@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ========================================================= -->
+    <!-- PAPERFORMAT PROPIO                                       -->
+    <!-- ========================================================= -->
+    <record id="paperformat_solicitud_reporte" model="report.paperformat">
+        <field name="name">Solicitud Reporte Amunet</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="dpi">90</field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- ACCIÓN DEL REPORTE                                       -->
+    <!-- ========================================================= -->
+    <record id="action_report_solicitud_reporte_v2" model="ir.actions.report">
+        <field name="name">Solicitud-Reporte</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_quality.report_solicitud_reporte_template_v2</field>
+        <field name="report_file">amunet_quality.report_solicitud_reporte_template_v2</field>
+        <field name="print_report_name">'Solicitud-Reporte - %s' % object.name</field>
+        <field name="binding_model_id" ref="model_amunet_quality_check"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="amunet_quality.paperformat_solicitud_reporte"/>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- TEMPLATE QWEB PDF (REF USER + BASIC LAYOUT)              -->
+    <!-- ========================================================= -->
+    <template id="report_solicitud_reporte_template_v2">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    
+                    <!-- WRAPPER UNICO PARA AISLAMIENTO TOTAL -->
+                    <div id="solicitud_report_unique">
+                        
+                        <style>
+                            /* AISLAMIENTO CSS POR ID */
+                            #solicitud_report_unique {
+                                width: 100%;
+                                font-family: 'DejaVu Sans', Arial, sans-serif !important;
+                                font-size: 11px;
+                                color: #000;
+                            }
+
+                            @page {
+                                size: A4;
+                                margin: 10mm;
+                            }
+
+                            #solicitud_report_unique .page {
+                                padding: 10mm;
+                                background-color: white;
+                            }
+
+                            #solicitud_report_unique * {
+                                font-family: inherit;
+                                font-size: inherit;
+                            }
+
+                            #solicitud_report_unique .title-blue {
+                                color: #1f4fd8;
+                                font-weight: bold;
+                                font-size: 14px;
+                                text-align: center;
+                            }
+
+                            #solicitud_report_unique .section-title {
+                                margin-top: 14px;
+                                margin-bottom: 4px;
+                                font-weight: bold;
+                                font-size: 12px;
+                            }
+
+                            /* === TABLAS SUAVES (3,4,5) === */
+                            #solicitud_report_unique .table-soft {
+                                width: 100%;
+                                border: 1px solid #b5b5b5;
+                                border-collapse: collapse;
+                            }
+
+                            #solicitud_report_unique .table-soft td {
+                                padding: 4px;
+                                vertical-align: top;
+                                border-bottom: 1px solid #b5b5b5;
+                                border-right: 1px solid #b5b5b5; /* Asegurar bordes internos */
+                            }
+
+                            #solicitud_report_unique .table-soft td:last-child {
+                                border-right: 1px solid #b5b5b5;
+                            }
+
+                            #solicitud_report_unique .table-soft tr:last-child td {
+                                border-bottom: 1px solid #b5b5b5; /* Restaurar borde inferior */
+                            }
+
+                            /* === HEADER FECHA === */
+                            #solicitud_report_unique .header-table {
+                                width: 100%;
+                                border: 1px solid #b5b5b5;
+                                border-collapse: collapse;
+                            }
+
+                            #solicitud_report_unique .header-table td {
+                                padding: 3px;
+                                border-bottom: 1px solid #b5b5b5;
+                                font-size: 10px;
+                            }
+
+                            #solicitud_report_unique .header-table tr:last-child td {
+                                border-bottom: none;
+                            }
+
+                            #solicitud_report_unique .gray-header {
+                                background-color: #e6e6e6;
+                                font-weight: bold;
+                                text-align: center;
+                                border-bottom: 1px solid #b5b5b5;
+                            }
+
+                            #solicitud_report_unique .center {
+                                text-align: center !important;
+                                vertical-align: middle !important;
+                            }
+                            
+                            #solicitud_report_unique .center img {
+                                margin: 0 auto;
+                                display: inline-block;
+                            }
+                            
+                            #solicitud_report_unique .center div {
+                                margin: 0 auto;
+                                text-align: center;
+                            }
+
+                            #solicitud_report_unique .page-break {
+                                page-break-before: always;
+                            }
+
+                            #solicitud_report_unique .footer-confidential {
+                                position: fixed;
+                                bottom: 0;
+                                left: 0;
+                                right: 0;
+                                text-align: center;
+                                font-size: 9px;
+                                font-style: italic;
+                                width: 100%;
+                                background-color: white;
+                                padding: 5px 0;
+                            }
+
+                            #solicitud_report_unique .signatures {
+                                margin-top: 90px;
+                            }
+                            
+                            /* Fix para tablas internas */
+                            #solicitud_report_unique table {
+                                width: 100%;
+                            }
+                        </style>
+
+                        <div class="page">
+                            <!-- ================= HEADER ================= -->
+                            <table width="100%">
+                                <tr>
+                                    <td width="20%" class="center">
+                                        <img t-att-src="'/web/image/res.company/%s/logo' % o.company_id.id" style="max-height:60px;" />
+                                    </td>
+                                    <td width="55%" class="center">
+                                        <div class="title-blue">SOLICITUD-REPORTE</div>
+                                        <div class="title-blue">
+                                            <span t-field="o.product_id.categ_id.name" />
+                                        </div>
+                                    </td>
+                                    <td width="25%">
+                                        <table class="header-table">
+                                            <tr>
+                                                <td><strong>Fecha de elaboración</strong></td>
+                                                <td><span t-field="o.create_date" t-options="{'widget': 'date'}"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Fecha de vigencia</strong></td>
+                                                <td><span t-field="o.expiration_date"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Código</strong></td>
+                                                <td><span t-field="o.product_id.report_document_code"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Versión</strong></td>
+                                                <td><span t-field="o.product_id.report_version"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Sustituye</strong></td>
+                                                <td><span t-field="o.product_id.report_replaces_version"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Pág.</strong></td>
+                                                <td><span class="page" /> / <span class="topage" /></td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- ================= 1 ================= -->
+                            <div class="section-title">1.- Datos Generales</div>
+                            <table width="100%">
+                                <tr>
+                                    <td width="15%"><strong>Nombre:</strong></td>
+                                    <td width="55%"><span t-field="o.product_id.name" /></td>
+                                    <td width="15%"><strong>Clave:</strong></td>
+                                    <td width="15%"><span t-field="o.product_code" /></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Descripción:</strong></td>
+                                    <td colspan="3"><span t-field="o.product_description" /></td>
+                                </tr>
+                            </table>
+
+                            <!-- ================= 2 ================= -->
+                            <div class="section-title">2.- Solicitud de análisis de muestreo</div>
+                            <table width="100%">
+                                <tr>
+                                    <td width="25%"><strong>Fecha de solicitud:</strong></td>
+                                    <td width="25%"><span t-field="o.request_date" /></td>
+                                    <td width="25%"><strong>Solicitante:</strong></td>
+                                    <td width="25%"><span t-field="o.requester_id.name" /></td>
+                                </tr>
+                            </table>
+
+                            <!-- ================= 3 ================= -->
+                            <div class="section-title">3.- Información del producto</div>
+                            <table class="table-soft">
+                                <tr class="gray-header">
+                                    <td>ORIGEN</td>
+                                    <td>USUARIO</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fabricante:</strong> <span t-field="o.partner_id.name" /></td>
+                                    <td><strong>No. Lote Amunet:</strong> <span t-field="o.lot_name_amunet" /></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Lote fábrica:</strong> <span t-field="o.lot_name_factory" /></td>
+                                    <td><strong>Cantidad:</strong> <span t-field="o.lot_qty_available" /></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fabricación:</strong> <span t-field="o.manufacturing_date" /></td>
+                                    <td><strong>Caducidad:</strong> <span t-field="o.expiration_date" /></td>
+                                </tr>
+                            </table>
+
+                            <!-- ================= 4 ================= -->
+                            <div class="section-title">4.- Muestreo</div>
+                            <table class="table-soft">
+                                <tr>
+                                    <td><strong>Fecha:</strong> <span t-field="o.sampling_date" /></td>
+                                    <td><strong>Cantidad:</strong> <span t-field="o.qty_sampling" /></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Muestreado por:</strong> <span t-field="o.user_realized_id.name" /></td>
+                                    <td><strong>Verifica:</strong> <span t-field="o.user_verified_id.name" /></td>
+                                </tr>
+                            </table>
+
+                            <!-- ================= 5 ================= -->
+                            <div class="section-title">5.- Análisis</div>
+                            <table class="table-soft">
+                                <tr>
+                                    <td><strong>Fecha de análisis:</strong> <span t-field="o.analysis_date" /></td>
+                                    <td><strong>Fecha de reanálisis:</strong> 
+                                        <!-- FIELD PRESERVED BUT COMMENTED -->
+                                        <!-- <span t-field="o.reanalysis_date" /> -->
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>No. de análisis:</strong> <span t-esc="o.analysis_number" /></td>
+                                    <td><strong>Tipo de análisis:</strong> <span t-field="o.analysis_type" /></td>
+                                </tr>
+                            </table>
+
+                            <!-- ===== SALTO DE PÁGINA ===== -->
+                            <div class="page-break"></div>
+
+                            <!-- ================= 6 ================= -->
+                            <div class="section-title">6.- Pruebas realizadas</div>
+                            <table style="border:1px solid #000; border-collapse:collapse; width:100%;">
+                                <tr class="gray-header">
+                                    <td width="35%">Nombre / Código</td>
+                                    <td width="65%">Resultado</td>
+                                </tr>
+                                <t t-foreach="o.test_line_ids" t-as="line">
+                                    <tr>
+                                        <td style="border:1px solid #000; padding:4px;">
+                                            <strong><span t-field="line.name" /></strong><br />
+                                            <span t-field="line.code" />
+                                        </td>
+                                        <td style="border:1px solid #000; padding:4px;">
+                                            <t t-foreach="line.detail_line_ids" t-as="detail">
+                                                <div>
+                                                    <t t-if="detail.verdict == 'pass'">☑</t>
+                                                    <t t-if="detail.verdict != 'pass'">☐</t>
+                                                    <span t-field="detail.name" />:
+                                                    <span t-field="detail.result_display" />
+                                                </div>
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </table>
+
+                            <!-- ================= FIRMAS ================= -->
+                            <div class="signatures">
+                                <table width="100%">
+                                    <tr>
+                                        <td width="50%" class="center">
+                                            ___________________________<br />
+                                            <strong>REALIZÓ</strong><br />
+                                            <strong>(Fecha, Nombre, Puesto)</strong><br /><br />
+                                            <span t-field="o.realized_date" /><br />
+                                            <span t-field="o.user_realized_id.name" /><br />
+                                            <span t-field="o.user_realized_id.job_title" />
+                                        </td>
+                                        <td width="50%" class="center">
+                                            ___________________________<br />
+                                            <strong>VERIFICÓ</strong><br />
+                                            <strong>(Fecha, Nombre, Puesto)</strong><br /><br />
+                                            <span t-field="o.verified_date" /><br />
+                                            <span t-field="o.user_verified_id.name" /><br />
+                                            <span t-field="o.user_verified_id.job_title" />
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- ================= FOOTER ================= -->
+                            <div class="footer-confidential">
+                                Este documento es confidencial. Uso exclusivo de Amunet S.A. de C.V.
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista tree de stock.quant con factory_lot_id -->
+    <record id="view_stock_quant_tree_inherit_amunet" model="ir.ui.view">
+        <field name="name">stock.quant.tree.inherit.amunet</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_tree"/>
+        <field name="arch" type="xml">
+            <!-- Agregar factory_lot_id después de lot_id -->
+            <xpath expr="//field[@name='lot_id']" position="after">
+                <field name="factory_lot_id" string="Número de serie/lote de fábrica" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Vista tree editable de stock.quant con factory_lot_id -->
+    <record id="view_stock_quant_tree_editable_inherit_amunet" model="ir.ui.view">
+        <field name="name">stock.quant.tree.editable.inherit.amunet</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_tree_editable"/>
+        <field name="arch" type="xml">
+            <!-- Cambiar etiqueta de lot_id -->
+            <xpath expr="//field[@name='lot_id']" position="attributes">
+                <attribute name="string">Número de serie/lote Amunet</attribute>
+            </xpath>
+
+            <!-- Agregar factory_lot_id después de lot_id -->
+            <xpath expr="//field[@name='lot_id']" position="after">
+                <field name="factory_lot_id" string="Número de serie/lote de fábrica" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Vista form de stock.quant con factory_lot_id -->
+    <record id="view_stock_quant_form_inherit_amunet" model="ir.ui.view">
+        <field name="name">stock.quant.form.inherit.amunet</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_form"/>
+        <field name="arch" type="xml">
+            <!-- Agregar factory_lot_id después de lot_id -->
+            <xpath expr="//field[@name='lot_id']" position="after">
+                <field name="factory_lot_id" string="Número de serie/lote de fábrica"/>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,43 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# * amunet_lot
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-18 12:00:00\n"
+"PO-Revision-Date: 2025-11-18 12:00:00\n"
+"Last-Translator: Amunet\n"
+"Language-Team: \n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: stock
+#: model:ir.model.fields,field_description:stock.field_stock_lot__name
+msgid "Lot/Serial Number"
+msgstr "Número de lote/serie Amunet"
+
+#. module: stock
+#: model:ir.model.fields,field_description:stock.field_stock_move_line__lot_id
+msgid "Lot/Serial Number"
+msgstr "Número de lote/serie Amunet"
+
+#. module: stock
+#: model:ir.model.fields,field_description:stock.field_stock_lot__ref
+msgid "Internal Reference"
+msgstr "Número de serie/lote de fábrica"
+
+#. module: stock
+#: model:ir.actions.act_window,name:stock.action_production_lot_form
+msgid "Lots / Serial Numbers"
+msgstr "Lotes Amunet"
+
+#. module: stock
+#: model:ir.ui.menu,name:stock.menu_action_production_lot_form
+msgid "Lots / Serial Numbers"
+msgstr "Lotes Amunet"
+

@@ -1,0 +1,1260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Vistas para Control de Calidad
+        Epic-029: Sistema de Control de Calidad
+        HU-029-2, HU-029-3: Ejecutar QC y Firmas
+    -->
+
+    <!-- Vista List -->
+    <record id="view_amunet_quality_check_list" model="ir.ui.view">
+        <field name="name">amunet.quality.check.list</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="arch" type="xml">
+            <list string="Controles de calidad" decoration-muted="state == 'done'"
+                  decoration-warning="state == 'pending'"
+                  decoration-info="state == 'in_progress'">
+                <field name="name"/>
+                <field name="analysis_number" optional="show"/>
+                <field name="product_id"/>
+                <field name="lot_name_amunet"/>
+                <field name="picking_id" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'in_progress'"
+                       decoration-danger="state == 'pending'"
+                       decoration-success="state == 'done'"/>
+                <field name="global_result" widget="badge"
+                       decoration-muted="global_result == 'pending'"
+                       decoration-success="global_result == 'pass'"
+                       decoration-danger="global_result == 'fail'"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista Form -->
+    <record id="view_amunet_quality_check_form" model="ir.ui.view">
+        <field name="name">amunet.quality.check.form</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="arch" type="xml">
+            <form string="Control de calidad">
+                <header>
+                    <!-- Botones dinámicos según estado y flags -->
+                    <button name="action_start" string="Inicio"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'draft'"
+                            confirm="¿Iniciar análisis?&#10;&#10;Se asignará su usuario y se bloqueará en el dashboard."/>
+
+                    <button name="action_review_info" string="Revisar información"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'in_progress' or info_reviewed"/>
+
+                    <button name="action_confirm_sampling" string="Confirmar muestreo"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'in_progress' or not info_reviewed or sampling_confirmed"/>
+
+                    <button name="action_edit_sampling" string="Editar muestreo"
+                            type="object"
+                            invisible="state != 'in_progress' or not sampling_confirmed"
+                            confirm="¿Editar Muestreo? Se desbloqueará Numeral 4 y se reiniciarán los datos del muestreo."/>
+
+                    <button name="action_finalize" string="Finalizar"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'in_progress' or not sampling_confirmed"
+                            confirm="¿Está seguro de finalizar el control de calidad?"/>
+
+                    <button name="action_reanalysis" string="Reanálisis"
+                            type="object"
+                            invisible="state not in ('done', 'pending')"/>
+
+                    <button name="action_force_download_certificate" 
+                            string="Imprimir Certificado"
+                            type="object" 
+                            class="oe_highlight"
+                            invisible="state != 'done'"/>
+                            
+                    <button name="action_print_solicitud_report" 
+                            string="Imprimir Reporte"
+                            type="object" 
+                            class="btn-secondary"
+                            invisible="state != 'done'"/>
+
+                    <button name="action_create_capa" string="🚨 Crear CAPA"
+                            type="object" class="btn-danger"
+                            invisible="global_result != 'fail' or state not in ('done', 'pending')"/>
+
+                    <button name="action_sign_realized" string="Firmar: Realizó" type="object" class="btn-primary"
+                            invisible="not sampling_confirmed or user_realized_id or state == 'done'"
+                            groups="amunet_quality.group_quality_user"
+                            confirm="¿Confirmar que Realizó el análisis?"/>
+
+                    <button name="action_sign_verified" string="Firmar: Verificó" type="object" class="btn-primary"
+                            invisible="not user_realized_id or user_verified_id or state == 'done'"
+                            groups="amunet_quality.group_quality_supervisor"
+                            confirm="¿Confirmar Verificación?"/>
+
+                    <button name="action_sign_authorized" string="Firmar: Autorizó" type="object" class="btn-primary"
+                            invisible="not user_verified_id or user_authorized_id or state == 'done'"
+                            groups="amunet_quality.group_quality_sanitary"
+                            confirm="¿Confirmar Autorización?"/>
+
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,in_progress,done"/>
+                </header>
+
+                <sheet>
+                    <!-- Ribbon para estado pendiente -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_procedures" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-book"
+                                invisible="procedure_count == 0">
+                            <field name="procedure_count" widget="statinfo" string="SOPs"/>
+                        </button>
+                        <button name="action_view_capas" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-exclamation-triangle"
+                                invisible="capa_count == 0">
+                            <field name="capa_count" widget="statinfo" string="CAPAs"/>
+                        </button>
+                    </div>
+
+                    <!-- Título y Badge -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <field name="global_result" widget="badge"
+                               decoration-muted="global_result == 'pending'"
+                               decoration-success="global_result == 'pass'"
+                               decoration-danger="global_result == 'fail'"/>
+                    </div>
+
+                    <!-- Alerta de Resultado Global (Epic-UI) -->
+                    <div class="alert alert-success text-center" role="alert" 
+                         invisible="global_result != 'pass'">
+                        <strong>✅ APROBADO</strong> - El producto cumple con todas las especificaciones.
+                    </div>
+                    <div class="alert alert-danger text-center" role="alert" 
+                         invisible="global_result != 'fail'">
+                        <strong>❌ RECHAZADO</strong> - El producto NO cumple con las especificaciones.
+                        <button name="action_create_capa" string="Iniciar CAPA" type="object" class="btn-link"/>
+                    </div>
+
+                    <!-- Folio (visible solo si existe) -->
+                    <group invisible="not analysis_number">
+                        <field name="analysis_number" readonly="1"/>
+                        <field name="analysis_type" readonly="1"/>
+                    </group>
+
+                    <!-- NUMERAL 1: DATOS GENERALES -->
+                    <group string="Numeral 1: Datos generales">
+                        <group>
+                            <field name="product_id" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="product_description" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- NUMERAL 2: SOLICITUD DE ANÁLISIS -->
+                    <group string="Numeral 2: Solicitud de análisis">
+                        <group>
+                            <field name="requester_id" readonly="1"/>
+                            <field name="request_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="picking_id" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <!-- ==================================================================== -->
+                    <!-- PROGRESSIVE DISCLOSURE UI (No Tabs) -->
+                    <!-- ==================================================================== -->
+
+                    <hr invisible="state == 'draft'"/>
+
+                    <!-- NUMERAL 3: INFORMACIÓN DEL PRODUCTO -->
+                    <!-- Visible: Siempre en In Progress, o Done. En Draft ocultamos para enfocar. -->
+                    <group string="Numeral 3: Información del producto">
+                         <group colspan="4" col="1">
+                            <div class="alert alert-info" role="alert"
+                                 invisible="info_reviewed or state == 'done'">
+                                <strong>Paso 1:</strong> Verifique la fecha de fabricación y lote. Luego haga clic en "Revisar Información".
+                            </div>
+                        </group>
+                        <group>
+                            <field name="partner_id" readonly="state != 'draft'"/>
+                            <field name="lot_id" readonly="state != 'draft'"/>
+                            <field name="lot_name_factory" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="lot_qty_available" readonly="1" force_save="1"/>
+                            <field name="manufacturing_date"
+                                   readonly="info_reviewed"/>
+                            <field name="expiration_date" readonly="1"/>
+                            <field name="reviewed_by_id" readonly="1"
+                                   invisible="not info_reviewed"/>
+                        </group>
+                    </group>
+
+                    <!-- SEPARATOR -->
+                    <div class="o_horizontal_separator" invisible="not info_reviewed">Numeral 4: Muestreo</div>
+                    <hr invisible="not info_reviewed"/>
+
+                    <!-- NUMERAL 4: MUESTREO -->
+                    <!-- Visible: Cuando info_reviewed es True -->
+                    <group invisible="not info_reviewed">
+                        <group colspan="4" col="1">
+                            <div class="alert alert-info" role="alert"
+                                 invisible="sampling_confirmed or state == 'done'">
+                                <strong>Paso 2:</strong> Ingrese cantidad de muestra y confirme para reservar inventario.
+                            </div>
+                        </group>
+                        <group>
+                            <field name="sampling_date"
+                                   readonly="sampling_confirmed"
+                                   required="info_reviewed"/>
+                            <field name="qty_sampling"
+                                   readonly="sampling_confirmed"/>
+                            <field name="sampling_uom_id"
+                                   readonly="sampling_confirmed"/>
+                        </group>
+                        <group>
+                            <field name="qty_analyzed"
+                                   readonly="sampling_confirmed"/>
+                            <field name="qty_to_return" readonly="1"/>
+                            <field name="sampling_move_id" readonly="1"
+                                   invisible="not sampling_move_id"/>
+                        </group>
+                    </group>
+
+                    <!-- Campos ocultos de control UI -->
+                    <field name="info_reviewed" invisible="1"/>
+                    <field name="sampling_confirmed" invisible="1"/>
+
+                    <!-- SEPARATOR -->
+                    <div class="o_horizontal_separator" invisible="not sampling_confirmed">Numeral 5: Análisis</div>
+                    <hr invisible="not sampling_confirmed"/>
+
+                    <!-- NUMERAL 5: ANÁLISIS -->
+                    <!-- Visible: Cuando sampling_confirmed es True -->
+                    <group invisible="not sampling_confirmed">
+                        <group>
+                            <field name="analysis_date"
+                                   readonly="state == 'done'"/>
+                        </group>
+                        <group>
+                            <field name="parent_check_id" readonly="1"
+                                   invisible="not parent_check_id"/>
+                            <field name="reanalysis_count" readonly="1"
+                                   invisible="reanalysis_count == 0"/>
+                        </group>
+                    </group>
+
+                    <!-- Barra de Progreso -->
+                    <field name="progress" widget="progressbar" 
+                           class="mb-3"
+                           invisible="state == 'done' or not sampling_confirmed"
+                           options="{'current_value': 'progress', 'max_value': 100, 'editable': false}"/>
+
+                    <!-- Resumen del Dictamen -->
+                    <group string="Resumen de Resultados" 
+                           invisible="not sampling_confirmed or total_parameters == 0">
+                        <group>
+                            <field name="parameters_pass" readonly="1" class="text-success"/>
+                            <field name="parameters_fail" readonly="1" class="text-danger"/>
+                        </group>
+                        <group>
+                            <field name="parameters_pending" readonly="1"/>
+                            <field name="parameters_na" readonly="1"/>
+                        </group>
+                        <group colspan="4" invisible="not fail_reason">
+                            <div class="alert alert-danger" role="alert">
+                                <strong>Causa de Rechazo:</strong> <field name="fail_reason" readonly="1" nolabel="1"/>
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- Tabla de Determinaciones -->
+                    <group colspan="4" col="1" invisible="not sampling_confirmed">
+                        <field name="test_line_ids" nolabel="1"
+                               readonly="state == 'done'"
+                               widget="quality_test_line_hierarchy"/>
+                    </group>
+                    
+                    <!-- Alerta pendientes -->
+                    <div class="alert alert-warning mt-2 mb-2" role="alert"
+                            invisible="parameters_pending == 0 or state == 'done' or not sampling_confirmed">
+                        <strong>Pendiente:</strong> Faltan <field name="parameters_pending" readonly="1" class="oe_inline"/> resultados.
+                    </div>
+
+                    <!-- INFORMACIÓN ADICIONAL -->
+                    <group string="Información Adicional" 
+                           invisible="not sampling_confirmed or not (show_additional_info_avg_length or show_additional_info_cv_percent or show_additional_info_observations)">
+                        
+                        <div class="text-muted mb-2" invisible="state == 'done'">
+                             Estos campos son informativos y no afectan el dictamen automático.
+                        </div>
+
+                        <group>
+                            <field name="show_additional_info_avg_length" invisible="1"/>
+                            <field name="show_additional_info_cv_percent" invisible="1"/>
+                            <field name="show_additional_info_observations" invisible="1"/>
+                            <!-- Requeridos invisibles -->
+                            <field name="required_additional_info_avg_length" invisible="1"/>
+                            <field name="required_additional_info_cv_percent" invisible="1"/>
+                            <field name="required_additional_info_observations" invisible="1"/>
+                            <!-- Placeholders -->
+                            <field name="placeholder_additional_info_avg_length" invisible="1"/>
+                            <field name="placeholder_additional_info_cv_percent" invisible="1"/>
+                            <field name="placeholder_additional_info_observations" invisible="1"/>
+
+                            <field name="additional_info_avg_length"
+                                   invisible="not show_additional_info_avg_length"
+                                   required="required_additional_info_avg_length"
+                                   readonly="state == 'done'"
+                                   widget="dynamic_placeholder_float"
+                                   options="{'placeholder_field': 'placeholder_additional_info_avg_length'}"
+                                   string="Promedio de largo (cm)"/>
+
+                            <field name="additional_info_cv_percent"
+                                   invisible="not show_additional_info_cv_percent"
+                                   required="required_additional_info_cv_percent"
+                                   readonly="state == 'done'"
+                                   widget="dynamic_placeholder_float"
+                                   options="{'placeholder_field': 'placeholder_additional_info_cv_percent'}"
+                                   string="Coeficiente de variación (%)"/>
+                         </group>
+                         <group invisible="not show_additional_info_observations" col="1">
+                             <separator string="Observaciones"/>
+                             <field name="additional_info_observations"
+                                   required="required_additional_info_observations"
+                                   readonly="state == 'done'"
+                                   widget="dynamic_placeholder_html"
+                                   options="{'placeholder_field': 'placeholder_additional_info_observations', 'height': 150}"
+                                   nolabel="1"/>
+                         </group>
+                    </group>
+
+                    <!-- SEPARATOR FIRMAS -->
+                    <div class="o_horizontal_separator" invisible="not sampling_confirmed">Numeral 8: Firmas</div>
+                    <hr invisible="not sampling_confirmed"/>
+
+                    <!-- FIRMAS -->
+                    <!-- Visible: sampling_confirmed -->
+                    <group invisible="not sampling_confirmed">
+                         <group colspan="4" col="1" invisible="state == 'done'">
+                            <div class="alert alert-info" role="alert" invisible="user_authorized_id">
+                                <strong>Proceso de Cierre:</strong> Firme secuencialmente como Realizó (Analista), Verificó (Supervisor) y Autorizó (Resp. Sanitario).
+                            </div>
+                        </group>
+                        <group>
+                            <group string="Ejecución">
+                                <field name="user_realized_id" readonly="1" decoration-success="user_realized_id"/>
+                                <field name="user_analyzed_id" invisible="1"/>
+                            </group>
+                            <group string="Revisión y Aprobación">
+                                <field name="user_verified_id" readonly="1" decoration-success="user_verified_id"/>
+                                <field name="user_authorized_id" readonly="1" decoration-success="user_authorized_id"/>
+                            </group>
+                        </group>
+                    </group>
+
+                    <group string="Justificación de Cambios" invisible="state == 'draft'">
+                         <field name="change_reason" 
+                                placeholder="Especifique el motivo de cualquier cambio en campos críticos..."/>
+                    </group>
+                </sheet>
+
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista Search -->
+    <record id="view_amunet_quality_check_search" model="ir.ui.view">
+        <field name="name">amunet.quality.check.search</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="analysis_number"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="picking_id"/>
+                <separator/>
+                <filter name="filter_draft" string="Por realizar"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_in_progress" string="En proceso"
+                        domain="[('state', '=', 'in_progress')]"/>
+                <filter name="filter_pending" string="Pendiente disposición"
+                        domain="[('state', '=', 'pending')]"/>
+                <filter name="filter_done" string="Finalizados"
+                        domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="filter_pass" string="Aprobados"
+                        domain="[('global_result', '=', 'pass')]"/>
+                <filter name="filter_fail" string="Rechazados"
+                        domain="[('global_result', '=', 'fail')]"/>
+                <separator/>
+                <filter name="group_state" string="Estado"
+                        context="{'group_by': 'state'}"/>
+                <filter name="group_product" string="Producto"
+                        context="{'group_by': 'product_id'}"/>
+                <filter name="group_result" string="Resultado"
+                        context="{'group_by': 'global_result'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_amunet_quality_check" model="ir.actions.act_window">
+        <field name="name">Controles de calidad</field>
+        <field name="res_model">amunet.quality.check</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear un nuevo control de calidad
+            </p>
+            <p>
+                Los controles de calidad se crean automáticamente
+                al validar recepciones de productos que lo requieren.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========== Epic-031: Vistas de Detalles de Línea de Test ========== -->
+
+    <!-- Vista List de Detalles (para dentro de test_line) -->
+    <record id="view_amunet_quality_test_line_detail_list" model="ir.ui.view">
+        <field name="name">amunet.quality.test.line.detail.list</field>
+        <field name="model">amunet.quality.test.line.detail</field>
+        <field name="arch" type="xml">
+            <list string="Especificaciones" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name" readonly="1"/>
+                <field name="acceptance_criteria" readonly="1" optional="show"/>
+                <field name="evaluation_type" column_invisible="1"/>
+                
+                <!-- Campos de resultado según tipo de evaluación -->
+                <field name="result_selection" 
+                       string="Resultado"
+                       invisible="evaluation_type != 'binary_selection'"/>
+                
+                <field name="result_numeric" 
+                       string="Resultado"
+                       invisible="evaluation_type != 'numeric_range'"/>
+                
+                <field name="result_checkbox_1"
+                       invisible="evaluation_type != 'checkbox_combined'"/>
+                <field name="result_checkbox_2"
+                       invisible="evaluation_type != 'checkbox_combined'"/>
+                
+                <field name="result_text_pattern"
+                       string="Patrón"
+                       invisible="evaluation_type != 'text_pattern'"/>
+                
+                <field name="result_expected_type"
+                       string="Esperado"
+                       invisible="evaluation_type != 'expected_vs_obtained'"/>
+                <field name="result_obtained_type"
+                       string="Obtenido"
+                       invisible="evaluation_type != 'expected_vs_obtained'"/>
+                
+                <field name="result_binary_option"
+                       string="Resultado"
+                       invisible="evaluation_type != 'binary_with_notes'"/>
+                
+                <field name="result_ternary"
+                       string="Resultado"
+                       invisible="evaluation_type != 'ternary_with_na'"/>
+
+                <field name="mavi15_result"
+                       string="Resultado"
+                       invisible="evaluation_type != 'mavi_15_ternary'"/>
+                
+                <!-- Decision Matrix (MAVI-16) -->
+                <field name="result_dm_step1_concentration"
+                       string="1️⃣ Conc."
+                       invisible="evaluation_type != 'decision_matrix'"/>
+                <field name="result_dm_step2_1_control_visible"
+                       string="2️⃣ C"
+                       invisible="evaluation_type != 'decision_matrix'"/>
+                <field name="result_dm_step2_2_comparison"
+                       string="3️⃣ T vs R"
+                       invisible="evaluation_type != 'decision_matrix'"/>
+                
+                <!-- MGA-0981 Fields -->
+                <field name="mga0981_vol_declarado"
+                       string="Vol. Declarado"
+                       invisible="evaluation_type != 'mga_0981'"/>
+                <field name="mga0981_vol_obtenido"
+                       string="Vol. Obtenido"
+                       invisible="evaluation_type != 'mga_0981'"/>
+
+                <!-- VAMA-105 -->
+                <field name="vama105_nominal_volume"
+                       string="Vol. Nominal"
+                       invisible="evaluation_type != 'vama_105'"
+                       required="evaluation_type == 'vama_105'"/>
+                <field name="vama105_measured_volume"
+                       string="Vol. Medido"
+                       invisible="evaluation_type != 'vama_105'"
+                       readonly="not vama105_nominal_volume"/>
+                
+                <!-- VAMA-034 -->
+                <field name="vama034_sample_type"
+                       string="Tipo Muestra"
+                       invisible="evaluation_type != 'vama_034'"
+                       required="evaluation_type == 'vama_034'"/>
+                <field name="vama034_observed_result"
+                       string="Resultado"
+                       invisible="evaluation_type != 'vama_034'"
+                       readonly="not vama034_sample_type"/>
+                
+                <!-- MAVI-11 -->
+                <field name="mavi11_target_height"
+                       string="Altura Objetivo"
+                       invisible="evaluation_type != 'mavi_11_height'"
+                       required="evaluation_type == 'mavi_11_height'"/>
+                <field name="mavi11_measured_height"
+                       string="Altura Medida"
+                       invisible="evaluation_type != 'mavi_11_height'"
+                       readonly="not mavi11_target_height"/>
+                
+                <!-- MAVI-07 -->
+                <field name="mavi07_hm_sample_type"
+                       string="Tipo Muestra"
+                       invisible="evaluation_type != 'mavi_07_ternary'"
+                       required="evaluation_type == 'mavi_07_ternary'"/>
+                <field name="mavi07_hm_result"
+                       string="Resultado"
+                       invisible="evaluation_type != 'mavi_07_ternary'"
+                       readonly="not mavi07_hm_sample_type"/>
+
+                <field name="result_display" string="Valor" readonly="1" optional="show"/>
+                
+                <field name="verdict" 
+                       string="Dictamen"
+                       widget="badge"
+                       decoration-muted="verdict == 'pending'"
+                       decoration-success="verdict == 'pass'"
+                       decoration-danger="verdict == 'fail'"
+                       decoration-info="verdict == 'not_applicable'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista Form de Detalles (modal para registrar resultados) -->
+    <record id="view_amunet_quality_test_line_detail_form" model="ir.ui.view">
+        <field name="name">amunet.quality.test.line.detail.form</field>
+        <field name="model">amunet.quality.test.line.detail</field>
+        <field name="arch" type="xml">
+            <form string="Registrar resultado">
+                <sheet>
+                    <group>
+                        <group string="Especificación">
+                            <field name="name" readonly="1"/>
+                            <field name="acceptance_criteria" readonly="1"/>
+                            <field name="evaluation_type" readonly="1" widget="badge"/>
+                        </group>
+                        <group string="Dictamen">
+                            <field name="verdict" widget="badge" readonly="1"
+                                   decoration-muted="verdict == 'pending'"
+                                   decoration-success="verdict == 'pass'"
+                                   decoration-danger="verdict == 'fail'"
+                                   decoration-info="verdict == 'not_applicable'"/>
+                            <field name="verdict_message" readonly="1" 
+                                   invisible="not verdict_message"/>
+                        </group>
+                    </group>
+
+                    <!-- Sección de Resultado según tipo -->
+                    <notebook>
+                        <!-- Binary Selection -->
+                        <page string="Selección" name="binary_selection"
+                              invisible="evaluation_type != 'binary_selection'">
+                            <group>
+                                <field name="binary_option_pass" invisible="1"/>
+                                <field name="binary_option_fail" invisible="1"/>
+                                <field name="result_selection" widget="radio"
+                                       options="{'horizontal': true}"/>
+                            </group>
+                        </page>
+
+                        <!-- Numeric Range -->
+                        <page string="Valor numérico" name="numeric_range"
+                              invisible="evaluation_type != 'numeric_range'">
+                            <group>
+                                <field name="result_numeric"/>
+                                <field name="uom_id" readonly="1"/>
+                                <field name="min_value" readonly="1"/>
+                                <field name="max_value" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <!-- Checkbox Combined -->
+                        <page string="Checkboxes" name="checkbox_combined"
+                              invisible="evaluation_type != 'checkbox_combined'">
+                            <group>
+                                <field name="checkbox_label_1" invisible="1"/>
+                                <field name="checkbox_label_2" invisible="1"/>
+                                <field name="checkbox_result_confirmed" invisible="1"/>
+                                <field name="result_checkbox_1" 
+                                       string="Checkbox 1"/>
+                                <field name="result_checkbox_2" 
+                                       string="Checkbox 2"/>
+                            </group>
+                        </page>
+
+                        <!-- Conditional Numeric -->
+                        <page string="Numérico condicional" name="conditional_numeric"
+                              invisible="evaluation_type != 'conditional_numeric_range'">
+                            <group>
+                                <field name="available_conditional_option_ids" invisible="1"/>
+                                <field name="result_conditional_option_id" 
+                                       options="{'no_create': True, 'no_edit': True}"/>
+                                <field name="result_conditional_value"/>
+                            </group>
+                        </page>
+
+                        <!-- Text Pattern (VAMA-112) -->
+                        <page string="Patrón de texto" name="text_pattern"
+                              invisible="evaluation_type != 'text_pattern'">
+                            <group>
+                                <field name="text_pattern_expected" readonly="1"/>
+                                <field name="result_text_pattern" 
+                                       placeholder="Ingrese el patrón (ej: AAAAA)"/>
+                            </group>
+                        </page>
+
+                        <!-- Expected vs Obtained -->
+                        <page string="Comparación" name="expected_vs_obtained"
+                              invisible="evaluation_type != 'expected_vs_obtained'">
+                            <group>
+                                <field name="expected_options" invisible="1"/>
+                                <field name="obtained_options" invisible="1"/>
+                                <field name="result_expected_type" string="Tipo de Muestra"/>
+                                <field name="result_obtained_type" string="Resultado Obtenido"/>
+                            </group>
+                        </page>
+
+                        <!-- Binary with Notes -->
+                        <page string="Selección con notas" name="binary_with_notes"
+                              invisible="evaluation_type != 'binary_with_notes'">
+                            <group>
+                                <field name="result_binary_option" widget="radio"/>
+                            </group>
+                            <group string="Notas" 
+                                   invisible="result_binary_option != 'fail'">
+                                <field name="result_notes" nolabel="1" 
+                                       placeholder="Ingrese las notas explicativas..."/>
+                            </group>
+                        </page>
+
+                        <!-- Ternary with N/A -->
+                        <page string="Selección ternaria" name="ternary_with_na"
+                              invisible="evaluation_type != 'ternary_with_na'">
+                            <group>
+                                <field name="ternary_option_yes" invisible="1"/>
+                                <field name="ternary_option_no" invisible="1"/>
+                                <field name="ternary_option_na" invisible="1"/>
+                                <field name="result_ternary" widget="radio"
+                                       options="{'horizontal': true}"/>
+                            </group>
+                            <div class="alert alert-info" role="alert"
+                                 invisible="result_ternary != 'na'">
+                                <strong>ℹ️ Nota:</strong>
+                                Al seleccionar N/A, esta especificación se excluirá del conteo 
+                                y no afectará el dictamen del parámetro.
+                            </div>
+                        </page>
+
+                        <!-- MAVI-15 Ternary -->
+                        <page string="MAVI-15" name="mavi_15"
+                              invisible="evaluation_type != 'mavi_15_ternary'">
+                            <group>
+                                <field name="mavi15_result" widget="radio"/>
+                            </group>
+                        </page>
+
+                        <!-- Decision Matrix (MAVI-16) -->
+                        <page string="Matriz de decisión" name="decision_matrix"
+                              invisible="evaluation_type != 'decision_matrix'">
+                            
+                            <!-- Campos de control -->
+                            <field name="dm_step2_1_unlocked" invisible="1"/>
+                            <field name="dm_step2_2_unlocked" invisible="1"/>
+                            <field name="dm_current_step" invisible="1"/>
+                            
+                            <!-- Indicador de progreso -->
+                            <div class="alert alert-primary mb-3" role="alert">
+                                <strong>Flujo de Evaluación:</strong>
+                                Complete los pasos en secuencia. Si la línea C no es visible, la prueba falla inmediatamente.
+                            </div>
+                            
+                            <group>
+                                <!-- PASO 1: Concentración Objetivo -->
+                                <group string="1️⃣ Paso 1: Concentración objetivo">
+                                    <field name="result_dm_step1_concentration" 
+                                           widget="radio"
+                                           options="{'horizontal': true}"
+                                           string="Seleccione la concentración"/>
+                                </group>
+                                
+                                <!-- PASO 2.1: Línea C Visible -->
+                                <group string="2️⃣ Paso 2.1: Línea de control (C)" 
+                                       invisible="not dm_step2_1_unlocked">
+                                    <field name="result_dm_step2_1_control_visible" 
+                                           widget="radio"
+                                           options="{'horizontal': true}"
+                                           string="¿La línea C es visible?"/>
+                                </group>
+                                
+                                <!-- Mensaje de fallo si C no es visible -->
+                                <div class="alert alert-danger" role="alert"
+                                     invisible="result_dm_step2_1_control_visible != 'no'">
+                                    <strong>❌ Prueba inválida:</strong>
+                                    La línea de control (C) no es visible. El resultado es NO CUMPLE.
+                                </div>
+                                
+                                <!-- PASO 2.2: Comparación T vs R -->
+                                <group string="3️⃣ Paso 2.2: Comparación visual T vs R" 
+                                       invisible="not dm_step2_2_unlocked">
+                                    <field name="result_dm_step2_2_comparison" 
+                                           widget="radio"
+                                           string="Compare la región de prueba (T) con la de referencia (R)"/>
+                                </group>
+                            </group>
+                            
+                            <!-- Resultado del escenario -->
+                            <group string="Escenario encontrado" 
+                                   invisible="not dm_matched_scenario_id">
+                                <field name="dm_matched_scenario_id" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <!-- VAMA-044 -->
+                        <page string="VAMA-044" name="vama_044"
+                              invisible="evaluation_type != 'vama_044'">
+                            <group string="Funcionalidad Tubo">
+                                <group>
+                                    <field name="vama044_num_gotas"/>
+                                    <field name="vama044_num_gotas_min" readonly="1" class="text-muted"/>
+                                </group>
+                                <group>
+                                    <field name="vama044_vol_gota"/>
+                                    <label for="vama044_vol_gota_min" string="Rango Volumen"/>
+                                    <div class="o_row">
+                                        <field name="vama044_vol_gota_min" readonly="1" class="text-muted"/>
+                                        <span>-</span>
+                                        <field name="vama044_vol_gota_max" readonly="1" class="text-muted"/>
+                                    </div>
+                                </group>
+                                <group>
+                                    <field name="vama044_union" widget="radio" options="{'horizontal': true}"/>
+                                </group>
+                                <group>
+                                    <field name="vama044_vol_llenado"/>
+                                    <label for="vama044_vol_llenado_min" string="Rango Llenado"/>
+                                    <div class="o_row">
+                                        <field name="vama044_vol_llenado_min" readonly="1" class="text-muted"/>
+                                        <span>-</span>
+                                        <field name="vama044_vol_llenado_max" readonly="1" class="text-muted"/>
+                                    </div>
+                                </group>
+                                <field name="vama044_result_text" readonly="1" invisible="not vama044_result_text"/>
+                            </group>
+                        </page>
+
+                        <!-- VAMA-112 -->
+                        <page string="VAMA-112" name="vama_112"
+                              invisible="evaluation_type != 'vama_112'">
+                            <group string="Checklist Centrífuga">
+                                <field name="vama112_cond1" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama112_cond2" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama112_cond3" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama112_cond4" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama112_cond5" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama112_result_text" readonly="1" invisible="not vama112_result_text"/>
+                            </group>
+                        </page>
+
+                        <!-- VAMA-078 -->
+                        <page string="VAMA-078" name="vama_078"
+                              invisible="evaluation_type != 'vama_078'">
+                            <group string="Visual Liofilizado">
+                                <field name="vama078_color" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama078_forma" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama078_textura" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama078_humedad" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama078_result_text" readonly="1" invisible="not vama078_result_text"/>
+                            </group>
+                        </page>
+
+                        <!-- MAVI-07 (Phase 1) -->
+                        <page string="MAVI-07" name="mavi_07"
+                              invisible="evaluation_type != 'mavi_07'">
+                            <group>
+                                <field name="multi_check_results_json" invisible="1" force_save="1"/>
+                                <field name="id" invisible="1"/>
+                                <field name="name" invisible="1"/>
+                                <field name="text_phrase_mapping" 
+                                       widget="vama_multi_check_widget" 
+                                       nolabel="1"/>
+                            </group>
+                        </page>
+
+                        <!-- Multi-Condición (Phase 2) -->
+                        <page string="VAMA-096" name="multi_condition"
+                              invisible="evaluation_type != 'multi_condition_numeric'">
+                            <group>
+                                <field name="multi_cond_binary" invisible="1"/>
+                                <field name="multi_cond_num1" invisible="1"/>
+                                <field name="multi_cond_num2" invisible="1"/>
+                                <field name="multi_cond_result_text" invisible="1"/>
+                                <field name="multi_cond_num1_min" invisible="1"/>
+                                <field name="multi_cond_num2_min" invisible="1"/>
+                                <field name="multi_cond_num2_max" invisible="1"/>
+                                <field name="multi_cond_binary"
+                                       widget="multi_condition_widget"
+                                       nolabel="1"/>
+                            </group>
+                        </page>
+
+                        <!-- MGA-0981: Variación de Volumen -->
+                        <page string="Variación de Volumen" name="mga_0981"
+                              invisible="evaluation_type != 'mga_0981'">
+                            <group>
+                            <group>
+                                <group>
+                                    <field name="mga0981_vol_declarado" widget="radio" options="{'horizontal': true}"/>
+                                </group>
+                                <group>
+                                    <field name="mga0981_vol_obtenido"/>
+                                    <field name="uom_id" readonly="1"/>
+                                </group>
+                            </group>
+                            </group>
+                        </page>
+                    <!-- VAMA-105 -->
+                        <page string="VAMA-105" name="vama_105" invisible="evaluation_type != 'vama_105'">
+                            <group>
+                                <group>
+                                    <field name="vama105_nominal_volume" widget="radio" options="{'horizontal': true}"/>
+                                </group>
+                                <group>
+                                    <field name="vama105_measured_volume"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- VAMA-034 -->
+                        <page string="VAMA-034" name="vama_034" invisible="evaluation_type != 'vama_034'">
+                            <group>
+                                <field name="vama034_sample_type" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama034_observed_result" widget="radio"/>
+                            </group>
+                        </page>
+
+                        <!-- MAVI-11 -->
+                        <page string="MAVI-11" name="mavi_11" invisible="evaluation_type != 'mavi_11_height'">
+                            <group>
+                                <group>
+                                    <field name="mavi11_target_height" widget="radio" options="{'horizontal': true}"/>
+                                </group>
+                                <group>
+                                    <field name="mavi11_measured_height"/>
+                                    <label for="mavi11_measured_height" string="cm"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- MAVI-07 -->
+                        <page string="MAVI-07" name="mavi_07_ternary" invisible="evaluation_type != 'mavi_07_ternary'">
+                            <group>
+                                <field name="mavi07_hm_sample_type" widget="radio" options="{'horizontal': true}"/>
+                                <field name="mavi07_hm_result" widget="radio"/>
+                            </group>
+                        </page>
+                        <!-- VAMA-105 -->
+                        <page string="VAMA-105" name="vama_105" invisible="evaluation_type != 'vama_105'">
+                            <group>
+                                <group>
+                                    <field name="vama105_nominal_volume" widget="radio" options="{'horizontal': true}"/>
+                                </group>
+                                <group>
+                                    <field name="vama105_measured_volume"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- VAMA-034 -->
+                        <page string="VAMA-034" name="vama_034" invisible="evaluation_type != 'vama_034'">
+                            <group>
+                                <field name="vama034_sample_type" widget="radio" options="{'horizontal': true}"/>
+                                <field name="vama034_observed_result" widget="radio"/>
+                            </group>
+                        </page>
+
+                        <!-- MAVI-11 -->
+                        <page string="MAVI-11" name="mavi_11" invisible="evaluation_type != 'mavi_11_height'">
+                            <group>
+                                <group>
+                                    <field name="mavi11_target_height" widget="radio" options="{'horizontal': true}"/>
+                                </group>
+                                <group>
+                                    <field name="mavi11_measured_height"/>
+                                    <label for="mavi11_measured_height" string="cm"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- MAVI-07 -->
+                        <page string="MAVI-07" name="mavi_07_ternary" invisible="evaluation_type != 'mavi_07_ternary'">
+                            <group>
+                                <field name="mavi07_hm_sample_type" widget="radio" options="{'horizontal': true}"/>
+                                <field name="mavi07_hm_result" widget="radio"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista Form de Test Line con detalles (modal expandido) -->
+    <record id="view_amunet_quality_test_line_form_with_details" model="ir.ui.view">
+        <field name="name">amunet.quality.test.line.form.details</field>
+        <field name="model">amunet.quality.test.line</field>
+        <field name="arch" type="xml">
+            <form string="Registrar resultados">
+                <sheet>
+                    <group>
+                        <group string="Parámetro">
+                            <field name="code" readonly="1"/>
+                            <field name="name" readonly="1"/>
+                        </group>
+                        <group string="Dictamen">
+                            <field name="verdict_summary" readonly="1"/>
+                            <field name="verdict" widget="badge" readonly="1"
+                                   decoration-muted="verdict == 'pending'"
+                                   decoration-success="verdict == 'pass'"
+                                   decoration-danger="verdict == 'fail'"
+                                   decoration-info="verdict == 'not_applicable'"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="change_reason" 
+                               placeholder="Razón de cambio (requerido si modifica un resultado ya guardado)"/>
+                    </group>
+                    <field name="has_details" invisible="1"/>
+
+                    <!-- Tabla de detalles si es parámetro jerárquico -->
+                    <group string="Especificaciones" invisible="not has_details">
+                        <field name="detail_line_ids" nolabel="1">
+                            <list string="Especificaciones">
+                                <field name="sequence" column_invisible="1"/>
+                                <field name="name" string="Especificación" readonly="1"/>
+                                <field name="evaluation_type" string="Tipo" readonly="1" widget="badge"/>
+                                <field name="result_display" string="Resultado"/>
+                                <field name="verdict" string="Dictamen"
+                                       widget="badge"
+                                       decoration-muted="verdict == 'pending'"
+                                       decoration-success="verdict == 'pass'"
+                                       decoration-danger="verdict == 'fail'"
+                                       decoration-info="verdict == 'not_applicable'"/>
+                            </list>
+                            <form string="Registrar resultado">
+                                <sheet>
+                                    <group>
+                                        <group string="Especificación">
+                                            <field name="name" readonly="1"/>
+                                            <field name="acceptance_criteria" readonly="1"/>
+                                            <field name="evaluation_type" readonly="1" widget="badge"/>
+                                        </group>
+                                        <group string="Dictamen">
+                                            <field name="verdict" readonly="1" widget="badge"
+                                                   decoration-muted="verdict == 'pending'"
+                                                   decoration-success="verdict == 'pass'"
+                                                   decoration-danger="verdict == 'fail'"
+                                                   decoration-info="verdict == 'not_applicable'"/>
+                                            <field name="result_display" readonly="1"/>
+                                        </group>
+                                    </group>
+                                    
+                                                    <!-- TEXTO CON PATRÓN -->
+                                                    <group string="Ingresar patrón" invisible="evaluation_type != 'text_pattern'">
+                                                        <field name="text_pattern_expected" readonly="1" string="Patrón esperado"/>
+                                                        <field name="result_text_pattern" string="Patrón ingresado" placeholder="Ej: AABB"/>
+                                                    </group>
+                                    
+                                    <!-- SELECCIÓN BINARIA -->
+                                    <group string="Seleccionar opción" invisible="evaluation_type != 'binary_selection'">
+                                        <field name="result_selection" invisible="1"/>
+                                        <div class="d-flex gap-2 mb-3">
+                                            <button name="action_select_pass" type="object" 
+                                                    class="btn btn-success"
+                                                    icon="fa-check">
+                                                <field name="binary_option_pass" readonly="1" nolabel="1"/>
+                                            </button>
+                                            <button name="action_select_fail" type="object" 
+                                                    class="btn btn-danger"
+                                                    icon="fa-times">
+                                                <field name="binary_option_fail" readonly="1" nolabel="1"/>
+                                            </button>
+                                        </div>
+                                        <field name="result_selection" readonly="1" string="Seleccionado"/>
+                                    </group>
+                                    
+                                    <!-- RANGO NUMÉRICO -->
+                                    <group string="Ingresar valor" invisible="evaluation_type != 'numeric_range'">
+                                        <field name="min_value" readonly="1"/>
+                                        <field name="max_value" readonly="1"/>
+                                        <field name="uom_id" readonly="1"/>
+                                        <field name="result_numeric"/>
+                                    </group>
+                                    
+                                                    <!-- CHECKBOXES COMBINADOS -->
+                                                    <group string="Marcar checkboxes" invisible="evaluation_type != 'checkbox_combined'">
+                                                        <field name="checkbox_label_1" invisible="1"/>
+                                                        <field name="checkbox_label_2" invisible="1"/>
+                                                        <field name="checkbox_result_confirmed" invisible="1"/>
+                                                        <field name="result_checkbox_1"/>
+                                                        <field name="result_checkbox_2"/>
+                                                    </group>
+                                    
+                                    <!-- ESPERADO VS OBTENIDO -->
+                                    <group string="Comparación" invisible="evaluation_type != 'expected_vs_obtained'">
+                                        <field name="result_expected_type"/>
+                                        <field name="result_obtained_type"/>
+                                    </group>
+                                    
+                                    <!-- TERNARIO CON N/A -->
+                                    <group string="Selección" invisible="evaluation_type != 'ternary_with_na'">
+                                        <field name="result_ternary" widget="radio"/>
+                                    </group>
+
+                                    <!-- MAVI-15 -->
+                                    <group string="Selección MAVI-15" invisible="evaluation_type != 'mavi_15_ternary'">
+                                        <field name="mavi15_result" widget="radio"/>
+                                    </group>
+                                    
+                                    <!-- BINARY CON NOTAS -->
+                                    <group string="Selección" invisible="evaluation_type != 'binary_with_notes'">
+                                        <field name="result_binary_option" widget="radio"/>
+                                        <field name="result_notes" invisible="result_binary_option != 'fail'"
+                                               placeholder="Ingrese notas explicativas..."/>
+                                    </group>
+                                    
+                                    <!-- MATRIZ DE DECISIÓN (MAVI-16) -->
+                                    <group string="Matriz de decisión multi-paso" invisible="evaluation_type != 'decision_matrix'" col="1">
+                                        <field name="dm_step2_1_unlocked" invisible="1"/>
+                                        <field name="dm_step2_2_unlocked" invisible="1"/>
+                                        
+                                        <div class="alert alert-info mb-2" role="alert">
+                                            Complete los pasos en secuencia. Si la línea C no es visible, la prueba falla.
+                                        </div>
+                                        
+                                        <group string="1️⃣ Concentración objetivo">
+                                            <field name="result_dm_step1_concentration" widget="radio" 
+                                                   options="{'horizontal': true}" nolabel="1"/>
+                                        </group>
+                                        
+                                        <group string="2️⃣ Línea C visible" invisible="not dm_step2_1_unlocked">
+                                            <field name="result_dm_step2_1_control_visible" widget="radio" 
+                                                   options="{'horizontal': true}" nolabel="1"/>
+                                        </group>
+                                        
+                                        <div class="alert alert-danger" role="alert"
+                                             invisible="result_dm_step2_1_control_visible != 'no'">
+                                            <strong>❌ Prueba Inválida:</strong> Línea C no visible.
+                                        </div>
+                                        
+                                        <group string="3️⃣ Comparación T vs R" invisible="not dm_step2_2_unlocked">
+                                            <field name="result_dm_step2_2_comparison" widget="radio" nolabel="1"/>
+                                        </group>
+                                        
+                                        <group string="Escenario" invisible="not dm_matched_scenario_id">
+                                            <field name="dm_matched_scenario_id" readonly="1"/>
+                                        </group>
+                                    </group>
+
+                                    <!-- VAMA-044 -->
+                                    <group string="VAMA-044: Funcionalidad Tubo" invisible="evaluation_type != 'vama_044'">
+                                        <group>
+                                            <field name="vama044_num_gotas"/>
+                                            <field name="vama044_num_gotas_min" readonly="1" class="text-muted"/>
+                                        </group>
+                                        <group>
+                                            <field name="vama044_vol_gota"/>
+                                            <label for="vama044_vol_gota_min" string="Rango Volumen"/>
+                                            <div class="o_row">
+                                                <field name="vama044_vol_gota_min" readonly="1" class="text-muted"/>
+                                                <span>-</span>
+                                                <field name="vama044_vol_gota_max" readonly="1" class="text-muted"/>
+                                            </div>
+                                        </group>
+                                        <group>
+                                            <field name="vama044_union" widget="radio" options="{'horizontal': true}"/>
+                                        </group>
+                                        <group>
+                                            <field name="vama044_vol_llenado"/>
+                                            <label for="vama044_vol_llenado_min" string="Rango Llenado"/>
+                                            <div class="o_row">
+                                                <field name="vama044_vol_llenado_min" readonly="1" class="text-muted"/>
+                                                <span>-</span>
+                                                <field name="vama044_vol_llenado_max" readonly="1" class="text-muted"/>
+                                            </div>
+                                        </group>
+                                    </group>
+
+                                    <!-- VAMA-112 -->
+                                    <group string="VAMA-112: Checklist Centrífuga" invisible="evaluation_type != 'vama_112'">
+                                        <field name="vama112_cond1" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="vama112_cond2" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="vama112_cond3" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="vama112_cond4" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="vama112_cond5" widget="radio" options="{'horizontal': true}"/>
+                                    </group>
+
+                                    <!-- VAMA-078 -->
+                                    <group string="VAMA-078: Visual Liofilizado" invisible="evaluation_type != 'vama_078'">
+                                        <field name="vama078_color" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="vama078_forma" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="vama078_textura" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="vama078_humedad" widget="radio" options="{'horizontal': true}"/>
+                                    </group>
+
+                                    <!-- MAVI-07 (Phase 1) -->
+                                    <group string="MAVI-07: Resultado Visual" invisible="evaluation_type != 'mavi_07'" col="1">
+                                        <field name="mavi07_expected_result" invisible="1"/>
+                                        <field name="mavi07_sample_type" widget="mavi07_widget" nolabel="1"/>
+                                    </group>
+
+                                    <!-- Multi-Condición (Phase 2) -->
+                                    <group string="VAMA-096: Multi-Condición" invisible="evaluation_type != 'multi_condition_numeric'" col="1">
+                                        <field name="multi_cond_num1_min" invisible="1"/>
+                                        <field name="multi_cond_num2_min" invisible="1"/>
+                                        <field name="multi_cond_num2_max" invisible="1"/>
+                                        <field name="multi_cond_binary" widget="multi_condition_widget" nolabel="1"/>
+                                    </group>
+
+                                    <!-- VAMA Multi-Check (Dynamic Verification) -->
+                                    <group string="Verificación VAMA" invisible="evaluation_type != 'vama_multi_check'" col="1">
+                                        <field name="text_phrase_mapping" invisible="1"/>
+                                        <field name="multi_check_results_json" invisible="1" force_save="1"/>
+                                        <field name="result_text_pattern" invisible="1"/>
+                                        <field name="text_phrase_mapping" 
+                                               widget="vama_multi_check_widget" 
+                                               nolabel="1"/>
+                                    </group>
+
+                                    <!-- MGA-0981: Variación de Volumen -->
+                                    <group string="Variación de Volumen" invisible="evaluation_type != 'mga_0981'" col="1">
+                                        <field name="text_phrase_mapping" invisible="1"/>
+                                        <field name="multi_check_results_json" invisible="1" force_save="1"/>
+                                        <field name="text_phrase_mapping" 
+                                               widget="vama_multi_check_widget" 
+                                               nolabel="1"/>
+                                    </group>
+                                    
+                                    <!-- VAMA-105: Volumen Nominal vs Medido -->
+                                    <group string="VAMA-105: Volumen" invisible="evaluation_type != 'vama_105'">
+                                        <group>
+                                            <field name="vama105_nominal_volume" widget="radio" options="{'horizontal': true}"/>
+                                        </group>
+                                        <group invisible="not vama105_nominal_volume">
+                                            <field name="vama105_measured_volume"/>
+                                            <field name="uom_id" readonly="1"/>
+                                        </group>
+                                    </group>
+
+                                    <!-- VAMA-034: Soluciones -->
+                                    <group string="VAMA-034: Soluciones" invisible="evaluation_type != 'vama_034'">
+                                        <field name="vama034_sample_type" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="vama034_observed_result" widget="radio" invisible="not vama034_sample_type"/>
+                                    </group>
+
+                                    <!-- MAVI-11: Altura -->
+                                    <group string="MAVI-11: Altura" invisible="evaluation_type != 'mavi_11_height'">
+                                        <group>
+                                            <field name="mavi11_target_height" widget="radio" options="{'horizontal': true}"/>
+                                        </group>
+                                        <group invisible="not mavi11_target_height">
+                                            <field name="mavi11_measured_height"/>
+                                            <label for="mavi11_measured_height" string="cm"/>
+                                        </group>
+                                    </group>
+
+                                    <!-- MAVI-07: Ternario HM -->
+                                    <group string="MAVI-07 (HM): Resultado Visual" invisible="evaluation_type != 'mavi_07_ternary'">
+                                        <field name="mavi07_hm_sample_type" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="mavi07_hm_result" widget="radio" invisible="not mavi07_hm_sample_type"/>
+                                    </group>
+                                    
+                                    <!-- VAMA-105: Volumen Nominal vs Medido -->
+                                    <group string="VAMA-105: Volumen" invisible="evaluation_type != 'vama_105'">
+                                        <group>
+                                            <field name="vama105_nominal_volume" widget="radio" options="{'horizontal': true}"/>
+                                        </group>
+                                        <group>
+                                            <field name="vama105_measured_volume"/>
+                                            <field name="uom_id" readonly="1"/>
+                                        </group>
+                                    </group>
+
+                                    <!-- VAMA-034: Soluciones -->
+                                    <group string="VAMA-034: Soluciones" invisible="evaluation_type != 'vama_034'">
+                                        <field name="vama034_sample_type" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="vama034_observed_result" widget="radio"/>
+                                    </group>
+
+                                    <!-- MAVI-11: Altura -->
+                                    <group string="MAVI-11: Altura" invisible="evaluation_type != 'mavi_11_height'">
+                                        <group>
+                                            <field name="mavi11_target_height" widget="radio" options="{'horizontal': true}"/>
+                                        </group>
+                                        <group>
+                                            <field name="mavi11_measured_height"/>
+                                            <label for="mavi11_measured_height" string="cm"/>
+                                        </group>
+                                    </group>
+
+                                    <!-- MAVI-07: Ternario HM -->
+                                    <group string="MAVI-07 (HM): Resultado Visual" invisible="evaluation_type != 'mavi_07_ternary'">
+                                        <field name="mavi07_hm_sample_type" widget="radio" options="{'horizontal': true}"/>
+                                        <field name="mavi07_hm_result" widget="radio"/>
+                                    </group>
+                                    
+                                    <!-- Mensaje de Evaluación -->
+                                    <group string="Mensaje" invisible="not verdict_message">
+                                        <field name="verdict_message" readonly="1" nolabel="1"/>
+                                    </group>
+                                </sheet>
+                            </form>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action para ver/editar detalles de una línea de test -->
+    <record id="action_view_test_line_details" model="ir.actions.act_window">
+        <field name="name">Numeral 5: Registrar resultados</field>
+        <field name="res_model">amunet.quality.test.line</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_amunet_quality_test_line_form_with_details"/>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
+

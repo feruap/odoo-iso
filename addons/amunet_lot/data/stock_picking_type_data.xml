@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+        Configuración automática de tipos de operación
+
+        Configura los campos is_reception, is_quality_control, is_storage
+        en los tipos de picking existentes.
+
+        IMPORTANTE: noupdate="1" evita sobrescribir cambios manuales del usuario
+        en actualizaciones del módulo.
+        -->
+
+        <!-- Función Python para configurar tipos de picking automáticamente -->
+        <function model="stock.picking.type" name="_setup_amunet_operation_types"/>
+
+    </data>
+</odoo>

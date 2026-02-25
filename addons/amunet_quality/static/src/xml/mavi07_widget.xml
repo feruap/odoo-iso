@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="amunet_quality.MAVI07Widget" owl="1">
+        <div class="o_mavi07_widget">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label class="o_form_label fw-bold">Paso 1: Tipo de Muestra</label>
+                    <select class="form-select"
+                            t-att-value="props.record.data.mavi07_sample_type"
+                            t-on-change="onSampleTypeChange">
+                        <option value="">-- Seleccione --</option>
+                        <t t-foreach="sampleTypeOptions" t-as="option" t-key="option.value">
+                            <option t-att-value="option.value"
+                                    t-att-selected="props.record.data.mavi07_sample_type === option.value">
+                                <t t-esc="option.label"/>
+                            </option>
+                        </t>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3" t-if="props.record.data.mavi07_sample_type">
+                <div class="col-12">
+                    <div class="alert alert-info py-2">
+                        <strong>Resultado Esperado:</strong> 
+                        <span class="ms-2" t-esc="props.record.data.mavi07_expected_result or '...'"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label class="o_form_label fw-bold">Paso 2: Resultado Observado</label>
+                    <div class="btn-group d-flex" role="group">
+                        <t t-foreach="resultOptions" t-as="option" t-key="option.value">
+                            <input type="radio"
+                                   class="btn-check"
+                                   t-att-name="'mavi07_res_' + props.record.id"
+                                   t-att-id="'result_' + option.value + '_' + props.record.id"
+                                   t-att-value="option.value"
+                                   t-att-checked="props.record.data.mavi07_observed_result === option.value"
+                                   t-on-change="onObservedResultChange"/>
+                            <label class="btn btn-outline-primary"
+                                   t-att-for="'result_' + option.value + '_' + props.record.id">
+                                <t t-esc="option.label"/>
+                            </label>
+                        </t>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultado Automático -->
+            <div class="row" t-if="props.record.data.verdict and props.record.data.evaluation_type === 'mavi_07'">
+                <div class="col-12">
+                    <div t-attf-class="alert py-2 {{ props.record.data.verdict === 'pass' ? 'alert-success' : props.record.data.verdict === 'fail' ? 'alert-danger' : 'alert-warning' }}">
+                        <i t-attf-class="fa me-2 {{ props.record.data.verdict === 'pass' ? 'fa-check-circle' : props.record.data.verdict === 'fail' ? 'fa-times-circle' : 'fa-clock-o' }}"/>
+                        <strong t-if="props.record.data.verdict === 'pass'">✓ CUMPLE</strong>
+                        <strong t-elif="props.record.data.verdict === 'fail'">✗ NO CUMPLE</strong>
+                        <strong t-else="">PENDIENTE</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

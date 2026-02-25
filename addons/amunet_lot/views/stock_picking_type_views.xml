@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista formulario de stock.picking.type con campos de tipo de operación -->
+    <record id="view_picking_type_form_inherit_amunet" model="ir.ui.view">
+        <field name="name">stock.picking.type.form.inherit.amunet</field>
+        <field name="model">stock.picking.type</field>
+        <field name="inherit_id" ref="stock.view_picking_type_form"/>
+        <field name="arch" type="xml">
+            <!-- Agregar campos después del grupo de Lots/Serial Numbers -->
+            <xpath expr="//group[@name='stock_picking_type_lot']" position="after">
+                <group string="Tipo de operación"
+                       invisible="code not in ['incoming', 'outgoing', 'internal']">
+                    <field name="is_quality_control"
+                           string="Es control de calidad"/>
+                    <field name="is_reception"
+                           string="Es recepción"/>
+                    <field name="is_storage"
+                           string="Es almacenamiento"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Extensión del formulario de stock.picking -->
+    <record id="view_picking_form_inherit_amunet_quality" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.amunet.quality</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="priority">9999</field>
+        <field name="arch" type="xml">
+            <!-- HIDE NATIVE QUALITY BUTTONS (AGRRESSIVE MULTI-REPLACEMENT) -->
+            <!-- These were Enterprise dependencies and are no longer needed in Community -->
+
+            <!-- Agregar botón de QC en el header -->
+            <button name="button_validate" position="after">
+                <field name="amunet_qc_count" invisible="1"/>
+                <field name="has_quality_points" invisible="1"/>
+                <!-- Botón Amunet Quality (OCULTO por requerimiento del usuario) -->
+                <button name="action_view_quality_checks"
+                        string="Controles de calidad"
+                        type="object"
+                        class="btn-secondary"
+                        icon="fa-flask"
+                        invisible="1"/>
+            </button>
+
+            <!-- Smart button para ver QC -->
+            <div name="button_box" position="inside">
+                <button name="action_view_quality_checks"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-flask"
+                        invisible="not has_quality_points and amunet_qc_count == 0">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="amunet_qc_count"/>
+                        </span>
+                        <span class="o_stat_text">Controles QC</span>
+                    </div>
+                </button>
+            </div>
+        </field>
+    </record>
+</odoo>

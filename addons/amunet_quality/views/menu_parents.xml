@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menú principal: Calidad -->
+    <menuitem id="menu_quality_root"
+              name="Calidad Amunet"
+              sequence="45"/>
+
+    <!-- Submenú: Operaciones -->
+    <menuitem id="menu_quality_operations"
+              name="Operaciones"
+              parent="menu_quality_root"
+              sequence="10"/>
+
+    <!-- Submenú: Regulatorio / Calidad -->
+    <menuitem id="menu_quality_regulatory"
+              name="Regulatorio"
+              parent="menu_quality_root"
+              sequence="50"/>
+
+    <!-- Submenú: Configuración -->
+    <menuitem id="menu_quality_config"
+              name="Configuración"
+              parent="menu_quality_root"
+              sequence="90"/>
+</odoo>

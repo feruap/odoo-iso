@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- SEARCH -->
+    <record id="view_amunet_quality_capa_search" model="ir.ui.view">
+        <field name="name">amunet.quality.capa.search</field>
+        <field name="model">amunet.quality.capa</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="title"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <filter name="my_capas" string="Mis CAPA" domain="[('user_responsible_id', '=', uid)]"/>
+                <filter name="open_capas" string="Abiertos" domain="[('state', '!=', 'closed')]"/>
+                <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_severity" string="Severidad" context="{'group_by': 'severity'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- FORM -->
+    <record id="view_amunet_quality_capa_form" model="ir.ui.view">
+        <field name="name">amunet.quality.capa.form</field>
+        <field name="model">amunet.quality.capa</field>
+        <field name="arch" type="xml">
+            <form string="CAPA">
+                <header>
+                    <button name="action_investigation" string="Iniciar Investigación" type="object" class="oe_highlight"
+                            invisible="state != 'draft'"/>
+                    <button name="action_plan" string="Definir Plan de Acción" type="object" class="oe_highlight"
+                            invisible="state != 'investigation'"/>
+                    <button name="action_verification" string="Verificar Efectividad" type="object" class="oe_highlight"
+                            invisible="state != 'action_plan'"/>
+                    <button name="action_close" string="Cerrar CAPA" type="object" class="oe_highlight"
+                            invisible="state != 'verification'"/>
+                    <button name="action_cancel" string="Cancelar" type="object"
+                            invisible="state in ('closed', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,investigation,action_plan,verification,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                        <label for="title" class="oe_edit_only"/>
+                        <h2><field name="title" placeholder="Resumen del problema de calidad"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="product_id"/>
+                            <field name="lot_id"/>
+                            <field name="source_check_id" readonly="1" invisible="not source_check_id"/>
+                        </group>
+                        <group>
+                            <field name="user_responsible_id"/>
+                            <field name="severity" widget="priority"/>
+                            <field name="target_date"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Investigación" invisible="state == 'draft'">
+                            <group string="Análisis de Causa Raíz">
+                                <field name="investigation_notes" placeholder="Detalles de la investigación..."/>
+                                <field name="root_cause" placeholder="Causa raíz identificada..."/>
+                            </group>
+                        </page>
+
+                        <page string="Plan de Acción" invisible="state in ('draft', 'investigation')">
+                            <group string="Contención (Inmediato)">
+                                <field name="containment_actions" placeholder="Acciones para detener el problema ahora..."/>
+                            </group>
+                            <group string="Corrección (Largo plazo)">
+                                <field name="corrective_actions" placeholder="Acciones para evitar recurrencia..."/>
+                            </group>
+                        </page>
+
+                        <page string="Verificación" invisible="state != 'verification' and state != 'closed'">
+                            <group>
+                                <field name="verification_notes" placeholder="Evidencia de efectividad..."/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_amunet_quality_capa" model="ir.actions.act_window">
+        <field name="name">CAPA (Acciones Correctivas)</field>
+        <field name="res_model">amunet.quality.capa</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Iniciar una nueva Acción Correctiva (CAPA)
+            </p>
+        </field>
+    </record>
+</odoo>

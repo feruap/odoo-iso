@@ -1,0 +1,602 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!--
+        Epic-031: Sistema de Parámetros de Calidad Jerárquicos
+        Templates OWL2 para vista jerárquica de determinaciones
+    -->
+
+    <!-- Badge de Dictamen -->
+    <t t-name="amunet_quality.QualityVerdictBadge">
+        <span t-attf-class="badge #{verdictClass}">
+            <t t-if="props.summary">
+                <t t-esc="props.summary"/>
+            </t>
+            <t t-else="">
+                <t t-esc="verdictLabel"/>
+            </t>
+        </span>
+    </t>
+
+    <!-- Fila de Línea de Test con expansión -->
+    <t t-name="amunet_quality.QualityTestLineRow">
+        <div class="quality-test-line-row">
+            <!-- Fila principal del parámetro -->
+            <div class="d-flex align-items-center py-2 border-bottom"
+                 t-attf-class="#{state.expanded ? 'bg-light' : ''}"
+                 style="width: 100%;">
+                
+                <!-- Botón expandir/colapsar -->
+                <button t-if="canExpand" 
+                        class="btn btn-link p-0 me-2"
+                        style="width: 30px; flex-shrink: 0;"
+                        t-on-click="toggleExpand"
+                        t-att-disabled="state.loading">
+                    <i t-attf-class="fa #{state.expanded ? 'fa-chevron-down' : 'fa-chevron-right'}"/>
+                </button>
+                <span t-else="" class="me-2" style="width: 30px; flex-shrink: 0;"></span>
+
+                <!-- Código -->
+                <span class="fw-bold me-3" style="width: 120px; flex-shrink: 0;">
+                    <t t-esc="props.testLine.code"/>
+                </span>
+
+                <!-- Determinación -->
+                <span class="flex-grow-1" style="min-width: 0;">
+                    <t t-esc="props.testLine.name"/>
+                </span>
+
+                <!-- Contador de specs -->
+                <span class="text-center me-2" style="width: 80px; flex-shrink: 0;">
+                    <span t-if="props.testLine.detail_count > 0" class="badge bg-secondary">
+                        <t t-esc="props.testLine.detail_count"/>
+                    </span>
+                    <span t-else="" class="text-muted">-</span>
+                </span>
+
+                <!-- Resumen de resultados -->
+                <span class="text-center me-2" style="width: 120px; flex-shrink: 0;">
+                    <t t-esc="props.testLine.verdict_summary || '-'"/>
+                </span>
+
+                <!-- Dictamen -->
+                <span style="width: 140px; flex-shrink: 0;">
+                    <QualityVerdictBadge 
+                        verdict="props.testLine.verdict || 'pending'"
+                        summary="props.testLine.verdict_display"/>
+                </span>
+            </div>
+
+            <!-- Detalles expandidos -->
+            <div t-if="state.expanded" class="quality-details-container ps-4 bg-light">
+                <t t-if="state.loading">
+                    <div class="text-center py-3">
+                        <i class="fa fa-spinner fa-spin"/> Cargando especificaciones...
+                    </div>
+                </t>
+                <t t-elif="state.details.length > 0">
+                    <table class="table table-sm table-borderless mb-0" style="width: 100%;">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th style="width: 30px;"></th>
+                                <th style="min-width: 150px;">Especificación</th>
+                                <th style="min-width: 150px;">Criterio</th>
+                                <th style="min-width: 200px;">Resultado</th>
+                                <th style="width: 120px;">Dictamen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="state.details" t-as="detail" t-key="detail.id">
+                                <tr class="quality-detail-row">
+                                    <td class="text-muted">↳</td>
+                                    <td>
+                                        <t t-esc="detail.name"/>
+                                    </td>
+                                    <td class="text-muted small">
+                                        <t t-esc="detail.acceptance_criteria"/>
+                                    </td>
+                                    <td>
+                                        <!-- Campo de resultado según tipo de evaluación -->
+                                        <!-- Binary Selection -->
+                                        <t t-if="detail.evaluation_type === 'binary_selection'">
+                                            <select t-if="!props.readonly"
+                                                    class="form-select form-select-sm"
+                                                    t-att-data-detail-id="detail.id"
+                                                    t-on-change="onSelectionChange">
+                                                <option value="">Seleccionar...</option>
+                                                <option t-att-value="detail.binary_option_pass"
+                                                        t-att-selected="detail.result_selection === detail.binary_option_pass">
+                                                    <t t-esc="detail.binary_option_pass"/>
+                                                </option>
+                                                <option t-att-value="detail.binary_option_fail"
+                                                        t-att-selected="detail.result_selection === detail.binary_option_fail">
+                                                    <t t-esc="detail.binary_option_fail"/>
+                                                </option>
+                                            </select>
+                                            <span t-else="" class="form-control-plaintext">
+                                                <t t-esc="detail.result_selection || '-'"/>
+                                            </span>
+                                        </t>
+
+                                        <!-- Numeric Range -->
+                                        <t t-elif="detail.evaluation_type === 'numeric_range'">
+                                            <div class="input-group input-group-sm">
+                                                <input t-if="!props.readonly"
+                                                       type="number" 
+                                                       class="form-control"
+                                                       step="0.01"
+                                                       t-att-value="detail.result_numeric"
+                                                       t-att-data-detail-id="detail.id"
+                                                       t-on-change="onNumericChange"/>
+                                                <span t-else="" class="form-control-plaintext">
+                                                    <t t-esc="detail.result_numeric || '-'"/>
+                                                </span>
+                                                <span class="input-group-text" t-if="detail.uom_id">
+                                                    <t t-esc="detail.uom_id[1]"/>
+                                                </span>
+                                            </div>
+                                            <small class="text-muted d-block">
+                                                Rango: <t t-esc="detail.min_value || 0"/>-<t t-esc="detail.max_value || 0"/>
+                                            </small>
+                                        </t>
+
+                                        <!-- Checkbox Combined -->
+                                        <t t-elif="detail.evaluation_type === 'checkbox_combined'">
+                                            <div class="form-check form-check-inline">
+                                                <input type="checkbox" 
+                                                       class="form-check-input"
+                                                       t-att-checked="detail.result_checkbox_1"
+                                                       t-att-disabled="props.readonly"
+                                                       t-att-data-detail-id="detail.id"
+                                                       data-field="result_checkbox_1"
+                                                       t-on-change="onCheckboxChange"/>
+                                                <label class="form-check-label small">
+                                                    <t t-esc="detail.checkbox_label_1"/>
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input type="checkbox" 
+                                                       class="form-check-input"
+                                                       t-att-checked="detail.result_checkbox_2"
+                                                       t-att-disabled="props.readonly"
+                                                       t-att-data-detail-id="detail.id"
+                                                       data-field="result_checkbox_2"
+                                                       t-on-change="onCheckboxChange"/>
+                                                <label class="form-check-label small">
+                                                    <t t-esc="detail.checkbox_label_2"/>
+                                                </label>
+                                            </div>
+                                        </t>
+
+                                        <!-- Text Pattern -->
+                                        <t t-elif="detail.evaluation_type === 'text_pattern'">
+                                            <input t-if="!props.readonly"
+                                                   type="text" 
+                                                   class="form-control form-control-sm"
+                                                   t-att-value="detail.result_text_pattern"
+                                                   t-att-placeholder="detail.text_pattern_expected"
+                                                   t-att-data-detail-id="detail.id"
+                                                   t-on-change="onTextPatternChange"/>
+                                            <span t-else="" class="form-control-plaintext">
+                                                <t t-esc="detail.result_text_pattern || '-'"/>
+                                            </span>
+                                            <div t-if="detail.constructed_phrase" class="small text-muted mt-1">
+                                                <t t-esc="detail.constructed_phrase"/>
+                                            </div>
+                                        </t>
+
+                                        <!-- Expected vs Obtained -->
+                                        <t t-elif="detail.evaluation_type === 'expected_vs_obtained'">
+                                            <div class="d-flex gap-2 align-items-center">
+                                                <input t-if="!props.readonly"
+                                                       type="text" 
+                                                       class="form-control form-control-sm"
+                                                       placeholder="Esperado"
+                                                       t-att-value="detail.result_expected_type"
+                                                       t-att-data-detail-id="detail.id"
+                                                       t-on-change="onExpectedTypeChange"/>
+                                                <span t-else="" class="form-control-plaintext">
+                                                    <t t-esc="detail.result_expected_type || '-'"/>
+                                                </span>
+                                                <span>/</span>
+                                                <input t-if="!props.readonly"
+                                                       type="text" 
+                                                       class="form-control form-control-sm"
+                                                       placeholder="Obtenido"
+                                                       t-att-value="detail.result_obtained_type"
+                                                       t-att-data-detail-id="detail.id"
+                                                       t-on-change="onObtainedTypeChange"/>
+                                                <span t-else="" class="form-control-plaintext">
+                                                    <t t-esc="detail.result_obtained_type || '-'"/>
+                                                </span>
+                                            </div>
+                                        </t>
+
+                                        <!-- Ternary with N/A -->
+                                        <t t-elif="detail.evaluation_type === 'ternary_with_na'">
+                                            <select t-if="!props.readonly"
+                                                    class="form-select form-select-sm"
+                                                    t-att-data-detail-id="detail.id"
+                                                    t-on-change="onTernaryChange">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="yes" t-att-selected="detail.result_ternary === 'yes'">Sí</option>
+                                                <option value="no" t-att-selected="detail.result_ternary === 'no'">No</option>
+                                                <option value="na" t-att-selected="detail.result_ternary === 'na'">N/A</option>
+                                            </select>
+                                            <span t-else="" class="form-control-plaintext">
+                                                <t t-esc="detail.result_display || '-'"/>
+                                            </span>
+                                        </t>
+
+                                        <!-- Binary with Notes -->
+                                        <t t-elif="detail.evaluation_type === 'binary_with_notes'">
+                                            <select t-if="!props.readonly"
+                                                    class="form-select form-select-sm mb-1"
+                                                    t-att-data-detail-id="detail.id"
+                                                    t-on-change="onBinaryOptionChange">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="pass" t-att-selected="detail.result_binary_option === 'pass'">Cumple</option>
+                                                <option value="fail" t-att-selected="detail.result_binary_option === 'fail'">No Cumple</option>
+                                            </select>
+                                            <textarea t-if="!props.readonly and detail.result_binary_option === 'fail'"
+                                                      class="form-control form-control-sm"
+                                                      rows="2"
+                                                      placeholder="Notas explicativas..."
+                                                      t-att-value="detail.result_notes"
+                                                      t-att-data-detail-id="detail.id"
+                                                      t-on-change="onNotesChange"/>
+                                            <span t-else="" class="form-control-plaintext">
+                                                <t t-esc="detail.result_display || '-'"/>
+                                            </span>
+                                        </t>
+
+                                        <!-- VAMA-034: Two-step widget (Restored) -->
+                                        <t t-elif="detail.evaluation_type === 'vama_034'">
+                                            <VAMA034Widget record="{data: detail}" readonly="props.readonly" updateRecord="(values) => this.updateDetailFields(detail.id, values)" />
+                                        </t>
+
+                                        <!-- MAVI-07: Results Lines (Restored) -->
+                                        <t t-elif="detail.evaluation_type === 'mavi_07' or detail.evaluation_type === 'mavi_07_ternary'">
+                                            <MAVI07Widget record="{data: detail}" readonly="props.readonly" updateRecord="(values) => this.updateDetailFields(detail.id, values)" />
+                                        </t>
+
+                                        <!-- VAMA-044: Tube Functionality (Restored) -->
+                                        <t t-elif="detail.evaluation_type === 'vama_044'">
+                                            <VAMA044Widget record="{data: detail}" readonly="props.readonly" updateRecord="(values) => this.updateDetailFields(detail.id, values)" />
+                                        </t>
+
+                                        <!-- VAMA-078: Lyophilized Visual (Restored) -->
+                                        <t t-elif="detail.evaluation_type === 'vama_078'">
+                                            <VAMA078Widget record="{data: detail}" readonly="props.readonly" updateRecord="(values) => this.updateDetailFields(detail.id, values)" />
+                                        </t>
+
+                                        <!-- VAMA-112: Centrifuge Checkboxes (Restored) -->
+                                        <t t-elif="detail.evaluation_type === 'vama_112'">
+                                            <VAMA112Widget record="{data: detail}" readonly="props.readonly" updateRecord="(values) => this.updateDetailFields(detail.id, values)" />
+                                        </t>
+
+
+
+                                        <!-- VAMA Multi-Check (Restored) -->
+                                        <t t-elif="detail.evaluation_type === 'vama_multi_check'">
+                                            <VAMAMultiCheckWidget record="{data: detail}" readonly="props.readonly" updateRecord="(values) => this.updateDetailFields(detail.id, values)" />
+                                        </t>
+
+                                        <!-- Multi-Condition Numeric (VAMA-096) (Restored) -->
+                                        <t t-elif="detail.evaluation_type === 'multi_condition_numeric'">
+                                            <MultiConditionWidget record="{data: detail}" readonly="props.readonly" updateRecord="(values) => this.updateDetailFields(detail.id, values)" />
+                                        </t>
+
+                                        <!-- MAVI-11: Height (6/8 cm) -->
+
+                                        <!-- VAMA-006: Color Scale 0-14 (Inline) -->
+                                        <t t-elif="detail.evaluation_type === 'vama_006'">
+                                            <div class="border rounded p-3 bg-light">
+                                                <div class="fw-bold small mb-2">Seleccione la Tonalidad Observada (0–14):</div>
+                                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                                    <t t-foreach="[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]" t-as="shade" t-key="shade">
+                                                        <button type="button"
+                                                                t-att-class="'btn btn-sm fw-bold ' + (detail.vama006_color_value === shade ? 'btn-primary text-white' : 'btn-outline-secondary')"
+                                                                t-att-data-detail-id="detail.id"
+                                                                t-att-data-shade="shade"
+                                                                t-att-disabled="props.readonly"
+                                                                t-att-title="'Tonalidad ' + shade + (shade >= 3 and shade &lt;= 10 ? ' ✅ Dentro de rango' : ' ❌ Fuera de rango')"
+                                                                t-on-click="(ev) => this.onVama006ColorClick(ev, shade)"
+                                                                style="min-width: 40px;">
+                                                            <t t-esc="shade"/>
+                                                        </button>
+                                                    </t>
+                                                </div>
+                                                <div class="small text-muted mb-2">Criterio de aceptación: Tonalidades <strong>3 al 10</strong></div>
+                                                <!-- Verdict feedback -->
+                                                <div t-if="detail.verdict_message" t-att-class="'alert mt-2 mb-0 py-2 px-3 small ' + (detail.verdict === 'pass' ? 'alert-success border-success' : (detail.verdict === 'fail' ? 'alert-danger border-danger' : 'alert-warning'))">
+                                                    <i t-attf-class="fa {{ detail.verdict === 'pass' ? 'fa-check-circle' : 'fa-times-circle' }} me-2"/>
+                                                    <strong t-esc="detail.verdict === 'pass' ? 'CUMPLE: ' : 'NO CUMPLE: '"/>
+                                                    <span t-esc="detail.verdict_message"/>
+                                                </div>
+                                            </div>
+                                        </t>
+
+                                        <!-- VAMA-067: 2-Step (Partículas/Color) Inline -->
+                                        <t t-elif="detail.evaluation_type === 'vama_067'">
+                                            <div class="border rounded p-3 bg-light">
+                                                <!-- Paso 1: Partículas -->
+                                                <div class="mb-3">
+                                                    <div class="fw-bold small mb-1">1. Presencia de partículas oscuras</div>
+                                                    <div class="text-muted small mb-2">Observar el fondo del tubo.</div>
+                                                    <div class="d-flex flex-column gap-2">
+                                                        <button type="button"
+                                                                t-att-class="'btn btn-sm text-start ' + (detail.vama067_particles === 'no_particles' ? 'btn-success' : 'btn-outline-secondary')"
+                                                                t-att-data-detail-id="detail.id"
+                                                                t-att-disabled="props.readonly"
+                                                                t-on-click="(ev) => this.onVama067ParticlesClick(ev, 'no_particles')">
+                                                            ✅ Opción A: Sin partículas oscuras visibles.
+                                                        </button>
+                                                        <button type="button"
+                                                                t-att-class="'btn btn-sm text-start ' + (detail.vama067_particles === 'with_particles' ? 'btn-danger' : 'btn-outline-secondary')"
+                                                                t-att-data-detail-id="detail.id"
+                                                                t-att-disabled="props.readonly"
+                                                                t-on-click="(ev) => this.onVama067ParticlesClick(ev, 'with_particles')">
+                                                            ❌ Opción B: Con partículas oscuras visibles.
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <!-- Paso 2: Color -->
+                                                <div t-if="detail.vama067_particles" class="mb-2">
+                                                    <div class="fw-bold small mb-1">2. Color de la solución</div>
+                                                    <div class="text-muted small mb-2">Comparar con la muestra de nanopartículas sin centrifugar.</div>
+                                                    <div class="d-flex flex-column gap-2">
+                                                        <button type="button"
+                                                                t-att-class="'btn btn-sm text-start ' + (detail.vama067_color === 'similar_color' ? 'btn-success' : 'btn-outline-secondary')"
+                                                                t-att-data-detail-id="detail.id"
+                                                                t-att-disabled="props.readonly"
+                                                                t-on-click="(ev) => this.onVama067ColorClick(ev, 'similar_color')">
+                                                            ✅ Opción A: Color similar.
+                                                        </button>
+                                                        <button type="button"
+                                                                t-att-class="'btn btn-sm text-start ' + (detail.vama067_color === 'different_color' ? 'btn-danger' : 'btn-outline-secondary')"
+                                                                t-att-data-detail-id="detail.id"
+                                                                t-att-disabled="props.readonly"
+                                                                t-on-click="(ev) => this.onVama067ColorClick(ev, 'different_color')">
+                                                            ❌ Opción B: Color distinto.
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <!-- Verdict feedback -->
+                                                <div t-if="detail.verdict_message" t-att-class="'alert mt-3 mb-0 py-2 px-3 small ' + (detail.verdict === 'pass' ? 'alert-success border-success' : (detail.verdict === 'fail' ? 'alert-danger border-danger' : 'alert-warning'))">
+                                                    <i t-attf-class="fa {{ detail.verdict === 'pass' ? 'fa-check-circle' : 'fa-times-circle' }} me-2"/>
+                                                    <strong t-esc="detail.verdict === 'pass' ? 'CUMPLE: ' : 'NO CUMPLE: '"/>
+                                                    <span t-esc="detail.verdict_message"/>
+                                                </div>
+                                            </div>
+                                        </t>
+
+                                        <!-- Conditional Numeric Range -->
+                                        <!-- Conditional Numeric Range: Ahora con BOTONES para mejor UX (MAVI-11 style) -->
+                                        <t t-elif="detail.evaluation_type === 'conditional_numeric_range'">
+                                            <div class="d-flex flex-column gap-2">
+                                                <!-- Selector de opción con botones -->
+                                                <div t-if="!props.readonly" class="btn-group btn-group-sm w-100" role="group">
+                                                    <t t-foreach="detail.conditional_options || []" t-as="opt" t-key="opt.id">
+                                                        <button type="button"
+                                                                t-att-class="'btn ' + (detail.result_conditional_option_id and detail.result_conditional_option_id[0] === opt.id ? 'btn-primary' : 'btn-outline-secondary')"
+                                                                t-att-data-detail-id="detail.id"
+                                                                t-att-data-option-id="opt.id"
+                                                                t-on-click="(ev) => this.onConditionalOptionClick(ev)">
+                                                            <t t-esc="opt.name"/>
+                                                        </button>
+                                                    </t>
+                                                </div>
+                                                
+                                                <!-- Campo de valor medido -->
+                                                <div t-if="!props.readonly and detail.result_conditional_option_id" class="input-group input-group-sm">
+                                                    <input type="number"
+                                                           step="0.01"
+                                                           class="form-control"
+                                                           placeholder="Valor medido"
+                                                           t-att-value="detail.result_conditional_value"
+                                                           t-att-data-detail-id="detail.id"
+                                                           t-on-change="onConditionalValueChange"/>
+                                                    <span class="input-group-text">
+                                                        <t t-set="selectedOpt" t-value="(detail.conditional_options || []).find(o => o.id === detail.result_conditional_option_id[0])"/>
+                                                        <t t-esc="selectedOpt and selectedOpt.uom_id ? selectedOpt.uom_id[1] : ''"/>
+                                                    </span>
+                                                </div>
+                                                
+                                                <!-- Vista de solo lectura o sin opción -->
+                                                <span t-if="props.readonly" class="form-control-plaintext small">
+                                                    <t t-esc="detail.result_display || '-'"/>
+                                                </span>
+
+                                                <!-- Verdict feedback -->
+                                                <div t-if="detail.verdict_message" t-att-class="'alert mt-1 mb-0 py-2 px-3 small ' + (detail.verdict === 'pass' ? 'alert-success border-success' : (detail.verdict === 'fail' ? 'alert-danger border-danger' : 'alert-warning'))">
+                                                    <i t-attf-class="fa {{ detail.verdict === 'pass' ? 'fa-check-circle' : 'fa-times-circle' }} me-2"/>
+                                                    <strong t-esc="detail.verdict === 'pass' ? 'CUMPLE: ' : 'NO CUMPLE: '"/>
+                                                    <span t-esc="detail.verdict_message"/>
+                                                </div>
+                                            </div>
+                                        </t>
+
+                                        <!-- Decision Matrix MAVI-16 (Restored) -->
+                                        <t t-elif="detail.evaluation_type === 'decision_matrix'">
+                                            <DecisionMatrixWidget record="{data: detail}" readonly="props.readonly" updateRecord="(values) => this.updateDetailFields(detail.id, values)" />
+                                        </t>
+
+                                        <!-- VAMA-105: Volumen dispensado de micropipeta -->
+                                        <t t-elif="detail.evaluation_type === 'vama_105' or (detail.evaluation_type === 'vama_multi_check' and detail.text_phrase_mapping and detail.text_phrase_mapping.includes('volume_tolerance'))">
+                                            <div class="d-flex flex-column gap-2">
+                                                <!-- Paso 1: Botones de volumen nominal (dinámicos desde text_phrase_mapping) -->
+                                                <div class="btn-group btn-group-sm w-100" role="group">
+                                                    <t t-if="detail.vama105_volume_options and detail.vama105_volume_options.length > 0">
+                                                        <t t-foreach="detail.vama105_volume_options" t-as="vol" t-key="vol.value">
+                                                            <button type="button"
+                                                                    t-att-class="'btn ' + (detail.vama105_nominal_volume === vol.value ? 'btn-primary' : 'btn-outline-secondary')"
+                                                                    t-att-data-detail-id="detail.id"
+                                                                    t-att-data-volume="vol.value"
+                                                                    t-att-disabled="props.readonly"
+                                                                    t-on-click="(ev) => this.onVama105VolumeClick(ev)">
+                                                                <t t-esc="vol.label"/>
+                                                            </button>
+                                                        </t>
+                                                    </t>
+                                                    <!-- Fallback a valores por defecto si no hay opciones -->
+                                                    <t t-else="">
+                                                        <t t-foreach="[{label:'5 µL', value:'5'}, {label:'25 µL', value:'25'}, {label:'50 µL', value:'50'}]" t-as="vol" t-key="vol.value">
+                                                            <button type="button"
+                                                                    t-att-class="'btn ' + (detail.vama105_nominal_volume === vol.value ? 'btn-primary' : 'btn-outline-secondary')"
+                                                                    t-att-data-detail-id="detail.id"
+                                                                    t-att-data-volume="vol.value"
+                                                                    t-att-disabled="props.readonly"
+                                                                    t-on-click="(ev) => this.onVama105VolumeClick(ev)">
+                                                                <t t-esc="vol.label"/>
+                                                            </button>
+                                                        </t>
+                                                    </t>
+                                                </div>
+                                                <!-- Paso 2: Volumen medido -->
+                                                <div t-if="detail.vama105_nominal_volume" class="input-group input-group-sm">
+                                                    <input t-if="!props.readonly"
+                                                           type="number"
+                                                           class="form-control"
+                                                           step="0.1"
+                                                           placeholder="Valor medido"
+                                                           t-att-value="detail.vama105_measured_volume"
+                                                           t-att-data-detail-id="detail.id"
+                                                           t-on-change="onVama105MeasuredChange"/>
+                                                    <span t-else="" class="form-control-plaintext">
+                                                        <t t-esc="detail.vama105_measured_volume || '-'"/>
+                                                    </span>
+                                                    <span class="input-group-text">µL</span>
+                                                </div>
+                                                <!-- Verdict inline -->
+                                                <div t-if="detail.verdict_message" t-att-class="'alert mt-1 mb-0 py-2 px-3 small ' + (detail.verdict === 'pass' ? 'alert-success border-success' : (detail.verdict === 'fail' ? 'alert-danger border-danger' : 'alert-warning border-warning'))">
+                                                    <i t-if="detail.verdict === 'pass'" class="fa fa-check-circle me-2"/>
+                                                    <i t-elif="detail.verdict === 'fail'" class="fa fa-times-circle me-2"/>
+                                                    <i t-else="" class="fa fa-exclamation-circle me-2"/>
+                                                    <strong t-if="detail.verdict === 'pass'">CUMPLE: </strong>
+                                                    <strong t-elif="detail.verdict === 'fail'">NO CUMPLE: </strong>
+                                                    <span><t t-esc="detail.verdict_message"/></span>
+                                                </div>
+                                            </div>
+                                        </t>
+
+
+                                        <t t-else="">
+                                            <t t-esc="detail.result_display || '-'"/>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <QualityVerdictBadge verdict="detail.verdict || 'pending'"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-else="">
+                    <div class="text-muted text-center py-2">
+                        Sin especificaciones configuradas
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+
+    <!-- Tabla jerárquica de determinaciones (componente standalone) -->
+    <!-- 
+        Componente reutilizable que recibe testLines como props
+        y renderiza la tabla con filas expandibles.
+        
+        Props:
+        - testLines: Array de líneas de test
+        - readonly: Boolean para modo solo lectura
+        - checkId: ID del control de calidad
+        - onGlobalUpdate: Callback para actualizaciones
+    -->
+    <t t-name="amunet_quality.QualityTestLineHierarchy">
+        <div class="quality-test-line-hierarchy" style="width: 100%;">
+            <!-- Encabezado con título, búsqueda y botón expandir todo -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+                <div class="d-flex align-items-center">
+                    <span class="fw-bold fs-6">
+                        <i class="fa fa-list-ul me-2"/>Determinaciones
+                    </span>
+                    <span class="badge bg-primary ms-2" t-esc="props.testLines.length"/>
+                    
+                    <!-- Search Input -->
+                    <div class="ms-3" style="width: 250px;">
+                        <input type="text"
+                               class="form-control form-control-sm"
+                               placeholder="🔍 Buscar..."
+                               t-on-input="onSearchInput"
+                               t-att-value="state.searchQuery"/>
+                    </div>
+                </div>
+                
+                <button t-if="props.testLines.length > 0"
+                        class="btn btn-sm btn-outline-secondary"
+                        t-on-click="toggleExpandAll">
+                    <i t-attf-class="fa #{state.expandedAll ? 'fa-compress' : 'fa-expand'} me-1"/>
+                    <t t-esc="state.expandedAll ? 'Colapsar todo' : 'Expandir todo'"/>
+                </button>
+            </div>
+
+            <!-- Sin determinaciones -->
+            <t t-if="props.testLines.length === 0">
+                <div class="alert alert-info text-center" role="alert">
+                    <i class="fa fa-info-circle me-2"/>
+                    No hay determinaciones configuradas para este control de calidad.
+                </div>
+            </t>
+
+            <!-- Tabla de determinaciones -->
+            <t t-else="">
+                <!-- Encabezados de tabla -->
+                <div class="d-flex align-items-center py-2 px-2 bg-secondary text-white small rounded-top" style="width: 100%;">
+                    <span style="width: 30px; flex-shrink: 0;"></span>
+                    <span class="fw-bold" style="width: 120px; flex-shrink: 0;">Código</span>
+                    <span class="fw-bold flex-grow-1">Determinación</span>
+                    <span class="fw-bold text-center" style="width: 80px; flex-shrink: 0;">Especificaciones</span>
+                    <span class="fw-bold text-center" style="width: 120px; flex-shrink: 0;">Resultado</span>
+                    <span class="fw-bold text-center" style="width: 140px; flex-shrink: 0;">Dictamen</span>
+                </div>
+
+                <!-- Filas de test lines (FILTRADAS) -->
+                <t t-foreach="filteredTestLines" t-as="testLine" t-key="testLine.id">
+                    <QualityTestLineRow 
+                        testLine="testLine"
+                        readonly="props.readonly"
+                        expandedAll="state.expandedAll"
+                        onUpdate.bind="onLineUpdate"/>
+                </t>
+            </t>
+        </div>
+    </t>
+
+    <!-- Widget de campo One2many para la jerarquía -->
+    <!-- 
+        Arquitectura refactorizada:
+        - QualityTestLineHierarchyField: Widget que carga datos desde Odoo
+        - QualityTestLineHierarchy: Componente standalone que renderiza la tabla
+    -->
+    <t t-name="amunet_quality.QualityTestLineHierarchyField">
+        <div class="o_field_quality_test_line_hierarchy" style="width: 100%;">
+            <!-- Estado de carga -->
+            <t t-if="state.loading">
+                <div class="text-center py-4">
+                    <i class="fa fa-spinner fa-spin fa-2x text-primary"/>
+                    <p class="mt-2 text-muted">Cargando determinaciones...</p>
+                </div>
+            </t>
+            
+            <!-- Delegar renderizado al componente standalone -->
+            <t t-else="">
+                <QualityTestLineHierarchy 
+                    testLines="state.testLines"
+                    readonly="readonly"
+                    checkId="checkId"
+                    onGlobalUpdate.bind="onGlobalUpdate"/>
+            </t>
+        </div>
+    </t>
+
+</templates>

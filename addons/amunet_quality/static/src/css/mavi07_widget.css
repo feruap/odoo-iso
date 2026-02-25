@@ -1,0 +1,21 @@
+.o_mavi07_widget {
+  padding: 15px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  margin-bottom: 10px;
+}
+
+.o_mavi07_widget .btn-group {
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.o_mavi07_widget .btn-outline-primary {
+  min-width: 60px;
+  border-radius: 4px !important;
+}
+
+.o_mavi07_widget .alert {
+  margin-bottom: 0;
+}

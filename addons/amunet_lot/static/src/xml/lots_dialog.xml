@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Cambiar texto del botón "Generate Serials/Lots" -->
+    <t t-name="stock.GenerateSerials" t-inherit="stock.GenerateSerials" t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('btn-link')]" position="replace">
+            <button class="btn btn-link" t-on-click="openDialog">Generar números de serie/lote Amunet</button>
+        </xpath>
+    </t>
+
+    <!-- Heredar template OWL del diálogo de generación de lotes -->
+    <t t-name="stock.generate_serial_dialog" t-inherit="stock.generate_serial_dialog" t-inherit-mode="extension">
+        
+        <!-- Deshabilitar el input de "Primer número de lote" y cambiar placeholder -->
+        <xpath expr="//input[@id='next_serial_0']" position="attributes">
+            <attribute name="disabled">disabled</attribute>
+            <attribute name="placeholder">Se genera automáticamente</attribute>
+            <attribute name="class">o_input bg-light</attribute>
+        </xpath>
+        
+        <!-- Cambiar el texto del botón "New" pero usar lógica estándar _onGenerate -->
+        <xpath expr="//button[hasclass('btn-primary')]" position="replace">
+            <button class="btn btn-primary py-1" t-on-click="_onGenerate">Generar lote Amunet</button>
+        </xpath>
+        
+    </t>
+
+</templates>
+

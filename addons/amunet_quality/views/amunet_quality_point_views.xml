@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista List -->
+    <record id="view_amunet_quality_point_list" model="ir.ui.view">
+        <field name="name">amunet.quality.point.list</field>
+        <field name="model">amunet.quality.point</field>
+        <field name="arch" type="xml">
+            <list string="Puntos de Control">
+                <field name="name"/>
+                <field name="picking_type_ids" widget="many2many_tags"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista Form -->
+    <record id="view_amunet_quality_point_form" model="ir.ui.view">
+        <field name="name">amunet.quality.point.form</field>
+        <field name="model">amunet.quality.point</field>
+        <field name="arch" type="xml">
+            <form string="Punto de Control">
+                <sheet>
+                    <widget name="web_ribbon" title="Archivado" bg_color="bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Ej: Recepción MP - Antibióticos"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Configuración de Activación">
+                            <field name="active" invisible="1"/>
+                            <field name="picking_type_ids" widget="many2many_tags" 
+                                   options="{'no_create': True}"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Productos vinculados">
+                            <field name="product_ids" widget="many2many_tags"
+                                   options="{'no_create': True}" nolabel="1"
+                                   placeholder="Seleccione los productos que disparan este QC..."/>
+                            <div class="text-muted" colspan="2">
+                                <strong>Nota:</strong> Los parámetros seleccionados abajo se aplicarán a estos productos.
+                            </div>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Parámetros a Aplicar" name="parameters">
+                            <group colspan="4" col="1">
+                                <div class="alert alert-info">
+                                    Seleccione los parámetros que se cargarán automáticamente cuando se cree un QC para este punto de control.
+                                </div>
+                                <field name="parameter_ids" nolabel="1">
+                                    <list>
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="specification_count" string="Especificaciones"/>
+                                    </list>
+                                </field>
+                            </group>
+                        </page>
+                        <page string="Configuración por Producto" name="product_configs">
+                            <group colspan="4" col="1">
+                                <div class="alert alert-info">
+                                    A continuación puede ver y configurar las personalizaciones de parámetros para cada producto asociado a este punto de control.
+                                </div>
+                                <field name="parameter_product_rel_ids" nolabel="1">
+                                    <list create="0" delete="0">
+                                        <field name="product_tmpl_id"/>
+                                        <field name="parameter_code"/>
+                                        <field name="parameter_name"/>
+                                        <field name="spec_summary" string="Estado"/>
+                                        <button name="action_configure_specifications" string="Configurar" 
+                                                type="object" icon="fa-gear" class="btn-primary"/>
+                                    </list>
+                                </field>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_amunet_quality_point" model="ir.actions.act_window">
+        <field name="name">Puntos de Control</field>
+        <field name="res_model">amunet.quality.point</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Cree su primer punto de control de calidad
+            </p>
+            <p>
+                Configure qué parámetros de calidad se deben medir para qué productos
+                y en qué operaciones (Recepciones, Fabricación, etc).
+            </p>
+        </field>
+    </record>
+
+    <!-- Menú (se agregará a menus.xml) -->
+</odoo>

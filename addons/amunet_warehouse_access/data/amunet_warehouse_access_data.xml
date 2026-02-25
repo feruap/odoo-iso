@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+            Grupo de Seguridad: Administrador de Accesos a Almacenes
+
+            Este grupo tiene permisos completos sobre la configuración de accesos.
+            Solo debe asignarse a usuarios de confianza (típicamente administradores del sistema).
+        -->
+        <record id="group_warehouse_access_admin" model="res.groups">
+            <field name="name">Administrador de Accesos a Almacenes</field>
+            <!-- Nota: En Odoo 19, res.groups no tiene categ_id, se usa privilege_id si es necesario -->
+        </record>
+
+        <!--
+            Nota sobre grupos dinámicos:
+
+            Los grupos de seguridad para usuarios individuales se crean DINÁMICAMENTE
+            cuando se les asigna un acceso a almacén. Estos grupos tienen el formato:
+
+            - XML ID: amunet_warehouse_access.group_warehouse_access_user_{USER_ID}
+            - Nombre: "Acceso Almacenes: {USER_NAME}"
+
+            Estos grupos NO se definen en este archivo, se crean programáticamente
+            en el modelo amunet.warehouse.access.rule._get_or_create_user_group()
+        -->
+
+        <!--
+            Record Rule: Usuarios siempre pueden ver sus propios registros de configuración
+
+            Esta regla asegura que los usuarios puedan ver sus propios registros de
+            amunet.warehouse.access.rule incluso cuando el permiso está desactivado.
+            Esto evita que los registros "desaparezcan" cuando se desactiva un permiso.
+            
+            Nota: Los administradores (base.group_system) siempre pueden ver todos los registros
+            debido a que las reglas de registro no se aplican a ellos.
+            
+            IMPORTANTE: Estas reglas se crean programáticamente en el método _init_visibility_rules()
+            para evitar problemas durante la actualización del módulo.
+        -->
+
+    </data>
+</odoo>

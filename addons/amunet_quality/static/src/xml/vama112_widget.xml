@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="amunet_quality.VAMA112Widget" owl="1">
+        <div class="o_vama112_widget">
+            <h6 class="mb-3">VAMA-112: Multi-Checkbox Centrífuga (5 Condiciones)</h6>
+            
+            <!-- Condición 1: Funcionamiento General -->
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-7">
+                            <label class="fw-bold mb-0">1. Funcionamiento General</label>
+                        </div>
+                        <div class="col-4">
+                            <select class="form-select"
+                                    t-att-value="props.record.data.vama112_cond1"
+                                    t-on-change="onCond1Change">
+                                <option value="">-- Seleccione --</option>
+                                <t t-foreach="cond1Options" t-as="option" t-key="option.value">
+                                    <option t-att-value="option.value"
+                                            t-att-selected="props.record.data.vama112_cond1 === option.value">
+                                        <t t-esc="option.label"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-1 text-end">
+                            <span t-if="condition1Pass" class="badge bg-success">✓</span>
+                            <span t-elif="props.record.data.vama112_cond1" class="badge bg-danger">✗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Condición 2: Movimientos -->
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-7">
+                            <label class="fw-bold mb-0">2. Movimientos</label>
+                        </div>
+                        <div class="col-4">
+                            <select class="form-select"
+                                    t-att-value="props.record.data.vama112_cond2"
+                                    t-on-change="onCond2Change">
+                                <option value="">-- Seleccione --</option>
+                                <t t-foreach="cond2Options" t-as="option" t-key="option.value">
+                                    <option t-att-value="option.value"
+                                            t-att-selected="props.record.data.vama112_cond2 === option.value">
+                                        <t t-esc="option.label"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-1 text-end">
+                            <span t-if="condition2Pass" class="badge bg-success">✓</span>
+                            <span t-elif="props.record.data.vama112_cond2" class="badge bg-danger">✗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Condición 3: Separación Correcta -->
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-7">
+                            <label class="fw-bold mb-0">3. Separación Correcta</label>
+                        </div>
+                        <div class="col-4">
+                            <select class="form-select"
+                                    t-att-value="props.record.data.vama112_cond3"
+                                    t-on-change="onCond3Change">
+                                <option value="">-- Seleccione --</option>
+                                <t t-foreach="cond3Options" t-as="option" t-key="option.value">
+                                    <option t-att-value="option.value"
+                                            t-att-selected="props.record.data.vama112_cond3 === option.value">
+                                        <t t-esc="option.label"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-1 text-end">
+                            <span t-if="condition3Pass" class="badge bg-success">✓</span>
+                            <span t-elif="props.record.data.vama112_cond3" class="badge bg-danger">✗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Condición 4: Separación Completa -->
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-7">
+                            <label class="fw-bold mb-0">4. Separación Completa</label>
+                        </div>
+                        <div class="col-4">
+                            <select class="form-select"
+                                    t-att-value="props.record.data.vama112_cond4"
+                                    t-on-change="onCond4Change">
+                                <option value="">-- Seleccione --</option>
+                                <t t-foreach="cond4Options" t-as="option" t-key="option.value">
+                                    <option t-att-value="option.value"
+                                            t-att-selected="props.record.data.vama112_cond4 === option.value">
+                                        <t t-esc="option.label"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-1 text-end">
+                            <span t-if="condition4Pass" class="badge bg-success">✓</span>
+                            <span t-elif="props.record.data.vama112_cond4" class="badge bg-danger">✗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Condición 5: Temperatura -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-7">
+                            <label class="fw-bold mb-0">5. Temperatura</label>
+                        </div>
+                        <div class="col-4">
+                            <select class="form-select"
+                                    t-att-value="props.record.data.vama112_cond5"
+                                    t-on-change="onCond5Change">
+                                <option value="">-- Seleccione --</option>
+                                <t t-foreach="cond5Options" t-as="option" t-key="option.value">
+                                    <option t-att-value="option.value"
+                                            t-att-selected="props.record.data.vama112_cond5 === option.value">
+                                        <t t-esc="option.label"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-1 text-end">
+                            <span t-if="condition5Pass" class="badge bg-success">✓</span>
+                            <span t-elif="props.record.data.vama112_cond5" class="badge bg-danger">✗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultado Generado -->
+            <div class="alert alert-info" t-if="props.record.data.vama112_result_text">
+                <strong>Resultado:</strong> <t t-esc="props.record.data.vama112_result_text"/>
+            </div>
+
+            <!-- Dictamen Final -->
+            <div t-if="props.record.data.verdict and props.record.data.evaluation_type === 'vama_112'">
+                <div t-attf-class="alert py-3 {{ props.record.data.verdict === 'pass' ? 'alert-success' : props.record.data.verdict === 'fail' ? 'alert-danger' : 'alert-warning' }}">
+                    <h5 class="mb-0">
+                        <i t-attf-class="fa me-2 {{ props.record.data.verdict === 'pass' ? 'fa-check-circle' : props.record.data.verdict === 'fail' ? 'fa-times-circle' : 'fa-clock-o' }}"/>
+                        <strong t-if="props.record.data.verdict === 'pass'">✓ CUMPLE</strong>
+                        <strong t-elif="props.record.data.verdict === 'fail'">✗ NO CUMPLE</strong>
+                        <strong t-else="">⏳ PENDIENTE</strong>
+                    </h5>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

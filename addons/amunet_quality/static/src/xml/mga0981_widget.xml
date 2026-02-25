@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="amunet_quality.MGA0981Widget">
+        <div class="mga0981-widget border rounded p-3">
+            <div class="mb-3">
+                <label class="form-label fw-bold">1. Volumen Declarado</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="btnradio_declarado" id="btnradio1" autocomplete="off" 
+                           t-att-checked="state.vol_declarado === '5ml'"
+                           t-on-change="() => this.onDeclaradoChange('5ml')"
+                           t-att-disabled="isReadonly"/>
+                    <label class="btn btn-outline-primary" for="btnradio1">5 ml</label>
+
+                    <input type="radio" class="btn-check" name="btnradio_declarado" id="btnradio2" autocomplete="off"
+                           t-att-checked="state.vol_declarado === '10ml'" 
+                           t-on-change="() => this.onDeclaradoChange('10ml')"
+                           t-att-disabled="isReadonly"/>
+                    <label class="btn btn-outline-primary" for="btnradio2">10 ml</label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">2. Medición Obtenida</label>
+                <input type="number" class="form-control" step="0.01" 
+                       t-att-value="state.vol_obtenido"
+                       t-on-change="onObtenidoChange"
+                       t-att-disabled="isReadonly"
+                       placeholder="Ingrese valor"/>
+            </div>
+
+            <div t-attf-class="alert #{resultClass} mb-2" role="alert">
+                <div class="fw-bold mb-1"><t t-esc="resultMessage"/></div>
+                <div t-if="state.verdict_message" class="small opacity-75 text-wrap">
+                    <t t-esc="state.verdict_message"/>
+                </div>
+            </div>
+
+            <div t-attf-class="d-flex align-items-center justify-content-center p-2 rounded text-white fw-bold #{verdictClass}">
+                <i t-if="state.verdict === 'pending'" class="fa fa-hourglass-half me-2"/>
+                <i t-if="state.verdict === 'pass'" class="fa fa-check-circle me-2"/>
+                <i t-if="state.verdict === 'fail'" class="fa fa-times-circle me-2"/>
+                <t t-esc="verdictLabel"/>
+            </div>
+        </div>
+    </t>
+</templates>

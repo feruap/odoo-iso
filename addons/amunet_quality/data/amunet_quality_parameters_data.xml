@@ -1,0 +1,1251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ======================================================== -->
+        <!-- MAVI-04: Aspectos Visuales (Común en todos los materiales) -->
+        <!-- ======================================================== -->
+        <record id="param_mavi_04" model="amunet.quality.check.parameter">
+            <field name="code">MAVI-04</field>
+            <field name="name">Aspectos Visuales</field>
+        </record>
+
+        <!-- Especificaciones de MAVI-04 -->
+        <record id="spec_mavi_04_polvo" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_04"/>
+            <field name="name">Polvo</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Sin polvo</field>
+            <field name="binary_prefix">Sin/Con</field>
+            <field name="binary_suffix">polvo</field>
+            <field name="binary_expected_option">with_prefix</field> <!-- "Sin polvo" es el pass -->
+        </record>
+
+        <record id="spec_mavi_04_manchas" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_04"/>
+            <field name="name">Manchas y/o suciedad</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Sin manchas y/o suciedad</field>
+            <field name="binary_prefix">Sin/Con</field>
+            <field name="binary_suffix">manchas y/o suciedad</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+        <record id="spec_mavi_04_rasgaduras" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_04"/>
+            <field name="name">Rasgaduras</field>
+            <field name="sequence">3</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Sin rasgaduras</field>
+            <field name="binary_prefix">Sin/Con</field>
+            <field name="binary_suffix">rasgaduras</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+        <record id="spec_mavi_04_deformidad" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_04"/>
+            <field name="name">Deformidad o deterioro</field>
+            <field name="sequence">5</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Sin deformidad o deterioro</field>
+            <field name="binary_prefix">Sin/Con</field>
+            <field name="binary_suffix">deformidad o deterioro</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+         <record id="spec_mavi_04_sellado" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_04"/>
+            <field name="name">Sellado</field>
+            <field name="sequence">6</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Sellado adecuado</field>
+            <field name="binary_prefix">Sellado adecuado/Sellado inadecuado</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- MAVI-11: Longitud y/o Grosor (Dimensiones)              -->
+        <!-- ======================================================== -->
+        <record id="param_mavi_11" model="amunet.quality.check.parameter">
+            <field name="code">MAVI-11</field>
+            <field name="name">Longitud y/o grosor</field>
+        </record>
+
+        <!-- Unidades de medida (referencias estándar de Odoo) -->
+        <!-- Asumiendo que uom.product_uom_millimeter existe o similar. Si no, usaremos IDs o buscaremos safe -->
+        <!-- Mejor dejar uom vacío por ahora o usar referencias si estamos seguros. Usaremos mm por defecto si existe -->
+
+        <record id="spec_mavi_11_ancho" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_11"/>
+            <field name="name">Ancho</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Según especificación de producto</field>
+        </record>
+
+        <record id="spec_mavi_11_largo" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_11"/>
+            <field name="name">Largo</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Según especificación de producto</field>
+        </record>
+
+        <record id="spec_mavi_11_grosor" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_11"/>
+            <field name="name">Grosor</field>
+            <field name="sequence">3</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Según especificación de producto</field>
+        </record>
+        
+        <record id="spec_mavi_11_altura" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_11"/>
+            <field name="name">Altura</field>
+            <field name="sequence">4</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Según especificación de producto</field>
+        </record>
+        
+         <record id="spec_mavi_11_diametro" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_11"/>
+            <field name="name">Diámetro</field>
+            <field name="sequence">5</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Según especificación de producto</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- MAVI-07: Visualización de líneas “resultado base”        -->
+        <!-- ======================================================== -->
+        <record id="param_mavi_07" model="amunet.quality.check.parameter">
+            <field name="code">MAVI-07</field>
+            <field name="name">Visualización de líneas “resultado base”</field>
+        </record>
+
+        <record id="spec_mavi_07_visual" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_07"/>
+            <field name="name">Interpretación de Líneas</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">vama_multi_check</field>
+            <field name="acceptance_criteria">Muestra Negativa -> Resultado esperado; Positiva -> Resultado esperado</field>
+            <field name="text_phrase_mapping">{
+    "positions": [
+        {
+            "index": 0, "A": "Negativa", "B": "Positiva", "context": "Muestra {value}",
+            "label": "1. Tipo de Muestra",
+            "instruction": "Indique qué tipo de muestra se está evaluando."
+        },
+        {
+            "index": 1, "A": "adecuada", "B": "inadecuada", "context": "interpretación {value}",
+            "label": "2. Resultado Observado",
+            "instruction": "Verificar si la visualización de líneas coincide con el patrón esperado."
+        }
+    ],
+    "phrase_template": "{0} con {1}."
+}</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-044: Funcionalidad de Tubo (Complejo)               -->
+        <!-- ======================================================== -->
+        <record id="param_vama_044" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-044</field>
+            <field name="name">Funcionalidad del tubo de extracción</field>
+        </record>
+
+        <record id="spec_vama_044_func" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_044"/>
+            <field name="name">Prueba de Funcionalidad</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">vama_044</field>
+            <field name="acceptance_criteria">Gotas&gt;=5, Vol Gota 40-50µl, Unión Adecuada, Vol Llenado 1540-1560µl</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-078: Aspectos del Liofilizado                      -->
+        <!-- ======================================================== -->
+        <record id="param_vama_078" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-078</field>
+            <field name="name">Aspectos del liofilizado</field>
+        </record>
+
+        <record id="spec_vama_078_aspectos" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_078"/>
+            <field name="name">Evaluación Liofilizado</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">vama_multi_check</field>
+            <field name="acceptance_criteria">Blanco, Compacto, Sin pegajosidad, Sin humedad</field>
+            <field name="text_phrase_mapping">{
+    "positions": [
+        {
+            "index": 0, "A": "Amarillo", "B": "Blanco", "context": "Color {value}",
+            "label": "1. Color del Liofilizado",
+            "instruction": "Observar el color general del producto."
+        },
+        {
+            "index": 1, "A": "Deformado", "B": "Compacto", "context": "Forma {value}",
+            "label": "2. Forma del Liofilizado",
+            "instruction": "Evaluar la integridad estructural."
+        },
+        {
+            "index": 2, "A": "sin textura pegajosa", "B": "con textura pegajosa", "context": "Liofilizado {value}",
+            "label": "3. Textura del Liofilizado",
+            "instruction": "Evaluar al tacto (si aplica) o visualmente."
+        },
+        {
+            "index": 3, "A": "sin humedad aparente", "B": "con humedad aparente", "context": "Liofilizado {value}",
+            "label": "4. Humedad aparente",
+            "instruction": "Observar signos de humedad."
+        }
+    ],
+    "phrase_template": "{0}, {1}, {2} y {3}."
+}</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-112: Centrífuga (Multi-Checkbox)                   -->
+        <!-- ======================================================== -->
+        <record id="param_vama_112" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-112</field>
+            <field name="name">Funcionamiento de Centrífuga</field>
+        </record>
+
+        <record id="spec_vama_112_func" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_112"/>
+            <field name="name">Prueba de Centrífuga</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">vama_multi_check</field>
+            <field name="acceptance_criteria">Adecuado, Sin movimientos bruscos, Separación Correcta/Completa, Sin calentar</field>
+            <field name="text_phrase_mapping">{
+    "positions": [
+        {
+            "index": 0, "A": "adecuado", "B": "inadecuado", "context": "Funcionamiento {value}",
+            "label": "1. Funcionamiento",
+            "instruction": "Verificar el arranque y marcha de la centrífuga."
+        },
+        {
+            "index": 1, "A": "sin movimientos bruscos", "B": "con movimientos bruscos", "context": "Operación {value}",
+            "label": "2. Movimientos",
+            "instruction": "Observar si hay vibraciones o ruidos anormales."
+        },
+        {
+            "index": 2, "A": "correcta", "B": "incorrecta", "context": "Separación {value}",
+            "label": "3. Separación Correcta",
+            "instruction": "Evaluar si la separación es nítida."
+        },
+        {
+            "index": 3, "A": "completa", "B": "incompleta", "context": "Separación {value}",
+            "label": "4. Separación Completa",
+            "instruction": "Evaluar si el sedimento es firme."
+        },
+        {
+            "index": 4, "A": "sin calentar", "B": "caliente", "context": "Muestra {value}",
+            "label": "5. Temperatura",
+            "instruction": "Tocar el tubo para verificar que no hubo calentamiento excesivo."
+        }
+    ],
+    "phrase_template": "{0}, {1}, {2}, {3} y {4}."
+}</field>
+        </record>
+        
+        <!-- ======================================================== -->
+        <!-- MAVI-09: Desempeño del tiempo de flujo capilar           -->
+        <!-- ======================================================== -->
+         <record id="param_mavi_09" model="amunet.quality.check.parameter">
+            <field name="code">MAVI-09</field>
+            <field name="name">Desempeño del tiempo de flujo capilar</field>
+        </record>
+
+        <record id="spec_mavi_09_liberacion" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_09"/>
+            <field name="name">Liberación de conjugado</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">1-30 segundos</field>
+        </record>
+        
+        <record id="spec_mavi_09_migracion" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_09"/>
+            <field name="name">Migración de conjugado</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">numeric_range</field>
+             <field name="acceptance_criteria">30-180 segundos</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-096: Funcionalidad del vial y tamaño de gota        -->
+        <!-- ======================================================== -->
+        <record id="param_vama_096" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-096</field>
+            <field name="name">Funcionalidad del vial y tamaño de gota</field>
+        </record>
+
+        <record id="spec_vama_096_func" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_096"/>
+            <field name="name">Prueba de Goteo</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">multi_condition_numeric</field>
+            <field name="acceptance_criteria">Funcionamiento correcto, &gt;=5 gotas, vol 40-50µl</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-004: Partículas en solución                         -->
+        <!-- ======================================================== -->
+        <record id="param_vama_004" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-004</field>
+            <field name="name">Partículas en solución</field>
+        </record>
+
+        <record id="spec_vama_004_particulas" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_004"/>
+            <field name="name">Partículas en solución</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Sin partículas suspendidas</field>
+            <field name="binary_prefix">Sin/Con</field>
+            <field name="binary_suffix">partículas</field>
+            <field name="binary_expected_option">with_prefix</field> <!-- Pass: Sin partículas -->
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-023: Capacidad de cierre (Cierre completo)          -->
+        <!-- ======================================================== -->
+        <record id="param_vama_023" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-023</field>
+            <field name="name">Capacidad de cierre</field>
+        </record>
+
+        <record id="spec_vama_023_cierre" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_023"/>
+            <field name="name">Cierre completo</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Cierre completo</field>
+            <field name="binary_prefix">Completo/Incompleto</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-098: Peso                                           -->
+        <!-- ======================================================== -->
+        <record id="param_vama_098" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-098</field>
+            <field name="name">Peso</field>
+        </record>
+
+        <record id="spec_vama_098_peso" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_098"/>
+            <field name="name">Peso</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">0.5 g ± 0.1 g</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-099: Absorción de humedad                           -->
+        <!-- ======================================================== -->
+        <record id="param_vama_099" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-099</field>
+            <field name="name">Absorción de humedad</field>
+        </record>
+
+        <record id="spec_vama_099_abs" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_099"/>
+            <field name="name">Porcentaje de absorción</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">&gt;= 20%</field> 
+            <field name="binary_prefix">&gt;= 20% / &lt; 20%</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-094: Desempeño de la almohadilla con alcohol        -->
+        <!-- ======================================================== -->
+        <record id="param_vama_094" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-094</field>
+            <field name="name">Desempeño de la almohadilla con alcohol</field>
+        </record>
+
+        <record id="spec_vama_094_unified" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_094"/>
+            <field name="name">Desempeño de la almohadilla con alcohol</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">vama_multi_check</field>
+            <field name="acceptance_criteria">Almohadilla húmeda con presencia de alcohol</field>
+            <field name="text_phrase_mapping">{
+    "positions": [
+        {"index": 0, "A": "Húmeda", "B": "Seca", "context": "Almohadilla {value}"},
+        {"index": 1, "A": "con presencia de alcohol", "B": "sin presencia de alcohol", "context": "{value}"}
+    ],
+    "phrase_template": "{0} {1}."
+}</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-095: Funcionalidad de lanceta                       -->
+        <!-- ======================================================== -->
+        <record id="param_vama_095" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-095</field>
+            <field name="name">Funcionalidad de lanceta</field>
+        </record>
+
+        <record id="spec_vama_095_puncion" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_095"/>
+            <field name="name">Presencia de punción</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Presencia de punción</field>
+            <field name="binary_prefix">Presencia/Ausencia</field>
+            <field name="binary_suffix">de punción</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-052: Funcionalidad del tubo con tapa desecante      -->
+        <!-- ======================================================== -->
+        <record id="param_vama_052" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-052</field>
+            <field name="name">Funcionalidad del tubo con tapa desecante</field>
+        </record>
+
+        <record id="spec_vama_052_unified" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_052"/>
+            <field name="name">Funcionalidad del tubo con tapa desecante</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">vama_multi_check</field>
+            <field name="acceptance_criteria">La tapa encaja y permite el cierre correcto con el tubo, sin daños en el sello de seguro</field>
+            <field name="text_phrase_mapping">{
+    "positions": [
+        {
+            "index": 0, "A": "encaja", "B": "no encaja", "context": "La tapa {value}",
+            "label": "1. Encaje de la tapa",
+            "instruction": "Verificar si la tapa ajusta correctamente en la boca del tubo."
+        },
+        {
+            "index": 1, "A": "permite", "B": "impide", "context": "{value} el cierre correcto con el tubo",
+            "label": "2. Funcionalidad del cierre",
+            "instruction": "Verificar si la tapa, una vez puesta, cierra herméticamente el tubo."
+        },
+        {
+            "index": 2, "A": "sin daños", "B": "con daños", "context": "{value} en el sello de seguro",
+            "label": "3. Estado del sello de seguro",
+            "instruction": "Inspeccionar visualmente el sello."
+        }
+    ],
+    "phrase_template": "{0} y {1}, {2}."
+}</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-093: Funcionalidad (Mililitros colectados)          -->
+        <!-- ======================================================== -->
+        <record id="param_vama_093" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-093</field>
+            <field name="name">Volumen colectado</field>
+        </record>
+
+        <record id="spec_vama_093_vol" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_093"/>
+            <field name="name">Mililitros</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Min 0.5 mL</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-057: Gotas obtenidas                                -->
+        <!-- ======================================================== -->
+        <record id="param_vama_057" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-057</field>
+            <field name="name">Gotas obtenidas</field>
+        </record>
+
+        <record id="spec_vama_057_gotas" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_057"/>
+            <field name="name">Conteo de gotas</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">&gt;= 10 gotas</field>
+        </record>
+
+        <!-- ======================================================== -->
+        <!-- MGA 0981: Variación de volumen                           -->
+        <!-- ======================================================== -->
+        <record id="param_mga_0981" model="amunet.quality.check.parameter">
+            <field name="code">MGA 0981</field>
+            <field name="name">Variación de volumen</field>
+        </record>
+
+        <record id="spec_mga_0981_vol" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mga_0981"/>
+            <field name="name">Volumen</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Según especificación de producto (ej: &gt;= 2.5 ml)</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- MGA 0701: pH                                            -->
+        <!-- ======================================================== -->
+        <record id="param_mga_0701" model="amunet.quality.check.parameter">
+            <field name="code">MGA 0701</field>
+            <field name="name">pH</field>
+        </record>
+
+        <record id="spec_mga_0701_val" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mga_0701"/>
+            <field name="name">Valor de pH</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Según especificación</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- MGA 0181: Color de la solución                          -->
+        <!-- ======================================================== -->
+        <record id="param_mga_0181" model="amunet.quality.check.parameter">
+            <field name="code">MGA 0181</field>
+            <field name="name">Color de la solución</field>
+        </record>
+
+        <record id="spec_mga_0181_color" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mga_0181"/>
+            <field name="name">Color</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Igual a muestra testigo</field>
+            <field name="binary_prefix">Igual/Diferente</field>
+            <field name="binary_suffix">a muestra testigo</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+        <!-- ======================================================== -->
+        <!-- VAMA-100: Determinación de funcionalidad del gel        -->
+        <!-- ======================================================== -->
+        <record id="param_vama_100" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-100</field>
+            <field name="name">Determinación de funcionalidad del gel refrigerante</field>
+        </record>
+
+        <record id="spec_vama_100_tiempo" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_100"/>
+            <field name="name">Tiempo de congelación completa</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Máximo 26 horas</field>
+            <field name="max_value">26.0</field>
+            <field name="use_manual_range">True</field>
+            <field name="min_value_manual">0.0</field>
+            <field name="max_value_manual">26.0</field>
+        </record>
+
+        <record id="spec_vama_100_temp" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_100"/>
+            <field name="name">Mantenimiento de temperatura</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Menor a 18°C</field>
+            <field name="max_value">17.9</field>
+            <field name="use_manual_range">True</field>
+            <field name="min_value_manual">0.0</field>
+            <field name="max_value_manual">17.9</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-115: Funcionalidad del reactivo seco                -->
+        <!-- ======================================================== -->
+        <record id="param_vama_115" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-115</field>
+            <field name="name">Funcionalidad del reactivo seco</field>
+        </record>
+
+        <record id="spec_vama_115_refr" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_115"/>
+            <field name="name">Reactivo almacenado en refrigeración</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">vama_multi_check</field>
+            <field name="acceptance_criteria">Visualización sólo de línea control (Libre), Visualización de líneas control y prueba (Con ADN)</field>
+            <field name="text_phrase_mapping">{
+    "positions": [
+        {"index": 0, "A": "sólo de línea control", "B": "de línea control y línea de prueba", "context": "Visualización {value} (Muestra Libre)"},
+        {"index": 1, "A": "de línea control y línea de prueba", "B": "sólo de línea control", "context": "Visualización {value} (Muestra con ADN)"}
+    ],
+    "phrase_template": "{0}; {1}."
+}</field>
+        </record>
+
+        <record id="spec_vama_115_amb" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_115"/>
+            <field name="name">Reactivo almacenado a temperatura ambiente</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">vama_multi_check</field>
+            <field name="acceptance_criteria">Visualización sólo de línea control (Libre), Visualización de líneas control y prueba (Con ADN)</field>
+            <field name="text_phrase_mapping">{
+    "positions": [
+        {"index": 0, "A": "sólo de línea control", "B": "de línea control y línea de prueba", "context": "Visualización {value} (Muestra Libre)"},
+        {"index": 1, "A": "de línea control y línea de prueba", "B": "sólo de línea control", "context": "Visualización {value} (Muestra con ADN)"}
+    ],
+    "phrase_template": "{0}; {1}."
+}</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-113: Funcionalidad del control positivo             -->
+        <!-- ======================================================== -->
+        <record id="param_vama_113" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-113</field>
+            <field name="name">Funcionalidad del control positivo</field>
+        </record>
+
+        <record id="spec_vama_113_refr" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_113"/>
+            <field name="name">Control almacenado en refrigeración</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Visualización de línea control y línea de prueba</field>
+            <field name="binary_prefix">Visualización de línea control y línea de prueba/Visualización sólo de línea control</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+        <record id="spec_vama_113_amb" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_113"/>
+            <field name="name">Control almacenado a temperatura ambiente</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Visualización de línea control y línea de prueba</field>
+            <field name="binary_prefix">Visualización de línea control y línea de prueba/Visualización sólo de línea control</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-114: Funcionalidad del control negativo             -->
+        <!-- ======================================================== -->
+        <record id="param_vama_114" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-114</field>
+            <field name="name">Funcionalidad del control negativo</field>
+        </record>
+
+        <record id="spec_vama_114_refr" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_114"/>
+            <field name="name">Control almacenado en refrigeración</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Visualización sólo de línea control</field>
+            <field name="binary_prefix">Visualización sólo de línea control/Visualización de línea control y línea de prueba</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+        <record id="spec_vama_114_amb" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_114"/>
+            <field name="name">Control almacenado a temperatura ambiente</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Visualización sólo de línea control</field>
+            <field name="binary_prefix">Visualización sólo de línea control/Visualización de línea control y línea de prueba</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- MAVI-06: Capacidad de absorción de líquidos              -->
+        <!-- ======================================================== -->
+        <record id="param_mavi_06" model="amunet.quality.check.parameter">
+            <field name="code">MAVI-06</field>
+            <field name="name">Capacidad de absorción de líquidos</field>
+        </record>
+
+        <record id="spec_mavi_06_cap" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_06"/>
+            <field name="name">Capacidad</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">&gt; 40 µl</field>
+        </record>
+
+        <record id="spec_mavi_06_vel" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_06"/>
+            <field name="name">Velocidad</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">&lt; 15 seg</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-056: Desempeño de almohadilla para filtrar sangre   -->
+        <!-- ======================================================== -->
+        <record id="param_vama_056" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-056</field>
+            <field name="name">Desempeño de almohadilla para filtrar sangre</field>
+        </record>
+
+        <record id="spec_vama_056_hemolisis" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_056"/>
+            <field name="name">Hemólisis</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Ausencia de hemólisis</field>
+            <field name="binary_prefix">Presencia/Ausencia</field>
+            <field name="binary_suffix">de hemólisis</field>
+            <field name="binary_expected_option">without_prefix</field> <!-- Pass: Ausencia -->
+        </record>
+
+         <record id="spec_vama_056_desempeno" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_056"/>
+            <field name="name">Desempeño</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Retención de eritrocitos, flujo libre de plasma</field>
+             <field name="binary_prefix">Adecuado/Inadecuado</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-091: Termosellado                                   -->
+        <!-- NOTA: La configuración actual en la base de datos usa 1 especificación -->
+        <!-- de tipo checkbox_combined con criterio "Sellado adecuado, sin defectos visibles". -->
+        <!-- Esta configuración en XML define 2 especificaciones separadas como plantilla. -->
+        <!-- La configuración en DB es la correcta según CC Bolsas.docx -->
+        <!-- ======================================================== -->
+         <record id="param_vama_091" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-091</field>
+            <field name="name">Termosellado</field>
+        </record>
+
+        <record id="spec_vama_091_calidad" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_091"/>
+            <field name="name">Calidad de Sellado</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Sellado adecuado</field>
+            <field name="binary_prefix">Sellado adecuado/Sellado inadecuado</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+        
+        <record id="spec_vama_091_defectos" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_091"/>
+            <field name="name">Defectos Visuales</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Sin defectos visibles</field>
+            <field name="binary_prefix">Sin defectos visibles/Con defectos visibles</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+
+
+        <!-- ======================================================== -->
+        <!-- MGA-0486: Hermeticidad                                   -->
+        <!-- ======================================================== -->
+         <record id="param_mga_0486" model="amunet.quality.check.parameter">
+            <field name="code">MGA-0486</field>
+            <field name="name">Hermeticidad</field>
+        </record>
+
+        <record id="spec_mga_0486_colorante" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mga_0486"/>
+            <field name="name">Prueba de colorante</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Ausencia de colorante</field>
+            <field name="binary_prefix">Presencia/Ausencia</field>
+            <field name="binary_suffix">de colorante</field>
+            <field name="binary_expected_option">without_prefix</field> <!-- Pass: Ausencia -->
+        </record>
+
+        <!-- ======================================================== -->
+        <!-- MAVI-14: Alineación de serigrafía (Ternario Si/No/NA)    -->
+        <!-- ======================================================== -->
+        <record id="param_mavi_14" model="amunet.quality.check.parameter">
+            <field name="code">MAVI-14</field>
+            <field name="name">Alineación de serigrafía</field>
+        </record>
+
+        <record id="spec_mavi_14_control" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_14"/>
+            <field name="name">Alineación Control (C)</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">ternary_with_na</field>
+            <field name="acceptance_criteria">Alineada (Si)</field>
+        </record>
+
+        <record id="spec_mavi_14_prueba" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_14"/>
+            <field name="name">Alineación Prueba (T)</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">ternary_with_na</field>
+            <field name="acceptance_criteria">Alineada (Si)</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- MAVI-16: Visualización de apariencia colorimétrica       -->
+        <!-- ======================================================== -->
+        <record id="param_mavi_16" model="amunet.quality.check.parameter">
+             <field name="code">MAVI-16</field>
+             <field name="name">Visualización de apariencia colorimétrica</field>
+        </record>
+
+        <record id="spec_mavi_16_matrix" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_16"/>
+            <field name="name">Matriz de decisión</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">decision_matrix</field>
+            <field name="acceptance_criteria">Ver tabla “Matriz de resultados para el MAVI-16”</field>
+        </record>
+
+        <!-- Scenarios for MAVI-16 -->
+        <!-- 1: Control Not Visible -->
+        <record id="scen_mavi16_1" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">1</field>
+            <field name="step1_concentration">any</field>
+            <field name="step2_1_control_visible">no</field>
+            <field name="step2_2_comparison">irrelevant</field>
+            <field name="verdict">fail</field>
+            <field name="result_message">Inválido: No hay visualización de la línea de control.</field>
+        </record>
+
+        <!-- 2: Low, Yes, T != R -> Pass -->
+        <record id="scen_mavi16_2" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">2</field>
+            <field name="step1_concentration">low</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_neq_r</field>
+            <field name="verdict">pass</field>
+            <field name="result_message">T ≠ R: No hay formación de una línea de color en la región T.</field>
+        </record>
+
+        <!-- 3: Low, Yes, T < R -> Pass -->
+        <record id="scen_mavi16_3" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">3</field>
+            <field name="step1_concentration">low</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_lt_r</field>
+            <field name="verdict">pass</field>
+            <field name="result_message">T &lt; R: La intensidad de la línea de color en la región T es menos intensa que la línea de color en la región R.</field>
+        </record>
+
+        <!-- 4: Low, Yes, T ~ R -> Fail -->
+        <record id="scen_mavi16_4" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">4</field>
+            <field name="step1_concentration">low</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_eq_r</field>
+            <field name="verdict">fail</field>
+            <field name="result_message">Inconsistente: Se esperaba Baja, se observó Intermedia.</field>
+        </record>
+
+        <!-- 5: Low, Yes, T > R -> Fail -->
+        <record id="scen_mavi16_5" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">5</field>
+            <field name="step1_concentration">low</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_gt_r</field>
+            <field name="verdict">fail</field>
+            <field name="result_message">Inconsistente: Se esperaba Baja, se observó Alta.</field>
+        </record>
+
+        <!-- 6: Medium, Yes, T != R -> Fail -->
+        <record id="scen_mavi16_6" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">6</field>
+            <field name="step1_concentration">medium</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_neq_r</field>
+            <field name="verdict">fail</field>
+            <field name="result_message">Inconsistente: Se esperaba Intermedia, no hubo reacción en T.</field>
+        </record>
+
+        <!-- 7: Medium, Yes, T < R -> Fail -->
+        <record id="scen_mavi16_7" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">7</field>
+            <field name="step1_concentration">medium</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_lt_r</field>
+            <field name="verdict">fail</field>
+            <field name="result_message">Inconsistente: Se esperaba Intermedia, se observó Baja.</field>
+        </record>
+
+        <!-- 8: Medium, Yes, T ~ R -> Pass -->
+        <record id="scen_mavi16_8" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">8</field>
+            <field name="step1_concentration">medium</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_eq_r</field>
+            <field name="verdict">pass</field>
+            <field name="result_message">T ~ R: La intensidad de la línea de color en la región T es igual o similar en intensidad que la línea de color en la región R.</field>
+        </record>
+
+        <!-- 9: Medium, Yes, T > R -> Fail -->
+        <record id="scen_mavi16_9" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">9</field>
+            <field name="step1_concentration">medium</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_gt_r</field>
+            <field name="verdict">fail</field>
+            <field name="result_message">Inconsistente: Se esperaba Intermedia, se observó Alta.</field>
+        </record>
+
+        <!-- 10: High, Yes, T != R -> Fail -->
+        <record id="scen_mavi16_10" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">10</field>
+            <field name="step1_concentration">high</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_neq_r</field>
+            <field name="verdict">fail</field>
+            <field name="result_message">Inconsistente: Se esperaba Alta, no hubo reacción en T.</field>
+        </record>
+
+        <!-- 11: High, Yes, T < R -> Fail -->
+        <record id="scen_mavi16_11" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">11</field>
+            <field name="step1_concentration">high</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_lt_r</field>
+            <field name="verdict">fail</field>
+            <field name="result_message">Inconsistente: Se esperaba Alta, se observó Baja.</field>
+        </record>
+
+        <!-- 12: High, Yes, T ~ R -> Fail -->
+        <record id="scen_mavi16_12" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">12</field>
+            <field name="step1_concentration">high</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_eq_r</field>
+            <field name="verdict">fail</field>
+            <field name="result_message">Inconsistente: Se esperaba Alta, se observó Intermedia.</field>
+        </record>
+
+        <!-- 13: High, Yes, T > R -> Pass -->
+        <record id="scen_mavi16_13" model="amunet.quality.parameter.decision.matrix">
+            <field name="specification_id" ref="spec_mavi_16_matrix"/>
+            <field name="sequence">13</field>
+            <field name="step1_concentration">high</field>
+            <field name="step2_1_control_visible">yes</field>
+            <field name="step2_2_comparison">t_gt_r</field>
+            <field name="verdict">pass</field>
+            <field name="result_message">T &gt; R: La intensidad de la línea de color en la región T es más intensa que la línea de color en la región R.</field>
+        </record>
+
+
+        <!-- ======================================================== -->
+        <!-- VAMA-038: Funcionalidad del gotero -->
+        <!-- ======================================================== -->
+        <record id="param_vama_038" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-038</field>
+            <field name="name">Funcionalidad del gotero</field>
+        </record>
+
+        <record id="spec_vama_038_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_038"/>
+            <field name="name">Obtención de al menos 5 gotas co n promedio de gota</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="acceptance_criteria">10 µl ±5 µl</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-097: Funcionalidad del tubo capilar -->
+        <!-- ======================================================== -->
+        <record id="param_vama_097" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-097</field>
+            <field name="name">Funcionalidad del tubo capilar</field>
+        </record>
+
+        <record id="spec_vama_097_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_097"/>
+            <field name="name">Llenado</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field> <!-- Auto-corrected to binary based on criteria -->
+            <field name="acceptance_criteria">Llenado completo</field>
+            <field name="binary_prefix">Si/No</field>
+            <field name="binary_suffix">llena completamente</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-032: D e sem peño de liberación de la almohadilla de conjugado -->
+        <!-- ======================================================== -->
+        <record id="param_vama_032" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-032</field>
+            <field name="name">D e sem peño de liberación de la almohadilla de conjugado</field>
+        </record>
+
+        <record id="spec_vama_032_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_032"/>
+            <field name="name">Liberación completa de conjugado, sin partículas visibles.</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Liberación completa de conjugado, sin partículas visibles.</field>
+            <field name="binary_prefix">Con/Sin</field>
+            <field name="binary_suffix">partículas visibles</field>
+            <field name="binary_expected_option">without_prefix</field> <!-- Pass: Sin partículas -->
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-036: Volumen de liofilizado -->
+        <!-- CORRECCIÓN: 3 especificaciones con sus propios sistemas de validación -->
+        <!-- ======================================================== -->
+        <record id="param_vama_036" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-036</field>
+            <field name="name">Información en material instructivo o apoyo para interpretación</field>
+        </record>
+
+        <record id="spec_vama_036_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_036"/>
+            <field name="name">Información técnica</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">vama_multi_check</field>
+            <field name="acceptance_criteria">La información presentada es correcta y coincide con la prueba indicada.</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-039: D e sem peño de la almohadilla de muestra tratada -->
+        <!-- ======================================================== -->
+        <record id="param_vama_039" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-039</field>
+            <field name="name">Pegamento</field>
+        </record>
+
+        <record id="spec_vama_039_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_039"/>
+            <field name="name">Adherible</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">El adherible se encuentra en las condiciones óptimas.</field>
+            <field name="binary_prefix">El adherible se encuentra en las condiciones óptimas.|El adherible se encuentra en malas condiciones.</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-064: pH -->
+        <!-- ======================================================== -->
+        <record id="param_vama_064" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-064</field>
+            <field name="name">Información de etiqueta de empaque</field>
+        </record>
+
+        <record id="spec_vama_064_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_064"/>
+            <field name="name">Etiqueta de empaque</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">vama_multi_check</field>
+            <field name="acceptance_criteria">La información que contiene la etiqueta es correcta y corresponde.</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-068: Conductividad -->
+        <!-- ======================================================== -->
+        <record id="param_vama_068" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-068</field>
+            <field name="name">Conductividad</field>
+        </record>
+
+        <record id="spec_vama_068_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_068"/>
+            <field name="name">Conductividad</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="acceptance_criteria">≤8 µs/cm</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-069: Agentes biológicos -->
+        <!-- ======================================================== -->
+        <record id="param_vama_069" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-069</field>
+            <field name="name">Agentes biológicos</field>
+        </record>
+
+        <record id="spec_vama_069_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_069"/>
+            <field name="name">Agentes biológicos</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="acceptance_criteria">≤100 UFC/10 ml o ≤ a D.O. de 0.6</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-104: Funcionalidad del mecanismo extensible/retráctil -->
+        <!-- ======================================================== -->
+        <record id="param_vama_104" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-104</field>
+            <field name="name">Funcionalidad del mecanismo extensible/retráctil</field>
+        </record>
+
+        <record id="spec_vama_104_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_104"/>
+            <field name="name">Funcionalidad del mecanismo extensible/retráctil</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="acceptance_criteria">El mecanismo se extiende y retrae sin fallas manteniéndose firme en posición extendida sin colapsar bajo presión simulada.</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-105: Volumen dispensado de micropipeta -->
+        <!-- CORRECCIÓN: Usar conditional_numeric_range para múltiples volúmenes -->
+        <!-- ======================================================== -->
+        <record id="param_vama_105" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-105</field>
+            <field name="name">Volumen dispensado de micropipeta</field>
+        </record>
+
+        <record id="spec_vama_105_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_105"/>
+            <field name="name">Volumen dispensado</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">conditional_numeric_range</field>
+            <field name="acceptance_criteria">5 µL ± 2 µL, 25/50 µL ± 5 µL</field>
+        </record>
+
+        <!-- Opciones condicionales para VAMA-105 -->
+        <record id="opt_vama_105_5ul" model="amunet.quality.parameter.conditional.option">
+            <field name="specification_id" ref="spec_vama_105_auto"/>
+            <field name="name">5 µL</field>
+            <field name="sequence">1</field>
+            <field name="nominal_value">5.0</field>
+            <field name="min_value">3.0</field>
+            <field name="max_value">7.0</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="opt_vama_105_25ul" model="amunet.quality.parameter.conditional.option">
+            <field name="specification_id" ref="spec_vama_105_auto"/>
+            <field name="name">25 µL</field>
+            <field name="sequence">2</field>
+            <field name="nominal_value">25.0</field>
+            <field name="min_value">20.0</field>
+            <field name="max_value">30.0</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="opt_vama_105_50ul" model="amunet.quality.parameter.conditional.option">
+            <field name="specification_id" ref="spec_vama_105_auto"/>
+            <field name="name">50 µL</field>
+            <field name="sequence">3</field>
+            <field name="nominal_value">50.0</field>
+            <field name="min_value">45.0</field>
+            <field name="max_value">55.0</field>
+            <field name="active">True</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-106: Funcionalidad de imanes -->
+        <!-- ======================================================== -->
+        <record id="param_vama_106" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-106</field>
+            <field name="name">Funcionalidad de imanes</field>
+        </record>
+
+        <record id="spec_vama_106_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_106"/>
+            <field name="name">Funcionalidad de imanes</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="acceptance_criteria">Todos sus imanes son funcionales</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-107: Agitación -->
+        <!-- ======================================================== -->
+        <record id="param_vama_107" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-107</field>
+            <field name="name">Agitación</field>
+        </record>
+
+        <record id="spec_vama_107_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_107"/>
+            <field name="name">Agitación</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="acceptance_criteria">Cumple con el movimiento de agitación</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-108: Tiempo en alcanzar temperatura -->
+        <!-- ======================================================== -->
+        <record id="param_vama_108" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-108</field>
+            <field name="name">Tiempo en alcanzar temperatura</field>
+        </record>
+
+        <record id="spec_vama_108_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_108"/>
+            <field name="name">Tiempo en alcanzar temperatura</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="acceptance_criteria">≤ 10 minutos</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-11: D e sem peño de liberación de la almohadilla de conjugado -->
+        <!-- ======================================================== -->
+        <record id="param_vama_11" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-11</field>
+            <field name="name">D e sem peño de liberación de la almohadilla de conjugado</field>
+        </record>
+
+        <record id="spec_vama_11_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_11"/>
+            <field name="name">Liberación completa de conjugado, sin partículas visibles.</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="acceptance_criteria">Liberación completa de conjugado, sin partículas visibles.</field>
+        </record>
+            
+        <!-- ======================================================== -->
+        <!-- VAMA-111: D e sem peño de liberación de la almohadilla de conjugado -->
+        <!-- ======================================================== -->
+        <record id="param_vama_111" model="amunet.quality.check.parameter">
+            <field name="code">VAMA-111</field>
+            <field name="name">D e sem peño de liberación de la almohadilla de conjugado</field>
+        </record>
+
+        <record id="spec_vama_111_auto" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_vama_111"/>
+            <field name="name">Liberación completa de conjugado, sin partículas visibles.</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Liberación completa de conjugado, sin partículas visibles.</field>
+            <field name="binary_prefix">Con/Sin</field>
+            <field name="binary_suffix">partículas visibles</field>
+            <field name="binary_expected_option">without_prefix</field> <!-- Pass: Sin partículas -->
+        </record>
+    </data>
+</odoo>
+

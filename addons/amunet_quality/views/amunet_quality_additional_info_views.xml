@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vista de Lista -->
+    <record id="view_additional_info_field_list" model="ir.ui.view">
+        <field name="name">amunet.quality.additional.info.field.list</field>
+        <field name="model">amunet.quality.additional.info.field</field>
+        <field name="arch" type="xml">
+            <list string="Campos de información adicional" default_order="sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="field_type"/>
+                <field name="uom" optional="show"/>
+                <field name="code" string="Código técnico" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista de Formulario -->
+    <record id="view_additional_info_field_form" model="ir.ui.view">
+        <field name="name">amunet.quality.additional.info.field.form</field>
+        <field name="model">amunet.quality.additional.info.field</field>
+        <field name="arch" type="xml">
+            <form string="Campo de información adicional">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active"/>
+                        </button>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="field_type"/>
+                            <field name="placeholder"
+                                   placeholder="Texto que verá el usuario en el campo"/>
+                        </group>
+                        <group>
+                            <field name="uom"
+                                   placeholder="ej: cm, %, kg"
+                                   invisible="field_type == 'html_attachments'"/>
+                            <field name="sequence"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción de Ventana -->
+    <record id="action_additional_info_field" model="ir.actions.act_window">
+        <field name="name">Campos de información adicional</field>
+        <field name="res_model">amunet.quality.additional.info.field</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Cree un nuevo campo de información adicional
+            </p>
+            <p>
+                Los campos informativos permiten capturar datos obligatorios durante el Control de Calidad
+                que no afectan el dictamen global (pass/fail).
+            </p>
+        </field>
+    </record>
+
+</odoo>

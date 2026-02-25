@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Vista de Producto - Pestaña Control de Calidad
+        Epic-031: Sistema de Parámetros de Calidad Jerárquicos
+        HU-031-1: Configurar Parámetros de Calidad por Producto
+    -->
+
+    <!-- Pestaña de Configuración de Control de Calidad -->
+    <record id="view_product_template_form_quality" model="ir.ui.view">
+        <field name="name">product.template.form.quality</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Control de calidad" name="quality_control">
+                    <group>
+                        <group string="Configuración">
+                            <field name="qc_required"/>
+                            <field name="qc_test_destructiveness"
+                                   invisible="not qc_required"/>
+                        </group>
+                        <group string="Estadísticas" invisible="not qc_required">
+                            <field name="qc_parameter_count"/>
+                            <field name="qc_check_count"/>
+                            <button name="action_view_quality_checks"
+                                    string="Ver Controles de calidad"
+                                    type="object"
+                                    class="oe_link"
+                                    invisible="qc_check_count == 0"/>
+                        </group>
+                    </group>
+
+                    <!-- Nueva tabla de Parámetros con Especificaciones (Epic-031) -->
+                    <separator string="Determinaciones de Control de Calidad" invisible="not qc_required"/>
+                    <field name="qc_parameter_rel_ids" nolabel="1" invisible="not qc_required"
+                           context="{'default_product_tmpl_id': id}">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="parameter_id"
+                                   options="{'no_create': False, 'no_create_edit': False}"
+                                   context="{'default_active': True}" string="Determinación"/>
+                            <field name="parameter_code" readonly="1"/>
+                            <field name="spec_summary" readonly="1"/>
+                            <button name="action_configure_specifications"
+                                    string="Configurar"
+                                    type="object"
+                                    icon="fa-cog"
+                                    class="btn-link"/>
+                        </list>
+                    </field>
+
+                    <!-- Epic-032: Sección de Información Adicional -->
+                    <separator string="Información adicional" invisible="not qc_required"/>
+                    <field name="require_additional_info" invisible="not qc_required"/>
+
+                    <field name="additional_info_config_ids" nolabel="1"
+                           invisible="not require_additional_info"
+                           context="{'default_product_tmpl_id': id}">
+                        <list editable="bottom" default_order="sequence">
+                            <field name="sequence" widget="handle"/>
+                            <field name="field_id"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   required="1"
+                                   domain="[('active', '=', True)]"/>
+                            <field name="field_name" string="Nombre" readonly="1"/>
+                            <field name="field_type_display" string="Tipo" readonly="1"/>
+                            <field name="uom" string="Unidad" readonly="1" optional="show"/>
+                            <field name="required" widget="boolean_toggle"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </list>
+                    </field>
+
+
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Pestaña de Documentos de Control de Calidad -->
+    <record id="view_product_template_form_quality_documents" model="ir.ui.view">
+        <field name="name">product.template.form.quality.documents</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="stock.product_template_form_view_procurement_button"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Documentos de control de calidad" name="quality_documents">
+                    <group>
+                        <!-- Sección izquierda: REPORTE DE ANÁLISIS -->
+                        <group string="REPORTE DE ANÁLISIS">
+                            <field name="report_document_header" string="Encabezado"/>
+                            <field name="report_effective_date" string="Fecha de elaboración"/>
+                            <field name="report_expiry_date" string="Fecha de vigencia"/>
+                            <field name="report_document_code" string="Código"/>
+                            <field name="report_version" string="Versión"/>
+                            <field name="report_replaces_version" string="Sustituye"/>
+                            <field name="report_references" string="Referencias"/>
+                        </group>
+
+                        <!-- Sección derecha: CERTIFICADO DE CALIDAD -->
+                        <group string="CERTIFICADO DE CALIDAD">
+                            <field name="certificate_document_header" string="Encabezado"/>
+                            <field name="certificate_effective_date" string="Fecha de elaboración"/>
+                            <field name="certificate_expiry_date" string="Fecha de vigencia"/>
+                            <field name="certificate_document_code" string="Código"/>
+                            <field name="certificate_version" string="Versión"/>
+                            <field name="certificate_replaces_version" string="Sustituye"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-secondary" role="alert">
+                        <strong>ℹ️ Nota:</strong>
+                        Estos campos se utilizan para la generación de documentos de control de calidad.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ========== Vistas para Relación Producto-Parámetro ========== -->
+
+    <record id="view_amunet_quality_parameter_product_rel_list" model="ir.ui.view">
+        <field name="name">amunet.quality.parameter.product.rel.list</field>
+        <field name="model">amunet.quality.parameter.product.rel</field>
+        <field name="arch" type="xml">
+            <list string="Parámetros del Producto" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="parameter_id"/>
+                <field name="parameter_code"/>
+                <field name="active_spec_count"/>
+                <field name="specification_total"/>
+                <field name="spec_summary"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_quality_parameter_product_rel_form" model="ir.ui.view">
+        <field name="name">amunet.quality.parameter.product.rel.form</field>
+        <field name="model">amunet.quality.parameter.product.rel</field>
+        <field name="arch" type="xml">
+            <form string="Configuración de Parámetro">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="product_tmpl_id" readonly="1"/>
+                            <field name="parameter_id"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="parameter_code" readonly="1"/>
+                            <field name="spec_summary" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="Especificaciones"/>
+                    <field name="specification_config_ids" nolabel="1">
+                        <list>
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="sequence" widget="handle"/>
+                            <field name="specification_name" readonly="1"/>
+                            <field name="evaluation_type" readonly="1" widget="badge"/>
+                            <field name="config_summary" string="Configuración" readonly="1"/>
+                            <button name="action_configure" type="object"
+                                    string="Configurar" icon="fa-cog"
+                                    class="btn-link"/>
+                        </list>
+                    </field>
+
+                    <button name="action_regenerate_configs"
+                            string="Regenerar configuraciones"
+                            type="object"
+                            class="btn-secondary mt-2"
+                            confirm="¿Está seguro? Se eliminarán las configuraciones actuales y se regenerarán desde el parámetro."/>
+                </sheet>
+                <footer>
+                    <button string="Guardar" special="save" class="btn-primary"/>
+                    <button string="Descartar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ========== Vistas para Configuración de Especificación por Producto ========== -->
+
+    <record id="view_amunet_quality_spec_config_list" model="ir.ui.view">
+        <field name="name">amunet.quality.parameter.specification.config.list</field>
+        <field name="model">amunet.quality.parameter.specification.config</field>
+        <field name="arch" type="xml">
+            <list string="Configuración de Especificaciones" editable="bottom">
+                <field name="active" widget="boolean_toggle"/>
+                <field name="sequence" widget="handle"/>
+                <field name="specification_name"/>
+                <field name="evaluation_type" widget="badge"/>
+                <field name="nominal_value" invisible="evaluation_type != 'numeric_range'"/>
+                <field name="tolerance" invisible="evaluation_type != 'numeric_range'"/>
+                <field name="min_value" invisible="evaluation_type != 'numeric_range'"/>
+                <field name="max_value" invisible="evaluation_type != 'numeric_range'"/>
+                <field name="uom_id" invisible="evaluation_type != 'numeric_range'"/>
+                <field name="config_summary"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Formulario completo de configuración por producto (WIZARD) -->
+    <record id="view_specification_config_form" model="ir.ui.view">
+        <field name="name">amunet.quality.parameter.specification.config.form.wizard</field>
+        <field name="model">amunet.quality.parameter.specification.config</field>
+        <field name="arch" type="xml">
+            <form string="Configurar Especificación">
+                <sheet>
+                    <group>
+                        <group string="Identificación">
+                            <field name="parameter_id" readonly="1" string="Parámetro"/>
+                            <field name="sequence"/>
+                            <field name="specification_name" readonly="1" string="Nombre"/>
+                            <field name="acceptance_criteria"/>
+                            <field name="evaluation_type" readonly="1" widget="badge"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Configuración Binary Selection -->
+                        <page string="Selección Binaria" name="binary_selection"
+                              invisible="evaluation_type != 'binary_selection'">
+                            <group>
+                                <group>
+                                    <field name="binary_prefix" placeholder="Sin/Con, Presencia/Ausencia"/>
+                                    <field name="binary_suffix" placeholder="polvo, manchas, colorante"/>
+                                    <field name="binary_expected_option"/>
+                                </group>
+                                <group string="Vista Previa">
+                                    <field name="binary_option_pass" readonly="1"/>
+                                    <field name="binary_option_fail" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Configuración Numeric Range -->
+                        <page string="Rango Numérico" name="numeric_range"
+                              invisible="evaluation_type != 'numeric_range'">
+                            <group>
+                                <group string="Configuración">
+                                    <field name="uom_id"/>
+                                    <field name="nominal_value"/>
+                                    <field name="tolerance"/>
+                                    <field name="use_manual_range"/>
+                                </group>
+                                <group string="Rango Calculado">
+                                    <field name="min_value_manual" invisible="not use_manual_range"/>
+                                    <field name="max_value_manual" invisible="not use_manual_range"/>
+                                    <field name="min_value" readonly="1"/>
+                                    <field name="max_value" readonly="1"/>
+                                    <field name="range_display" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Configuración Checkbox Combined -->
+                        <page string="Checkboxes combinados" name="checkbox_combined"
+                              invisible="evaluation_type != 'checkbox_combined'">
+                            <group>
+                                <field name="checkbox_label_1" placeholder="Sellado adecuado"/>
+                                <field name="checkbox_label_2" placeholder="Sin defectos visibles"/>
+                                <field name="checkbox_require_both"/>
+                            </group>
+                        </page>
+
+                        <!-- Configuración Conditional Numeric Range -->
+                        <page string="Numérico condicional" name="conditional_numeric"
+                              invisible="evaluation_type != 'conditional_numeric_range'">
+                            <group>
+                                <field name="active_conditional_option_ids" nolabel="1"
+                                       widget="many2many_checkboxes"/>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong>ℹ️ Nota:</strong>
+                                Seleccione las opciones condicionales activas para este producto.
+                                Las opciones se configuran en el parámetro base.
+                            </div>
+                        </page>
+
+                        <!-- Configuración Text Pattern (VAMA-112) -->
+                        <page string="Texto con patrón" name="text_pattern"
+                              invisible="evaluation_type != 'text_pattern'">
+                            <group>
+                                <group>
+                                    <field name="text_pattern_expected" placeholder="AAAAA"/>
+                                    <field name="text_pattern_regex" placeholder="^[AB]{5}$"/>
+                                    <field name="text_pattern_length" readonly="1"/>
+                                </group>
+                            </group>
+                            <separator string="Mapeo de Frases (JSON)"/>
+                            <field name="text_phrase_mapping" nolabel="1" widget="text"
+                                   placeholder='{"positions": [{"index": 0, "A": "adecuado", "B": "no adecuado", "context": "El funcionamiento es {value}"}]}'/>
+                            <div class="text-muted small">
+                                <strong>Ejemplo:</strong> {"positions": [{"index": 0, "A": "adecuado", "B": "no adecuado", "context": "El funcionamiento es {value}"}]}
+                            </div>
+                        </page>
+
+                        <!-- Configuración Expected vs Obtained -->
+                        <page string="Esperado vs obtenido" name="expected_vs_obtained"
+                              invisible="evaluation_type != 'expected_vs_obtained'">
+                            <group>
+                                <field name="expected_options" placeholder="Positivo,Negativo"/>
+                                <field name="obtained_options" placeholder="Positivo,Negativo"/>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong>ℹ️ Nota:</strong>
+                                Ingrese las opciones separadas por coma. El sistema evaluará si el resultado obtenido coincide con el esperado.
+                            </div>
+                        </page>
+
+                        <!-- Configuración Binary with Notes -->
+                        <page string="Binary con notas" name="binary_with_notes"
+                              invisible="evaluation_type != 'binary_with_notes'">
+                            <group>
+                                <field name="binary_notes_option_pass" placeholder="La información es completa y correcta"/>
+                                <field name="binary_notes_option_fail" placeholder="La información es incompleta"/>
+                                <field name="binary_notes_required"/>
+                            </group>
+                        </page>
+
+                        <!-- Configuración Ternary with N/A -->
+                        <page string="Ternario con N/A" name="ternary_with_na"
+                              invisible="evaluation_type != 'ternary_with_na'">
+                            <group>
+                                <field name="ternary_option_yes"/>
+                                <field name="ternary_option_no"/>
+                                <field name="ternary_option_na"/>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong>ℹ️ Nota:</strong>
+                                Cuando se selecciona N/A, la especificación se excluye del conteo y no afecta el dictamen.
+                            </div>
+                        </page>
+
+                        <!-- Configuración VAMA Multi-Check -->
+                        <page string="VAMA Multi-Check" name="vama_multi_check"
+                              invisible="evaluation_type != 'vama_multi_check'">
+                            <separator string="Mapeo de Puntos (JSON)"/>
+                            <field name="text_phrase_mapping" nolabel="1" widget="text"
+                                   placeholder='{"success_msg": "...", "positions": [{"index": 0, "label": "Nombre", "A": "...", "B": "...", "N": "...", "error_msg": "..."}]}'/>
+                            <div class="text-muted small">
+                                <strong>Ejemplo:</strong> {"success_msg": "Todo OK", "positions": [{"index": 0, "label": "Lote", "A": "Correcto", "B": "Error", "error_msg": "Lote mal"}]}
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button string="Guardar" special="save" class="btn-primary"/>
+                    <button string="Descartar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Formulario simple para edición en lista -->
+    <record id="view_amunet_quality_spec_config_form" model="ir.ui.view">
+        <field name="name">amunet.quality.parameter.specification.config.form</field>
+        <field name="model">amunet.quality.parameter.specification.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuración de Especificación">
+                <sheet>
+                    <group>
+                        <group string="Especificación">
+                            <field name="specification_id" readonly="1"/>
+                            <field name="specification_name" readonly="1"/>
+                            <field name="evaluation_type" readonly="1"/>
+                            <field name="acceptance_criteria"/>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group string="Resumen">
+                            <field name="config_summary" readonly="1"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        Use el botón "Configurar" para editar los criterios de aceptación.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action para configurar especificaciones (se abre en modal) -->
+    <record id="action_configure_specifications" model="ir.actions.act_window">
+        <field name="name">Configurar Especificaciones</field>
+        <field name="res_model">amunet.quality.parameter.specification.config</field>
+        <field name="view_mode">list,form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

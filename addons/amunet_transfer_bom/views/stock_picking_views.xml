@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Extender vista de formulario de Entrega -->
+    <record id="view_picking_form_bom" model="ir.ui.view">
+        <field name="name">stock.picking.form.bom</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <!-- Agregar campos BOM antes del notebook (pestañas) -->
+            <xpath expr="//notebook" position="before">
+                <group name="bom_transfer_group" string="Entrega por lista de materiales" invisible="not show_bom_fields">
+                    <field name="show_bom_fields" invisible="1"/>
+                    <field name="available_bom_product_ids" invisible="1"/>
+                    <field name="use_bom_transfer" widget="boolean_toggle"/>
+                    <field name="bom_product_id" invisible="not use_bom_transfer" required="use_bom_transfer"/>
+                    <field name="bom_product_qty" invisible="not use_bom_transfer"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_quality_signature_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.quality.signature.wizard.form</field>
+        <field name="model">amunet.quality.signature.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Firma Electrónica">
+                <group>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Seguridad:</strong> Para firmar este documento, ingrese su <strong>Contraseña</strong> o su <strong>PIN de Firma</strong>.
+                        <br/>
+                        <small class="text-muted">Esto confirma su identidad y autoriza la acción conforme a 21 CFR Part 11.</small>
+                    </div>
+                    <group>
+                        <field name="password" password="True" string="Contraseña o PIN"/>
+                        <field name="signature_type" invisible="1"/>
+                        <field name="check_ids" invisible="1"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_confirm_signature" string="Firmar" type="object" class="btn-primary" icon="fa-lock"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

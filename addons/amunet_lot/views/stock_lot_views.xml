@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista de lista de lotes -->
+    <record id="view_stock_lot_tree_amunet" model="ir.ui.view">
+        <field name="name">stock.lot.tree.amunet</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_tree"/>
+        <field name="arch" type="xml">
+            <!-- <xpath expr="//list" position="attributes">
+                <attribute name="decoration-success">amunet_auto_generated == True</attribute>
+            </xpath> -->
+            <!-- <xpath expr="//field[@name='name']" position="after">
+                <field name="amunet_auto_generated" optional="show"/>
+            </xpath> -->
+            <!-- Cambiar etiqueta del campo name -->
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="string">Número de lote/serie Amunet</attribute>
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- Vista de formulario de lotes -->
+    <record id="view_stock_lot_form_amunet" model="ir.ui.view">
+        <field name="name">stock.lot.form.amunet</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <!-- Cambiar etiqueta del campo name -->
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="string">Número de lote/serie Amunet</attribute>
+            </xpath>
+            <xpath expr="//field[@name='product_id']" position="before">
+                <!-- <field name="amunet_auto_generated"/> -->
+                <field name="factory_lot_id" string="Número de serie/lote de fábrica"/>
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- Heredar acción para cambiar nombre -->
+    <record id="stock.action_production_lot_form" model="ir.actions.act_window">
+        <field name="name">Números de serie/lote Amunet</field>
+        <field name="res_model">stock.lot</field>
+    </record>
+    
+    <!-- Redefinir menú con el nuevo nombre -->
+    <menuitem 
+        id="stock.menu_action_production_lot_form"
+        name="Números de serie/lote Amunet"
+        parent="stock.menu_stock_inventory_control"
+        action="stock.action_production_lot_form"
+        groups="stock.group_production_lot"
+        sequence="101"/>
+</odoo>
+

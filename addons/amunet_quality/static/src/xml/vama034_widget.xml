@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="amunet_quality.VAMA034Widget">
+        <div>
+            <div class="d-flex gap-2">
+                <select t-if="!props.readonly"
+                        class="form-select form-select-sm"
+                        t-on-change="onSampleChange">
+                    <option value="">Seleccione el tipo de muestra:</option>
+                    <option value="negative" t-att-selected="detail.vama034_sample_type === 'negative'">Opción A: Negativa</option>
+                    <option value="positive" t-att-selected="detail.vama034_sample_type === 'positive'">Opción B: Positiva</option>
+                </select>
+                <span t-else="" class="form-control-plaintext">
+                    <t t-esc="detail.vama034_sample_type === 'negative' ? 'Opción A: Negativa' : (detail.vama034_sample_type === 'positive' ? 'Opción B: Positiva' : '-')"/>
+                </span>
+
+                <select t-if="!props.readonly"
+                        class="form-select form-select-sm"
+                        t-att-disabled="!detail.vama034_sample_type"
+                        t-on-change="onResultChange">
+                    <option value="">Registre el resultado:</option>
+                    <option value="control_only" t-att-selected="detail.vama034_observed_result === 'control_only'">Opción A: Visualización sólo de la línea control.</option>
+                    <option value="control_test" t-att-selected="detail.vama034_observed_result === 'control_test'">Opción B: Visualización de línea control y línea de prueba.</option>
+                </select>
+                <span t-else="" class="form-control-plaintext">
+                    <t t-esc="detail.vama034_observed_result === 'control_only' ? 'Opción A: Visualización sólo de la línea control.' : (detail.vama034_observed_result === 'control_test' ? 'Opción B: Visualización de línea control y línea de prueba.' : '-')"/>
+                </span>
+            </div>
+            <div t-if="detail.verdict_message" class="alert alert-info mt-2 mb-0 py-1 px-2 small">
+                <i t-attf-class="fa #{detail.verdict === 'pass' ? 'fa-check-circle text-success' : (detail.verdict === 'fail' ? 'fa-times-circle text-danger' : 'fa-info-circle text-info')} me-1"/>
+                <span t-esc="detail.verdict_message"/>
+            </div>
+        </div>
+    </t>
+</templates>

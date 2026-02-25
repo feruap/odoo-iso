@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista heredada de Partner para agregar estado de calidad -->
+    <record id="view_partner_form_amunet_quality" model="ir.ui.view">
+        <field name="name">res.partner.form.amunet.quality</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="%(amunet_quality_supplier_audit_action)d" 
+                        type="action" 
+                        class="oe_stat_button" 
+                        icon="fa-shield" 
+                        context="{'default_partner_id': id}">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value"><field name="quality_status"/></span>
+                        <span class="o_stat_text">Calidad</span>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='internal_notes']" position="after">
+                <page string="Calidad / ISO 13485" name="quality_iso" invisible="not is_company">
+                    <group>
+                        <group string="Estado de Calificación">
+                            <field name="quality_status"/>
+                            <field name="last_audit_date"/>
+                            <field name="next_audit_date"/>
+                        </group>
+                        <group string="Auditoría">
+                            <field name="quality_notes" placeholder="Notas sobre certificación ISO, desviaciones aceptadas, etc."/>
+                        </group>
+                    </group>
+                    <field name="audit_ids" readonly="1">
+                        <list>
+                            <field name="audit_date"/>
+                            <field name="auditor_id"/>
+                            <field name="result" widget="badge" decoration-success="result == 'pass'" decoration-warning="result == 'conditional'" decoration-danger="result == 'fail'"/>
+                            <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'done'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

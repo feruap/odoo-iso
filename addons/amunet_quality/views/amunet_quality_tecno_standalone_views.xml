@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Standalone Incident Tree View -->
+    <record id="view_amunet_quality_tecno_incident_list" model="ir.ui.view">
+        <field name="name">amunet.quality.tecno.incident.list</field>
+        <field name="model">amunet.quality.tecno.incident</field>
+        <field name="arch" type="xml">
+            <list string="Incidentes de Tecnovigilancia" decoration-danger="tecno_report_deadline &lt; now and not resolved" decoration-success="resolved">
+                <field name="name"/>
+                <field name="tecno_notification_date"/>
+                <field name="tecno_incident_type"/>
+                <field name="tecno_severity"/>
+                <field name="tecno_report_deadline"/>
+                <field name="resolved"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Standalone Incident Form View -->
+    <record id="view_amunet_quality_tecno_incident_form" model="ir.ui.view">
+        <field name="name">amunet.quality.tecno.incident.form</field>
+        <field name="model">amunet.quality.tecno.incident</field>
+        <field name="arch" type="xml">
+            <form string="Incidente de Tecnovigilancia">
+                <header>
+                    <field name="resolved" widget="boolean_toggle" string="Resuelto"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Clasificación del Incidente">
+                            <field name="is_tecnovigilancia" invisible="1"/>
+                            <field name="tecno_incident_type" required="1"/>
+                            <field name="tecno_severity" required="1"/>
+                            <field name="tecno_detection_date" required="1"/>
+                            <field name="tecno_notification_date" required="1"/>
+                            <field name="tecno_report_deadline" readonly="1"/>
+                        </group>
+                        <group string="Datos del Paciente / Producto">
+                            <field name="tecno_patient_initials"/>
+                            <group>
+                                <field name="tecno_age"/>
+                                <field name="tecno_gender"/>
+                            </group>
+                            <field name="tecno_product_lot"/>
+                            <field name="tecno_product_expiry"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Descripción del Evento">
+                            <field name="description" placeholder="Escriba aquí los detalles del incidente..."/>
+                        </page>
+                    </notebook>
+                    <div class="alert alert-info" role="alert" invisible="not tecno_report_deadline">
+                        Plazo legal de reporte basado en NOM-240-SSA1-2012 calculado automáticamente.
+                    </div>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Standalone Incident Search View -->
+    <record id="view_amunet_quality_tecno_incident_search" model="ir.ui.view">
+        <field name="name">amunet.quality.tecno.incident.search</field>
+        <field name="model">amunet.quality.tecno.incident</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="tecno_product_lot"/>
+                <separator/>
+                <filter string="Pendientes" name="pending" domain="[('resolved', '=', False)]"/>
+                <filter string="Por Vencer" name="deadline" domain="[('tecno_report_deadline', '&lt;', context_today().strftime('%Y-%m-%d %H:%M:%S'))]"/>
+                <separator/>
+                <filter string="Tipo de Incidente" name="group_type" context="{'group_by': 'tecno_incident_type'}"/>
+                <filter string="Severidad" name="group_severity" context="{'group_by': 'tecno_severity'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action for Standalone Incident -->
+    <record id="action_amunet_quality_tecno_incident" model="ir.actions.act_window">
+        <field name="name">Incidentes Tecnovigilancia</field>
+        <field name="res_model">amunet.quality.tecno.incident</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_quality_tecno_incident_search"/>
+        <field name="context">{'default_is_tecnovigilancia': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registrar un nuevo incidente de Tecnovigilancia
+            </p>
+            <p>
+                Este módulo permite cumplir con la NOM-240-SSA1-2012 para el reporte de incidentes adversos.
+            </p>
+        </field>
+    </record>
+</odoo>

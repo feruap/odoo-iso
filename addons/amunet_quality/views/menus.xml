@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Menús del módulo Control de Calidad Amunet
+        Epic-029: Sistema de Control de Calidad
+    -->
+
+    <!-- Menú principal: Calidad -->
+    <!-- El icono se toma automáticamente del icono del módulo configurado en __manifest__.py -->
+    <!-- Submenú: Operaciones (Ya definido en menu_parents.xml) -->
+    <menuitem id="menu_quality_check"
+              name="Controles de calidad"
+              parent="menu_quality_operations"
+              action="action_amunet_quality_check"
+              sequence="10"/>
+
+    <!-- Submenú: Configuración (Ya definido en menu_parents.xml) -->
+    <menuitem id="menu_quality_parameter"
+              name="Parámetros de calidad"
+              parent="menu_quality_config"
+              action="action_amunet_quality_parameter"
+              sequence="10"/>
+
+    <menuitem id="menu_quality_point"
+              name="Puntos de control"
+              parent="menu_quality_config"
+              action="action_amunet_quality_point"
+              sequence="20"/>
+
+    <menuitem id="menu_additional_info_field"
+              name="Información adicional"
+              parent="menu_quality_config"
+              action="action_additional_info_field"
+              sequence="50"/>
+
+    <menuitem id="menu_quality_signature_permissions"
+              name="Permisos de Firma"
+              parent="menu_quality_config"
+              action="action_res_users_quality"
+              groups="amunet_quality.group_quality_manager,base.group_erp_manager"
+              sequence="100"/>
+
+    <!-- Menús Regulatorios -->
+    <menuitem id="menu_quality_tecno_incident"
+              name="Incidentes Tecnovigilancia"
+              parent="menu_quality_regulatory"
+              action="action_amunet_quality_tecno_incident"
+              sequence="10"/>
+
+    <menuitem id="menu_quality_capa"
+              name="CAPAs (Acciones Correctivas)"
+              parent="menu_quality_regulatory"
+              action="action_amunet_quality_capa"
+              sequence="20"/>
+
+    <!-- Configurar icono del menú principal en el menú de aplicaciones -->
+    <record id="menu_quality_root" model="ir.ui.menu">
+        <field name="web_icon">amunet_quality,static/description/icon.png</field>
+    </record>
+
+</odoo>

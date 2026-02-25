@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Acción del Reporte -->
+    <record id="action_report_quality_certificate" model="ir.actions.report">
+        <field name="name">Certificado de Calidad</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_quality.report_quality_certificate_template</field>
+        <field name="report_file">amunet_quality.report_quality_certificate_template</field>
+        <field name="print_report_name">object.get_pdf_filename()</field>
+        <field name="binding_model_id" ref="model_amunet_quality_check"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Template del Reporte -->
+    <template id="report_quality_certificate_template">
+        <t t-call="web.html_container">
+            <!-- 
+                FIX: Override de fuentes para evitar warning de Courier
+                El CSS de assets_backend incluye 'Courier New' que causa:
+                "Warn: Can't find .pfb for face 'Courier'"
+                
+                Este warning corrompe la respuesta HTTP y causa que el PDF
+                se descargue con nombre UUID sin extensión.
+                
+                Solución: Forzar DejaVu Sans en todos los elementos.
+            -->
+            <style>
+                /* Forzar DejaVu Sans en TODO el PDF - override de CSS externo */
+                .certificate-container {
+                    font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif !important;
+                }
+                
+                .certificate-container * {
+                    font-family: inherit !important;
+                }
+                
+                /* Para elementos monospace, usar DejaVu Sans Mono (disponible en contenedor) */
+                .certificate-container pre, 
+                .certificate-container code, 
+                .certificate-container .monospace, 
+                .certificate-container textarea {
+                    font-family: 'DejaVu Sans Mono', 'Liberation Mono', monospace !important;
+                }
+                
+                /* Asegurar que inputs y selects también usen DejaVu */
+                .certificate-container input, 
+                .certificate-container select, 
+                .certificate-container button {
+                    font-family: inherit !important;
+                }
+            </style>
+            
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page certificate-container">
+                        <div class="row">
+                            <div class="col-8">
+                                <h2>CERTIFICADO DE CALIDAD</h2>
+                                <h4>No. Análisis: <span t-esc="o.analysis_number or o.name"/></h4>
+                            </div>
+                            <div class="col-4 text-end">
+                                <div style="width: 100px; height: 100px; float: right;">
+                                    <img t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', o.action_generate_report_qr(), 200, 200)" style="width:100px;height:100px;"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <div class="row mt32 mb32">
+                            <div class="col-6">
+                                <strong>Producto:</strong> <span t-field="o.product_id.name"/><br/>
+                                <strong>Código:</strong> <span t-field="o.product_code"/><br/>
+                                <strong>Proveedor:</strong> <span t-field="o.partner_id.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Lote Amunet:</strong> <span t-field="o.lot_name_amunet"/><br/>
+                                <strong>Lote Fábrica:</strong> <span t-field="o.lot_name_factory"/><br/>
+                                <strong>Caducidad:</strong> <span t-field="o.expiration_date"/>
+                            </div>
+                        </div>
+
+                        <h4>RESULTADOS DEL ANÁLISIS</h4>
+                        <table class="table table-sm o_main_table border">
+                            <thead style="background-color: #f2f2f2;">
+                                <tr>
+                                    <th>Determinación</th>
+                                    <th>Especificación</th>
+                                    <th>Método / Criterio</th>
+                                    <th>Resultado</th>
+                                    <th>Dictamen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.test_line_ids" t-as="line">
+                                    <tr t-att-class="'bg-light fw-bold' if line.has_details else ''">
+                                        <td><span t-field="line.name"/></td>
+                                        <td colspan="3"></td>
+                                        <td>
+                                            <span t-if="line.verdict == 'pass'">CUMPLE</span>
+                                            <span t-if="line.verdict == 'fail'">NO CUMPLE</span>
+                                            <span t-if="line.verdict == 'not_applicable'">N/A</span>
+                                        </td>
+                                    </tr>
+                                    <t t-if="line.has_details">
+                                        <t t-foreach="line.detail_line_ids" t-as="detail">
+                                            <tr>
+                                                <td style="padding-left: 20px;">└─ <span t-field="detail.name"/></td>
+                                                <td><span t-field="detail.acceptance_criteria"/></td>
+                                                <td><span t-field="detail.evaluation_type"/></td>
+                                                <td><span t-field="detail.result_display"/></td>
+                                                <td>
+                                                    <span t-if="detail.verdict == 'pass'">CUMPLE</span>
+                                                    <span t-if="detail.verdict == 'fail'">NO CUMPLE</span>
+                                                    <span t-if="detail.verdict == 'not_applicable'">N/A</span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <div class="row mt32">
+                            <div class="col-12">
+                                <strong>DICTAMEN GLOBAL: </strong>
+                                <span t-att-class="'text-success fw-bold' if o.global_result == 'pass' else 'text-danger fw-bold'">
+                                    <span t-field="o.global_result_display"/>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row mt64 text-center">
+                            <div class="col-4">
+                                <hr/>
+                                <strong>REALIZÓ</strong><br/>
+                                <span t-field="o.user_realized_id.name"/><br/>
+                                <span t-field="o.realized_date"/>
+                            </div>
+                            <div class="col-4">
+                                <hr/>
+                                <strong>VERIFICÓ</strong><br/>
+                                <span t-field="o.user_verified_id.name"/><br/>
+                                <span t-field="o.verified_date"/>
+                            </div>
+                            <div class="col-4">
+                                <hr/>
+                                <strong>AUTORIZÓ</strong><br/>
+                                <span t-field="o.user_authorized_id.name"/><br/>
+                                <span t-field="o.authorized_date"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

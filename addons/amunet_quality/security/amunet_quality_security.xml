@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Grupos de Seguridad - Control de Calidad Amunet
+        Epic-029: Sistema de Control de Calidad
+        T-029-16: Configurar grupos de seguridad
+    -->
+
+    <!-- Grupo: Usuario de QC (Analista) -->
+    <record id="group_quality_user" model="res.groups">
+        <field name="name">Calidad / Analista QC</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">
+            Puede crear y editar controles de calidad.
+            Puede registrar resultados de pruebas.
+            Puede firmar en el campo "Realizó".
+        </field>
+    </record>
+
+    <!-- Grupo: Supervisor de QC -->
+    <record id="group_quality_supervisor" model="res.groups">
+        <field name="name">Calidad / Supervisor QC</field>
+        <field name="implied_ids" eval="[(4, ref('group_quality_user'))]"/>
+        <field name="comment">
+            Todos los permisos del Analista.
+            Puede firmar en el campo "Verificó".
+        </field>
+    </record>
+
+    <!-- Grupo: Responsable Sanitario -->
+    <record id="group_quality_sanitary" model="res.groups">
+        <field name="name">Calidad / Responsable Sanitario</field>
+        <field name="implied_ids" eval="[(4, ref('group_quality_supervisor'))]"/>
+        <field name="comment">
+            Todos los permisos del Supervisor.
+            Puede firmar en el campo "Autorizó".
+            Único que puede finalizar el análisis.
+        </field>
+    </record>
+
+    <!-- Grupo: Manager de QC -->
+    <record id="group_quality_manager" model="res.groups">
+        <field name="name">Calidad / Manager QC</field>
+        <field name="implied_ids" eval="[(4, ref('group_quality_sanitary'))]"/>
+        <field name="comment">
+            Acceso total al módulo de calidad.
+            Puede configurar parámetros.
+            Puede eliminar registros (con restricciones).
+        </field>
+    </record>
+
+</odoo>

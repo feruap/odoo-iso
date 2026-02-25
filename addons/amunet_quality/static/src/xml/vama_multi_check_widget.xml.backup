@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="amunet_quality.VAMAMultiCheckWidget" owl="1">
+        <div class="o_vama_multi_check_widget p-3 border rounded bg-light">
+
+            <t t-foreach="positions" t-as="pos" t-key="pos.index">
+                <div class="card mb-2 shadow-sm">
+                    <div class="card-body py-2">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-6 mb-2 mb-md-0">
+                                <label class="fw-bold mb-0">
+                                    <t t-esc="pos.label"/>
+                                </label>
+                                <div t-if="pos.instruction" class="text-muted small mt-1 italic">
+                                    <i class="fa fa-info-circle me-1"/> <t t-esc="pos.instruction"/>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div t-if="!pos.type || pos.type === 'binary'" class="btn-group w-100" role="group">
+                                    <button type="button" 
+                                            class="btn btn-sm"
+                                            t-att-class="getValue(pos.index) === 'A' ? 'btn-success' : 'btn-outline-success'"
+                                            t-on-click="() => this.updateValue(pos.index, 'A')">
+                                        <i class="fa fa-check me-1"/> <t t-esc="pos.A || 'Correcto'"/>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm"
+                                            t-att-class="getValue(pos.index) === 'B' ? 'btn-danger' : 'btn-outline-danger'"
+                                            t-on-click="() => this.updateValue(pos.index, 'B')">
+                                        <i class="fa fa-times me-1"/> <t t-esc="pos.B || 'Incorrecto'"/>
+                                    </button>
+                                </div>
+
+                                <!-- Type: Numeric (Input Field) -->
+                                <div t-elif="pos.type === 'numeric'" class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control"
+                                           t-att-placeholder="pos.placeholder || 'Ingrese valor'"
+                                           t-att-value="getValue(pos.index)"
+                                           t-on-change="(ev) => this.updateValue(pos.index, ev.target.value)"/>
+                                    <span t-if="pos.uom" class="input-group-text"><t t-esc="pos.uom"/></span>
+                                    <span t-if="pos.min !== undefined || pos.max !== undefined" class="input-group-text small bg-white text-muted">
+                                        Ref: <t t-if="pos.min !== undefined"><t t-esc="pos.min"/></t><t t-if="pos.min !== undefined &amp;&amp; pos.max !== undefined">-</t><t t-if="pos.max !== undefined"><t t-esc="pos.max"/></t>
+                                    </span>
+                                </div>
+
+                                <!-- Type: Select (Dropdown) -->
+                                <div t-elif="pos.type === 'select'" class="w-100">
+                                    <select class="form-select form-select-sm"
+                                            t-on-change="(ev) => this.updateValue(pos.index, ev.target.value)">
+                                        <option value="">-- Seleccione --</option>
+                                        <t t-foreach="pos.options || []" t-as="opt" t-key="opt.value">
+                                            <option t-att-value="opt.value" t-att-selected="getValue(pos.index) === opt.value">
+                                                <t t-esc="opt.label"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Resultado Generado -->
+            <div class="alert alert-info mt-3 py-2 mb-2" t-if="props.record.data.verdict_message">
+                <small class="fw-bold text-uppercase d-block mb-1">Resultado de la prueba:</small>
+                <div style="white-space: pre-wrap;"><t t-esc="props.record.data.verdict_message"/></div>
+            </div>
+
+            <!-- Dictamen Final -->
+            <div class="verdict-box mt-2" t-if="props.record.data.verdict and props.record.data.evaluation_type === 'vama_multi_check'">
+                <div t-attf-class="alert py-2 mb-0 {{ props.record.data.verdict === 'pass' ? 'alert-success' : props.record.data.verdict === 'fail' ? 'alert-danger' : 'alert-warning' }}">
+                    <h5 class="mb-0">
+                        <i t-attf-class="fa me-2 {{ props.record.data.verdict === 'pass' ? 'fa-check-circle' : props.record.data.verdict === 'fail' ? 'fa-times-circle' : 'fa-clock-o' }}"/>
+                        <strong t-if="props.record.data.verdict === 'pass'">✓ CUMPLE</strong>
+                        <strong t-elif="props.record.data.verdict === 'fail'">✗ NO CUMPLE</strong>
+                        <strong t-else="">⏳ PENDIENTE</strong>
+                    </h5>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

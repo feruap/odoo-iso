@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Campo 1: Promedio de largo de las hojas -->
+        <record id="field_avg_length" model="amunet.quality.additional.info.field">
+            <field name="code">avg_length</field>
+            <field name="name">Promedio de largo de las hojas</field>
+            <field name="field_type">decimal</field>
+            <field name="uom">cm</field>
+            <field name="placeholder">Ingrese el promedio en cm</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Campo 2: Coeficiente de variación -->
+        <record id="field_cv_percent" model="amunet.quality.additional.info.field">
+            <field name="code">cv_percent</field>
+            <field name="name">Coeficiente de variación</field>
+            <field name="field_type">percentage</field>
+            <field name="uom">%</field>
+            <field name="placeholder">Ingrese el CV%</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Campo 3: Observaciones generales -->
+        <record id="field_observations" model="amunet.quality.additional.info.field">
+            <field name="code">observations</field>
+            <field name="name">Observaciones generales</field>
+            <field name="field_type">html_attachments</field>
+            <field name="uom"></field>
+            <field name="placeholder">Escriba aquí las observaciones generales. Puede incluir imágenes utilizando el botón de la barra de herramientas.</field>
+            <field name="sequence">30</field>
+        </record>
+
+    </data>
+</odoo>

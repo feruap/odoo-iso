@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="amunet_quality.DecisionMatrixWidget" owl="1">
+        <div class="o_decision_matrix_widget">
+            <h6 class="mb-3">MAVI-16: Matriz de Decisión Colorimétrica</h6>
+            
+            <!-- Paso 1: Concentración -->
+            <div class="card mb-3" t-attf-class="{{ step1Complete ? 'border-success' : 'border-primary' }}">
+                <div class="card-header bg-light">
+                    <strong>
+                        <span t-if="step1Complete" class="badge bg-success me-2">✓</span>
+                        <span t-else="" class="badge bg-primary me-2">1</span>
+                        Paso 1: Seleccione la Concentración Objetivo
+                    </strong>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group d-flex" role="group">
+                        <t t-foreach="concentrationOptions" t-as="option" t-key="option.value">
+                            <input type="radio"
+                                   class="btn-check"
+                                   t-att-name="'dm_conc_' + props.record.id"
+                                   t-att-id="'conc_' + option.value + '_' + props.record.id"
+                                   t-att-value="option.value"
+                                   t-att-checked="props.record.data.result_dm_step1_concentration === option.value"
+                                   t-on-change="onConcentrationChange"/>
+                            <label class="btn btn-outline-primary"
+                                   t-att-for="'conc_' + option.value + '_' + props.record.id">
+                                <t t-esc="option.label"/>
+                            </label>
+                        </t>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 2.1: Línea de Control Visible -->
+            <div t-if="showStep2_1" class="card mb-3" t-attf-class="{{ step2_1Complete ? 'border-success' : 'border-primary' }}">
+                <div class="card-header bg-light">
+                    <strong>
+                        <span t-if="step2_1Complete" class="badge bg-success me-2">✓</span>
+                        <span t-else="" class="badge bg-primary me-2">2.1</span>
+                        Paso 2.1: ¿La línea de control (C) es visible?
+                    </strong>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group d-flex" role="group">
+                        <t t-foreach="controlVisibleOptions" t-as="option" t-key="option.value">
+                            <input type="radio"
+                                   class="btn-check"
+                                   t-att-name="'dm_control_' + props.record.id"
+                                   t-att-id="'control_' + option.value + '_' + props.record.id"
+                                   t-att-value="option.value"
+                                   t-att-checked="props.record.data.result_dm_step2_1_control_visible === option.value"
+                                   t-on-change="onControlVisibleChange"/>
+                            <label t-attf-class="btn {{ option.value === 'yes' ? 'btn-outline-success' : 'btn-outline-danger' }}"
+                                   t-att-for="'control_' + option.value + '_' + props.record.id">
+                                <t t-esc="option.label"/>
+                            </label>
+                        </t>
+                    </div>
+                    <div t-if="props.record.data.result_dm_step2_1_control_visible === 'no'" class="alert alert-danger mt-3 mb-0">
+                        <i class="fa fa-exclamation-triangle me-2"></i>
+                        <strong>Prueba inválida:</strong> No hay visualización de la línea de control.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 2.2: Comparación T vs R -->
+            <div t-if="showStep2_2" class="card mb-3" t-attf-class="{{ step2_2Complete ? 'border-success' : 'border-primary' }}">
+                <div class="card-header bg-light">
+                    <strong>
+                        <span t-if="step2_2Complete" class="badge bg-success me-2">✓</span>
+                        <span t-else="" class="badge bg-primary me-2">2.2</span>
+                        Paso 2.2: Compare visualmente T vs R
+                    </strong>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <t t-foreach="comparisonOptions" t-as="option" t-key="option.value">
+                            <div class="col-6">
+                                <input type="radio"
+                                       class="btn-check"
+                                       t-att-name="'dm_comp_' + props.record.id"
+                                       t-att-id="'comp_' + option.value + '_' + props.record.id"
+                                       t-att-value="option.value"
+                                       t-att-checked="props.record.data.result_dm_step2_2_comparison === option.value"
+                                       t-on-change="onComparisonChange"/>
+                                <label class="btn btn-outline-info w-100"
+                                       t-att-for="'comp_' + option.value + '_' + props.record.id">
+                                    <t t-esc="option.label"/>
+                                </label>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultado del Escenario Encontrado -->
+            <div t-if="props.record.data.dm_matched_scenario_id" class="alert alert-info">
+                <strong>Escenario Identificado:</strong> ID <t t-esc="props.record.data.dm_matched_scenario_id"/>
+            </div>
+
+            <!-- Dictamen Final -->
+            <div t-if="props.record.data.verdict and props.record.data.evaluation_type === 'decision_matrix'">
+                <div t-attf-class="alert py-3 {{ props.record.data.verdict === 'pass' ? 'alert-success' : props.record.data.verdict === 'fail' ? 'alert-danger' : 'alert-warning' }}">
+                    <h5 class="mb-2">
+                        <i t-attf-class="fa me-2 {{ props.record.data.verdict === 'pass' ? 'fa-check-circle' : props.record.data.verdict === 'fail' ? 'fa-times-circle' : 'fa-clock-o' }}"/>
+                        <strong t-if="props.record.data.verdict === 'pass'">✓ CUMPLE</strong>
+                        <strong t-elif="props.record.data.verdict === 'fail'">✗ NO CUMPLE</strong>
+                        <strong t-else="">⏳ PENDIENTE</strong>
+                    </h5>
+                    <div t-if="props.record.data.verdict_message" class="small">
+                        <t t-esc="props.record.data.verdict_message"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

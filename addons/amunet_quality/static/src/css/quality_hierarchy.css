@@ -1,0 +1,252 @@
+/**
+ * Epic-031: Sistema de Parámetros de Calidad Jerárquicos
+ * Estilos para vista jerárquica de determinaciones
+ */
+
+/* Campo de Mapeo JSON - más grande y legible */
+.o_field_widget[name="text_phrase_mapping"] textarea {
+    min-height: 200px !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 12px !important;
+    width: 100% !important;
+    white-space: pre-wrap;
+}
+
+/* Contenedor principal del widget field */
+.o_field_quality_test_line_hierarchy {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Contenedor principal */
+.quality-test-line-hierarchy {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+/* Fila de línea de test */
+.quality-test-line-row {
+    width: 100% !important;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.quality-test-line-row > div:first-child {
+    width: 100% !important;
+}
+
+.quality-test-line-row:last-child {
+    border-bottom: none;
+}
+
+.quality-test-line-row:hover > .d-flex:first-child {
+    background-color: #f8f9fa;
+}
+
+/* Botón de expansión */
+.quality-test-line-row .btn-link {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quality-test-line-row .btn-link:hover {
+    background-color: #e9ecef;
+    border-radius: 4px;
+}
+
+/* Contenedor de detalles */
+.quality-details-container {
+    border-top: 1px solid #e9ecef;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+    }
+}
+
+/* Tabla de detalles */
+.quality-details-container {
+    width: 100% !important;
+}
+
+.quality-details-container table {
+    width: 100% !important;
+    margin-left: 24px;
+    table-layout: auto;
+}
+
+.quality-details-container table th {
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.quality-detail-row {
+    transition: background-color 0.15s;
+}
+
+.quality-detail-row:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Badges de dictamen */
+.badge {
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+/* Campos de resultado */
+.quality-detail-row input,
+.quality-detail-row select {
+    max-width: 150px;
+}
+
+.quality-detail-row .input-group {
+    max-width: 180px;
+}
+
+/* Indicador de carga */
+.quality-details-container .fa-spinner {
+    color: #6c757d;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .quality-test-line-hierarchy {
+        font-size: 0.875rem;
+    }
+    
+    .quality-details-container table {
+        margin-left: 0;
+    }
+    
+    .quality-detail-row input,
+    .quality-detail-row select {
+        max-width: 100%;
+    }
+}
+
+/* Estilos para estados de dictamen en lista estándar de Odoo */
+.o_list_view .o_data_row[data-verdict="pass"] {
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+.o_list_view .o_data_row[data-verdict="fail"] {
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+.o_list_view .o_data_row[data-verdict="pending"] {
+    background-color: rgba(255, 193, 7, 0.05);
+}
+
+/* Badge personalizado para tipos de parámetro */
+.o_field_badge[data-value="simple"] {
+    background-color: #6c757d !important;
+}
+
+.o_field_badge[data-value="composite"] {
+    background-color: #0d6efd !important;
+}
+
+.o_field_badge[data-value="multi_field"] {
+    background-color: #198754 !important;
+}
+
+.o_field_badge[data-value="multi_checkbox"] {
+    background-color: #0dcaf0 !important;
+}
+
+.o_field_badge[data-value="text_pattern"] {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.o_field_badge[data-value="conditional_numeric"] {
+    background-color: #fd7e14 !important;
+}
+
+.o_field_badge[data-value="expected_vs_obtained"] {
+    background-color: #6f42c1 !important;
+}
+
+.o_field_badge[data-value="binary_with_notes"] {
+    background-color: #d63384 !important;
+}
+
+.o_field_badge[data-value="ternary_with_na"] {
+    background-color: #20c997 !important;
+}
+
+/* Estilos para alerts homologados en Quality Check */
+.o_form_view .alert.alert-warning {
+    background-color: #ff9800 !important;
+    border: 1px solid #e65100 !important;
+    color: #212529 !important;
+    padding: 0.4rem 0.65rem !important;
+    border-radius: 0.375rem !important;
+    margin-bottom: 0.75rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    font-size: 0.9rem !important;
+}
+
+.o_form_view .alert.alert-warning strong {
+    color: #212529 !important;
+    font-weight: 600 !important;
+}
+
+/* Reducir margen superior cuando el alert está al inicio de un group para acercarlo al título */
+.o_form_view .o_group > .alert.alert-warning:first-child {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+/* Asegurar que los alerts dentro de groups tengan espaciado consistente */
+.o_form_view .o_group > .alert.alert-warning:not(:first-child) {
+    margin-top: 0.5rem !important;
+}
+
+/* Asegurar que los alerts dentro de groups ocupen todo el ancho disponible */
+.o_form_view .o_group .alert.alert-warning {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Asegurar que los groups con colspan ocupen todo el ancho */
+.o_form_view .o_group[colspan="4"] {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.o_form_view .o_group[colspan="4"] .alert.alert-warning {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Asegurar que los groups tengan el ancho completo para distribuir bien los campos */
+.o_form_view .o_group {
+    width: 100% !important;
+}
+

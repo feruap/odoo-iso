@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="helpdesk_ticket_view_form_inherit_tecno" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.inherit.tecno</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='team_id']" position="after">
+                <field name="is_tecnovigilancia"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Tecnovigilancia (NOM-240)" invisible="not is_tecnovigilancia">
+                    <group>
+                        <group string="Clasificación del Incidente">
+                            <field name="tecno_incident_type" required="is_tecnovigilancia"/>
+                            <field name="tecno_severity" required="is_tecnovigilancia"/>
+                            <field name="tecno_notification_date" required="is_tecnovigilancia"/>
+                            <field name="tecno_report_deadline" readonly="1"/>
+                        </group>
+                        <group string="Datos del Paciente / Producto">
+                            <field name="tecno_patient_initials"/>
+                            <group>
+                                <field name="tecno_age"/>
+                                <field name="tecno_gender"/>
+                            </group>
+                            <field name="tecno_product_lot"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

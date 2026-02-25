@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sequence for Standalone Tecnovigilancia Incidents -->
+        <record id="seq_amunet_quality_tecno_incident" model="ir.sequence">
+            <field name="name">Secuencia de Incidentes Tecnovigilancia</field>
+            <field name="code">amunet.quality.tecno.incident</field>
+            <field name="prefix">TEC/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

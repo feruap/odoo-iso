@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_quality_signature_pin_form" model="ir.ui.view">
+        <field name="name">amunet.quality.signature.pin.form</field>
+        <field name="model">amunet.quality.signature.pin</field>
+        <field name="arch" type="xml">
+            <form string="Mi PIN de Firma">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Establezca aquí su PIN personal de 4 dígitos para firmar documentos de calidad rápidamente.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="user_id" readonly="1"/>
+                            <field name="pin" password="True"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_amunet_quality_signature_pin_tree" model="ir.ui.view">
+        <field name="name">amunet.quality.signature.pin.tree</field>
+        <field name="model">amunet.quality.signature.pin</field>
+        <field name="arch" type="xml">
+            <list string="PINs de Firma">
+                <field name="user_id"/>
+                <field name="pin" password="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_my_signature_pin" model="ir.actions.act_window">
+        <field name="name">Mi PIN de Firma</field>
+        <field name="res_model">amunet.quality.signature.pin</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_user_id': uid}</field>
+    </record>
+
+    <!-- Server Action to open the user's PIN record specifically -->
+    <record id="action_open_my_pin" model="ir.actions.server">
+        <field name="name">Configurar mi PIN</field>
+        <field name="model_id" ref="model_amunet_quality_signature_pin"/>
+        <field name="state">code</field>
+        <field name="code">
+# Buscar si el usuario ya tiene PIN
+pin_record = env['amunet.quality.signature.pin'].search([('user_id', '=', env.user.id)], limit=1)
+if not pin_record:
+    pin_record = env['amunet.quality.signature.pin'].create({'user_id': env.user.id, 'pin': ''})
+
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Mi PIN de Firma',
+    'res_model': 'amunet.quality.signature.pin',
+    'res_id': pin_record.id,
+    'view_mode': 'form',
+    'target': 'new',
+}
+        </field>
+    </record>
+
+    <menuitem id="menu_quality_my_pin"
+              name="Mi PIN de Firma"
+              parent="amunet_quality.menu_quality_config"
+              action="action_open_my_pin"
+              sequence="90"/>
+</odoo>

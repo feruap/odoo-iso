@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista de formulario de stock.scrap con factory_lot_id -->
+    <record id="view_stock_scrap_form_inherit_amunet" model="ir.ui.view">
+        <field name="name">stock.scrap.form.inherit.amunet</field>
+        <field name="model">stock.scrap</field>
+        <field name="inherit_id" ref="stock.stock_scrap_form_view"/>
+        <field name="arch" type="xml">
+            <!-- Cambiar etiqueta del campo lot_id -->
+            <xpath expr="//field[@name='lot_id']" position="attributes">
+                <attribute name="string">Número de serie/lote Amunet</attribute>
+            </xpath>
+            <!-- Agregar factory_lot_id después de lot_id -->
+            <xpath expr="//field[@name='lot_id']" position="after">
+                <field name="factory_lot_id"
+                       invisible="tracking not in ['lot', 'serial']"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Heredar vista formulario de stock.picking para mostrar vista detallada condicional -->
+    <record id="view_picking_form_inherit_amunet_lot_detailed_operations" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.amunet.lot.detailed.operations</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <!-- Agregar campo computado invisible para que esté disponible en las condiciones -->
+            <xpath expr="//field[@name='origin']" position="after">
+                <field name="is_quality_control" invisible="1"/>
+                <field name="is_storage" invisible="1"/>
+                <field name="is_reception" invisible="1"/>
+            </xpath>
+
+            <!--
+                Modificar el campo move_ids para ocultarlo cuando:
+                - state in ('done', 'cancel') OR
+                - (is_quality_control and state == 'assigned') OR
+                - (picking_type_code == 'internal' and state == 'assigned')
+            -->
+            <xpath expr="//page[@name='operations']/field[@name='move_ids']" position="attributes">
+                <attribute name="invisible">state in ('done', 'cancel') or (is_quality_control and state == 'assigned') or (picking_type_code == 'internal' and state == 'assigned')</attribute>
+            </xpath>
+
+            <!-- Cambiar etiqueta de columna "Números de serie" en move_ids -->
+            <xpath expr="//page[@name='operations']/field[@name='move_ids']//field[@name='lot_ids']" position="attributes">
+                <attribute name="string">Números de serie/lote Amunet</attribute>
+            </xpath>
+
+            <!--
+                Agregar el campo move_line_ids después de move_ids para mostrarlo cuando:
+                - state in ('done', 'cancel') OR
+                - (is_quality_control and state == 'assigned') OR
+                - (picking_type_code == 'internal' and state == 'assigned')
+            -->
+            <xpath expr="//page[@name='operations']/field[@name='move_ids']" position="after">
+                <field name="move_line_ids"
+                       invisible="state not in ('done', 'cancel') and not (is_quality_control and state == 'assigned') and not (picking_type_code == 'internal' and state == 'assigned')"
+                       readonly="0"
+                       mode="list"
+                       string="Operaciones detalladas"
+                       nolabel="1"
+                       context="{}">
+                    <list string="Operaciones Detalladas" create="1" edit="1" delete="1" no_open="1">
+                        <field name="product_id" string="Producto" widget="many2one" />
+                        <field name="factory_lot_id" string="Números de serie/lote de fábrica" options="{'no_open': True}"/>
+                        <field name="lot_id" string="Números de serie/lote Amunet" options="{'no_open': True}"/>
+                        <field name="quantity" string="Cantidad" options="{'no_open': True}"/>
+                        <field name="product_uom_id" string="Unidad" options="{'no_open': True}"/>
+                        <field name="location_id" string="Ubicación origen" options="{'no_open': True}"/>
+                        <field name="location_dest_id" string="Ubicación destino" options="{'no_open': True}"/>
+                    </list>
+                </field>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

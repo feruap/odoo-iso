@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_amunet_warehouse_access_admin,amunet.warehouse.access admin,model_amunet_warehouse_access,base.group_system,1,1,1,1
+access_amunet_warehouse_access_user,amunet.warehouse.access user,model_amunet_warehouse_access,stock.group_stock_user,1,0,0,0
+access_amunet_warehouse_access_manager,amunet.warehouse.access manager,model_amunet_warehouse_access,stock.group_stock_manager,1,0,0,0
+access_amunet_warehouse_access_rule_admin,amunet.warehouse.access.rule admin,model_amunet_warehouse_access_rule,base.group_system,1,1,1,1
+access_amunet_warehouse_access_rule_user,amunet.warehouse.access.rule user,model_amunet_warehouse_access_rule,stock.group_stock_user,1,0,0,0
+access_amunet_warehouse_access_rule_manager,amunet.warehouse.access.rule manager,model_amunet_warehouse_access_rule,stock.group_stock_manager,1,0,0,0

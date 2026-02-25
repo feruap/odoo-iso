@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista de líneas de movimiento - Cambiar etiqueta de lot_id -->
+    <record id="view_stock_move_line_tree_amunet" model="ir.ui.view">
+        <field name="name">stock.move.line.tree.amunet</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_move_line_tree"/>
+        <field name="arch" type="xml">
+            <!-- Cambiar etiqueta del campo lot_id -->
+            <xpath expr="//field[@name='lot_id']" position="attributes">
+                <attribute name="string">Número de lote/serie Amunet</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- PRUEBA: Vista de formulario comentada temporalmente para debugging -->
+    <!-- 
+    <record id="view_stock_move_line_form_amunet" model="ir.ui.view">
+        <field name="name">stock.move.line.form.amunet</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_move_line_form"/>
+        <field name="arch" type="xml">
+        </field>
+    </record>
+    -->
+</odoo>
+

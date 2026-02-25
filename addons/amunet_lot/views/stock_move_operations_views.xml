@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. Vista de operaciones detalladas (stock.move.line en picking) -->
+    <record id="view_stock_move_line_detailed_operation_tree_amunet" model="ir.ui.view">
+        <field name="name">stock.move.line.detailed.operations.list.amunet</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_stock_move_line_detailed_operation_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='lot_id']" position="after">
+                <field name="factory_lot_id"
+                       string="Número de serie/lote de fábrica"
+                       options="{'quick_create': True, 'no_open': True}"
+                       force_save="1"/>
+                <field name="manufacturing_date"
+                       string="Fecha de fabricación"
+                       optional="show"
+                       force_save="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 2. Vista de operaciones (usa lot_name) -->
+    <record id="view_stock_move_line_operation_tree_amunet" model="ir.ui.view">
+        <field name="name">stock.move.line.operations.list.amunet</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_stock_move_line_operation_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='lot_name']" position="attributes">
+                <attribute name="string">Número de serie/lote Amunet</attribute>
+            </xpath>
+            <xpath expr="//field[@name='lot_name']" position="after">
+                <field name="factory_lot_id"
+                       string="Número de serie/lote de fábrica"
+                       options="{'quick_create': True, 'no_open': True}"
+                       force_save="1"/>
+                <field name="manufacturing_date"
+                       string="Fecha de fabricación"
+                       optional="show"
+                       force_save="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 3. Vista del modal "Detalles" (stock.view_stock_move_operations) -->
+    <!-- CRÍTICO: Este heredamiento asegura que los campos Amunet aparezcan en el popup -->
+    <record id="view_stock_move_operations_form_amunet" model="ir.ui.view">
+        <field name="name">stock.view.stock.move.operations.amunet</field>
+        <field name="model">stock.move</field>
+        <field name="inherit_id" ref="stock.view_stock_move_operations"/>
+        <field name="arch" type="xml">
+            <!-- Agregar campos Amunet en move_line_ids dentro del modal -->
+            <xpath expr="//field[@name='move_line_ids']/tree/field[@name='lot_name']" position="after">
+                <field name="factory_lot_id" 
+                       string="Número de serie/lote de fábrica"
+                       options="{'quick_create': True, 'no_open': True}"/>
+                <field name="manufacturing_date" 
+                       string="Fecha de fabricación"
+                       optional="show"/>
+            </xpath>
+            
+            <!-- Agregar campos Amunet en move_line_nosuggest_ids (si existe) -->
+            <xpath expr="//field[@name='move_line_nosuggest_ids']/tree/field[@name='lot_name']" position="after">
+                <field name="factory_lot_id" 
+                       string="Número de serie/lote de fábrica"
+                       options="{'quick_create': True, 'no_open': True}"/>
+                <field name="manufacturing_date" 
+                       string="Fecha de fabricación"
+                       optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

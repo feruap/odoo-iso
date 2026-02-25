@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_amunet_transfer_bom_user,amunet.transfer.bom.user,model_amunet_transfer_bom,stock.group_stock_user,1,0,0,0
+access_amunet_transfer_bom_manager,amunet.transfer.bom.manager,model_amunet_transfer_bom,stock.group_stock_manager,1,1,1,1
+access_amunet_transfer_bom_line_user,amunet.transfer.bom.line.user,model_amunet_transfer_bom_line,stock.group_stock_user,1,0,0,0
+access_amunet_transfer_bom_line_manager,amunet.transfer.bom.line.manager,model_amunet_transfer_bom_line,stock.group_stock_manager,1,1,1,1

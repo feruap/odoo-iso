@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Vistas para Parámetros de Calidad - Epic-031
+        Sistema de Parámetros de Calidad Jerárquicos
+        HU-031-1: Configurar Plantillas de Parámetros con Especificaciones
+    -->
+
+    <!-- ========== Vista List de Parámetros ========== -->
+    <record id="view_amunet_quality_parameter_list" model="ir.ui.view">
+        <field name="name">amunet.quality.check.parameter.list</field>
+        <field name="model">amunet.quality.check.parameter</field>
+        <field name="arch" type="xml">
+            <list string="Parámetros de calidad">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="specification_count" string="Esp."/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ========== Vista Form de Parámetros ========== -->
+    <record id="view_amunet_quality_parameter_form" model="ir.ui.view">
+        <field name="name">amunet.quality.check.parameter.form</field>
+        <field name="model">amunet.quality.check.parameter</field>
+        <field name="arch" type="xml">
+            <form string="Parámetro de calidad">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_specifications"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-list"
+                                invisible="specification_count == 0">
+                            <field name="specification_count" widget="statinfo" string="Especificaciones"/>
+                        </button>
+                        <field name="active" widget="boolean_toggle"/>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Determinación"/>
+                        <h1>
+                            <field name="name" placeholder="Nombre de la prueba..."/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Identificación">
+                            <field name="code" placeholder="MAVI-04, VAMA-112..."/>
+                        </group>
+                        <!--<group string="Información">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="is_hierarchical" invisible="1"/>
+                        </group>-->
+                    </group>
+
+                    <notebook>
+                        <!-- Pestaña de Especificaciones -->
+                        <page string="Especificaciones" name="specifications">
+                            <field name="specification_line_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name" string="Especificación"/>
+                                    <field name="acceptance_criteria" string="Criterio de aceptación"/>
+                                    <field name="evaluation_type" string="Tipo de evaluación"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                    <button name="action_open_configuration" type="object"
+                                            string="⚙️" class="btn-link"
+                                            title="Configuración avanzada"/>
+                                </list>
+                                <form string="Especificación">
+                                    <sheet>
+                                        <group>
+                                            <group string="Identificación">
+                                                <field name="sequence"/>
+                                                <field name="name"/>
+                                                <field name="acceptance_criteria"/>
+                                                <field name="evaluation_type"/>
+                                                <field name="active"/>
+                                            </group>
+                                        </group>
+
+                                        <!-- Configuración Binary Selection -->
+                                        <group string="Configuración selección binaria"
+                                               invisible="evaluation_type != 'binary_selection'">
+                                            <group>
+                                                <field name="binary_prefix" placeholder="Sin/Con"/>
+                                                <field name="binary_suffix" placeholder="polvo, manchas"/>
+                                                <field name="binary_expected_option"/>
+                                            </group>
+                                            <group string="Vista Previa">
+                                                <field name="binary_option_pass" readonly="1"/>
+                                                <field name="binary_option_fail" readonly="1"/>
+                                            </group>
+                                        </group>
+
+                                        <!-- Configuración Numeric Range -->
+                                        <group string="Configuración rango numérico"
+                                               invisible="evaluation_type != 'numeric_range'">
+                                            <group>
+                                                <field name="uom_id"/>
+                                                <field name="nominal_value"/>
+                                                <field name="tolerance"/>
+                                                <field name="use_manual_range"/>
+                                            </group>
+                                            <group string="Rango Calculado">
+                                                <field name="min_value_manual" invisible="not use_manual_range"/>
+                                                <field name="max_value_manual" invisible="not use_manual_range"/>
+                                                <field name="min_value" readonly="1"/>
+                                                <field name="max_value" readonly="1"/>
+                                            </group>
+                                            <div class="alert alert-info" role="alert" colspan="2">
+                                                <strong>Nota:</strong> Estos valores servirán como plantilla por defecto para los productos.
+                                            </div>
+                                        </group>
+
+                                        <!-- Configuración Checkbox Combined -->
+                                        <group string="Configuración checkboxes"
+                                               invisible="evaluation_type != 'checkbox_combined'">
+                                            <field name="checkbox_label_1" placeholder="Etiqueta 1"/>
+                                            <field name="checkbox_label_2" placeholder="Etiqueta 2"/>
+                                            <field name="checkbox_require_both"/>
+                                        </group>
+
+                                        <!-- Configuración Text Pattern (VAMA-112) -->
+                                        <group string="Configuración texto con patrón"
+                                               invisible="evaluation_type != 'text_pattern'">
+                                            <group>
+                                                <field name="text_pattern_expected" placeholder="AAAAA"
+                                                       required="evaluation_type == 'text_pattern'"/>
+                                                <field name="text_pattern_regex" placeholder="^[AB]{5}$"
+                                                       required="evaluation_type == 'text_pattern'"/>
+                                                <field name="text_pattern_length" readonly="1"/>
+                                            </group>
+                                        </group>
+                                        <group colspan="4" col="1" invisible="evaluation_type != 'text_pattern'">
+                                            <separator string="Mapeo de frases (JSON)"/>
+                                            <label for="text_phrase_mapping" string=""/>
+                                            <field name="text_phrase_mapping" nolabel="1" widget="text"
+                                                   placeholder='{"positions": [{"index": 0, "A": "valor A", "B": "valor B", "context": "Frase con {value}"}]}'/>
+                                            <div class="text-muted small">
+                                                <strong>Formato:</strong> {"positions": [{"index": 0, "A": "texto A", "B": "texto B", "context": "Frase {value}"}]}
+                                            </div>
+                                        </group>
+
+                                        <!-- Configuración Conditional Numeric -->
+                                        <group string="Opciones condicionales"
+                                               invisible="evaluation_type != 'conditional_numeric_range'">
+                                            <field name="conditional_option_ids" nolabel="1" colspan="2">
+                                                <list editable="bottom">
+                                                    <field name="sequence" widget="handle"/>
+                                                    <field name="name"/>
+                                                    <field name="nominal_value"/>
+                                                    <field name="tolerance"/>
+                                                    <field name="min_value"/>
+                                                    <field name="max_value"/>
+                                                    <field name="uom_id"/>
+                                                </list>
+                                            </field>
+                                        </group>
+
+                                        <!-- Configuración Expected vs Obtained -->
+                                        <group string="Configuración esperado vs obtenido"
+                                               invisible="evaluation_type != 'expected_vs_obtained'">
+                                            <field name="expected_options" placeholder="Positivo,Negativo"/>
+                                            <field name="obtained_options" placeholder="Positivo,Negativo"/>
+                                        </group>
+
+                                        <!-- Configuración Binary with Notes -->
+                                        <group string="Configuración binaria con notas"
+                                               invisible="evaluation_type != 'binary_with_notes'">
+                                            <field name="binary_notes_option_pass" placeholder="La información es completa"/>
+                                            <field name="binary_notes_option_fail" placeholder="La información es incompleta"/>
+                                            <field name="binary_notes_required"/>
+                                        </group>
+
+                                        <!-- Configuración Ternary with N/A -->
+                                        <group string="Configuración ternario"
+                                               invisible="evaluation_type != 'ternary_with_na'">
+                                            <field name="ternary_option_yes"/>
+                                            <field name="ternary_option_no"/>
+                                            <field name="ternary_option_na"/>
+                                        </group>
+
+                                        <!-- Configuración VAMA Multi-Check (JSON) -->
+                                        <group string="Configuración VAMA Multi-Check (JSON)"
+                                               invisible="evaluation_type != 'vama_multi_check'">
+                                            <field name="text_phrase_mapping" widget="text" nolabel="1"/>
+                                            <div class="text-muted small">
+                                                <strong>Formato:</strong> {"success_msg": "...", "positions": [{"index": 0, "label": "Nombre", "A": "...", "B": "...", "N": "...", "error_msg": "..."}]}
+                                            </div>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+
+                            <div class="alert alert-info mt-3" role="alert"
+                                 invisible="specification_count &lt;= 1">
+                                <strong>ℹ️ Tip:</strong>
+                                Agregue múltiples especificaciones para parámetros compuestos.
+                                Cada especificación puede tener su propio tipo de evaluación.
+                            </div>
+
+                            <button name="action_create_default_specification"
+                                    string="Crear Especificación por defecto"
+                                    type="object"
+                                    class="btn-secondary mt-2"
+                                    invisible="specification_count > 0"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ========== Vista Search de Parámetros ========== -->
+    <record id="view_amunet_quality_parameter_search" model="ir.ui.view">
+        <field name="name">amunet.quality.check.parameter.search</field>
+        <field name="model">amunet.quality.check.parameter</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="code"/>
+                <field name="name"/>
+                <separator/>
+                <filter name="filter_active" string="Activos"
+                        domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactivos"
+                        domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="group_code" string="Código"
+                        context="{'group_by': 'code'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ========== Action de Parámetros ========== -->
+    <record id="action_amunet_quality_parameter" model="ir.actions.act_window">
+        <field name="name">Parámetros de calidad</field>
+        <field name="res_model">amunet.quality.check.parameter</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear un nuevo parámetro de calidad
+            </p>
+            <p>
+                Los parámetros definen las pruebas que se realizarán
+                en los controles de calidad. Puede crear parámetros simples
+                o compuestos con múltiples especificaciones.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========== Vistas de Especificaciones ========== -->
+    
+    <!-- Vista List de Especificaciones -->
+    <record id="view_amunet_quality_specification_list" model="ir.ui.view">
+        <field name="name">amunet.quality.check.parameter.specification.list</field>
+        <field name="model">amunet.quality.check.parameter.specification</field>
+        <field name="arch" type="xml">
+            <list string="Especificaciones" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="parameter_id" invisible="context.get('default_parameter_id')"/>
+                <field name="name"/>
+                <field name="acceptance_criteria"/>
+                <field name="evaluation_type" widget="badge"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista Form de Especificaciones -->
+    <record id="view_amunet_quality_specification_form" model="ir.ui.view">
+        <field name="name">amunet.quality.check.parameter.specification.form</field>
+        <field name="model">amunet.quality.check.parameter.specification</field>
+        <field name="arch" type="xml">
+            <form string="Especificación de parámetro">
+                <sheet>
+                    <group>
+                        <group string="Identificación">
+                            <field name="parameter_id" invisible="context.get('default_parameter_id')" string="Determinación"/>
+                            
+                            <field name="name" string="Especificación"/>
+                            <field name="acceptance_criteria" string="Criterio de aceptación"/>
+                            <field name="evaluation_type" string="Tipo de evaluación"/>
+                            <field name="active" string="Activo"/>
+                        </group>
+                        <group string="Justificación de Cambio">
+                             <field name="change_reason" placeholder="Razón de cambio..."/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Configuración Binary Selection -->
+                        <page string="Selección binaria" name="binary_selection"
+                              invisible="evaluation_type != 'binary_selection'">
+                            <group>
+                                <group>
+                                    <field name="binary_prefix" placeholder="Sin/Con, Presencia/Ausencia"/>
+                                    <field name="binary_suffix" placeholder="polvo, manchas, colorante"/>
+                                    <field name="binary_expected_option"/>
+                                </group>
+                                <group string="Vista previa">
+                                    <field name="binary_option_pass" readonly="1"/>
+                                    <field name="binary_option_fail" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Configuración Numeric Range -->
+                        <page string="Rango numérico" name="numeric_range"
+                              invisible="evaluation_type != 'numeric_range'">
+                                <group string="Configuración">
+                                    <field name="uom_id"/>
+                                    <field name="nominal_value"/>
+                                    <field name="tolerance"/>
+                                    <field name="use_manual_range"/>
+                                </group>
+                                <group string="Rango Calculado">
+                                    <field name="min_value_manual" invisible="not use_manual_range"/>
+                                    <field name="max_value_manual" invisible="not use_manual_range"/>
+                                    <field name="min_value" readonly="1"/>
+                                    <field name="max_value" readonly="1"/>
+                                </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong>ℹ️ Nota:</strong>
+                                Los valores mínimo/máximo se configuran por producto en la pestaña de "Control de calidad".
+                            </div>
+                        </page>
+
+                        <!-- Configuración Checkbox Combined -->
+                        <page string="Checkboxes combinados" name="checkbox_combined"
+                              invisible="evaluation_type != 'checkbox_combined'">
+                            <group>
+                                <field name="checkbox_label_1" placeholder="Sellado adecuado"/>
+                                <field name="checkbox_label_2" placeholder="Sin defectos visibles"/>
+                                <field name="checkbox_require_both"/>
+                            </group>
+                        </page>
+
+                        <!-- Configuración Conditional Numeric -->
+                        <page string="Numérico condicional" name="conditional_numeric"
+                              invisible="evaluation_type != 'conditional_numeric_range'">
+                            <field name="conditional_option_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="nominal_value"/>
+                                    <field name="tolerance"/>
+                                    <field name="min_value"/>
+                                    <field name="max_value"/>
+                                    <field name="uom_id"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Configuración Text Pattern (VAMA-112) -->
+                        <page string="Texto con patrón" name="text_pattern"
+                              invisible="evaluation_type != 'text_pattern'">
+                            <group>
+                                <group>
+                                    <field name="text_pattern_expected" placeholder="AAAAA"/>
+                                    <field name="text_pattern_regex" placeholder="^[AB]{5}$"/>
+                                    <field name="text_pattern_length" readonly="1"/>
+                                </group>
+                            </group>
+                            <separator string="Mapeo de frases (JSON)"/>
+                            <field name="text_phrase_mapping" nolabel="1" widget="text"/>
+                            <div class="text-muted small">
+                                <strong>Ejemplo:</strong> {"positions": [{"index": 0, "A": "adecuado", "B": "no adecuado", "context": "El funcionamiento es {value}"}]}
+                            </div>
+                        </page>
+
+                        <!-- Configuración Expected vs Obtained -->
+                        <page string="Esperado vs obtenido" name="expected_vs_obtained"
+                              invisible="evaluation_type != 'expected_vs_obtained'">
+                            <group>
+                                <field name="expected_options" placeholder="Positivo,Negativo"/>
+                                <field name="obtained_options" placeholder="Positivo,Negativo"/>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong>ℹ️ Nota:</strong>
+                                Ingrese las opciones separadas por coma. El sistema evaluará si el resultado obtenido coincide con el esperado.
+                            </div>
+                        </page>
+
+                        <!-- Configuración Binary with Notes -->
+                        <page string="Binario con notas" name="binary_with_notes"
+                              invisible="evaluation_type != 'binary_with_notes'">
+                            <group>
+                                <field name="binary_notes_option_pass" placeholder="La información es completa y correcta"/>
+                                <field name="binary_notes_option_fail" placeholder="La información es incompleta"/>
+                                <field name="binary_notes_required"/>
+                            </group>
+                        </page>
+
+                        <!-- Configuración Ternary with N/A -->
+                        <page string="Ternario con N/A" name="ternary_with_na"
+                              invisible="evaluation_type != 'ternary_with_na'">
+                            <group>
+                                <field name="ternary_option_yes"/>
+                                <field name="ternary_option_no"/>
+                                <field name="ternary_option_na"/>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong>ℹ️ Nota:</strong>
+                                Cuando se selecciona N/A, la especificación se excluye del conteo y no afecta el dictamen.
+                            </div>
+                        </page>
+
+                        <!-- Configuración VAMA Multi-Check -->
+                        <page string="VAMA Multi-Check" name="vama_multi_check"
+                              invisible="evaluation_type != 'vama_multi_check'">
+                            <separator string="Mapeo de Puntos (JSON)"/>
+                            <field name="text_phrase_mapping" nolabel="1" widget="text"/>
+                            <div class="text-muted small">
+                                <strong>Ejemplo:</strong> {"success_msg": "Todo OK", "positions": [{"index": 0, "label": "Lote", "A": "Correcto", "B": "Error", "error_msg": "Lote mal"}]}
+                            </div>
+                        </page>
+
+                        <!-- Configuración Decision Matrix (MAVI-16) -->
+                        <page string="Matriz de decisión" name="decision_matrix"
+                              invisible="evaluation_type != 'decision_matrix'">
+                            <group>
+                                <group string="Etiquetas de pasos">
+                                    <field name="dm_step1_label"/>
+                                    <field name="dm_step2_1_label"/>
+                                    <field name="dm_step2_2_label"/>
+                                </group>
+                                <group string="Resumen">
+                                    <field name="decision_matrix_scenario_count" string="Escenarios configurados"/>
+                                    <button name="action_populate_mavi16_scenarios"
+                                            string="📋 Poblar escenarios MAVI-16"
+                                            type="object"
+                                            class="btn-primary"
+                                            confirm="¿Esto eliminará los escenarios existentes y creará los 13 escenarios por defecto de MAVI-16. ¿Continuar?"
+                                            invisible="decision_matrix_scenario_count > 0"/>
+                                </group>
+                            </group>
+
+                            <separator string="Escenarios de la matriz"/>
+                            <field name="decision_matrix_scenario_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle" string="No."/>
+                                    <field name="step1_concentration" string="Paso 1: Concentración"/>
+                                    <field name="step2_1_control_visible" string="Paso 2.1: Línea C"/>
+                                    <field name="step2_2_comparison" string="Paso 2.2: T vs R"/>
+                                    <field name="verdict" widget="badge"
+                                           decoration-success="verdict == 'pass'"
+                                           decoration-danger="verdict == 'fail'"/>
+                                    <field name="result_message"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+
+                            <div class="alert alert-info mt-3" role="alert">
+                                <strong>ℹ️ Flujo de evaluación:</strong>
+                                <ol class="mb-0">
+                                    <li><strong>Paso 1:</strong> El analista selecciona la concentración objetivo (Baja/Intermedia/Alta)</li>
+                                    <li><strong>Paso 2.1:</strong> Indica si la línea de control (C) es visible. Si NO → Fallo inmediato</li>
+                                    <li><strong>Paso 2.2:</strong> Compara visualmente T vs R y el sistema busca el escenario coincidente</li>
+                                </ol>
+                            </div>
+                        </page>
+
+                        <!-- Panel Informativo VAMA-044 -->
+                        <page string="Funcionalidad Tubo (VAMA-044)" name="vama_044"
+                              invisible="evaluation_type != 'vama_044'">
+                            <div class="alert alert-info">
+                                <h4><i class="fa fa-flask"/> VAMA-044: Prueba de Funcionalidad de Tubo</h4>
+                                <p>Este tipo de evaluación verifica 4 condiciones simultáneas:</p>
+                                <ul>
+                                    <li><strong>Número de Gotas:</strong> Mínimo 5 (Configurable en defaults del sistema)</li>
+                                    <li><strong>Volumen de Gota:</strong> 40-50 µl</li>
+                                    <li><strong>Unión:</strong> Debe ser adecuada</li>
+                                    <li><strong>Volumen de Llenado:</strong> 1540-1560 µl</li>
+                                </ul>
+                                <p class="mb-0 text-muted">Nota: Los rangos se evalúan usando los estándares predefinidos en el código.</p>
+                            </div>
+                        </page>
+
+                        <!-- Panel Informativo VAMA-112 -->
+                        <page string="Centrífuga (VAMA-112)" name="vama_112"
+                              invisible="evaluation_type != 'vama_112'">
+                            <div class="alert alert-info">
+                                <h4><i class="fa fa-cogs"/> VAMA-112: Verificación de Centrífuga</h4>
+                                <p>Evalúa 5 puntos de control mediante lista de verificación:</p>
+                                <ul>
+                                    <li>Funcionamiento General (Adecuado)</li>
+                                    <li>Movimientos (Sin movimientos bruscos)</li>
+                                    <li>Separación Correcta</li>
+                                    <li>Separación Completa</li>
+                                    <li>Temperatura (Sin calentar)</li>
+                                </ul>
+                            </div>
+                        </page>
+
+                        <!-- Panel Informativo VAMA-078 -->
+                        <page string="Liofilizado (VAMA-078)" name="vama_078"
+                              invisible="evaluation_type != 'vama_078'">
+                            <div class="alert alert-info">
+                                <h4><i class="fa fa-eye"/> VAMA-078: Inspección de Liofilizado</h4>
+                                <p>Evaluación visual de 4 características cualitativas. El estándar aceptado es:</p>
+                                <ul>
+                                    <li><strong>Color:</strong> Blanco ⚪</li>
+                                    <li><strong>Forma:</strong> Compacto (Pastilla) ✅</li>
+                                    <li><strong>Textura:</strong> Sin textura pegajosa</li>
+                                    <li><strong>Humedad:</strong> Sin humedad aparente</li>
+                                </ul>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action de Especificaciones -->
+    <record id="action_amunet_quality_specification" model="ir.actions.act_window">
+        <field name="name">Especificaciones</field>
+        <field name="res_model">amunet.quality.check.parameter.specification</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ========== Vistas de Opciones Condicionales ========== -->
+    
+    <record id="view_amunet_quality_conditional_option_list" model="ir.ui.view">
+        <field name="name">amunet.quality.parameter.conditional.option.list</field>
+        <field name="model">amunet.quality.parameter.conditional.option</field>
+        <field name="arch" type="xml">
+            <list string="Opciones condicionales" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="nominal_value"/>
+                <field name="tolerance"/>
+                <field name="min_value"/>
+                <field name="max_value"/>
+                <field name="uom_id"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

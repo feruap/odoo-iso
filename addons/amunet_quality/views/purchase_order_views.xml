@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_view_form_inherit_amunet_quality" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.amunet.quality</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase_stock.purchase_order_view_form_inherit"/>
+        <field name="arch" type="xml">
+            <!-- Hiding the "Recibir" (Receive) button in the Purchase Order context -->
+            <xpath expr="//button[@name='action_view_picking']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

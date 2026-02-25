@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 
+        Vista ÚNICA para product.template que oculta serial_prefix_format 
+        y muestra amunet_lot_prefix en su lugar.
+        
+        IMPORTANTE: Solo heredamos de stock.product_template_form_view_procurement_button
+        porque esta vista ya hereda de product.product_template_only_form_view.
+        Si heredamos de AMBAS, el campo aparece duplicado.
+        
+        Jerarquía de vistas:
+        - product.product_template_only_form_view (base)
+            ↓ hereda
+        - stock.product_template_form_view_procurement_button
+            ↓ hereda (nuestra vista)
+        - view_product_template_form_amunet_lot
+    -->
+    <record id="view_product_template_form_amunet_lot" model="ir.ui.view">
+        <field name="name">product.template.form.amunet.lot</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="stock.product_template_form_view_procurement_button"/>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <!-- Ocultar el campo nativo serial_prefix_format (muestra placeholders) -->
+            <xpath expr="//field[@name='serial_prefix_format']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            
+            <!-- Agregar nuestro campo limpio que NO muestra placeholders -->
+            <xpath expr="//field[@name='serial_prefix_format']" position="after">
+                <field name="amunet_lot_prefix" 
+                       string="Número de serie/lote personalizado"
+                       invisible="tracking not in ('lot', 'serial')"/>
+            </xpath>
+            
+            <!-- Agregar campos en la pestaña Inventario, sección Trazabilidad -->
+            <xpath expr="//group[@name='traceability']" position="inside">
+                <!-- Campo de reinicio mensual: solo visible cuando tracking='lot' y tiene prefijo configurado -->
+                <field name="amunet_lot_reset_monthly" 
+                       invisible="tracking != 'lot' or not amunet_lot_prefix"
+                       string="Reiniciar secuencia mensualmente"/>
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- 
+        Vista para product.product (variantes individuales).
+        Necesaria porque product.product tiene su propia vista de formulario
+        que NO hereda automáticamente de product.template.
+    -->
+    <record id="view_product_product_form_amunet_lot" model="ir.ui.view">
+        <field name="name">product.product.form.amunet.lot</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <!-- Ocultar el campo nativo serial_prefix_format -->
+            <xpath expr="//field[@name='serial_prefix_format']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            
+            <!-- Agregar nuestro campo limpio después del campo oculto -->
+            <xpath expr="//field[@name='serial_prefix_format']" position="after">
+                <field name="amunet_lot_prefix" 
+                       string="Número de serie/lote personalizado"
+                       invisible="tracking not in ('lot', 'serial')"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Extensión del formulario de usuario: Tab "Accesos a Almacenes" -->
+    <record id="view_users_form_warehouse_access" model="ir.ui.view">
+        <field name="name">res.users.form.warehouse.access</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Agregar tab después de "Permisos de Acceso" -->
+            <xpath expr="//page[@name='access_rights']" position="after">
+                <page name="warehouse_access" string="Accesos a almacenes"
+                      groups="base.group_system">
+
+                    <group>
+                        <group>
+                            <field name="warehouse_count" string="Almacenes con acceso"/>
+                        </group>
+                        <group>
+                            <button name="action_view_warehouse_accesses"
+                                    type="object" 
+                                    string="Ver todos los accesos"
+                                    class="oe_link"
+                                    invisible="warehouse_count == 0"/>
+                        </group>
+                    </group>
+
+                    <group string="Configuración de accesos" col="1">
+                        <field name="warehouse_access_ids" nolabel="1" context="{'default_user_id': id}">
+                            <list editable="bottom">
+                                <field name="warehouse_id"
+                                       options="{'no_create': True, 'no_create_edit': True}"/>
+                                <field name="access_type" widget="badge"
+                                       decoration-success="access_type == 'full'"
+                                       decoration-warning="access_type == 'restricted'"/>
+                                <field name="operation_type_ids" widget="many2many_tags"
+                                       invisible="access_type == 'full'"
+                                       options="{'no_create': True, 'no_create_edit': True}"/>
+                                <field name="rule_count" string="Reglas" optional="hide"/>
+                                <field name="active" widget="boolean_toggle"/>
+                                <button name="action_view_rules"
+                                        type="object"
+                                        icon="fa-list"
+                                        title="Ver Reglas Generadas"
+                                        invisible="rule_count == 0"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <group string="Almacenes permitidos (vista rápida)" invisible="warehouse_count == 0">
+                        <field name="warehouse_ids" widget="many2many_tags" readonly="1" nolabel="1"/>
+                    </group>
+
+                    <div class="alert alert-info" role="alert" invisible="warehouse_count > 0">
+                        <p><strong>Sin accesos configurados</strong></p>
+                        <p>Este usuario no tiene accesos a almacenes configurados.
+                           Agregue al menos una línea para asignar acceso a almacenes específicos.</p>
+                        <p><em>Nota: Los administradores del sistema tienen acceso completo a todos los almacenes automáticamente.</em></p>
+                    </div>
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Vista simplificada de lista de usuarios con columna de almacenes -->
+    <record id="view_users_tree_warehouse_access" model="ir.ui.view">
+        <field name="name">res.users.tree.warehouse.access</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='login']" position="after">
+                <field name="warehouse_count" string="Almacenes" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="amunet_quality.MultiConditionWidget" owl="1">
+        <div class="o_multi_condition_widget p-3 border rounded bg-light">
+            <!-- Condición 1: Funcionamiento -->
+            <div class="condition-box mb-3 p-2 border rounded bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="fw-bold m-0">1. Funcionamiento del Vial</label>
+                    <span t-if="props.record.data.multi_cond_binary"
+                          t-attf-class="badge {{ isCondition1Pass ? 'bg-success' : 'bg-danger' }}">
+                        <i t-attf-class="fa {{ isCondition1Pass ? 'fa-check' : 'fa-times' }}"/>
+                    </span>
+                </div>
+                <select class="form-select mt-2"
+                        t-att-value="props.record.data.multi_cond_binary"
+                        t-on-change="onBinaryChange">
+                    <option value="">-- Seleccione --</option>
+                    <option value="correct">✓ Funcionamiento Correcto</option>
+                    <option value="incorrect">✗ Funcionamiento Incorrecto</option>
+                </select>
+            </div>
+
+            <!-- Condición 2: Número de gotas -->
+            <div class="condition-box mb-3 p-2 border rounded bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="fw-bold m-0">2. Número de Gotas Obtenidas</label>
+                    <span t-if="props.record.data.multi_cond_num1"
+                          t-attf-class="badge {{ isCondition2Pass ? 'bg-success' : 'bg-danger' }}">
+                        <i t-attf-class="fa {{ isCondition2Pass ? 'fa-check' : 'fa-times' }}"/>
+                    </span>
+                </div>
+                <div class="input-group mt-2">
+                    <input type="number"
+                           class="form-control"
+                           placeholder="Ingrese cantidad"
+                           t-att-value="props.record.data.multi_cond_num1"
+                           t-on-input="onNum1Change"/>
+                    <span class="input-group-text">
+                        gotas (mín: <t t-esc="props.record.data.multi_cond_num1_min || 5"/>)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Condición 3: Volumen de gota -->
+            <div class="condition-box mb-3 p-2 border rounded bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="fw-bold m-0">3. Volumen Promedio de Gota</label>
+                    <span t-if="props.record.data.multi_cond_num2"
+                          t-attf-class="badge {{ isCondition3Pass ? 'bg-success' : 'bg-danger' }}">
+                        <i t-attf-class="fa {{ isCondition3Pass ? 'fa-check' : 'fa-times' }}"/>
+                    </span>
+                </div>
+                <div class="input-group mt-2">
+                    <input type="number"
+                           class="form-control"
+                           step="0.01"
+                           placeholder="Ingrese volumen"
+                           t-att-value="props.record.data.multi_cond_num2"
+                           t-on-input="onNum2Change"/>
+                    <span class="input-group-text">
+                        µl (rango: <t t-esc="props.record.data.multi_cond_num2_min || 40"/> - <t t-esc="props.record.data.multi_cond_num2_max || 50"/>)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Resultado Generado -->
+            <div class="result-box mt-3" t-if="props.record.data.multi_cond_result_text">
+                <div class="alert alert-info py-2 mb-0">
+                    <small class="fw-bold text-uppercase d-block mb-1">Resultado de la prueba:</small>
+                    <t t-esc="props.record.data.multi_cond_result_text"/>
+                </div>
+            </div>
+
+            <!-- Dictamen Final -->
+            <div class="verdict-box mt-3" t-if="props.record.data.verdict and props.record.data.evaluation_type === 'multi_condition_numeric'">
+                <div t-attf-class="alert py-2 mb-0 {{ props.record.data.verdict === 'pass' ? 'alert-success' : 'alert-danger' }}">
+                    <i t-attf-class="fa fa-lg me-2 {{ props.record.data.verdict === 'pass' ? 'fa-check-circle' : 'fa-times-circle' }}"/>
+                    <strong t-if="props.record.data.verdict === 'pass'">✓ CUMPLE</strong>
+                    <strong t-else="">✗ NO CUMPLE</strong>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
