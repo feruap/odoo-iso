@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Secuencia para Auditorías -->
+        <record id="seq_amunet_auditoria" model="ir.sequence">
+            <field name="name">Auditoría</field>
+            <field name="code">amunet.auditoria</field>
+            <field name="prefix">AUD-</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <!-- Secuencia para Hallazgos -->
+        <record id="seq_amunet_auditoria_hallazgo" model="ir.sequence">
+            <field name="name">Hallazgo de Auditoría</field>
+            <field name="code">amunet.auditoria.hallazgo</field>
+            <field name="prefix">HALL-</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+    </data>
+</odoo>

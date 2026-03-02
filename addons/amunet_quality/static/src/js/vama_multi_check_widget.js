@@ -58,6 +58,7 @@ export class VAMAMultiCheckWidget extends Component {
 
     async _loadMapping(props) {
         try {
+            // Leer directamente desde text_phrase_mapping del detalle
             const rawMapping = props.record.data.text_phrase_mapping;
             if (rawMapping) {
                 const mapping = JSON.parse(rawMapping);
@@ -137,7 +138,9 @@ VAMAMultiCheckWidget.fieldDependencies = [
     "multi_check_results_json",
     "evaluation_type",
     "verdict",
-    "verdict_message"
+    "verdict_message",
+    "text_phrase_mapping",
+    "result_text_pattern"
 ];
 
 registry.category("fields").add("vama_multi_check_widget", {

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista: Matriz de Competencias (pivot-style list)
+         Agrupa capacitaciones por analista y SOP
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_matriz_competencias_list" model="ir.ui.view">
+        <field name="name">amunet.registro.capacitacion.matriz.list</field>
+        <field name="model">amunet.registro.capacitacion</field>
+        <field name="arch" type="xml">
+            <list string="Matriz de Competencias"
+                  decoration-danger="state == 'vencida'"
+                  decoration-warning="state == 'proxima'"
+                  decoration-success="state == 'vigente'"
+                  default_group_by="user_id">
+                <field name="user_id" optional="show"/>
+                <field name="department_id" optional="show"/>
+                <field name="procedure_id" optional="show"/>
+                <field name="parameter_id" optional="hide"/>
+                <field name="expiry_date" optional="show"/>
+                <field name="days_to_expiry" string="Días restantes" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'vigente'"
+                       decoration-warning="state == 'proxima'"
+                       decoration-danger="state == 'vencida'"
+                       decoration-muted="state == 'cancelada'"/>
+                <field name="training_type" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista: Búsqueda para Matriz
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_matriz_competencias_search" model="ir.ui.view">
+        <field name="name">amunet.registro.capacitacion.matriz.search</field>
+        <field name="model">amunet.registro.capacitacion</field>
+        <field name="arch" type="xml">
+            <search string="Filtrar Matriz">
+                <field name="user_id"/>
+                <field name="procedure_id"/>
+                <field name="parameter_id"/>
+                <field name="department_id"/>
+                <separator/>
+                <filter name="solo_activas" string="Vigentes + Por vencer"
+                        domain="[('state', 'in', ['vigente', 'proxima'])]"/>
+                <filter name="vencidas" string="Vencidas"
+                        domain="[('state', '=', 'vencida')]"/>
+                <separator/>
+                <filter name="group_user" string="Agrupar por Analista" context="{'group_by': 'user_id'}"/>
+                <filter name="group_dept" string="Agrupar por Departamento" context="{'group_by': 'department_id'}"/>
+                <filter name="group_procedure" string="Agrupar por Procedimiento" context="{'group_by': 'procedure_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Acción de ventana — Matriz de Competencias
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_amunet_matriz_competencias" model="ir.actions.act_window">
+        <field name="name">Matriz de Competencias</field>
+        <field name="res_model">amunet.registro.capacitacion</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_amunet_matriz_competencias_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('amunet_competencias.view_amunet_registro_capacitacion_form')}),
+        ]"/>
+        <field name="search_view_id" ref="view_amunet_matriz_competencias_search"/>
+        <field name="context">{'search_default_solo_activas': 1, 'group_by': ['user_id']}</field>
+    </record>
+
+</odoo>

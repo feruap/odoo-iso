@@ -1,0 +1,203 @@
+/* Copyright 2018 Tecnativa - Jairo Llopis
+ * Copyright 2021 ITerra - Sergey Shebanin
+ * Copyright 2023 Taras Shabaranskyi
+ * License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl). */
+
+:root {
+  .o_grid_apps_menu[data-theme="milk"] {
+    --app-menu-background:
+      url("../../img/home-menu-bg-overlay.svg"),
+      linear-gradient(
+        to bottom,
+        #{$app-menu-background-color},
+        #{desaturate(lighten($app-menu-background-color, 20%), 15)}
+      );
+  }
+
+  .o_grid_apps_menu[data-theme="community"] {
+    --app-menu-background:
+      url("../../img/home-menu-bg-overlay.svg"),
+      linear-gradient(
+        to bottom,
+        #{$o-brand-primary},
+        #{desaturate(lighten($o-brand-primary, 20%), 15)}
+      );
+  }
+}
+
+@mixin full-screen-dropdown {
+  border: none;
+  box-shadow: none;
+  height: 100%;
+  max-height: calc(var(--vh100, 100vh) - #{$o-navbar-height});
+  max-height: calc(100dvh - #{$o-navbar-height});
+  position: fixed;
+  margin: 0;
+  width: 100vw;
+  z-index: 1000;
+  left: 0 !important;
+}
+
+.o_apps_menu_opened .o_main_navbar {
+  .o_menu_brand,
+  .o_menu_sections {
+    display: none !important;
+  }
+}
+
+// hide and save odoo default QUnit tests
+.o_navbar_apps_menu.hide .dropdown-toggle {
+  position: absolute !important;
+  z-index: -100 !important;
+}
+
+// Iconized full screen apps menu
+.o_grid_apps_menu {
+  &__button {
+    background: unset;
+    border: unset;
+    outline: unset;
+    margin-right: 0.25rem;
+    min-height: $o-navbar-height;
+    height: $o-navbar-height;
+    width: $o-navbar-height;
+    color: $o-navbar-brand-color;
+
+    &:hover,
+    &:focus {
+      background: $o-navbar-entry-bg--hover;
+    }
+  }
+
+  .o-app-menu-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    width: 100%;
+    gap: 0.25rem;
+
+    @include media-breakpoint-up(sm) {
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    }
+  }
+}
+
+.app-menu-container {
+  @include full-screen-dropdown();
+  overflow: auto;
+  background-clip: border-box;
+  padding: 2rem;
+  background: var(--app-menu-background);
+  background-size: cover;
+  border-radius: 0;
+  display: flex !important;
+  z-index: 1024 !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+
+  @include media-breakpoint-up(md) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .o-home-menu-sidebar {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding-top: 0;
+    height: auto;
+    z-index: 20;
+    mix-blend-mode: multiply !important;
+
+    /* Scaled down logo for smaller screens (e.g. tablet or half-window) */
+    .o-home-menu-logo {
+      background: transparent !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      max-width: 90px;
+      max-height: 90px;
+      object-fit: contain;
+
+      /* Regular size for desktop */
+      @include media-breakpoint-up(lg) {
+        max-width: 140px;
+        max-height: 120px;
+      }
+    }
+  }
+
+  .o-home-menu-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 1000px;
+    padding-top: 6rem;
+
+    @include media-breakpoint-up(lg) {
+        padding-top: 8rem;
+    }
+
+    .o-app-menu-list {
+      margin-top: 2rem;
+      width: 100%;
+    }
+  }
+
+  .o-home-menu-footer {
+    width: 100%;
+    padding: 1.25rem 1.5rem;
+    text-align: center;
+    background: #f1f3f4 !important;
+    margin-top: auto;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+
+    .o-home-menu-company-name {
+      color: #004d8d !important;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.1rem;
+    }
+
+    .o-home-menu-company-address {
+      color: #005999 !important;
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .o-home-menu-company-website {
+      margin-top: 0.1rem;
+      
+      a {
+        color: #007bff !important;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  // Hide app icons when searching
+  .has-results ~ .o-app-menu-list {
+    display: none;
+  }
+}
+
+// Sidebar positioning
+.o_app_menu_sidebar {
+  transform: translateX(-100%);
+}

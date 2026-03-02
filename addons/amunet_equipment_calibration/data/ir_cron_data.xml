@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Cron Job: Búsqueda y Bloqueo de Equipos Vencidos (Regla Fuerte No. 1) -->
+        <record id="cron_check_equipment_calibration_status" model="ir.cron">
+            <field name="name">Equipos: Actualizar Estado de Calibración</field>
+            <field name="model_id" ref="model_amunet_equipment"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_check_calibration_status()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

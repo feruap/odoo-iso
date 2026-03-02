@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════
+         Grupos de Seguridad — Programa de Auditorías
+         ISO 13485 §8.2.4 / §7.4
+    ══════════════════════════════════════════════════════ -->
+
+    <!-- Grupo: Auditor (ejecución) -->
+    <record id="group_auditorias_auditor" model="res.groups">
+        <field name="name">Auditorías / Auditor</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">
+            Puede crear y ejecutar auditorías.
+            Puede registrar hallazgos y generar CAPAs.
+        </field>
+    </record>
+
+    <!-- Grupo: Gestor de Auditorías -->
+    <record id="group_auditorias_manager" model="res.groups">
+        <field name="name">Auditorías / Gestor</field>
+        <field name="implied_ids" eval="[(4, ref('group_auditorias_auditor'))]"/>
+        <field name="comment">
+            Todos los permisos del Auditor.
+            Puede cerrar y cancelar auditorías.
+            Puede ver y gestionar todas las auditorías.
+        </field>
+    </record>
+
+</odoo>

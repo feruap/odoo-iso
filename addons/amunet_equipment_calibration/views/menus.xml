@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <menuitem id="menu_amunet_equipment_root" 
+                  name="Equipos" 
+                  parent="amunet_quality.menu_quality_root" 
+                  sequence="30"/>
+
+        <menuitem id="menu_amunet_equipment_inventory" 
+                  name="Inventario de Equipos" 
+                  parent="menu_amunet_equipment_root" 
+                  action="action_amunet_equipment" 
+                  sequence="10"/>
+    </data>
+</odoo>

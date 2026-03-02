@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista: Auditoría — Formulario Principal
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_auditoria_form" model="ir.ui.view">
+        <field name="name">amunet.auditoria.form</field>
+        <field name="model">amunet.auditoria</field>
+        <field name="arch" type="xml">
+            <form string="Auditoría">
+                <header>
+                    <button name="action_iniciar" string="▶ Iniciar Auditoría"
+                            type="object" class="btn-primary"
+                            invisible="state != 'planificada'"/>
+                    <button name="action_con_hallazgos" string="⚠️ Registrar Hallazgos"
+                            type="object" class="btn-warning"
+                            invisible="state != 'en_ejecucion'"/>
+                    <button name="action_cerrar" string="✅ Cerrar Auditoría"
+                            type="object" class="btn-success"
+                            confirm="¿Confirma cerrar la auditoría? Se actualizará el estatus del proveedor."
+                            invisible="state not in ['en_ejecucion', 'con_hallazgos']"/>
+                    <button name="action_cancelar" string="Cancelar"
+                            type="object" class="btn-danger"
+                            confirm="¿Cancelar esta auditoría?"
+                            invisible="state in ['cerrada', 'cancelada']"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="planificada,en_ejecucion,con_hallazgos,cerrada"/>
+                </header>
+                <sheet>
+                    <!-- Smart Buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_ver_hallazgos" type="object"
+                                class="oe_stat_button" icon="fa-exclamation-triangle"
+                                string="Hallazgos">
+                            <field name="hallazgo_count" widget="statinfo" string="Hallazgos"/>
+                        </button>
+                        <button name="action_ver_capas" type="object"
+                                class="oe_stat_button" icon="fa-tasks"
+                                invisible="capa_count == 0">
+                            <field name="capa_count" widget="statinfo" string="CAPAs"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                            <span class="ms-3 badge"
+                                  invisible="tipo != 'interna'">🏢 Interna</span>
+                            <span class="ms-3 badge text-bg-warning"
+                                  invisible="tipo != 'proveedores'">🏭 Proveedores</span>
+                        </h1>
+                    </div>
+
+                    <!-- Tabs principales -->
+                    <notebook>
+                        <page string="📋 Información General" name="general">
+                            <group>
+                                <group string="Clasificación">
+                                    <field name="tipo"/>
+                                    <field name="norma_referencia"
+                                           placeholder="Ej: ISO 13485:2016 §8.2.4"/>
+                                    <field name="resultado_global"/>
+                                </group>
+                                <group string="Fechas">
+                                    <field name="fecha_planeada"/>
+                                    <field name="fecha_ejecucion"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="👤 Equipo Auditor">
+                                    <field name="auditor_lider_id"
+                                           options="{'no_create': True}"/>
+                                    <field name="co_auditores_ids"
+                                           widget="many2many_tags"
+                                           options="{'no_create': True}"/>
+                                </group>
+                                <group string="🎯 Alcance">
+                                    <field name="department_id"
+                                           invisible="tipo != 'interna'"
+                                           options="{'no_create': True}"/>
+                                    <field name="partner_id"
+                                           invisible="tipo != 'proveedores'"
+                                           options="{'no_create': True}"/>
+                                </group>
+                            </group>
+                            <group string="📝 Alcance Detallado">
+                                <field name="alcance" nolabel="1" colspan="2"/>
+                            </group>
+                            <group string="📄 Conclusión / Informe Narrativo">
+                                <field name="conclusion" nolabel="1" colspan="2"/>
+                            </group>
+                            <group string="📎 Informe PDF">
+                                <field name="report_file" widget="binary"
+                                       filename="report_filename"/>
+                                <field name="report_filename" invisible="1"/>
+                            </group>
+                        </page>
+
+                        <page string="☑️ Checklist de Evaluación" name="checklist">
+                            <field name="checklist_ids">
+                                <list editable="bottom"
+                                      decoration-danger="resultado == 'nc_mayor'"
+                                      decoration-warning="resultado in ['nc_menor', 'observacion']"
+                                      decoration-success="resultado == 'conforme'">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="clausula" optional="show"/>
+                                    <field name="requisito"/>
+                                    <field name="resultado" widget="badge"
+                                           decoration-success="resultado == 'conforme'"
+                                           decoration-warning="resultado in ['nc_menor', 'observacion']"
+                                           decoration-danger="resultado == 'nc_mayor'"
+                                           decoration-muted="resultado == 'na'"/>
+                                    <field name="evidencia" optional="show"/>
+                                    <field name="notas" optional="hide"/>
+                                    <field name="hallazgo_id" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="🚨 Hallazgos / No Conformidades" name="hallazgos">
+                            <field name="hallazgo_ids">
+                                <list editable="bottom"
+                                      decoration-danger="severidad in ['nc_mayor', 'critica']"
+                                      decoration-warning="severidad == 'nc_menor'"
+                                      decoration-muted="estado_hallazgo == 'cerrado'">
+                                    <field name="name" readonly="1"/>
+                                    <field name="titulo"/>
+                                    <field name="severidad" widget="badge"
+                                           decoration-success="severidad == 'observacion'"
+                                           decoration-warning="severidad == 'nc_menor'"
+                                           decoration-danger="severidad in ['nc_mayor', 'critica']"/>
+                                    <field name="clausula_incumplida" optional="show"/>
+                                    <field name="fecha_limite" optional="show"/>
+                                    <field name="responsable_id" optional="show"/>
+                                    <field name="capa_id" optional="show" readonly="1"/>
+                                    <field name="capa_state" optional="show" readonly="1"/>
+                                    <field name="estado_hallazgo" widget="badge"
+                                           decoration-danger="estado_hallazgo == 'abierto'"
+                                           decoration-warning="estado_hallazgo == 'capa_creada'"
+                                           decoration-success="estado_hallazgo == 'cerrado'"/>
+                                    <button name="action_crear_capa"
+                                            string="🚨 Crear CAPA"
+                                            type="object"
+                                            class="btn-danger btn-sm"
+                                            confirm="¿Generar un CAPA para este hallazgo?"
+                                            invisible="capa_id != False"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista: Lista de Auditorías
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_auditoria_list" model="ir.ui.view">
+        <field name="name">amunet.auditoria.list</field>
+        <field name="model">amunet.auditoria</field>
+        <field name="arch" type="xml">
+            <list string="Auditorías"
+                  decoration-muted="state == 'cancelada'"
+                  decoration-success="state == 'cerrada'"
+                  decoration-warning="state == 'con_hallazgos'"
+                  decoration-info="state == 'en_ejecucion'">
+                <field name="name"/>
+                <field name="tipo"/>
+                <field name="partner_id" optional="show"/>
+                <field name="department_id" optional="show"/>
+                <field name="norma_referencia" optional="show"/>
+                <field name="fecha_planeada"/>
+                <field name="fecha_ejecucion" optional="show"/>
+                <field name="auditor_lider_id"/>
+                <field name="resultado_global" widget="badge"
+                       decoration-success="resultado_global == 'conforme'"
+                       decoration-warning="resultado_global == 'conforme_con_obs'"
+                       decoration-danger="resultado_global == 'no_conforme'"
+                       decoration-muted="resultado_global == 'pendiente'"/>
+                <field name="hallazgo_count" string="Hallazgos"/>
+                <field name="capa_count" string="CAPAs"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'planificada'"
+                       decoration-warning="state in ['en_ejecucion', 'con_hallazgos']"
+                       decoration-success="state == 'cerrada'"
+                       decoration-muted="state == 'cancelada'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista: Búsqueda de Auditorías
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_auditoria_search" model="ir.ui.view">
+        <field name="name">amunet.auditoria.search</field>
+        <field name="model">amunet.auditoria</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Auditorías">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="auditor_lider_id"/>
+                <field name="norma_referencia"/>
+                <separator/>
+                <filter name="internas" string="Internas" domain="[('tipo', '=', 'interna')]"/>
+                <filter name="proveedores" string="A Proveedores" domain="[('tipo', '=', 'proveedores')]"/>
+                <separator/>
+                <filter name="en_curso" string="En curso"
+                        domain="[('state', 'in', ['planificada', 'en_ejecucion', 'con_hallazgos'])]"/>
+                <filter name="cerradas" string="Cerradas" domain="[('state', '=', 'cerrada')]"/>
+                <separator/>
+                <filter name="con_hallazgos_abiertos" string="Con Hallazgos Abiertos"
+                        domain="[('hallazgo_ids.estado_hallazgo', '=', 'abierto')]"/>
+                <separator/>
+                <filter name="group_tipo" string="Agrupar por Tipo" context="{'group_by': 'tipo'}"/>
+                <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_auditor" string="Agrupar por Auditor" context="{'group_by': 'auditor_lider_id'}"/>
+                <filter name="group_partner" string="Agrupar por Proveedor" context="{'group_by': 'partner_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista: Hallazgos standalone (lista global)
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_auditoria_hallazgo_list" model="ir.ui.view">
+        <field name="name">amunet.auditoria.hallazgo.list</field>
+        <field name="model">amunet.auditoria.hallazgo</field>
+        <field name="arch" type="xml">
+            <list string="Hallazgos"
+                  decoration-danger="severidad in ['nc_mayor', 'critica'] and estado_hallazgo == 'abierto'"
+                  decoration-warning="estado_hallazgo == 'capa_creada'"
+                  decoration-success="estado_hallazgo == 'cerrado'">
+                <field name="name"/>
+                <field name="auditoria_id"/>
+                <field name="titulo"/>
+                <field name="severidad" widget="badge"
+                       decoration-success="severidad == 'observacion'"
+                       decoration-warning="severidad == 'nc_menor'"
+                       decoration-danger="severidad in ['nc_mayor', 'critica']"/>
+                <field name="fecha_limite"/>
+                <field name="responsable_id"/>
+                <field name="capa_id"/>
+                <field name="capa_state" optional="show"/>
+                <field name="estado_hallazgo" widget="badge"
+                       decoration-danger="estado_hallazgo == 'abierto'"
+                       decoration-warning="estado_hallazgo == 'capa_creada'"
+                       decoration-success="estado_hallazgo == 'cerrado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Acciones de ventana
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_amunet_auditoria" model="ir.actions.act_window">
+        <field name="name">Auditorías</field>
+        <field name="res_model">amunet.auditoria</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_auditoria_search"/>
+        <field name="context">{'search_default_en_curso': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay auditorías registradas.
+            </p>
+            <p>
+                Planifique su primera auditoría interna o a proveedor
+                para dar cumplimiento a ISO 13485 §8.2.4 y §7.4.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_amunet_auditoria_hallazgo" model="ir.actions.act_window">
+        <field name="name">Todos los Hallazgos</field>
+        <field name="res_model">amunet.auditoria.hallazgo</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_amunet_auditoria_hallazgo_list')}),
+        ]"/>
+        <field name="domain">[('estado_hallazgo', '!=', 'cerrado')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay hallazgos abiertos.
+            </p>
+        </field>
+    </record>
+
+</odoo>

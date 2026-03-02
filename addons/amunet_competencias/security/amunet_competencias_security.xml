@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════
+         Grupos de Seguridad — Gestión de Competencias
+         ISO 13485 §6.2
+    ══════════════════════════════════════════════════════ -->
+
+    <!-- Grupo: Analista (lectura de sus propias capacitaciones) -->
+    <record id="group_competencias_user" model="res.groups">
+        <field name="name">Competencias / Analista</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">
+            Puede ver sus propios registros de capacitación.
+            No puede crear ni editar registros ajenos.
+        </field>
+    </record>
+
+    <!-- Grupo: Gestor de Capacitación -->
+    <record id="group_competencias_manager" model="res.groups">
+        <field name="name">Competencias / Gestor de Capacitación</field>
+        <field name="implied_ids" eval="[(4, ref('group_competencias_user'))]"/>
+        <field name="comment">
+            Puede crear, editar y cancelar cualquier registro de capacitación.
+            Puede gestionar la Matriz de Competencias completa.
+        </field>
+    </record>
+
+</odoo>

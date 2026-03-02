@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Equipo Tree View -->
+        <record id="view_amunet_equipment_tree" model="ir.ui.view">
+            <field name="name">amunet.equipment.list</field>
+            <field name="model">amunet.equipment</field>
+            <field name="arch" type="xml">
+                <list string="Equipos de Medición" decoration-danger="state == 'out_of_service'" decoration-warning="state == 'maintenance'">
+                    <field name="name"/>
+                    <field name="serial_number"/>
+                    <field name="brand"/>
+                    <field name="model_name"/>
+                    <field name="location_id"/>
+                    <field name="state" widget="badge" 
+                           decoration-success="state == 'active'" 
+                           decoration-warning="state == 'maintenance'" 
+                           decoration-danger="state == 'out_of_service'"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Equipo Form View -->
+        <record id="view_amunet_equipment_form" model="ir.ui.view">
+            <field name="name">amunet.equipment.form</field>
+            <field name="model">amunet.equipment</field>
+            <field name="arch" type="xml">
+                <form string="Equipo de Medición">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="active,maintenance,out_of_service"/>
+                    </header>
+                    <sheet>
+                        <!-- Badge de Estado -->
+                        <widget name="web_ribbon" title="Fuera de Servicio" bg_color="bg-danger" 
+                                invisible="state != 'out_of_service'"/>
+                        <widget name="web_ribbon" title="Activo" bg_color="bg-success" 
+                                invisible="state != 'active'"/>
+
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Ej. Balanza Analítica 001"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="serial_number"/>
+                                <field name="brand"/>
+                                <field name="model_name"/>
+                            </group>
+                            <group>
+                                <field name="location_id"/>
+                                <field name="next_calibration_date" decoration-danger="next_calibration_date &lt; current_date"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Historial de Calibraciones" name="calibrations">
+                                <field name="calibration_line_ids">
+                                    <list string="Calibraciones" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'">
+                                        <field name="calibration_date"/>
+                                        <field name="expiration_date"/>
+                                        <field name="lab_name"/>
+                                        <field name="state" widget="badge" 
+                                               decoration-success="state == 'done'" 
+                                               decoration-info="state == 'draft'" 
+                                               decoration-muted="state == 'cancelled'"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="view_amunet_equipment_search" model="ir.ui.view">
+            <field name="name">amunet.equipment.search</field>
+            <field name="model">amunet.equipment</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_amunet_equipment" model="ir.actions.act_window">
+            <field name="name">Equipos de Medición</field>
+            <field name="res_model">amunet.equipment</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_amunet_equipment_search"/>
+            <field name="help" type="html">
+              <p class="o_view_nocontent_smiling_face">
+                Crea tu primer equipo de medición
+              </p>
+              <p>
+                Lleva el control del inventario de instrumentos y gestiona sus calibraciones para cumplir con la norma ISO 13485.
+              </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -269,7 +269,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Muestreado por:</strong> <span t-field="o.user_realized_id.name" /></td>
-                                    <td><strong>Verifica:</strong> <span t-field="o.user_verified_id.name" /></td>
+                                    <td><strong>Verifica:</strong> <span t-field="o.inventory_validator_id.name" /></td>
                                 </tr>
                             </table>
 

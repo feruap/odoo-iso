@@ -187,7 +187,16 @@ class StockPicking(models.Model):
                         except Exception:
                             move.quality_check_id = False
                          
-        return super(StockPicking, self).button_validate()
+        res = super(StockPicking, self).button_validate()
+        
+        # Asignar usuario validador de inventario a los QCs vinculados
+        for picking in self:
+            if picking.amunet_qc_ids:
+                picking.amunet_qc_ids.write({
+                    'inventory_validator_id': self.env.user.id
+                })
+                
+        return res
 
     def action_view_quality_checks(self):
         """Abre los controles de calidad del picking. Si no existen, los crea primero."""

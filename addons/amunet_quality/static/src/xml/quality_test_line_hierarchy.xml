@@ -184,31 +184,77 @@
                                             </div>
                                         </t>
 
-                                        <!-- Expected vs Obtained -->
+                                        <!-- Expected vs Obtained (VAMA-032) -->
                                         <t t-elif="detail.evaluation_type === 'expected_vs_obtained'">
-                                            <div class="d-flex gap-2 align-items-center">
-                                                <input t-if="!props.readonly"
-                                                       type="text" 
-                                                       class="form-control form-control-sm"
-                                                       placeholder="Esperado"
-                                                       t-att-value="detail.result_expected_type"
-                                                       t-att-data-detail-id="detail.id"
-                                                       t-on-change="onExpectedTypeChange"/>
-                                                <span t-else="" class="form-control-plaintext">
-                                                    <t t-esc="detail.result_expected_type || '-'"/>
-                                                </span>
-                                                <span>/</span>
-                                                <input t-if="!props.readonly"
-                                                       type="text" 
-                                                       class="form-control form-control-sm"
-                                                       placeholder="Obtenido"
-                                                       t-att-value="detail.result_obtained_type"
-                                                       t-att-data-detail-id="detail.id"
-                                                       t-on-change="onObtainedTypeChange"/>
-                                                <span t-else="" class="form-control-plaintext">
-                                                    <t t-esc="detail.result_obtained_type || '-'"/>
-                                                </span>
-                                            </div>
+                                            <!-- Si tiene opciones configuradas: usar selectores -->
+                                            <t t-if="detail.expected_options">
+                                                <div class="d-flex flex-column gap-2">
+                                                    <!-- Paso 1: Tipo de Muestra -->
+                                                    <div class="d-flex gap-2 align-items-center">
+                                                        <label class="form-label mb-0 small text-nowrap" style="min-width: 60px;">Paso 1:</label>
+                                                        <select t-if="!props.readonly"
+                                                                class="form-select form-select-sm"
+                                                                t-att-data-detail-id="detail.id"
+                                                                t-on-change="onExpectedTypeChange">
+                                                            <option value="">Seleccione el tipo de muestra:</option>
+                                                            <t t-foreach="detail.expected_options.split(',')" t-as="opt" t-key="opt_index">
+                                                                <option t-att-value="opt.trim()"
+                                                                        t-att-selected="detail.result_expected_type === opt.trim()">
+                                                                    <t t-esc="opt.trim()"/>
+                                                                </option>
+                                                            </t>
+                                                        </select>
+                                                        <span t-else="" class="form-control-plaintext">
+                                                            <t t-esc="detail.result_expected_type || '-'"/>
+                                                        </span>
+                                                    </div>
+                                                    <!-- Paso 2: Resultado Obtenido -->
+                                                    <div class="d-flex gap-2 align-items-center">
+                                                        <label class="form-label mb-0 small text-nowrap" style="min-width: 60px;">Paso 2:</label>
+                                                        <select t-if="!props.readonly"
+                                                                class="form-select form-select-sm"
+                                                                t-att-data-detail-id="detail.id"
+                                                                t-on-change="onObtainedTypeChange">
+                                                            <option value="">Seleccione el resultado obtenido:</option>
+                                                            <t t-foreach="detail.obtained_options ? detail.obtained_options.split(',') : []" t-as="opt" t-key="opt_index">
+                                                                <option t-att-value="opt.trim()"
+                                                                        t-att-selected="detail.result_obtained_type === opt.trim()">
+                                                                    <t t-esc="opt.trim()"/>
+                                                                </option>
+                                                            </t>
+                                                        </select>
+                                                        <span t-else="" class="form-control-plaintext">
+                                                            <t t-esc="detail.result_obtained_type || '-'"/>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                            <!-- Si NO tiene opciones: mantener inputs de texto (comportamiento anterior) -->
+                                            <t t-else="">
+                                                <div class="d-flex gap-2 align-items-center">
+                                                    <input t-if="!props.readonly"
+                                                           type="text"
+                                                           class="form-control form-control-sm"
+                                                           placeholder="Esperado"
+                                                           t-att-value="detail.result_expected_type"
+                                                           t-att-data-detail-id="detail.id"
+                                                           t-on-change="onExpectedTypeChange"/>
+                                                    <span t-else="" class="form-control-plaintext">
+                                                        <t t-esc="detail.result_expected_type || '-'"/>
+                                                    </span>
+                                                    <span>/</span>
+                                                    <input t-if="!props.readonly"
+                                                           type="text"
+                                                           class="form-control form-control-sm"
+                                                           placeholder="Obtenido"
+                                                           t-att-value="detail.result_obtained_type"
+                                                           t-att-data-detail-id="detail.id"
+                                                           t-on-change="onObtainedTypeChange"/>
+                                                    <span t-else="" class="form-control-plaintext">
+                                                        <t t-esc="detail.result_obtained_type || '-'"/>
+                                                    </span>
+                                                </div>
+                                            </t>
                                         </t>
 
                                         <!-- Ternary with N/A -->

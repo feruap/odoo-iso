@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Extiende el formulario de amunet.quality.capa para mostrar
+        la pestaña "Auditoría Origen" cuando el CAPA fue generado
+        desde un hallazgo de auditoría.
+
+        No se modifica ningún archivo de amunet_quality.
+    -->
+    <record id="view_amunet_quality_capa_ext_form" model="ir.ui.view">
+        <field name="name">amunet.quality.capa.auditorias.ext</field>
+        <field name="model">amunet.quality.capa</field>
+        <field name="inherit_id" ref="amunet_quality.view_amunet_quality_capa_form"/>
+        <field name="arch" type="xml">
+            <!-- Añadir pestaña al notebook existente del CAPA -->
+            <xpath expr="//notebook" position="inside">
+                <page string="🏭 Auditoría Origen" name="auditoria_origen"
+                      invisible="not source_audit_id">
+                    <group>
+                        <group string="Trazabilidad de Auditoría">
+                            <field name="source_audit_id" readonly="1"/>
+                            <field name="source_hallazgo_id" readonly="1"/>
+                            <field name="audit_partner_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        <strong>📋 CAPA generada desde Auditoría.</strong>
+                        Esta Acción Correctiva fue creada automáticamente por el hallazgo
+                        <strong><field name="source_hallazgo_id" readonly="1" nolabel="1"/></strong>
+                        detectado durante la auditoría
+                        <strong><field name="source_audit_id" readonly="1" nolabel="1"/></strong>.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

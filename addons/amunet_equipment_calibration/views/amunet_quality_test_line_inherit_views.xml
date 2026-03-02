@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vista Árbol Independiente para amunet.quality.test.line -->
+        <record id="view_amunet_quality_test_line_equipment_tree" model="ir.ui.view">
+            <field name="name">amunet.quality.test.line.equipment.list</field>
+            <field name="model">amunet.quality.test.line</field>
+            <field name="arch" type="xml">
+                <list string="Instrumentos por Línea de Prueba" editable="bottom" create="false" delete="false">
+                    <field name="sequence" widget="handle"/>
+                    <field name="code" readonly="1"/>
+                    <field name="name" readonly="1"/>
+                    <field name="equipment_id" options="{'no_create': True}" placeholder="Seleccionar instrumento..."/>
+                    <field name="verdict" widget="badge" 
+                           decoration-success="verdict == 'pass'" 
+                           decoration-danger="verdict == 'fail'" 
+                           readonly="1"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Acción para abrir las líneas del Check actual -->
+        <record id="action_view_test_lines_equipment" model="ir.actions.act_window">
+            <field name="name">Asignar Instrumentos</field>
+            <field name="res_model">amunet.quality.test.line</field>
+            <field name="view_mode">list</field>
+            <field name="domain">[('check_id', '=', active_id)]</field>
+            <field name="context">{'default_check_id': active_id}</field>
+            <field name="view_id" ref="view_amunet_quality_test_line_equipment_tree"/>
+        </record>
+
+        <!-- Heredamos el Form de amunet.quality.check para agregar el Smart Button -->
+        <record id="view_amunet_quality_check_equipment_inherit" model="ir.ui.view">
+            <field name="name">amunet.quality.check.equipment.inherit</field>
+            <field name="model">amunet.quality.check</field>
+            <field name="inherit_id" ref="amunet_quality.view_amunet_quality_check_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="%(action_view_test_lines_equipment)d" 
+                            type="action" 
+                            class="oe_stat_button" 
+                            icon="fa-wrench"
+                            invisible="state == 'draft'">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Equipos Utilizados</span>
+                            </div>
+                    </button>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

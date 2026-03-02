@@ -33,8 +33,9 @@
                     <input type="number"
                            class="form-control"
                            placeholder="Ingrese cantidad"
-                           t-att-value="props.record.data.multi_cond_num1"
-                           t-on-input="onNum1Change"/>
+                           t-att-value="state.num1Value"
+                           t-on-input="onNum1Change"
+                           t-on-blur="onNum1Blur"/>
                     <span class="input-group-text">
                         gotas (mín: <t t-esc="props.record.data.multi_cond_num1_min || 5"/>)
                     </span>
@@ -55,8 +56,9 @@
                            class="form-control"
                            step="0.01"
                            placeholder="Ingrese volumen"
-                           t-att-value="props.record.data.multi_cond_num2"
-                           t-on-input="onNum2Change"/>
+                           t-att-value="state.num2Value"
+                           t-on-input="onNum2Change"
+                           t-on-blur="onNum2Blur"/>
                     <span class="input-group-text">
                         µl (rango: <t t-esc="props.record.data.multi_cond_num2_min || 40"/> - <t t-esc="props.record.data.multi_cond_num2_max || 50"/>)
                     </span>

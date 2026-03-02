@@ -189,6 +189,8 @@ export class QualityTestLineRow extends Component {
                     "multi_cond_binary", "multi_cond_num1", "multi_cond_num1_min",
                     "multi_cond_num2", "multi_cond_num2_min", "multi_cond_num2_max",
                     "mavi07_sample_type", "mavi07_expected_result", "mavi07_observed_result",
+                    // Expected vs Obtained (VAMA-032)
+                    "expected_options", "obtained_options",
                 ],
                 { order: "sequence, id" }
             );

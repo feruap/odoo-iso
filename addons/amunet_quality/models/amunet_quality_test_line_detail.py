@@ -328,11 +328,11 @@ class AmunetQualityTestLineDetail(models.Model):
     ], string='Funcionamiento del Vial')
 
     multi_cond_num1 = fields.Integer(string='Número de Gotas')
-    multi_cond_num1_filled = fields.Boolean(string='Num1 llenado', default=False)
+    multi_cond_num1_filled = fields.Boolean(string='Num1 llenado', compute='_compute_multi_cond_filled', store=True)
     multi_cond_num1_min = fields.Integer(string='Mínimo Gotas', default=5)
 
     multi_cond_num2 = fields.Float(string='Volumen de Gota (µl)', digits=(10, 2))
-    multi_cond_num2_filled = fields.Boolean(string='Num2 llenado', default=False)
+    multi_cond_num2_filled = fields.Boolean(string='Num2 llenado', compute='_compute_multi_cond_filled', store=True)
     multi_cond_num2_min = fields.Float(string='Volumen Mínimo', default=40.0)
     multi_cond_num2_max = fields.Float(string='Volumen Máximo', default=50.0)
 
@@ -507,6 +507,13 @@ class AmunetQualityTestLineDetail(models.Model):
     text_phrase_mapping = fields.Text(
         string='Mapeo de Frases (JSON)'
     )
+    
+    # Campo related para traer el mapping desde la configuración (sin store=True para evitar columna en BD)
+    config_text_phrase_mapping = fields.Text(
+        string='Mapeo desde Configuración',
+        related='specification_config_id.text_phrase_mapping',
+        readonly=True
+    )
 
     # -- Expected vs Obtained --
     expected_options = fields.Char(
@@ -599,6 +606,13 @@ class AmunetQualityTestLineDetail(models.Model):
                 record.mavi07_expected_result = '#1, #2, #3 o #4'
             else:
                 record.mavi07_expected_result = False
+
+    @api.depends('multi_cond_num1', 'multi_cond_num2')
+    def _compute_multi_cond_filled(self):
+        """Compute if multi_cond fields have been filled"""
+        for record in self:
+            record.multi_cond_num1_filled = bool(record.multi_cond_num1 or record.multi_cond_num1 == 0)
+            record.multi_cond_num2_filled = bool(record.multi_cond_num2 or record.multi_cond_num2 == 0.0)
 
     @api.depends('evaluation_type', 'multi_cond_binary', 'multi_cond_num1', 'multi_cond_num2')
     def _compute_multi_cond_result(self):
@@ -837,6 +851,7 @@ class AmunetQualityTestLineDetail(models.Model):
         'vama006_color_value',
         'vama067_particles', 'vama067_color',
         'multi_cond_binary', 'multi_cond_num1', 'multi_cond_num2',
+        'multi_cond_num1_filled', 'multi_cond_num2_filled',
         'vama044_num_gotas', 'vama044_vol_gota', 'vama044_union', 'vama044_vol_llenado',
         'vama112_cond1', 'vama112_cond2', 'vama112_cond3', 'vama112_cond4', 'vama112_cond5',
         'vama078_color', 'vama078_forma', 'vama078_textura', 'vama078_humedad',
@@ -1517,6 +1532,9 @@ class AmunetQualityTestLineDetail(models.Model):
         raw_mapping = config.text_phrase_mapping if config else None
         if not raw_mapping and self.specification_id:
             raw_mapping = self.specification_id.text_phrase_mapping
+        # Fallback: usar el text_phrase_mapping del propio registro
+        if not raw_mapping and self.text_phrase_mapping:
+            raw_mapping = self.text_phrase_mapping
 
         positions = []
         evaluation_rules = None
@@ -1555,13 +1573,31 @@ class AmunetQualityTestLineDetail(models.Model):
         numeric_messages = []
         select_value = None  # Para guardar el valor seleccionado y usar en evaluación numérica
         
+        # Obtener mensajes configurados del mapping
+        success_message = mapping.get('success_message', 'Todos los puntos cumplen')
+        error_prefix = mapping.get('error_prefix', 'No cumple:')
+        dynamic_error = mapping.get('dynamic_error', False)
+        error_messages = []  # Para errores dinámicos
+        
         for i, pos in enumerate(positions):
             val = results.get(str(i), '')
             ptype = pos.get('type', 'binary')
             label = pos.get('label', f'Posición {i+1}')
 
-            if not val or val in ('N', '', '0'):
+            if not val or val == '':
+                # Solo es pendiente si no tiene valor
                 pending.append(label)
+            elif ptype == 'ternary':
+                # Tipo ternary: A = Coincide (pass), B = No coincide (fail), N = No aplica (neutral)
+                # 'N' NO se considera pendiente ni fallo - se trata como "pase"
+                if val == 'B':
+                    # Solo B (No coincide) es un fallo
+                    error_msg = pos.get('error_msg', f'{label} no coincide.')
+                    if dynamic_error:
+                        error_messages.append(f"• {error_msg}")
+                    else:
+                        failed.append(label)
+                # A (Coincide) y N (No aplica) se consideran como pass
             elif ptype == 'binary':
                 # A = opción positiva (pass), B = opción negativa (fail)
                 expected_pass = pos.get('pass_value', 'A')
@@ -1595,33 +1631,144 @@ class AmunetQualityTestLineDetail(models.Model):
                             else:
                                 failed.append(f'{label}: {numeric_val} uL fuera de rango ({min_val}-{max_val})')
                         else:
-                            # Sin regla específica, solo verificar que tenga valor
-                            numeric_messages.append(f'{label}: {numeric_val}')
+                            # Sin regla específica, verificar min/max de la posición
+                            pos_min = pos.get('min')
+                            pos_max = pos.get('max')
+                            if pos_min is not None and pos_max is not None:
+                                if pos_min <= numeric_val <= pos_max:
+                                    numeric_messages.append(f'{label}: {numeric_val}')
+                                else:
+                                    error_msg = pos.get('error_msg', f'{label}: {numeric_val} fuera de rango ({pos_min}-{pos_max})')
+                                    if dynamic_error:
+                                        error_messages.append(f"• {error_msg}")
+                                    else:
+                                        failed.append(f'{label}: fuera de rango')
+                            elif pos_min is not None:
+                                if numeric_val >= pos_min:
+                                    numeric_messages.append(f'{label}: {numeric_val}')
+                                else:
+                                    error_msg = pos.get('error_msg', f'{label}: {numeric_val} debe ser >= {pos_min}')
+                                    if dynamic_error:
+                                        error_messages.append(f"• {error_msg}")
+                                    else:
+                                        failed.append(f'{label}: fuera de rango')
+                            else:
+                                numeric_messages.append(f'{label}: {numeric_val}')
                     else:
-                        # Sin reglas de evaluación, aceptar cualquier valor numérico
-                        numeric_messages.append(f'{label}: {numeric_val}')
+                        # Sin reglas de evaluación, verificar min/max de la posición
+                        pos_min = pos.get('min')
+                        pos_max = pos.get('max')
+                        if pos_min is not None and pos_max is not None:
+                            if pos_min <= numeric_val <= pos_max:
+                                numeric_messages.append(f'{label}: {numeric_val}')
+                            else:
+                                error_msg = pos.get('error_msg', f'{label}: {numeric_val} fuera de rango ({pos_min}-{pos_max})')
+                                if dynamic_error:
+                                    error_messages.append(f"• {error_msg}")
+                                else:
+                                    failed.append(f'{label}: fuera de rango')
+                        elif pos_min is not None:
+                            if numeric_val >= pos_min:
+                                numeric_messages.append(f'{label}: {numeric_val}')
+                            else:
+                                error_msg = pos.get('error_msg', f'{label}: {numeric_val} debe ser >= {pos_min}')
+                                if dynamic_error:
+                                    error_messages.append(f"• {error_msg}")
+                                else:
+                                    failed.append(f'{label}: fuera de rango')
+                        else:
+                            numeric_messages.append(f'{label}: {numeric_val}')
                         
                 except (ValueError, TypeError):
                     pending.append(f'{label}: valor inválido')
 
+        # 4. Evaluación especial: MAVI-07 con reglas sample_type/result
+        if evaluation_rules and 'rules' in evaluation_rules and isinstance(evaluation_rules.get('rules'), list):
+            # Nuevo formato: rules es una lista de reglas con sample_type, result, verdict, message
+            rules_list = evaluation_rules.get('rules', [])
+            
+            # Obtener valores de sample_type (índice 0) y result (índice 1)
+            sample_type = results.get('0', '')
+            result_value = results.get('1', '')
+            
+            if not sample_type:
+                return {'verdict': 'pending', 'message': 'Seleccione el tipo de muestra'}
+            if not result_value:
+                return {'verdict': 'pending', 'message': 'Seleccione el resultado observado'}
+            
+            # Buscar la regla que coincide
+            for rule in rules_list:
+                rule_sample = rule.get('sample_type', '')
+                rule_result = rule.get('result', '')
+                
+                if rule_sample == sample_type and rule_result == result_value:
+                    verdict = rule.get('verdict', 'pending')
+                    message = rule.get('message', '')
+                    return {'verdict': verdict, 'message': message}
+            
+            # Si no se encontró regla específica, retornar pendiente
+            return {'verdict': 'pending', 'message': 'Combinación no configurada'}
+
+        # 5. Evaluación especial: expected_vs_obtained (formato anterior)
+        if evaluation_rules and evaluation_rules.get('type') == 'expected_vs_obtained':
+            expected_idx = str(evaluation_rules.get('expected_index', 0))
+            obtained_idx = str(evaluation_rules.get('obtained_index', 1))
+            expected_val = results.get(expected_idx, '')
+            obtained_val = results.get(obtained_idx, '')
+            
+            if not expected_val:
+                return {'verdict': 'pending', 'message': 'Seleccione el tipo de muestra (Paso 1)'}
+            if not obtained_val:
+                return {'verdict': 'pending', 'message': 'Seleccione el resultado obtenido (Paso 2)'}
+            
+            # Etiquetas simplificadas
+            expected_label = 'Muestra negativa' if expected_val == 'negative' else 'Muestra positiva'
+            obtained_label = 'Negativo' if obtained_val == 'negative' else 'Positivo'
+            
+            # Comparar: si coinciden -> pass, si no -> fail
+            if expected_val == obtained_val:
+                return {
+                    'verdict': 'pass',
+                    'message': f'{expected_label}: {obtained_label}.'
+                }
+            else:
+                expected_result = 'Negativo' if expected_val == 'negative' else 'Positivo'
+                return {
+                    'verdict': 'fail',
+                    'message': f'{expected_label}: Esperado {expected_result}, Obtenido {obtained_label}.'
+                }
+
         if pending:
             return {'verdict': 'pending', 'message': 'Complete: ' + ', '.join(pending)}
+
+        # Manejo de errores dinámicos (para tipo ternary con dynamic_error=true)
+        if error_messages:
+            # Construir mensaje dinámico listando solo los fallos
+            error_text = '\n'.join(error_messages)
+            return {
+                'verdict': 'fail',
+                'message': f"{error_prefix}\n{error_text}"
+            }
 
         if failed:
             return {
                 'verdict': 'fail',
-                'message': 'No cumple: ' + ', '.join(failed)
+                'message': error_prefix + ' ' + ', '.join(failed)
             }
 
-        # Construir mensaje de éxito
+        # Construir mensaje de éxito usando success_message si está configurado
         msg_parts = []
         if select_value:
             msg_parts.append(f'Volumen nominal: {select_value} uL')
         if numeric_messages:
             msg_parts.extend(numeric_messages)
         
-        message = ' | '.join(msg_parts) if msg_parts else 'Todos los puntos cumplen'
-        return {'verdict': 'pass', 'message': message}
+        # Usar success_message configurado o construir uno por defecto
+        if success_message and not msg_parts:
+            return {'verdict': 'pass', 'message': success_message}
+        else:
+            message = ' | '.join(msg_parts) if msg_parts else success_message
+            return {'verdict': 'pass', 'message': message}
 
     def _compute_verdict_display(self):
         """Genera texto de dictamen para mostrar"""

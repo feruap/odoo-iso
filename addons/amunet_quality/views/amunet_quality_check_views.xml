@@ -61,7 +61,7 @@
 
                     <button name="action_finalize" string="Finalizar"
                             type="object" class="oe_highlight"
-                            invisible="state != 'in_progress' or not sampling_confirmed"
+                            invisible="state != 'in_progress' or not sampling_confirmed or not display_action_finalize"
                             confirm="¿Está seguro de finalizar el control de calidad?"/>
 
                     <button name="action_reanalysis" string="Reanálisis"
@@ -235,6 +235,7 @@
                     <!-- Campos ocultos de control UI -->
                     <field name="info_reviewed" invisible="1"/>
                     <field name="sampling_confirmed" invisible="1"/>
+                    <field name="display_action_finalize" invisible="1"/>
 
                     <!-- SEPARATOR -->
                     <div class="o_horizontal_separator" invisible="not sampling_confirmed">Numeral 5: Análisis</div>
@@ -1152,8 +1153,8 @@
                                         <field name="text_phrase_mapping" invisible="1"/>
                                         <field name="multi_check_results_json" invisible="1" force_save="1"/>
                                         <field name="result_text_pattern" invisible="1"/>
-                                        <field name="text_phrase_mapping" 
-                                               widget="vama_multi_check_widget" 
+                                        <field name="text_phrase_mapping"
+                                               widget="vama_multi_check_widget"
                                                nolabel="1"/>
                                     </group>
 

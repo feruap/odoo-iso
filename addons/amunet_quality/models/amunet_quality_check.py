@@ -59,6 +59,23 @@ class AmunetQualityCheck(models.Model):
         tracking=True,
         help='Estado del control de calidad')
 
+    display_action_finalize = fields.Boolean(
+        compute='_compute_display_action_finalize',
+        string="Mostrar botón Finalizar"
+    )
+
+    @api.depends('user_realized_id', 'user_verified_id', 'user_authorized_id')
+    def _compute_display_action_finalize(self):
+        """
+        Calcula si el botón Finalizar debe ser visible.
+        - Siempre visible para Responsable Sanitario / Manager (con grupo amunet_quality.group_quality_sanitary).
+        - Para otros usuarios, solo visible si las 3 firmas están completas.
+        """
+        is_sanitary = self.env.user.has_group('amunet_quality.group_quality_sanitary')
+        for record in self:
+            all_signed = bool(record.user_realized_id and record.user_verified_id and record.user_authorized_id)
+            record.display_action_finalize = is_sanitary or all_signed
+
     # ========================================================================
     # NUMERAL 1: DATOS GENERALES
     # ========================================================================
@@ -362,6 +379,14 @@ class AmunetQualityCheck(models.Model):
         string='Autorizó',
         tracking=True,
         help='Usuario que autorizó el análisis (Resp. Sanitario)'
+    )
+
+    inventory_validator_id = fields.Many2one(
+        'res.users',
+        string='Validador de Ingreso',
+        tracking=True,
+        readonly=True,
+        help='Usuario de almacén que validó la operación'
     )
 
     realized_date = fields.Datetime(
@@ -1601,8 +1626,18 @@ class AmunetQualityCheck(models.Model):
 
     def _action_sign_realized_logic(self):
         """Lógica de firma Realizó (ejecutada tras validar PIN/Password)"""
-        self.write({'user_realized_id': self.env.user.id})
-        self.message_post(body="Firmado como Realizó.", message_type='notification')
+        for record in self:
+            record.write({'user_realized_id': self.env.user.id})
+            
+            status_dict = dict(record._fields['global_result'].selection)
+            status = status_dict.get(record.global_result, 'Desconocido')
+            
+            from markupsafe import Markup
+            msg = f"Firmado como Realizó.<br/>Dictamen actual: <b>{status}</b>"
+            if record.global_result == 'fail' and record.fail_reason:
+                msg += f"<br/>Motivo de fallo: {record.fail_reason}"
+                
+            record.message_post(body=Markup(msg), message_type='notification')
 
     def action_sign_verified(self):
         """Abre wizard para firmar como Verificó (Supervisor)"""
@@ -1631,6 +1666,16 @@ class AmunetQualityCheck(models.Model):
             if not record.user_realized_id:
                 raise ValidationError(_("Debe firmar 'Realizó' antes de verificar."))
             record.write({'user_verified_id': self.env.user.id})
+            
+            status_dict = dict(record._fields['global_result'].selection)
+            status = status_dict.get(record.global_result, 'Desconocido')
+            
+            from markupsafe import Markup
+            msg = f"Firmado como Verificó.<br/>Dictamen actual: <b>{status}</b>"
+            if record.global_result == 'fail' and record.fail_reason:
+                msg += f"<br/>Motivo de fallo: {record.fail_reason}"
+                
+            record.message_post(body=Markup(msg), message_type='notification')
 
     def action_sign_authorized(self):
         """Abre wizard para firmar como Autorizó (Sanitario)"""
@@ -1655,8 +1700,18 @@ class AmunetQualityCheck(models.Model):
 
     def _action_sign_authorized_logic(self):
         """Lógica de firma Autorizó"""
-        self.write({'user_authorized_id': self.env.user.id})
-        self.message_post(body="Firmado como Autorizó.", message_type='notification')
+        for record in self:
+            record.write({'user_authorized_id': self.env.user.id})
+            
+            status_dict = dict(record._fields['global_result'].selection)
+            status = status_dict.get(record.global_result, 'Desconocido')
+            
+            from markupsafe import Markup
+            msg = f"Firmado como Autorizó.<br/>Dictamen actual: <b>{status}</b>"
+            if record.global_result == 'fail' and record.fail_reason:
+                msg += f"<br/>Motivo de fallo: {record.fail_reason}"
+                
+            record.message_post(body=Markup(msg), message_type='notification')
 
     def action_finalize(self):
         """

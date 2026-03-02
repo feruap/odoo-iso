@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista: Registro de Capacitación — Formulario
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_registro_capacitacion_form" model="ir.ui.view">
+        <field name="name">amunet.registro.capacitacion.form</field>
+        <field name="model">amunet.registro.capacitacion</field>
+        <field name="arch" type="xml">
+            <form string="Registro de Capacitación">
+                <header>
+                    <button name="action_cancelar" string="Cancelar"
+                            type="object" class="btn-danger"
+                            confirm="¿Desea cancelar este registro de capacitación?"
+                            invisible="state == 'cancelada'"/>
+                    <button name="action_reactivar" string="Reactivar"
+                            type="object" class="btn-success"
+                            invisible="state != 'cancelada'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="vigente,proxima,vencida"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box"/>
+
+                    <!-- Alerta visual si está vencida -->
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'vencida'">
+                        <strong>⚠️ Capacitación VENCIDA.</strong>
+                        Este analista está BLOQUEADO para firmar controles de calidad
+                        que usen el procedimiento o parámetro indicado.
+                    </div>
+
+                    <!-- Alerta si vence pronto -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="state != 'proxima'">
+                        <strong>⏰ Capacitación por vencer.</strong>
+                        Quedan <field name="days_to_expiry" readonly="1"/> días. Programe la renovación.
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="👤 Analista">
+                            <field name="user_id" options="{'no_create': True}"/>
+                            <field name="employee_id" readonly="1"/>
+                            <field name="department_id" readonly="1"/>
+                        </group>
+                        <group string="📋 Alcance de la Capacitación">
+                            <field name="procedure_id" options="{'no_create': True}"/>
+                            <field name="parameter_id" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="📅 Fechas">
+                            <field name="training_date"/>
+                            <field name="expiry_date"/>
+                            <field name="days_to_expiry" readonly="1"/>
+                        </group>
+                        <group string="🎓 Instructor y Modalidad">
+                            <field name="trainer_id" options="{'no_create': True}"/>
+                            <field name="training_type"/>
+                        </group>
+                    </group>
+
+                    <group string="📎 Evidencia Documental">
+                        <field name="certificate_file" widget="binary"
+                               filename="certificate_filename"/>
+                        <field name="certificate_filename" invisible="1"/>
+                    </group>
+
+                    <group string="📝 Observaciones">
+                        <field name="notes" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista: Lista de Registros de Capacitación
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_registro_capacitacion_list" model="ir.ui.view">
+        <field name="name">amunet.registro.capacitacion.list</field>
+        <field name="model">amunet.registro.capacitacion</field>
+        <field name="arch" type="xml">
+            <list string="Registros de Capacitación"
+                  decoration-danger="state == 'vencida'"
+                  decoration-warning="state == 'proxima'"
+                  decoration-success="state == 'vigente'">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="department_id"/>
+                <field name="procedure_id"/>
+                <field name="parameter_id"/>
+                <field name="training_date"/>
+                <field name="expiry_date"/>
+                <field name="days_to_expiry" string="Días restantes"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'vigente'"
+                       decoration-warning="state == 'proxima'"
+                       decoration-danger="state == 'vencida'"
+                       decoration-muted="state == 'cancelada'"/>
+                <field name="trainer_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista: Búsqueda
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_registro_capacitacion_search" model="ir.ui.view">
+        <field name="name">amunet.registro.capacitacion.search</field>
+        <field name="model">amunet.registro.capacitacion</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Capacitaciones">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="procedure_id"/>
+                <field name="parameter_id"/>
+                <separator/>
+                <filter name="vigentes" string="Vigentes"
+                        domain="[('state', '=', 'vigente')]"/>
+                <filter name="proximas" string="Por vencer (&lt; 30 días)"
+                        domain="[('state', '=', 'proxima')]"/>
+                <filter name="vencidas" string="Vencidas"
+                        domain="[('state', '=', 'vencida')]"/>
+                <separator/>
+                <filter name="mis_capacitaciones" string="Mis capacitaciones"
+                        domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter name="group_user" string="Agrupar por Analista" context="{'group_by': 'user_id'}"/>
+                <filter name="group_procedure" string="Agrupar por Procedimiento" context="{'group_by': 'procedure_id'}"/>
+                <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_dept" string="Agrupar por Departamento" context="{'group_by': 'department_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Acción de ventana
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_amunet_registro_capacitacion" model="ir.actions.act_window">
+        <field name="name">Registros de Capacitación</field>
+        <field name="res_model">amunet.registro.capacitacion</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_registro_capacitacion_search"/>
+        <field name="context">{'search_default_vigentes': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay registros de capacitación aún.
+            </p>
+            <p>
+                Registre las capacitaciones de sus analistas para que el sistema
+                pueda validar automáticamente su competencia al momento de firmar.
+            </p>
+        </field>
+    </record>
+
+</odoo>

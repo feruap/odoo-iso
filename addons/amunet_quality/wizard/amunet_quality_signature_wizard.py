@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, AccessDenied
 
 _logger = logging.getLogger(__name__)
 
@@ -161,6 +161,8 @@ class AmunetQualitySignatureWizard(models.TransientModel):
             self._enforce_nominal_user(check)
 
             if self.signature_type == 'finalize':
+                if not self.env.user.has_group('amunet_quality.group_quality_sanitary'):
+                    raise AccessDenied("Solo el Responsable Sanitario o Manager pueden finalizar el QC.")
                 check._action_finalize_logic()
             elif self.signature_type == 'realized':
                 check._action_sign_realized_logic()
