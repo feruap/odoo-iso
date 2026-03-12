@@ -80,6 +80,12 @@
                             class="btn-secondary"
                             invisible="state != 'done'"/>
 
+                    <button name="action_print_certificado_interno" 
+                            string="Imprimir Certificado Interno"
+                            type="object" 
+                            class="btn-secondary"
+                            invisible="state != 'done'"/>
+
                     <button name="action_create_capa" string="🚨 Crear CAPA"
                             type="object" class="btn-danger"
                             invisible="global_result != 'fail' or state not in ('done', 'pending')"/>
@@ -339,6 +345,16 @@
                                    options="{'placeholder_field': 'placeholder_additional_info_observations', 'height': 150}"
                                    nolabel="1"/>
                          </group>
+                    </group>
+                    <!-- REFERENCIAS Y ANEXOS (Numeral 7 y 8) -->
+                    <group string="Numeral 7 y 8: Referencias y Anexos"
+                           invisible="not sampling_confirmed">
+                        <field name="reference_ids" widget="many2many_tags" 
+                               options="{'no_create': True}"
+                               readonly="state == 'done'"/>
+                        <field name="anexos_text" 
+                               placeholder="Descarga de datos crudos, cuentas, observaciones, etc..."
+                               readonly="state == 'done'"/>
                     </group>
 
                     <!-- SEPARATOR FIRMAS -->
@@ -884,46 +900,6 @@
                                 <field name="mavi07_hm_result" widget="radio"/>
                             </group>
                         </page>
-                        <!-- VAMA-105 -->
-                        <page string="VAMA-105" name="vama_105" invisible="evaluation_type != 'vama_105'">
-                            <group>
-                                <group>
-                                    <field name="vama105_nominal_volume" widget="radio" options="{'horizontal': true}"/>
-                                </group>
-                                <group>
-                                    <field name="vama105_measured_volume"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <!-- VAMA-034 -->
-                        <page string="VAMA-034" name="vama_034" invisible="evaluation_type != 'vama_034'">
-                            <group>
-                                <field name="vama034_sample_type" widget="radio" options="{'horizontal': true}"/>
-                                <field name="vama034_observed_result" widget="radio"/>
-                            </group>
-                        </page>
-
-                        <!-- MAVI-11 -->
-                        <page string="MAVI-11" name="mavi_11" invisible="evaluation_type != 'mavi_11_height'">
-                            <group>
-                                <group>
-                                    <field name="mavi11_target_height" widget="radio" options="{'horizontal': true}"/>
-                                </group>
-                                <group>
-                                    <field name="mavi11_measured_height"/>
-                                    <label for="mavi11_measured_height" string="cm"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <!-- MAVI-07 -->
-                        <page string="MAVI-07" name="mavi_07_ternary" invisible="evaluation_type != 'mavi_07_ternary'">
-                            <group>
-                                <field name="mavi07_hm_sample_type" widget="radio" options="{'horizontal': true}"/>
-                                <field name="mavi07_hm_result" widget="radio"/>
-                            </group>
-                        </page>
                     </notebook>
                 </sheet>
             </form>
@@ -1177,13 +1153,11 @@
                                             <field name="uom_id" readonly="1"/>
                                         </group>
                                     </group>
-
                                     <!-- VAMA-034: Soluciones -->
                                     <group string="VAMA-034: Soluciones" invisible="evaluation_type != 'vama_034'">
                                         <field name="vama034_sample_type" widget="radio" options="{'horizontal': true}"/>
                                         <field name="vama034_observed_result" widget="radio" invisible="not vama034_sample_type"/>
                                     </group>
-
                                     <!-- MAVI-11: Altura -->
                                     <group string="MAVI-11: Altura" invisible="evaluation_type != 'mavi_11_height'">
                                         <group>
@@ -1194,46 +1168,12 @@
                                             <label for="mavi11_measured_height" string="cm"/>
                                         </group>
                                     </group>
-
                                     <!-- MAVI-07: Ternario HM -->
                                     <group string="MAVI-07 (HM): Resultado Visual" invisible="evaluation_type != 'mavi_07_ternary'">
                                         <field name="mavi07_hm_sample_type" widget="radio" options="{'horizontal': true}"/>
                                         <field name="mavi07_hm_result" widget="radio" invisible="not mavi07_hm_sample_type"/>
                                     </group>
                                     
-                                    <!-- VAMA-105: Volumen Nominal vs Medido -->
-                                    <group string="VAMA-105: Volumen" invisible="evaluation_type != 'vama_105'">
-                                        <group>
-                                            <field name="vama105_nominal_volume" widget="radio" options="{'horizontal': true}"/>
-                                        </group>
-                                        <group>
-                                            <field name="vama105_measured_volume"/>
-                                            <field name="uom_id" readonly="1"/>
-                                        </group>
-                                    </group>
-
-                                    <!-- VAMA-034: Soluciones -->
-                                    <group string="VAMA-034: Soluciones" invisible="evaluation_type != 'vama_034'">
-                                        <field name="vama034_sample_type" widget="radio" options="{'horizontal': true}"/>
-                                        <field name="vama034_observed_result" widget="radio"/>
-                                    </group>
-
-                                    <!-- MAVI-11: Altura -->
-                                    <group string="MAVI-11: Altura" invisible="evaluation_type != 'mavi_11_height'">
-                                        <group>
-                                            <field name="mavi11_target_height" widget="radio" options="{'horizontal': true}"/>
-                                        </group>
-                                        <group>
-                                            <field name="mavi11_measured_height"/>
-                                            <label for="mavi11_measured_height" string="cm"/>
-                                        </group>
-                                    </group>
-
-                                    <!-- MAVI-07: Ternario HM -->
-                                    <group string="MAVI-07 (HM): Resultado Visual" invisible="evaluation_type != 'mavi_07_ternary'">
-                                        <field name="mavi07_hm_sample_type" widget="radio" options="{'horizontal': true}"/>
-                                        <field name="mavi07_hm_result" widget="radio"/>
-                                    </group>
                                     
                                     <!-- Mensaje de Evaluación -->
                                     <group string="Mensaje" invisible="not verdict_message">
@@ -1258,4 +1198,3 @@
     </record>
 
 </odoo>
-

@@ -1,0 +1,406 @@
+{
+  "ALMACÉN DE MATERIA PRIMA": [
+    {
+      "nombre": "Refrigerador",
+      "marca": "Criotec",
+      "modelo": "CFX-17",
+      "codigo": "ALM/REF/01"
+    },
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "NA",
+      "modelo": "HTC-1",
+      "codigo": "ALM/TER/01"
+    }
+  ],
+  "SOLUCIONES": [
+    {
+      "nombre": "Agitador magnético con calefacción",
+      "marca": "Arec",
+      "modelo": "F20510011",
+      "codigo": "PRO/AGI/02"
+    },
+    {
+      "nombre": "Balanza analítica",
+      "marca": "NA",
+      "modelo": "JF2004",
+      "codigo": "PRO/BAL/01"
+    },
+    {
+      "nombre": "Centrifuga refrigerada",
+      "marca": "NA",
+      "modelo": "Hermle Labortechnik",
+      "codigo": "PRO/CEN/02"
+    },
+    {
+      "nombre": "Cronómetro",
+      "marca": "SANSURE",
+      "modelo": "201130067079.7",
+      "codigo": "PRO/CNM/01"
+    },
+    {
+      "nombre": "Micropipeta  100-1000 µL",
+      "marca": "UCHEN",
+      "modelo": "152758",
+      "codigo": "PRO/MIC/01"
+    },
+    {
+      "nombre": "Micropipeta  10-100 µL",
+      "marca": "DLAB",
+      "modelo": "YL213AK0045135",
+      "codigo": "PRO/MIC/02"
+    },
+    {
+      "nombre": "Micropipeta  0.5-10 µL",
+      "marca": "DLAB",
+      "modelo": "YL214AK0050512",
+      "codigo": "PRO/MIC/03"
+    },
+    {
+      "nombre": "Micropipeta  100-1000 µL",
+      "marca": "DLAB",
+      "modelo": "YL218AK0082100",
+      "codigo": "PRO/MIC/04"
+    },
+    {
+      "nombre": "Micropipeta  20-200 µL",
+      "marca": "UCHEN",
+      "modelo": "135238",
+      "codigo": "PRO/MIC/05"
+    },
+    {
+      "nombre": "Micropipeta  20-200 µL",
+      "marca": "UCHEN",
+      "modelo": "135307",
+      "codigo": "PRO/MIC/06"
+    },
+    {
+      "nombre": "Micropipeta  20-200 µL",
+      "marca": "LABNET",
+      "modelo": "544030208",
+      "codigo": "PRO/MIC/07"
+    },
+    {
+      "nombre": "Micropipeta elect.  0.5-10 µL",
+      "marca": "NA",
+      "modelo": "MPA-10",
+      "codigo": "PRO/MIC/08"
+    },
+    {
+      "nombre": "Marco de pesas",
+      "marca": "F1",
+      "modelo": "OIML",
+      "codigo": "PRO/PES/01"
+    },
+    {
+      "nombre": "Analizador multiparamétrico",
+      "marca": "Ohauz",
+      "modelo": "a-AB33M1",
+      "codigo": "PRO/AMO/01"
+    },
+    {
+      "nombre": "Mini centrífuga",
+      "marca": "NA",
+      "modelo": "NA",
+      "codigo": "PRO/MNC/02"
+    },
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "HTC",
+      "modelo": "HTC-1",
+      "codigo": "PRO/TER/01"
+    },
+    {
+      "nombre": "Vortex",
+      "marca": "NA",
+      "modelo": "Velp scientifica",
+      "codigo": "PRO/VOR/02"
+    }
+  ],
+  "LECTURA Y SECADO": [
+    {
+      "nombre": "Espectrofotómetro",
+      "marca": "NA",
+      "modelo": "EPOCH-2",
+      "codigo": "PRO/ESP/01"
+    },
+    {
+      "nombre": "Agitador orbital",
+      "marca": "NA",
+      "modelo": "KJ-201BD",
+      "codigo": "PRO/AGO/01"
+    },
+    {
+      "nombre": "PC portátil",
+      "marca": "Thinkcentre",
+      "modelo": "M700",
+      "codigo": "PRO/PCP/01"
+    },
+    {
+      "nombre": "Horno",
+      "marca": "POL-EKO-APARATURA",
+      "modelo": "SLW-53 SIMPLE",
+      "codigo": "PRO/HOR/01"
+    }
+  ],
+  "INYECCIÓN": [
+    {
+      "nombre": "Horno",
+      "marca": "NA",
+      "modelo": "ECOSHEL 9023A",
+      "codigo": "PRO/HOR/02"
+    },
+    {
+      "nombre": "Dispensador",
+      "marca": "NA",
+      "modelo": "HM3235",
+      "codigo": "PRO/INY/01"
+    },
+    {
+      "nombre": "Compresor de aire",
+      "marca": "NA",
+      "modelo": "INSTRUTEK",
+      "codigo": "PRO/BOM/01"
+    },
+    {
+      "nombre": "Manómetro",
+      "marca": "NA",
+      "modelo": "INSTRUTEK",
+      "codigo": "PRO/BOM/01-1"
+    },
+    {
+      "nombre": "Manómetro",
+      "marca": "NA",
+      "modelo": "INSTRUTEK",
+      "codigo": "PRO/BOM/01-2"
+    },
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "HTC",
+      "modelo": "HTC-1",
+      "codigo": "PRO/TER/02"
+    }
+  ],
+  "LAMINADO, SECADO Y CORTE": [
+    {
+      "nombre": "Horno",
+      "marca": "Luzeren",
+      "modelo": "DHG9053A",
+      "codigo": "PRO/HOR/03"
+    },
+    {
+      "nombre": "Cortadora de tiras",
+      "marca": "NA",
+      "modelo": "ZQ2000",
+      "codigo": "PRO/COT/01"
+    },
+    {
+      "nombre": "Cortadora de hojas",
+      "marca": "NA",
+      "modelo": "CTS300",
+      "codigo": "PRO/COH/01"
+    },
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "HTC",
+      "modelo": "HTC-2",
+      "codigo": "PRO/TER/03"
+    },
+    {
+      "nombre": "Selladora de mano",
+      "marca": "NA",
+      "modelo": "PFD-300",
+      "codigo": "PRO/SDM/01"
+    },
+    {
+      "nombre": "Lámpara de mesa",
+      "marca": "NA",
+      "modelo": "NA",
+      "codigo": "PRO/LMP/01"
+    },
+    {
+      "nombre": "Lámpara de mesa",
+      "marca": "NA",
+      "modelo": "NA",
+      "codigo": "PRO/LMP/02"
+    }
+  ],
+  "ENCARTUCHADO": [
+    {
+      "nombre": "Selladora",
+      "marca": "NA",
+      "modelo": "YK725",
+      "codigo": "PRO/SEC/01"
+    },
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "HTC",
+      "modelo": "HTC-1",
+      "codigo": "PRO/TER/04"
+    }
+  ],
+  "ACONDICIONADO 1": [
+    {
+      "nombre": "Selladora",
+      "marca": "NA",
+      "modelo": "FR-900",
+      "codigo": "PRO/SEL/01"
+    },
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "HTC",
+      "modelo": "HTC-1",
+      "codigo": "PRO/TER/05"
+    }
+  ],
+  "ACONDICIONADO 2": [
+    {
+      "nombre": "Serigrafiadora láser",
+      "marca": "NA",
+      "modelo": "MX-1",
+      "codigo": "PRO/IMP/01"
+    }
+  ],
+  "ALMACÉN TEMPORAL DE PRODUCTO TERMINADO": [
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "HTC",
+      "modelo": "HTC-1",
+      "codigo": "ALT/TER/01"
+    }
+  ],
+  "ESTABILIDAD": [
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "HTC",
+      "modelo": "HTC-2",
+      "codigo": "EST/TER/02"
+    },
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "HTC",
+      "modelo": "HTC-1",
+      "codigo": "EST/TER/01"
+    },
+    {
+      "nombre": "Cámara climática",
+      "marca": "KENTON",
+      "modelo": "RG-250",
+      "codigo": "EST/CLI/01"
+    }
+  ],
+  "CONTROL DE CALIDAD": [
+    {
+      "nombre": "Congelador",
+      "marca": "NA",
+      "modelo": "FRIOCIMA FCF-7",
+      "codigo": "CAL/CGR/01"
+    },
+    {
+      "nombre": "Cronómetro",
+      "marca": "SANSURE",
+      "modelo": "201130067079.7",
+      "codigo": "CAL/CNM/01"
+    },
+    {
+      "nombre": "Cronómetro",
+      "marca": "SANSURE",
+      "modelo": "201130067079.7",
+      "codigo": "CAL/CNM/02"
+    },
+    {
+      "nombre": "Cronómetro",
+      "marca": "SANSURE",
+      "modelo": "201130067079.7",
+      "codigo": "CAL/CNM/03"
+    },
+    {
+      "nombre": "Cronómetro",
+      "marca": "SANSURE",
+      "modelo": "201130067079.7",
+      "codigo": "CAL/CNM/04"
+    },
+    {
+      "nombre": "Micrómetro Exterior",
+      "marca": "NA",
+      "modelo": "GABI",
+      "codigo": "CAL/MIE/01"
+    },
+    {
+      "nombre": "Micropipeta 0.5-10 µL",
+      "marca": "LABNET",
+      "modelo": "BIOPETTE (444021051)",
+      "codigo": "CAL/MIC/01"
+    },
+    {
+      "nombre": "Micropipeta 20-200 µL",
+      "marca": "BIOPETTE",
+      "modelo": "544050197",
+      "codigo": "CAL/MIC/02"
+    },
+    {
+      "nombre": "Micropipeta 100-1000 µL",
+      "marca": "BIOPETTE",
+      "modelo": "544080419",
+      "codigo": "CAL/MIC/03"
+    },
+    {
+      "nombre": "Regla",
+      "marca": "NA",
+      "modelo": "WESTONS",
+      "codigo": "CAL/REG/01"
+    },
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "NA",
+      "modelo": "HTC-2",
+      "codigo": "CAL/TER/01"
+    },
+    {
+      "nombre": "Lámpara de mesa",
+      "marca": "NA",
+      "modelo": "NA",
+      "codigo": "CAL/LMP/01"
+    },
+    {
+      "nombre": "Datalogger",
+      "marca": "MOCREO",
+      "modelo": "ST5",
+      "codigo": "CAL/DTL/01"
+    }
+  ],
+  "DESARROLLO": [
+    {
+      "nombre": "Micropipeta",
+      "marca": "LABNET",
+      "modelo": "544020114",
+      "codigo": "DES/MIC/01"
+    },
+    {
+      "nombre": "Micropipeta",
+      "marca": "AND",
+      "modelo": "MPA-200",
+      "codigo": "DES/MIC/02"
+    },
+    {
+      "nombre": "Micropipeta",
+      "marca": "LABNET",
+      "modelo": "544050205",
+      "codigo": "DES/MIC/03"
+    },
+    {
+      "nombre": "Micropipeta",
+      "marca": "LABNET",
+      "modelo": "BIOPETTE (544000414)",
+      "codigo": "DES/MIC/04"
+    }
+  ],
+  "ALMACÉN DE PRODUCTO TERMINADO": [
+    {
+      "nombre": "Termohigrómetro",
+      "marca": "HTC",
+      "modelo": "HTC-2",
+      "codigo": "ALP/TER/01"
+    }
+  ]
+}

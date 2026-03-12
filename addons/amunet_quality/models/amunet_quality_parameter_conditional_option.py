@@ -81,6 +81,12 @@ class AmunetQualityParameterConditionalOption(models.Model):
 
     # ========== Control ==========
 
+    is_not_applicable = fields.Boolean(
+        string='Es No Aplica',
+        default=False,
+        help='Si está marcado, seleccionar esta opción devuelve veredicto N/A sin requerir valor numérico'
+    )
+
     active = fields.Boolean(
         string='Activo',
         default=True

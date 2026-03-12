@@ -273,6 +273,22 @@
                                             </span>
                                         </t>
 
+                                        <!-- MAVI-15 Ternary -->
+                                        <t t-elif="detail.evaluation_type === 'mavi_15_ternary'">
+                                            <select t-if="!props.readonly"
+                                                    class="form-select form-select-sm"
+                                                    t-att-data-detail-id="detail.id"
+                                                    t-on-change="onMavi15Change">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="opcion_a" t-att-selected="detail.mavi15_result === 'opcion_a'">Opción A: Si coincide.</option>
+                                                <option value="opcion_b" t-att-selected="detail.mavi15_result === 'opcion_b'">Opción B: No coincide.</option>
+                                                <option value="opcion_c" t-att-selected="detail.mavi15_result === 'opcion_c'">Opción C: Sin visualización de la línea control pese a la coincidencia con el patrón colorimétrico.</option>
+                                            </select>
+                                            <span t-else="" class="form-control-plaintext">
+                                                <t t-esc="detail.result_display || '-'"/>
+                                            </span>
+                                        </t>
+
                                         <!-- Binary with Notes -->
                                         <t t-elif="detail.evaluation_type === 'binary_with_notes'">
                                             <select t-if="!props.readonly"

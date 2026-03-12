@@ -33,6 +33,7 @@
         'data/ir_sequence_data.xml',
         'data/amunet_quality_additional_info_data.xml',
         'data/amunet_quality_parameters_data.xml',
+        'data/report_quality_params.xml',
 
         # Wizards
         'wizard/amunet_quality_reanalysis_wizard_views.xml',
@@ -60,6 +61,7 @@
         # Reportes
         'reports/quality_certificate_report.xml',
         'reports/solicitud_reporte_report.xml',
+        'reports/report_certificado_interno.xml',
     ],
     'assets': {
         'web.assets_backend': [

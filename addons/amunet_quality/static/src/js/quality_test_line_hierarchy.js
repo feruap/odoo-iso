@@ -152,7 +152,7 @@ export class QualityTestLineRow extends Component {
                     "result_text_pattern", "constructed_phrase",
                     "result_expected_type", "result_obtained_type",
                     "result_binary_option", "result_notes",
-                    "result_ternary",
+                    "result_ternary", "mavi15_result",
                     // VAMA-034: Two-step widget fields
                     "vama034_sample_type", "vama034_observed_result",
                     // VAMA-006: Color scale
@@ -346,6 +346,11 @@ export class QualityTestLineRow extends Component {
         this.onDetailChange(detailId, 'result_ternary', ev.target.value);
     }
 
+    onMavi15Change(ev) {
+        const detailId = parseInt(ev.target.dataset.detailId);
+        this.onDetailChange(detailId, 'mavi15_result', ev.target.value);
+    }
+
     onBinaryOptionChange(ev) {
         const detailId = parseInt(ev.target.dataset.detailId);
         this.onDetailChange(detailId, 'result_binary_option', ev.target.value);
@@ -476,6 +481,7 @@ export class QualityTestLineRow extends Component {
             'vama_multi_check': _t('Multi-Check'),
             'multi_condition_numeric': _t('Multi-Condición'),
             'vama_105': _t('Volumen Micropipeta'),
+            'mavi_15_ternary': _t('Ternario MAVI-15'),
         };
         return labels[type] || type;
     }

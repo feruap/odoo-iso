@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- Menú Raíz: Validación -->
+        <menuitem id="menu_validation_root"
+                  name="Validación"
+                  web_icon="amunet_equipment_calibration,static/description/icon.png"
+                  sequence="60"/>
+
         <menuitem id="menu_amunet_equipment_root" 
                   name="Equipos" 
-                  parent="amunet_quality.menu_quality_root" 
-                  sequence="30"/>
+                  parent="menu_validation_root" 
+                  sequence="10"/>
 
         <menuitem id="menu_amunet_equipment_inventory" 
                   name="Inventario de Equipos" 

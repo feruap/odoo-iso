@@ -13,6 +13,21 @@ class AmunetEquipment(models.Model):
     serial_number = fields.Char(string='Número de Serie / Fabricante', tracking=True)
     brand = fields.Char(string='Marca')
     model_name = fields.Char(string='Modelo')
+    department = fields.Selection([
+        ('ALMACÉN DE MATERIA PRIMA', 'Almacén de Materia Prima'),
+        ('SOLUCIONES', 'Soluciones'),
+        ('LECTURA Y SECADO', 'Lectura y Secado'),
+        ('INYECCIÓN', 'Inyección'),
+        ('LAMINADO, SECADO Y CORTE', 'Laminado, Secado y Corte'),
+        ('ENCARTUCHADO', 'Encartuchado'),
+        ('ACONDICIONADO 1', 'Acondicionado 1'),
+        ('ACONDICIONADO 2', 'Acondicionado 2'),
+        ('ALMACÉN TEMPORAL DE PRODUCTO TERMINADO', 'Almacén Temporal de Producto Terminado'),
+        ('ESTABILIDAD', 'Estabilidad'),
+        ('CONTROL DE CALIDAD', 'Control de Calidad'),
+        ('DESARROLLO', 'Desarrollo'),
+        ('ALMACÉN DE PRODUCTO TERMINADO', 'Almacén de Producto Terminado')
+    ], string='Departamento', tracking=True)
     location_id = fields.Many2one('stock.location', string='Ubicación')
     
     state = fields.Selection([

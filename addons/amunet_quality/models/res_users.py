@@ -60,40 +60,27 @@ class ResUsers(models.Model):
 
     def _inverse_group_quality_user(self):
         grp = self.env.ref('amunet_quality.group_quality_user')
-        higher = [
-            self.env.ref('amunet_quality.group_quality_supervisor'),
-            self.env.ref('amunet_quality.group_quality_sanitary'),
-            self.env.ref('amunet_quality.group_quality_manager'),
-        ]
         for user in self:
             if user.in_group_quality_user:
                 user.write({'group_ids': [(4, grp.id)]})
             else:
-                commands = [(3, grp.id)] + [(3, h.id) for h in higher]
-                user.write({'group_ids': commands})
+                user.write({'group_ids': [(3, grp.id)]})
 
     def _inverse_group_quality_supervisor(self):
         grp = self.env.ref('amunet_quality.group_quality_supervisor')
-        higher = [
-            self.env.ref('amunet_quality.group_quality_sanitary'),
-            self.env.ref('amunet_quality.group_quality_manager'),
-        ]
         for user in self:
             if user.in_group_quality_supervisor:
                 user.write({'group_ids': [(4, grp.id)]})
             else:
-                commands = [(3, grp.id)] + [(3, h.id) for h in higher]
-                user.write({'group_ids': commands})
+                user.write({'group_ids': [(3, grp.id)]})
 
     def _inverse_group_quality_sanitary(self):
         grp = self.env.ref('amunet_quality.group_quality_sanitary')
-        higher = [self.env.ref('amunet_quality.group_quality_manager')]
         for user in self:
             if user.in_group_quality_sanitary:
                 user.write({'group_ids': [(4, grp.id)]})
             else:
-                commands = [(3, grp.id)] + [(3, h.id) for h in higher]
-                user.write({'group_ids': commands})
+                user.write({'group_ids': [(3, grp.id)]})
 
     def _inverse_group_quality_manager(self):
         grp = self.env.ref('amunet_quality.group_quality_manager')

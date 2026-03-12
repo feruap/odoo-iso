@@ -283,10 +283,10 @@ class AmunetQualityTestLineDetail(models.Model):
 
     # -- MAVI-15 --
     mavi15_result = fields.Selection([
-        ('opcion_a', 'Opción A'),
-        ('opcion_b', 'Opción B'),
-        ('opcion_c', 'Opción C'),
-    ], string='Resultado MAVI-15')
+        ('opcion_a', 'Opción A: Si coincide.'),
+        ('opcion_b', 'Opción B: No coincide.'),
+        ('opcion_c', 'Opción C: Sin visualización de la línea control pese a la coincidencia con el patrón colorimétrico.'),
+    ], string='Selección MAVI-15')
 
     # -- MAVI-07 HM --
     mavi07_hm_sample_type = fields.Selection([
@@ -856,7 +856,8 @@ class AmunetQualityTestLineDetail(models.Model):
         'vama112_cond1', 'vama112_cond2', 'vama112_cond3', 'vama112_cond4', 'vama112_cond5',
         'vama078_color', 'vama078_forma', 'vama078_textura', 'vama078_humedad',
         'vama105_nominal_volume', 'vama105_measured_volume',
-        'mga0981_vol_declarado', 'mga0981_vol_obtenido'
+        'mga0981_vol_declarado', 'mga0981_vol_obtenido',
+        'mavi15_result'
     )
     def _compute_verdict(self):
         """Evalúa el resultado y determina el dictamen"""
@@ -912,6 +913,8 @@ class AmunetQualityTestLineDetail(models.Model):
             return self._evaluate_mga_0981()
         elif self.evaluation_type == 'mavi_11_height':
             return self._evaluate_mavi_11_height()
+        elif self.evaluation_type == 'mavi_15_ternary':
+            return self._evaluate_mavi_15_ternary()
         elif self.evaluation_type in ('vama_multi_check', 'mavi_07_ternary', 'mavi_07'):
             return self._evaluate_vama_multi_check()
         else:
@@ -986,11 +989,16 @@ class AmunetQualityTestLineDetail(models.Model):
         if not self.result_conditional_option_id:
             return {'verdict': 'pending', 'message': 'Seleccione una opción'}
 
+        option = self.result_conditional_option_id
+
+        # Si la opción es N/A, no se requiere valor numérico
+        if option.is_not_applicable:
+            return {'verdict': 'not_applicable', 'message': f'{option.name} - Excluida del conteo'}
+
         # Verificar si el usuario ha llenado el campo de valor
         if not self.result_conditional_value_filled:
             return {'verdict': 'pending', 'message': 'Ingrese el valor medido'}
 
-        option = self.result_conditional_option_id
         value = self.result_conditional_value
         uom_name = option.uom_id.name if option.uom_id else ''
 
@@ -1441,6 +1449,28 @@ class AmunetQualityTestLineDetail(models.Model):
                 'message': f'{measured} µL fuera de rango ({nominal} µL: {min_val}-{max_val})'
             }
 
+    def _evaluate_mavi_15_ternary(self):
+        """Evalúa MAVI-15: Selección Ternaria (Opción A cumple, B y C fallan)"""
+        if not self.mavi15_result:
+            return {'verdict': 'pending', 'message': 'Seleccione una opción (A/B/C)'}
+
+        if self.mavi15_result == 'opcion_a':
+            return {
+                'verdict': 'pass', 
+                'message': 'Opción A: Si coincide.'
+            }
+        elif self.mavi15_result == 'opcion_b':
+            return {
+                'verdict': 'fail', 
+                'message': 'Opción B: No coincide. (Esperado Opción A)'
+            }
+        elif self.mavi15_result == 'opcion_c':
+            return {
+                'verdict': 'fail', 
+                'message': 'Opción C: Sin visualización de la línea control pese a la coincidencia con el patrón colorimétrico. (Esperado Opción A)'
+            }
+            
+        return {'verdict': 'pending', 'message': 'Opción no reconocida'}
 
     def _evaluate_mga_0981(self):
         """Evalúa MGA-0981: Variación de volumen"""
@@ -1785,10 +1815,15 @@ class AmunetQualityTestLineDetail(models.Model):
                  'result_checkbox_1', 'result_checkbox_2',
                  'result_conditional_option_id', 'result_conditional_value',
                  'result_text_pattern', 'result_expected_type', 'result_obtained_type',
-                 'result_binary_option', 'result_ternary', 'uom_id',
+                 'result_binary_option', 'result_ternary', 'uom_id', 'mavi15_result',
                  'result_dm_step1_concentration', 'result_dm_step2_1_control_visible',
                  'result_dm_step2_2_comparison',
                  'mavi07_sample_type', 'mavi07_observed_result',
+                 'mavi07_hm_sample_type', 'mavi07_hm_result',
+                 'mavi11_target_height', 'mavi11_measured_height',
+                 'mga0981_vol_declarado', 'mga0981_vol_obtenido',
+                 'vama105_nominal_volume', 'vama105_measured_volume',
+                 'vama034_sample_type', 'vama034_observed_result',
                  'multi_cond_binary', 'multi_cond_num1', 'multi_cond_num2')
     def _compute_result_display(self):
         """Genera texto de resultado para mostrar"""
@@ -1883,6 +1918,44 @@ class AmunetQualityTestLineDetail(models.Model):
                 if all([record.multi_cond_binary, record.multi_cond_num1, record.multi_cond_num2]):
                     func = 'OK' if record.multi_cond_binary == 'correct' else 'ERR'
                     record.result_display = f"{func} | {record.multi_cond_num1} gotas | {record.multi_cond_num2} µl"
+                else:
+                    record.result_display = ''
+
+            elif record.evaluation_type == 'mavi_15_ternary':
+                mavi15_labels = {
+                    'opcion_a': 'Opción A: Si coincide.',
+                    'opcion_b': 'Opción B: No coincide.',
+                    'opcion_c': 'Opción C: Sin visualización de la línea control pese a la coincidencia con el patrón colorimétrico.',
+                }
+                record.result_display = mavi15_labels.get(record.mavi15_result, '')
+
+            elif record.evaluation_type == 'mga_0981':
+                if record.mga0981_vol_declarado and record.mga0981_vol_obtenido:
+                    record.result_display = f"{record.mga0981_vol_declarado}: {record.mga0981_vol_obtenido} ml"
+                else:
+                    record.result_display = ''
+
+            elif record.evaluation_type == 'vama_105':
+                if record.vama105_nominal_volume and record.vama105_measured_volume:
+                    record.result_display = f"{record.vama105_nominal_volume} µL: {record.vama105_measured_volume} µL"
+                else:
+                    record.result_display = ''
+
+            elif record.evaluation_type == 'vama_034':
+                if record.vama034_sample_type and record.vama034_observed_result:
+                    record.result_display = f"{record.vama034_sample_type} → {record.vama034_observed_result}"
+                else:
+                    record.result_display = ''
+
+            elif record.evaluation_type == 'mavi_11_height':
+                if record.mavi11_target_height and record.mavi11_measured_height:
+                    record.result_display = f"{record.mavi11_target_height}: {record.mavi11_measured_height} cm"
+                else:
+                    record.result_display = ''
+
+            elif record.evaluation_type == 'mavi_07_ternary':
+                if record.mavi07_hm_sample_type and record.mavi07_hm_result:
+                    record.result_display = f"{record.mavi07_hm_sample_type}: {record.mavi07_hm_result}"
                 else:
                     record.result_display = ''
 

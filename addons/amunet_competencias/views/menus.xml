@@ -5,12 +5,20 @@
          Menú: Competencias (bajo el catálogo de Calidad)
     ══════════════════════════════════════════════════════ -->
 
+    <!-- Menú Raíz: Recursos Humanos -->
+    <menuitem
+        id="menu_hr_root"
+        name="Recursos Humanos"
+        web_icon="amunet_competencias,static/description/icon.png"
+        sequence="50"
+        groups="amunet_competencias.group_competencias_user"/>
+
     <!-- Menú padre: Competencias -->
     <menuitem
         id="menu_amunet_competencias_root"
         name="Competencias"
-        parent="amunet_quality.menu_quality_root"
-        sequence="50"
+        parent="menu_hr_root"
+        sequence="10"
         groups="amunet_competencias.group_competencias_user"/>
 
     <!-- Submenú: Registros de Capacitación -->

@@ -11,10 +11,16 @@
               parent="menu_quality_root"
               sequence="10"/>
 
+    <!-- Menú Raíz: Sistema de Gestión de Calidad (SGC) -->
+    <menuitem id="menu_sgc_root"
+              name="Sistema de Gestión de Calidad"
+              web_icon="amunet_quality,static/description/icon.png"
+              sequence="46"/>
+
     <!-- Submenú: Regulatorio / Calidad -->
     <menuitem id="menu_quality_regulatory"
               name="Regulatorio"
-              parent="menu_quality_root"
+              parent="menu_sgc_root"
               sequence="50"/>
 
     <!-- Submenú: Configuración -->

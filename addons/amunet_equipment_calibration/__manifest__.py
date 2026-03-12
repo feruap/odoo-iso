@@ -25,6 +25,6 @@ Módulo de Gestión de Calibración de Equipos (ISO 13485 Cláusula 7.6).
         'views/menus.xml',
     ],
     'installable': True,
-    'application': False,
+    'application': True,
     'license': 'LGPL-3',
 }

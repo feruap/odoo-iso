@@ -106,7 +106,7 @@
             <field name="name">Altura</field>
             <field name="sequence">4</field>
             <field name="evaluation_type">numeric_range</field>
-            <field name="acceptance_criteria">Según especificación de producto</field>
+            <field name="acceptance_criteria">6 u 8 cm ± 0.5 cm</field>
         </record>
         
          <record id="spec_mavi_11_diametro" model="amunet.quality.check.parameter.specification">
@@ -803,22 +803,23 @@
 
 
         <!-- ======================================================== -->
-        <!-- MAVI-16: Visualización de apariencia colorimétrica       -->
+        <!-- MAVI-16: Visualización de líneas resultado en rango      -->
         <!-- ======================================================== -->
         <record id="param_mavi_16" model="amunet.quality.check.parameter">
              <field name="code">MAVI-16</field>
-             <field name="name">Visualización de apariencia colorimétrica</field>
+             <field name="name">Visualización de líneas resultado en rango</field>
         </record>
 
         <record id="spec_mavi_16_matrix" model="amunet.quality.check.parameter.specification">
             <field name="parameter_id" ref="param_mavi_16"/>
-            <field name="name">Matriz de decisión</field>
+            <field name="name">Visualización Operativa</field>
             <field name="sequence">1</field>
-            <field name="evaluation_type">decision_matrix</field>
-            <field name="acceptance_criteria">Ver tabla “Matriz de resultados para el MAVI-16”</field>
+            <field name="evaluation_type">mavi_15_ternary</field>
+            <field name="acceptance_criteria">Visualización de líneas resultado en rango</field>
         </record>
 
-        <!-- Scenarios for MAVI-16 -->
+        <!-- The previous MAVI-16 decision matrix scenarios have been removed. 
+             If you need them in the future for a different product, they can be restored. -->
         <!-- 1: Control Not Visible -->
         <record id="scen_mavi16_1" model="amunet.quality.parameter.decision.matrix">
             <field name="specification_id" ref="spec_mavi_16_matrix"/>
@@ -1176,8 +1177,12 @@
             <field name="parameter_id" ref="param_vama_106"/>
             <field name="name">Funcionalidad de imanes</field>
             <field name="sequence">1</field>
-            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="evaluation_type">binary_selection</field>
             <field name="acceptance_criteria">Todos sus imanes son funcionales</field>
+            <field name="binary_prefix">Todos sus imanes son funcionales./No todos sus imanes son funcionales.</field>
+            <field name="binary_expected_option">with_prefix</field>
+            <field name="binary_option_pass">Todos sus imanes son funcionales.</field>
+            <field name="binary_option_fail">No todos sus imanes son funcionales.</field>
         </record>
             
         <!-- ======================================================== -->
@@ -1192,8 +1197,12 @@
             <field name="parameter_id" ref="param_vama_107"/>
             <field name="name">Agitación</field>
             <field name="sequence">1</field>
-            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="evaluation_type">binary_selection</field>
             <field name="acceptance_criteria">Cumple con el movimiento de agitación</field>
+            <field name="binary_prefix">Cumple con el movimiento de agitación./No cumple con el movimiento de agitación.</field>
+            <field name="binary_expected_option">with_prefix</field>
+            <field name="binary_option_pass">Cumple con el movimiento de agitación.</field>
+            <field name="binary_option_fail">No cumple con el movimiento de agitación.</field>
         </record>
             
         <!-- ======================================================== -->
@@ -1208,7 +1217,7 @@
             <field name="parameter_id" ref="param_vama_108"/>
             <field name="name">Tiempo en alcanzar temperatura</field>
             <field name="sequence">1</field>
-            <field name="evaluation_type">numeric_range</field> <!-- Default, adjust manually -->
+            <field name="evaluation_type">numeric_range</field>
             <field name="acceptance_criteria">≤ 10 minutos</field>
         </record>
             

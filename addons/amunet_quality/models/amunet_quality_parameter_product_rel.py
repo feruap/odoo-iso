@@ -121,7 +121,7 @@ class AmunetQualityParameterProductRel(models.Model):
         for record in self:
             # Filtrar solo las que tienen algún valor real configurado
             configs = record.specification_config_ids.filtered(
-                lambda s: s.nominal_value > 0 or s.max_value_manual > 0 or s.min_value_manual > 0 or s.acceptance_criteria
+                lambda s: s.active
             )
             
             if not configs:
@@ -132,16 +132,21 @@ class AmunetQualityParameterProductRel(models.Model):
             # Tomar las primeras 3 para no saturar la vista de lista
             for config in configs[:3]:
                 name = config.specification_id.name or "?"
-                if config.nominal_value > 0:
-                    val = f"{config.nominal_value}"
-                elif config.max_value_manual > 0:
-                    val = f"<{config.max_value_manual}"
-                elif config.min_value_manual > 0:
-                    val = f">{config.min_value_manual}"
+                if config.evaluation_type == 'numeric_range':
+                    if config.nominal_value > 0:
+                        val = f"{config.nominal_value}"
+                    elif config.max_value_manual > 0:
+                        val = f"<{config.max_value_manual}"
+                    elif config.min_value_manual > 0:
+                        val = f">{config.min_value_manual}"
+                    else:
+                        val = "?"
+                elif config.evaluation_type == 'binary_selection':
+                    val = config.binary_option_pass or "OK"
                 elif config.acceptance_criteria:
                     val = "OK"
                 else:
-                    val = "?"
+                    val = "..."
                 summary_parts.append(f"{name}: {val}")
             
             suffix = "..." if len(configs) > 3 else ""

@@ -115,6 +115,51 @@ class AmunetQualityController(http.Controller):
             _logger.error(f"[PDF ERROR] Error descargando solicitud: {str(e)}", exc_info=True)
             return request.make_response(f"Error Interno (solicitud): {str(e)}", status=500)
 
+    @http.route('/amunet_quality/download_certificado_interno/<int:check_id>', type='http', auth='user')
+    def download_certificado_interno(self, check_id, **kwargs):
+        """
+        Descarga directa del "Certificado Interno" con filename forzado.
+        """
+        try:
+            _logger.info(f"[PDF] download_certificado_interno - ID: {check_id}")
+            check = request.env['amunet.quality.check'].sudo().browse(check_id)
+            
+            if not check.exists():
+                return request.not_found()
+            
+            # Incrementar contador y guardar (SUDO para asegurar escritura)
+            check.sudo().write({'internal_certificate_count': check.internal_certificate_count + 1})
+            
+            # Generar PDF
+            report_xml_id = 'amunet_quality.action_report_certificado_interno'
+            report = request.env.ref(report_xml_id, raise_if_not_found=False)
+            
+            if not report:
+                return request.make_response(f"Error: No se encontró la acción de reporte '{report_xml_id}'.", status=404)
+            
+            pdf_content, _ = report.sudo()._render_qweb_pdf(report_xml_id, [check_id])
+            
+            # Obtener nombre de archivo: CERMP-001-Nombre del producto
+            # Limpiar nombre del producto para evitar caracteres inválidos
+            product_name = (check.product_id.name or 'Producto').replace('/', '_').replace('\\', '_')
+            seq_str = str(check.internal_certificate_count).zfill(3)
+            filename = f"CERMP-{seq_str}-{product_name}.pdf"
+            
+            from odoo.http import content_disposition
+            disposition = content_disposition(filename)
+            
+            pdfheaders = [
+                ('Content-Type', 'application/pdf'),
+                ('Content-Length', len(pdf_content)),
+                ('Content-Disposition', disposition)
+            ]
+            
+            return request.make_response(pdf_content, headers=pdfheaders)
+            
+        except Exception as e:
+            _logger.error(f"[PDF ERROR] Error descargando certificado interno: {str(e)}", exc_info=True)
+            return request.make_response(f"Error Interno: {str(e)}", status=500)
+
     @http.route('/qc/<int:check_id>/<string:check_number>', type='http', auth='public')
     def verify_quality_certificate(self, check_id, check_number, **kwargs):
         """

@@ -1,7 +1,26 @@
 {
   "permissions": {
     "allow": [
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "Bash(docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(docker exec:*)",
+      "Bash(docker compose:*)",
+      "Bash(grep -v '^$')",
+      "Bash(__NEW_LINE_41948f7cf410901a__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_99064e5ed263d61b__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_4432a32d28fada09__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_617f1a082a942060__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_6bc65e32228828a6__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_ea08146157004caa__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_a73200003940439c__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_081fccad0e86d939__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_8a362c470a02e4e2__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_0b4835ef95723cc5__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_3eee4c75bc6101db__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_47aa17d9d1761820__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_4948a7c8e344dadb__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(__NEW_LINE_267a185a51163f5f__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)",
+      "Bash(1 __NEW_LINE_f6894b0bd18d3d95__ docker exec odoo-docker-web-db-1 psql -U odoo -d amunet_local -t -c \":*)"
     ]
   }
 }

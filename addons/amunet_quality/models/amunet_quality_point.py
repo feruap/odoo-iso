@@ -192,6 +192,14 @@ class AmunetQualityPoint(models.Model):
                 'lot_id': lot.id if lot else False,
             }
             
+            # EXTRAER UOM DE MUESTREO
+            # Prioridad 1: UoM de la línea de movimiento (move_line)
+            if hasattr(move_line, 'product_uom_id') and move_line.product_uom_id:
+                qc_vals['sampling_uom_id'] = move_line.product_uom_id.id
+            # Prioridad 2: UoM del producto
+            elif product.uom_id:
+                qc_vals['sampling_uom_id'] = product.uom_id.id
+            
             # EXTRAER FABRICANTE/PROVEEDOR
             if picking.partner_id:
                 qc_vals['partner_id'] = picking.partner_id.id

@@ -68,13 +68,13 @@ class AmunetQualityCheck(models.Model):
     def _compute_display_action_finalize(self):
         """
         Calcula si el botón Finalizar debe ser visible.
-        - Siempre visible para Responsable Sanitario / Manager (con grupo amunet_quality.group_quality_sanitary).
+        - Siempre visible para Manager QC (con grupo amunet_quality.group_quality_manager).
         - Para otros usuarios, solo visible si las 3 firmas están completas.
         """
-        is_sanitary = self.env.user.has_group('amunet_quality.group_quality_sanitary')
+        is_manager = self.env.user.has_group('amunet_quality.group_quality_manager')
         for record in self:
             all_signed = bool(record.user_realized_id and record.user_verified_id and record.user_authorized_id)
-            record.display_action_finalize = is_sanitary or all_signed
+            record.display_action_finalize = is_manager or all_signed
 
     # ========================================================================
     # NUMERAL 1: DATOS GENERALES
@@ -434,6 +434,13 @@ class AmunetQualityCheck(models.Model):
         help='Justificación obligatoria para cambios en registros no-borrador'
     )
 
+    internal_certificate_count = fields.Integer(
+        string='Contador Certificado Interno',
+        default=0,
+        copy=False,
+        help='Número de veces que se ha generado el certificado interno'
+    )
+
     # ========================================================================
     # INVENTARIO
     # ========================================================================
@@ -451,6 +458,24 @@ class AmunetQualityCheck(models.Model):
         'amunet_disposition_qc_id',
         string='Movimientos de disposición',
         help='Transferencias generadas en la disposición final'
+    )
+
+    original_dest_location_id = fields.Many2one(
+        'stock.location',
+        string='Ubicación Original de Destino',
+        help='Almacén final al que debía ir el lote antes de ser retenido'
+    )
+
+    pending_disposition_picking_id = fields.Many2one(
+        'stock.picking',
+        string='Transferencia Pendiente (Cuarentena)',
+        help='Transferencia en espera para liberar el lote desde el Dashboard'
+    )
+    
+    original_qty_received = fields.Float(
+        string='Cantidad Total Recibida',
+        digits='Product Unit of Measure',
+        help='Cantidad original enviada a cuarentena'
     )
 
     # ========================================================================
@@ -578,6 +603,24 @@ class AmunetQualityCheck(models.Model):
     additional_info_observations = fields.Html(
         string='Observaciones generales',
         help='Observaciones generales con posibilidad de adjuntar imágenes'
+    )
+
+    # ========================================================================
+    # NUMERAL 7 & 8: REFERENCIAS Y ANEXOS
+    # ========================================================================
+
+    reference_ids = fields.Many2many(
+        'amunet.quality.procedure',
+        'amunet_quality_check_procedure_rel',
+        'check_id',
+        'procedure_id',
+        string='Referencias',
+        help='Procedimientos o documentos de referencia aplicables'
+    )
+
+    anexos_text = fields.Text(
+        string='Anexos',
+        help='Información adicional, descarga de datos crudos, observaciones, etc.'
     )
 
     # ========== Campos Computed de Visibilidad ==========
@@ -993,7 +1036,8 @@ class AmunetQualityCheck(models.Model):
         Carga automáticamente los parámetros de calidad del producto
         cuando se selecciona un producto.
         
-        También actualiza el tipo de prueba (destructiva/no destructiva).
+        También actualiza el tipo de prueba (destructiva/no destructiva)
+        y la unidad de medida de muestreo por defecto.
         """
         if self.product_id:
             # Actualizar tipo de prueba
@@ -1001,6 +1045,10 @@ class AmunetQualityCheck(models.Model):
                 self.product_id.product_tmpl_id.qc_test_destructiveness
                 or 'non_destructive'
             )
+            
+            # Auto-asignar unidad de medida de muestreo por defecto
+            if not self.sampling_uom_id and self.product_id.uom_id:
+                self.sampling_uom_id = self.product_id.uom_id.id
             
             # Cargar parámetros si no hay líneas existentes o si se cambió el producto
             if not self.test_line_ids or not self.test_line_ids.filtered(lambda l: l.parameter_id):
@@ -1348,7 +1396,7 @@ class AmunetQualityCheck(models.Model):
         """
         Location = self.env['stock.location']
 
-        # Buscar ubicación de QC existente
+        # Buscar ubicación de QC existente (tipo 'internal')
         qc_location = Location.search([
             ('usage', '=', 'internal'),
             ('company_id', '=', self.company_id.id),
@@ -1370,8 +1418,9 @@ class AmunetQualityCheck(models.Model):
         if qc_location:
             return qc_location
 
-        # Fallback: ubicación de stock principal
-        return self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+        # Sin fallback a Stock: si no se encuentra la ubicación de Calidad, retornar False
+        # para que los callers no muevan bienes al almacén principal por error.
+        return False
 
     def _get_source_location(self):
         """
@@ -1382,7 +1431,7 @@ class AmunetQualityCheck(models.Model):
         if not self.lot_id or not self.product_id:
             return self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
 
-        # Buscar donde está el stock del lote
+        # Buscar donde está el stock del lote en ubicaciones internas
         quant = self.env['stock.quant'].search([
             ('lot_id', '=', self.lot_id.id),
             ('product_id', '=', self.product_id.id),
@@ -1840,11 +1889,9 @@ class AmunetQualityCheck(models.Model):
     def _execute_disposition(self):
         """
         T-029-14: Ejecuta los movimientos de disposición según resultado.
-
-        Escenarios:
-        - APROBADO + No Destructivo: CC → Existencias (todo)
-        - APROBADO + Destructivo: CC → Scrap (analizado) + CC → Existencias (devolver)
-        - RECHAZADO: CC → Devolución (todo)
+        Nueva Lógica Cuarentena: Procesa la transferencia pendiente 
+        (pending_disposition_picking_id) completando el lote retenido
+        y enviando a merma solo la cantidad analizada en destructivo.
         """
         self.ensure_one()
 
@@ -1856,52 +1903,111 @@ class AmunetQualityCheck(models.Model):
             return ''
 
         messages = []
+        pending_pick = self.pending_disposition_picking_id
+        qty_total = self.original_qty_received or self.lot_qty_available
 
+        # LÓGICA DE TRANSFERENCIAS PENDIENTES (LIMPIEZA DE TABLERO Y COMPATIBILIDAD)
+        if pending_pick and pending_pick.state not in ('done', 'cancel'):
+            # Si el picking pendiente YA tiene como destino el almacén final o devuelto,
+            # lo procesamos y terminamos aquí (comportamiento antiguo).
+            # Si es un paso intermedio (Entrada -> Calidad), lo validamos y SEGUIMOS a la lógica dinámica.
+            is_intermediate = pending_pick.location_dest_id == qc_location
+            
+            if self.global_result == 'pass':
+                # Forzar reserva de stock si no está listo
+                if pending_pick.state in ('confirmed', 'waiting'):
+                    pending_pick.action_assign()
+                
+                # Ajuste de cantidad por destructividad
+                target_qty = qty_total
+                if self.test_destructiveness == 'destructive' and self.qty_analyzed > 0:
+                    target_qty = max(0, qty_total - self.qty_analyzed)
+                
+                # Validar el picking pendiente (Step 2)
+                for move in pending_pick.move_ids:
+                    move.picked = True
+                    # En Odoo 17, asignar quantity sobre el move intenta repartir en move_lines
+                    move.quantity = target_qty
+                    for ml in move.move_line_ids:
+                        ml.quantity = target_qty
+                        ml.picked = True
+                        if self.lot_id:
+                            ml.lot_id = self.lot_id.id
+                
+                try:
+                    pending_pick.with_context(skip_backorder=True, picking_label_report=False).button_validate()
+                    messages.append(f'Validado pendiente: {pending_pick.name}')
+                except Exception as e:
+                    _logger.warning(f"No se pudo validar auto el picking {pending_pick.name}: {str(e)}")
+                    # Si falla la auto-validación, al menos intentamos seguir
+
+                # Si NO era un paso intermedio (es decir, ya iba a Stock), terminamos
+                if not is_intermediate:
+                    messages.append(f'Liberado: {target_qty} → Existencias')
+                    if self.test_destructiveness == 'destructive' and self.qty_analyzed > 0:
+                        scrap_move = self._create_disposition_move(qc_location, self._get_scrap_location(), self.qty_analyzed, 'Merma destructiva QC')
+                        if scrap_move: messages.append(f'Merma: {self.qty_analyzed} → Scrap')
+                    return '. '.join(messages)
+            else:
+                # RECHAZADO
+                return_location = self._get_return_location()
+                pending_pick.write({'location_dest_id': return_location.id})
+                if pending_pick.state in ('confirmed', 'waiting'):
+                    pending_pick.action_assign()
+                
+                for move in pending_pick.move_ids:
+                    move.quantity = qty_total
+                    move.picked = True
+                    for ml in move.move_line_ids:
+                        ml.location_dest_id = return_location.id
+                        ml.quantity = qty_total
+                        ml.picked = True
+                        if self.lot_id: ml.lot_id = self.lot_id.id
+                
+                try:
+                    pending_pick.with_context(skip_backorder=True, picking_label_report=False).button_validate()
+                    messages.append(f'Rechazado: {qty_total} → Devolución')
+                except Exception as e:
+                    _logger.warning(f"No se pudo validar auto el rechazo {pending_pick.name}: {str(e)}")
+                
+                return '. '.join(messages)
+        
+        # NUEVA LÓGICA (CREACIÓN DINÁMICA DE MOVIMIENTOS)
+        # Se ejecuta siempre para controles que vienen del flujo de 3 pasos (donde el pendiente era solo Entrada->Calidad)
+
+        # NUEVA LÓGICA (CREACIÓN DINÁMICA DE MOVIMIENTOS)
+        destination_location = self.original_dest_location_id or self._get_stock_location()
+        
         if self.global_result == 'pass':
-            # APROBADO
             if self.test_destructiveness == 'destructive':
-                # Destructivo: enviar analizado a scrap, devolver el resto
+                # 1. Liberar (Total - Analizado)
+                qty_to_release = qty_total - self.qty_analyzed
+                if qty_to_release > 0:
+                    return_move = self._create_disposition_move(
+                        qc_location, destination_location, qty_to_release, 'Liberación a existencias'
+                    )
+                    if return_move: messages.append(f'Liberado: {qty_to_release} → Existencias')
+                
+                # 2. Merma por lo analizado
                 if self.qty_analyzed > 0:
                     scrap_move = self._create_disposition_move(
-                        qc_location,
-                        self._get_scrap_location(),
-                        self.qty_analyzed,
-                        'Merma (cantidad analizada)'
+                        qc_location, self._get_scrap_location(), self.qty_analyzed, 'Merma destructiva QC'
                     )
-                    if scrap_move:
-                        messages.append(f'Merma: {self.qty_analyzed} → Scrap')
-
-                if self.qty_to_return > 0:
-                    return_move = self._create_disposition_move(
-                        qc_location,
-                        self._get_stock_location(),
-                        self.qty_to_return,
-                        'Devolución a existencias'
-                    )
-                    if return_move:
-                        messages.append(f'Devuelto: {self.qty_to_return} → Existencias')
+                    if scrap_move: messages.append(f'Merma: {self.qty_analyzed} → Scrap')
             else:
-                # No Destructivo: devolver todo a existencias
-                if self.qty_sampling > 0:
+                # No destructivo: Liberar todo
+                if qty_total > 0:
                     return_move = self._create_disposition_move(
-                        qc_location,
-                        self._get_stock_location(),
-                        self.qty_sampling,
-                        'Liberación a existencias'
+                        qc_location, destination_location, qty_total, 'Liberación a existencias'
                     )
-                    if return_move:
-                        messages.append(f'Liberado: {self.qty_sampling} → Existencias')
+                    if return_move: messages.append(f'Liberado: {qty_total} → Existencias')
         else:
-            # RECHAZADO: todo a devolución
-            if self.qty_sampling > 0:
+            # RECHAZADO: Redirigir a Devoluciones
+            if qty_total > 0:
                 reject_move = self._create_disposition_move(
-                    qc_location,
-                    self._get_return_location(),
-                    self.qty_sampling,
-                    'Rechazo - Devolución'
+                    qc_location, self._get_return_location(), qty_total, 'Rechazo - Devolución'
                 )
-                if reject_move:
-                    messages.append(f'Rechazado: {self.qty_sampling} → Devolución')
+                if reject_move: messages.append(f'Rechazado: {qty_total} → Devolución')
 
         return '. '.join(messages)
 
@@ -2238,6 +2344,23 @@ class AmunetQualityCheck(models.Model):
              raise ValidationError("El control de calidad debe estar finalizado para imprimir el reporte.")
 
         download_url = f"/amunet_quality/download_solicitud_report/{self.id}"
+        
+        return {
+            'type': 'ir.actions.act_url',
+            'url': download_url,
+            'target': 'self',
+        }
+
+    def action_print_certificado_interno(self):
+        """
+        Acción para imprimir el "Certificado Interno".
+        Usa descarga directa para filename controlado y evitar UUID.
+        """
+        self.ensure_one()
+        if self.state != 'done':
+             raise ValidationError("El control de calidad debe estar finalizado para imprimir el certificado.")
+
+        download_url = f"/amunet_quality/download_certificado_interno/{self.id}"
         
         return {
             'type': 'ir.actions.act_url',
