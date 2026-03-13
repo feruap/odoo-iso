@@ -14,6 +14,7 @@ access_amunet_quality_additional_info_field,amunet.quality.additional.info.field
 access_amunet_quality_additional_info_config,amunet.quality.additional.info.config,model_amunet_quality_additional_info_config,base.group_user,1,1,1,1
 access_amunet_quality_signature_pin,amunet.quality.signature.pin,model_amunet_quality_signature_pin,base.group_user,1,1,1,1
 access_amunet_quality_signature_wizard,amunet.quality.signature.wizard,model_amunet_quality_signature_wizard,base.group_user,1,1,1,1
+access_amunet_quality_reanalysis_wizard,amunet.quality.reanalysis.wizard,model_amunet_quality_reanalysis_wizard,base.group_user,1,1,1,1
 access_amunet_quality_supplier_audit,amunet.quality.supplier.audit,model_amunet_quality_supplier_audit,base.group_user,1,1,1,1
 access_amunet_quality_capa,amunet.quality.capa,model_amunet_quality_capa,base.group_user,1,1,1,1
 access_amunet_quality_audit_log,amunet.quality.audit.log,model_amunet_quality_audit_log,base.group_user,1,1,1,1

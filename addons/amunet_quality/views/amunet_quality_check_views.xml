@@ -139,12 +139,19 @@
                                decoration-danger="global_result == 'fail'"/>
                     </div>
 
+                    <!-- Banner de Reanálisis (visible desde draft si es reanalysis) -->
+                    <div class="alert alert-warning text-center" role="alert"
+                         invisible="analysis_type != 'reanalysis'">
+                        <strong>🔄 REANÁLISIS</strong> — Este análisis es un reanálisis.
+                        Análisis original: <field name="parent_check_id" readonly="1" class="d-inline" nolabel="1"/>
+                    </div>
+
                     <!-- Alerta de Resultado Global (Epic-UI) -->
-                    <div class="alert alert-success text-center" role="alert" 
+                    <div class="alert alert-success text-center" role="alert"
                          invisible="global_result != 'pass'">
                         <strong>✅ APROBADO</strong> - El producto cumple con todas las especificaciones.
                     </div>
-                    <div class="alert alert-danger text-center" role="alert" 
+                    <div class="alert alert-danger text-center" role="alert"
                          invisible="global_result != 'fail'">
                         <strong>❌ RECHAZADO</strong> - El producto NO cumple con las especificaciones.
                         <button name="action_create_capa" string="Iniciar CAPA" type="object" class="btn-link"/>
@@ -232,7 +239,7 @@
                         <group>
                             <field name="qty_analyzed"
                                    readonly="sampling_confirmed"/>
-                            <field name="qty_to_return" readonly="1"/>
+                            <field name="qty_to_return" readonly="sampling_confirmed"/>
                             <field name="sampling_move_id" readonly="1"
                                    invisible="not sampling_move_id"/>
                         </group>
@@ -346,13 +353,10 @@
                                    nolabel="1"/>
                          </group>
                     </group>
-                    <!-- REFERENCIAS Y ANEXOS (Numeral 7 y 8) -->
-                    <group string="Numeral 7 y 8: Referencias y Anexos"
+                    <!-- ANEXOS (Numeral 7) -->
+                    <group string="Numeral 7: Anexos"
                            invisible="not sampling_confirmed">
-                        <field name="reference_ids" widget="many2many_tags" 
-                               options="{'no_create': True}"
-                               readonly="state == 'done'"/>
-                        <field name="anexos_text" 
+                        <field name="anexos_text"
                                placeholder="Descarga de datos crudos, cuentas, observaciones, etc..."
                                readonly="state == 'done'"/>
                     </group>

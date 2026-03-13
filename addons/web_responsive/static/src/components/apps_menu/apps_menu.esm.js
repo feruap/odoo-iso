@@ -58,7 +58,7 @@ export class AppsMenu extends Component {
         onWillStart(async () => {
             const companyId = session.company_id || 1;
             try {
-                const companyData = await this.orm.read("res.company", [companyId], ["name", "contact_address", "website"]);
+                const companyData = await this.orm.read("res.company", [companyId], ["name", "website"]);
                 if (companyData && companyData.length > 0) {
                     this.state.company = companyData[0];
                 }
@@ -163,7 +163,6 @@ export class AppsMenu extends Component {
             } else {
                 this.setOpenState(!this.state.open);
             }
-            const {href, hash} = location;
             const menuId = this.router.current.menu_id;
             if (menuId && menuId !== redirect_menuId) {
                 browser.localStorage.setItem(
@@ -172,8 +171,9 @@ export class AppsMenu extends Component {
                 );
             }
 
-            if (href.includes(hash)) {
-                window.history.replaceState(null, "", href.replace(hash, ""));
+            // Update URL to home when opening the apps menu (Odoo 17+ uses path routing, no hash)
+            if (this.state.open) {
+                window.history.pushState(null, "", "/odoo");
             }
         }
     }

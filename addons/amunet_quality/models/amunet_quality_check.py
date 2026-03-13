@@ -230,9 +230,9 @@ class AmunetQualityCheck(models.Model):
 
     qty_to_return = fields.Float(
         string='A devolver',
-        compute='_compute_qty_to_return',
+        store=True,
         digits='Product Unit of Measure',
-        help='Cantidad a devolver: muestreada - analizada'
+        help='Cantidad a devolver al lote (editable; auto-calculado al cambiar muestreo o análisis)'
     )
 
     sampling_move_id = fields.Many2one(
@@ -738,11 +738,97 @@ class AmunetQualityCheck(models.Model):
             else:
                 record.lot_qty_available = 0.0
 
-    @api.depends('qty_sampling', 'qty_analyzed')
-    def _compute_qty_to_return(self):
-        """Calcula la cantidad a devolver"""
-        for record in self:
-            record.qty_to_return = record.qty_sampling - record.qty_analyzed
+    @api.onchange('qty_sampling')
+    def _onchange_suggest_qty_fields(self):
+        """
+        Al cambiar qty_sampling:
+        - Siempre sugiere qty_analyzed = qty_sampling
+        - qty_to_return se sugiere segun tipo de prueba:
+            * No destructiva: qty_to_return = qty_sampling
+              (se espera devolver todo lo muestreado)
+            * Destructiva:    qty_to_return = 0
+              (se espera que todo lo analizado se destruye)
+        El usuario puede ajustar ambos libremente despues.
+        Cambiar qty_analyzed NO toca qty_to_return para evitar perdidas accidentales.
+        """
+        if not self.sampling_confirmed:
+            qty = self.qty_sampling or 0.0
+            self.qty_analyzed = qty
+            if self.test_destructiveness == 'destructive':
+                self.qty_to_return = 0.0
+            else:
+                self.qty_to_return = qty
+
+    @api.onchange('qty_to_return')
+    def _onchange_qty_to_return_warn(self):
+        """
+        Corrige qty_to_return si supera el máximo permitido según destructividad:
+        - Destructiva:    max = qty_sampling - qty_analyzed
+        - No destructiva: max = qty_sampling
+        """
+        qty_s = self.qty_sampling or 0.0
+        qty_a = self.qty_analyzed or 0.0
+        qty_r = self.qty_to_return or 0.0
+
+        if self.test_destructiveness == 'destructive':
+            max_return = max(0.0, qty_s - qty_a)
+            if qty_r > max_return:
+                self.qty_to_return = max_return
+                return {'warning': {
+                    'title': 'Límite de devolución (destructiva)',
+                    'message': (
+                        f'En prueba destructiva lo analizado ({qty_a}) se destruye. '
+                        f'La cantidad a devolver fue ajustada al máximo posible: {max_return}.'
+                    )
+                }}
+        else:
+            if qty_r > qty_s:
+                self.qty_to_return = qty_s
+                return {'warning': {
+                    'title': 'Límite de devolución',
+                    'message': (
+                        f'No se puede devolver más de lo muestreado ({qty_s}). '
+                        f'La cantidad a devolver fue ajustada a {qty_s}.'
+                    )
+                }}
+        if qty_r < 0.0:
+            self.qty_to_return = 0.0
+
+    @api.onchange('qty_sampling')
+    def _onchange_qty_sampling_warn(self):
+        """Si qty_sampling excede el lote, lo corrige al máximo y avisa."""
+        if self.qty_sampling and self.lot_qty_available:
+            qty_uom = self._convert_qty_to_product_uom(self.qty_sampling, self.sampling_uom_id)
+            if qty_uom > self.lot_qty_available:
+                # Calcular el máximo permitido en la UoM de muestreo
+                if self.sampling_uom_id and self.product_id.uom_id:
+                    max_in_sampling_uom = self.product_id.uom_id._compute_quantity(
+                        self.lot_qty_available, self.sampling_uom_id
+                    )
+                else:
+                    max_in_sampling_uom = self.lot_qty_available
+                self.qty_sampling = max_in_sampling_uom
+                return {'warning': {
+                    'title': 'Límite del lote',
+                    'message': (
+                        f'La cantidad muestreada fue ajustada al máximo disponible del lote: '
+                        f'{max_in_sampling_uom} {self.sampling_uom_id.name or self.product_id.uom_id.name or ""}.'
+                    )
+                }}
+
+    @api.onchange('qty_analyzed')
+    def _onchange_qty_analyzed_warn(self):
+        """Si qty_analyzed excede qty_sampling, lo corrige al máximo y avisa."""
+        if self.qty_analyzed and self.qty_sampling:
+            if self.qty_analyzed > self.qty_sampling:
+                self.qty_analyzed = self.qty_sampling
+                return {'warning': {
+                    'title': 'Límite de análisis',
+                    'message': (
+                        f'La cantidad analizada fue ajustada al máximo permitido: '
+                        f'{self.qty_sampling} (igual a la cantidad muestreada).'
+                    )
+                }}
 
     @api.depends('test_line_ids.verdict')
     def _compute_global_result(self):
@@ -1083,15 +1169,21 @@ class AmunetQualityCheck(models.Model):
     # CONSTRAINTS
     # ========================================================================
 
-    @api.constrains('user_realized_id', 'user_verified_id')
+    @api.constrains('user_realized_id', 'user_verified_id', 'user_authorized_id')
     def _check_segregation(self):
-        """Valida segregación de funciones: Realizó ≠ Verificó"""
+        """Valida segregación de funciones: las 3 firmas deben ser usuarios distintos"""
         for record in self:
-            if record.user_realized_id and record.user_verified_id:
-                if record.user_realized_id == record.user_verified_id:
+            pairs = [
+                (record.user_realized_id,  record.user_verified_id,   'Realizó',  'Verificó'),
+                (record.user_realized_id,  record.user_authorized_id, 'Realizó',  'Autorizó'),
+                (record.user_verified_id,  record.user_authorized_id, 'Verificó', 'Autorizó'),
+            ]
+            for u1, u2, nombre1, nombre2 in pairs:
+                if u1 and u2 and u1 == u2:
                     raise ValidationError(
-                        'Segregación de funciones: '
-                        'El usuario que realizó no puede ser el mismo que Verificó'
+                        f'Segregación de funciones: '
+                        f'El usuario que firmó como "{nombre1}" '
+                        f'no puede firmar también como "{nombre2}".'
                     )
 
     @api.constrains('manufacturing_date')
@@ -1103,6 +1195,66 @@ class AmunetQualityCheck(models.Model):
                 raise ValidationError(
                     'La fecha de fabricación no puede ser futura'
                 )
+
+    @api.constrains('qty_sampling', 'qty_analyzed', 'qty_to_return')
+    def _check_qty_limits(self):
+        """
+        Valida límites de cantidades al guardar:
+        - qty_sampling no puede exceder lot_qty_available (con conversión de UoM)
+        - qty_analyzed no puede exceder qty_sampling
+        - qty_to_return debe estar entre 0 y qty_sampling
+        Solo aplica cuando info_reviewed=True y state != 'done' para no afectar
+        registros existentes ni borradores.
+        """
+        for record in self:
+            if record.state == 'done' or not record.info_reviewed:
+                continue
+
+            # Límite qty_sampling ≤ lot_qty_available
+            if record.qty_sampling and record.lot_qty_available:
+                qty_uom = record._convert_qty_to_product_uom(
+                    record.qty_sampling, record.sampling_uom_id
+                )
+                if qty_uom > record.lot_qty_available:
+                    raise ValidationError(
+                        f'La cantidad muestreada ({record.qty_sampling} '
+                        f'{record.sampling_uom_id.name or ""}) excede el stock '
+                        f'disponible del lote ({record.lot_qty_available} '
+                        f'{record.product_id.uom_id.name or ""})'
+                    )
+
+            # Límite qty_analyzed ≤ qty_sampling
+            if record.qty_analyzed and record.qty_sampling:
+                if record.qty_analyzed > record.qty_sampling:
+                    raise ValidationError(
+                        f'La cantidad analizada ({record.qty_analyzed}) no puede '
+                        f'exceder la cantidad muestreada ({record.qty_sampling})'
+                    )
+
+            # Límite qty_to_return según tipo de prueba
+            if record.qty_to_return < 0:
+                raise ValidationError('La cantidad a devolver no puede ser negativa')
+
+            qty_s = record.qty_sampling or 0.0
+            qty_a = record.qty_analyzed or 0.0
+
+            if record.test_destructiveness == 'destructive':
+                # Destructiva: lo analizado se destruye → máx = qty_sampling - qty_analyzed
+                max_return = max(0.0, qty_s - qty_a)
+                if record.qty_to_return > max_return:
+                    raise ValidationError(
+                        f'Prueba destructiva: la cantidad a devolver ({record.qty_to_return}) '
+                        f'no puede exceder lo no analizado ({max_return}): '
+                        f'{qty_s} muestreada − {qty_a} analizada'
+                    )
+            else:
+                # No destructiva: el análisis no destruye → máx = qty_sampling
+                # (el usuario puede devolver menos si consumió alguna pieza en la práctica)
+                if record.qty_to_return > qty_s:
+                    raise ValidationError(
+                        f'La cantidad a devolver ({record.qty_to_return}) no puede '
+                        f'exceder la cantidad muestreada ({qty_s})'
+                    )
 
     # ========================================================================
     # MÉTODOS DE CREACIÓN
@@ -1714,6 +1866,11 @@ class AmunetQualityCheck(models.Model):
         for record in self:
             if not record.user_realized_id:
                 raise ValidationError(_("Debe firmar 'Realizó' antes de verificar."))
+            if record.user_realized_id.id == self.env.user.id:
+                raise ValidationError(
+                    'Segregación de funciones: '
+                    'No puede firmar como "Verificó" porque ya firmó como "Realizó".'
+                )
             record.write({'user_verified_id': self.env.user.id})
             
             status_dict = dict(record._fields['global_result'].selection)
@@ -1750,6 +1907,16 @@ class AmunetQualityCheck(models.Model):
     def _action_sign_authorized_logic(self):
         """Lógica de firma Autorizó"""
         for record in self:
+            if record.user_realized_id and record.user_realized_id.id == self.env.user.id:
+                raise ValidationError(
+                    'Segregación de funciones: '
+                    'No puede firmar como "Autorizó" porque ya firmó como "Realizó".'
+                )
+            if record.user_verified_id and record.user_verified_id.id == self.env.user.id:
+                raise ValidationError(
+                    'Segregación de funciones: '
+                    'No puede firmar como "Autorizó" porque ya firmó como "Verificó".'
+                )
             record.write({'user_authorized_id': self.env.user.id})
             
             status_dict = dict(record._fields['global_result'].selection)
@@ -1861,8 +2028,42 @@ class AmunetQualityCheck(models.Model):
         return self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
 
     def _get_scrap_location(self):
-        """Obtiene la ubicación de desecho/scrap"""
-        return self.env.ref('stock.stock_location_scrapped', raise_if_not_found=False)
+        """Obtiene o crea la ubicacion de desecho/scrap.
+
+        Intenta en orden:
+        1. External ID estandar de Odoo (stock.stock_location_scrapped)
+        2. Busqueda por nombre (scrap / desech / merma) con usage=inventory
+        3. Crea la ubicacion 'Desechos' y registra su external ID para uso futuro
+        """
+        scrap_loc = self.env.ref('stock.stock_location_scrapped', raise_if_not_found=False)
+        if scrap_loc:
+            return scrap_loc
+
+        scrap_loc = self.env['stock.location'].search([
+            ('usage', '=', 'inventory'),
+            '|', '|',
+            ('name', 'ilike', 'scrap'),
+            ('name', 'ilike', 'desech'),
+            ('name', 'ilike', 'merma'),
+        ], limit=1)
+
+        if not scrap_loc:
+            _logger.info("Ubicacion de scrap no encontrada. Creando 'Desechos'...")
+            scrap_loc = self.env['stock.location'].sudo().create({
+                'name': 'Desechos',
+                'usage': 'inventory',
+                'active': True,
+            })
+            self.env['ir.model.data'].sudo().create({
+                'name': 'stock_location_scrapped',
+                'module': 'stock',
+                'model': 'stock.location',
+                'res_id': scrap_loc.id,
+                'noupdate': True,
+            })
+            _logger.info(f"Ubicacion 'Desechos' creada con ID {scrap_loc.id}")
+
+        return scrap_loc
 
     def _get_return_location(self):
         """
@@ -1889,9 +2090,13 @@ class AmunetQualityCheck(models.Model):
     def _execute_disposition(self):
         """
         T-029-14: Ejecuta los movimientos de disposición según resultado.
-        Nueva Lógica Cuarentena: Procesa la transferencia pendiente 
-        (pending_disposition_picking_id) completando el lote retenido
-        y enviando a merma solo la cantidad analizada en destructivo.
+
+        Lógica basada en qty_to_return (cantidad que el analista declara devolver):
+        - A existencias : qty_total - qty_sampling + qty_to_return
+          (unidades no muestreadas + unidades que sí se devuelven del muestreo)
+        - A scrap/merma : qty_sampling - qty_to_return
+          (unidades del muestreo que NO se devuelven, sea por destrucción o pérdida)
+        - Rechazado     : qty_total → devolución (igual que antes)
         """
         self.ensure_one()
 
@@ -1905,48 +2110,44 @@ class AmunetQualityCheck(models.Model):
         messages = []
         pending_pick = self.pending_disposition_picking_id
         qty_total = self.original_qty_received or self.lot_qty_available
+        qty_sampling = self.qty_sampling or 0.0
+        qty_to_return = self.qty_to_return or 0.0
 
-        # LÓGICA DE TRANSFERENCIAS PENDIENTES (LIMPIEZA DE TABLERO Y COMPATIBILIDAD)
+        # Cantidades finales de disposición
+        # Unidades que vuelven a stock = (lote total - muestra) + (muestra que se devuelve)
+        qty_to_stock = max(0.0, qty_total - qty_sampling + qty_to_return)
+        # Unidades del muestreo que no se devuelven (destruidas, perdidas, consumidas)
+        qty_to_scrap = max(0.0, qty_sampling - qty_to_return)
+
+        # LÓGICA DE TRANSFERENCIAS PENDIENTES (COMPATIBILIDAD)
         if pending_pick and pending_pick.state not in ('done', 'cancel'):
-            # Si el picking pendiente YA tiene como destino el almacén final o devuelto,
-            # lo procesamos y terminamos aquí (comportamiento antiguo).
-            # Si es un paso intermedio (Entrada -> Calidad), lo validamos y SEGUIMOS a la lógica dinámica.
             is_intermediate = pending_pick.location_dest_id == qc_location
-            
+
             if self.global_result == 'pass':
-                # Forzar reserva de stock si no está listo
                 if pending_pick.state in ('confirmed', 'waiting'):
                     pending_pick.action_assign()
-                
-                # Ajuste de cantidad por destructividad
-                target_qty = qty_total
-                if self.test_destructiveness == 'destructive' and self.qty_analyzed > 0:
-                    target_qty = max(0, qty_total - self.qty_analyzed)
-                
-                # Validar el picking pendiente (Step 2)
+
                 for move in pending_pick.move_ids:
                     move.picked = True
-                    # En Odoo 17, asignar quantity sobre el move intenta repartir en move_lines
-                    move.quantity = target_qty
+                    move.quantity = qty_to_stock
                     for ml in move.move_line_ids:
-                        ml.quantity = target_qty
+                        ml.quantity = qty_to_stock
                         ml.picked = True
                         if self.lot_id:
                             ml.lot_id = self.lot_id.id
-                
+
                 try:
                     pending_pick.with_context(skip_backorder=True, picking_label_report=False).button_validate()
                     messages.append(f'Validado pendiente: {pending_pick.name}')
                 except Exception as e:
                     _logger.warning(f"No se pudo validar auto el picking {pending_pick.name}: {str(e)}")
-                    # Si falla la auto-validación, al menos intentamos seguir
 
-                # Si NO era un paso intermedio (es decir, ya iba a Stock), terminamos
                 if not is_intermediate:
-                    messages.append(f'Liberado: {target_qty} → Existencias')
-                    if self.test_destructiveness == 'destructive' and self.qty_analyzed > 0:
-                        scrap_move = self._create_disposition_move(qc_location, self._get_scrap_location(), self.qty_analyzed, 'Merma destructiva QC')
-                        if scrap_move: messages.append(f'Merma: {self.qty_analyzed} → Scrap')
+                    messages.append(f'Liberado: {qty_to_stock} a existencias')
+                    if qty_to_scrap > 0:
+                        scrap = self._create_scrap_order(qty_to_scrap, qc_location, 'Merma QC')
+                        if scrap:
+                            messages.append(f'Merma: {qty_to_scrap} a desechos')
                     return '. '.join(messages)
             else:
                 # RECHAZADO
@@ -1954,7 +2155,7 @@ class AmunetQualityCheck(models.Model):
                 pending_pick.write({'location_dest_id': return_location.id})
                 if pending_pick.state in ('confirmed', 'waiting'):
                     pending_pick.action_assign()
-                
+
                 for move in pending_pick.move_ids:
                     move.quantity = qty_total
                     move.picked = True
@@ -1962,54 +2163,90 @@ class AmunetQualityCheck(models.Model):
                         ml.location_dest_id = return_location.id
                         ml.quantity = qty_total
                         ml.picked = True
-                        if self.lot_id: ml.lot_id = self.lot_id.id
-                
+                        if self.lot_id:
+                            ml.lot_id = self.lot_id.id
+
                 try:
                     pending_pick.with_context(skip_backorder=True, picking_label_report=False).button_validate()
-                    messages.append(f'Rechazado: {qty_total} → Devolución')
+                    messages.append(f'Rechazado: {qty_total} a devolución')
                 except Exception as e:
                     _logger.warning(f"No se pudo validar auto el rechazo {pending_pick.name}: {str(e)}")
-                
+
                 return '. '.join(messages)
-        
-        # NUEVA LÓGICA (CREACIÓN DINÁMICA DE MOVIMIENTOS)
-        # Se ejecuta siempre para controles que vienen del flujo de 3 pasos (donde el pendiente era solo Entrada->Calidad)
 
         # NUEVA LÓGICA (CREACIÓN DINÁMICA DE MOVIMIENTOS)
         destination_location = self.original_dest_location_id or self._get_stock_location()
-        
+
         if self.global_result == 'pass':
-            if self.test_destructiveness == 'destructive':
-                # 1. Liberar (Total - Analizado)
-                qty_to_release = qty_total - self.qty_analyzed
-                if qty_to_release > 0:
-                    return_move = self._create_disposition_move(
-                        qc_location, destination_location, qty_to_release, 'Liberación a existencias'
-                    )
-                    if return_move: messages.append(f'Liberado: {qty_to_release} → Existencias')
-                
-                # 2. Merma por lo analizado
-                if self.qty_analyzed > 0:
-                    scrap_move = self._create_disposition_move(
-                        qc_location, self._get_scrap_location(), self.qty_analyzed, 'Merma destructiva QC'
-                    )
-                    if scrap_move: messages.append(f'Merma: {self.qty_analyzed} → Scrap')
-            else:
-                # No destructivo: Liberar todo
-                if qty_total > 0:
-                    return_move = self._create_disposition_move(
-                        qc_location, destination_location, qty_total, 'Liberación a existencias'
-                    )
-                    if return_move: messages.append(f'Liberado: {qty_total} → Existencias')
+            # 1. Liberar a existencias
+            if qty_to_stock > 0:
+                return_move = self._create_disposition_move(
+                    qc_location, destination_location, qty_to_stock, 'Liberación a existencias'
+                )
+                if return_move:
+                    messages.append(f'Liberado: {qty_to_stock} a existencias')
+
+            # 2. Merma: unidades del muestreo que no se devuelven
+            if qty_to_scrap > 0:
+                scrap = self._create_scrap_order(qty_to_scrap, qc_location, 'Merma QC')
+                if scrap:
+                    messages.append(f'Merma: {qty_to_scrap} a desechos')
         else:
-            # RECHAZADO: Redirigir a Devoluciones
+            # RECHAZADO: todo el lote a devoluciones
             if qty_total > 0:
                 reject_move = self._create_disposition_move(
                     qc_location, self._get_return_location(), qty_total, 'Rechazo - Devolución'
                 )
-                if reject_move: messages.append(f'Rechazado: {qty_total} → Devolución')
+                if reject_move:
+                    messages.append(f'Rechazado: {qty_total} a devolución')
 
         return '. '.join(messages)
+
+    def _create_scrap_order(self, qty, source_location, description):
+        """
+        Crea una orden de desecho (stock.scrap) para la merma del QC.
+        Usa el modelo nativo de Odoo para integracion correcta con inventario.
+
+        Args:
+            qty          : Cantidad a desechar (en UoM de muestreo)
+            source_location : Ubicacion origen (tipicamente QC)
+            description  : Texto de referencia para el campo 'origin'
+
+        Returns:
+            stock.scrap record o False
+        """
+        self.ensure_one()
+        if qty <= 0 or not source_location:
+            return False
+
+        qty_product_uom = self._convert_qty_to_product_uom(qty, self.sampling_uom_id)
+        if qty_product_uom <= 0:
+            return False
+
+        scrap_location = self._get_scrap_location()
+        if not scrap_location:
+            _logger.error(f"No se encontro ubicacion de scrap para QC {self.id}")
+            return False
+
+        scrap_vals = {
+            'product_id': self.product_id.id,
+            'product_uom_id': self.product_id.uom_id.id,
+            'scrap_qty': qty_product_uom,
+            'location_id': source_location.id,
+            'scrap_location_id': scrap_location.id,
+            'origin': f'{description} - {self.name}',
+            'company_id': self.company_id.id,
+        }
+        if self.lot_id:
+            scrap_vals['lot_id'] = self.lot_id.id
+
+        scrap = self.env['stock.scrap'].create(scrap_vals)
+        scrap.action_validate()
+        _logger.info(
+            f"DEBUG: Scrap {scrap.name} creado para QC {self.id}, "
+            f"qty={qty_product_uom} {self.product_id.uom_id.name}"
+        )
+        return scrap
 
     def _create_disposition_move(self, source_location, dest_location, qty, description):
         """

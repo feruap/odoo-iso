@@ -133,6 +133,23 @@ class ResUsers(models.Model):
 
         return operation_types
 
+    # ========== OVERRIDES ==========
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        users = super().create(vals_list)
+        self._assign_employee_filters(users)
+        return users
+
+    @api.model
+    def _assign_employee_filters(self, users):
+        """Asignar filtros favoritos de hr.employee a los usuarios dados."""
+        filters = self.env['ir.filters'].sudo().search([
+            ('model_id', '=', 'hr.employee'),
+        ])
+        for f in filters:
+            f.sudo().write({'user_ids': [(4, u.id) for u in users]})
+
     # ========== ACTIONS ==========
 
     def action_view_warehouse_accesses(self):

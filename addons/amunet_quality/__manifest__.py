@@ -52,6 +52,7 @@
         'views/res_users_views.xml',
         'views/product_template_views.xml',
         'views/stock_picking_views.xml',
+        'views/stock_lot_views.xml',
         'views/purchase_order_views.xml',
         'views/amunet_quality_tecno_standalone_views.xml',
 

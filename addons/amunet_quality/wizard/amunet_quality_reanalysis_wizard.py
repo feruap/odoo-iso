@@ -82,14 +82,23 @@ class AmunetQualityReanalysisWizard(models.TransientModel):
 
     @api.depends('lot_id', 'product_id')
     def _compute_qty_available(self):
-        """Calcula el stock disponible del lote"""
+        """
+        Calcula el stock disponible del lote únicamente en ubicaciones de
+        Existencias (lot_stock_id de cada almacén y sus ubicaciones hijas),
+        excluyendo ubicaciones de Control de Calidad u otras intermedias.
+        """
         for record in self:
             if record.lot_id and record.product_id:
-                quants = self.env['stock.quant'].search([
-                    ('lot_id', '=', record.lot_id.id),
-                    ('product_id', '=', record.product_id.id),
-                ])
-                record.qty_available = sum(quants.mapped('quantity'))
+                stock_locations = self.env['stock.warehouse'].search([]).mapped('lot_stock_id')
+                if stock_locations:
+                    quants = self.env['stock.quant'].search([
+                        ('lot_id', '=', record.lot_id.id),
+                        ('product_id', '=', record.product_id.id),
+                        ('location_id', 'child_of', stock_locations.ids),
+                    ])
+                    record.qty_available = sum(quants.mapped('quantity'))
+                else:
+                    record.qty_available = 0.0
             else:
                 record.qty_available = 0.0
 
@@ -105,7 +114,7 @@ class AmunetQualityReanalysisWizard(models.TransientModel):
             check = self.env['amunet.quality.check'].browse(active_id)
             res.update({
                 'quality_check_id': check.id,
-                'qty_reanalysis': check.qty_sampling,
+                'qty_reanalysis': 0.0,
                 'reanalysis_uom_id': check.sampling_uom_id.id if check.sampling_uom_id else check.product_id.uom_id.id,
             })
 
@@ -183,6 +192,23 @@ class AmunetQualityReanalysisWizard(models.TransientModel):
                  f'Motivo: {self.reason}',
             message_type='notification'
         )
+
+        # Si el wizard fue abierto desde inventario (stock.lot):
+        #   - Confirmar el muestreo automáticamente (genera movimiento Existencias → Control QC)
+        #   - Regresar al lote (el usuario de inventario no debe ver el QC)
+        origin_model = self.env.context.get('origin_model')
+        if origin_model == 'stock.lot':
+            # Confirmar muestreo: crea y valida el movimiento de stock automáticamente
+            new_check.action_confirm_sampling()
+
+            lot_id = self.env.context.get('origin_lot_id')
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'stock.lot',
+                'res_id': lot_id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
 
         return {
             'type': 'ir.actions.act_window',

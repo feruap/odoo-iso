@@ -8,6 +8,7 @@ from . import amunet_quality_test_line
 from . import product_template
 from . import product_product
 from . import stock_picking
+from . import stock_lot
 from . import res_users
 from . import amunet_quality_signature_pin
 

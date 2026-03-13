@@ -12,7 +12,8 @@ services:
 
   # 2. La Aplicación (Odoo)
   web:
-    image: odoo:19.0  # <--- CAMBIA ESTO si usas otra versión (ej. odoo:17.0)
+    build: .          # Usa el Dockerfile local (agrega fuentes Cambria y otras personalizaciones)
+    image: odoo:19.0-amunet  # Nombre de la imagen construida localmente
     depends_on:
       - web-db
     ports:
