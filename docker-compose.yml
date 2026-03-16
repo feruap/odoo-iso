@@ -21,7 +21,6 @@ services:
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./addons:/mnt/extra-addons  # <--- MAGIA: Conecta tu carpeta local con el Odoo virtual
-      - ./filestore:/var/lib/odoo/filestore
     environment:
       - HOST=web-db
       - USER=odoo
