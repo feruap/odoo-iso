@@ -1,0 +1,28 @@
+name: Deploy Odoo to Coolify
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - dev
+      - "feature/*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Example: trigger Coolify webhook
+      # Update the secret in GitHub Settings -> Secrets
+      - name: Trigger Coolify Webhook
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+             echo "Deploying to production..."
+             # curl -X POST ${{ secrets.COOLIFY_WEBHOOK_MAIN }}
+          else
+             echo "Deploying branch ${{ github.ref_name }}"
+             # curl -X POST ${{ secrets.COOLIFY_WEBHOOK_STAGING }}
+          fi
