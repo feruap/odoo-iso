@@ -64,6 +64,17 @@ class AmunetQualityCheck(models.Model):
         string="Mostrar botón Finalizar"
     )
 
+    @api.depends('tiene_anexos', 'user_realized_id')
+    def _compute_puede_descargar_anexo(self):
+        for rec in self:
+            rec.puede_descargar_anexo = bool(rec.tiene_anexos and rec.user_realized_id)
+
+    def action_download_anexo(self):
+        self.ensure_one()
+        return self.env.ref(
+            'amunet_quality.action_report_anexo_solicitud'
+        ).report_action(self)
+
     @api.depends('user_realized_id', 'user_verified_id', 'user_authorized_id')
     def _compute_display_action_finalize(self):
         """
@@ -621,6 +632,42 @@ class AmunetQualityCheck(models.Model):
     anexos_text = fields.Text(
         string='Anexos',
         help='Información adicional, descarga de datos crudos, observaciones, etc.'
+    )
+
+    # ── Numeral 7: Anexo General ─────────────────────────────────────────────
+    tiene_anexos = fields.Boolean(
+        string='Incluir Anexo',
+        default=False,
+    )
+    anexo_titulo = fields.Char(
+        string='Título del Anexo',
+        default='ANEXO GENERAL',
+    )
+    # Encabezados de columnas editables por registro
+    anexo_col1_header = fields.Char(string='Encabezado Col 1', default='Apariencia')
+    anexo_col2_header = fields.Char(string='Encabezado Col 2', default='')
+    anexo_col3_header = fields.Char(string='Encabezado Col 3', default='')
+    anexo_col4_header = fields.Char(string='Encabezado Col 4', default='')
+    anexo_col5_header = fields.Char(string='Encabezado Col 5', default='')
+    anexo_col6_header = fields.Char(string='Encabezado Col 6', default='')
+    # Filas de datos
+    anexo_line_ids = fields.One2many(
+        'amunet.quality.anexo.line',
+        'check_id',
+        string='Líneas del Anexo',
+    )
+    # Fotografías del anexo — se adjuntan como archivos (sin límite fijo)
+    anexo_photo_ids  = fields.Many2many(
+        'ir.attachment',
+        'amunet_quality_check_photo_rel',
+        'check_id',
+        'attachment_id',
+        string='Fotografías del Anexo',
+    )
+    # Computed: habilita botón descarga (tiene_anexos + al menos firma "Realizó")
+    puede_descargar_anexo = fields.Boolean(
+        string='Puede descargar anexo',
+        compute='_compute_puede_descargar_anexo',
     )
 
     # ========== Campos Computed de Visibilidad ==========

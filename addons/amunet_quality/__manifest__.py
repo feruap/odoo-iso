@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Control de Calidad',
-    'version': '19.0.3.2.8',
+    'version': '19.0.3.2.9',
     'category': 'Quality',
     'summary': 'Sistema de Control de Calidad con Parámetros Jerárquicos',
     'description': """
@@ -62,6 +62,7 @@
         # Reportes
         'reports/quality_certificate_report.xml',
         'reports/solicitud_reporte_report.xml',
+        'reports/report_anexo_solicitud.xml',
         'reports/report_certificado_interno.xml',
     ],
     'assets': {

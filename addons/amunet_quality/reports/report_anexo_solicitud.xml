@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Acción de reporte independiente para descargar solo el Anexo -->
+    <record id="action_report_anexo_solicitud" model="ir.actions.report">
+        <field name="name">Anexo General</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_quality.report_anexo_solicitud_template</field>
+        <field name="report_file">amunet_quality.report_anexo_solicitud_template</field>
+        <field name="print_report_name">'Anexo - %s' % (object.name)</field>
+        <field name="paperformat_id" ref="paperformat_solicitud_reporte"/>
+    </record>
+
+    <!-- Template del Anexo General (reutilizable en solicitud y descarga independiente) -->
+    <template id="report_anexo_solicitud_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="page"
+                     style="font-family: Arial, sans-serif; padding: 10px;">
+
+                    <!-- ═══ TABLA PRINCIPAL DEL ANEXO ═══ -->
+                    <table style="width: 100%; border-collapse: collapse; margin: 0 auto;">
+
+                        <!-- Fila 1: Título fusionado -->
+                        <tr>
+                            <td colspan="7"
+                                style="text-align: center;
+                                       font-weight: bold;
+                                       font-size: 14pt;
+                                       background-color: #D9D9D9;
+                                       border: 1px solid #4472C4;
+                                       padding: 6px 4px;">
+                                <t t-esc="o.anexo_titulo or 'ANEXO GENERAL'"/>
+                            </td>
+                        </tr>
+
+                        <!-- Fila 2: Fecha | No. Análisis -->
+                        <tr>
+                            <td colspan="4"
+                                style="font-weight: bold;
+                                       background-color: #D9D9D9;
+                                       border: 1px solid #4472C4;
+                                       padding: 4px 6px;">
+                                Fecha:
+                                <span style="font-weight: normal;">
+                                    <t t-esc="o.analysis_date and o.analysis_date.strftime('%d/%m/%Y') or (o.date_done and o.date_done.strftime('%d/%m/%Y')) or ''"/>
+                                </span>
+                            </td>
+                            <td colspan="3"
+                                style="font-weight: bold;
+                                       background-color: #D9D9D9;
+                                       border: 1px solid #4472C4;
+                                       padding: 4px 6px;">
+                                No. Análisis:
+                                <span style="font-weight: normal;">
+                                    <t t-esc="o.analysis_number or o.name or ''"/>
+                                </span>
+                            </td>
+                        </tr>
+
+                        <!-- Fila 3: Encabezados de columnas -->
+                        <tr style="background-color: #D9D9D9; font-weight: bold; text-align: center;">
+                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 9%;">
+                                # Muestra
+                            </td>
+                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                                <t t-esc="o.anexo_col1_header or ''"/>
+                            </td>
+                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                                <t t-esc="o.anexo_col2_header or ''"/>
+                            </td>
+                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                                <t t-esc="o.anexo_col3_header or ''"/>
+                            </td>
+                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                                <t t-esc="o.anexo_col4_header or ''"/>
+                            </td>
+                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                                <t t-esc="o.anexo_col5_header or ''"/>
+                            </td>
+                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 16%;">
+                                <t t-esc="o.anexo_col6_header or ''"/>
+                            </td>
+                        </tr>
+
+                        <!-- Filas de datos -->
+                        <t t-foreach="o.anexo_line_ids" t-as="line">
+                            <tr>
+                                <td style="border: 1px solid #4472C4; padding: 4px 6px; text-align: center;">
+                                    <t t-esc="line.muestra or ''"/>
+                                </td>
+                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
+                                    <t t-esc="line.col1 or ''"/>
+                                </td>
+                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
+                                    <t t-esc="line.col2 or ''"/>
+                                </td>
+                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
+                                    <t t-esc="line.col3 or ''"/>
+                                </td>
+                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
+                                    <t t-esc="line.col4 or ''"/>
+                                </td>
+                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
+                                    <t t-esc="line.col5 or ''"/>
+                                </td>
+                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
+                                    <t t-esc="line.col6 or ''"/>
+                                </td>
+                            </tr>
+                        </t>
+
+                    </table><!-- fin tabla principal -->
+
+                    <!-- ═══ SECCIÓN DE FOTOGRAFÍAS (siempre al final) ═══ -->
+                    <t t-if="o.anexo_photo_ids">
+                        <div style="margin-top: 30px;">
+                            <div style="font-weight: bold;
+                                        font-size: 11pt;
+                                        border-bottom: 2px solid #4472C4;
+                                        padding-bottom: 4px;
+                                        margin-bottom: 12px;">
+                                Fotografías:
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap;
+                                        justify-content: center; gap: 12px;">
+                                <t t-foreach="o.anexo_photo_ids" t-as="foto">
+                                    <t t-if="foto.datas">
+                                        <div style="text-align: center;">
+                                            <img t-att-src="image_data_uri(foto.datas)"
+                                                 style="max-width: 190px; max-height: 190px;
+                                                        border: 1px solid #4472C4; display: block;"/>
+                                            <span style="font-size: 9pt; color: #555;">
+                                                <t t-esc="foto.name or ''"/>
+                                            </span>
+                                        </div>
+                                    </t>
+                                </t>
+                            </div>
+                        </div>
+                    </t><!-- fin fotografías -->
+
+                </div><!-- fin page -->
+            </t>
+        </t>
+    </template>
+
+</odoo>
