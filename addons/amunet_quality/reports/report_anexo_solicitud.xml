@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="paperformat_anexo_general" model="report.paperformat">
+        <field name="name">Anexo General Amunet</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">15</field>
+        <field name="header_spacing">0</field>
+        <field name="margin_bottom">15</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="dpi">90</field>
+    </record>
+
     <!-- Acción de reporte independiente para descargar solo el Anexo -->
     <record id="action_report_anexo_solicitud" model="ir.actions.report">
         <field name="name">Anexo General</field>
@@ -9,139 +23,162 @@
         <field name="report_name">amunet_quality.report_anexo_solicitud_template</field>
         <field name="report_file">amunet_quality.report_anexo_solicitud_template</field>
         <field name="print_report_name">'Anexo - %s' % (object.name)</field>
-        <field name="paperformat_id" ref="paperformat_solicitud_reporte"/>
+        <field name="paperformat_id" ref="paperformat_anexo_general"/>
     </record>
 
-    <!-- Template del Anexo General (reutilizable en solicitud y descarga independiente) -->
+    <!-- Template del Anexo General -->
     <template id="report_anexo_solicitud_template">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
-                <div class="page"
-                     style="font-family: Arial, sans-serif; padding: 10px;">
+                <div class="article page" style="font-family: Arial, sans-serif; font-size: 10pt; padding: 10px;">
 
-                    <!-- ═══ TABLA PRINCIPAL DEL ANEXO ═══ -->
-                    <table style="width: 100%; border-collapse: collapse; margin: 0 auto;">
+                    <!-- TABLA PRINCIPAL DEL ANEXO -->
+                    <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
 
-                        <!-- Fila 1: Título fusionado -->
+                        <!-- Fila 1: Título -->
                         <tr>
-                            <td colspan="7"
-                                style="text-align: center;
-                                       font-weight: bold;
-                                       font-size: 14pt;
-                                       background-color: #D9D9D9;
-                                       border: 1px solid #4472C4;
-                                       padding: 6px 4px;">
+                            <td colspan="8" style="
+                                text-align:       center;
+                                font-weight:      bold;
+                                font-size:        13pt;
+                                background-color: #D9D9D9;
+                                border:           1.5px solid #1F4E79;
+                                padding:          7px 4px;
+                                height:           30px;
+                                vertical-align:   middle;">
                                 <t t-esc="o.anexo_titulo or 'ANEXO GENERAL'"/>
                             </td>
                         </tr>
 
-                        <!-- Fila 2: Fecha | No. Análisis -->
+                        <!-- Fila 2: Fecha (etiqueta gris | valor blanco) + No. Análisis (etiqueta gris | valor blanco) -->
                         <tr>
-                            <td colspan="4"
-                                style="font-weight: bold;
-                                       background-color: #D9D9D9;
-                                       border: 1px solid #4472C4;
-                                       padding: 4px 6px;">
+                            <td style="
+                                width:            8%;
+                                background-color: #D9D9D9;
+                                border:           1.5px solid #1F4E79;
+                                padding:          3px 6px;
+                                font-weight:      bold;
+                                height:           23px;
+                                vertical-align:   middle;
+                                white-space:      nowrap;">
                                 Fecha:
-                                <span style="font-weight: normal;">
-                                    <t t-esc="o.analysis_date and o.analysis_date.strftime('%d/%m/%Y') or (o.date_done and o.date_done.strftime('%d/%m/%Y')) or ''"/>
-                                </span>
                             </td>
-                            <td colspan="3"
-                                style="font-weight: bold;
-                                       background-color: #D9D9D9;
-                                       border: 1px solid #4472C4;
-                                       padding: 4px 6px;">
+                            <td colspan="3" style="
+                                background-color: #FFFFFF;
+                                border:           1.5px solid #1F4E79;
+                                padding:          3px 6px;
+                                height:           23px;
+                                vertical-align:   middle;">
+                                <t t-esc="o.analysis_date and o.analysis_date.strftime('%d/%m/%Y') or ''"/>
+                            </td>
+                            <td style="
+                                width:            13%;
+                                background-color: #D9D9D9;
+                                border:           1.5px solid #1F4E79;
+                                padding:          3px 6px;
+                                font-weight:      bold;
+                                height:           23px;
+                                vertical-align:   middle;
+                                white-space:      nowrap;">
                                 No. Análisis:
-                                <span style="font-weight: normal;">
-                                    <t t-esc="o.analysis_number or o.name or ''"/>
-                                </span>
+                            </td>
+                            <td colspan="3" style="
+                                background-color: #FFFFFF;
+                                border:           1.5px solid #1F4E79;
+                                padding:          3px 6px;
+                                height:           23px;
+                                vertical-align:   middle;">
+                                <t t-esc="o.analysis_number or ''"/>
                             </td>
                         </tr>
 
                         <!-- Fila 3: Encabezados de columnas -->
                         <tr style="background-color: #D9D9D9; font-weight: bold; text-align: center;">
-                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 9%;">
+                            <td colspan="2" style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 11%;">
                                 # Muestra
                             </td>
-                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
                                 <t t-esc="o.anexo_col1_header or ''"/>
                             </td>
-                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
                                 <t t-esc="o.anexo_col2_header or ''"/>
                             </td>
-                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
                                 <t t-esc="o.anexo_col3_header or ''"/>
                             </td>
-                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
                                 <t t-esc="o.anexo_col4_header or ''"/>
                             </td>
-                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
                                 <t t-esc="o.anexo_col5_header or ''"/>
                             </td>
-                            <td style="border: 1px solid #4472C4; padding: 4px 6px; width: 16%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 14%;">
                                 <t t-esc="o.anexo_col6_header or ''"/>
                             </td>
                         </tr>
 
                         <!-- Filas de datos -->
+                        <t t-set="data_rows_count" t-value="len(o.anexo_line_ids)"/>
+                        <t t-set="min_data_rows" t-value="25"/>
                         <t t-foreach="o.anexo_line_ids" t-as="line">
                             <tr>
-                                <td style="border: 1px solid #4472C4; padding: 4px 6px; text-align: center;">
+                                <td colspan="2" style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; text-align: center; vertical-align: middle;">
                                     <t t-esc="line.muestra or ''"/>
                                 </td>
-                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
-                                    <t t-esc="line.col1 or ''"/>
-                                </td>
-                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
-                                    <t t-esc="line.col2 or ''"/>
-                                </td>
-                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
-                                    <t t-esc="line.col3 or ''"/>
-                                </td>
-                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
-                                    <t t-esc="line.col4 or ''"/>
-                                </td>
-                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
-                                    <t t-esc="line.col5 or ''"/>
-                                </td>
-                                <td style="border: 1px solid #4472C4; padding: 4px 6px;">
-                                    <t t-esc="line.col6 or ''"/>
-                                </td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col1 or ''"/></td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col2 or ''"/></td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col3 or ''"/></td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col4 or ''"/></td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col5 or ''"/></td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col6 or ''"/></td>
                             </tr>
                         </t>
 
-                    </table><!-- fin tabla principal -->
+                        <!-- Filas vacías de relleno (mínimo 25 filas en total) -->
+                        <t t-if="data_rows_count &lt; min_data_rows">
+                            <t t-foreach="range(min_data_rows - data_rows_count)" t-as="i">
+                                <tr>
+                                    <td colspan="2" style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                </tr>
+                            </t>
+                        </t>
 
-                    <!-- ═══ SECCIÓN DE FOTOGRAFÍAS (siempre al final) ═══ -->
+                    </table>
+
+                    <!-- SECCIÓN DE FOTOGRAFÍAS -->
                     <t t-if="o.anexo_photo_ids">
-                        <div style="margin-top: 30px;">
-                            <div style="font-weight: bold;
-                                        font-size: 11pt;
-                                        border-bottom: 2px solid #4472C4;
-                                        padding-bottom: 4px;
-                                        margin-bottom: 12px;">
+                        <div style="page-break-before: always; margin-top: 30px;">
+                            <div style="font-weight: bold; font-size: 11pt; border-bottom: 2px solid #1F4E79; padding-bottom: 4px; margin-bottom: 12px;">
                                 Fotografías:
                             </div>
-                            <div style="display: flex; flex-wrap: wrap;
-                                        justify-content: center; gap: 12px;">
+                            <div style="text-align: center;">
                                 <t t-foreach="o.anexo_photo_ids" t-as="foto">
                                     <t t-if="foto.datas">
-                                        <div style="text-align: center;">
+                                        <div style="margin: 20px auto; text-align: center; page-break-inside: avoid;">
                                             <img t-att-src="image_data_uri(foto.datas)"
-                                                 style="max-width: 190px; max-height: 190px;
-                                                        border: 1px solid #4472C4; display: block;"/>
-                                            <span style="font-size: 9pt; color: #555;">
+                                                 style="max-width: 100%; height: auto; border: 1px solid #1F4E79; display: block; margin: 0 auto;"/>
+                                            <div style="font-size: 10pt; color: #555; margin-top: 8px;">
                                                 <t t-esc="foto.name or ''"/>
-                                            </span>
+                                            </div>
                                         </div>
                                     </t>
                                 </t>
                             </div>
                         </div>
-                    </t><!-- fin fotografías -->
+                    </t>
 
-                </div><!-- fin page -->
+                </div>
+
+                <div class="footer" style="width: 100%; text-align: center; font-size: 11pt; font-weight: bold; font-style: italic; font-family: Cambria, serif;">
+                    Este documento es confidencial. Uso exclusivo de Amunet S.A. de C.V.
+                </div>
+
             </t>
         </t>
     </template>

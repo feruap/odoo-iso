@@ -54,6 +54,7 @@ class AmunetQualityCheck(models.Model):
         ('draft', 'Por realizar'),
         ('in_progress', 'En proceso'),
         ('pending', 'Pendiente disposición'),
+        ('awaiting_reception', 'Pendiente recepción almacén'),
         ('done', 'Finalizado'),
     ], string='Estado', default='draft', required=True,
         tracking=True,
@@ -481,6 +482,14 @@ class AmunetQualityCheck(models.Model):
         'stock.picking',
         string='Transferencia Pendiente (Cuarentena)',
         help='Transferencia en espera para liberar el lote desde el Dashboard'
+    )
+
+    final_reception_picking_id = fields.Many2one(
+        'stock.picking',
+        string='Recepción de ingreso final',
+        readonly=True,
+        copy=False,
+        help='Picking generado para que almacén confirme el ingreso al inventario final'
     )
     
     original_qty_received = fields.Float(
@@ -1443,6 +1452,9 @@ class AmunetQualityCheck(models.Model):
             'analysis_date': fields.Date.today(),
         })
         self._generate_test_lines()
+        self._post_employee_activity(
+            f'Inició el Control de Calidad <b>{self.name}</b>'
+        )
 
     def _generate_test_lines(self):
         """
@@ -1851,6 +1863,24 @@ class AmunetQualityCheck(models.Model):
     # MÉTODOS DE FIRMA ELECTRÓNICA (Refactorizado para Wizard CFR 21 Part 11)
     # ========================================================================
 
+    def _post_employee_activity(self, msg):
+        """
+        Publica una nota interna en el chatter del empleado vinculado al usuario
+        que ejecutó la acción. Permite rastrear el historial de actividades QC
+        directamente desde la ficha del empleado.
+        """
+        self.ensure_one()
+        employee = self.env['hr.employee'].search(
+            [('user_id', '=', self.env.user.id)], limit=1
+        )
+        if employee:
+            from markupsafe import Markup
+            employee.sudo().message_post(
+                body=Markup(msg),
+                message_type='comment',
+                subtype_xmlid='mail.mt_note',
+            )
+
     def action_sign_realized(self):
         """Abre wizard para firmar como Realizó (Analista)"""
         self.ensure_one()
@@ -1886,6 +1916,10 @@ class AmunetQualityCheck(models.Model):
                 msg += f"<br/>Motivo de fallo: {record.fail_reason}"
                 
             record.message_post(body=Markup(msg), message_type='notification')
+            record._post_employee_activity(
+                f'Firmó como <b>Realizó</b> el Control de Calidad'
+                f' <b>{record.name}</b> — Dictamen: {status}'
+            )
 
     def action_sign_verified(self):
         """Abre wizard para firmar como Verificó (Supervisor)"""
@@ -1929,6 +1963,10 @@ class AmunetQualityCheck(models.Model):
                 msg += f"<br/>Motivo de fallo: {record.fail_reason}"
                 
             record.message_post(body=Markup(msg), message_type='notification')
+            record._post_employee_activity(
+                f'Firmó como <b>Verificó</b> el Control de Calidad'
+                f' <b>{record.name}</b> — Dictamen: {status}'
+            )
 
     def action_sign_authorized(self):
         """Abre wizard para firmar como Autorizó (Sanitario)"""
@@ -1975,6 +2013,10 @@ class AmunetQualityCheck(models.Model):
                 msg += f"<br/>Motivo de fallo: {record.fail_reason}"
                 
             record.message_post(body=Markup(msg), message_type='notification')
+            record._post_employee_activity(
+                f'Firmó como <b>Autorizó</b> el Control de Calidad'
+                f' <b>{record.name}</b> — Dictamen: {status}'
+            )
 
     def action_finalize(self):
         """
@@ -2042,7 +2084,7 @@ class AmunetQualityCheck(models.Model):
             analysis_number = self._generate_analysis_number()
 
             # Determinar estado final
-            new_state = 'done' if self.global_result == 'pass' else 'pending'
+            new_state = 'awaiting_reception' if self.global_result == 'pass' else 'pending'
 
             self.write({
                 'analysis_number': analysis_number,
@@ -2050,25 +2092,318 @@ class AmunetQualityCheck(models.Model):
                 'change_reason': 'Finalización de Control de Calidad (Firma Electrónica)'
             })
 
-            # Ejecutar disposición final según resultado
-            _logger.info(f"DEBUG: Executing disposition for QC {self.id}")
-            disposition_msg = self._execute_disposition()
-            _logger.info(f"DEBUG: Disposition executed for QC {self.id}")
+            # Ejecutar disposición según resultado
+            if self.global_result == 'pass':
+                # NUEVO FLUJO: Merma automática + picking de recepción final para almacén
+                _logger.info(f"DEBUG: QC {self.id} aprobado → generando recepción final")
+                disposition_msg = self._execute_approved_disposition()
+            else:
+                # RECHAZADO: flujo original sin cambios
+                _logger.info(f"DEBUG: QC {self.id} rechazado → ejecutando disposición directa")
+                disposition_msg = self._execute_disposition()
 
             # Actualizar información en el producto
             self._update_product_document_info()
 
-            result_text = 'APROBADO' if self.global_result == 'pass' else 'RECHAZADO'
+            result_text = 'APROBADO — Pendiente recepción de almacén' if self.global_result == 'pass' else 'RECHAZADO'
             msg = f'Control de Calidad finalizado. Folio: {analysis_number}. Resultado: {result_text}'
             if disposition_msg:
                 msg += f'. {disposition_msg}'
 
             self.message_post(body=msg, message_type='notification')
+            self._post_employee_activity(
+                f'Finalizó el Control de Calidad <b>{self.name}</b>'
+                f' (Folio: {analysis_number}) — Resultado: <b>{result_text}</b>'
+            )
         except Exception as e:
             _logger.error(f"Error in _action_finalize_logic for QC {self.id}: {str(e)}")
             import traceback
             _logger.error(traceback.format_exc())
             raise
+
+    # ========================================================================
+    # RECEPCIÓN FINAL DE ALMACÉN (nuevo flujo post-QC aprobado)
+    # ========================================================================
+
+    def _execute_approved_disposition(self):
+        """
+        Flujo para QCs APROBADOS: merma automática + picking de recepción final.
+
+        En lugar de liberar el stock directamente, genera un picking incoming
+        que el almacenista debe validar para confirmar el ingreso al inventario.
+        La merma (qty_to_scrap) se procesa automáticamente aquí.
+
+        Returns:
+            str: Mensaje descriptivo de la disposición
+        """
+        self.ensure_one()
+
+        messages = []
+        qc_location = self._get_quality_control_location()
+        qty_total = self.original_qty_received or self.lot_qty_available
+        qty_sampling = self.qty_sampling or 0.0
+        qty_to_return = self.qty_to_return or 0.0
+
+        qty_to_stock = max(0.0, qty_total - qty_sampling + qty_to_return)
+        qty_to_scrap = max(0.0, qty_sampling - qty_to_return)
+
+        # 1. Merma automática (irrevocable — el producto fue analizado/destruido)
+        if qty_to_scrap > 0 and qc_location:
+            scrap = self._create_scrap_order(qty_to_scrap, qc_location, 'Merma QC')
+            if scrap:
+                messages.append(f'Merma: {qty_to_scrap} a desechos')
+
+        # 2. Crear picking de recepción final para almacén
+        if qty_to_stock > 0:
+            reception = self._create_final_reception_picking(qty_to_stock)
+            if reception:
+                messages.append(f'Recepción pendiente de almacén: {reception.name} ({qty_to_stock} unidades)')
+            else:
+                messages.append(f'AVISO: No se pudo crear el picking de recepción final')
+        else:
+            # No hay stock que liberar (todo se muestreó y destruyó)
+            self.write({'state': 'done'})
+            messages.append('Lote finalizado sin stock a liberar (todo muestreado/desechado)')
+
+        return '. '.join(messages)
+
+    def _create_final_reception_picking(self, qty_to_stock):
+        """
+        Crea el picking incoming de recepción final para que almacén confirme
+        el ingreso del lote aprobado al inventario final.
+
+        El picking queda en estado 'assigned' (confirmado pero no validado).
+        El almacenista lo ve en su tablero y puede editar las cantidades antes de validar.
+
+        Args:
+            qty_to_stock (float): Cantidad a ingresar al inventario final (en UoM de muestreo)
+
+        Returns:
+            stock.picking o False
+        """
+        self.ensure_one()
+
+        if not self.product_id or not self.lot_id:
+            _logger.warning(f"_create_final_reception_picking: QC {self.id} sin producto o lote")
+            return False
+
+        source_location = self._get_quality_control_location()
+        dest_location = self.original_dest_location_id or self._get_stock_location()
+
+        if not source_location or not dest_location:
+            _logger.warning(f"_create_final_reception_picking: ubicaciones no encontradas para QC {self.id}")
+            return False
+
+        if source_location == dest_location:
+            _logger.warning(f"_create_final_reception_picking: origen y destino son iguales para QC {self.id}")
+            return False
+
+        # Buscar tipo de operación incoming
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'incoming'),
+            ('company_id', '=', self.company_id.id),
+        ], limit=1)
+
+        if not picking_type:
+            # Fallback: tipo internal
+            picking_type = self.env['stock.picking.type'].search([
+                ('code', '=', 'internal'),
+                ('company_id', '=', self.company_id.id),
+            ], limit=1)
+
+        if not picking_type:
+            _logger.error(f"_create_final_reception_picking: no hay tipo de operación disponible para QC {self.id}")
+            return False
+
+        qty_product_uom = self._convert_qty_to_product_uom(qty_to_stock, self.sampling_uom_id)
+        if qty_product_uom <= 0:
+            return False
+
+        picking_vals = {
+            'picking_type_id': picking_type.id,
+            'location_id': source_location.id,
+            'location_dest_id': dest_location.id,
+            'origin': f'Liberación QC: {self.name}',
+            'amunet_disposition_qc_id': self.id,
+            'move_ids': [(0, 0, {
+                'product_id': self.product_id.id,
+                'product_uom_qty': qty_product_uom,
+                'product_uom': self.product_id.uom_id.id,
+                'location_id': source_location.id,
+                'location_dest_id': dest_location.id,
+                'company_id': self.company_id.id,
+            })],
+        }
+
+        reception = self.env['stock.picking'].with_context(
+            default_check_ids=False,
+            default_quality_check_id=False,
+            default_picking_type_id=False,
+            default_origin=False,
+            check_ids=False,
+            quality_check_id=False,
+            active_id=False,
+            active_ids=False,
+            active_model=False
+        ).create(picking_vals)
+
+        # Confirmar (pero NO validar — el almacenista lo hace manualmente)
+        reception.action_confirm()
+
+        # Después de confirmar, pre-llenar la cantidad y lote en los detalles (move_lines)
+        # para que el almacenista no tenga que capturarlos manualmente.
+        for move in reception.move_ids:
+            move_line = reception.move_line_ids.filtered(
+                lambda ml: ml.move_id == move and ml.product_id == self.product_id
+            )
+            
+            if not move_line:
+                reception.env['stock.move.line'].create({
+                    'picking_id': reception.id,
+                    'move_id': move.id,
+                    'product_id': self.product_id.id,
+                    'product_uom_id': self.product_id.uom_id.id,
+                    'location_id': source_location.id,
+                    'location_dest_id': dest_location.id,
+                    'lot_id': self.lot_id.id if self.lot_id else False,
+                    'quantity': qty_product_uom,
+                    'company_id': self.company_id.id,
+                })
+            else:
+                move_line.write({
+                    'lot_id': self.lot_id.id if self.lot_id else False,
+                    'quantity': qty_product_uom,
+                })
+
+        # Vincular picking al QC
+        self.final_reception_picking_id = reception.id
+
+        # Auditoría: registrar en chatter del QC
+        from markupsafe import Markup
+        self.message_post(
+            body=Markup(
+                f'Recepción de ingreso pendiente generada: <b>{reception.name}</b><br/>'
+                f'Cantidad a ingresar: <b>{qty_product_uom} {self.product_id.uom_id.name}</b><br/>'
+                f'Destino: <b>{dest_location.display_name}</b><br/>'
+                f'El almacenista debe validar esta recepción para completar el ingreso al inventario.'
+            ),
+            message_type='notification'
+        )
+
+        _logger.info(f"Recepción final {reception.name} creada para QC {self.name}")
+        return reception
+
+    def _finalize_after_reception(self, qty_done):
+        """
+        Llamado desde stock_picking.button_validate() cuando se valida
+        la recepción de ingreso final.
+
+        Cierra el QC, registra la confirmación y detecta discrepancias de cantidad.
+
+        Args:
+            qty_done (float): Cantidad real validada por el almacenista
+        """
+        self.ensure_one()
+        from markupsafe import Markup
+
+        qty_total = self.original_qty_received or self.lot_qty_available
+        qty_sampling = self.qty_sampling or 0.0
+        qty_to_return = self.qty_to_return or 0.0
+        qty_expected = max(0.0, qty_total - qty_sampling + qty_to_return)
+
+        # Actualizar estado a done — se incluye change_reason requerido por el override
+        # de write() del modelo para registros que ya no están en estado 'draft'
+        self.write({
+            'state': 'done',
+            'change_reason': 'Recepción final validada por almacén',
+        })
+
+        # Mensaje de confirmación
+        msg = (
+            f'Recepción de ingreso validada por <b>{self.env.user.name}</b>.<br/>'
+            f'Cantidad ingresada: <b>{qty_done} {self.product_id.uom_id.name}</b>'
+        )
+
+        # Detectar y registrar discrepancia
+        if qty_done != qty_expected and qty_expected > 0:
+            diff = qty_done - qty_expected
+            sign = '+' if diff > 0 else ''
+            msg += (
+                f'<br/><b>⚠ Diferencia detectada:</b> '
+                f'Calidad liberó {qty_expected}, almacén confirmó {qty_done} '
+                f'({sign}{diff} {self.product_id.uom_id.name})'
+            )
+
+        self.message_post(body=Markup(msg), message_type='notification')
+
+        # Actividad en el empleado
+        self._post_employee_activity(
+            f'Recepción de ingreso final validada para QC <b>{self.name}</b> — '
+            f'Ingresaron: {qty_done} {self.product_id.uom_id.name}'
+        )
+
+        _logger.info(f"QC {self.name} finalizado tras recepción de almacén. qty_done={qty_done}")
+
+    def action_cancel_pending_reception(self):
+        """
+        Cancela la recepción pendiente de almacén y regresa el QC a estado 'pending'
+        para permitir crear un reanálisis.
+
+        Solo disponible para usuarios de grupos de Calidad.
+        La merma ya ejecutada NO se revierte (el producto fue físicamente analizado/destruido).
+        """
+        self.ensure_one()
+
+        # Verificar permisos: solo grupos de calidad
+        is_quality_user = (
+            self.env.user.has_group('amunet_quality.group_quality_user') or
+            self.env.user.has_group('amunet_quality.group_quality_supervisor') or
+            self.env.user.has_group('amunet_quality.group_quality_sanitary') or
+            self.env.user.has_group('amunet_quality.group_quality_manager')
+        )
+        if not is_quality_user:
+            from odoo.exceptions import AccessDenied
+            raise AccessDenied("Solo el personal de Calidad puede cancelar una recepción pendiente.")
+
+        if self.state != 'awaiting_reception':
+            raise UserError("Solo se puede cancelar la recepción cuando el QC está en estado 'Pendiente recepción almacén'.")
+
+        picking = self.final_reception_picking_id
+        if picking and picking.state not in ('done', 'cancel'):
+            try:
+                picking.action_cancel()
+                _logger.info(f"Picking {picking.name} cancelado para QC {self.name}")
+            except Exception as e:
+                _logger.warning(f"Error al cancelar picking {picking.name}: {e}")
+
+        # Regresar QC a pending para permitir reanálisis
+        self.write({'state': 'pending'})
+
+        from markupsafe import Markup
+        self.message_post(
+            body=Markup(
+                f'Recepción pendiente <b>{picking.name if picking else "N/A"}</b> '
+                f'cancelada por <b>{self.env.user.name}</b>.<br/>'
+                f'Estado regresado a "Pendiente disposición" para permitir reanálisis.<br/>'
+                f'<i>Nota: La merma previamente ejecutada no se revirtió.</i>'
+            ),
+            message_type='notification'
+        )
+
+    def action_view_final_reception(self):
+        """Abre el picking de recepción final desde el formulario del QC."""
+        self.ensure_one()
+        if not self.final_reception_picking_id:
+            raise UserError("No hay recepción de ingreso pendiente vinculada a este QC.")
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'res_id': self.final_reception_picking_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+
 
     def _get_stock_location(self):
         """Obtiene la ubicación de existencias/stock"""
@@ -2421,7 +2756,6 @@ class AmunetQualityCheck(models.Model):
         if self.global_result == 'pass':
             product_tmpl.write({
                 'report_effective_date': fields.Date.today(),
-                'report_document_code': self.analysis_number,
                 'report_version': (product_tmpl.report_version or 0) + 1,
                 'report_replaces_version': product_tmpl.report_version or 0,
             })
@@ -2465,7 +2799,7 @@ class AmunetQualityCheck(models.Model):
 
         try:
             # Buscar última secuencia del día
-            prefix = f'AN-{employee_code}{date_str}'
+            prefix = f'{employee_code}{date_str}'
             last_check = self.search([
                 ('analysis_number', 'like', f'{prefix}%'),
                 ('id', '!=', self.id),
@@ -2488,7 +2822,7 @@ class AmunetQualityCheck(models.Model):
             # Fallback: usar timestamp como secuencia
             import time
             timestamp = str(int(time.time()))[-4:]  # Últimos 4 dígitos del timestamp
-            return f'AN-{employee_code}{date_str}-{timestamp}'
+            return f'{employee_code}{date_str}-{timestamp}'
 
     def _get_empty_required_additional_info_fields(self):
         """

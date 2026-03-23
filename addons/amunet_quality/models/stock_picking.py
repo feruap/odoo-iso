@@ -269,6 +269,10 @@ class StockPicking(models.Model):
 
         # Asignar usuario validador de inventario a los QCs vinculados y registrar recepción
         for picking in self:
+            # Guard: los pickings de recepción final de disposición QC se procesan
+            # en el HOOK de abajo (sección HOOK), no aquí.
+            if picking.amunet_disposition_qc_id:
+                continue
             if picking.amunet_qc_ids:
                 picking.amunet_qc_ids.write({
                     'inventory_validator_id': self.env.user.id
@@ -291,7 +295,52 @@ class StockPicking(models.Model):
                             except Exception as e:
                                 _logger.error(f"Error al guardar cantidad recibida para QC {qc.name}: {str(e)}")
 
+
+        # =====================================================================
+        # HOOK: Recepción final de QC aprobado
+        # Detecta si este picking es la recepción de ingreso final generada por
+        # _create_final_reception_picking() y cierra el QC correspondiente.
+        # =====================================================================
+        for picking in self:
+            qc = picking.amunet_disposition_qc_id
+            if qc and qc.state == 'awaiting_reception':
+                try:
+                    # Calcular qty real validada — filtro estricto por producto Y lote
+                    qty_done = sum(
+                        ml.quantity
+                        for ml in picking.move_line_ids
+                        if ml.product_id == qc.product_id
+                        and (not qc.lot_id or ml.lot_id == qc.lot_id)
+                    )
+
+                    # Validar límites de negocio
+                    from odoo.exceptions import UserError as StockUserError
+                    if qty_done < 0:
+                        raise StockUserError("La cantidad recibida no puede ser negativa.")
+
+                    # Calcular cantidad esperada por Calidad
+                    qty_total = qc.original_qty_received or qc.lot_qty_available
+                    qty_expected = max(0.0,
+                        qty_total - (qc.qty_sampling or 0.0) + (qc.qty_to_return or 0.0)
+                    )
+                    if qty_expected > 0 and qty_done > qty_expected:
+                        raise StockUserError(
+                            f"No puede recibir más cantidad ({qty_done:.2f}) "
+                            f"de la que Calidad liberó ({qty_expected:.2f})."
+                        )
+
+                    # Cerrar el QC y registrar la confirmación
+                    qc._finalize_after_reception(qty_done)
+                    _logger.info(
+                        f"QC {qc.name} cerrado tras validación de recepción final "
+                        f"por {self.env.user.name}. qty_done={qty_done}"
+                    )
+                except Exception as e:
+                    _logger.error(f"Error en hook recepción final para QC {qc.name}: {str(e)}")
+                    raise
+
         return res
+
 
     def action_view_quality_checks(self):
         """Abre los controles de calidad del picking. Si no existen, los crea primero."""

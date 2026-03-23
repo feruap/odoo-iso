@@ -93,6 +93,19 @@ class AmunetQualityController(http.Controller):
             
             # Pass report XML ID and IDs list
             pdf_content, _ = report.sudo()._render_qweb_pdf(report_xml_id, [check_id])
+
+            # Agregar anexo si existe contenido en líneas, fotos o el usuario lo marcó
+            if check.tiene_anexos or check.anexo_line_ids or check.anexo_photo_ids:
+                try:
+                    anexo_xml_id = 'amunet_quality.action_report_anexo_solicitud'
+                    anexo_report = request.env.ref(anexo_xml_id, raise_if_not_found=False)
+                    if anexo_report:
+                        anexo_content, _ = anexo_report.sudo()._render_qweb_pdf(anexo_xml_id, [check_id])
+                        from odoo.tools.pdf import merge_pdf
+                        pdf_content = merge_pdf([pdf_content, anexo_content])
+                        _logger.info(f"[PDF] Anexo integrado (merge) al reporte principal para {check_id}")
+                except Exception as e_anx:
+                    _logger.warning(f"Error integrando anexo al PDF para {check_id}: {e_anx}")
             
             _logger.info(f"[PDF] PDF de solicitud generado para {check_id}")
 

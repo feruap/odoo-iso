@@ -255,13 +255,8 @@
                             </tr>
                         </table>
                     </div>
-                </div>
 
-                <!-- ═══ PÁGINA DE ANEXO (hoja extra, sin firmas) ═══ -->
-                <t t-if="o.tiene_anexos">
-                    <div style="page-break-before: always;"/>
-                    <t t-call="amunet_quality.report_anexo_solicitud_template_inner"/>
-                </t>
+                </div>
 
                 <div class="footer" style="width: 100%; text-align: center; font-size: 11pt; font-weight: bold; font-style: italic; font-family: Cambria, serif;">
                     Este documento es confidencial. Uso exclusivo de Amunet S.A. de C.V.

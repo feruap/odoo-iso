@@ -6,13 +6,12 @@
         HU-029-2, HU-029-3: Ejecutar QC y Firmas
     -->
 
-    <!-- Vista List -->
     <record id="view_amunet_quality_check_list" model="ir.ui.view">
         <field name="name">amunet.quality.check.list</field>
         <field name="model">amunet.quality.check</field>
         <field name="arch" type="xml">
             <list string="Controles de calidad" decoration-muted="state == 'done'"
-                  decoration-warning="state == 'pending'"
+                  decoration-warning="state == 'pending' or state == 'awaiting_reception'"
                   decoration-info="state == 'in_progress'">
                 <field name="name"/>
                 <field name="analysis_number" optional="show"/>
@@ -23,6 +22,7 @@
                        decoration-info="state == 'draft'"
                        decoration-warning="state == 'in_progress'"
                        decoration-danger="state == 'pending'"
+                       decoration-primary="state == 'awaiting_reception'"
                        decoration-success="state == 'done'"/>
                 <field name="global_result" widget="badge"
                        decoration-muted="global_result == 'pending'"
@@ -32,6 +32,7 @@
             </list>
         </field>
     </record>
+
 
     <!-- Vista Form -->
     <record id="view_amunet_quality_check_form" model="ir.ui.view">
@@ -72,19 +73,20 @@
                             string="Imprimir Certificado"
                             type="object" 
                             class="oe_highlight"
-                            invisible="state != 'done'"/>
+                            invisible="state not in ('done', 'awaiting_reception')"/>
                             
                     <button name="action_print_solicitud_report" 
                             string="Imprimir Reporte"
                             type="object" 
                             class="btn-secondary"
-                            invisible="state != 'done'"/>
+                            invisible="state not in ('done', 'awaiting_reception')"/>
 
                     <button name="action_print_certificado_interno" 
                             string="Imprimir Certificado Interno"
                             type="object" 
                             class="btn-secondary"
-                            invisible="state != 'done'"/>
+                            invisible="state not in ('done', 'awaiting_reception')"/>
+
 
                     <button name="action_create_capa" string="🚨 Crear CAPA"
                             type="object" class="btn-danger"
@@ -106,8 +108,9 @@
                             confirm="¿Confirmar Autorización?"/>
 
                     <field name="state" widget="statusbar"
-                           statusbar_visible="draft,in_progress,done"/>
+                           statusbar_visible="draft,in_progress,awaiting_reception,done"/>
                 </header>
+
 
                 <sheet>
                     <!-- Ribbon para estado pendiente -->
@@ -126,7 +129,18 @@
                                 invisible="capa_count == 0">
                             <field name="capa_count" widget="statinfo" string="CAPAs"/>
                         </button>
+                        <!-- Stat button recepción final -->
+                        <button name="action_view_final_reception"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-truck"
+                                invisible="not final_reception_picking_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Recepción Final</span>
+                            </div>
+                        </button>
                     </div>
+
 
                     <!-- Título y Badge -->
                     <div class="oe_title">
@@ -157,11 +171,21 @@
                         <button name="action_create_capa" string="Iniciar CAPA" type="object" class="btn-link"/>
                     </div>
 
+                    <!-- Banner recepción pendiente de almacén -->
+                    <div class="alert alert-primary text-center" role="alert"
+                         invisible="state != 'awaiting_reception'">
+                        <strong>📦 PENDIENTE RECEPCIÓN DE ALMACÉN</strong> — El QC fue aprobado.
+                        El almacenista debe validar la recepción de ingreso para cerrar el ciclo.
+                        <field name="final_reception_picking_id" readonly="1" class="d-inline" nolabel="1"
+                               invisible="not final_reception_picking_id"/>
+                    </div>
+
                     <!-- Folio (visible solo si existe) -->
                     <group invisible="not analysis_number">
                         <field name="analysis_number" readonly="1"/>
                         <field name="analysis_type" readonly="1"/>
                     </group>
+
 
                     <!-- NUMERAL 1: DATOS GENERALES -->
                     <group string="Numeral 1: Datos generales">
@@ -249,6 +273,8 @@
                     <field name="info_reviewed" invisible="1"/>
                     <field name="sampling_confirmed" invisible="1"/>
                     <field name="display_action_finalize" invisible="1"/>
+                    <field name="final_reception_picking_id" invisible="1"/>
+
 
                     <!-- SEPARATOR -->
                     <div class="o_horizontal_separator" invisible="not sampling_confirmed">Numeral 5: Análisis</div>
@@ -368,52 +394,157 @@
                     <!-- Contenido visible solo si tiene_anexos -->
                     <group invisible="not tiene_anexos or not sampling_confirmed" colspan="4" col="1">
 
-                        <!-- Título editable -->
-                        <group string="Configuración del Anexo">
-                            <field name="anexo_titulo"
-                                   string="Título"
-                                   placeholder="ANEXO GENERAL"
-                                   readonly="state == 'done'"/>
-                        </group>
+                        <!-- ══════════════════════════════════════════════════════════════
+                             TABLA EDITABLE — espejo visual del reporte PDF
+                             ══════════════════════════════════════════════════════════════ -->
+                        <div style="width:100%; overflow-x:auto; margin-bottom:0px;">
+                            <table style="width:100%; border-collapse:collapse; font-family:Arial,sans-serif; font-size:10pt; table-layout:fixed;">
+                                <colgroup>
+                                    <col style="width:12%;"/>  <!-- # Muestra -->
+                                    <col style="width:14%;"/>  <!-- col1 -->
+                                    <col style="width:14%;"/>  <!-- col2 -->
+                                    <col style="width:14%;"/>  <!-- col3 -->
+                                    <col style="width:15%;"/>  <!-- col4 -->
+                                    <col style="width:15%;"/>  <!-- col5 -->
+                                    <col style="width:16%;"/>  <!-- col6 -->
+                                </colgroup>
 
-                        <!-- Nombres de columnas editables -->
-                        <group string="Nombres de Columnas">
-                            <group>
-                                <field name="anexo_col1_header" string="Columna 1"
-                                       placeholder="Apariencia" readonly="state == 'done'"/>
-                                <field name="anexo_col2_header" string="Columna 2"
-                                       placeholder="(vacía)" readonly="state == 'done'"/>
-                                <field name="anexo_col3_header" string="Columna 3"
-                                       placeholder="(vacía)" readonly="state == 'done'"/>
-                            </group>
-                            <group>
-                                <field name="anexo_col4_header" string="Columna 4"
-                                       placeholder="(vacía)" readonly="state == 'done'"/>
-                                <field name="anexo_col5_header" string="Columna 5"
-                                       placeholder="(vacía)" readonly="state == 'done'"/>
-                                <field name="anexo_col6_header" string="Columna 6"
-                                       placeholder="(vacía)" readonly="state == 'done'"/>
-                            </group>
-                        </group>
+                                <!-- Fila 1 · Título (campo editable centrado) -->
+                                <tr>
+                                    <td colspan="7"
+                                        style="background:#D9D9D9; border:1.5px solid #1F4E79;
+                                               padding:4px 8px; text-align:center;">
+                                        <field name="anexo_titulo"
+                                               placeholder="ANEXO GENERAL"
+                                               nolabel="1"
+                                               readonly="state == 'done'"
+                                               style="font-weight:bold; font-size:13pt;
+                                                      text-align:center; width:100%;
+                                                      background:transparent; border:none;
+                                                      outline:none;"/>
+                                    </td>
+                                </tr>
 
-                        <!-- Tabla de datos -->
-                        <group string="Tabla del Anexo" colspan="4" col="1">
+                                <!-- Fila 2 · Fecha (1 col) | valor (2 cols) | No. Análisis (1 col) | valor (3 cols) = 7 -->
+                                <tr>
+                                    <td style="background:#D9D9D9; border:1.5px solid #1F4E79;
+                                               padding:3px 6px; font-weight:bold; white-space:nowrap;
+                                               vertical-align:middle;">
+                                        Fecha:
+                                    </td>
+                                    <td colspan="2"
+                                        style="background:#fff; border:1.5px solid #1F4E79;
+                                               padding:3px 6px; vertical-align:middle;">
+                                        <field name="analysis_date" nolabel="1" readonly="1"
+                                               options="{'datepicker': {'warn_future': false}}"/>
+                                    </td>
+                                    <td style="background:#D9D9D9; border:1.5px solid #1F4E79;
+                                               padding:3px 6px; font-weight:bold; white-space:nowrap;
+                                               vertical-align:middle;">
+                                        No. Análisis:
+                                    </td>
+                                    <td colspan="3"
+                                        style="background:#fff; border:1.5px solid #1F4E79;
+                                               padding:3px 6px; vertical-align:middle;">
+                                        <field name="analysis_number" nolabel="1" readonly="1"
+                                               placeholder="(sin folio aún)"/>
+                                    </td>
+                                </tr>
+
+                                <!-- Fila 3 · Encabezados de columnas (editables) — 7 celdas = 7 cols -->
+                                <tr style="background:#D9D9D9; font-weight:bold; text-align:center;">
+                                    <td style="border:1.5px solid #1F4E79; padding:4px; vertical-align:middle;">
+                                        # Muestra
+                                    </td>
+                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
+                                        <field name="anexo_col1_header" nolabel="1"
+                                               placeholder="Col 1" readonly="state == 'done'"
+                                               style="text-align:center; width:100%;
+                                                      background:transparent; border:none;
+                                                      font-weight:bold;"/>
+                                    </td>
+                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
+                                        <field name="anexo_col2_header" nolabel="1"
+                                               placeholder="Col 2" readonly="state == 'done'"
+                                               style="text-align:center; width:100%;
+                                                      background:transparent; border:none;
+                                                      font-weight:bold;"/>
+                                    </td>
+                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
+                                        <field name="anexo_col3_header" nolabel="1"
+                                               placeholder="Col 3" readonly="state == 'done'"
+                                               style="text-align:center; width:100%;
+                                                      background:transparent; border:none;
+                                                      font-weight:bold;"/>
+                                    </td>
+                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
+                                        <field name="anexo_col4_header" nolabel="1"
+                                               placeholder="Col 4" readonly="state == 'done'"
+                                               style="text-align:center; width:100%;
+                                                      background:transparent; border:none;
+                                                      font-weight:bold;"/>
+                                    </td>
+                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
+                                        <field name="anexo_col5_header" nolabel="1"
+                                               placeholder="Col 5" readonly="state == 'done'"
+                                               style="text-align:center; width:100%;
+                                                      background:transparent; border:none;
+                                                      font-weight:bold;"/>
+                                    </td>
+                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
+                                        <field name="anexo_col6_header" nolabel="1"
+                                               placeholder="Col 6" readonly="state == 'done'"
+                                               style="text-align:center; width:100%;
+                                                      background:transparent; border:none;
+                                                      font-weight:bold;"/>
+                                    </td>
+                                </tr>
+
+                            </table>
+                        </div>
+
+                        <!-- Grilla de datos (one2many) — sin header propio, usa la tabla de arriba -->
+                        <style>
+                            /* Ocultar encabezados nativos de Odoo */
+                            .o_anexo_nohdr .o_list_renderer thead { display: none !important; }
+                            /* Bordes azul marino en celdas de datos */
+                            .o_anexo_nohdr .o_list_renderer .o_data_row td {
+                                border: 1px solid #1F4E79 !important;
+                                padding: 3px 5px !important;
+                            }
+                            /* Forzar anchos de columnas para alinear con la tabla de encabezados */
+                            .o_anexo_nohdr .o_list_renderer td[name="muestra"] { width: 12% !important; }
+                            .o_anexo_nohdr .o_list_renderer td[name="col1"]    { width: 14% !important; }
+                            .o_anexo_nohdr .o_list_renderer td[name="col2"]    { width: 14% !important; }
+                            .o_anexo_nohdr .o_list_renderer td[name="col3"]    { width: 14% !important; }
+                            .o_anexo_nohdr .o_list_renderer td[name="col4"]    { width: 15% !important; }
+                            .o_anexo_nohdr .o_list_renderer td[name="col5"]    { width: 15% !important; }
+                            .o_anexo_nohdr .o_list_renderer td[name="col6"]    { width: 16% !important; }
+                            /* También en colgroup */
+                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(1) { width: 12% !important; }
+                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(2) { width: 14% !important; }
+                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(3) { width: 14% !important; }
+                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(4) { width: 14% !important; }
+                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(5) { width: 15% !important; }
+                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(6) { width: 15% !important; }
+                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(7) { width: 16% !important; }
+                        </style>
+                        <div class="o_anexo_nohdr">
                             <field name="anexo_line_ids" nolabel="1"
                                    readonly="state == 'done'">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="muestra"  string="# Muestra"/>
-                                    <field name="col1"     string="Col 1"/>
-                                    <field name="col2"     string="Col 2"/>
-                                    <field name="col3"     string="Col 3"/>
-                                    <field name="col4"     string="Col 4"/>
-                                    <field name="col5"     string="Col 5"/>
-                                    <field name="col6"     string="Col 6"/>
+                                    <field name="muestra" string="# Muestra"/>
+                                    <field name="col1"    string="Col 1"/>
+                                    <field name="col2"    string="Col 2"/>
+                                    <field name="col3"    string="Col 3"/>
+                                    <field name="col4"    string="Col 4"/>
+                                    <field name="col5"    string="Col 5"/>
+                                    <field name="col6"    string="Col 6"/>
                                 </list>
                             </field>
-                        </group>
+                        </div>
 
-                        <!-- Fotografías — estilo pizarra: botón único para adjuntar -->
+                        <!-- Fotografías -->
                         <group string="Fotografías del Anexo" colspan="4" col="1">
                             <div class="text-muted mb-2" style="font-size:12px;"
                                  invisible="state == 'done'">
@@ -425,11 +556,11 @@
                                    readonly="state == 'done'"/>
                         </group>
 
-                        <!-- Botón de descarga del anexo -->
+                        <!-- Botón de descarga -->
                         <group colspan="4" col="1">
                             <field name="puede_descargar_anexo" invisible="1"/>
                             <div style="padding: 8px 0;">
-                                <button string="⬇ Descargar Anexo"
+                                <button string="Descargar Anexo"
                                         type="object"
                                         name="action_download_anexo"
                                         class="btn btn-primary"

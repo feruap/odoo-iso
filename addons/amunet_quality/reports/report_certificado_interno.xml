@@ -59,15 +59,15 @@
                                     </tr>
                                     <tr>
                                         <td style="padding: 1px 3px; border-bottom: 1px solid black; border-right: none; border-left: none; text-align: left; font-weight: bold;">Código:</td>
-                                        <td style="padding: 1px 3px; border-bottom: 1px solid black; border-right: none; border-left: none; text-align: right;"><span t-field="o.product_id.report_document_code"/></td>
+                                        <td style="padding: 1px 3px; border-bottom: 1px solid black; border-right: none; border-left: none; text-align: right;"><span t-field="o.product_id.certificate_document_code"/></td>
                                     </tr>
                                     <tr>
                                         <td style="padding: 1px 3px; border-bottom: 1px solid black; border-right: none; border-left: none; text-align: left; font-weight: bold;">Versión:</td>
-                                        <td style="padding: 1px 3px; border-bottom: 1px solid black; border-right: none; border-left: none; text-align: right;"><span t-field="o.product_id.report_version"/></td>
+                                        <td style="padding: 1px 3px; border-bottom: 1px solid black; border-right: none; border-left: none; text-align: right;"><span t-field="o.product_id.certificate_version"/></td>
                                     </tr>
                                     <tr>
                                         <td style="padding: 1px 3px; border-bottom: 1px solid black; border-right: none; border-left: none; text-align: left; font-weight: bold;">Sustituye:</td>
-                                        <td style="padding: 1px 3px; border-bottom: 1px solid black; border-right: none; border-left: none; text-align: right;"><span t-field="o.product_id.report_replaces_version"/></td>
+                                        <td style="padding: 1px 3px; border-bottom: 1px solid black; border-right: none; border-left: none; text-align: right;"><span t-field="o.product_id.certificate_replaces_version"/></td>
                                     </tr>
                                     <tr>
                                         <td style="padding: 1px 3px; border: none; text-align: left; font-weight: bold;">Pág.:</td>

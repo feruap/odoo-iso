@@ -71,7 +71,7 @@
                         <div class="row mt32 mb32">
                             <div class="col-6">
                                 <strong>Producto:</strong> <span t-field="o.product_id.name"/><br/>
-                                <strong>Código:</strong> <span t-field="o.product_code"/><br/>
+                                <strong>Código:</strong> <span t-field="o.product_id.certificate_document_code"/><br/>
                                 <strong>Proveedor:</strong> <span t-field="o.partner_id.name"/>
                             </div>
                             <div class="col-6">

@@ -47,10 +47,10 @@ class StockLot(models.Model):
 
     @api.depends('quality_check_ids', 'quality_check_ids.state')
     def _compute_last_quality_check_id(self):
-        """Retorna el QC completado más reciente del lote (done o pending)."""
+        """Retorna el QC completado más reciente del lote (done, pending o awaiting_reception)."""
         for lot in self:
             done_checks = lot.quality_check_ids.filtered(
-                lambda c: c.state in ('done', 'pending')
+                lambda c: c.state in ('done', 'pending', 'awaiting_reception')
             ).sorted('id', reverse=True)
             lot.last_quality_check_id = done_checks[0] if done_checks else False
 

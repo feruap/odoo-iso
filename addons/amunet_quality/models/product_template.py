@@ -78,6 +78,7 @@ class ProductTemplate(models.Model):
         ('materia_prima', 'Materia prima'),
         ('producto_terminado', 'Producto terminado'),
         ('insumo', 'Insumo'),
+        ('material_impreso', 'Material impreso'),
     ], string='Encabezado (Reporte)',
         help='Tipo de producto del último reporte finalizado')
 
@@ -117,6 +118,7 @@ class ProductTemplate(models.Model):
         ('materia_prima', 'Materia prima'),
         ('producto_terminado', 'Producto terminado'),
         ('insumo', 'Insumo'),
+        ('material_impreso', 'Material impreso'),
     ], string='Encabezado (Certificado)',
         help='Tipo de producto del último certificado finalizado')
 
