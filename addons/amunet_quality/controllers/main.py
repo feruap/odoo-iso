@@ -109,9 +109,13 @@ class AmunetQualityController(http.Controller):
             
             _logger.info(f"[PDF] PDF de solicitud generado para {check_id}")
 
-            # Obtener nombre de archivo
-            ref_name = check.name or str(check_id)
-            filename = f"Solicitud_Reporte_{ref_name.replace('/', '_')}.pdf"
+            # Nombre basado en número de análisis legal; fallback al nombre de secuencia QC
+            ref_name = check.analysis_number or check.name or str(check_id)
+            invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+            sanitized = ref_name
+            for ch in invalid_chars:
+                sanitized = sanitized.replace(ch, '_')
+            filename = f"RA_{sanitized}.pdf"
             
             from odoo.http import content_disposition
             disposition = content_disposition(filename)
@@ -140,23 +144,37 @@ class AmunetQualityController(http.Controller):
             if not check.exists():
                 return request.not_found()
             
-            # Incrementar contador y guardar (SUDO para asegurar escritura)
+            # Incrementar solo el contador de impresiones
             check.sudo().write({'internal_certificate_count': check.internal_certificate_count + 1})
-            
+
+            # Asignar secuencia diaria fija si es la primera vez
+            from odoo.fields import Date
+            today = Date.today()
+            if not check.internal_certificate_seq or check.internal_certificate_seq_date != today:
+                # Contar cuántos QC ya tienen secuencia asignada hoy
+                existing = request.env['amunet.quality.check'].sudo().search_count([
+                    ('internal_certificate_seq_date', '=', today),
+                    ('id', '!=', check_id),
+                ])
+                seq_num = existing + 1
+                check.sudo().write({
+                    'internal_certificate_seq': str(seq_num).zfill(3),
+                    'internal_certificate_seq_date': today,
+                })
+
             # Generar PDF
             report_xml_id = 'amunet_quality.action_report_certificado_interno'
             report = request.env.ref(report_xml_id, raise_if_not_found=False)
-            
+
             if not report:
                 return request.make_response(f"Error: No se encontró la acción de reporte '{report_xml_id}'.", status=404)
-            
+
             pdf_content, _ = report.sudo()._render_qweb_pdf(report_xml_id, [check_id])
-            
-            # Obtener nombre de archivo: CERMP-001-Nombre del producto
-            # Limpiar nombre del producto para evitar caracteres inválidos
+
+            # Nombre: CER-{seq_diaria}-{Producto}
             product_name = (check.product_id.name or 'Producto').replace('/', '_').replace('\\', '_')
-            seq_str = str(check.internal_certificate_count).zfill(3)
-            filename = f"CERMP-{seq_str}-{product_name}.pdf"
+            seq_str = check.internal_certificate_seq or '001'
+            filename = f"CER-{seq_str}-{product_name}.pdf"
             
             from odoo.http import content_disposition
             disposition = content_disposition(filename)

@@ -453,6 +453,18 @@ class AmunetQualityCheck(models.Model):
         help='Número de veces que se ha generado el certificado interno'
     )
 
+    internal_certificate_seq = fields.Char(
+        string='Secuencia Certificado Interno',
+        copy=False,
+        help='Número secuencial del día asignado al generar el primer certificado interno'
+    )
+
+    internal_certificate_seq_date = fields.Date(
+        string='Fecha Secuencia Certificado Interno',
+        copy=False,
+        help='Fecha en que se asignó la secuencia diaria del certificado interno'
+    )
+
     # ========================================================================
     # INVENTARIO
     # ========================================================================
@@ -3027,35 +3039,20 @@ class AmunetQualityCheck(models.Model):
     
     def get_pdf_filename(self):
         """
-        Genera el nombre de archivo para el PDF del certificado.
-        
-        Sanitiza caracteres inválidos para nombres de archivo y headers HTTP.
-        Los caracteres / \ : * ? " < > | son reemplazados por guión bajo.
-        
-        Returns:
-            str: Nombre de archivo sanitizado sin extensión (Odoo añade .pdf)
+        Genera el nombre de archivo para el PDF del certificado oficial.
+        Formato: CER_{analysis_number} o CER_{name}
         """
         self.ensure_one()
-        
-        # Generar nombre base
+
         base_name = self.analysis_number or self.name or f"QC-{self.id}"
-        
-        # Sanitizar caracteres inválidos para filenames y HTTP headers
-        # RFC 6266: Los slashes, backslashes y otros caracteres especiales
-        # causan que Content-Disposition sea rechazado por navegadores
+
         invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
         sanitized_name = base_name
-        
         for char in invalid_chars:
             sanitized_name = sanitized_name.replace(char, '_')
-        
-        # Remover espacios múltiples y trimear
+
         sanitized_name = ' '.join(sanitized_name.split())
-        
-        # Prefijo descriptivo
-        filename = f"Certificado_{sanitized_name}"
-        
-        return filename
+        return f"CER_{sanitized_name}"
 
 
     # ========================================================================
