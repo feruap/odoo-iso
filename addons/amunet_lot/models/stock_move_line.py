@@ -70,11 +70,18 @@ class StockMoveLine(models.Model):
             lot_id = vals.get('lot_id')
             factory_lot_id = vals.get('factory_lot_id')
             
-            if lot_id and not factory_lot_id:
-                # Cargar factory_lot_id desde el lote
+            if lot_id:
+                # Cargar datos faltantes directamente desde el lote
                 lot = self.env['stock.lot'].browse(lot_id)
-                if lot.exists() and lot.factory_lot_id:
-                    vals['factory_lot_id'] = lot.factory_lot_id.id
+                if lot.exists():
+                    if not factory_lot_id and lot.factory_lot_id:
+                        vals['factory_lot_id'] = lot.factory_lot_id.id
+                    if not vals.get('manufacturing_date') and lot.manufacturing_date:
+                        vals['manufacturing_date'] = lot.manufacturing_date
+                    if not vals.get('expiration_date') and lot.expiration_date:
+                        vals['expiration_date'] = lot.expiration_date
+                    if not vals.get('removal_date') and lot.removal_date:
+                        vals['removal_date'] = lot.removal_date
             
             # --- CORRECCIÓN GENERACIÓN DE LOTES AMUNET ---
             # Si se intenta crear una línea con lot_name="0" (fallo del widget nativo) 

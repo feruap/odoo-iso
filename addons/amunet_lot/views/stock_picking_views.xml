@@ -6,7 +6,6 @@
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-            <!-- Agregar campo computado invisible para que esté disponible en las condiciones -->
             <xpath expr="//field[@name='origin']" position="after">
                 <field name="is_quality_control" invisible="1"/>
                 <field name="is_storage" invisible="1"/>
@@ -44,12 +43,14 @@
                        context="{}">
                     <list string="Operaciones Detalladas" create="1" edit="1" delete="1" no_open="1">
                         <field name="product_id" string="Producto" widget="many2one" />
-                        <field name="factory_lot_id" string="Números de serie/lote de fábrica" options="{'no_open': True}"/>
-                        <field name="lot_id" string="Números de serie/lote Amunet" options="{'no_open': True}"/>
-                        <field name="quantity" string="Cantidad" options="{'no_open': True}"/>
+                        <field name="lot_name" string="Número de serie/lote Amunet" />
+                        <field name="factory_lot_id" string="Número de serie/lote de fábrica" options="{'no_open': True}"/>
+                        <field name="manufacturing_date" string="Fecha de fabricación" />
+                        <field name="lot_id" string="Lote UUID" column_invisible="True"/>
+                        <field name="quantity" string="Cantidad" />
                         <field name="product_uom_id" string="Unidad" options="{'no_open': True}"/>
                         <field name="location_id" string="Ubicación origen" options="{'no_open': True}"/>
-                        <field name="location_dest_id" string="Ubicación destino" options="{'no_open': True}"/>
+                        <field name="location_dest_id" string="Almacenar en" options="{'no_open': True}"/>
                     </list>
                 </field>
             </xpath>

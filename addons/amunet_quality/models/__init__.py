@@ -42,6 +42,7 @@ from . import amunet_quality_supplier_audit
 
 # Anexo General (Numeral 7)
 from . import amunet_quality_anexo_line
+from . import amunet_quality_check_destination
 
 # Tecnovigilancia (NOM-240)
 from . import amunet_tecno_mixin

@@ -41,32 +41,43 @@
         </field>
     </record>
 
-    <!-- 3. Vista del modal "Detalles" (stock.view_stock_move_operations) -->
-    <!-- SECURE BOOT HOTFIX: Comentado porque Odoo 19 Community cambió el nombre/estructura de move_line_ids
+    <!-- 3. Boton "Distribuir ubicaciones" en el modal de detalle (stock.move form) -->
     <record id="view_stock_move_operations_form_amunet" model="ir.ui.view">
         <field name="name">stock.view.stock.move.operations.amunet</field>
         <field name="model">stock.move</field>
         <field name="inherit_id" ref="stock.view_stock_move_operations"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='move_line_ids']//field[@name='lot_name']" position="after">
-                <field name="factory_lot_id" 
-                       string="Número de serie/lote de fábrica"
-                       options="{'quick_create': True, 'no_open': True}"/>
-                <field name="manufacturing_date" 
-                       string="Fecha de fabricación"
-                       optional="show"/>
-            </xpath>
-            
-            <xpath expr="//field[@name='move_line_nosuggest_ids']//field[@name='lot_name']" position="after">
-                <field name="factory_lot_id" 
-                       string="Número de serie/lote de fábrica"
-                       options="{'quick_create': True, 'no_open': True}"/>
-                <field name="manufacturing_date" 
-                       string="Fecha de fabricación"
-                       optional="show"/>
+            <xpath expr="//widget[@name='generate_serials']" position="after">
+                <button name="action_split_lines_half_amunet"
+                        string="Distribuir ubicaciones"
+                        type="object"
+                        class="btn btn-link"/>
             </xpath>
         </field>
     </record>
-    -->
+
+    <!-- 4. Quitar restriccion de ubicaciones en el tree interno (Odoo 19) -->
+    <record id="view_stock_move_line_operation_tree_amunet_domain" model="ir.ui.view">
+        <field name="name">stock.view.stock.move.line.operation.tree.amunet</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_stock_move_line_operation_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_dest_id'][@domain]" position="attributes">
+                <attribute name="domain">[('usage', 'in', ('internal', 'transit')), '|', ('company_id', '=', False), ('company_id', '=', company_id)]</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 5. Agregar el nombre del Almacen al tree de ubicaciones -->
+    <record id="view_location_tree2_amunet_lot" model="ir.ui.view">
+        <field name="name">stock.location.tree.amunet.lot</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="stock.view_location_tree2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='complete_name']" position="before">
+                <field name="warehouse_id" string="Almacén" optional="show"/>
+            </xpath>
+        </field>
+    </record>
 
 </odoo>

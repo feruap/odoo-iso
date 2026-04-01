@@ -287,3 +287,76 @@ class StockMove(models.Model):
                 'sticky': False,
             }
         }
+
+    def action_split_lines_half_amunet(self):
+        """
+        Divide la linea al 50/50 o asigna automáticamente el resto faltante.
+        """
+        self.ensure_one()
+        import math
+
+        lines = self.move_line_ids
+        if not lines:
+            raise UserError(_('No hay lineas de operacion para distribuir.'))
+
+        total_qty = sum(lines.mapped('quantity'))
+        demand = self.product_uom_qty
+
+        # 1. Caso DUAL: Si la suma total actual es menor a la demanda (ej: cambiaron 5 a 2)
+        # en lugar de dividir de nuevo, creamos la línea que falta por la diferencia exacta.
+        if total_qty < demand:
+            remaining_qty = demand - total_qty
+            
+            # Usar la primera línea (o la última que modificaron) como molde para copiar lotes y ubicaciones
+            mold_line = lines[0]
+            orig_mfg = mold_line.manufacturing_date
+            orig_exp = mold_line.expiration_date
+            orig_rem = mold_line.removal_date
+            
+            new_line = mold_line.copy({
+                'quantity': remaining_qty,
+            })
+            # Forzar fechas explicitly after copy
+            (mold_line | new_line).write({
+                'manufacturing_date': orig_mfg,
+                'expiration_date': orig_exp,
+                'removal_date': orig_rem,
+            })
+            return self.action_show_details()
+
+        # 2. Caso NORMAL (Inicial): Hay una sola línea y cubre toda la demanda (división 50/50 inicial)
+        if len(lines) == 1:
+            line = lines[0]
+            qty = line.quantity
+
+            if qty <= 1:
+                raise UserError(_('La cantidad (%s) no se puede dividir. Debe ser mayor a 1.') % qty)
+
+            q1 = math.floor(qty / 2)
+            q2 = qty - q1
+
+            orig_mfg = line.manufacturing_date
+            orig_exp = line.expiration_date
+            orig_rem = line.removal_date
+
+            line.write({'quantity': q1})
+            new_line = line.copy({
+                'quantity': q2,
+            })
+            # Forzar fechas explicitly after copy and write
+            (line | new_line).write({
+                'manufacturing_date': orig_mfg,
+                'expiration_date': orig_exp,
+                'removal_date': orig_rem,
+            })
+            
+            return self.action_show_details()
+
+        # 3. Caso COMPLETADO: Ya hay 2+ líneas y el total = demanda.
+        raise UserError(
+            _('La suma total de las líneas ya cubre la demanda de %s unidades. '
+              'Ajuste las ubicaciones manualmente si desea mover inventario de lugar.') 
+            % demand
+        )
+
+

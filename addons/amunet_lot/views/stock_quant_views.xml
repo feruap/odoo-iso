@@ -44,4 +44,46 @@
 
         </field>
     </record>
+
+    <!-- Vista de Inventario Físico - campos de trazabilidad editables solo para lotes nuevos -->
+    <record id="view_stock_quant_tree_inventory_inherit_amunet" model="ir.ui.view">
+        <field name="name">stock.quant.inventory.list.inherit.amunet</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_tree_inventory_editable"/>
+        <field name="arch" type="xml">
+            <!-- Renombrar lot_id en inventario físico -->
+            <xpath expr="//field[@name='lot_id']" position="attributes">
+                <attribute name="string">Lote/Serie Amunet</attribute>
+            </xpath>
+
+            <!-- Inyectar campos de trazabilidad después de lot_id -->
+            <xpath expr="//field[@name='lot_id']" position="after">
+                <field name="factory_lot_id"
+                    string="Lote/Serie Fábrica"
+                    groups="stock.group_production_lot"
+                    readonly="tracking not in ['serial', 'lot'] or (id and (lot_id or quantity != 0))"
+                    optional="show"/>
+                <field name="analysis_number"
+                    string="No. Análisis"
+                    groups="stock.group_production_lot"
+                    readonly="tracking not in ['serial', 'lot'] or (id and (lot_id or quantity != 0))"
+                    optional="show"/>
+                <field name="manufacturing_date"
+                    string="Fecha fabricación"
+                    groups="stock.group_production_lot"
+                    readonly="tracking not in ['serial', 'lot'] or (id and (lot_id or quantity != 0))"
+                    optional="show"/>
+                <field name="expiration_date"
+                    string="Fecha caducidad"
+                    groups="stock.group_production_lot"
+                    readonly="tracking not in ['serial', 'lot'] or (id and (lot_id or quantity != 0))"
+                    optional="show"/>
+                <field name="removal_date"
+                    string="Fecha remoción"
+                    groups="stock.group_production_lot"
+                    readonly="tracking not in ['serial', 'lot'] or (id and (lot_id or quantity != 0))"
+                    optional="show"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>

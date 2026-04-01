@@ -233,15 +233,8 @@ class AmunetQualityPoint(models.Model):
                 else:
                     qc_vals['removal_date'] = rem_date
             
-            # FALLBACK: Si aún no hay fecha de fabricación, usar scheduled_date o hoy
-            if 'manufacturing_date' not in qc_vals or not qc_vals.get('manufacturing_date'):
-                if picking.scheduled_date:
-                    qc_vals['manufacturing_date'] = picking.scheduled_date.date() \
-                        if hasattr(picking.scheduled_date, 'date') else picking.scheduled_date
-                else:
-                    qc_vals['manufacturing_date'] = fields.Date.today()
-            
             # 5. CREAR QC CON TODOS LOS DATOS
+            _logger.error(f">>>>> DEBUG: qc_vals={qc_vals} for product {product.name}")
             qc = QualityCheck.create(qc_vals)
             
             # Cargar parámetros desde todos los puntos aplicables

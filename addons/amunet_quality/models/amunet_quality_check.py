@@ -486,8 +486,15 @@ class AmunetQualityCheck(models.Model):
 
     original_dest_location_id = fields.Many2one(
         'stock.location',
-        string='Ubicación Original de Destino',
-        help='Almacén final al que debía ir el lote antes de ser retenido'
+        string='Ubicacion Original de Destino',
+        help='Almacen final al que debia ir el lote antes de ser retenido'
+    )
+
+    destination_line_ids = fields.One2many(
+        'amunet.quality.check.destination',
+        'check_id',
+        string='Destinos originales',
+        help='Distribucion de destinos capturada antes de redirigir a Cuarentena',
     )
 
     pending_disposition_picking_id = fields.Many2one(
@@ -755,56 +762,46 @@ class AmunetQualityCheck(models.Model):
     # MÉTODOS COMPUTADOS
     # ========================================================================
 
-    @api.depends('lot_id', 'product_id', 'picking_id')
+    @api.depends('lot_id', 'product_id', 'picking_id', 'destination_line_ids', 'destination_line_ids.quantity')
     def _compute_lot_qty_available(self):
         """
-        Calcula el stock disponible del lote en todas las ubicaciones internas.
-        
-        Considera todas las ubicaciones con usage='internal' para obtener
-        la cantidad realmente disponible en almacén, incluyendo ubicaciones
-        de entrada, stock, calidad, etc.
-        
-        Si el QC está vinculado a un picking, también considera las move_lines
-        del picking en caso de que el stock aún no esté en quants.
+        Calcula la cantidad del lote priorizado segun disponibilidad de datos:
+        1. destination_line_ids (capturado durante recepcion, fuente mas confiable)
+        2. quants en ubicaciones internas (stock ya asentado)
+        3. move_lines del picking (stock en transito, fallback final)
         """
         for record in self:
-            if record.lot_id and record.product_id:
-                total_qty = 0.0
-                
-                # 1. Buscar quants en todas las ubicaciones internas
-                quants = self.env['stock.quant'].search([
-                    ('lot_id', '=', record.lot_id.id),
-                    ('product_id', '=', record.product_id.id),
-                    ('location_id.usage', '=', 'internal'),
-                ])
-                total_qty += sum(q.quantity for q in quants if q.quantity > 0)
-                
-                # 2. Si hay un picking asociado y no hay quants, buscar en move_lines
-                # (puede estar en proceso de recepción)
-                if record.picking_id and total_qty == 0:
-                    move_lines = record.picking_id.move_line_ids.filtered(
-                        lambda ml: (
-                            ml.lot_id == record.lot_id and
-                            ml.product_id == record.product_id and
-                            ml.location_dest_id.usage == 'internal' and
-                            ml.state in ('confirmed', 'assigned', 'done')
-                        )
-                    )
-                    if move_lines:
-                        # Usar qty_done si existe, sino reserved_uom_qty o quantity
-                        for ml in move_lines:
-                            qty = 0
-                            if hasattr(ml, 'qty_done') and ml.qty_done > 0:
-                                qty = ml.qty_done
-                            elif hasattr(ml, 'reserved_uom_qty'):
-                                qty = ml.reserved_uom_qty
-                            elif hasattr(ml, 'quantity'):
-                                qty = ml.quantity
-                            total_qty += qty
-                
-                record.lot_qty_available = total_qty
-            else:
+            if not (record.lot_id and record.product_id):
                 record.lot_qty_available = 0.0
+                continue
+
+            # 1. Fuente mas confiable: destinos capturados en el QC
+            if record.destination_line_ids:
+                record.lot_qty_available = sum(record.destination_line_ids.mapped('quantity'))
+                continue
+
+            # 2. Quants asentados en ubicaciones internas
+            quants = self.env['stock.quant'].search([
+                ('lot_id', '=', record.lot_id.id),
+                ('product_id', '=', record.product_id.id),
+                ('location_id.usage', '=', 'internal'),
+            ])
+            total_qty = sum(q.quantity for q in quants if q.quantity > 0)
+
+            # 3. Fallback: move_lines del picking (stock en transito)
+            if not total_qty and record.picking_id:
+                move_lines = record.picking_id.move_line_ids.filtered(
+                    lambda ml: (
+                        ml.lot_id == record.lot_id and
+                        ml.product_id == record.product_id and
+                        ml.location_dest_id.usage in ('internal', 'transit')
+                    )
+                )
+                for ml in move_lines:
+                    qty = getattr(ml, 'quantity', 0.0) or getattr(ml, 'qty_done', 0.0)
+                    total_qty += qty
+
+            record.lot_qty_available = total_qty
 
     @api.onchange('qty_sampling')
     def _onchange_suggest_qty_fields(self):
@@ -1260,6 +1257,7 @@ class AmunetQualityCheck(models.Model):
         for record in self:
             if (record.manufacturing_date and
                     record.manufacturing_date > fields.Date.today()):
+                _logger.error(f">>>>> DEBUG: Validation failed. manufacturing_date={record.manufacturing_date}, today={fields.Date.today()}, product={record.product_id.name}, lot={record.lot_id.name}")
                 raise ValidationError(
                     'La fecha de fabricación no puede ser futura'
                 )
@@ -2200,35 +2198,40 @@ class AmunetQualityCheck(models.Model):
             return False
 
         source_location = self._get_quality_control_location()
-        dest_location = self.original_dest_location_id or self._get_stock_location()
 
-        if not source_location or not dest_location:
+        if not source_location:
             _logger.warning(f"_create_final_reception_picking: ubicaciones no encontradas para QC {self.id}")
             return False
 
-        if source_location == dest_location:
-            _logger.warning(f"_create_final_reception_picking: origen y destino son iguales para QC {self.id}")
-            return False
-
-        # Buscar tipo de operación incoming
+        # Buscar tipo de operacion incoming
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'incoming'),
             ('company_id', '=', self.company_id.id),
         ], limit=1)
 
         if not picking_type:
-            # Fallback: tipo internal
             picking_type = self.env['stock.picking.type'].search([
                 ('code', '=', 'internal'),
                 ('company_id', '=', self.company_id.id),
             ], limit=1)
 
         if not picking_type:
-            _logger.error(f"_create_final_reception_picking: no hay tipo de operación disponible para QC {self.id}")
+            _logger.error(f"_create_final_reception_picking: no hay tipo de operacion disponible para QC {self.id}")
             return False
 
         qty_product_uom = self._convert_qty_to_product_uom(qty_to_stock, self.sampling_uom_id)
         if qty_product_uom <= 0:
+            return False
+
+        # Destino del picking (header y move principal) = ubicacion stock del almacen
+        dest_location = (
+            self.original_dest_location_id
+            or (self.destination_line_ids[0].location_dest_id if self.destination_line_ids else False)
+            or self._get_stock_location()
+        )
+
+        if not dest_location:
+            _logger.warning(f"_create_final_reception_picking: sin destino para QC {self.id}")
             return False
 
         picking_vals = {
@@ -2237,6 +2240,7 @@ class AmunetQualityCheck(models.Model):
             'location_dest_id': dest_location.id,
             'origin': f'Liberación QC: {self.name}',
             'amunet_disposition_qc_id': self.id,
+            'company_id': self.company_id.id,
             'move_ids': [(0, 0, {
                 'product_id': self.product_id.id,
                 'product_uom_qty': qty_product_uom,
@@ -2259,45 +2263,72 @@ class AmunetQualityCheck(models.Model):
             active_model=False
         ).create(picking_vals)
 
-        # Confirmar (pero NO validar — el almacenista lo hace manualmente)
+        # Confirmar el picking (esto auto-creara una move_line por defecto en Odoo)
         reception.action_confirm()
 
-        # Después de confirmar, pre-llenar la cantidad y lote en los detalles (move_lines)
-        # para que el almacenista no tenga que capturarlos manualmente.
-        for move in reception.move_ids:
-            move_line = reception.move_line_ids.filtered(
-                lambda ml: ml.move_id == move and ml.product_id == self.product_id
-            )
-            
-            if not move_line:
-                reception.env['stock.move.line'].create({
+        # Limpiar la move_line autocreada buscando directo en BD (para evadir cache ORM vacia)
+        move = reception.move_ids[0]
+        self.env['stock.move.line'].search([('move_id', '=', move.id)]).unlink()
+
+        if self.destination_line_ids:
+            total_original = sum(self.destination_line_ids.mapped('quantity')) or 1.0
+            qty_remaining = qty_product_uom
+
+            for idx, dest_line in enumerate(self.destination_line_ids):
+                if qty_remaining <= 0:
+                    break
+                is_last = (idx == len(self.destination_line_ids) - 1)
+                line_qty = qty_remaining if is_last else min(
+                    round(qty_product_uom * (dest_line.quantity / total_original), 4),
+                    qty_remaining
+                )
+                if line_qty <= 0:
+                    continue
+
+                self.env['stock.move.line'].create({
                     'picking_id': reception.id,
                     'move_id': move.id,
                     'product_id': self.product_id.id,
                     'product_uom_id': self.product_id.uom_id.id,
                     'location_id': source_location.id,
-                    'location_dest_id': dest_location.id,
+                    'location_dest_id': dest_line.location_dest_id.id,
                     'lot_id': self.lot_id.id if self.lot_id else False,
-                    'quantity': qty_product_uom,
+                    'lot_name': self.lot_id.name if self.lot_id else False,
+                    'manufacturing_date': self.manufacturing_date,
+                    'quantity': line_qty,
                     'company_id': self.company_id.id,
                 })
-            else:
-                move_line.write({
-                    'lot_id': self.lot_id.id if self.lot_id else False,
-                    'quantity': qty_product_uom,
-                })
+                qty_remaining -= line_qty
+        else:
+            # LEGACY: un solo destino
+            self.env['stock.move.line'].create({
+                'picking_id': reception.id,
+                'move_id': move.id,
+                'product_id': self.product_id.id,
+                'product_uom_id': self.product_id.uom_id.id,
+                'location_id': source_location.id,
+                'location_dest_id': dest_location.id,
+                'lot_id': self.lot_id.id if self.lot_id else False,
+                'lot_name': self.lot_id.name if self.lot_id else False,
+                'manufacturing_date': self.manufacturing_date,
+                'quantity': qty_product_uom,
+                'company_id': self.company_id.id,
+            })
 
         # Vincular picking al QC
         self.final_reception_picking_id = reception.id
 
-        # Auditoría: registrar en chatter del QC
+        # Auditoria
         from markupsafe import Markup
+        dest_names = ', '.join(
+            reception.move_line_ids.mapped('location_dest_id.display_name')
+        )
         self.message_post(
             body=Markup(
-                f'Recepción de ingreso pendiente generada: <b>{reception.name}</b><br/>'
+                f'Recepcion de ingreso pendiente generada: <b>{reception.name}</b><br/>'
                 f'Cantidad a ingresar: <b>{qty_product_uom} {self.product_id.uom_id.name}</b><br/>'
-                f'Destino: <b>{dest_location.display_name}</b><br/>'
-                f'El almacenista debe validar esta recepción para completar el ingreso al inventario.'
+                f'Destino(s): <b>{dest_names}</b><br/>'
+                f'El almacenista debe validar esta recepcion para completar el ingreso al inventario.'
             ),
             message_type='notification'
         )

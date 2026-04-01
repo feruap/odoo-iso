@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 
 class StockPicking(models.Model):
@@ -20,15 +21,15 @@ class StockPicking(models.Model):
     )
 
     is_reception = fields.Boolean(
-        string='Es recepción',
+        string='Es recepcion',
         compute='_compute_is_reception',
         store=True,
-        help='Indica si este picking es de recepción'
+        help='Indica si este picking es de recepcion'
     )
+
 
     @api.depends('picking_type_id', 'picking_type_id.is_quality_control')
     def _compute_is_quality_control(self):
-        """Calcula si este picking es de control de calidad"""
         for record in self:
             record.is_quality_control = (
                 record.picking_type_id.is_quality_control
@@ -37,7 +38,6 @@ class StockPicking(models.Model):
 
     @api.depends('picking_type_id', 'picking_type_id.is_storage')
     def _compute_is_storage(self):
-        """Calcula si este picking es de almacenamiento"""
         for record in self:
             record.is_storage = (
                 record.picking_type_id.is_storage
@@ -46,7 +46,6 @@ class StockPicking(models.Model):
 
     @api.depends('picking_type_id', 'picking_type_id.is_reception')
     def _compute_is_reception(self):
-        """Calcula si este picking es de recepción"""
         for record in self:
             record.is_reception = (
                 record.picking_type_id.is_reception
@@ -55,36 +54,27 @@ class StockPicking(models.Model):
 
     def action_confirm(self):
         """
-        Override para intentar reservar automáticamente en entradas.
-        Esto soluciona el problema de que las recepciones queden "En Espera".
+        Override para intentar reservar automaticamente en entradas.
         """
         res = super(StockPicking, self).action_confirm()
 
-        # Intentar reservar (Check Availability) automáticamente para entradas
         for picking in self:
             if picking.picking_type_code == 'incoming' and picking.state == 'confirmed':
                 try:
                     picking.action_assign()
-                    
-                    # Si después de intentar reservar sigue sin estar listo (ej. viene de tránsito sin stock),
-                    # y es una recepción, FORZAMOS el estado a disponible.
                     if picking.state not in ('assigned', 'done', 'cancel'):
                         picking.move_ids.write({'state': 'assigned'})
-                        # El estado del picking se recalcula automáticamente
-                        
                 except Exception as e:
-                    # Si falla, intentamos forzar
                     picking.move_ids.write({'state': 'assigned'})
         return res
 
     def _action_done(self):
         """
         Override para sincronizar factory_lot_id de stock.move.line a stock.lot
-        después de validar el picking.
+        despues de validar el picking.
         """
         res = super()._action_done()
-        
-        # Sincronizar campos de las líneas a los lotes
+
         for picking in self:
             for line in picking.move_line_ids:
                 if line.lot_id:
@@ -97,9 +87,9 @@ class StockPicking(models.Model):
                         vals_sync['expiration_date'] = line.expiration_date
                     if line.removal_date and line.lot_id.removal_date != line.removal_date:
                         vals_sync['removal_date'] = line.removal_date
-                    
+
                     if vals_sync:
                         line.lot_id.sudo().write(vals_sync)
-        
+
         return res
 

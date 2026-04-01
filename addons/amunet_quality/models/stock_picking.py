@@ -151,7 +151,8 @@ class StockPicking(models.Model):
         
         # 1. CREACIÓN DE QCS: Generar QCs Amunet si no existen
         for picking in self:
-            if picking.origin and (picking.origin.startswith('Muestreo QC') or picking.origin.startswith('Liberación QC')):
+            # Evitar recursividad: si el picking viene de una liberación o muestreo QC, no crear más QCs
+            if picking.origin and any(picking.origin.startswith(s) for s in ['Muestreo QC', 'Liberación QC', 'Liberacion QC']):
                 continue
             
             if not picking.amunet_qc_ids:
@@ -159,33 +160,51 @@ class StockPicking(models.Model):
                 if qc_created:
                     _logger.info(f"Created {qc_created} quality check(s) for picking {picking.name}")
                     
-            # 1.5. FORZAR REDIRECCIÓN A CALIDAD (Garantiza que el stock entre a Cuarentena/Calidad)
-            # Actualiza picking, moves Y move_lines: Odoo 17 crea los quants basándose en
-            # move_line_ids.location_dest_id, no en move.location_dest_id. Si no se actualiza
-            # la move_line, el producto va al destino original aunque el picking/move apunten a QC.
+            # 1.5 CAPTURAR DESTINOS ORIGINALES antes de sobreescribir a Cuarentena
             if picking.amunet_qc_ids:
                 qc_location = picking.amunet_qc_ids[0]._get_quality_control_location()
                 if qc_location and picking.location_dest_id != qc_location:
-                    _logger.info(f"REDIRECCIÓN: Forzando destino {qc_location.name} para {picking.name}")
+                    DestLine = self.env['amunet.quality.check.destination']
+                    for qc in picking.amunet_qc_ids:
+                        if not qc.destination_line_ids:
+                            product_moves = picking.move_ids.filtered(
+                                lambda m: m.product_id == qc.product_id
+                                and m.state not in ('done', 'cancel')
+                            )
+                            qc_lot_name = qc.lot_id.name if qc.lot_id else qc.lot_name
+                            
+                            # Recorrer lineas exactas de movimiento para respetar multimples destinos por producto
+                            for move in product_moves:
+                                target_lines = move.move_line_ids
+                                if qc_lot_name:
+                                    target_lines = target_lines.filtered(
+                                        lambda ml: (ml.lot_id.name if ml.lot_id else ml.lot_name) == qc_lot_name
+                                    )
+                                
+                                for ml in target_lines:
+                                    qty = getattr(ml, 'quantity', getattr(ml, 'qty_done', 0.0))
+                                    if qty > 0:
+                                        DestLine.create({
+                                            'check_id': qc.id,
+                                            'location_dest_id': ml.location_dest_id.id,
+                                            'quantity': qty,
+                                        })
+                            _logger.info(
+                                f"CAPTURA DESTINOS: QC {qc.name} → "
+                                f"{len(qc.destination_line_ids)} destinos guardados"
+                            )
+
+                    # Ahora sobreescribir todo a Cuarentena
+                    _logger.info(f"REDIRECCION: Forzando destino {qc_location.name} para {picking.name}")
                     picking.location_dest_id = qc_location
                     for move in picking.move_ids:
                         if move.state not in ('done', 'cancel'):
                             move.location_dest_id = qc_location
-                            # CRÍTICO: también actualizar move_lines; _action_done() mueve
-                            # quants según ml.location_dest_id, ignorando move.location_dest_id
                             for ml in move.move_line_ids:
                                 ml.location_dest_id = qc_location
 
         # 2. ENFORCEMENT: (DESHABILITADO por requerimiento del usuario)
-        # Se permite validar aunque existan controles de calidad pendientes.
-        # Los controles se crean automáticamente arriba, pero no bloquean el ingreso.
-        # for picking in self:
-        #     pending_qcs = picking.amunet_qc_ids.filtered(lambda qc: qc.state not in ('done', 'pass'))
-        #     
-        #     if pending_qcs:
-        #         raise ValidationError(f"No puede validar la transferencia porque hay controles de calidad pendientes:\n" + 
-        #                             "\n".join([f"- {qc.product_id.name}" for qc in pending_qcs]))
-        
+
         # 3. LIMPIEZA: Asegurar que no haya referencias fantasma
         for picking in self:
             if hasattr(picking, 'quality_check_id'):
@@ -194,7 +213,7 @@ class StockPicking(models.Model):
                         picking.quality_check_id = False
                 except Exception:
                     picking.quality_check_id = False
-            
+
             if hasattr(picking, 'move_ids'):
                 for move in picking.move_ids:
                     if hasattr(move, 'quality_check_id'):
@@ -203,54 +222,39 @@ class StockPicking(models.Model):
                                 move.quality_check_id = False
                         except Exception:
                             move.quality_check_id = False
-                         
+
         res = super(StockPicking, self).button_validate()
 
-        # Invalidar caché del ORM: las push rules crean nuevos pickings/moves DURANTE super(),
-        # por lo que move.state y move.move_dest_ids en caché son datos PRE-validación.
-        # Sin esto, move.state nunca sería 'done' y move.move_dest_ids estaría vacío.
         self.env.invalidate_all()
 
-        # 4. POST-VALIDATION: Capturar destinos y cancelar pickings de la cadena.
-        # Se ejecuta DESPUÉS de super().button_validate() porque las push rules crean
-        # los pickings intermedios durante la validación, no antes.
-        # La disposición final (QC → Stock) será creada dinámicamente por _execute_disposition
-        # cuando el analista presione Finalizar.
+        # 4. POST-VALIDATION: Cancelar pickings downstream y capturar qty_received.
         for picking in self:
-            _logger.info(f"[SEC4] Picking {picking.name} | state={picking.state} | QC count={len(picking.amunet_qc_ids)}")
             if not picking.amunet_qc_ids:
-                _logger.info(f"[SEC4] SKIP {picking.name}: sin QCs vinculados")
                 continue
             for move in picking.move_ids:
-                _logger.info(f"[SEC4] Move {move.id} product={move.product_id.name} state={move.state} move_dest_ids count={len(move.move_dest_ids)}")
                 if move.state != 'done':
                     continue
                 qc_for_product = picking.amunet_qc_ids.filtered(
                     lambda q: q.product_id == move.product_id
                 )
                 if not qc_for_product:
-                    _logger.info(f"[SEC4] SKIP move {move.id}: sin QC para producto {move.product_id.name}")
                     continue
-                # Capturar picking inmediato posterior (ya creado por push rule tras super())
                 next_picking = move.move_dest_ids.mapped('picking_id')[:1]
-                _logger.info(f"[SEC4] next_picking={next_picking.name if next_picking else 'NINGUNO'} | move_dest_ids={move.move_dest_ids.ids}")
-                # Capturar destino final real recorriendo la cadena completa
-                final_location_id = move.location_dest_id.id
-                curr_move = move
-                while curr_move.move_dest_ids:
-                    curr_move = curr_move.move_dest_ids[0]
-                    final_location_id = curr_move.location_dest_id.id
+                # original_dest_location_id legacy: usar primer destino de destination_line_ids
                 for qc in qc_for_product:
-                    # Siempre sobreescribir con valores correctos post-validación
-                    qc.original_dest_location_id = final_location_id
-                    _logger.info(f"CAPTURA: Destino final {final_location_id} para QC {qc.name}")
+                    if qc.destination_line_ids and not qc.original_dest_location_id:
+                        qc.original_dest_location_id = qc.destination_line_ids[0].location_dest_id.id
+                    elif not qc.original_dest_location_id:
+                        final_location_id = move.location_dest_id.id
+                        curr_move = move
+                        while curr_move.move_dest_ids:
+                            curr_move = curr_move.move_dest_ids[0]
+                            final_location_id = curr_move.location_dest_id.id
+                        qc.original_dest_location_id = final_location_id
+
                     if next_picking and not qc.pending_disposition_picking_id:
                         qc.pending_disposition_picking_id = next_picking.id
-                        _logger.info(f"LINK: Picking {next_picking.name} (estado={next_picking.state}) vinculado a QC {qc.name}")
-                    # Cancelar el picking QC→Stock (y cualquier downstream) para que no
-                    # aparezca como transferencia pendiente en el tablero de Almacenamiento.
-                    # La disposición final se crea dinámicamente en _execute_disposition()
-                    # cuando el analista presione Finalizar.
+                    # Cancelar pickings downstream
                     to_cancel = self.env['stock.picking']
                     if qc.pending_disposition_picking_id and \
                        qc.pending_disposition_picking_id.state not in ('done', 'cancel'):
@@ -267,30 +271,25 @@ class StockPicking(models.Model):
                         except Exception as e:
                             _logger.warning(f"Error cancelando {p.name}: {e}")
 
-        # Asignar usuario validador de inventario a los QCs vinculados y registrar recepción
+        # 5. Asignar validador y registrar qty_received
         for picking in self:
-            # Guard: los pickings de recepción final de disposición QC se procesan
-            # en el HOOK de abajo (sección HOOK), no aquí.
             if picking.amunet_disposition_qc_id:
                 continue
             if picking.amunet_qc_ids:
                 picking.amunet_qc_ids.write({
                     'inventory_validator_id': self.env.user.id
                 })
-                
-                # Guardar la cantidad original recibida para la disposición posterior
                 for qc in picking.amunet_qc_ids:
-                    if qc.original_dest_location_id and not qc.original_qty_received:
-                        # Identificar cantidad recibida realmente
-                        qty_received = sum(picking.move_line_ids.filtered(
-                            lambda ml: ml.product_id == qc.product_id and ml.state == 'done'
-                        ).mapped(lambda ml: ml.quantity if hasattr(ml, 'quantity') else (ml.qty_done if hasattr(ml, 'qty_done') else 0.0)))
-                        
+                    if not qc.original_qty_received:
+                        if qc.destination_line_ids:
+                            qty_received = sum(qc.destination_line_ids.mapped('quantity'))
+                        else:
+                            qty_received = sum(picking.move_line_ids.filtered(
+                                lambda ml: ml.product_id == qc.product_id and ml.state == 'done'
+                            ).mapped(lambda ml: ml.quantity if hasattr(ml, 'quantity') else (ml.qty_done if hasattr(ml, 'qty_done') else 0.0)))
                         if qty_received > 0:
                             try:
-                                qc.write({
-                                    'original_qty_received': qty_received
-                                })
+                                qc.write({'original_qty_received': qty_received})
                                 _logger.info(f"Guardada cantidad original recibida {qty_received} para QC {qc.name}")
                             except Exception as e:
                                 _logger.error(f"Error al guardar cantidad recibida para QC {qc.name}: {str(e)}")

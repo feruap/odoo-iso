@@ -20,3 +20,4 @@ access_amunet_quality_capa,amunet.quality.capa,model_amunet_quality_capa,base.gr
 access_amunet_quality_audit_log,amunet.quality.audit.log,model_amunet_quality_audit_log,base.group_user,1,1,1,1
 access_amunet_quality_tecno_incident,amunet.quality.tecno.incident,model_amunet_quality_tecno_incident,base.group_user,1,1,1,1
 access_amunet_quality_anexo_line,amunet.quality.anexo.line,model_amunet_quality_anexo_line,base.group_user,1,1,1,1
+access_amunet_quality_check_destination,amunet.quality.check.destination,model_amunet_quality_check_destination,base.group_user,1,1,1,1

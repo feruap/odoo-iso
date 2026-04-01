@@ -22,6 +22,12 @@ class StockLot(models.Model):
         help='Número de serie/lote de fábrica asociado a este Número de serie/lote de Amunet'
     )
 
+    analysis_number = fields.Char(
+        string='No. Análisis',
+        help='Número de análisis asociado a este lote.',
+        tracking=True,
+    )
+
     # Campo manufacturing_date - Sincronizado desde la línea
     manufacturing_date = fields.Date(
         string='Fecha de fabricación',
