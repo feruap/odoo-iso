@@ -3,7 +3,8 @@
     <!-- Menú principal: Calidad -->
     <menuitem id="menu_quality_root"
               name="Calidad Amunet"
-              sequence="45"/>
+              sequence="45"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"/>
 
     <!-- Submenú: Operaciones -->
     <menuitem id="menu_quality_operations"
@@ -15,7 +16,8 @@
     <menuitem id="menu_sgc_root"
               name="Sistema de Gestión de Calidad"
               web_icon="amunet_quality,static/description/icon.png"
-              sequence="46"/>
+              sequence="46"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"/>
 
     <!-- Submenú: Regulatorio / Calidad -->
     <menuitem id="menu_quality_regulatory"
