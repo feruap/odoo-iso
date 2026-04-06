@@ -1,0 +1,40 @@
+services:
+  db-staging:
+    image: postgres:16
+    container_name: odoo-staging-db
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-odoo_staging}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-odoo_staging_2024_secure}
+      - POSTGRES_USER=${POSTGRES_USER:-odoo}
+    volumes:
+      - odoo-staging-db:/var/lib/postgresql/data
+    networks:
+      - odoo-staging-net
+
+  web-staging:
+    image: odoo:19.0-amunet
+    container_name: odoo-staging
+    restart: always
+    depends_on:
+      - db-staging
+    ports:
+      - "127.0.0.1:8070:8069"
+      - "127.0.0.1:8073:8072"
+    volumes:
+      - odoo-staging-data:/var/lib/odoo
+      - ./addons:/mnt/extra-addons
+      - ./odoo_server.conf:/etc/odoo/odoo.conf
+    environment:
+      - HOST=db-staging
+      - USER=${POSTGRES_USER:-odoo}
+      - PASSWORD=${POSTGRES_PASSWORD:-odoo_staging_2024_secure}
+    networks:
+      - odoo-staging-net
+
+volumes:
+  odoo-staging-db:
+  odoo-staging-data:
+
+networks:
+  odoo-staging-net:

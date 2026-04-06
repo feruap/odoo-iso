@@ -5,7 +5,7 @@ services:
     restart: always
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-odoo_production}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-odoo_prod_secure}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-odoo_prod_2024_secure}
       - POSTGRES_USER=${POSTGRES_USER:-odoo}
     volumes:
       - odoo-production-db:/var/lib/postgresql/data
@@ -13,7 +13,6 @@ services:
       - odoo-production-net
 
   web-production:
-    build: .
     image: odoo:19.0-amunet
     container_name: odoo-production
     restart: always
@@ -21,6 +20,7 @@ services:
       - db-production
     ports:
       - "127.0.0.1:8069:8069"
+      - "127.0.0.1:8072:8072"
     volumes:
       - odoo-production-data:/var/lib/odoo
       - ./addons:/mnt/extra-addons
@@ -28,14 +28,13 @@ services:
     environment:
       - HOST=db-production
       - USER=${POSTGRES_USER:-odoo}
-      - PASSWORD=${POSTGRES_PASSWORD:-odoo_prod_secure}
+      - PASSWORD=${POSTGRES_PASSWORD:-odoo_prod_2024_secure}
     networks:
       - odoo-production-net
 
 volumes:
-  odoo-production-data:
   odoo-production-db:
+  odoo-production-data:
 
 networks:
   odoo-production-net:
-    driver: bridge
