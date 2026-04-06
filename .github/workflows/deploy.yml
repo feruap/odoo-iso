@@ -1,28 +1,62 @@
-name: Deploy Odoo to Coolify
+name: Deploy Odoo
 
 on:
   push:
     branches:
       - main
       - staging
-      - dev
-      - "feature/*"
 
 jobs:
-  deploy:
+  deploy-staging:
+    name: Deploy to Staging
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Example: trigger Coolify webhook
-      # Update the secret in GitHub Settings -> Secrets
-      - name: Trigger Coolify Webhook
-        run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
-             echo "Deploying to production..."
-             # curl -X POST ${{ secrets.COOLIFY_WEBHOOK_MAIN }}
-          else
-             echo "Deploying branch ${{ github.ref_name }}"
-             # curl -X POST ${{ secrets.COOLIFY_WEBHOOK_STAGING }}
-          fi
+      - name: Deploy to Staging via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/odoo/staging
+            export GIT_SSH_COMMAND='ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
+            git fetch origin
+            git checkout staging 2>/dev/null || git checkout -b staging origin/staging
+            git pull origin staging
+            docker compose -f docker-compose.staging.yml build web-staging
+            docker compose -f docker-compose.staging.yml up -d
+            sleep 15
+            docker exec odoo-staging odoo -c /etc/odoo/odoo.conf -u all --stop-after-init 2>/dev/null || true
+            docker compose -f docker-compose.staging.yml restart web-staging
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Production via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/odoo/production
+            export GIT_SSH_COMMAND='ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
+            git fetch origin
+            git checkout main
+            git pull origin main
+            docker compose -f docker-compose.production.yml build web-production
+            docker compose -f docker-compose.production.yml up -d
+            sleep 15
+            docker exec odoo-production odoo -c /etc/odoo/odoo.conf -u all --stop-after-init 2>/dev/null || true
+            docker compose -f docker-compose.production.yml restart web-production
