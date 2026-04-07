@@ -1,0 +1,24 @@
+name: Clone Production DB to Staging
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clone-db:
+    name: Clonar BD de Produccion a Staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ejecutar script de clonacion via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/odoo/staging
+            export GIT_SSH_COMMAND='ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
+            git fetch origin
+            git checkout staging 2>/dev/null || git checkout -b staging origin/staging
+            git pull origin staging
+            bash scripts/clone-db-to-staging.sh

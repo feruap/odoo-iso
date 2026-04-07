@@ -6,7 +6,7 @@ STAGING_CONTAINER="odoo-staging-db"
 PROD_DB="odoo_production"
 STAGING_DB="odoo_staging"
 PROD_DATA_VOL="production_odoo-production-data"
-STAGING_DATA_VOL="odoo-staging_odoo-staging-data"
+STAGING_DATA_VOL="staging_odoo-staging-data"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="/tmp/prod_backup_${TIMESTAMP}.sql"
 
