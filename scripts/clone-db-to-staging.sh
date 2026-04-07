@@ -33,17 +33,20 @@ echo "[3.5/4] Copiando filestore y corrigiendo permisos..."
 echo "--- Diagnostico: estructura del volumen de produccion ---"
 docker run --rm -v "${PROD_DATA_VOL}:/prod:ro" alpine sh -c "find /prod -maxdepth 4 -type d | head -30"
 echo "--- Fin diagnostico ---"
+PROD_FILESTORE_NAME="odoo_production"
 docker run --rm -v "${PROD_DATA_VOL}:/prod:ro" -v "${STAGING_DATA_VOL}:/staging" alpine sh -c \
-  "rm -rf /staging/.local/share/Odoo/filestore/${STAGING_DB} && \
-   mkdir -p /staging/.local/share/Odoo/filestore && \
-   if [ -d /prod/.local/share/Odoo/filestore/${PROD_DB} ]; then \
-     cp -r /prod/.local/share/Odoo/filestore/${PROD_DB} /staging/.local/share/Odoo/filestore/${STAGING_DB}; \
+  "rm -rf /staging/filestore/${STAGING_DB} && \
+   mkdir -p /staging/filestore && \
+   if [ -d /prod/filestore/${PROD_FILESTORE_NAME} ]; then \
+     echo 'Copiando /prod/filestore/${PROD_FILESTORE_NAME} -> /staging/filestore/${STAGING_DB}'; \
+     cp -r /prod/filestore/${PROD_FILESTORE_NAME} /staging/filestore/${STAGING_DB}; \
    elif [ -d /prod/filestore/${PROD_DB} ]; then \
-     cp -r /prod/filestore/${PROD_DB} /staging/.local/share/Odoo/filestore/${STAGING_DB}; \
+     echo 'Copiando /prod/filestore/${PROD_DB} -> /staging/filestore/${STAGING_DB}'; \
+     cp -r /prod/filestore/${PROD_DB} /staging/filestore/${STAGING_DB}; \
    else \
      echo 'WARN: No se encontro filestore de produccion'; \
    fi && \
-   chown -R 100:101 /staging/.local/share/Odoo/filestore"
+   chown -R 100:101 /staging/filestore"
 
 echo "[4/5] Limpiando cache de assets..."
 docker exec "$STAGING_CONTAINER" psql -U odoo -d "$STAGING_DB" -c "DELETE FROM ir_attachment WHERE url LIKE '/web/assets/%';" || true
