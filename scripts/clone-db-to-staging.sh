@@ -10,12 +10,12 @@ STAGING_DATA_VOL="staging_odoo-staging-data"
 BACKUP_FILE="/tmp/backup_amunet_prod.dump"
 CONTAINER_BACKUP="/tmp/restore_prod.dump"
 
-echo "=== Clonando produccion (amunet_prod) -> staging (Amunet_testing) ==="
+echo "=== Clonando produccion ($PROD_DB) -> staging ($STAGING_DB) ==="
 
 echo "[1/4] Deteniendo Odoo staging..."
 docker stop odoo-staging
 
-echo "[2/4] Dump de amunet_prod (modo seguro)..."
+echo "[2/4] Dump de $PROD_DB (modo seguro)..."
 docker exec "$PROD_CONTAINER" pg_dump -F custom --no-owner --no-privileges -U odoo -f /tmp/backup_prod_internal.dump "$PROD_DB"
 docker cp "${PROD_CONTAINER}:/tmp/backup_prod_internal.dump" "$BACKUP_FILE"
 docker exec "$PROD_CONTAINER" rm -f /tmp/backup_prod_internal.dump
