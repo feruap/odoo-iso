@@ -7,4 +7,9 @@ USER root
 COPY fonts/cambria/ /usr/share/fonts/truetype/cambria/
 RUN fc-cache -f
 
+# Copiar addons y configuracion para evitar errores de montaje de volumenes de Git en Portainer
+COPY addons/ /mnt/extra-addons/
+COPY odoo_server.conf /etc/odoo/odoo.conf
+RUN chown -R odoo:odoo /mnt/extra-addons /etc/odoo
+
 USER odoo

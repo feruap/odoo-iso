@@ -13,18 +13,18 @@ services:
       - odoo-production-net
 
   web-production:
+    build: .
     image: odoo:19.0-amunet
     container_name: odoo-production
     restart: always
     depends_on:
       - db-production
+    command: odoo -c /etc/odoo/odoo.conf -u all
     ports:
       - "127.0.0.1:8069:8069"
       - "127.0.0.1:8072:8072"
     volumes:
       - odoo-production-data:/var/lib/odoo
-      - ./addons:/mnt/extra-addons
-      - ./odoo_server.conf:/etc/odoo/odoo.conf
     environment:
       - HOST=db-production
       - USER=${POSTGRES_USER:-odoo}
