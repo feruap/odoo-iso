@@ -19,7 +19,7 @@ services:
     restart: always
     depends_on:
       - db-production
-    command: odoo -c /etc/odoo/odoo.conf -u all
+    command: odoo -c /etc/odoo/odoo.conf -d odoo_production -u all
     ports:
       - "127.0.0.1:8069:8069"
       - "127.0.0.1:8072:8072"
@@ -27,6 +27,7 @@ services:
       - odoo-production-data:/var/lib/odoo
     environment:
       - HOST=db-production
+      - PORT=5432
       - USER=${POSTGRES_USER:-odoo}
       - PASSWORD=${POSTGRES_PASSWORD:-odoo_prod_2024_secure}
     networks:

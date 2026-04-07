@@ -19,7 +19,7 @@ services:
     restart: always
     depends_on:
       - db-staging
-    command: odoo -c /etc/odoo/odoo.conf -u all --dev=reload
+    command: odoo -c /etc/odoo/odoo.conf -d odoo_staging -u all --dev=reload
     ports:
       - "127.0.0.1:8070:8069"
       - "127.0.0.1:8073:8072"
@@ -27,6 +27,7 @@ services:
       - odoo-staging-data:/var/lib/odoo
     environment:
       - HOST=db-staging
+      - PORT=5432
       - USER=${POSTGRES_USER:-odoo}
       - PASSWORD=${POSTGRES_PASSWORD:-odoo_staging_2024_secure}
     networks:
