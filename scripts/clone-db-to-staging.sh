@@ -15,8 +15,10 @@ echo "=== Clonando produccion (amunet_prod) -> staging (Amunet_testing) ==="
 echo "[1/4] Deteniendo Odoo staging..."
 docker stop odoo-staging
 
-echo "[2/4] Dump de amunet_prod..."
-docker exec "$PROD_CONTAINER" pg_dump -F custom --no-owner --no-privileges -U odoo "$PROD_DB" > "$BACKUP_FILE"
+echo "[2/4] Dump de amunet_prod (modo seguro)..."
+docker exec "$PROD_CONTAINER" pg_dump -F custom --no-owner --no-privileges -U odoo -f /tmp/backup_prod_internal.dump "$PROD_DB"
+docker cp "${PROD_CONTAINER}:/tmp/backup_prod_internal.dump" "$BACKUP_FILE"
+docker exec "$PROD_CONTAINER" rm -f /tmp/backup_prod_internal.dump
 
 echo "[3/4] Restaurando como $STAGING_DB en staging..."
 docker exec "$STAGING_CONTAINER" psql -U odoo -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${STAGING_DB}' AND pid <> pg_backend_pid();" postgres
