@@ -1,39 +1,42 @@
 #!/bin/bash
-# clone-db-to-staging.sh - Clona produccion a staging
+# clone-db-to-staging.sh - Clona bases de datos de produccion a staging
 set -e
 PROD_CONTAINER="odoo-production-db"
 STAGING_CONTAINER="odoo-staging-db"
-PROD_DB="odoo_production"
-STAGING_DB="Amunet_testing"
 PROD_DATA_VOL="production_odoo-production-data"
 STAGING_DATA_VOL="staging_odoo-staging-data"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="/tmp/prod_backup_${TIMESTAMP}.dump"
-CONTAINER_BACKUP="/tmp/restore_staging.dump"
+
+clone_db() {
+  local DB_NAME="$1"
+  local BACKUP_FILE="/tmp/backup_${DB_NAME}.dump"
+  local CONTAINER_BACKUP="/tmp/restore_${DB_NAME}.dump"
+
+  echo "--- Clonando BD: $DB_NAME ---"
+  docker exec "$PROD_CONTAINER" pg_dump -F custom --no-owner --no-privileges -U odoo "$DB_NAME" > "$BACKUP_FILE"
+  docker exec "$STAGING_CONTAINER" psql -U odoo -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();" postgres
+  docker exec "$STAGING_CONTAINER" psql -U odoo -c "DROP DATABASE IF EXISTS \"$DB_NAME\" WITH (FORCE);" postgres
+  docker exec "$STAGING_CONTAINER" psql -U odoo -c "CREATE DATABASE \"$DB_NAME\";" postgres
+  docker cp "$BACKUP_FILE" "${STAGING_CONTAINER}:${CONTAINER_BACKUP}"
+  docker exec "$STAGING_CONTAINER" pg_restore -U odoo -d "$DB_NAME" --no-owner --no-privileges "$CONTAINER_BACKUP" || true
+  docker exec "$STAGING_CONTAINER" rm -f "$CONTAINER_BACKUP"
+  rm -f "$BACKUP_FILE"
+  echo "--- BD $DB_NAME restaurada ---"
+}
 
 echo "=== Clonando produccion -> staging ==="
-echo "[DIAG] Bases de datos en produccion:"
-docker exec "$PROD_CONTAINER" psql -U odoo -l postgres
-echo "[DIAG] Filestore disponible en volumen de produccion:"
-docker run --rm -v "${PROD_DATA_VOL}:/prod:ro" alpine ls -la /prod/filestore/ 2>/dev/null || echo "No existe /prod/filestore"
-echo "[1/5] Deteniendo Odoo staging..."
+echo "[1/4] Deteniendo Odoo staging..."
 docker stop odoo-staging
-echo "[2/5] Backup base de datos produccion (formato binario)..."
-docker exec "$PROD_CONTAINER" pg_dump -F custom --no-owner --no-privileges -U odoo "$PROD_DB" > "$BACKUP_FILE"
-echo "[3/5] Restaurando en staging..."
-# Terminar conexiones activas si existen antes de dropear
-docker exec "$STAGING_CONTAINER" psql -U odoo -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${STAGING_DB}' AND pid <> pg_backend_pid();" postgres
-docker exec "$STAGING_CONTAINER" psql -U odoo -c "DROP DATABASE IF EXISTS \"$STAGING_DB\" WITH (FORCE);" postgres
-docker exec "$STAGING_CONTAINER" psql -U odoo -c "CREATE DATABASE \"$STAGING_DB\";" postgres
-# Copiar dump al contenedor y restaurar con pg_restore (no tiene restricciones de backslash)
-docker cp "$BACKUP_FILE" "${STAGING_CONTAINER}:${CONTAINER_BACKUP}"
-docker exec "$STAGING_CONTAINER" pg_restore -U odoo -d "$STAGING_DB" --no-owner --no-privileges "$CONTAINER_BACKUP" || true
-docker exec "$STAGING_CONTAINER" rm -f "$CONTAINER_BACKUP"
-echo "[4/5] Copiando filestore..."
-docker run --rm -v "${PROD_DATA_VOL}:/prod:ro" -v "${STAGING_DATA_VOL}:/staging" alpine sh -c "rm -rf /staging/filestore && cp -r /prod/filestore /staging/filestore && mv /staging/filestore/odoo_production /staging/filestore/Amunet_testing"
-echo "[5/5] Reiniciando Odoo staging..."
+
+echo "[2/4] Clonando bases de datos..."
+clone_db "amunet_prod"
+clone_db "Amunet_testing"
+
+echo "[3/4] Copiando filestores..."
+docker run --rm -v "${PROD_DATA_VOL}:/prod:ro" -v "${STAGING_DATA_VOL}:/staging" alpine sh -c \
+  "rm -rf /staging/filestore && mkdir -p /staging/filestore && \
+   cp -r /prod/filestore/amunet_prod /staging/filestore/amunet_prod && \
+   cp -r /prod/filestore/Amunet_testing /staging/filestore/Amunet_testing"
+
+echo "[4/4] Reiniciando Odoo staging..."
 docker start odoo-staging
-rm -f "$BACKUP_FILE"
 echo "=== Listo! staging.fc.amunet.com.mx tiene datos frescos ==="
-
-
