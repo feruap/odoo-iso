@@ -35,7 +35,7 @@ jobs:
             docker compose -f docker-compose.staging.yml build web-staging
             docker compose -f docker-compose.staging.yml up -d
             sleep 15
-            docker exec odoo-staging odoo -c /etc/odoo/odoo.conf -u all --stop-after-init 2>/dev/null || true
+            docker exec odoo-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u all --stop-after-init 2>/dev/null || true
             docker compose -f docker-compose.staging.yml restart web-staging
 
   deploy-production:
