@@ -35,11 +35,13 @@ echo "[3/4] Copiando filestores..."
 docker run --rm -v "${PROD_DATA_VOL}:/prod:ro" -v "${STAGING_DATA_VOL}:/staging" alpine sh -c \
   "rm -rf /staging/filestore && mkdir -p /staging/filestore && \
    cp -r /prod/filestore/amunet_prod /staging/filestore/amunet_prod && \
-   cp -r /prod/filestore/Amunet_testing /staging/filestore/Amunet_testing"
+   cp -r /prod/filestore/Amunet_testing /staging/filestore/Amunet_testing && \
+   chown -R 100:101 /staging/filestore"
 
-echo "[3.5/4] Limpiando cache de assets en staging (Amunet_testing)..."
-docker exec "$STAGING_CONTAINER" psql -U odoo -d "Amunet_testing" -c \
-  "DELETE FROM ir_attachment WHERE url LIKE '/web/assets/%';" || true
+echo "[3.5/4] Limpiando cache de assets y quitando filtro de BD..."
+docker exec "$STAGING_CONTAINER" psql -U odoo -d "Amunet_testing" -c "DELETE FROM ir_attachment WHERE url LIKE '/web/assets/%';" || true
+docker exec "$STAGING_CONTAINER" psql -U odoo -d "amunet_prod" -c "DELETE FROM ir_attachment WHERE url LIKE '/web/assets/%';" || true
+docker exec -u root "$STAGING_CONTAINER" sed -i 's/db_name = Amunet_testing/db_name = /g' /etc/odoo/odoo.conf || true
 
 echo "[4/4] Reiniciando Odoo staging..."
 docker start odoo-staging
