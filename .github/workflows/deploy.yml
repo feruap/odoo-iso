@@ -27,6 +27,7 @@ jobs:
             export GIT_SSH_COMMAND='ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
             git fetch origin
             git checkout staging 2>/dev/null || git checkout -b staging origin/staging
+            git checkout -- .
             git pull origin staging
             # Ajustar config especifica de staging antes del build
             sed -i 's/db_host = False/db_host = db-staging/g' odoo_server.conf
