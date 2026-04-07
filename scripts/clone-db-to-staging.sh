@@ -45,7 +45,12 @@ docker run --rm -v "${PROD_DATA_VOL}:/prod:ro" -v "${STAGING_DATA_VOL}:/staging"
    fi && \
    chown -R 100:101 /staging/.local/share/Odoo/filestore"
 
-echo "[4/4] Limpiando cache de assets y reiniciando..."
+echo "[4/5] Limpiando cache de assets..."
 docker exec "$STAGING_CONTAINER" psql -U odoo -d "$STAGING_DB" -c "DELETE FROM ir_attachment WHERE url LIKE '/web/assets/%';" || true
+
+echo "[5/5] Actualizando modulos y reiniciando..."
 docker start odoo-staging
+sleep 10
+docker exec odoo-staging odoo -c /etc/odoo/odoo.conf -d "$STAGING_DB" -u all --stop-after-init 2>/dev/null || true
+docker compose -f /opt/odoo/staging/docker-compose.staging.yml restart web-staging
 echo "=== Listo! staging.fc.amunet.com.mx es copia exacta de produccion ==="
