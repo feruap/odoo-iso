@@ -12,6 +12,10 @@ BACKUP_FILE="/tmp/prod_backup_${TIMESTAMP}.dump"
 CONTAINER_BACKUP="/tmp/restore_staging.dump"
 
 echo "=== Clonando produccion -> staging ==="
+echo "[DIAG] Bases de datos en produccion:"
+docker exec "$PROD_CONTAINER" psql -U odoo -l postgres
+echo "[DIAG] Filestore disponible en volumen de produccion:"
+docker run --rm -v "${PROD_DATA_VOL}:/prod:ro" alpine ls -la /prod/filestore/ 2>/dev/null || echo "No existe /prod/filestore"
 echo "[1/5] Deteniendo Odoo staging..."
 docker stop odoo-staging
 echo "[2/5] Backup base de datos produccion (formato binario)..."
