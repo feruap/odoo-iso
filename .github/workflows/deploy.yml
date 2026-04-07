@@ -31,7 +31,7 @@ jobs:
             # Ajustar config especifica de staging antes del build
             sed -i 's/db_host = False/db_host = db-staging/g' odoo_server.conf
             sed -i 's/db_port = False/db_port = 5432/g' odoo_server.conf
-            sed -i 's/db_name = amunet_local/db_name = Amunet_testing/g' odoo_server.conf
+            sed -i 's/db_name = amunet_local/db_name = /g' odoo_server.conf
             docker compose -f docker-compose.staging.yml build web-staging
             docker compose -f docker-compose.staging.yml up -d
             sleep 15

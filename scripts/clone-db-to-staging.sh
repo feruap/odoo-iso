@@ -37,6 +37,11 @@ docker run --rm -v "${PROD_DATA_VOL}:/prod:ro" -v "${STAGING_DATA_VOL}:/staging"
    cp -r /prod/filestore/amunet_prod /staging/filestore/amunet_prod && \
    cp -r /prod/filestore/Amunet_testing /staging/filestore/Amunet_testing"
 
+echo "[3.5/4] Limpiando cache de assets en staging (Amunet_testing)..."
+docker exec "$STAGING_CONTAINER" psql -U odoo -d "Amunet_testing" -c \
+  "DELETE FROM ir_attachment WHERE url LIKE '/web/assets/%';" || true
+
 echo "[4/4] Reiniciando Odoo staging..."
 docker start odoo-staging
 echo "=== Listo! staging.fc.amunet.com.mx tiene datos frescos ==="
+
