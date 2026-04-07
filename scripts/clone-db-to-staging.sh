@@ -3,7 +3,7 @@
 set -e
 PROD_CONTAINER="odoo-production-db"
 STAGING_CONTAINER="odoo-staging-db"
-PROD_DB="amunet_prod"
+PROD_DB="odoo_production"
 STAGING_DB="Amunet_testing"
 PROD_DATA_VOL="production_odoo-production-data"
 STAGING_DATA_VOL="staging_odoo-staging-data"
