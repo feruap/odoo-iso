@@ -28,9 +28,10 @@ jobs:
             git fetch origin
             git checkout staging 2>/dev/null || git checkout -b staging origin/staging
             git pull origin staging
-            # Fix staging-specific config (db_host differs from production)
-            sed -i 's/db_host = db-production/db_host = db-staging/g' odoo_server.conf
-            sed -i 's/db_name = odoo_production/db_name = odoo_staging/g' odoo_server.conf
+            # Ajustar config especifica de staging antes del build
+            sed -i 's/db_host = False/db_host = db-staging/g' odoo_server.conf
+            sed -i 's/db_port = False/db_port = 5432/g' odoo_server.conf
+            sed -i 's/db_name = amunet_local/db_name = Amunet_testing/g' odoo_server.conf
             docker compose -f docker-compose.staging.yml build web-staging
             docker compose -f docker-compose.staging.yml up -d
             sleep 15
