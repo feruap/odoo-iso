@@ -1,0 +1,19 @@
+name: Ver Logs de Odoo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-logs:
+    name: Obtener Logs de Odoo Staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch logs via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Ultimos 300 renglones del log interno de Odoo ==="
+            docker exec odoo-staging tail -n 300 /var/log/odoo/odoo-server.log
