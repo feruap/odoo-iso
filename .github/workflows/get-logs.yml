@@ -17,3 +17,7 @@ jobs:
           script: |
             echo "=== Ultimos 300 renglones del log interno de Odoo ==="
             docker exec odoo-staging tail -n 300 /var/log/odoo/odoo-server.log
+            echo "=== Bases de datos en PRODUCCION con tamano ==="
+            docker exec odoo-production-db psql -U odoo -c "SELECT datname, pg_size_pretty(pg_database_size(datname)) FROM pg_database WHERE datname NOT LIKE 'template%' AND datname != 'postgres' ORDER BY pg_database_size(datname) DESC;"
+            echo "=== Bases de datos en STAGING con tamano ==="
+            docker exec odoo-staging-db psql -U odoo -c "SELECT datname, pg_size_pretty(pg_database_size(datname)) FROM pg_database WHERE datname NOT LIKE 'template%' AND datname != 'postgres' ORDER BY pg_database_size(datname) DESC;"
