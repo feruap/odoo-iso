@@ -31,8 +31,16 @@ jobs:
             git pull origin staging
             docker compose -f docker-compose.staging.yml build web-staging
             docker compose -f docker-compose.staging.yml up -d
-            sleep 15
-            docker exec odoo-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u all --stop-after-init 2>/dev/null || true
+            echo "Esperando que Odoo staging este listo..."
+            for i in $(seq 1 24); do
+              if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
+                echo "Odoo listo despues de $((i * 5))s"
+                break
+              fi
+              echo "  Intento $i/24..."
+              sleep 5
+            done
+            docker exec odoo-staging odoo -c /etc/odoo/odoo.conf -d amunet_testing -u all --stop-after-init
             docker compose -f docker-compose.staging.yml restart web-staging
 
   deploy-production:

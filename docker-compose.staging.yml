@@ -4,7 +4,7 @@ services:
     container_name: odoo-staging-db
     restart: always
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-Amunet_testing}
+      - POSTGRES_DB=${POSTGRES_DB:-amunet_testing}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-odoo_staging_2024_secure}
       - POSTGRES_USER=${POSTGRES_USER:-odoo}
     volumes:
