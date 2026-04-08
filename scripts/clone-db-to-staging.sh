@@ -65,6 +65,6 @@ for i in $(seq 1 24); do
   echo "  Intento $i/24, esperando 5s..."
   sleep 5
 done
-docker exec odoo-staging bash -c "odoo -c /etc/odoo/odoo.conf -d ${STAGING_DB} -u all --stop-after-init --db_host \$HOST --db_port \$PORT --db_user \$USER --db_password \$PASSWORD"
+docker exec odoo-staging bash -c "odoo -c /etc/odoo/odoo.conf -d ${STAGING_DB} -u all --stop-after-init --no-http --db_host \$HOST --db_port \$PORT --db_user \$USER --db_password \$PASSWORD"
 docker compose -f /opt/odoo/staging/docker-compose.staging.yml restart web-staging
 echo "=== Listo! staging.fc.amunet.com.mx es copia exacta de produccion ==="
