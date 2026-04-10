@@ -10,8 +10,8 @@ STAGING_DATA_VOL="staging_odoo-staging-data"
 clone_db() {
   local SRC_DB="$1"
   local DST_DB="$2"
-  local BACKUP_HOST="/tmp/clone_${SRC_DB}.dump"
-  local BACKUP_CONT="/tmp/clone_${SRC_DB}.dump"
+  local BACKUP_HOST="/tmp/clone_${DST_DB}.dump"
+  local BACKUP_CONT="/tmp/clone_${DST_DB}.dump"
 
   echo ""
   echo "--- Clonando: produccion[$SRC_DB] -> staging[$DST_DB] ---"
@@ -75,9 +75,21 @@ echo "=== INICIO: Clonacion de produccion a staging ==="
 echo "[1/4] Deteniendo Odoo staging..."
 docker stop odoo-staging
 
+echo "[1.5/4] Limpiando bases de datos huerfanas en staging..."
+ORPHANS=$(docker exec "$STAGING_CONTAINER" psql -U odoo postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('amunet_prod', 'Amunet_testing', 'postgres') AND datname NOT LIKE 'template%';")
+for db in $ORPHANS; do
+  db=$(echo $db | tr -d ' ' | tr -d '\r')
+  if [ -n "$db" ]; then
+    echo "  Borrando BD heredada o sucia: $db..."
+    docker exec "$STAGING_CONTAINER" psql -U odoo postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${db}' AND pid <> pg_backend_pid();" > /dev/null
+    docker exec "$STAGING_CONTAINER" psql -U odoo postgres -c "DROP DATABASE IF EXISTS \"${db}\";"
+    docker run --rm -v "${STAGING_DATA_VOL}:/staging" alpine sh -c "rm -rf /staging/filestore/${db}"
+  fi
+done
+
 echo "[2/4] Clonando bases de datos..."
 clone_db "amunet_prod"    "amunet_prod"
-clone_db "Amunet_testing" "Amunet_testing"
+clone_db "amunet_prod" "Amunet_testing"
 
 echo "[3/4] Arrancando Odoo staging..."
 docker start odoo-staging
@@ -95,7 +107,11 @@ echo "[4/4] Actualizando modulos en ambas BDs..."
 docker exec odoo-staging bash -c \
   'odoo -c /etc/odoo/odoo.conf -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
 docker exec odoo-staging bash -c \
-  'odoo -c /etc/odoo/odoo.conf -d "Amunet_testing" -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+  'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+
+echo "[4.5/4] Neutralizando base de datos Amunet_testing en Staging..."
+docker exec odoo-staging bash -c \
+  'odoo neutralize -c /etc/odoo/odoo.conf -d Amunet_testing --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
 
 docker compose -f /opt/odoo/staging/docker-compose.staging.yml restart web-staging
 echo "=== FIN: staging.fc.amunet.com.mx es copia exacta de produccion ==="

@@ -66,6 +66,15 @@ jobs:
             git pull origin main
             docker compose -f docker-compose.production.yml build web-production
             docker compose -f docker-compose.production.yml up -d
-            sleep 15
+            echo "Esperando que Odoo produccion este listo..."
+            for i in $(seq 1 24); do
+              if docker exec odoo-production curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
+                echo "Odoo listo despues de $((i * 5))s"
+                break
+              fi
+              echo "  Intento $i/24..."
+              sleep 5
+            done
             docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+            docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
             docker compose -f docker-compose.production.yml restart web-production
