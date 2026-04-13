@@ -15,6 +15,24 @@ class StockQuant(models.Model):
         help='Lote de fábrica asociado al lote Amunet de este quant'
     )
 
+    lot_note = fields.Text(
+        string='Notas del Lote',
+        compute='_compute_lot_note',
+        inverse='_inverse_lot_note',
+        help='Notas e información vinculadas nativamente al detalle del lote'
+    )
+
+    @api.depends('lot_id.note')
+    def _compute_lot_note(self):
+        for quant in self:
+            # Si tuviera etiquetas html viejas, el frontend o backend se hace cargo de mostrarlas crudas.
+            quant.lot_note = quant.lot_id.note if quant.lot_id else False
+
+    def _inverse_lot_note(self):
+        for quant in self:
+            if quant.lot_id:
+                quant.lot_id.note = quant.lot_note
+
     analysis_number = fields.Char(
         related='lot_id.analysis_number',
         string='No. Análisis',
@@ -46,6 +64,7 @@ class StockQuant(models.Model):
         return fields + [
             'analysis_number',
             'factory_lot_id',
+            'lot_note',
             'manufacturing_date',
             'expiration_date',
             'removal_date'
