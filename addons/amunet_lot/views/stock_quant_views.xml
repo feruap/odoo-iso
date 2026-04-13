@@ -9,6 +9,7 @@
             <!-- Agregar factory_lot_id después de lot_id -->
             <xpath expr="//field[@name='lot_id']" position="after">
                 <field name="factory_lot_id" string="Número de serie/lote de fábrica" optional="show"/>
+                <field name="lot_note" string="Notas del Lote" optional="show"/>
             </xpath>
         </field>
     </record>
@@ -27,6 +28,7 @@
             <!-- Agregar factory_lot_id después de lot_id -->
             <xpath expr="//field[@name='lot_id']" position="after">
                 <field name="factory_lot_id" string="Número de serie/lote de fábrica" readonly="1"/>
+                <field name="lot_note" string="Notas del Lote" optional="show"/>
             </xpath>
         </field>
     </record>
@@ -40,6 +42,7 @@
             <!-- Agregar factory_lot_id después de lot_id -->
             <xpath expr="//field[@name='lot_id']" position="after">
                 <field name="factory_lot_id" string="Número de serie/lote de fábrica"/>
+                <field name="lot_note" string="Notas del Lote"/>
             </xpath>
 
         </field>
@@ -63,6 +66,7 @@
                     groups="stock.group_production_lot"
                     readonly="tracking not in ['serial', 'lot'] or (id and (lot_id or quantity != 0))"
                     optional="show"/>
+                <field name="lot_note" string="Notas del Lote" optional="show"/>
                 <field name="analysis_number"
                     string="No. Análisis"
                     groups="stock.group_production_lot"
