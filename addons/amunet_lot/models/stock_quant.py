@@ -15,7 +15,7 @@ class StockQuant(models.Model):
         help='Lote de fábrica asociado al lote Amunet de este quant'
     )
 
-    lot_note = fields.Text(
+    lot_note = fields.Char(
         string='Notas del Lote',
         compute='_compute_lot_note',
         inverse='_inverse_lot_note',
