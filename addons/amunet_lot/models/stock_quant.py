@@ -19,6 +19,7 @@ class StockQuant(models.Model):
         string='Notas del Lote',
         compute='_compute_lot_note',
         inverse='_inverse_lot_note',
+        store=True,
         help='Notas e información vinculadas nativamente al detalle del lote'
     )
 
