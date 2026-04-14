@@ -4,7 +4,7 @@
 **Autor**: DIC Consultores
 **Cliente**: Amunet S.A. de C.V.
 
----
+<hr/>
 
 ## Descripción
 
@@ -17,7 +17,7 @@ Este módulo permite configurar listas de materiales (BOMs) para productos y usa
 - 📦 **Trazabilidad**: Compatible con sistema de lotes Amunet
 - 🔄 **Consistencia**: Garantiza componentes correctos siempre
 
----
+<hr/>
 
 ## Instalación
 
@@ -34,7 +34,7 @@ Este módulo permite configurar listas de materiales (BOMs) para productos y usa
 2. Actualizar lista de aplicaciones
 3. Instalar "Listas de Materiales para Entregas"
 
----
+<hr/>
 
 ## Configuración
 
@@ -59,7 +59,7 @@ Este módulo permite configurar listas de materiales (BOMs) para productos y usa
    - Producto: COCRI03, Cantidad: 5.0 unidades
 5. Guardar
 
----
+<hr/>
 
 ## Uso
 
@@ -78,7 +78,7 @@ Este módulo permite configurar listas de materiales (BOMs) para productos y usa
 6. Verificar líneas en pestaña "Operaciones Detalladas"
 7. Validar entrega
 
----
+<hr/>
 
 ## Características
 
@@ -88,7 +88,7 @@ Este módulo permite configurar listas de materiales (BOMs) para productos y usa
 - **Unicidad**: Una BOM por producto por compañía
 - **Integración Amunet**: Compatible con lotes Amunet
 
----
+<hr/>
 
 ## Limitaciones
 
@@ -97,7 +97,7 @@ Este módulo permite configurar listas de materiales (BOMs) para productos y usa
 - No valida stock disponible automáticamente
 - Sin versionamiento de BOMs
 
----
+<hr/>
 
 ## Soporte
 
@@ -105,7 +105,7 @@ Este módulo permite configurar listas de materiales (BOMs) para productos y usa
 - **Consultora**: DIC Consultores
 - **Cliente**: Amunet S.A. de C.V.
 
----
+<hr/>
 
 ## Licencia
 

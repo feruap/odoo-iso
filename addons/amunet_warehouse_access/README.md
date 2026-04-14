@@ -4,7 +4,7 @@
 **Epic**: [EPIC-033: Control de Acceso Dinámico por Almacén](amunet_quality/docs/tickets/033_control-acceso-almacenes/EPIC.md)
 **Licencia**: LGPL-3
 
----
+<hr/>
 
 ## Descripción
 
@@ -19,7 +19,7 @@ Este módulo implementa un sistema de **control de acceso granular a almacenes**
 ✅ **Vista de Matriz**: Gestión masiva de accesos desde una sola pantalla
 ✅ **Auditoría**: Visibilidad completa de quién tiene acceso a qué almacenes
 
----
+<hr/>
 
 ## Casos de Uso
 
@@ -48,7 +48,7 @@ Este módulo implementa un sistema de **control de acceso granular a almacenes**
 - ✅ Juan puede ver ubicaciones, quants, movimientos
 - ❌ Juan NO puede acceder a otros almacenes
 
----
+<hr/>
 
 ## Instalación
 
@@ -75,7 +75,7 @@ make shell
 'installed'
 ```
 
----
+<hr/>
 
 ## Configuración
 
@@ -113,7 +113,7 @@ Vista de lista con todos los accesos configurados:
 3. Ver lista de usuarios configurados
 4. Editar accesos directamente
 
----
+<hr/>
 
 ## Funcionamiento Técnico
 
@@ -157,7 +157,7 @@ Vista de lista con todos los accesos configurados:
 - `user_access_ids`: Usuarios con acceso
 - `allowed_user_ids`: Usuarios permitidos (computed)
 
----
+<hr/>
 
 ## Validaciones de Seguridad
 
@@ -192,7 +192,7 @@ El módulo valida permisos en **backend** (Python) para mayor seguridad:
 - Cron jobs, procesos automatizados
 - No se validan para evitar bloqueos
 
----
+<hr/>
 
 ## Arquitectura de Record Rules
 
@@ -223,7 +223,7 @@ Cada usuario con accesos personalizados obtiene un **grupo único**:
 
 **Ventaja**: Cada usuario tiene reglas independientes sin conflictos.
 
----
+<hr/>
 
 ## API de Programación
 
@@ -264,7 +264,7 @@ has_access = warehouse.user_has_access(user, operation_type=None)
 users = warehouse.get_users_with_access(operation_type=None)
 ```
 
----
+<hr/>
 
 ## Permisos de Seguridad
 
@@ -282,7 +282,7 @@ users = warehouse.get_users_with_access(operation_type=None)
 - Usuarios de inventario pueden ver su configuración
 - Managers pueden ver configuraciones de su equipo
 
----
+<hr/>
 
 ## Troubleshooting
 
@@ -332,7 +332,7 @@ make shell
 make restart-dev
 ```
 
----
+<hr/>
 
 ## Compatibilidad
 
@@ -340,7 +340,7 @@ make restart-dev
 - **Odoo 18**: ⚠️ Compatible con ajustes menores
 - **Odoo 17 o anterior**: ❌ No compatible (usa sintaxis moderna de Odoo 19)
 
----
+<hr/>
 
 ## Roadmap
 
@@ -359,7 +359,7 @@ make restart-dev
 **Epic-036**: Restricción por cantidad/horarios
 **Epic-037**: Dashboard de auditoría de accesos
 
----
+<hr/>
 
 ## Soporte
 
@@ -367,14 +367,14 @@ make restart-dev
 **Contacto**: [email protected]
 **Documentación Técnica**: Ver `docs/tickets/033_control-acceso-almacenes/`
 
----
+<hr/>
 
 ## Licencia
 
 Este módulo se distribuye bajo licencia LGPL-3.
 Copyright (c) 2025 Amunet S.A. de C.V.
 
----
+<hr/>
 
 ## Créditos
 

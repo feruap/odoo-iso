@@ -6,7 +6,7 @@
 **Licencia**: LGPL-3
 **Estado**: 🚧 **EN DESARROLLO ACTIVO** 🚧
 
----
+<hr/>
 
 ## ⚠️ Estado del desarrollo
 
@@ -37,9 +37,11 @@
     - Paso 2.1: Verificación binaria (¿Línea C visible? Sí/No)
     - Paso 2.2: Comparación visual de intensidades (T≠R / T<R / T~R / T>R)
     - Evaluación: Cruce de las 3 variables en tabla de 13 filas
+
   - **Documentación**: Ver `docs/tickets/matrices/Matriz de control de calidad hojas maestras.md` (línea 85-115)
   - **Casos de uso**: SPHMC25, SPHMC38, SPHMC52
   - ⚠️ Sin este tipo, no se pueden configurar correctamente ~10 productos críticos
+
 - [ ] **Parámetros MAVI especializados adicionales**
   - MAVI-07: Visualización líneas resultado base (condicional por tipo muestra)
   - MAVI-15: Visualización líneas resultado en rango (3 opciones condicionales)
@@ -76,7 +78,7 @@
 4. Performance en productos con >20 parámetros no optimizada
 5. Faltan mensajes de error descriptivos en validaciones
 
----
+<hr/>
 
 ## Descripción General
 
@@ -102,7 +104,7 @@ Sistema de Control de Calidad para la manufactura de dispositivos médicos y pro
 - NOM-241-SSA-V-VIGENTE
 - Buenas Prácticas de Fabricación (BPF)
 
----
+<hr/>
 
 ## Arquitectura del Sistema de Parámetros
 
@@ -207,7 +209,7 @@ El sistema se basa en **4 niveles jerárquicos** para máxima flexibilidad:
 4. **Evaluación granular**: Cada especificación se evalúa independientemente
 5. **Agregación automática**: El dictamen del parámetro se calcula automáticamente
 
----
+<hr/>
 
 ## Tipos de parámetros
 
@@ -355,7 +357,7 @@ Evaluación: Matriz de 13 escenarios
 
 **Estado**: 🚧 No implementado - Bloqueador para ~10 productos críticos
 
----
+<hr/>
 
 ## Tipos de Evaluación
 
@@ -400,7 +402,7 @@ quality_check.result = agregar_lineas(quality_check.test_line_ids.result_verdict
 
 **Importante**: El flag `exclude_na_from_verdict` en especificaciones controla si N/A cuenta como fallo o se ignora.
 
----
+<hr/>
 
 ## Flujo de uso completo
 
@@ -483,7 +485,7 @@ Calidad → Controles de Calidad → [QC Nuevo]
    - Estado cambia a **"Finalizado"**
    - Si resultado = RECHAZADO → Estado = **"Pendiente disposición"**
 
----
+<hr/>
 
 ## Modelos de Datos
 
@@ -587,7 +589,7 @@ Detalle de especificación (resultado individual).
 
 **Archivo**: `models/amunet_quality_test_line_detail.py` (~600 líneas)
 
----
+<hr/>
 
 ## Interfaz de Usuario
 
@@ -632,7 +634,7 @@ La UI controla visibilidad según estado usando `invisible` en XML (NO `attrs`):
 </group>
 ```
 
----
+<hr/>
 
 ## Dependencias
 
@@ -641,7 +643,7 @@ La UI controla visibilidad según estado usando `invisible` en XML (NO `attrs`):
 - `uom` (Unidades de Medida - Core Odoo)
 - `amunet_lot` (Sistema de lotes Amunet - proporciona `factory_lot_id`)
 
----
+<hr/>
 
 ## Instalación y Configuración
 
@@ -668,7 +670,7 @@ make install-module MODULE=amunet_quality DB=Amunet
    - `Manager QC` - Acceso total + configuración de parámetros
 3. **Configurar código de empleado** (para folio): Campo `employee_code` en usuario
 
----
+<hr/>
 
 ## Grupos de Seguridad
 
@@ -681,7 +683,7 @@ make install-module MODULE=amunet_quality DB=Amunet
 
 **Archivo**: `security/amunet_quality_security.xml`
 
----
+<hr/>
 
 ## Estructura del Módulo
 
@@ -752,7 +754,7 @@ amunet_quality/
             └── Matriz de control de calidad Equipos.md
 ```
 
----
+<hr/>
 
 ## Documentación Técnica
 
@@ -772,7 +774,7 @@ Las matrices originales del cliente se encuentran en `docs/tickets/matrices/`:
 - Goteros
 - Equipos
 
----
+<hr/>
 
 ## Testing y Validación
 
@@ -816,7 +818,7 @@ Las matrices originales del cliente se encuentran en `docs/tickets/matrices/`:
 - [ ] Validar generación de PDF
 - [ ] Probar integración con sistema de firmas
 
----
+<hr/>
 
 ## Troubleshooting
 
@@ -853,7 +855,7 @@ Las matrices originales del cliente se encuentran en `docs/tickets/matrices/`:
 3. Revisar consola del navegador por errores JS
 4. Reiniciar servidor Odoo
 
----
+<hr/>
 
 ## Roadmap de Desarrollo
 
@@ -888,7 +890,7 @@ Las matrices originales del cliente se encuentran en `docs/tickets/matrices/`:
 - [ ] App móvil para registro de resultados (con soporte para matriz de decisión)
 - [ ] Sistema de auditoría avanzado
 
----
+<hr/>
 
 ## Changelog
 
@@ -902,7 +904,7 @@ Para ver el historial completo de cambios, consulta el archivo [CHANGELOG.md](CH
 - **19.0.2.0.0**: Sistema jerárquico de parámetros (Epic-031) e información adicional (Epic-032)
 - **18.0.1.0.0**: Versión inicial con sistema simple
 
----
+<hr/>
 
 ## Soporte y Contacto
 
@@ -912,13 +914,13 @@ Para ver el historial completo de cambios, consulta el archivo [CHANGELOG.md](CH
 
 **Repositorio**: `/Users/rafaelodoo/projects/odooDocker18/sh_repos/amunetdev/amunet_quality`
 
----
+<hr/>
 
 ## Licencia
 
 Este módulo está licenciado bajo **LGPL-3**.
 
----
+<hr/>
 
 ## Notas Importantes
 
