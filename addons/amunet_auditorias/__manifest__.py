@@ -5,16 +5,17 @@
     'category': 'Quality',
     'summary': 'Auditorías internas y a proveedores con checklists y generación automática de CAPAs',
     'description': """
-        Gestión del Programa de Auditorías para Calidad bajo ISO 13485.
+Gestión del Programa de Auditorías para Calidad bajo ISO 13485.
 
-        Funcionalidades:
-        - Auditorías internas (a departamentos) y externas (a proveedores)
-        - Checklists dinámicos por cláusula de norma
-        - Registro y clasificación de Hallazgos / No Conformidades
-        - Botón "Crear CAPA" que genera automáticamente una Acción Correctiva
-          en amunet_quality con trazabilidad completa (proveedor, hallazgo, auditoría)
-        - Actualización automática del estatus de calidad del proveedor
-        - Registro en Audit Log (21 CFR Part 11) de cada CAPA generada
+Funcionalidades:
+
+- Auditorías internas (a departamentos) y externas (a proveedores)
+- Checklists dinámicos por cláusula de norma
+- Registro y clasificación de Hallazgos / No Conformidades
+- Botón "Crear CAPA" que genera automáticamente una Acción Correctiva
+  en amunet_quality con trazabilidad completa (proveedor, hallazgo, auditoría)
+- Actualización automática del estatus de calidad del proveedor
+- Registro en Audit Log (21 CFR Part 11) de cada CAPA generada
     """,
     'author': 'DIC Consultores - Rafael López Flores',
     'website': 'https://www.amunet.com.mx',

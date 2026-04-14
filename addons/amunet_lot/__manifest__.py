@@ -4,13 +4,13 @@
     'version': '19.0.1.0.2',
     'summary': 'Generación automática de secuencias de lotes',
     'description': """
-        Módulo de gestión de lotes simplificado que utiliza stock.lot nativo de Odoo con denominación secuencial automática por producto.
-        
-        Diferencia clave con amunet_lot_sequence: 
-            - Utiliza stock.lot directamente (sin modelo intermedio).
-            - Generación automática de secuencias en la creación de lotes.
-            - Prefijos configurables por producto.
-            - Restablecimiento de secuencia mensual opcional.
+Módulo de gestión de lotes simplificado que utiliza stock.lot nativo de Odoo con denominación secuencial automática por producto.
+
+Diferencia clave con amunet_lot_sequence: 
+- Utiliza stock.lot directamente (sin modelo intermedio).
+- Generación automática de secuencias en la creación de lotes.
+- Prefijos configurables por producto.
+- Restablecimiento de secuencia mensual opcional.
     """,
     'author': 'Rafael López Flores',
     'category': 'Inventory/Inventory',
