@@ -63,7 +63,7 @@ jobs:
             export GIT_SSH_COMMAND='ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
             git fetch origin
             git reset --hard origin/main
-            docker compose -f docker-compose.production.yml build web-production
+            docker compose -f docker-compose.production.yml build --no-cache web-production
             docker compose -f docker-compose.production.yml up -d
             echo "Esperando que Odoo produccion este listo..."
             for i in $(seq 1 24); do
