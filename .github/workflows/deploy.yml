@@ -74,39 +74,9 @@ jobs:
               echo "  Intento $i/24..."
               sleep 5
             done
-            python3 - <<'PYEOF'
-import psycopg2, json, os
-DBS = ['amunet_prod', 'Amunet_testing']
-CLEAN = {
-    'amunet_lot':                   'Generacion automatica de secuencias de lotes para Odoo.',
-    'amunet_quality':               'Sistema de Control de Calidad para manufactura de dispositivos medicos y productos farmaceuticos.',
-    'amunet_auditorias':            'Gestion del Programa de Auditorias bajo ISO 13485.',
-    'amunet_warehouse_access':      'Control de acceso dinamico por almacen y operaciones de inventario.',
-    'amunet_competencias':          'Gestion de capacitacion y competencias bajo ISO 13485.',
-    'amunet_equipment_calibration': 'Control de calibracion de equipos bajo ISO 13485.',
-    'amunet_transfer_bom':          'Transferencia y gestion de listas de materiales.',
-}
-for db in DBS:
-    try:
-        conn = psycopg2.connect(dbname=db, user=os.environ['USER'], password=os.environ['PASSWORD'], host=os.environ['HOST'], port=os.environ['PORT'])
-        cur = conn.cursor()
-        for mod, desc in CLEAN.items():
-            cur.execute("SELECT id, description FROM ir_module_module WHERE name = %s", (mod,))
-            row = cur.fetchone()
-            if row:
-                mid, old = row
-                try:
-                    d = old if isinstance(old, dict) else json.loads(old or '{}')
-                    nd = {k: desc for k in d.keys()} if d else {'en_US': desc}
-                except Exception:
-                    nd = {'en_US': desc}
-                cur.execute("UPDATE ir_module_module SET description = %s WHERE id = %s", (json.dumps(nd), mid))
-        conn.commit()
-        conn.close()
-        print(f'Fixed descriptions in {db}')
-    except Exception as e:
-        print(f'Warning: could not fix {db}: {e}')
-PYEOF
+            docker cp corrections/fix_db_module_descriptions.py odoo-production:/tmp/fix_db_desc.py
+            docker exec odoo-production bash -c 'python3 /tmp/fix_db_desc.py amunet_prod $USER $PASSWORD $HOST $PORT'
+            docker exec odoo-production bash -c 'python3 /tmp/fix_db_desc.py Amunet_testing $USER $PASSWORD $HOST $PORT'
             docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
             docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
             docker compose -f docker-compose.production.yml restart web-production
