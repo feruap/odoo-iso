@@ -28,8 +28,11 @@ jobs:
             git fetch origin
             git checkout staging 2>/dev/null || git checkout -b staging origin/staging
             git reset --hard origin/staging
-            docker compose -f docker-compose.staging.yml build web-staging
-            docker compose -f docker-compose.staging.yml up -d
+            echo "==== DIAGNÓSTICO: ARCHIVO EN HOST ===="
+            cat addons/amunet_lot/views/stock_quant_views.xml | grep lot_note || echo "NO ENCONTRADO EN HOST"
+            echo "====================================="
+            docker compose -f docker-compose.staging.yml build --no-cache web-staging
+            docker compose -f docker-compose.staging.yml up -d --force-recreate
             echo "Esperando que Odoo staging este listo..."
             for i in $(seq 1 24); do
               if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
