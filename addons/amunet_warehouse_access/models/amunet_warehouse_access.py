@@ -268,7 +268,10 @@ class AmunetWarehouseAccess(models.Model):
         self.ensure_one()
 
         # Dominio base: filtrar por almacén del usuario
-        domain = [(warehouse_field, '=', self.warehouse_id.id)]
+        if model_name in ['stock.location', 'stock.quant']:
+            domain = ['|', (warehouse_field, '=', self.warehouse_id.id), (warehouse_field, '=', False)]
+        else:
+            domain = [(warehouse_field, '=', self.warehouse_id.id)]
 
         # Si acceso restringido, agregar filtro por tipo de operación
         if self.access_type == 'restricted' and model_name == 'stock.picking':
@@ -298,7 +301,7 @@ class AmunetWarehouseAccess(models.Model):
             return True
 
         # Buscar configuración de acceso
-        access = self.search([
+        access = self.sudo().search([
             ('user_id', '=', user.id),
             ('warehouse_id', '=', warehouse.id),
             ('active', '=', True),
