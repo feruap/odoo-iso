@@ -27,10 +27,9 @@ jobs:
             export GIT_SSH_COMMAND='ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
             git fetch origin
             git checkout staging 2>/dev/null || git checkout -b staging origin/staging
-            git checkout -- .
-            git pull origin staging
-            docker compose -f docker-compose.staging.yml build web-staging
-            docker compose -f docker-compose.staging.yml up -d
+            git reset --hard origin/staging
+            docker compose -f docker-compose.staging.yml build --no-cache web-staging
+            docker compose -f docker-compose.staging.yml up -d --force-recreate
             echo "Esperando que Odoo staging este listo..."
             for i in $(seq 1 24); do
               if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
@@ -63,8 +62,7 @@ jobs:
             cd /opt/odoo/production
             export GIT_SSH_COMMAND='ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
             git fetch origin
-            git checkout -- .
-            git pull origin main
+            git reset --hard origin/main
             docker compose -f docker-compose.production.yml build web-production
             docker compose -f docker-compose.production.yml up -d
             echo "Esperando que Odoo produccion este listo..."
