@@ -72,7 +72,7 @@
         <field name="inherit_id" ref="base.view_users_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='login']" position="after">
-                <field name="warehouse_count" string="Almacenes" optional="hide"/>
+                <field name="warehouse_count" string="Almacenes" optional="hide" groups="base.group_system"/>
             </xpath>
         </field>
     </record>
