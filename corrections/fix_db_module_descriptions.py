@@ -59,7 +59,7 @@ cur = conn.cursor()
 cur.execute("""
     SELECT id, name, description 
     FROM ir_module_module 
-    WHERE state = 'installed' 
+    WHERE state IN ('installed', 'to upgrade', 'to install') 
     AND description IS NOT NULL
 """)
 rows = cur.fetchall()

@@ -77,6 +77,6 @@ jobs:
             docker cp corrections/fix_db_module_descriptions.py odoo-production:/tmp/fix_db_desc.py
             docker exec odoo-production bash -c 'python3 /tmp/fix_db_desc.py amunet_prod $USER $PASSWORD $HOST $PORT'
             docker exec odoo-production bash -c 'python3 /tmp/fix_db_desc.py Amunet_testing $USER $PASSWORD $HOST $PORT'
-            docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
-            docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+            docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+            docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
             docker compose -f docker-compose.production.yml restart web-production
