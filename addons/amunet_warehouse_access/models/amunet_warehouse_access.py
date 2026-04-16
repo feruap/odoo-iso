@@ -229,9 +229,11 @@ class AmunetWarehouseAccess(models.Model):
             return
 
         # Modelos para los cuales generar reglas
+        # stock.location excluido: su lectura es necesaria para vistas internas de Odoo
+        # (forecast, ajustes de inventario). La restriccion de escritura ya esta
+        # manejada por los overrides en stock_location.py
         models_to_restrict = [
             ('stock.picking', 'picking_type_id.warehouse_id'),
-            ('stock.location', 'warehouse_id'),
             ('stock.warehouse', 'id'),
             ('stock.quant', 'location_id.warehouse_id'),
         ]
@@ -268,7 +270,7 @@ class AmunetWarehouseAccess(models.Model):
         self.ensure_one()
 
         # Dominio base: filtrar por almacén del usuario
-        if model_name in ['stock.location', 'stock.quant']:
+        if model_name == 'stock.quant':
             domain = ['|', (warehouse_field, '=', self.warehouse_id.id), (warehouse_field, '=', False)]
         else:
             domain = [(warehouse_field, '=', self.warehouse_id.id)]
