@@ -2,8 +2,13 @@
 create_product_hoja_maestra_antidoping_sangre.py
 
 Crea "Hoja Maestra Antidoping Sangre 2 Parámetros" (SPHMC75)
-copiando todos los atributos del producto base con default_code='SPHMC53'.
-Idempotente: no hace nada si el producto ya existe.
+copiando todos los atributos e imagen del producto base con default_code='SPHMC53'.
+
+Idempotente:
+  - Si ya existe con SPHMC75 e imagen → no hace nada.
+  - Si ya existe con SPHMC75 pero sin imagen → copia imagen del origen.
+  - Si existe con código incorrecto SPHMC53 y nombre correcto → corrige código e imagen.
+  - Si no existe → lo crea desde cero.
 
 Uso: python3 create_product_hoja_maestra_antidoping_sangre.py DB USER PASSWORD HOST PORT
 """
@@ -34,29 +39,89 @@ print(f"[{db}] Connecting to {host}:{port}")
 conn = psycopg2.connect(dbname=db, user=user, password=pwd, host=host, port=port)
 cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-# ── Idempotency ──────────────────────────────────────────────────────────────
+now = datetime.now(timezone.utc)
+
+def get_source_image():
+    cur.execute("""
+        SELECT pt.image_1920
+        FROM product_template pt
+        JOIN product_product pp ON pp.product_tmpl_id = pt.id
+        WHERE pp.default_code = %s
+        LIMIT 1
+    """, (SOURCE_CODE,))
+    row = cur.fetchone()
+    return row['image_1920'] if row else None
+
+def tmpl_has_default_code_col():
+    cur.execute("""
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'product_template'
+          AND column_name = 'default_code'
+    """)
+    return cur.fetchone() is not None
+
+# ── Case 1: correct code SPHMC75 already exists ──────────────────────────────
 cur.execute("""
-    SELECT pt.id FROM product_template pt
+    SELECT pt.id, pt.image_1920
+    FROM product_template pt
     JOIN product_product pp ON pp.product_tmpl_id = pt.id
     WHERE pp.default_code = %s
     LIMIT 1
 """, (NEW_CODE,))
-if cur.fetchone():
-    print(f"[{db}] {NEW_CODE!r} already exists — nothing to do.")
+row_ok = cur.fetchone()
+if row_ok:
+    if row_ok['image_1920'] is not None:
+        print(f"[{db}] {NEW_CODE!r} already exists with image — nothing to do.")
+        conn.close()
+        sys.exit(0)
+    src_image = get_source_image()
+    if src_image:
+        cur.execute(
+            "UPDATE product_template SET image_1920 = %s, write_date = %s WHERE id = %s",
+            (src_image, now, row_ok['id']),
+        )
+        conn.commit()
+        print(f"[{db}] Updated missing image on {NEW_CODE!r} product (tmpl_id={row_ok['id']}).")
+    else:
+        print(f"[{db}] {NEW_CODE!r} exists but source has no image — nothing to do.")
     conn.close()
     sys.exit(0)
 
+# ── Case 2: exists with wrong code SPHMC53 + correct name → fix it ───────────
 cur.execute("""
-    SELECT id FROM product_template
-    WHERE name::text ILIKE %s
+    SELECT pt.id, pp.id AS pp_id, pt.image_1920
+    FROM product_template pt
+    JOIN product_product pp ON pp.product_tmpl_id = pt.id
+    WHERE pp.default_code = %s
+      AND pt.name::text ILIKE %s
     LIMIT 1
-""", (f'%{NEW_NAME}%',))
-if cur.fetchone():
-    print(f"[{db}] Product {NEW_NAME!r} already exists — nothing to do.")
+""", (SOURCE_CODE, f'%{NEW_NAME}%'))
+row_bad = cur.fetchone()
+if row_bad:
+    print(f"[{db}] Found product '{NEW_NAME}' with wrong code {SOURCE_CODE!r} — fixing to {NEW_CODE!r}...")
+    cur.execute(
+        "UPDATE product_product SET default_code = %s, write_date = %s WHERE id = %s",
+        (NEW_CODE, now, row_bad['pp_id']),
+    )
+    if tmpl_has_default_code_col():
+        cur.execute(
+            "UPDATE product_template SET default_code = %s, write_date = %s WHERE id = %s",
+            (NEW_CODE, now, row_bad['id']),
+        )
+    if row_bad['image_1920'] is None:
+        src_image = get_source_image()
+        if src_image:
+            cur.execute(
+                "UPDATE product_template SET image_1920 = %s WHERE id = %s",
+                (src_image, row_bad['id']),
+            )
+            print(f"[{db}] Also copied missing image from {SOURCE_CODE!r}.")
+    conn.commit()
+    print(f"[{db}] Fixed: default_code corrected to {NEW_CODE!r} (tmpl_id={row_bad['id']}).")
     conn.close()
     sys.exit(0)
 
-# ── Find source product ──────────────────────────────────────────────────────
+# ── Case 3: product does not exist → create from scratch ─────────────────────
 cur.execute("""
     SELECT pt.id FROM product_template pt
     JOIN product_product pp ON pp.product_tmpl_id = pt.id
@@ -71,7 +136,6 @@ if not row:
 src_tmpl_id = row['id']
 print(f"[{db}] Source product_template.id = {src_tmpl_id} (default_code={SOURCE_CODE})")
 
-# ── Load source rows ─────────────────────────────────────────────────────────
 cur.execute("SELECT * FROM product_template WHERE id = %s", (src_tmpl_id,))
 src_tmpl = dict(cur.fetchone())
 
@@ -84,7 +148,6 @@ cur.execute("""
 src_pp_row = cur.fetchone()
 src_pp = dict(src_pp_row) if src_pp_row else {}
 
-# ── Get actual column names from information_schema ──────────────────────────
 cur.execute("""
     SELECT column_name FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'product_template'
@@ -99,14 +162,12 @@ cur.execute("""
 """)
 pp_cols = {r['column_name'] for r in cur.fetchall()}
 
-# ── Build new product_template ────────────────────────────────────────────────
+# default_code excluded here; set explicitly after insert to avoid copying SOURCE_CODE
 SKIP_TMPL = {
     'id', 'create_date', 'write_date', 'create_uid', 'write_uid',
-    'message_main_attachment_id', 'sequence',
+    'message_main_attachment_id', 'sequence', 'default_code',
     'website_slug', 'is_published', 'website_published',
 }
-
-now = datetime.now(timezone.utc)
 
 new_tmpl = {}
 for col in tmpl_cols:
@@ -114,7 +175,6 @@ for col in tmpl_cols:
         continue
     val = src_tmpl[col]
     if col == 'name':
-        # Replace name in every stored language
         if isinstance(val, dict):
             val = {lang: NEW_NAME for lang in val}
         elif isinstance(val, str):
@@ -145,7 +205,13 @@ cur.execute(
 new_tmpl_id = cur.fetchone()['id']
 print(f"[{db}] Created product_template.id = {new_tmpl_id}")
 
-# ── Build new product_product ─────────────────────────────────────────────────
+# Set default_code on template if it has a stored column
+if 'default_code' in tmpl_cols:
+    cur.execute(
+        "UPDATE product_template SET default_code = %s WHERE id = %s",
+        (NEW_CODE, new_tmpl_id),
+    )
+
 SKIP_PP = {
     'id', 'create_date', 'write_date', 'create_uid', 'write_uid',
     'message_main_attachment_id', 'product_tmpl_id', 'default_code',
@@ -173,7 +239,6 @@ new_pp.update({
 if 'combination_indices' in pp_cols:
     new_pp['combination_indices'] = ''
 
-# Only include columns that exist in the table
 new_pp = {k: v for k, v in new_pp.items() if k in pp_cols}
 
 cols_p = list(new_pp.keys())
