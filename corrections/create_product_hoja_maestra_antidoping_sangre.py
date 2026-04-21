@@ -41,16 +41,56 @@ cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
 now = datetime.now(timezone.utc)
 
-def get_source_image():
+def get_source_tmpl_id():
     cur.execute("""
-        SELECT pt.image_1920
-        FROM product_template pt
+        SELECT pt.id FROM product_template pt
         JOIN product_product pp ON pp.product_tmpl_id = pt.id
         WHERE pp.default_code = %s
         LIMIT 1
     """, (SOURCE_CODE,))
     row = cur.fetchone()
-    return row['image_1920'] if row else None
+    return row['id'] if row else None
+
+def has_image_attachment(tmpl_id_val):
+    cur.execute("""
+        SELECT 1 FROM ir_attachment
+        WHERE res_model = 'product.template'
+          AND res_field = 'image_1920'
+          AND res_id = %s
+        LIMIT 1
+    """, (tmpl_id_val,))
+    return cur.fetchone() is not None
+
+def copy_image_attachment(src_tmpl_id_val, dst_tmpl_id_val):
+    """Copy image_1920 from ir_attachment of src to dst. Returns True if copied."""
+    cur.execute("""
+        SELECT name, datas, store_fname, mimetype, file_size
+        FROM ir_attachment
+        WHERE res_model = 'product.template'
+          AND res_field = 'image_1920'
+          AND res_id = %s
+        ORDER BY id DESC LIMIT 1
+    """, (src_tmpl_id_val,))
+    src_att = cur.fetchone()
+    if not src_att:
+        return False
+    cur.execute("""
+        INSERT INTO ir_attachment
+          (name, datas, store_fname, res_model, res_field, res_id,
+           type, mimetype, file_size, create_uid, write_uid, create_date, write_date)
+        VALUES (%s, %s, %s, 'product.template', 'image_1920', %s,
+                'binary', %s, %s, 1, 1, %s, %s)
+    """, (
+        src_att['name'],
+        src_att['datas'],
+        src_att['store_fname'],
+        dst_tmpl_id_val,
+        src_att.get('mimetype', 'image/png'),
+        src_att['file_size'],
+        now,
+        now,
+    ))
+    return True
 
 def tmpl_has_default_code_col():
     cur.execute("""
@@ -62,7 +102,7 @@ def tmpl_has_default_code_col():
 
 # ── Case 1: correct code SPHMC75 already exists ──────────────────────────────
 cur.execute("""
-    SELECT pt.id, pt.image_1920
+    SELECT pt.id
     FROM product_template pt
     JOIN product_product pp ON pp.product_tmpl_id = pt.id
     WHERE pp.default_code = %s
@@ -70,16 +110,12 @@ cur.execute("""
 """, (NEW_CODE,))
 row_ok = cur.fetchone()
 if row_ok:
-    if row_ok['image_1920'] is not None:
+    if has_image_attachment(row_ok['id']):
         print(f"[{db}] {NEW_CODE!r} already exists with image — nothing to do.")
         conn.close()
         sys.exit(0)
-    src_image = get_source_image()
-    if src_image:
-        cur.execute(
-            "UPDATE product_template SET image_1920 = %s, write_date = %s WHERE id = %s",
-            (src_image, now, row_ok['id']),
-        )
+    src_tmpl_id_for_img = get_source_tmpl_id()
+    if src_tmpl_id_for_img and copy_image_attachment(src_tmpl_id_for_img, row_ok['id']):
         conn.commit()
         print(f"[{db}] Updated missing image on {NEW_CODE!r} product (tmpl_id={row_ok['id']}).")
     else:
@@ -89,7 +125,7 @@ if row_ok:
 
 # ── Case 2: exists with wrong code SPHMC53 + correct name → fix it ───────────
 cur.execute("""
-    SELECT pt.id, pp.id AS pp_id, pt.image_1920
+    SELECT pt.id, pp.id AS pp_id
     FROM product_template pt
     JOIN product_product pp ON pp.product_tmpl_id = pt.id
     WHERE pp.default_code = %s
@@ -108,13 +144,9 @@ if row_bad:
             "UPDATE product_template SET default_code = %s, write_date = %s WHERE id = %s",
             (NEW_CODE, now, row_bad['id']),
         )
-    if row_bad['image_1920'] is None:
-        src_image = get_source_image()
-        if src_image:
-            cur.execute(
-                "UPDATE product_template SET image_1920 = %s WHERE id = %s",
-                (src_image, row_bad['id']),
-            )
+    if not has_image_attachment(row_bad['id']):
+        src_tmpl_id_for_img = get_source_tmpl_id()
+        if src_tmpl_id_for_img and copy_image_attachment(src_tmpl_id_for_img, row_bad['id']):
             print(f"[{db}] Also copied missing image from {SOURCE_CODE!r}.")
     conn.commit()
     print(f"[{db}] Fixed: default_code corrected to {NEW_CODE!r} (tmpl_id={row_bad['id']}).")
@@ -167,6 +199,7 @@ SKIP_TMPL = {
     'id', 'create_date', 'write_date', 'create_uid', 'write_uid',
     'message_main_attachment_id', 'sequence', 'default_code',
     'website_slug', 'is_published', 'website_published',
+    'image_1920',  # stored in ir_attachment in Odoo 17+, not as a column
 }
 
 new_tmpl = {}
@@ -249,6 +282,12 @@ cur.execute(
 )
 new_pp_id = cur.fetchone()['id']
 print(f"[{db}] Created product_product.id = {new_pp_id}")
+
+# ── Copy image via ir_attachment ──────────────────────────────────────────────
+if copy_image_attachment(src_tmpl_id, new_tmpl_id):
+    print(f"[{db}] Copied image from {SOURCE_CODE!r} to {NEW_CODE!r} via ir_attachment.")
+else:
+    print(f"[{db}] No image found for {SOURCE_CODE!r} in ir_attachment — continuing without image.")
 
 # ── Copy Many2Many: customer taxes ────────────────────────────────────────────
 cur.execute("SELECT tax_id FROM product_taxes_rel WHERE prod_id = %s", (src_tmpl_id,))
