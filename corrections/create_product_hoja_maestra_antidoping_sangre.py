@@ -2,7 +2,7 @@
 create_product_hoja_maestra_antidoping_sangre.py
 
 Crea "Hoja Maestra Antidoping Sangre 2 Parámetros" (SPHMC75)
-copiando todos los atributos de "Hoja maestra Antidoping 2 Parámetros".
+copiando todos los atributos del producto base con default_code='SPHMC53'.
 Idempotente: no hace nada si el producto ya existe.
 
 Uso: python3 create_product_hoja_maestra_antidoping_sangre.py DB USER PASSWORD HOST PORT
@@ -20,7 +20,7 @@ except ImportError:
     import psycopg2
     import psycopg2.extras
 
-SOURCE_NAME = 'Hoja maestra Antidoping 2 Parámetros'
+SOURCE_CODE = 'SPHMC53'
 NEW_NAME    = 'Hoja Maestra Antidoping Sangre 2 Parámetros'
 NEW_CODE    = 'SPHMC75'
 
@@ -58,17 +58,18 @@ if cur.fetchone():
 
 # ── Find source product ──────────────────────────────────────────────────────
 cur.execute("""
-    SELECT id FROM product_template
-    WHERE name::text ILIKE %s
+    SELECT pt.id FROM product_template pt
+    JOIN product_product pp ON pp.product_tmpl_id = pt.id
+    WHERE pp.default_code = %s
     LIMIT 1
-""", (f'%{SOURCE_NAME}%',))
+""", (SOURCE_CODE,))
 row = cur.fetchone()
 if not row:
-    print(f"[{db}] ERROR: Source product not found: {SOURCE_NAME!r}")
+    print(f"[{db}] ERROR: Source product not found: default_code={SOURCE_CODE!r}")
     conn.close()
     sys.exit(1)
 src_tmpl_id = row['id']
-print(f"[{db}] Source product_template.id = {src_tmpl_id}")
+print(f"[{db}] Source product_template.id = {src_tmpl_id} (default_code={SOURCE_CODE})")
 
 # ── Load source rows ─────────────────────────────────────────────────────────
 cur.execute("SELECT * FROM product_template WHERE id = %s", (src_tmpl_id,))

@@ -77,9 +77,13 @@ jobs:
             docker cp corrections/fix_db_module_descriptions.py odoo-production:/tmp/fix_db_desc.py
             docker exec odoo-production bash -c 'python3 /tmp/fix_db_desc.py amunet_prod $USER $PASSWORD $HOST $PORT'
             docker exec odoo-production bash -c 'python3 /tmp/fix_db_desc.py Amunet_testing $USER $PASSWORD $HOST $PORT'
+            docker cp corrections/fix_fk_rule_group_118.py odoo-production:/tmp/fix_fk_rule_group_118.py
+            docker exec odoo-production bash -c 'python3 /tmp/fix_fk_rule_group_118.py Amunet_testing $USER $PASSWORD $HOST $PORT'
             docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
             docker compose -f docker-compose.production.yml restart web-production
             docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
+            docker cp corrections/add_inventory_hoja_maestra_covinet_lote_0126.py odoo-production:/tmp/add_inv_hmc_0126.py
+            docker exec odoo-production bash -c 'python3 /tmp/add_inv_hmc_0126.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: Inventory correction (Hoja maestra covinet / lote 0126) failed for Amunet_testing."
             docker cp corrections/create_product_hoja_maestra_antidoping_sangre.py odoo-production:/tmp/create_product_antidoping_sangre.py
             docker exec odoo-production bash -c 'python3 /tmp/create_product_antidoping_sangre.py amunet_prod $USER $PASSWORD $HOST $PORT'
-            docker exec odoo-production bash -c 'python3 /tmp/create_product_antidoping_sangre.py Amunet_testing $USER $PASSWORD $HOST $PORT'
+            docker exec odoo-production bash -c 'python3 /tmp/create_product_antidoping_sangre.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_antidoping_sangre en Amunet_testing fallo."
