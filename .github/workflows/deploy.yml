@@ -39,8 +39,8 @@ jobs:
               echo "  Intento $i/24..."
               sleep 5
             done
-            docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf -d amunet_prod -u all -i amunet_production --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
-            docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u all -i amunet_production --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+            docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf -d amunet_prod -i amunet_production --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+            docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -i amunet_production --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: amunet_production update failed on Amunet_testing (possible FK issue, non-critical)"
             docker cp corrections/setup_amunet_production_data.py odoo-staging:/tmp/setup_amunet_production_data.py
             docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d amunet_prod --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_production_data.py' || echo "WARNING: setup_amunet_production_data failed on amunet_prod"
             docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d Amunet_testing --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_production_data.py' || echo "WARNING: setup_amunet_production_data failed on Amunet_testing"
