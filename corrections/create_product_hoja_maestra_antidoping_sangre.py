@@ -44,29 +44,30 @@ def has_image(tmpl_id):
     return cur.fetchone() is not None
 
 def copy_image(src_id, dst_id):
-    """Copia imagen via store_fname (Odoo 17+ no tiene columna datas en DB).
-    Usa SAVEPOINT para no afectar el resto de la transaccion si falla."""
-    # buscar attachment origen â sin columna datas
+    """Copia imagen. Detecta columnas disponibles en ir_attachment dinamicamente."""
     cur.execute("SELECT id,name,mimetype,store_fname,file_size FROM ir_attachment WHERE res_model='product.template' AND res_field='image_1920' AND res_id=%s ORDER BY id DESC LIMIT 1",(src_id,))
     att=cur.fetchone()
     if not att:
         cur.execute("SELECT id,name,mimetype,store_fname,file_size FROM ir_attachment WHERE res_model='product.template' AND res_id=%s AND mimetype ILIKE 'image/%' ORDER BY id DESC LIMIT 1",(src_id,))
         att=cur.fetchone()
     if not att:
-        print(f"[WARN] No image attachment found for src_tmpl_id={src_id} â skipping")
-        return False
-    print(f"[INFO] Image: id={att['id']}, mime={att['mimetype']}, store_fname={att['store_fname']}, size={att['file_size']}")
+        print(f"[WARN] No image found for src_tmpl_id={src_id}"); return False
     if not att['store_fname']:
-        print(f"[WARN] store_fname is empty â cannot copy image"); return False
-    # borrar imagen destino si existe
+        print(f"[WARN] store_fname is empty"); return False
+    print(f"[INFO] Image: id={att['id']}, mime={att['mimetype']}, store_fname={att['store_fname']}, size={att['file_size']}")
     cur.execute("DELETE FROM ir_attachment WHERE res_model='product.template' AND res_field='image_1920' AND res_id=%s",(dst_id,))
-    # usar SAVEPOINT para aislar el INSERT
+    # Detectar columnas disponibles para no hardcodear
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='ir_attachment'")
+    existing={r['column_name'] for r in cur.fetchall()}
+    data={'name':att['name'] or 'image','res_model':'product.template','res_field':'image_1920',
+          'res_id':dst_id,'type':'binary','mimetype':att['mimetype'] or 'image/jpeg',
+          'store_fname':att['store_fname'],'file_size':att['file_size'] or 0,'create_date':now,'write_date':now}
+    for col,val in {'res_name':NEW_NAME,'public':False,'create_uid':1,'write_uid':1}.items():
+        if col in existing: data[col]=val
+    cols=list(data.keys()); vals=[data[c] for c in cols]
     cur.execute("SAVEPOINT img_copy")
     try:
-        cur.execute("""INSERT INTO ir_attachment
-            (name,res_model,res_field,res_id,type,mimetype,store_fname,file_size,create_date,write_date)
-            VALUES(%s,%s,'product.template','image_1920',%s,'binary',%s,%s,%s,%s,%s)""",
-            (att['name'] or 'image',dst_id,att['mimetype'] or 'image/png',att['store_fname'],att['file_size'] or 0,now,now))
+        cur.execute(f"INSERT INTO ir_attachment ({','.join(cols)}) VALUES ({','.join(['%s']*len(vals))})",vals)
         cur.execute("RELEASE SAVEPOINT img_copy")
         print(f"[OK]   Image copied to dst_tmpl_id={dst_id}"); return True
     except Exception as e:
@@ -79,7 +80,7 @@ r=cur.fetchone()
 if r:
     fix_codes(r['id'],r['pp_id'])
     if has_image(r['id']):
-        print(f"[{db}] '{NEW_CODE}' already correct with image â done.")
+        print(f"[{db}] '{NEW_CODE}' already correct with image Ã¢ÂÂ done.")
         conn.commit(); conn.close(); sys.exit(0)
     src=get_source_tmpl_id()
     if src: copy_image(src,r['id'])
@@ -90,7 +91,7 @@ if r:
 cur.execute("SELECT pt.id,pp.id AS pp_id FROM product_template pt JOIN product_product pp ON pp.product_tmpl_id=pt.id WHERE pp.default_code=%s AND pt.name::text ILIKE '%Antidoping Sangre%' LIMIT 1",(SOURCE_CODE,))
 r=cur.fetchone()
 if r:
-    print(f"[{db}] Wrong code found (tmpl_id={r['id']}) â fixing...")
+    print(f"[{db}] Wrong code found (tmpl_id={r['id']}) Ã¢ÂÂ fixing...")
     fix_codes(r['id'],r['pp_id'])
     if not has_image(r['id']):
         src=get_source_tmpl_id()
@@ -104,7 +105,7 @@ if r:
 print(f"[{db}] Creating '{NEW_CODE}' from scratch...")
 src_tmpl_id=get_source_tmpl_id()
 if not src_tmpl_id:
-    print(f"[ERROR] Source '{SOURCE_CODE}' not found â aborting"); conn.close(); sys.exit(1)
+    print(f"[ERROR] Source '{SOURCE_CODE}' not found Ã¢ÂÂ aborting"); conn.close(); sys.exit(1)
 print(f"[OK]   Source: tmpl_id={src_tmpl_id}")
 SKIP_TMPL={'id','create_date','write_date','create_uid','write_uid','default_code','image_1920','image_128','active'}
 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='product_template' ORDER BY ordinal_position")
