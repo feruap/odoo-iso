@@ -44,6 +44,9 @@ jobs:
             docker cp corrections/setup_amunet_production_data.py odoo-staging:/tmp/setup_amunet_production_data.py
             docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d amunet_prod --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_production_data.py' || echo "WARNING: setup_amunet_production_data failed on amunet_prod"
             docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d Amunet_testing --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_production_data.py' || echo "WARNING: setup_amunet_production_data failed on Amunet_testing"
+            docker cp corrections/setup_amunet_bom_data.py odoo-staging:/tmp/setup_amunet_bom_data.py
+            docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d amunet_prod --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_bom_data.py' || echo "WARNING: setup_amunet_bom_data failed on amunet_prod"
+            docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d Amunet_testing --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_bom_data.py' || echo "WARNING: setup_amunet_bom_data failed on Amunet_testing"
             docker compose -f docker-compose.staging.yml restart web-staging
 
   deploy-production:
