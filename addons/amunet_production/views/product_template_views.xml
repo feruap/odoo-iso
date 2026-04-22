@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_product_template_form_amunet_inherit" model="ir.ui.view">
+            <field name="name">product.template.form.amunet.inherit</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="Configuración Solución" name="amunet_solution_config" invisible="type != 'product'">
+                        <group name="amunet_sol_config_group">
+                            <group string="Checklist de Fabricación (Actividades Obligatorias)">
+                                <field name="amunet_req_history_log"/>
+                                <field name="amunet_req_calculations"/>
+                                <field name="amunet_req_dilution"/>
+                                <field name="amunet_req_aforar"/>
+                                <field name="amunet_req_quality_control"/>
+                            </group>
+                            <group string="Parámetros Físico-Químicos de la Solución">
+                                <field name="amunet_initial_ph"/>
+                                <field name="amunet_ph_adj_range_text"/>
+                                <field name="amunet_weighing_range_text"/>
+                                <field name="amunet_expiration_text"/>
+                                <field name="amunet_solution_dependency_id" domain="[('categ_id.name', 'ilike', 'Solucion')]"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_product_product_form_amunet_inherit" model="ir.ui.view">
+            <field name="name">product.product.form.amunet.inherit</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="Configuración Solución" name="amunet_solution_config" invisible="type != 'product'">
+                        <group name="amunet_sol_config_group">
+                            <group string="Checklist de Fabricación (Actividades Obligatorias)">
+                                <field name="amunet_req_history_log"/>
+                                <field name="amunet_req_calculations"/>
+                                <field name="amunet_req_dilution"/>
+                                <field name="amunet_req_aforar"/>
+                                <field name="amunet_req_quality_control"/>
+                            </group>
+                            <group string="Parámetros Físico-Químicos de la Solución">
+                                <field name="amunet_initial_ph"/>
+                                <field name="amunet_ph_adj_range_text"/>
+                                <field name="amunet_weighing_range_text"/>
+                                <field name="amunet_expiration_text"/>
+                                <field name="amunet_solution_dependency_id" domain="[('categ_id.name', 'ilike', 'Solucion')]"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

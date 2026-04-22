@@ -26,12 +26,14 @@ Este módulo implementa un sistema de **control de acceso granular a almacenes**
 ### Ejemplo 1: Usuario de Recepción
 
 **Configuración**:
+
 - Usuario: "María González"
 - Almacén: "Almacén Principal"
 - Tipo: Acceso Restringido
 - Operaciones: Solo "Recepciones"
 
 **Resultado**:
+
 - ✅ María puede ver y validar recepciones en Almacén Principal
 - ❌ María NO puede ver entregas ni transferencias internas
 - ❌ María NO puede acceder a otros almacenes
@@ -39,11 +41,13 @@ Este módulo implementa un sistema de **control de acceso granular a almacenes**
 ### Ejemplo 2: Usuario de Producción
 
 **Configuración**:
+
 - Usuario: "Juan Pérez"
 - Almacén: "Almacén de Producción"
 - Tipo: Acceso Completo
 
 **Resultado**:
+
 - ✅ Juan puede realizar TODAS las operaciones en Almacén de Producción
 - ✅ Juan puede ver ubicaciones, quants, movimientos
 - ❌ Juan NO puede acceder a otros almacenes
