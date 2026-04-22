@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_analysis_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.production.analysis.wizard.form</field>
+        <field name="model">amunet.production.analysis.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Confirmar Análisis a Laboratorio">
+                <alert message="Estás a punto de bloquear la edición de esta orden y mandarla a Cola de Análisis Clínico." type="warning"/>
+                
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="production_id" invisible="1"/>
+                            <field name="product_id"/>
+                            <field name="product_qty"/>
+                            <field name="amunet_expiration_text"/>
+                            <field name="solution_expiration_date"/>
+                            <field name="solution_lot_id"/>
+                        </group>
+                        <group>
+                            <label for="quality_ph_initial" string="Lecturas de pH"/>
+                            <div class="o_row">
+                                <span>Inicial: </span><field name="quality_ph_initial"/>
+                                <span> | Final: </span><field name="quality_ph_final"/>
+                            </div>
+                        </group>
+                    </group>
+                    
+                    <separator string="Reactivos Involucrados (Validados)"/>
+                    <field name="move_raw_ids" readonly="1">
+                        <list>
+                            <field name="product_id"/>
+                            <field name="product_uom_qty" string="Esperado"/>
+                            <field name="quantity" string="Utilizado"/>
+                            <field name="product_uom" string="UdM"/>
+                            <field name="amunet_is_valid" string="Válido" widget="boolean"/>
+                        </list>
+                    </field>
+                </sheet>
+                
+                <footer>
+                    <button string="Confirmar Análisis" name="action_confirm_analysis" type="object" class="btn-success"/>
+                    <button string="Cancelar / Regresar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_analysis_wizard" model="ir.actions.act_window">
+        <field name="name">Confirmar Análisis a Laboratorio</field>
+        <field name="res_model">amunet.production.analysis.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
