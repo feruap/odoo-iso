@@ -105,12 +105,6 @@
                     <attribute name="string">Cantidad Utilizada</attribute>
                     <attribute name="column_invisible">False</attribute>
                 </xpath>
-                <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_uom']" position="attributes">
-                    <attribute name="string">Unidad de Medida (UdM)</attribute>
-                    <attribute name="column_invisible">False</attribute>
-                    <attribute name="readonly">1</attribute>
-                    <attribute name="groups"></attribute>
-                </xpath>
 
                 <!-- Ocultar badge de disponibilidad nativo -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='forecast_availability']" position="attributes">
