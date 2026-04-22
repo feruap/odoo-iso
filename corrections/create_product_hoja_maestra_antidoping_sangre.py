@@ -1,7 +1,7 @@
 """
 create_product_hoja_maestra_antidoping_sangre.py
-Idempotente. Actualiza default_code en product_template Y product_product.
-Uso: python3 script.py DB USER PASSWORD HOST PORT
+Crea o corrige producto SPHMC75 basado en SPHMC53.
+Fixes: (1) no usa columna datas en ir_attachment (Odoo 17+), (2) usa SAVEPOINT para imagen.
 """
 import sys, json
 from datetime import datetime, timezone
@@ -12,8 +12,10 @@ except ImportError:
     subprocess.check_call([sys.executable,'-m','pip','install','psycopg2-binary','-q'])
     import psycopg2, psycopg2.extras
 
-SOURCE_CODE='SPHMC53'; NEW_NAME='Hoja Maestra Antidoping Sangre 2 Par\u00e1metros'; NEW_CODE='SPHMC75'
-db,user,pwd,host,port = sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],int(sys.argv[5])
+SOURCE_CODE='SPHMC53'
+NEW_NAME='Hoja Maestra Antidoping Sangre 2 Par\u00e1metros'
+NEW_CODE='SPHMC75'
+db,user,pwd,host,port=sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],int(sys.argv[5])
 print(f"[{db}] Conectando a {host}:{port}...")
 conn=psycopg2.connect(dbname=db,user=user,password=pwd,host=host,port=port)
 conn.autocommit=False
@@ -24,15 +26,14 @@ def get_source_tmpl_id():
     cur.execute("SELECT pt.id FROM product_template pt JOIN product_product pp ON pp.product_tmpl_id=pt.id WHERE pp.default_code=%s LIMIT 1",(SOURCE_CODE,))
     r=cur.fetchone(); return r['id'] if r else None
 
-def fix_codes(tmpl_id,pp_id=None):
-    # Fix product_product (this is what the UI shows)
+def fix_codes(tmpl_id, pp_id=None):
+    """Actualiza default_code en product_product Y product_template."""
     if pp_id:
         cur.execute("UPDATE product_product SET default_code=%s WHERE id=%s",(NEW_CODE,pp_id))
         print(f"[OK]   pp id={pp_id} default_code='{NEW_CODE}'")
     else:
         cur.execute("UPDATE product_product SET default_code=%s WHERE product_tmpl_id=%s AND (default_code!=%s OR default_code IS NULL)",(NEW_CODE,tmpl_id,NEW_CODE))
         print(f"[OK]   product_product updated: {cur.rowcount} row(s)")
-    # Fix product_template if column exists
     cur.execute("SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='product_template' AND column_name='default_code'")
     if cur.fetchone():
         cur.execute("UPDATE product_template SET default_code=%s WHERE id=%s",(NEW_CODE,tmpl_id))
@@ -42,26 +43,37 @@ def has_image(tmpl_id):
     cur.execute("SELECT id FROM ir_attachment WHERE res_model='product.template' AND res_field='image_1920' AND res_id=%s LIMIT 1",(tmpl_id,))
     return cur.fetchone() is not None
 
-def copy_image(src_id,dst_id):
-    cur.execute("SELECT id,name,mimetype,datas,store_fname,file_size FROM ir_attachment WHERE res_model='product.template' AND res_field='image_1920' AND res_id=%s ORDER BY id DESC LIMIT 1",(src_id,))
+def copy_image(src_id, dst_id):
+    """Copia imagen via store_fname (Odoo 17+ no tiene columna datas en DB).
+    Usa SAVEPOINT para no afectar el resto de la transaccion si falla."""
+    # buscar attachment origen — sin columna datas
+    cur.execute("SELECT id,name,mimetype,store_fname,file_size FROM ir_attachment WHERE res_model='product.template' AND res_field='image_1920' AND res_id=%s ORDER BY id DESC LIMIT 1",(src_id,))
     att=cur.fetchone()
     if not att:
-        cur.execute("SELECT id,name,mimetype,datas,store_fname,file_size FROM ir_attachment WHERE res_model='product.template' AND res_id=%s AND mimetype ILIKE 'image/%' ORDER BY id DESC LIMIT 1",(src_id,))
+        cur.execute("SELECT id,name,mimetype,store_fname,file_size FROM ir_attachment WHERE res_model='product.template' AND res_id=%s AND mimetype ILIKE 'image/%' ORDER BY id DESC LIMIT 1",(src_id,))
         att=cur.fetchone()
     if not att:
-        print(f"[WARN] No image found for src_tmpl_id={src_id}"); return False
-    print(f"[INFO] Image: id={att['id']}, mime={att['mimetype']}, has_datas={att['datas'] is not None}, store={att['store_fname']}")
-    if not att['datas'] and not att['store_fname']:
-        print("[WARN] No datas/store_fname — skipping image"); return False
+        print(f"[WARN] No image attachment found for src_tmpl_id={src_id} — skipping")
+        return False
+    print(f"[INFO] Image: id={att['id']}, mime={att['mimetype']}, store_fname={att['store_fname']}, size={att['file_size']}")
+    if not att['store_fname']:
+        print(f"[WARN] store_fname is empty — cannot copy image"); return False
+    # borrar imagen destino si existe
     cur.execute("DELETE FROM ir_attachment WHERE res_model='product.template' AND res_field='image_1920' AND res_id=%s",(dst_id,))
+    # usar SAVEPOINT para aislar el INSERT
+    cur.execute("SAVEPOINT img_copy")
     try:
-        cur.execute("INSERT INTO ir_attachment(name,res_name,res_model,res_field,res_id,type,mimetype,datas,store_fname,file_size,create_date,write_date) VALUES(%s,%s,'product.template','image_1920',%s,'binary',%s,%s,%s,%s,%s,%s)",
-            (att['name'] or 'image',NEW_NAME,dst_id,att['mimetype'] or 'image/png',att['datas'],att['store_fname'],att['file_size'] or 0,now,now))
+        cur.execute("""INSERT INTO ir_attachment
+            (name,res_name,res_model,res_field,res_id,type,mimetype,store_fname,file_size,create_date,write_date)
+            VALUES(%s,%s,'product.template','image_1920',%s,'binary',%s,%s,%s,%s,%s)""",
+            (att['name'] or 'image',NEW_NAME,dst_id,att['mimetype'] or 'image/png',att['store_fname'],att['file_size'] or 0,now,now))
+        cur.execute("RELEASE SAVEPOINT img_copy")
         print(f"[OK]   Image copied to dst_tmpl_id={dst_id}"); return True
     except Exception as e:
-        print(f"[ERROR] Image insert failed: {e}"); conn.rollback(); return False
+        cur.execute("ROLLBACK TO SAVEPOINT img_copy")
+        print(f"[ERROR] Image copy failed: {e}"); return False
 
-# Case 1: SPHMC75 exists
+# Case 1: SPHMC75 ya existe
 cur.execute("SELECT pt.id,pp.id AS pp_id FROM product_template pt JOIN product_product pp ON pp.product_tmpl_id=pt.id WHERE pp.default_code=%s LIMIT 1",(NEW_CODE,))
 r=cur.fetchone()
 if r:
@@ -74,7 +86,7 @@ if r:
     conn.commit(); conn.close()
     print(f"[LISTO] Imagen actualizada en '{db}'."); sys.exit(0)
 
-# Case 2: wrong code SPHMC53 + correct name
+# Case 2: codigo incorrecto + nombre correcto
 cur.execute("SELECT pt.id,pp.id AS pp_id FROM product_template pt JOIN product_product pp ON pp.product_tmpl_id=pt.id WHERE pp.default_code=%s AND pt.name::text ILIKE '%Antidoping Sangre%' LIMIT 1",(SOURCE_CODE,))
 r=cur.fetchone()
 if r:
@@ -88,12 +100,12 @@ if r:
     conn.commit(); conn.close()
     print(f"[LISTO] '{NEW_CODE}' corregido en '{db}'."); sys.exit(0)
 
-# Case 3: create from scratch
+# Case 3: crear desde cero
 print(f"[{db}] Creating '{NEW_CODE}' from scratch...")
 src_tmpl_id=get_source_tmpl_id()
 if not src_tmpl_id:
     print(f"[ERROR] Source '{SOURCE_CODE}' not found — aborting"); conn.close(); sys.exit(1)
-
+print(f"[OK]   Source: tmpl_id={src_tmpl_id}")
 SKIP_TMPL={'id','create_date','write_date','create_uid','write_uid','default_code','image_1920','image_128','active'}
 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='product_template' ORDER BY ordinal_position")
 copy_cols=[r['column_name'] for r in cur.fetchall() if r['column_name'] not in SKIP_TMPL]
@@ -101,8 +113,7 @@ cur.execute(f"SELECT {','.join(copy_cols)} FROM product_template WHERE id=%s",(s
 src_row=cur.fetchone()
 values=[src_row[c] for c in copy_cols]
 if 'name' in copy_cols:
-    idx=copy_cols.index('name')
-    orig=src_row['name']
+    idx=copy_cols.index('name'); orig=src_row['name']
     if isinstance(orig,dict): values[idx]={k:NEW_NAME for k in orig}
     elif isinstance(orig,str):
         try: parsed=json.loads(orig); values[idx]=json.dumps({k:NEW_NAME for k in parsed})
@@ -113,7 +124,6 @@ cols_str=','.join(copy_cols+['default_code','active','create_date','write_date']
 cur.execute(f"INSERT INTO product_template({cols_str}) VALUES({','.join(['%s']*len(values))}) RETURNING id",values)
 new_tmpl_id=cur.fetchone()['id']
 print(f"[OK]   product_template created: id={new_tmpl_id}")
-
 SKIP_PP={'id','create_date','write_date','create_uid','write_uid','product_tmpl_id','default_code','active'}
 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='product_product' ORDER BY ordinal_position")
 copy_pp=[r['column_name'] for r in cur.fetchall() if r['column_name'] not in SKIP_PP]
