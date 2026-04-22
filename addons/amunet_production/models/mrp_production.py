@@ -119,7 +119,7 @@ class MrpProduction(models.Model):
         if not self.bom_id:
             bom_results = self.env['mrp.bom']._bom_find(
                 product,
-                company_id=self.company_id,
+                company_id=self.company_id.id,
                 bom_type='normal',
             )
             bom = bom_results.get(product, False)
