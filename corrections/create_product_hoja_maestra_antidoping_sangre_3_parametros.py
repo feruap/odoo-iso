@@ -297,6 +297,9 @@ if 'name' in copy_cols:
         print(f"[WARN] No se pudo parsear name JSONB: {e} — usando string directo")
         values[name_idx] = NEW_NAME
 
+# Serialize any remaining JSONB/dict columns so psycopg2 can adapt them
+values = [json.dumps(v) if isinstance(v, dict) else v for v in values]
+
 cur.execute(f"""
     INSERT INTO product_template ({cols_str})
     VALUES ({vals_placeholder})
@@ -327,6 +330,9 @@ if src_pp:
 else:
     pp_cols_str = 'product_tmpl_id, default_code, active, create_date, write_date'
     pp_vals = [new_tmpl_id, NEW_CODE, True, now, now]
+
+# Serialize any JSONB/dict columns
+pp_vals = [json.dumps(v) if isinstance(v, dict) else v for v in pp_vals]
 
 pp_placeholder = ', '.join(['%s'] * len(pp_vals))
 cur.execute(f"""
