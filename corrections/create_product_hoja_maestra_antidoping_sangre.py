@@ -64,6 +64,8 @@ def copy_image(src_id, dst_id):
           'store_fname':att['store_fname'],'file_size':att['file_size'] or 0,'create_date':now,'write_date':now}
     for col,val in {'res_name':NEW_NAME,'public':False,'create_uid':1,'write_uid':1}.items():
         if col in existing: data[col]=val
+    if 'checksum' in existing and att['store_fname'] and '/' in att['store_fname']:
+        data['checksum']=att['store_fname'].split('/')[-1]
     cols=list(data.keys()); vals=[data[c] for c in cols]
     cur.execute("SAVEPOINT img_copy")
     try:
