@@ -105,14 +105,26 @@ class MrpProduction(models.Model):
 
     @api.onchange('product_id')
     def _onchange_product_expiration(self):
-        """Asigna directamente los campos de caducidad y pH al cambiar producto para garantizar refresco en UI"""
+        """Asigna campos de caducidad/pH y garantiza enlace de BoM al cambiar producto"""
         from datetime import timedelta
         product = self.product_id
         if not product:
             self.solution_expiration_date = False
             self.amunet_expiration_text = False
             self.quality_ph_initial = False
+            self.bom_id = False
             return
+
+        # Forzar enlace de BoM si no esta asignado (Odoo 19: el metodo nativo puede no correr antes)
+        if not self.bom_id:
+            bom_results = self.env['mrp.bom']._bom_find(
+                product,
+                company_id=self.company_id,
+                bom_type='normal',
+            )
+            bom = bom_results.get(product, False)
+            if bom:
+                self.bom_id = bom
 
         self.amunet_expiration_text = product.amunet_expiration_text
         self.quality_ph_initial = product.amunet_initial_ph
