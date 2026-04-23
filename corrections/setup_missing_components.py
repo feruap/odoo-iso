@@ -42,7 +42,7 @@ for data in MISSING_PRODUCTS:
 
     Product.create({
         'name': data['name'],
-        'detailed_type': data['type'],
+        'type': data['type'],
         'uom_id': uom.id,
         'uom_po_id': uom.id,
         'categ_id': categ.id,
