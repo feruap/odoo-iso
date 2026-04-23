@@ -17,11 +17,11 @@ MISSING_PRODUCTS = [
     {'name': 'Caseína CHEMS', 'uom': 'g', 'type': 'consu'}
 ]
 
-Product = env['product.product']
+Product = env['product.template']
 Uom = env['uom.uom']
 Categ = env['product.category']
 
-# Buscar categoria por defecto
+# Buscar categoria de materia prima o fallback a All
 categ = Categ.search([('name', 'ilike', 'materia prima')], limit=1)
 if not categ:
     categ = Categ.search([], limit=1)
@@ -33,18 +33,16 @@ for data in MISSING_PRODUCTS:
         print(f"[SKIP] componente ya existe: {data['name']}")
         continue
 
-    # Buscar UoM
     uom = Uom.search([('name', '=', data['uom'])], limit=1)
     if not uom:
         uom = Uom.search([('name', 'ilike', data['uom'])], limit=1)
     if not uom:
-        uom = env.ref('uom.product_uom_unit') # Fallback
+        uom = env.ref('uom.product_uom_unit')
 
     Product.create({
         'name': data['name'],
         'type': data['type'],
         'uom_id': uom.id,
-        'uom_po_id': uom.id,
         'categ_id': categ.id,
     })
     env.cr.commit()
