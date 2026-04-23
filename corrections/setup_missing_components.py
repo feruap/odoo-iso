@@ -19,12 +19,6 @@ MISSING_PRODUCTS = [
 
 Product = env['product.template']
 Uom = env['uom.uom']
-Categ = env['product.category']
-
-# Buscar categoria de materia prima o fallback a All
-categ = Categ.search([('name', 'ilike', 'materia prima')], limit=1)
-if not categ:
-    categ = Categ.search([], limit=1)
 
 created = 0
 for data in MISSING_PRODUCTS:
@@ -43,7 +37,6 @@ for data in MISSING_PRODUCTS:
         'name': data['name'],
         'type': data['type'],
         'uom_id': uom.id,
-        'categ_id': categ.id,
     })
     env.cr.commit()
     print(f"[OK] Componente creado: {data['name']} ({uom.name})")
