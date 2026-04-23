@@ -199,7 +199,7 @@ class MrpProduction(models.Model):
                 record.amunet_all_ingredients_valid = all(move.amunet_is_valid for move in record.move_raw_ids)
 
     def action_request_analysis(self):
-        """Valida estado/reactivos y abre el Wizard de análisis"""
+        """Valida estado/reactivos/checklist y abre el Wizard de análisis"""
         self.ensure_one()
 
         if self.quality_analysis_status not in ('none', 'to_request', 'rejected'):
@@ -213,7 +213,20 @@ class MrpProduction(models.Model):
 
         if not self.amunet_all_ingredients_valid:
             raise UserError('Todos los reactivos deben estar marcados como Válidos para proceder.')
-        
+
+        # Validar checklist operativa antes de mostrar el wizard
+        missing = []
+        if self.amunet_sys_req_history and not self.amunet_check_history_log:
+            missing.append("Registro en Bitácoras")
+        if self.amunet_sys_req_calc and not self.amunet_check_calculations:
+            missing.append("Cálculos Realizados")
+        if self.amunet_sys_req_dilution and not self.amunet_check_dilution:
+            missing.append("Dilución de Reactivos")
+        if self.amunet_sys_req_aforar and not self.amunet_check_aforar:
+            missing.append("Aforar")
+        if missing:
+            raise UserError('Completa las siguientes actividades operativas antes de solicitar el análisis:\n- ' + '\n- '.join(missing))
+
         return {
             'name': 'Confirmar Solicitud de Análisis',
             'type': 'ir.actions.act_window',
