@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Inherit mrp.production form view -->
+        <record id="view_mrp_production_form_amunet_inherit" model="ir.ui.view">
+            <field name="name">mrp.production.form.amunet.inherit</field>
+            <field name="model">mrp.production</field>
+            <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+            <field name="arch" type="xml">
+                <!-- Agregar al header o a los campos principales de la orden -->
+                <!-- Odoo 17 mrp forms have a lot of fields like 'user_id', 'origin'. Let's find an anchor like 'date_planned_start' or directly below product_id -->
+                <xpath expr="//header" position="inside">
+                    <button name="action_request_analysis" string="Confirmar análisis" type="object" class="oe_highlight" invisible="state == 'done' or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"/>
+                    <button name="%(amunet_production.action_report_production_zebra_label)d" string="Imprimir Etiqueta" type="action" class="oe_highlight" invisible="not amunet_all_ingredients_valid"/>
+                </xpath>
+                
+                <xpath expr="//button[@name='action_confirm']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@name='action_start']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@name='do_unreserve']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@name='button_plan']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@name='button_unplan']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//label[@for='lot_producing_ids']" position="attributes">
+                    <attribute name="string">Lote de Solución</attribute>
+                </xpath>
+
+                <xpath expr="//div[@name='bom_div']" position="after">
+                    <field name="solution_lot_id" string="Lote de Solución (Asignado)"/>
+                    <label for="quality_ph_initial" string="Control de pH" invisible="quality_ph_initial == 0.0"/>
+                    <div class="o_row" invisible="quality_ph_initial == 0.0">
+                        Inicial: <field name="quality_ph_initial" readonly="1" force_save="1" style="width:50px"/>
+                        | Rango: <field name="amunet_sys_ph_range" readonly="1"/>
+                        | Final: <field name="quality_ph_final"/>
+                    </div>
+                    <label for="solution_expiration_date" string="Caducidad"/>
+                    <div class="o_row">
+                        <field name="solution_expiration_date" force_save="1"/>
+                        <field name="amunet_expiration_text" readonly="1" force_save="1" class="text-muted"/>
+                    </div>
+                    <field name="quality_analysis_status" readonly="1" force_save="1" decoration-info="quality_analysis_status == 'requested'" decoration-success="quality_analysis_status == 'approved'" decoration-danger="quality_analysis_status == 'rejected'"/>
+                    <field name="amunet_all_ingredients_valid" invisible="1"/>
+                    <field name="amunet_sys_req_qc" invisible="1"/>
+                </xpath>
+                
+                <xpath expr="//notebook" position="inside">
+                    <page string="Actividades (Checklist)" name="amunet_activities_page">
+                        <div class="alert alert-warning" role="alert" invisible="quality_analysis_status == 'none' or not amunet_sys_req_qc">
+                            <i class="fa fa-info-circle"/> <strong>Control de Calidad:</strong> La solución requerirá validación del laboratorio antes de finalizar.
+                        </div>
+                        <group name="amunet_checklist_grp">
+                            <group string="Validación Operativa">
+                                <field name="amunet_sys_req_history" invisible="1"/>
+                                <field name="amunet_check_history_log" invisible="not amunet_sys_req_history"/>
+                                
+                                <field name="amunet_sys_req_calc" invisible="1"/>
+                                <field name="amunet_check_calculations" invisible="not amunet_sys_req_calc"/>
+                                
+                                <field name="amunet_sys_req_dilution" invisible="1"/>
+                                <field name="amunet_check_dilution" invisible="not amunet_sys_req_dilution"/>
+                                
+                                <field name="amunet_sys_req_aforar" invisible="1"/>
+                                <field name="amunet_check_aforar" invisible="not amunet_sys_req_aforar"/>
+
+                                <field name="amunet_sys_req_qc" string="Requerir C.C." widget="boolean_toggle"/>
+                            </group>
+                            <group string="Tolerancias Especificadas">
+                                <label for="amunet_sys_weighing_range" string="Rango de Pesaje" invisible="not amunet_sys_weighing_range"/>
+                                <div invisible="not amunet_sys_weighing_range">
+                                    <field name="amunet_sys_weighing_range" class="fw-bold text-primary"/>
+                                </div>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+
+                <!-- Filtrar por soluciones en el selector de producto -->
+                <xpath expr="//field[@name='product_id']" position="attributes">
+                    <attribute name="domain">[('categ_id.name', 'ilike', 'Solucion')]</attribute>
+                </xpath>
+
+                <!-- Mostrar categoria del producto seleccionado (solo lectura) -->
+                <xpath expr="//field[@name='product_id']" position="after">
+                    <field name="amunet_product_categ_id" string="Categoria" readonly="1"/>
+                </xpath>
+
+                <!-- Inyectar campo de estado visual en las líneas de reactivos -->
+                <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_id']" position="after">
+                    <field name="amunet_lot_id" domain="[('product_id', '=', product_id)]" context="{'default_product_id': product_id}"/>
+                    <field name="amunet_dissolution"/>
+                    <field name="amunet_is_valid" widget="boolean_toggle"/>
+                </xpath>
+
+                <!-- Hacer visible Cantidad Utilizada y Unidad de Medida -->
+                <xpath expr="//field[@name='move_raw_ids']/list/field[@name='quantity']" position="attributes">
+                    <attribute name="string">Cantidad Utilizada</attribute>
+                    <attribute name="column_invisible">False</attribute>
+                </xpath>
+
+                <!-- Ocultar badge de disponibilidad nativo -->
+                <xpath expr="//field[@name='move_raw_ids']/list/field[@name='forecast_availability']" position="attributes">
+                    <attribute name="column_invisible">True</attribute>
+                </xpath>
+            </field>
+        </record>
+
+
+
+    </data>
+</odoo>
