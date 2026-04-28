@@ -25,7 +25,7 @@ except ImportError:
     import psycopg2
     import psycopg2.extras
 
-SOURCE_CODE = 'DSC01'
+SOURCE_CODE = 'STDSC01'
 NEW_NAME    = 'Lengüeta'
 NEW_CODE    = 'LEN01'
 
