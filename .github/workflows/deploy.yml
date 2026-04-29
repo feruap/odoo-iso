@@ -31,12 +31,19 @@ jobs:
             for i in $(seq 1 24); do
               if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
                 echo "Odoo listo despues de $((i * 5))s"
+                sleep 15
                 break
               fi
               echo " Intento $i/24..."
               sleep 5
             done
-            docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf -d amunet_prod -i amunet_production --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+            for j in 1 2 3; do
+              if docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf -d amunet_prod -i amunet_production --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
+                break
+              fi
+              echo "Reintentando actualizacion en 10s..."
+              sleep 10
+            done
             docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -i amunet_production --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: amunet_production update failed on Amunet_testing (possible FK issue, non-critical)"
 
             docker compose -f docker-compose.staging.yml restart web-staging
@@ -65,12 +72,19 @@ jobs:
             for i in $(seq 1 24); do
               if docker exec odoo-production curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
                 echo "Odoo listo despues de $((i * 5))s"
+                sleep 15
                 break
               fi
               echo " Intento $i/24..."
               sleep 5
             done
-            docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+            for j in 1 2 3; do
+              if docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
+                break
+              fi
+              echo "Reintentando actualizacion en 10s..."
+              sleep 10
+            done
             docker compose -f docker-compose.production.yml restart web-production
             docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
 
