@@ -53,6 +53,9 @@ jobs:
             docker cp corrections/create_product_lengueta_len01.py odoo-staging:/tmp/create_product_lengueta_len01.py
             docker exec odoo-staging bash -c 'python3 /tmp/create_product_lengueta_len01.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_lengueta_len01 en amunet_prod fallo."
             docker exec odoo-staging bash -c 'python3 /tmp/create_product_lengueta_len01.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_lengueta_len01 en Amunet_testing fallo."
+            docker cp corrections/create_product_caja_caple_antidoping_sangre_micaj17.py odoo-staging:/tmp/create_product_caja_caple_antidoping_sangre_micaj17.py
+            docker exec odoo-staging bash -c 'python3 /tmp/create_product_caja_caple_antidoping_sangre_micaj17.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_caja_caple_antidoping_sangre_micaj17 en amunet_prod fallo."
+            docker exec odoo-staging bash -c 'python3 /tmp/create_product_caja_caple_antidoping_sangre_micaj17.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_caja_caple_antidoping_sangre_micaj17 en Amunet_testing fallo."
             docker compose -f docker-compose.staging.yml restart web-staging
   deploy-production:
     name: Deploy to Production
@@ -96,3 +99,6 @@ jobs:
             docker cp corrections/create_product_lengueta_len01.py odoo-production:/tmp/create_product_lengueta_len01.py
             docker exec odoo-production bash -c 'python3 /tmp/create_product_lengueta_len01.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_lengueta_len01 en amunet_prod fallo."
             docker exec odoo-production bash -c 'python3 /tmp/create_product_lengueta_len01.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_lengueta_len01 en Amunet_testing fallo."
+            docker cp corrections/create_product_caja_caple_antidoping_sangre_micaj17.py odoo-production:/tmp/create_product_caja_caple_antidoping_sangre_micaj17.py
+            docker exec odoo-production bash -c 'python3 /tmp/create_product_caja_caple_antidoping_sangre_micaj17.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_caja_caple_antidoping_sangre_micaj17 en amunet_prod fallo."
+            docker exec odoo-production bash -c 'python3 /tmp/create_product_caja_caple_antidoping_sangre_micaj17.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_caja_caple_antidoping_sangre_micaj17 en Amunet_testing fallo."
