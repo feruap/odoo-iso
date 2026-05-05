@@ -1,16 +1,16 @@
 """
-create_product_lengueta_len01.py
+create_product_caja_caple_antidoping_sangre_micaj17.py
 
-Crea "Lengüeta" (LEN01)
-copiando todos los atributos e imagen del producto base con default_code='DSC01'.
+Crea "Caja Caple Antidoping Sangre" (MICAJ17)
+copiando todos los atributos e imagen del producto base con default_code='MICAJ12'.
 
 Idempotente:
-  - Si ya existe con LEN01 e imagen → no hace nada.
-  - Si ya existe con LEN01 pero sin imagen → copia imagen del origen.
-  - Si existe con código incorrecto DSC01 y nombre correcto → corrige código e imagen.
+  - Si ya existe con MICAJ17 e imagen → no hace nada.
+  - Si ya existe con MICAJ17 pero sin imagen → copia imagen del origen.
+  - Si existe con código incorrecto MICAJ12 y nombre correcto → corrige código e imagen.
   - Si no existe → lo crea desde cero.
 
-Uso: python3 create_product_lengueta_len01.py DB USER PASSWORD HOST PORT
+Uso: python3 create_product_caja_caple_antidoping_sangre_micaj17.py DB USER PASSWORD HOST PORT
 """
 import sys
 import json
@@ -25,9 +25,9 @@ except ImportError:
     import psycopg2
     import psycopg2.extras
 
-SOURCE_CODE = 'STDSC01'
-NEW_NAME    = 'Lengüeta'
-NEW_CODE    = 'LEN01'
+SOURCE_CODE = 'MICAJ12'
+NEW_NAME    = 'Caja Caple Antidoping Sangre'
+NEW_CODE    = 'MICAJ17'
 
 db   = sys.argv[1]
 user = sys.argv[2]
@@ -211,7 +211,7 @@ if row:
     sys.exit(0)
 
 
-# ── Case 2: Existe con código incorrecto (DSC01 + nombre correcto) ─────────────
+# ── Case 2: Existe con código incorrecto (MICAJ12 + nombre correcto) ─────────────
 cur.execute("""
     SELECT pt.id, pp.id AS pp_id
     FROM product_template pt
@@ -219,7 +219,7 @@ cur.execute("""
     WHERE pp.default_code = %s
       AND (pt.name::text ILIKE %s OR pt.name::text ILIKE %s)
     LIMIT 1
-""", (SOURCE_CODE, f'%{NEW_NAME}%', '%Leng%eta%'))
+""", (SOURCE_CODE, f'%{NEW_NAME}%', '%Caja%Caple%Antidoping%'))
 row = cur.fetchone()
 
 if row:
