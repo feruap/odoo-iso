@@ -94,7 +94,7 @@ Tiempo: ~30s a 2 min según tamaño.
 
 1. **No editar prod a mano.** Todo cambio de código a prod debe pasar por
    `main`. Si algo se edita manual en `/opt/odoo/production`, el próximo deploy
-   lo sobrescribe (el script hace `git reset --hard origin/main`).
+   lo sobrescribe en el próximo push a `main`. Como ahora el deploy usa `git pull --ff-only`, los cambios sin commit en el server se preservan, pero un nuevo push a `main` que toque los mismos archivos hará FALLAR el deploy con conflicto — commitearlos antes.
 2. **No push directo a `main`.** Siempre vía PR desde `staging`.
 3. **`main` es sagrado.** Nada va a `main` sin haber pasado por staging
    primero (probado con datos clonados de prod, idealmente).
@@ -110,7 +110,7 @@ Tiempo: ~30s a 2 min según tamaño.
 
 ### `deploy.yml` — Deploy Odoo
 
-Trigger: `push` a `main` o `staging`. Hace `git reset --hard`, rebuilda imagen
+Trigger: `push` a `main` o `staging`. Hace `git fetch --all` + `git pull --ff-only`, rebuilda imagen
 Docker (con `--no-cache`), recrea contenedor, espera healthcheck, y corre
 `odoo -u all` (prod) o `odoo -i amunet_production` (staging).
 
