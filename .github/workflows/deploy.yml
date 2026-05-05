@@ -1,7 +1,12 @@
 name: Deploy Odoo
-# WARNING TO AI AGENTS: Do NOT remove the sleep delays or retry loops (for j in 1 2 3) 
-# around the "odoo -u all" commands. They are critical to prevent PostgreSQL serialization 
+# WARNING TO AI AGENTS: Do NOT remove the sleep delays or retry loops (for j in 1 2 3)
+# around the "odoo -u all" commands. They are critical to prevent PostgreSQL serialization
 # lock errors (SerializationFailure) during concurrent container startups.
+#
+# WARNING TO AI AGENTS (2026-05-05): Do NOT replace `git pull --ff-only` with
+# `git reset --hard`. The fast-forward-only flow protects in-flight uncommitted
+# work that an agent may have on the server. If a push from GitHub conflicts
+# with local changes the deploy must FAIL LOUD instead of silently overwriting.
 on:
   push:
     branches:
@@ -26,9 +31,12 @@ jobs:
             cd /opt/odoo/staging
             export GITHUB_TOKEN=$(grep -E '^GITHUB_TOKEN=' /opt/odoo/.env | cut -d'=' -f2- | tr -d '"' | tr -d "'")
             git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/feruap/odoo-iso.git
-            git fetch origin
+            git fetch --all --prune
             git checkout staging 2>/dev/null || git checkout -b staging origin/staging
-            git reset --hard origin/staging
+            # Fast-forward only: preserves any uncommitted work an agent may
+            # have on /opt/odoo/staging. If conflict, deploy fails loudly and
+            # the agent must commit (or stash) before the next external push.
+            git pull --ff-only origin staging
             docker compose -f docker-compose.staging.yml build --no-cache web-staging
             docker compose -f docker-compose.staging.yml up -d --force-recreate
             echo "Esperando que Odoo staging este listo..."
@@ -49,24 +57,6 @@ jobs:
               sleep 10
             done
             docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -i amunet_production --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: amunet_production update failed on Amunet_testing (possible FK issue, non-critical)"
-            docker cp corrections/setup_amunet_production_data.py odoo-staging:/tmp/setup_amunet_production_data.py
-            docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d amunet_prod --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_production_data.py' || echo "WARNING: setup_amunet_production_data failed on amunet_prod"
-            docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d Amunet_testing --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_production_data.py' || echo "WARNING: setup_amunet_production_data failed on Amunet_testing"
-            docker cp corrections/setup_missing_components.py odoo-staging:/tmp/setup_missing_components.py
-            docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d amunet_prod --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_missing_components.py' || echo "WARNING: setup_missing_components failed on amunet_prod"
-            docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d Amunet_testing --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_missing_components.py' || echo "WARNING: setup_missing_components failed on Amunet_testing"
-            docker cp corrections/setup_amunet_bom_data.py odoo-staging:/tmp/setup_amunet_bom_data.py
-            docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d amunet_prod --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_bom_data.py' || echo "WARNING: setup_amunet_bom_data failed on amunet_prod"
-            docker exec odoo-staging bash -c 'odoo shell -c /etc/odoo/odoo.conf -d Amunet_testing --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD < /tmp/setup_amunet_bom_data.py' || echo "WARNING: setup_amunet_bom_data failed on Amunet_testing"
-            docker cp corrections/grant_inventory_perms_veronica.py odoo-staging:/tmp/grant_inv_perms_veronica.py
-            docker exec odoo-staging bash -c 'python3 /tmp/grant_inv_perms_veronica.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: grant_inv_perms_veronica en amunet_prod fallo."
-            docker exec odoo-staging bash -c 'python3 /tmp/grant_inv_perms_veronica.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: grant_inv_perms_veronica en Amunet_testing fallo."
-            docker cp corrections/create_product_lengueta_len01.py odoo-staging:/tmp/create_product_lengueta_len01.py
-            docker exec odoo-staging bash -c 'python3 /tmp/create_product_lengueta_len01.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_lengueta_len01 en amunet_prod fallo."
-            docker exec odoo-staging bash -c 'python3 /tmp/create_product_lengueta_len01.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_lengueta_len01 en Amunet_testing fallo."
-            docker cp corrections/create_product_caja_caple_antidoping_sangre_micaj17.py odoo-staging:/tmp/create_product_caja_caple_antidoping_sangre_micaj17.py
-            docker exec odoo-staging bash -c 'python3 /tmp/create_product_caja_caple_antidoping_sangre_micaj17.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_caja_caple_antidoping_sangre_micaj17 en amunet_prod fallo."
-            docker exec odoo-staging bash -c 'python3 /tmp/create_product_caja_caple_antidoping_sangre_micaj17.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_caja_caple_antidoping_sangre_micaj17 en Amunet_testing fallo."
             docker compose -f docker-compose.staging.yml restart web-staging
   deploy-production:
     name: Deploy to Production
@@ -86,8 +76,12 @@ jobs:
             cd /opt/odoo/production
             export GITHUB_TOKEN=$(grep -E '^GITHUB_TOKEN=' /opt/odoo/.env | cut -d'=' -f2- | tr -d '"' | tr -d "'")
             git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/feruap/odoo-iso.git
-            git fetch origin
-            git reset --hard origin/main
+            git fetch --all --prune
+            git checkout main 2>/dev/null || git checkout -b main origin/main
+            # Fast-forward only: preserves any uncommitted work an agent may
+            # have on /opt/odoo/production. If conflict, deploy fails loudly
+            # and the agent must commit (or stash) before the next push.
+            git pull --ff-only origin main
             docker compose -f docker-compose.production.yml build --no-cache web-production
             docker compose -f docker-compose.production.yml up -d
             echo "Esperando que Odoo produccion este listo..."
@@ -109,12 +103,3 @@ jobs:
             done
             docker compose -f docker-compose.production.yml restart web-production
             docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
-            docker cp corrections/grant_inventory_perms_veronica.py odoo-production:/tmp/grant_inv_perms_veronica.py
-            docker exec odoo-production bash -c 'python3 /tmp/grant_inv_perms_veronica.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: grant_inv_perms_veronica en amunet_prod fallo."
-            docker exec odoo-production bash -c 'python3 /tmp/grant_inv_perms_veronica.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: grant_inv_perms_veronica en Amunet_testing fallo."
-            docker cp corrections/create_product_lengueta_len01.py odoo-production:/tmp/create_product_lengueta_len01.py
-            docker exec odoo-production bash -c 'python3 /tmp/create_product_lengueta_len01.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_lengueta_len01 en amunet_prod fallo."
-            docker exec odoo-production bash -c 'python3 /tmp/create_product_lengueta_len01.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_lengueta_len01 en Amunet_testing fallo."
-            docker cp corrections/create_product_caja_caple_antidoping_sangre_micaj17.py odoo-production:/tmp/create_product_caja_caple_antidoping_sangre_micaj17.py
-            docker exec odoo-production bash -c 'python3 /tmp/create_product_caja_caple_antidoping_sangre_micaj17.py amunet_prod $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_caja_caple_antidoping_sangre_micaj17 en amunet_prod fallo."
-            docker exec odoo-production bash -c 'python3 /tmp/create_product_caja_caple_antidoping_sangre_micaj17.py Amunet_testing $USER $PASSWORD $HOST $PORT' || echo "WARNING: create_product_caja_caple_antidoping_sangre_micaj17 en Amunet_testing fallo."
