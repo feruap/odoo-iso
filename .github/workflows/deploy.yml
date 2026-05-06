@@ -1,6 +1,6 @@
 name: Deploy Odoo
-# WARNING TO AI AGENTS: Do NOT remove the sleep delays or retry loops (for j in 1 2 3) 
-# around the "odoo -u all" commands. They are critical to prevent PostgreSQL serialization 
+# WARNING TO AI AGENTS: Do NOT remove the sleep delays or retry loops (for j in 1 2 3)
+# around the "odoo -u all" commands. They are critical to prevent PostgreSQL serialization
 # lock errors (SerializationFailure) during concurrent container startups.
 on:
   push:
@@ -24,7 +24,8 @@ jobs:
           script: |
             set -e
             cd /opt/odoo/staging
-            export GIT_SSH_COMMAND='ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
+            export GITHUB_TOKEN=$(grep -E '^GITHUB_TOKEN=' /opt/odoo/.env | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/feruap/odoo-iso.git
             git fetch origin
             git checkout staging 2>/dev/null || git checkout -b staging origin/staging
             git reset --hard origin/staging
@@ -83,7 +84,8 @@ jobs:
           script: |
             set -e
             cd /opt/odoo/production
-            export GIT_SSH_COMMAND='ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
+            export GITHUB_TOKEN=$(grep -E '^GITHUB_TOKEN=' /opt/odoo/.env | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/feruap/odoo-iso.git
             git fetch origin
             git reset --hard origin/main
             docker compose -f docker-compose.production.yml build --no-cache web-production
@@ -105,6 +107,7 @@ jobs:
               echo "Reintentando actualizacion en 10s..."
               sleep 10
             done
+
             echo "Ejecutando corrections en amunet_prod..."
             for script in /opt/odoo/production/corrections/*.py; do
               [ -f "$script" ] || continue
@@ -125,4 +128,3 @@ jobs:
 
             docker compose -f docker-compose.production.yml restart web-production
             docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
-
