@@ -23,10 +23,7 @@ jobs:
         run: |
           echo "$SSH_KEY_B64" | base64 -d > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
-          ssh -i /tmp/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            "$SSH_USER@$SSH_HOST" << 'ENDSSH'
+          cat > /tmp/deploy_staging.sh << 'SCRIPT'
           set -e
           cd /opt/odoo/staging
           git fetch origin
@@ -71,7 +68,12 @@ jobs:
           done
 
           docker compose -f docker-compose.staging.yml restart web-staging
-          ENDSSH
+          SCRIPT
+          ssh -i /tmp/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o BatchMode=yes \
+            "$SSH_USER@$SSH_HOST" 'bash -s' < /tmp/deploy_staging.sh
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
@@ -87,10 +89,7 @@ jobs:
         run: |
           echo "$SSH_KEY_B64" | base64 -d > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
-          ssh -i /tmp/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            "$SSH_USER@$SSH_HOST" << 'ENDSSH'
+          cat > /tmp/deploy_production.sh << 'SCRIPT'
           set -e
           cd /opt/odoo/production
           git fetch origin
@@ -135,4 +134,9 @@ jobs:
 
           docker compose -f docker-compose.production.yml restart web-production
           docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
-          ENDSSH
+          SCRIPT
+          ssh -i /tmp/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o BatchMode=yes \
+            "$SSH_USER@$SSH_HOST" 'bash -s' < /tmp/deploy_production.sh
