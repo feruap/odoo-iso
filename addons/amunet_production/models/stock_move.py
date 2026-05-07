@@ -44,9 +44,8 @@ class StockMove(models.Model):
             else:
                 in_range = qty_used > 0
 
-            # Si el producto requiere disolucion, debe estar confirmada
-            req_dilution = product.product_tmpl_id.amunet_req_dilution if product else False
-            if req_dilution and not move.amunet_dissolution:
+            # La columna de disolucion funciona como un checklist, se requiere que este activada para validar
+            if not move.amunet_dissolution:
                 move.amunet_is_valid = False
                 continue
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api, Command
 from odoo.exceptions import UserError
 
 class MrpProduction(models.Model):
@@ -9,6 +9,12 @@ class MrpProduction(models.Model):
     quality_ph_initial = fields.Float(string='pH Inicial Objetivo', compute='_compute_quality_params', store=True, readonly=False)
     quality_ph_final = fields.Float(string='pH Final Obtenido')
     solution_lot_id = fields.Char(string='Lote de Solución', copy=False, help="Lote asignado a la solución final (interno)")
+
+    amunet_scheduled_date_display = fields.Char(
+        string='Fecha Programada',
+        compute='_compute_scheduled_date_display',
+        store=False
+    )
     
     solution_expiration_date = fields.Datetime(string='Fecha de Caducidad (Calendario)', compute='_compute_quality_params', store=True, readonly=False)
     amunet_expiration_text = fields.Char(string='Caducidad (Texto)', compute='_compute_quality_params', store=True, readonly=False)
@@ -198,16 +204,41 @@ class MrpProduction(models.Model):
             else:
                 record.amunet_all_ingredients_valid = all(move.amunet_is_valid for move in record.move_raw_ids)
 
-    def _auto_generate_lot_draft(self):
-        """Genera lote del producto final en estado draft si el producto usa trazabilidad"""
+    @api.depends('date_start')
+    def _compute_scheduled_date_display(self):
+        import pytz
+        for rec in self:
+            if rec.date_start:
+                user_tz = self.env.user.tz or 'UTC'
+                utc_dt = rec.date_start.replace(tzinfo=pytz.utc)
+                local_dt = utc_dt.astimezone(pytz.timezone(user_tz))
+                rec.amunet_scheduled_date_display = local_dt.strftime('%d/%m/%y %I:%M %p')
+            else:
+                rec.amunet_scheduled_date_display = ''
+
+    def _auto_generate_lot_draft(self, force_recreate=False):
+        """Pre-visualiza el nombre del lote en draft SIN crearlo en base de datos"""
         for prod in self:
-            if (
-                prod.product_id
-                and prod.product_id.tracking != 'none'
-                and not prod.lot_producing_id
-                and prod.state == 'draft'
-            ):
-                prod._generate_lot_ids()
+            if prod.state != 'draft':
+                continue
+                
+            # NUNCA reservamos/creamos lote físico en draft para evitar lotes fantasma
+            prod.lot_producing_ids = [Command.clear()]
+            
+            if prod.product_id and prod.product_id.tracking != 'none':
+                # Predicción del nombre leyendo la secuencia sin consumirla
+                tmpl_id = prod.product_id.product_tmpl_id.id
+                seq = self.env['ir.sequence'].search([('code', '=', f'amunet.lot.sequence.{tmpl_id}')], limit=1)
+                if seq:
+                    try:
+                        next_number = seq.get_next_char(seq.number_next_actual)
+                        prod.solution_lot_id = next_number
+                    except Exception:
+                        prod.solution_lot_id = "Auto-Lote"
+                else:
+                    prod.solution_lot_id = "Generación Automática"
+            else:
+                prod.solution_lot_id = ''
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -218,8 +249,63 @@ class MrpProduction(models.Model):
     def write(self, vals):
         res = super().write(vals)
         if 'product_id' in vals:
-            self.filtered(lambda p: not p.lot_producing_id)._auto_generate_lot_draft()
+            # Si cambia el producto en borrador, forzamos regenerar la previsualizacion
+            for prod in self.filtered(lambda p: p.state == 'draft'):
+                prod._auto_generate_lot_draft(force_recreate=True)
+                
+        # Sincronización robusta: Si el lote real cambia (por ej. Limpiar o Generar serial), actualiza el campo texto
+        if 'lot_producing_ids' in vals or 'lot_producing_id' in vals:
+            for prod in self:
+                if prod.lot_producing_ids:
+                    prod.solution_lot_id = ", ".join(prod.lot_producing_ids.mapped('name'))
+                    
         return res
+
+    def action_generate_serial(self):
+        # Asegurar sincronizacion al darle al botón nativo de Odoo "Generar Lote"
+        res = super().action_generate_serial()
+        for prod in self:
+            if prod.lot_producing_ids:
+                prod.solution_lot_id = ", ".join(prod.lot_producing_ids.mapped('name'))
+        return res
+        
+    def action_clear_lot_producing_ids(self):
+        res = super().action_clear_lot_producing_ids()
+        for prod in self:
+            if not prod.lot_producing_ids:
+                prod.solution_lot_id = "Pendiente de Lote"
+        return res
+
+    @api.onchange('product_id')
+    def _onchange_product_id_lot_predict(self):
+        """Permite que la UI muestre la previsualizacion en vivo al cambiar producto antes de guardar"""
+        self._auto_generate_lot_draft()
+
+    def action_confirm(self):
+        # Crear fisicamente el lote ahora que se esta confirmando el analisis
+        for prod in self:
+            if prod.state == 'draft' and prod.product_id and prod.product_id.tracking != 'none' and not prod.lot_producing_ids:
+                try:
+                    tmpl_id = prod.product_id.product_tmpl_id.id
+                    seq = self.env['ir.sequence'].search([('code', '=', f'amunet.lot.sequence.{tmpl_id}')], limit=1)
+                    predicted = seq.get_next_char(seq.number_next_actual) if seq else ""
+                    
+                    if prod.solution_lot_id and prod.solution_lot_id != predicted:
+                        # El usuario lo editó manualmente. Respetamos su nombre y creamos el lote explícitamente (sin consumir secuencia).
+                        lot_vals = {
+                            'name': prod.solution_lot_id,
+                            'product_id': prod.product_id.id,
+                            'company_id': prod.company_id.id,
+                        }
+                    else:
+                        # No lo editó. Usamos la creación oficial de Odoo que consume la secuencia en BD.
+                        lot_vals = prod._prepare_stock_lot_values()
+                        
+                    prod.lot_producing_ids = [Command.create(lot_vals)]
+                    prod.solution_lot_id = lot_vals.get('name', prod.solution_lot_id)
+                except Exception:
+                    pass
+        return super().action_confirm()
 
     def action_request_analysis(self):
         """Valida estado/reactivos/checklist y abre el Wizard de análisis"""

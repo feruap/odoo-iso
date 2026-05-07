@@ -1,8 +1,9 @@
 # Agente Odoo Amunet
 
-> Este archivo es leído automáticamente por Claude Code al abrirse en C:\odoo-docker\
-> Contiene el contexto completo del sistema Amunet para operar de forma segura.
-> NO incluir tokens, contraseñas ni credenciales aquí — esos datos viven en el servidor.
+> Leído automáticamente por Claude Code al abrirse en `C:\odoo-docker\`
+> NO incluir tokens, contraseñas ni credenciales aquí.
+> Credenciales viven en `/opt/odoo/.env` en el servidor
+> y como Secrets en GitHub (Settings → Secrets → Actions).
 
 ---
 
@@ -50,155 +51,307 @@ Responde siempre en español.
 - Plataforma:      Odoo 19.0 (build 19.0-20260305)
 - Python:          3.12.3 (contenedor principal de Odoo)
 - Base de datos:   PostgreSQL 16.13 (Debian 16.13-1.pgdg13+1, verificado SSH 2026-04-29)
-- Ruta módulos local:      C:\odoo-docker\addons
-- Ruta correcciones local: C:\odoo-docker\corrections
+- Ruta módulos en servidor staging:     `/opt/odoo/staging/addons/`
+- Ruta módulos en servidor producción:  `/opt/odoo/production/addons/`
+- Ruta local (solo para git):           `C:\odoo-docker\addons`
+- Ruta correcciones en servidor:        `/opt/odoo/[entorno]/corrections/`
+- Ruta correcciones local (referencia): `C:\odoo-docker\corrections`
 
 ### Imágenes Docker por entorno (verificadas SSH 2026-04-29)
 
-| Entorno    | Imagen Docker                  |
-|------------|--------------------------------|
-| Producción | odoo:19.0-amunet               |
-| Staging    | odoo:19.0-amunet-staging       |
+| Entorno    | Imagen Docker            |
+|------------|--------------------------|
+| Producción | odoo:19.0-amunet         |
+| Staging    | odoo:19.0-amunet-staging |
 
 ### Módulos activos en producción (verificados vía SSH 2026-04-29)
 
-| Módulo técnico               | Descripción                              |
-|------------------------------|------------------------------------------|
-| amunet_production            | Manufactura / Órdenes de Producción      |
-| amunet_quality               | Control de Calidad                       |
-| amunet_lot                   | Gestión de Lotes y Números de Serie      |
-| amunet_warehouse_access      | Control de Acceso por Almacén            |
-| amunet_transfer_bom          | Transferencia de Listas de Materiales    |
-| amunet_equipment_calibration | Calibración de Equipos                   |
-| amunet_competencias          | Gestión de Competencias del Personal     |
-| amunet_auditorias            | Auditorías Internas                      |
-| web_responsive               | Adaptación visual responsive             |
+| Módulo técnico               | Descripción                           |
+|------------------------------|---------------------------------------|
+| amunet_production            | Manufactura / Órdenes de Producción   |
+| amunet_quality               | Control de Calidad                    |
+| amunet_lot                   | Gestión de Lotes y Números de Serie   |
+| amunet_warehouse_access      | Control de Acceso por Almacén         |
+| amunet_transfer_bom          | Transferencia de Listas de Materiales |
+| amunet_equipment_calibration | Calibración de Equipos                |
+| amunet_competencias          | Gestión de Competencias del Personal  |
+| amunet_auditorias            | Auditorías Internas                   |
+| web_responsive               | Adaptación visual responsive          |
 
 ### Bases de datos
 
-| Entorno    | Base de datos   | Uso                                           |
-|------------|-----------------|-----------------------------------------------|
-| Local      | amunet_local    | Desarrollo — origen de todos los cambios      |
-| Staging    | Amunet_testing  | Validación previa — confirmar aquí siempre    |
-| Producción | amunet_prod     | Sistema oficial — solo cambios aprobados      |
+| Entorno    | Base de datos  | Uso                                      |
+|------------|----------------|------------------------------------------|
+| Staging    | Amunet_testing | Validación previa — origen de cambios    |
+| Producción | amunet_prod    | Sistema oficial — solo cambios aprobados |
 
-> amunet_local es la base origen. Los cambios fluyen hacia
-> Amunet_testing y luego a amunet_prod. Nunca al revés.
+> El flujo es: `Amunet_testing` → `amunet_prod`. Nunca al revés.
+> No existe base de datos local de desarrollo. Los cambios se hacen
+> directamente en staging y se validan antes de pasar a producción.
+
+### Rol de la carpeta local C:\odoo-docker\
+
+```
+C:\odoo-docker\addons\     — sincronización para historial git (NO es origen)
+C:\odoo-docker\corrections\ — referencia local de scripts (se ejecutan en servidor)
+```
+
+> La carpeta local NO es el origen de los cambios.
+> Se usa para hacer `git pull` desde el servidor y mantener
+> el historial de GitHub actualizado después de cada cambio.
 
 ### Servidores y acceso SSH
 
+```
 Host:     149.102.142.110
 Usuario:  agentia-odoo
 Conexión: ssh agentia-odoo@149.102.142.110
+```
 
-> La contraseña SSH y el token de GitHub NO se almacenan aquí.
-> Viven en /opt/odoo/.env en el servidor.
-> Para leer el token: ssh agentia-odoo@149.102.142.110 "source /opt/odoo/.env && echo \$GITHUB_TOKEN"
+> Contraseña SSH vive en `/opt/odoo/.env` y como secret `SSH_PASSWORD` en GitHub.
+> Token de GitHub vive en `/opt/odoo/.env` como variable `GITHUB_TOKEN`.
+> Para leer el token:
+> `ssh agentia-odoo@149.102.142.110 "source /opt/odoo/.env && echo \$GITHUB_TOKEN"`
 
-### Estructura verificada en el servidor (vía SSH 2026-04-29)
+### Estructura verificada en el servidor (SSH 2026-04-29)
 
 ```
 /opt/odoo/
-├── staging/      — entorno staging  (Amunet_testing)
-├── production/   — entorno producción (amunet_prod)
-├── backups/      — backups automáticos diarios (cron activo desde 2026-04-22)
-├── scripts/      — scripts de mantenimiento (backup.sh, etc.)
-└── admin-tools/  — herramientas administrativas
+├── staging/
+│   ├── addons/       — código activo de staging (ORIGEN de cambios)
+│   └── corrections/  — scripts de corrección para Amunet_testing
+├── production/
+│   ├── addons/       — código activo de producción
+│   └── corrections/  — scripts de corrección para amunet_prod
+├── backups/          — backups automáticos diarios (cron desde 2026-04-22)
+├── scripts/          — scripts de mantenimiento (backup.sh, etc.)
+└── admin-tools/      — herramientas administrativas
 ```
 
-| Entorno    | URL                          | Carpeta en servidor      |
-|------------|------------------------------|--------------------------|
-| Staging    | staging.fc.amunet.com.mx     | /opt/odoo/staging/       |
-| Producción | fc.amunet.com.mx             | /opt/odoo/production/    |
+| Entorno    | URL                         | Carpeta addons en servidor        |
+|------------|-----------------------------|-----------------------------------|
+| Staging    | staging.fc.amunet.com.mx    | /opt/odoo/staging/addons/         |
+| Producción | fc.amunet.com.mx            | /opt/odoo/production/addons/      |
 
 ---
 
 ## NOMBRES DE CONTENEDORES DOCKER (VERIFICADOS — NO USAR PLACEHOLDERS)
 
-| Entorno    | Contenedor Odoo    | Contenedor PostgreSQL  | Compose file                   |
-|------------|--------------------|------------------------|--------------------------------|
-| Staging    | odoo-staging       | odoo-staging-db        | docker-compose.staging.yml     |
-| Producción | odoo-production    | odoo-production-db     | docker-compose.production.yml  |
+| Entorno    | Contenedor Odoo | Contenedor PostgreSQL | Compose file                  |
+|------------|-----------------|-----------------------|-------------------------------|
+| Staging    | odoo-staging    | odoo-staging-db       | docker-compose.staging.yml    |
+| Producción | odoo-production | odoo-production-db    | docker-compose.production.yml |
 
 Si `docker ps` muestra nombres distintos, usar los que muestra `docker ps`.
 
 ---
 
+## GITHUB — ESTADO VERIFICADO (2026-04-29)
+
+### Repositorio
+
+```
+URL:    https://github.com/feruap/odoo-iso
+Rama staging:    staging  →  Amunet_testing
+Rama producción: main     →  amunet_prod
+```
+
+### Secrets configurados en GitHub (inyectados vía API 2026-04-29)
+
+| Secret       | Uso en deploy.yml                        |
+|--------------|------------------------------------------|
+| SSH_HOST     | Host del servidor en ambos jobs          |
+| SSH_USER     | Usuario SSH en ambos jobs                |
+| SSH_PASSWORD | Autenticación SSH en ambos jobs          |
+
+### Token de GitHub (para git push desde PC local)
+
+Guardado en `/opt/odoo/.env` como `GITHUB_TOKEN`.
+
+---
+
+## DOS RUTAS DE DEPLOY
+
+```
+RUTA A — Normal (PC + SSH directo)
+──────────────────────────────────────────────────────────────
+1. SSH → editar archivos en /opt/odoo/staging/addons/
+2. build + odoo -u all en staging
+3. Verificar en staging.fc.amunet.com.mx
+4. rsync servidor-a-servidor: staging/addons/ → production/addons/
+5. build + odoo -u all en producción
+6. Verificar en fc.amunet.com.mx
+7. git pull en PC local → git push a GitHub (registro histórico)
+
+RUTA B — Emergencia (teléfono + GitHub CI/CD)
+──────────────────────────────────────────────────────────────
+1. Claude.ai genera el código del cambio
+2. Editar directamente en github.com/feruap/odoo-iso
+3. Commit a rama staging → CI/CD despliega a staging automático
+4. Verificar en staging.fc.amunet.com.mx
+5. PR staging → main → merge → CI/CD despliega a producción
+6. Verificar en fc.amunet.com.mx
+```
+
+> En la **Ruta A**: el git push es el último paso — solo registro histórico.
+> En la **Ruta B**: el merge ES el deploy — no hacer SSH adicional.
+> **Nunca mezclar ambas rutas en el mismo cambio.**
+
+---
+
 ## FLUJO DE CAMBIOS — PASO A PASO
 
-Aplica para el 50% de negocio puro (crear productos, dar permisos,
-editar registros) y el 50% de código (módulos, vistas, lógica).
+### FASE 1 — ENTENDER Y PLANIFICAR (ambas rutas)
 
-### FASE 1 — ENTENDER Y PLANIFICAR
-
-**Paso 1.** Detectar perfil del usuario (si no es evidente, preguntar):
+**Paso 1.** Detectar perfil del usuario:
 - Técnico (desarrollador, admin) — comunicación directa y técnica
 - Negocio (cualquier otra persona) — lenguaje visual y de negocio
 
-**Paso 2.** Reformular el requerimiento con claridad:
+**Paso 2.** Reformular el requerimiento:
 > "Entiendo que quieres [descripción]. ¿Es correcto?"
 
-**Paso 3.** Verificar si ya existe en `C:\odoo-docker\addons`:
-- Si YA EXISTE — informar, mostrar dónde y cómo usarlo
-- Si NO EXISTE — confirmar que se procederá a crearlo
-
-**Paso 4.** Elaborar plan de implementación y esperar aprobación explícita:
-> "Para lograr esto haré: 1. [...] 2. [...]"
-> PROHIBIDO modificar código sin luz verde del usuario.
-
-### FASE 2 — EJECUTAR EN STAGING
-
-**Paso 5.** Hacer backup OBLIGATORIO. Confirmar éxito antes de continuar.
-
-**Paso 6.** Aplicar cambios en staging (Amunet_testing) vía SSH.
-
-**Paso 7.** Si el cambio requiere modificación de DB o reglas
-— crear `.py` en `C:\odoo-docker\corrections\` (ver política de uso).
-
-**Paso 8.** Dar lista de verificación visual:
+**Paso 3.** Verificar si ya existe en `/opt/odoo/staging/addons/` via SSH:
+```bash
+ssh agentia-odoo@149.102.142.110 \
+  "find /opt/odoo/staging/addons/ -name '*.py' | xargs grep -l '[término]' 2>/dev/null"
 ```
-Ve a: [URL exacta en staging.fc.amunet.com.mx/...]
-Haz clic en: [nombre exacto del botón o menú]
-Deberías ver: [descripción visual del resultado esperado]
-```
+- YA EXISTE — informar dónde y cómo usarlo
+- NO EXISTE — confirmar que se procederá a crearlo
 
-**Paso 9.** Preguntar:
-> "Los cambios ya están en Staging. ¿Puedes confirmarme si se ven bien?"
-- Si NO — revisar logs, corregir, volver al paso 5
-- Si SÍ — continuar al paso 9b
+**Paso 4.** Elaborar plan y esperar aprobación explícita.
+Prohibido modificar código sin luz verde del usuario.
 
-**Paso 9b.** DESPUÉS de confirmación en staging — registrar en GitHub:
-`git commit + push` a rama `staging` ← NO es un deploy, NO toca el servidor.
+---
 
-### FASE 3 — APROBAR Y SUBIR A PRODUCCIÓN
+### RUTA A — Edición directa en servidor (PC disponible)
 
-**Paso 10.** Pedir segunda confirmación:
-> "¿Procedo a hacer el pase a Producción (amunet_prod) ahora?"
-> PROHIBIDO tocar producción sin esta confirmación.
+**Paso 5A.** Backup manual OBLIGATORIO de staging. Confirmar éxito.
 
-**Paso 11.** Hacer backup manual de producción. Confirmar éxito.
+**Paso 6A.** Editar archivos directamente en el servidor de staging:
+```bash
+# Opción 1 — editar con nano/vim en el servidor
+ssh agentia-odoo@149.102.142.110 \
+  "nano /opt/odoo/staging/addons/[modulo]/[archivo].py"
 
-**Paso 12.** Aplicar cambios en producción con el orden obligatorio.
+# Opción 2 — crear/sobrescribir archivo desde heredoc
+ssh agentia-odoo@149.102.142.110 "cat > /opt/odoo/staging/addons/[modulo]/[archivo].py << 'EOF'
+[contenido del archivo]
+EOF"
 
-**Paso 13.** Dar lista de verificación equivalente para producción.
-
-**Paso 14.** DESPUÉS de confirmación en producción — registrar en GitHub:
-`git commit + push` a rama `main` ← NO es un deploy, NO toca el servidor.
-
-**Paso 15.** Cerrar con resumen:
-```
-[OK] [Cambio 1] aplicado en producción
-[OK] Commit registrado en GitHub — rama main
-Backup en: /opt/odoo/backups/db_[fecha]_manual_prod.sql.gz
-Próximo paso: [acción si aplica]
+# Opción 3 — copiar archivo desde PC local a staging
+scp C:\odoo-docker\addons\[modulo]\[archivo].py \
+  agentia-odoo@149.102.142.110:/opt/odoo/staging/addons/[modulo]/
 ```
 
-### GENERACIÓN DE CÓDIGO
+**Paso 7A.** Si el cambio requiere DB o reglas → crear script en servidor:
+```bash
+ssh agentia-odoo@149.102.142.110 "cat > /opt/odoo/staging/corrections/[script].py << 'EOF'
+[contenido del script]
+EOF"
+```
 
-- Lógica, modelos y vistas → `C:\odoo-docker\addons\[modulo]\`
-- Modificaciones de DB, migraciones, ir.rule, ir.model.access → `C:\odoo-docker\corrections\`
-- Indicar siempre: ¿requiere reinicio? ¿requiere `-u nombre_modulo`?
-- Indicar siempre: ¿afecta registros existentes en la base de datos?
+**Paso 8A.** Rebuild y actualización de staging:
+```bash
+ssh agentia-odoo@149.102.142.110 \
+  "cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build"
+
+ssh agentia-odoo@149.102.142.110 \
+  "docker exec odoo-staging odoo -u all --stop-after-init \
+  --logfile /dev/stdout --workers 0 \
+  -c /etc/odoo/odoo.conf -d Amunet_testing --no-http"
+
+ssh agentia-odoo@149.102.142.110 \
+  "cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml up -d"
+```
+
+**Paso 9A.** Lista de verificación visual en `staging.fc.amunet.com.mx`
+
+**Paso 10A.** Confirmar staging:
+> "¿Los cambios se ven bien y funcionan correctamente en staging?"
+
+**Paso 11A.** Backup manual de producción OBLIGATORIO. Confirmar éxito.
+
+**Paso 12A.** Sincronizar staging → producción (servidor a servidor):
+```bash
+# Copiar addons de staging a producción en el mismo servidor
+ssh agentia-odoo@149.102.142.110 \
+  "rsync -avz \
+  --exclude='*.pyc' --exclude='__pycache__/' \
+  /opt/odoo/staging/addons/ \
+  /opt/odoo/production/addons/"
+```
+
+**Paso 13A.** Rebuild y actualización de producción:
+```bash
+ssh agentia-odoo@149.102.142.110 \
+  "cd /opt/odoo/production && docker compose -f docker-compose.production.yml build"
+
+ssh agentia-odoo@149.102.142.110 \
+  "docker exec odoo-production odoo -u all --stop-after-init \
+  --logfile /dev/stdout --workers 0 \
+  -c /etc/odoo/odoo.conf -d amunet_prod --no-http"
+
+ssh agentia-odoo@149.102.142.110 \
+  "cd /opt/odoo/production && docker compose -f docker-compose.production.yml up -d"
+```
+
+**Paso 14A.** Lista de verificación en `fc.amunet.com.mx`
+
+**Paso 15A.** Sincronizar servidor → PC local y registrar en GitHub:
+```bash
+# Traer cambios del servidor a la carpeta local
+rsync -avz \
+  --exclude='*.pyc' --exclude='__pycache__/' \
+  agentia-odoo@149.102.142.110:/opt/odoo/staging/addons/ \
+  C:\odoo-docker\addons\
+
+# Registrar en GitHub
+cd C:\odoo-docker
+git add addons/
+git commit -m "tipo(módulo): descripción del cambio en español"
+git push https://[TOKEN]@github.com/feruap/odoo-iso.git HEAD:staging
+git push https://[TOKEN]@github.com/feruap/odoo-iso.git HEAD:main
+```
+
+**Paso 16A.** Resumen de cierre.
+
+---
+
+### RUTA B — Deploy por PR/merge (teléfono, sin PC)
+
+**Paso 5B.** Claude.ai genera el código del cambio.
+
+**Paso 6B.** Ir a `github.com/feruap/odoo-iso` desde el navegador.
+Editar archivo → crear rama `fix/descripcion` → PR a `staging`.
+
+**Paso 7B.** Hacer merge del PR a `staging`
+→ GitHub Actions despliega automáticamente a staging
+→ Esperar que el pipeline termine (pestaña Actions)
+
+**Paso 8B.** Verificar en `staging.fc.amunet.com.mx`
+
+**Paso 9B.** Segunda confirmación para producción.
+
+**Paso 10B.** PR desde `staging` → `main` → merge
+→ GitHub Actions despliega a producción automáticamente
+
+**Paso 11B.** Verificar en `fc.amunet.com.mx`
+
+**Paso 12B.** Resumen de cierre.
+> El merge ya registró el cambio en GitHub. El CI/CD sincronizó
+> automáticamente. NO hacer rsync ni SSH adicional.
+
+---
+
+## GENERACIÓN DE CÓDIGO
+
+El código se escribe para ser aplicado directamente en el servidor de staging.
+
+- Archivos de módulos → `/opt/odoo/staging/addons/[modulo]/`
+- Scripts de corrections/ → `/opt/odoo/staging/corrections/`
+- Indicar siempre: ¿requiere rebuild? ¿requiere `-u nombre_modulo`?
+- Indicar siempre: ¿afecta registros existentes en Amunet_testing?
+- Después de confirmar en staging → se sincroniza a production/addons/
 
 ---
 
@@ -206,16 +359,16 @@ Próximo paso: [acción si aplica]
 
 ### Sistema actual (verificado SSH 2026-04-29)
 
-- Ruta base: `/opt/odoo/backups/`
-- Cron: `/opt/odoo/scripts/backup.sh` — diario a las 02:00 desde 2026-04-22
-- Retención: 7 días (limpieza automática)
+- Ruta: `/opt/odoo/backups/`
+- Cron: `/opt/odoo/scripts/backup.sh` — diario 02:00 desde 2026-04-22
+- Retención: 7 días
 - Formato:
   - `db_YYYYMMDD_HHMMSS.sql.gz` — dump plain text comprimido
   - `filestore_YYYYMMDD_HHMMSS.tar.gz` — archivos del filestore
 
 El cron ya está corriendo. **No configurarlo de nuevo.**
 
-### Backup manual de emergencia
+### Backup manual antes de deploy
 
 ```bash
 FECHA=$(date +%Y%m%d_%H%M%S)
@@ -246,174 +399,41 @@ ssh agentia-odoo@149.102.142.110 \
 
 ---
 
-## DEPLOY SEGURO VÍA SSH
+## ESTADO DEL deploy.yml (correcciones aplicadas 2026-04-29)
 
-### Orden OBLIGATORIO (nunca alterar)
+| # | Corrección aplicada | Por qué es importante |
+|---|---|---|
+| 1 | Job staging usa `Amunet_testing` (no `amunet_prod`) | Staging no modifica producción |
+| 2 | `-u all` en lugar de `-i amunet_production` | Actualiza todos los módulos |
+| 3 | `--logfile /dev/stdout --workers 0` en staging | Logs visibles en Actions |
+| 4 | Autenticación por `secrets.SSH_PASSWORD` | Habilita Ruta B completa |
+| 5 | Triggers: `push: branches: [staging, main]` | Deploy automático al hacer merge |
 
-1. Backup manual → `/opt/odoo/backups/db_FECHA_manual_[entorno].sql.gz`
-2. rsync → módulos a `/opt/odoo/[entorno]/addons/` (con exclusiones)
-3. `docker compose build` (con `-f` compose file correspondiente)
-4. `odoo -u all --stop-after-init -c /etc/odoo/odoo.conf -d [base] --no-http`
-5. `docker compose up -d` (con `-f` compose file correspondiente)
+### Intocabilidad del deploy.yml
 
-> NUNCA ejecutar solo `docker compose restart` sin los pasos 3 y 4.
-> Reiniciar sin actualizar la DB corrompe vistas y modelos en Odoo.
+PROHIBIDO modificar:
+- `sleep N` — previene `SerializationFailure` en PostgreSQL
+- `for j in 1 2 3` — ciclos de reintento ante fallos transitorios
 
-### Comandos SSH completos
+Son salvaguardas activas, no código muerto.
 
-```bash
-# ── STAGING ──────────────────────────────────────────────────────
-ssh agentia-odoo@149.102.142.110 \
-  "cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build"
+---
 
-ssh agentia-odoo@149.102.142.110 \
-  "docker exec odoo-staging odoo -u all --stop-after-init \
-  -c /etc/odoo/odoo.conf -d Amunet_testing --no-http"
-
-ssh agentia-odoo@149.102.142.110 \
-  "cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml up -d"
-
-# ── PRODUCCIÓN (solo tras confirmación en staging) ────────────────
-ssh agentia-odoo@149.102.142.110 \
-  "cd /opt/odoo/production && docker compose -f docker-compose.production.yml build"
-
-ssh agentia-odoo@149.102.142.110 \
-  "docker exec odoo-production odoo -u all --stop-after-init \
-  -c /etc/odoo/odoo.conf -d amunet_prod --no-http"
-
-ssh agentia-odoo@149.102.142.110 \
-  "cd /opt/odoo/production && docker compose -f docker-compose.production.yml up -d"
-```
-
-### Rsync con exclusiones obligatorias
-
-```bash
-# A staging
-rsync -avz \
-  --exclude='.git/' --exclude='.github/' \
-  --exclude='.claude' --exclude='.claude/' --exclude='.roo/' \
-  --exclude='.cursorrules' --exclude='.copilot' --exclude='.aider*' \
-  --exclude='.env' --exclude='.env.*' \
-  --exclude='*.pyc' --exclude='__pycache__/' \
-  --exclude='.DS_Store' --exclude='*.log' \
-  --exclude='node_modules/' \
-  --exclude='.gitignore' --exclude='.gitattributes' \
-  --exclude='*.secret' --exclude='*.key' --exclude='*.pem' \
-  C:\odoo-docker\addons\ \
-  agentia-odoo@149.102.142.110:/opt/odoo/staging/addons/
-
-# A producción (SOLO después de confirmación en staging)
-rsync -avz \
-  --exclude='.git/' --exclude='.github/' \
-  --exclude='.claude' --exclude='.claude/' --exclude='.roo/' \
-  --exclude='.cursorrules' --exclude='.copilot' --exclude='.aider*' \
-  --exclude='.env' --exclude='.env.*' \
-  --exclude='*.pyc' --exclude='__pycache__/' \
-  --exclude='.DS_Store' --exclude='*.log' \
-  --exclude='node_modules/' \
-  --exclude='.gitignore' --exclude='.gitattributes' \
-  --exclude='*.secret' --exclude='*.key' --exclude='*.pem' \
-  C:\odoo-docker\addons\ \
-  agentia-odoo@149.102.142.110:/opt/odoo/production/addons/
-```
-
-### Ruta de módulos en servidor
-
-- **SIEMPRE:** `/opt/amunet-addons/`
-- **NUNCA:** `/mnt/extra-addons` (volumen anónimo — causa código fantasma)
-
-`odoo_server.conf`:
-```
-addons_path = /usr/lib/python3/dist-packages/odoo/addons,/opt/amunet-addons
-```
-
-### Verificación de logs post-deploy
+## LOGS POST-DEPLOY
 
 ```bash
 # Staging
 ssh agentia-odoo@149.102.142.110 \
-  "cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml logs --tail=50"
+  "cd /opt/odoo/staging && \
+  docker compose -f docker-compose.staging.yml logs --tail=50"
 
 # Producción
 ssh agentia-odoo@149.102.142.110 \
-  "cd /opt/odoo/production && docker compose -f docker-compose.production.yml logs --tail=50"
+  "cd /opt/odoo/production && \
+  docker compose -f docker-compose.production.yml logs --tail=50"
 ```
 
 Si hay error 500 — **DETENER**. No continuar hasta resolver.
-
-### Intocabilidad del deploy.yml
-
-PROHIBIDO modificar en `.github/workflows/deploy.yml`:
-- `sleep N`
-- `for j in 1 2 3`
-
-Previenen `SerializationFailure` en PostgreSQL. Son salvaguardas activas.
-
----
-
-## INTEGRACIÓN CON GITHUB
-
-- Repositorio: `https://github.com/feruap/odoo-iso`
-- Usuario: `feruap`
-- Rama staging: `staging` → Amunet_testing
-- Rama producción: `main` → amunet_prod
-
-### Principio fundamental
-
-**SSH = motor del deploy. GitHub = registro oficial.**
-
-El `git push` ocurre SIEMPRE DESPUÉS de confirmar que el cambio
-funciona en el servidor. Nunca antes. Nunca al mismo tiempo.
-
-> El git push NO toca el servidor. NO dispara CI/CD. NO duplica el deploy.
-> Es exclusivamente un registro de versión.
-
-### Token de acceso
-
-```bash
-# Leer token desde el servidor (nunca hardcodearlo aquí)
-ssh agentia-odoo@149.102.142.110 \
-  "source /opt/odoo/.env && echo \$GITHUB_TOKEN"
-```
-
-### Comandos de git
-
-```bash
-# Después de confirmar staging (paso 9b):
-cd C:\odoo-docker
-git add addons/
-git commit -m "tipo(módulo): descripción del cambio en español"
-git push https://[TOKEN]@github.com/feruap/odoo-iso.git HEAD:staging
-
-# Después de confirmar producción (paso 14):
-cd C:\odoo-docker
-git add addons/
-git commit -m "tipo(módulo): descripción del cambio en español"
-git push https://[TOKEN]@github.com/feruap/odoo-iso.git HEAD:main
-```
-
-### Formato de commits
-
-```
-tipo(módulo): descripción en español
-
-feat      → nueva funcionalidad
-fix       → corrección de error
-chore     → configuración, permisos, datos maestros
-refactor  → mejora de código sin cambio funcional
-
-Ejemplos:
-feat(amunet_quality): agregar campo observaciones en control de calidad
-fix(amunet_production): corregir cálculo de cantidad en orden de manufactura
-chore(amunet_warehouse_access): agregar permiso acceso almacén principal
-```
-
-### Reglas de git
-
-- Proponer mensaje de commit antes de ejecutar — usuario aprueba
-- No hacer push si hay `corrections/` Tipo B pendientes de ejecutar
-- No hacer merge entre ramas — solo push directo
-- Si el push falla — reportar y no reintentar sin instrucción explícita
 
 ---
 
@@ -422,22 +442,24 @@ chore(amunet_warehouse_access): agregar permiso acceso almacén principal
 ### ERROR 1 — Código fantasma [RESUELTO]
 
 - **Causa:** `/mnt/extra-addons` es volumen anónimo. Monta código viejo al reconstruir.
-- **Solución:** `/opt/amunet-addons/` + `COPY` en Dockerfile + `odoo_server.conf` actualizado.
-- **Regla:** Si "deploy OK pero sin cambios visibles" — verificar `addons_path` primero.
+- **Solución:** `/opt/amunet-addons/` + `COPY` en Dockerfile + `odoo_server.conf` correcto.
+- **Regla:** Si "deploy OK pero sin cambios visibles" → verificar `addons_path` primero.
+
+`odoo_server.conf`:
+```
+addons_path = /usr/lib/python3/dist-packages/odoo/addons,/opt/amunet-addons
+```
 
 ### ERROR 2 — FK failures en odoo -u all [RESUELTO]
 
-- **Contexto:** Registros huérfanos limpiados en abril 2026. DB sana actualmente.
-  `fix_db_module_descriptions.py` fue ejecutado y retirado del pipeline.
-- **Regla:** NO ejecutar SQL directo salvo emergencia confirmada en logs.
+Registros huérfanos limpiados en abril 2026. DB sana. Script retirado del pipeline.
 
 ```bash
-# Diagnóstico
+# Solo ejecutar si reaparece el error en logs
 docker exec -i odoo-production-db psql -U odoo amunet_prod -c "
   SELECT id, name, state FROM ir_module_module
   WHERE description IS NULL OR state = 'unknown';"
 
-# Limpieza de grupos huérfanos si aplica
 docker exec -i odoo-production-db psql -U odoo amunet_prod -c "
   DELETE FROM rule_group_rel
   WHERE group_id NOT IN (SELECT id FROM res_groups);"
@@ -445,38 +467,49 @@ docker exec -i odoo-production-db psql -U odoo amunet_prod -c "
 
 ### ERROR 3 — Scripts con dependencias rotas [RESUELTO]
 
-1. Idempotencia obligatoria en `corrections/` (usar `[SKIP]` siempre)
+1. Idempotencia obligatoria en `corrections/` (usar `[SKIP]`)
 2. Orden manufactura: Componentes → Productos → BoMs
-3. Tolerancia a fallos: `|| echo "WARNING"` en bases no críticas
-   Un fallo en `Amunet_testing` NUNCA debe bloquear `amunet_prod`.
+3. `|| echo "WARNING"` en bases no críticas
+   Un fallo en `Amunet_testing` NUNCA debe bloquear `amunet_prod`
 
 ### ERROR 4 — Módulo nuevo no aparece en Aplicaciones
 
-- **Causa:** `odoo -u all` nunca instala un módulo nuevo por primera vez.
-- **Solución:**
-  1. Verificar `addons_path` en `odoo_server.conf` del servidor.
-  2. Ajustes → Aplicaciones → **Actualizar lista** → Instalar.
-  3. O agregar a `depends[]` de un módulo activo.
-- **Regla:** Advertir esto siempre que se cree un módulo desde cero.
+`odoo -u all` nunca instala módulo nuevo por primera vez.
+→ Ajustes → Aplicaciones → **Actualizar lista** → Instalar
+→ O agregar a `depends[]` de un módulo activo.
 
 ---
 
-## POLÍTICA DE LA CARPETA corrections/
+## POLÍTICA DE corrections/
 
-### TIPO A — Diagnóstico y consulta (se quedan en el repo)
+### TIPO A — Diagnóstico (permanecen en el servidor y en el repo)
 
-Scripts reutilizables: `check_product_expiry.py`, `get_quality_fields.py`, etc.
-Se crean una vez, se usan cuantas veces sea necesario.
+Reutilizables: `check_product_expiry.py`, `get_quality_fields.py`, etc.
+Viven en `/opt/odoo/[entorno]/corrections/` y en `C:\odoo-docker\corrections\`
 
 ### TIPO B — Migraciones one-off (se eliminan después de ejecutar)
 
-Ciclo obligatorio:
-1. Crear `.py` en `C:\odoo-docker\corrections\`
-2. Ejecutar en servidor vía SSH
-3. Confirmar ejecución exitosa
-4. **ELIMINAR** el `.py` del repositorio
+```
+1. Crear script en /opt/odoo/staging/corrections/
+2. Ejecutar en el contenedor de staging
+3. Confirmar éxito
+4. ELIMINAR del servidor y del repo
+```
 
-Si hay Tipo B al momento de un deploy — preguntar si ya fue ejecutado.
+Ejecución del script en el contenedor:
+```bash
+ssh agentia-odoo@149.102.142.110 \
+  "docker exec odoo-staging odoo shell \
+  -c /etc/odoo/odoo.conf -d Amunet_testing \
+  < /opt/odoo/staging/corrections/[script].py"
+```
+
+Orden con prefijo numérico para garantizar dependencias:
+```
+01_componentes.py  →  primero
+02_productos.py    →  segundo
+03_boms.py         →  tercero
+```
 
 ### Idempotencia obligatoria en todos los scripts
 
@@ -493,45 +526,32 @@ else:
 
 ## REGLAS ARQUITECTÓNICAS
 
-### Módulos completamente nuevos
+### Módulos nuevos
 
-`odoo -u all` NUNCA instala un módulo nuevo por primera vez.
-
-- **Opción A:** agregar a `depends[]` de un módulo activo.
-- **Opción B:** Ajustes → Aplicaciones → Actualizar lista → Instalar
-  (solo después del deploy y con `addons_path` verificado).
+`odoo -u all` nunca instala módulo nuevo por primera vez.
+- Opción A: agregar a `depends[]` de un módulo activo
+- Opción B: Ajustes → Aplicaciones → Actualizar lista → Instalar
 
 ### Prevención código fantasma
 
-`.gitignore` SIEMPRE debe incluir:
-
+`.gitignore` debe incluir siempre:
 ```
-.roo/
-.claude
-.claude/
-__pycache__/
-*.pyc
-.env
-.env.*
-*.log
-.DS_Store
-node_modules/
+.roo/  .claude  .claude/  __pycache__/  *.pyc
+.env  .env.*  *.log  .DS_Store  node_modules/
 ```
 
 No mapear volúmenes en vivo en `docker-compose` para staging/producción.
-El código siempre va empaquetado en imagen vía `COPY` en el `Dockerfile`.
+Código siempre empaquetado en imagen vía `COPY` en el `Dockerfile`.
 
 ### Advertencias regulatorias automáticas
 
-Si el cambio afecta estos módulos, advertir **ANTES** de ejecutar:
-
 | Módulo | Riesgo |
 |--------|--------|
-| `amunet_quality` / `amunet_auditorias` | Registros de calidad ISO 13485 |
-| `amunet_equipment_calibration` | Trazabilidad regulatoria Cofepris |
-| `amunet_production` | Puede interrumpir órdenes activas |
-| `amunet_warehouse_access` | Accesos y permisos del personal |
-| `amunet_competencias` | Registros de capacitación del personal |
+| `amunet_quality` / `amunet_auditorias` | Registros ISO 13485 |
+| `amunet_equipment_calibration` | Trazabilidad Cofepris |
+| `amunet_production` | Interrumpir órdenes activas |
+| `amunet_warehouse_access` | Accesos y permisos |
+| `amunet_competencias` | Registros de capacitación |
 
 ---
 
@@ -539,65 +559,70 @@ Si el cambio afecta estos módulos, advertir **ANTES** de ejecutar:
 
 ### Comunicación dual
 
-**PERFIL TÉCNICO** (desarrollador, admin):
-- Conciso, directo, técnico
-- Explica el porqué de las decisiones
-- Usa términos de Odoo, Python, Docker sin rodeos
+**TÉCNICO:** conciso, directo, términos de Odoo/Python/Docker sin rodeos.
 
-**PERFIL DE NEGOCIO** (cualquier otra persona):
-- Lenguaje de negocio, nunca jerga técnica sin explicar
-- Listas de verificación visuales y concretas
-- Si algo es ambiguo — preguntar en términos de negocio
+**NEGOCIO:** lenguaje de negocio, listas visuales concretas, sin jerga.
 
-**EN AMBOS PERFILES:**
-- Si instrucción es ambigua — detente y pregunta, nunca asumir
-- Sin emojis en código o archivos de configuración
-- Comentarios en código: cortos, precisos, solo si son necesarios
+**AMBOS:** si hay ambigüedad → preguntar, nunca asumir.
+Sin emojis en código. Comentarios: cortos, precisos, solo si son necesarios.
 
 ### Confirmaciones obligatorias
 
-El agente NUNCA ejecuta sin confirmación explícita:
+Nunca ejecutar sin confirmación explícita:
 - Plan de implementación aprobado
-- Subir cambios a staging o producción
-- `git commit + push` a GitHub
-- Modificar o eliminar registros en base de datos
+- Cualquier edición en el servidor (staging o producción)
+- Sincronización staging → producción
+- git commit + push a GitHub
+- Modificar o eliminar registros en DB
 - Cambiar permisos de acceso
 
 ### Cierre de cada sesión
 
 ```
-[OK]        [Cambio 1] — aplicado en [entorno]
-[OK]        Commit registrado en GitHub — rama [staging/main]
-[PENDIENTE] [Cambio 2] — pendiente de revisión en staging
+[OK]        [Cambio] — aplicado en [entorno] vía [Ruta A / Ruta B]
+[OK]        Sincronizado a producción
+[OK]        Registrado en GitHub — ramas staging y main
+[PENDIENTE] [Cambio] — pendiente de revisión
 Backup en:  /opt/odoo/backups/db_[fecha]_manual_[entorno].sql.gz
 Próximo paso: [acción concreta]
 ```
 
 ### Notas generales
 
+- El origen de los cambios es el servidor de staging — no la PC local
+- La PC local es solo para sincronización y registro en GitHub
 - Preferir soluciones compatibles con versiones futuras de Odoo
-- Ante la duda entre seguridad y velocidad — siempre seguridad
-- El CI/CD de GitHub es secundario; vía principal es SSH directo
-- Si hay ambigüedad — preguntar, nunca asumir
+- Seguridad siempre sobre velocidad
+- Ruta A es la vía principal; Ruta B es el flujo de emergencia
+- Si hay ambigüedad → preguntar, nunca asumir
 
 ---
 
-## CONTEXTO DE CLAUDE CODE (solo aplica en este entorno)
+## CONTEXTO DE CLAUDE CODE (solo aplica en este entorno local)
 
-Estás corriendo en la máquina de desarrollo local `C:\odoo-docker\`.
+Estás en `C:\odoo-docker\` — la máquina local.
+
+En este entorno la PC local **NO es el origen de cambios**.
+El origen es el servidor de staging (`/opt/odoo/staging/addons/`).
+
+**Uso principal de este entorno:**
+- Sincronizar cambios del servidor hacia local para historial git
+- Revisar código existente como referencia
+- Preparar scripts de corrections/ antes de subirlos al servidor
 
 **Puedes hacer directamente:**
-- Leer y editar archivos en `addons\` y `corrections\`
-- Ejecutar comandos `rsync`, `git` y `ssh` desde esta terminal
-- Hacer deploy completo a staging y producción siguiendo el flujo
+- Leer archivos en `addons\` y `corrections\` como referencia
+- Ejecutar `git` para sincronizar y registrar en GitHub
+- Ejecutar `ssh` y `scp` para interactuar con el servidor
+- Ejecutar `rsync` para sincronizar servidor → local
 
-**Requieren confirmación explícita antes de ejecutar:**
+**Requieren confirmación antes de ejecutar:**
 - Cualquier comando `ssh` que modifique el servidor
-- Cualquier `git push`
-- Cualquier eliminación de archivos
-- Cualquier modificación fuera de `C:\odoo-docker\`
+- Cualquier `git push` o merge
+- Sincronización producción → staging (dirección inversa prohibida)
 
 **Nunca ejecutar:**
-- Comandos destructivos (`rm -rf`, `DROP TABLE`, `DELETE` sin `WHERE`)
-- Push a GitHub sin aprobación del mensaje de commit
-- Deploy a producción sin confirmación visual en staging primero
+- Comandos destructivos sin `WHERE` explícito
+- Push sin aprobación del mensaje de commit
+- Deploy a producción sin confirmación visual en staging
+- rsync en dirección local → servidor para producción directamente
