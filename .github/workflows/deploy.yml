@@ -24,8 +24,7 @@ jobs:
           script: |
             set -e
             cd /opt/odoo/staging
-            export GITHUB_TOKEN=$(grep -E '^GITHUB_TOKEN=' /opt/odoo/.env | cut -d'=' -f2- | tr -d '"' | tr -d "'")
-            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/feruap/odoo-iso.git
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/feruap/odoo-iso.git
             git fetch origin
             git checkout staging 2>/dev/null || git checkout -b staging origin/staging
             git reset --hard origin/staging
@@ -84,8 +83,7 @@ jobs:
           script: |
             set -e
             cd /opt/odoo/production
-            export GITHUB_TOKEN=$(grep -E '^GITHUB_TOKEN=' /opt/odoo/.env | cut -d'=' -f2- | tr -d '"' | tr -d "'")
-            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/feruap/odoo-iso.git
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/feruap/odoo-iso.git
             git fetch origin
             git reset --hard origin/main
             docker compose -f docker-compose.production.yml build --no-cache web-production
