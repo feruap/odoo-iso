@@ -15,61 +15,63 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Prepare SSH key
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
       - name: Deploy to Staging via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key_path: /tmp/deploy_key
-          script: |
-            set -e
-            cd /opt/odoo/staging
-            git fetch origin
-            git checkout staging 2>/dev/null || git checkout -b staging origin/staging
-            git reset --hard origin/staging
-            docker compose -f docker-compose.staging.yml build --no-cache web-staging
-            docker compose -f docker-compose.staging.yml up -d --force-recreate
-            echo "Esperando que Odoo staging este listo..."
-            for i in $(seq 1 24); do
-              if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
-                echo "Odoo listo despues de $((i * 5))s"
-                sleep 15
-                break
-              fi
-              echo " Intento $i/24..."
-              sleep 5
-            done
-            for j in 1 2 3; do
-              if docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
-                break
-              fi
-              echo "Reintentando actualizacion en 10s..."
-              sleep 10
-            done
+        env:
+          SSH_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          echo "$SSH_KEY_B64" | base64 -d > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "$SSH_USER@$SSH_HOST" << 'ENDSSH'
+          set -e
+          cd /opt/odoo/staging
+          git fetch origin
+          git checkout staging 2>/dev/null || git checkout -b staging origin/staging
+          git reset --hard origin/staging
+          docker compose -f docker-compose.staging.yml build --no-cache web-staging
+          docker compose -f docker-compose.staging.yml up -d --force-recreate
+          echo "Esperando que Odoo staging este listo..."
+          for i in $(seq 1 24); do
+            if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
+              echo "Odoo listo despues de $((i * 5))s"
+              sleep 15
+              break
+            fi
+            echo " Intento $i/24..."
+            sleep 5
+          done
+          for j in 1 2 3; do
+            if docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
+              break
+            fi
+            echo "Reintentando actualizacion en 10s..."
+            sleep 10
+          done
 
-            echo "Ejecutando corrections en Amunet_testing..."
-            for script in /opt/odoo/staging/corrections/*.py; do
-              [ -f "$script" ] || continue
-              docker exec odoo-staging odoo shell \
-                -c /etc/odoo/odoo.conf -d Amunet_testing \
-                --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
-                < "$script" || echo "WARNING: $script fallo en Amunet_testing"
-            done
+          echo "Ejecutando corrections en Amunet_testing..."
+          for script in /opt/odoo/staging/corrections/*.py; do
+            [ -f "$script" ] || continue
+            docker exec odoo-staging odoo shell \
+              -c /etc/odoo/odoo.conf -d Amunet_testing \
+              --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
+              < "$script" || echo "WARNING: $script fallo en Amunet_testing"
+          done
 
-            echo "Ejecutando corrections en amunet_prod (staging-db)..."
-            for script in /opt/odoo/staging/corrections/*.py; do
-              [ -f "$script" ] || continue
-              docker exec odoo-staging odoo shell \
-                -c /etc/odoo/odoo.conf -d amunet_prod \
-                --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
-                < "$script" || echo "WARNING: $script fallo en amunet_prod"
-            done
+          echo "Ejecutando corrections en amunet_prod (staging-db)..."
+          for script in /opt/odoo/staging/corrections/*.py; do
+            [ -f "$script" ] || continue
+            docker exec odoo-staging odoo shell \
+              -c /etc/odoo/odoo.conf -d amunet_prod \
+              --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
+              < "$script" || echo "WARNING: $script fallo en amunet_prod"
+          done
 
-            docker compose -f docker-compose.staging.yml restart web-staging
+          docker compose -f docker-compose.staging.yml restart web-staging
+          ENDSSH
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
@@ -77,58 +79,60 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Prepare SSH key
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
       - name: Deploy to Production via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key_path: /tmp/deploy_key
-          script: |
-            set -e
-            cd /opt/odoo/production
-            git fetch origin
-            git reset --hard origin/main
-            docker compose -f docker-compose.production.yml build --no-cache web-production
-            docker compose -f docker-compose.production.yml up -d
-            echo "Esperando que Odoo produccion este listo..."
-            for i in $(seq 1 24); do
-              if docker exec odoo-production curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
-                echo "Odoo listo despues de $((i * 5))s"
-                sleep 15
-                break
-              fi
-              echo " Intento $i/24..."
-              sleep 5
-            done
-            for j in 1 2 3; do
-              if docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
-                break
-              fi
-              echo "Reintentando actualizacion en 10s..."
-              sleep 10
-            done
+        env:
+          SSH_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          echo "$SSH_KEY_B64" | base64 -d > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "$SSH_USER@$SSH_HOST" << 'ENDSSH'
+          set -e
+          cd /opt/odoo/production
+          git fetch origin
+          git reset --hard origin/main
+          docker compose -f docker-compose.production.yml build --no-cache web-production
+          docker compose -f docker-compose.production.yml up -d
+          echo "Esperando que Odoo produccion este listo..."
+          for i in $(seq 1 24); do
+            if docker exec odoo-production curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
+              echo "Odoo listo despues de $((i * 5))s"
+              sleep 15
+              break
+            fi
+            echo " Intento $i/24..."
+            sleep 5
+          done
+          for j in 1 2 3; do
+            if docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
+              break
+            fi
+            echo "Reintentando actualizacion en 10s..."
+            sleep 10
+          done
 
-            echo "Ejecutando corrections en amunet_prod..."
-            for script in /opt/odoo/production/corrections/*.py; do
-              [ -f "$script" ] || continue
-              docker exec odoo-production odoo shell \
-                -c /etc/odoo/odoo.conf -d amunet_prod \
-                --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
-                < "$script" || echo "WARNING: $script fallo en amunet_prod"
-            done
+          echo "Ejecutando corrections en amunet_prod..."
+          for script in /opt/odoo/production/corrections/*.py; do
+            [ -f "$script" ] || continue
+            docker exec odoo-production odoo shell \
+              -c /etc/odoo/odoo.conf -d amunet_prod \
+              --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
+              < "$script" || echo "WARNING: $script fallo en amunet_prod"
+          done
 
-            echo "Ejecutando corrections en Amunet_testing (production-db)..."
-            for script in /opt/odoo/production/corrections/*.py; do
-              [ -f "$script" ] || continue
-              docker exec odoo-production odoo shell \
-                -c /etc/odoo/odoo.conf -d Amunet_testing \
-                --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
-                < "$script" || echo "WARNING: $script fallo en Amunet_testing"
-            done
+          echo "Ejecutando corrections en Amunet_testing (production-db)..."
+          for script in /opt/odoo/production/corrections/*.py; do
+            [ -f "$script" ] || continue
+            docker exec odoo-production odoo shell \
+              -c /etc/odoo/odoo.conf -d Amunet_testing \
+              --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
+              < "$script" || echo "WARNING: $script fallo en Amunet_testing"
+          done
 
-            docker compose -f docker-compose.production.yml restart web-production
-            docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
+          docker compose -f docker-compose.production.yml restart web-production
+          docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
+          ENDSSH
