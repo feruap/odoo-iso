@@ -19,7 +19,7 @@ services:
     restart: always
     depends_on:
       - db-production
-    command: odoo -c /etc/odoo/odoo.conf
+    command: odoo -c /etc/odoo/odoo.conf --db-filter=^amunet_prod$
     ports:
       - "127.0.0.1:8069:8069"
       - "127.0.0.1:8072:8072"
