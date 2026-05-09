@@ -37,16 +37,24 @@ class StockPicking(models.Model):
 
         return super().button_validate()
 
-    @api.model
-    def create(self, vals):
-        """Override para validar acceso al crear picking."""
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override para validar acceso al crear picking.
+
+        Migrado a @api.model_create_multi (Odoo 18+) el 2026-05-09 para que
+        la validacion de acceso por almacen se aplique tambien en creaciones
+        en batch (importaciones masivas, jobs, modulos que crean varios
+        pickings de golpe). Antes con @api.model la firma singular podia
+        ser bypasseada en esos casos.
+        """
         # Crear primero para tener acceso a campos relacionados
-        picking = super().create(vals)
+        pickings = super().create(vals_list)
 
-        # Validar acceso después de creación
-        picking._check_warehouse_access_permission(operation='crear', raise_warning=False)
+        # Validar acceso para cada picking creado
+        for picking in pickings:
+            picking._check_warehouse_access_permission(operation='crear', raise_warning=False)
 
-        return picking
+        return pickings
 
     def write(self, vals):
         """Override para validar acceso al modificar picking."""
