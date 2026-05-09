@@ -52,7 +52,7 @@ class StockPicking(models.Model):
 
         # Validar acceso para cada picking creado
         for picking in pickings:
-            picking._check_warehouse_access_permission(operation='crear', raise_warning=False)
+            picking._check_warehouse_access_permission(operation='crear')
 
         return pickings
 
@@ -67,8 +67,7 @@ class StockPicking(models.Model):
         if any(field in vals for field in critical_fields):
             for picking in self:
                 picking._check_warehouse_access_permission(
-                    operation='modificar',
-                    raise_warning=False
+                    operation='modificar'
                 )
 
         return super().write(vals)
@@ -78,8 +77,7 @@ class StockPicking(models.Model):
         # Validar acceso antes de eliminar
         for picking in self:
             picking._check_warehouse_access_permission(
-                operation='eliminar',
-                raise_warning=False
+                operation='eliminar'
             )
 
         return super().unlink()
