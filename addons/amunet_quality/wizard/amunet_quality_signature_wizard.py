@@ -57,14 +57,10 @@ class AmunetQualitySignatureWizard(models.TransientModel):
             _logger.info(f"User {user.login} authenticated via Password")
             return True
 
-        # 3. Fallback controlado (solo si el login es admin y el parámetro está activo)
-        fallback_param = self.env['ir.config_parameter'].sudo().get_param(
-            'amunet_quality.signature_fallback_enabled', 'False'
-        ).lower() == 'true'
-
-        if fallback_param and user.login == 'admin' and password_or_pin == 'admin':
-             _logger.warning("Authenticated via Admin Fallback - NOT FOR PRODUCTION")
-             return True
+        # NOTA: Aquí había un fallback (login=admin + password=admin + parámetro
+        # 'amunet_quality.signature_fallback_enabled'=True) que aceptaba la
+        # firma. Eliminado el 2026-05-09 porque viola CFR 21 Part 11. Las
+        # firmas electrónicas reguladas NO admiten bypass por configuración.
 
         return False
 
@@ -125,18 +121,13 @@ class AmunetQualitySignatureWizard(models.TransientModel):
         except Exception as e:
             _logger.info("Estrategia 2 ERROR: %s", str(e))
 
-        # ESTRATEGIA 3: Fallback por Parámetro (Emergencia)
-        try:
-            fallback_enabled = self.env['ir.config_parameter'].sudo().get_param(
-                'amunet_quality.signature_fallback_enabled', 'False'
-            ).lower() == 'true'
-            
-            if fallback_enabled:
-                _logger.warning("MODO FALLBACK ACTIVO - ACEPTANDO POR LONGITUD")
-                if len(str(password)) >= 4:
-                    return True
-        except Exception:
-            pass
+        # NOTA: Anteriormente había una "Estrategia 3" de fallback que aceptaba
+        # cualquier password de 4+ caracteres si el parámetro
+        # 'amunet_quality.signature_fallback_enabled' estaba en True.
+        # Eliminada el 2026-05-09 por ser incompatible con CFR 21 Part 11 y
+        # con la auditoría de Cofepris: una firma electrónica regulada NO puede
+        # tener bypass por configuración. Si las Estrategias 1 y 2 fallan,
+        # la firma DEBE rechazarse y el problema se diagnostica con los logs.
 
         _logger.warning("=== TODAS LAS ESTRATEGIAS FALLARON PARA %s ===", user.login)
         return False
