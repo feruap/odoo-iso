@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Programa de Auditorías (ISO 13485 §8.2.4 / §7.4)',
     'version': '19.0.1.0.0',

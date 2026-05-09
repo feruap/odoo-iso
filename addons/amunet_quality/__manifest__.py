@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Control de Calidad',
     'version': '19.0.3.2.9',

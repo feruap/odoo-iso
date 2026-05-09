@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Lotes',
     'version': '19.0.1.0.2',
