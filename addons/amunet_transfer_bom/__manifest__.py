@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     'name': 'Listas de materiales para entregas',
     'version': '19.0.1.0.0',

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Control de acceso dinámico por almacén',
     'version': '19.0.1.0.0',

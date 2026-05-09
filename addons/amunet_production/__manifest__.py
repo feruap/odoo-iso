@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     'name': "Amunet Módulo de Producción de Soluciones",
     'summary': """

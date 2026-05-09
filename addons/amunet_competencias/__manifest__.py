@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Competencias y Capacitación (ISO 13485 §6.2)',
     'version': '19.0.1.0.0',
