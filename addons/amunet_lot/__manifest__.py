@@ -24,14 +24,11 @@ Diferencia clave con amunet_lot_sequence:
         'data/ir_cron_data.xml',
         'data/stock_picking_type_data.xml',
         'views/product_template_views.xml',
-        # PRUEBA: Desactivando vistas una por una para encontrar el problema
-        # Empezando por las más simples
         'views/amunet_lot_factory_views.xml',
         'views/stock_lot_views.xml',
         'views/stock_quant_views.xml',
         'views/stock_scrap_views.xml',
         'views/stock_picking_views.xml',
-        # Vistas de stock_move_line
         'views/stock_move_line_views.xml',
         'views/stock_move_line_actions.xml',
         'views/stock_move_operations_views.xml',
