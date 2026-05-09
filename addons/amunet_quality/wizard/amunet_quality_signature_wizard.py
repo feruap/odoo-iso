@@ -96,37 +96,12 @@ class AmunetQualitySignatureWizard(models.TransientModel):
         except Exception as e:
             _logger.info("Estrategia 1 FALLIDA: %s", str(e))
 
-        # ESTRATEGIA 2: Verificación Directa via SQL (Máxima Robustez)
-        # Útil si el ORM oculta el campo password o hay problemas de contexto
-        try:
-            _logger.info("Estrategia 2: Intentando Verificación SQL Directa")
-            from passlib.context import CryptContext
-            pwd_context = CryptContext(
-                schemes=["pbkdf2_sha512", "pbkdf2_sha256", "argon2", "bcrypt", "plaintext"], 
-                deprecated="auto"
-            )
-            
-            # Leer directamente de la BD saltándonos el ORM
-            self.env.cr.execute("SELECT password FROM res_users WHERE id = %s", (user.id,))
-            res = self.env.cr.fetchone()
-            stored_hash = res[0] if res else None
-            
-            _logger.info("Hash en DB: %s...", stored_hash[:10] if stored_hash else "VACÍO")
-            
-            if stored_hash and pwd_context.verify(password, stored_hash):
-                _logger.info("Estrategia 2 EXITOSA (SQL Match)")
-                return True
-            else:
-                _logger.info("Estrategia 2 FALLIDA: Hash no coincide o no existe")
-        except Exception as e:
-            _logger.info("Estrategia 2 ERROR: %s", str(e))
-
         # NOTA: Anteriormente había una "Estrategia 3" de fallback que aceptaba
         # cualquier password de 4+ caracteres si el parámetro
         # 'amunet_quality.signature_fallback_enabled' estaba en True.
         # Eliminada el 2026-05-09 por ser incompatible con CFR 21 Part 11 y
         # con la auditoría de Cofepris: una firma electrónica regulada NO puede
-        # tener bypass por configuración. Si las Estrategias 1 y 2 fallan,
+        # tener bypass por configuración. Si la autenticación oficial de Odoo falla,
         # la firma DEBE rechazarse y el problema se diagnostica con los logs.
 
         _logger.warning("=== TODAS LAS ESTRATEGIAS FALLARON PARA %s ===", user.login)
