@@ -38,12 +38,26 @@ work centers, routing y trazabilidad de consumo move-by-move.
 | Modulo | Version | Notas |
 |---|---|---|
 | `mrp` | 19.0.2.0 | nativo Odoo Community |
-| `amunet_production` | **19.0.1.1.0** | custom Amunet, depende de mrp + amunet_equipment_calibration |
+| `amunet_production` | **19.0.1.2.0** | custom Amunet, depende de mrp + amunet_equipment_calibration |
 
-**Nuevo en 19.0.1.1.0**: M2M formal `amunet_equipment_ids` en `mrp.workcenter`
+**19.0.1.1.0**: M2M formal `amunet_equipment_ids` en `mrp.workcenter`
 + override de `mrp.workorder.button_start()` que valida que **todos** los
 equipos vinculados tengan certificado de calibracion vigente. Vista nueva
 `Equipos Amunet` en el form de cada workcenter.
+
+**19.0.1.2.0** (actual):
+- Fail-closed: workcenter sin equipos vinculados Y sin marca de excepcion
+  bloquea `button_start` con UserError. Antes pasaba silenciosamente
+  (riesgo: WC mal configurado dispara produccion sin chequeo).
+- Validacion adicional de `equipment.state == 'active'`. Si esta en
+  `maintenance` o `out_of_service`, la WO no arranca aunque tenga cert
+  vigente.
+- Campo nuevo `amunet_no_equipment_required` en `mrp.workcenter` para
+  documentar excepcion ISO 13485 (mesa manual sin instrumento). Vista
+  con boolean_toggle en la pestana "Equipos Amunet".
+- Cuando se aplica la excepcion, el override publica nota en el chatter
+  de la `mrp.production` padre (mrp.workorder no es mail.thread): "WO X
+  iniciada sin equipos calibrados. Excepcion autorizada en WC Y...".
 
 Backup pre-instalacion mrp:
 `/opt/odoo/backups/db_20260510_074730_manual_Amunet_testing_pre_mrp_install.sql.gz` (6.2 MB)
@@ -290,7 +304,13 @@ Todos se corren con:
 6. **Medir tiempos reales por operacion** sobre lotes reales.
 7. **Asignar capacidades reales** en `mrp.workcenter.capacity` por
    producto si aplica.
-8. **Reemplazar SOP demo** con el SOP real de fabricacion hCG y
+8. **Marca `amunet_no_equipment_required`**: si en produccion existen
+   workcenters legitimamente sin instrumentos (mesas manuales, areas de
+   inspeccion visual), antes de instalar el modulo en `amunet_prod` se
+   debe marcar la excepcion en cada uno con justificacion ISO 13485
+   documentada (referencia a SOP/CAPA). Sin esa marca, button_start
+   bloquea la WO completamente.
+9. **Reemplazar SOP demo** con el SOP real de fabricacion hCG y
    capacitar al equipo contra el SOP real.
 
 ## Rollback total

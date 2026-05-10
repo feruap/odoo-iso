@@ -12,10 +12,15 @@
         - (19.0.1.1.0) Vinculación formal de equipos Amunet a centros de trabajo
           (mrp.workcenter) con validación de calibración vigente al iniciar
           cada orden de trabajo.
+        - (19.0.1.2.0) Fail-closed: workcenter sin equipos vinculados bloquea
+          button_start salvo que se marque amunet_no_equipment_required (ISO
+          13485 requiere justificacion documentada). Validacion adicional de
+          que cada equipo este en state='active' (no maintenance ni out_of_service).
+          Log automatico en el chatter de la WO cuando se aplica la excepcion.
     """,
     'author': "Amunet",
     'category': 'Manufacturing',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'depends': ['mrp', 'stock', 'amunet_quality', 'amunet_equipment_calibration'],
     'data': [
         'data/production_data.xml',
