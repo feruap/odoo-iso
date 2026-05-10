@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+from odoo.exceptions import UserError as _DemoGuardError
+
+ALLOWED_DB = "Amunet_testing"
+if env.cr.dbname != ALLOWED_DB:
+    raise _DemoGuardError(
+        "SCRIPT DEMO: solo se ejecuta en BD %r. BD actual: %r. Abortado." % (
+            ALLOWED_DB, env.cr.dbname
+        )
+    )
+
+
 from datetime import date, datetime
 
 DEMO_TAG = 'DEMO-MRP-HCG-2000-20260510'

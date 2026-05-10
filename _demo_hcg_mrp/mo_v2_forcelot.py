@@ -1,6 +1,17 @@
 # -*- coding: utf-8 -*-
 """MO V2: forzar lot_producing_ids despues del create para que amunet_production
 no lo sobreescriba con un lote auto-generado."""
+from odoo.exceptions import UserError as _DemoGuardError
+
+ALLOWED_DB = "Amunet_testing"
+if env.cr.dbname != ALLOWED_DB:
+    raise _DemoGuardError(
+        "SCRIPT DEMO: solo se ejecuta en BD %r. BD actual: %r. Abortado." % (
+            ALLOWED_DB, env.cr.dbname
+        )
+    )
+
+
 from datetime import date, datetime
 
 DEMO_TAG = 'DEMO-MRP-HCG-2000-20260510-V2'

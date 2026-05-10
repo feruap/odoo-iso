@@ -1,0 +1,41 @@
+================================================================================
+EVIDENCIA: Constraint de calibracion vigente al iniciar Work Order
+amunet_production v19.0.1.1.0 - 2026-05-10 - Amunet_testing
+================================================================================
+
+ESCENARIO PROBADO:
+  - Equipo PRO/BAL/01 (Balanza analitica) vinculado a WC-PESAJE
+  - Cert de calibracion id=19 originalmente vigente hasta 2027-05-10
+  - Caducado temporalmente: calibration_date=2024-12-01, expiration_date=2025-01-01
+  - Hoy = 2026-05-10 -> cert YA VENCIDO
+
+[TEST 1] Llamar wc._amunet_check_equipment_calibration() directamente
+RESULTADO: UserError disparado.
+MENSAJE:
+> No se puede iniciar la orden de trabajo: hay equipos sin certificado de
+> calibracion vigente:
+>  - PRO/BAL/01 (Balanza analítica) en WC-PESAJE: ultima calibracion vence
+>    2025-01-01 (state=done)
+>  - CAL/MIC/03 (Micropipeta 100-1000 µL) en WC-PESAJE: sin calibracion
+>    registrada
+>
+> Sube los certificados al modulo de calibracion antes de arrancar produccion.
+
+[TEST 2] Llamar wo.button_start() sobre WO real (id=25, WC-PESAJE)
+RESULTADO: UserError disparado al arrancar la orden de trabajo (override
+de mrp.workorder.button_start aplica el constraint del WC).
+MENSAJE: igual al Test 1.
+
+[TEST 3] Despues de revertir cert a vigente (2027-05-10)
+RESULTADO PRIMERO: UserError porque CAL/MIC/03 no tenia cert.
+ACCION CORRECTORA: se crearon certs DEMO para los 4 equipos faltantes
+(CAL/CNM/02, CAL/CNM/03, CAL/CNM/04, CAL/MIC/03) con vencimiento
+2027-05-10.
+RESULTADO FINAL: 15 / 15 equipos vinculados a WCs con cert vigente.
+
+CONCLUSION:
+  El constraint cumple su funcion: ningun WC inicia trabajo sin tener
+  los certs de calibracion al dia. Esto se aplica tanto en codigo (helper
+  publico) como en la UI al pulsar "Iniciar" en una WO. Es la forma
+  formal y mantenible de hacerlo en Odoo (override de modelo, no patches
+  externos).
