@@ -19,12 +19,20 @@
             <xpath expr="//sheet" position="before">
                 <header>
                     <field name="can_request_reanalysis" invisible="1"/>
+                    <field name="amunet_lot_release_state" invisible="1"/>
                     <button name="action_request_reanalysis"
                             string="Solicitar Reanálisis"
                             type="object"
                             class="btn-primary"
                             icon="fa-refresh"
                             invisible="not can_request_reanalysis"/>
+                    <button name="action_open_lot_release_wizard"
+                            string="Liberar lote"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-lock"
+                            groups="amunet_quality.group_quality_sanitary,amunet_quality.group_quality_manager,base.group_system"
+                            invisible="amunet_lot_release_state == 'released'"/>
                 </header>
             </xpath>
 
@@ -44,6 +52,30 @@
                     </div>
                 </button>
             </div>
+
+            <xpath expr="//sheet" position="inside">
+                <group string="Liberación DHR" name="amunet_lot_release_group">
+                    <group>
+                        <field name="amunet_lot_release_state" readonly="1"
+                               decoration-success="amunet_lot_release_state == 'released'"
+                               decoration-warning="amunet_lot_release_state == 'pending'"/>
+                        <field name="amunet_lot_release_quality_check_id" readonly="1"
+                               invisible="amunet_lot_release_state != 'released'"/>
+                        <field name="amunet_lot_released_by_id" readonly="1"
+                               invisible="amunet_lot_release_state != 'released'"/>
+                        <field name="amunet_lot_released_date" readonly="1"
+                               invisible="amunet_lot_release_state != 'released'"/>
+                    </group>
+                    <group invisible="amunet_lot_release_state != 'released'">
+                        <field name="amunet_lot_release_hash" readonly="1"/>
+                        <field name="amunet_lot_release_notes" readonly="1"/>
+                    </group>
+                </group>
+                <group string="Snapshot DHR inmutable"
+                       invisible="amunet_lot_release_state != 'released'">
+                    <field name="amunet_lot_release_snapshot" readonly="1" nolabel="1"/>
+                </group>
+            </xpath>
 
         </field>
     </record>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_amunet_quality_lot_release_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.quality.lot.release.wizard.form</field>
+        <field name="model">amunet.quality.lot.release.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Liberar lote">
+                <group>
+                    <field name="lot_id"/>
+                    <field name="validation_summary" nolabel="1" readonly="1"/>
+                    <field name="release_notes" placeholder="Justificación o comentarios de liberación"/>
+                    <field name="password" password="True"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_release"
+                            string="Liberar lote"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancelar" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
