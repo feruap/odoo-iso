@@ -335,7 +335,21 @@ Todos se corren con:
    debe marcar la excepcion en cada uno con justificacion ISO 13485
    documentada (referencia a SOP/CAPA). Sin esa marca, button_start
    bloquea la WO completamente.
-9. **Reemplazar SOP demo** con el SOP real de fabricacion hCG y
+9. **Grupos MRP a admins (HALLAZGO 2026-05-10)**: cuando se instale
+   `mrp` en `amunet_prod`, los usuarios admin no heredan los grupos de
+   Manufacturing automaticamente. Aunque tengan `base.group_system`,
+   los links del PDF a BOM y Work Center disparan AccessError. Asignar
+   `mrp.group_mrp_manager` + `mrp.group_mrp_user` + `mrp.group_mrp_routings`
+   a cada admin master tras la instalacion. En staging ya esta hecho
+   para Fernando (uid 67) via odoo shell.
+10. **Tours pendientes en master**: el usuario master Fernando tenia
+    `tour_enabled=True` y 6 tours pendientes (purchase_tour, account_tour,
+    discuss_channel_tour, etc.). Esto bloquea la carga del web client
+    porque el tour intenta clickear menus que no estan disponibles aun.
+    Solucion en staging: marcar tours como consumidos +
+    `tour_enabled=False`. Para prod: hacer lo mismo a cada admin que
+    no necesite el onboarding.
+11. **Reemplazar SOP demo** con el SOP real de fabricacion hCG y
    capacitar al equipo contra el SOP real.
 
 ## Rollback total
