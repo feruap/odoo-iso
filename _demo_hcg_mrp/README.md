@@ -38,7 +38,7 @@ work centers, routing y trazabilidad de consumo move-by-move.
 | Modulo | Version | Notas |
 |---|---|---|
 | `mrp` | 19.0.2.0 | nativo Odoo Community |
-| `amunet_production` | **19.0.1.2.0** | custom Amunet, depende de mrp + amunet_equipment_calibration |
+| `amunet_production` | **19.0.1.3.0** | custom Amunet, depende de mrp + amunet_equipment_calibration |
 
 **19.0.1.1.0**: M2M formal `amunet_equipment_ids` en `mrp.workcenter`
 + override de `mrp.workorder.button_start()` que valida que **todos** los
@@ -58,6 +58,31 @@ equipos vinculados tengan certificado de calibracion vigente. Vista nueva
 - Cuando se aplica la excepcion, el override publica nota en el chatter
   de la `mrp.production` padre (mrp.workorder no es mail.thread): "WO X
   iniciada sin equipos calibrados. Excepcion autorizada en WC Y...".
+
+**19.0.1.3.0** (actual): reporte de la MO con **links clickeables** y
+seccion **Trazabilidad ISO 13485**.
+
+Cambios:
+- `reports/mrp_production_report.xml`: inherit de `mrp.report_mrporder` y
+  `mrp.report_mrp_production_components`. CSS con clase `amunet-link`.
+- `data/system_parameters.xml`: registra
+  `amunet_production.report_base_url = https://stagingfc.amunet.com.mx`
+  para construir URLs absolutas. Si esta vacio, fallback a
+  `web.base.url`.
+- En el PDF cada uno de estos elementos lleva al expediente vivo:
+  nombre de la MO, source (si es lote), producto terminado, lote
+  producido, BOM, work center, cada componente del BOM, cada lote
+  consumido por componente.
+- Seccion "Trazabilidad ISO 13485" al final del PDF con tablas
+  (linkeables): QC + hash DHR; ordenes de trabajo con WC, fechas,
+  duracion y equipos vinculados; equipos calibrados con cert vigente;
+  firmantes del QC.
+
+Verificacion (PDF de MO 7 / `MO_AMP_00007_clickable.pdf`):
+- 67 anotaciones de URI, 48 URLs unicas, 3 paginas, 51 KB.
+- 1 link a la MO, 11 a productos, 12 a lotes (final + componentes),
+  1 al BOM, 8 a workcenters, 1 al QC, 33 a equipos.
+
 
 Backup pre-instalacion mrp:
 `/opt/odoo/backups/db_20260510_074730_manual_Amunet_testing_pre_mrp_install.sql.gz` (6.2 MB)
