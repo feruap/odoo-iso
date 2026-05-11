@@ -57,7 +57,7 @@ jobs:
           echo "Ejecutando corrections en Amunet_testing..."
           for script in /opt/odoo/staging/corrections/*.py; do
             [ -f "$script" ] || continue
-            docker exec odoo-staging odoo shell \
+            docker exec -i odoo-staging odoo shell \
               -c /etc/odoo/odoo.conf -d Amunet_testing \
               --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
               < "$script" || echo "WARNING: $script fallo en Amunet_testing"
@@ -66,7 +66,7 @@ jobs:
           echo "Ejecutando corrections en amunet_prod (staging-db)..."
           for script in /opt/odoo/staging/corrections/*.py; do
             [ -f "$script" ] || continue
-            docker exec odoo-staging odoo shell \
+            docker exec -i odoo-staging odoo shell \
               -c /etc/odoo/odoo.conf -d amunet_prod \
               --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
               < "$script" || echo "WARNING: $script fallo en amunet_prod"
@@ -122,7 +122,7 @@ jobs:
           echo "Ejecutando corrections en amunet_prod..."
           for script in /opt/odoo/production/corrections/*.py; do
             [ -f "$script" ] || continue
-            docker exec odoo-production odoo shell \
+            docker exec -i odoo-production odoo shell \
               -c /etc/odoo/odoo.conf -d amunet_prod \
               --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
               < "$script" || echo "WARNING: $script fallo en amunet_prod"
@@ -131,7 +131,7 @@ jobs:
           echo "Ejecutando corrections en Amunet_testing (production-db)..."
           for script in /opt/odoo/production/corrections/*.py; do
             [ -f "$script" ] || continue
-            docker exec odoo-production odoo shell \
+            docker exec -i odoo-production odoo shell \
               -c /etc/odoo/odoo.conf -d Amunet_testing \
               --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
               < "$script" || echo "WARNING: $script fallo en Amunet_testing"
