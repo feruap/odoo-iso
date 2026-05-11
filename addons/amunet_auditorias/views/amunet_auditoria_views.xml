@@ -19,11 +19,13 @@
                     <button name="action_cerrar" string="✅ Cerrar Auditoría"
                             type="object" class="btn-success"
                             confirm="¿Confirma cerrar la auditoría? Se actualizará el estatus del proveedor."
-                            invisible="state not in ['en_ejecucion', 'con_hallazgos']"/>
+                            invisible="state not in ['en_ejecucion', 'con_hallazgos']"
+                            groups="amunet_auditorias.group_auditorias_manager"/>
                     <button name="action_cancelar" string="Cancelar"
                             type="object" class="btn-danger"
                             confirm="¿Cancelar esta auditoría?"
-                            invisible="state in ['cerrada', 'cancelada']"/>
+                            invisible="state in ['cerrada', 'cancelada']"
+                            groups="amunet_auditorias.group_auditorias_manager"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="planificada,en_ejecucion,con_hallazgos,cerrada"/>
                 </header>

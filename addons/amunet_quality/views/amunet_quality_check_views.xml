@@ -63,6 +63,7 @@
                     <button name="action_finalize" string="Finalizar"
                             type="object" class="oe_highlight"
                             invisible="state != 'in_progress' or not sampling_confirmed or not display_action_finalize"
+                            groups="amunet_quality.group_quality_sanitary"
                             confirm="¿Está seguro de finalizar el control de calidad?"/>
 
                     <button name="action_reanalysis" string="Reanálisis"
