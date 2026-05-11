@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- Grupo: Solicitante de Material -->
+        <record id="group_material_requester" model="res.groups">
+            <field name="name">Solicitudes de Material / Solicitante</field>
+            <field name="implied_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+            <field name="comment">
+                Crea y envia solicitudes de material.
+                Ve solo las solicitudes propias.
+            </field>
+        </record>
+
+        <!-- Grupo: Almacen (surte y entrega) -->
+        <record id="group_material_warehouse" model="res.groups">
+            <field name="name">Solicitudes de Material / Almacen</field>
+            <field name="implied_ids" eval="[(6, 0, [ref('group_material_requester'), ref('stock.group_stock_user')])]"/>
+            <field name="comment">
+                Recibe solicitudes, asigna lotes y confirma entregas.
+                Ve todas las solicitudes.
+            </field>
+        </record>
+
+        <!-- Grupo: Administrador del modulo -->
+        <record id="group_material_manager" model="res.groups">
+            <field name="name">Solicitudes de Material / Administrador</field>
+            <field name="implied_ids" eval="[(6, 0, [ref('group_material_warehouse')])]"/>
+            <field name="comment">
+                Acceso total: cancela, regresa a borrador, ve todo.
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================ LIST ============================ -->
+    <record id="view_amunet_material_request_list" model="ir.ui.view">
+        <field name="name">amunet.material.request.list</field>
+        <field name="model">amunet.material.request</field>
+        <field name="arch" type="xml">
+            <list string="Solicitudes de Material"
+                  decoration-info="state == 'submitted'"
+                  decoration-warning="state == 'in_picking'"
+                  decoration-primary="state == 'pending_reception'"
+                  decoration-muted="state == 'cancelled'"
+                  decoration-success="state == 'closed'">
+                <field name="name"/>
+                <field name="request_date"/>
+                <field name="requester_id"/>
+                <field name="department_id"/>
+                <field name="warehouse_id"/>
+                <field name="required_date" optional="show"/>
+                <field name="line_count" string="Lineas"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'submitted'"
+                       decoration-warning="state == 'in_picking'"
+                       decoration-primary="state == 'pending_reception'"
+                       decoration-success="state == 'closed'"
+                       decoration-danger="state == 'cancelled'"
+                       decoration-muted="state == 'draft'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================ FORM ============================ -->
+    <record id="view_amunet_material_request_form" model="ir.ui.view">
+        <field name="name">amunet.material.request.form</field>
+        <field name="model">amunet.material.request</field>
+        <field name="arch" type="xml">
+            <form string="Solicitud de Material">
+                <header>
+                    <button name="action_submit" string="Firmar y Enviar"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'draft'"
+                            confirm="Al enviar quedara registrada tu firma digital. Continuar?"/>
+                    <button name="action_start_picking" string="Iniciar Surtido"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'submitted'"
+                            groups="amunet_material_request.group_material_warehouse"/>
+                    <button name="action_confirm_delivery" string="Confirmar Entrega"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'in_picking'"
+                            groups="amunet_material_request.group_material_warehouse"
+                            confirm="Al confirmar se descuenta stock real con los lotes asignados. Continuar?"/>
+                    <button name="action_validate_reception" string="Validar Recepcion"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'pending_reception' or not can_validate_reception"
+                            confirm="Al validar la recepcion la solicitud queda cerrada con tu firma. Continuar?"/>
+                    <button name="action_cancel" string="Cancelar"
+                            type="object"
+                            invisible="state in ('closed','cancelled')"/>
+                    <button name="action_draft" string="Regresar a Borrador"
+                            type="object"
+                            invisible="state != 'cancelled'"
+                            groups="amunet_material_request.group_material_manager"/>
+                    <field name="can_validate_reception" invisible="1"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,in_picking,pending_reception,closed"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_picking" type="object"
+                                class="oe_stat_button" icon="fa-truck"
+                                invisible="not picking_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Transferencia</span>
+                                <field name="picking_state"/>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="requester_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="department_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="warehouse_id"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="request_date"/>
+                            <field name="required_date"
+                                   readonly="state not in ('draft','submitted')"/>
+                            <field name="picking_id" readonly="1"
+                                   invisible="not picking_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Productos" name="lines">
+                            <field name="line_ids"
+                                   readonly="state not in ('draft','in_picking','pending_reception')">
+                                <list editable="bottom"
+                                      decoration-success="reception_status == 'complete'"
+                                      decoration-warning="reception_status == 'partial'">
+                                    <field name="product_id"
+                                           readonly="parent.state != 'draft'"/>
+                                    <field name="uom_id" optional="hide"/>
+                                    <field name="tracking" optional="hide"/>
+                                    <field name="qty_requested"
+                                           readonly="parent.state != 'draft'"/>
+                                    <field name="qty_supplied"
+                                           readonly="parent.state != 'in_picking'"
+                                           column_invisible="parent.state == 'draft'"/>
+                                    <field name="lot_id"
+                                           domain="[('product_id','=', product_id)]"
+                                           readonly="parent.state != 'in_picking'"
+                                           column_invisible="parent.state == 'draft'"/>
+                                    <field name="lot_available_qty" readonly="1"
+                                           column_invisible="parent.state == 'draft'"/>
+                                    <field name="qty_received"
+                                           readonly="parent.state != 'pending_reception' or not parent.can_validate_reception"
+                                           column_invisible="parent.state in ('draft','submitted','in_picking')"/>
+                                    <field name="line_reception_note"
+                                           string="Obs. recepcion"
+                                           readonly="parent.state != 'pending_reception' or not parent.can_validate_reception"
+                                           column_invisible="parent.state in ('draft','submitted','in_picking')"
+                                           optional="show"/>
+                                    <field name="reception_status" widget="badge"
+                                           decoration-success="reception_status == 'complete'"
+                                           decoration-warning="reception_status == 'partial'"
+                                           decoration-muted="reception_status == 'none'"
+                                           column_invisible="parent.state in ('draft','submitted','in_picking')"
+                                           optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas" name="notes">
+                            <field name="note" placeholder="Notas internas para almacen..."/>
+                        </page>
+                        <page string="Recepcion" name="reception"
+                              invisible="state in ('draft','submitted','in_picking')">
+                            <group>
+                                <group>
+                                    <field name="reception_complete" readonly="1"/>
+                                </group>
+                            </group>
+                            <separator string="Observaciones de recepcion"/>
+                            <field name="reception_notes"
+                                   readonly="state != 'pending_reception' or not can_validate_reception"
+                                   placeholder="Observaciones generales del solicitante sobre la recepcion..."/>
+                        </page>
+                        <page string="Firmas" name="signatures">
+                            <group>
+                                <group string="Solicitud">
+                                    <field name="user_requested_id" readonly="1"/>
+                                    <field name="requested_signature_date" readonly="1"/>
+                                </group>
+                                <group string="Entrega">
+                                    <field name="user_dispatched_id" readonly="1"/>
+                                    <field name="dispatched_signature_date" readonly="1"/>
+                                </group>
+                                <group string="Recepcion">
+                                    <field name="user_validator_id" readonly="1"/>
+                                    <field name="validation_signature_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================ SEARCH ============================ -->
+    <record id="view_amunet_material_request_search" model="ir.ui.view">
+        <field name="name">amunet.material.request.search</field>
+        <field name="model">amunet.material.request</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Solicitudes">
+                <field name="name"/>
+                <field name="requester_id"/>
+                <field name="department_id"/>
+                <field name="warehouse_id"/>
+                <field name="picking_id"/>
+
+                <filter name="my_requests" string="Mis solicitudes"
+                        domain="[('requester_id','=', uid)]"/>
+                <separator/>
+                <filter name="state_draft" string="Borrador"
+                        domain="[('state','=','draft')]"/>
+                <filter name="state_submitted" string="Enviada"
+                        domain="[('state','=','submitted')]"/>
+                <filter name="state_in_picking" string="En surtido"
+                        domain="[('state','=','in_picking')]"/>
+                <filter name="state_pending_reception" string="Pte. recepcion"
+                        domain="[('state','=','pending_reception')]"/>
+                <filter name="state_closed" string="Cerrada"
+                        domain="[('state','=','closed')]"/>
+                <filter name="state_cancelled" string="Cancelada"
+                        domain="[('state','=','cancelled')]"/>
+                <separator/>
+                <filter name="filter_active" string="Activas"
+                        domain="[('state','in',['draft','submitted','in_picking','pending_reception'])]"/>
+                <filter name="filter_to_validate" string="Por validar recepcion"
+                        domain="[('state','=','pending_reception')]"/>
+
+                <separator/>
+                <filter name="group_state" string="Estado"
+                        context="{'group_by': 'state'}"/>
+                <filter name="group_requester" string="Solicitante"
+                        context="{'group_by': 'requester_id'}"/>
+                <filter name="group_department" string="Area"
+                        context="{'group_by': 'department_id'}"/>
+                <filter name="group_warehouse" string="Almacen"
+                        context="{'group_by': 'warehouse_id'}"/>
+                <filter name="group_date" string="Mes solicitud"
+                        context="{'group_by': 'request_date:month'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================ ACTION ============================ -->
+    <record id="action_amunet_material_request" model="ir.actions.act_window">
+        <field name="name">Solicitudes de Material</field>
+        <field name="res_model">amunet.material.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_material_request_search"/>
+        <field name="context">{'search_default_filter_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea tu primera solicitud de material
+            </p>
+            <p>
+                Indica que productos necesitas y cuantos. Al enviar, almacen recibira
+                la solicitud, asignara los lotes y confirmara la entrega.
+            </p>
+        </field>
+    </record>
+
+</odoo>
