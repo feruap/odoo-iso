@@ -8,9 +8,9 @@
             <field name="arch" type="xml">
                 <form string="Certificado de Calibración">
                     <header>
-                        <button name="action_approve" type="object" string="Aprobar" class="oe_highlight" invisible="state != 'draft'"/>
-                        <button name="action_cancel" type="object" string="Cancelar" invisible="state not in ('draft', 'done')"/>
-                        <button name="action_draft" type="object" string="Volver a Borrador" invisible="state != 'cancelled'"/>
+                        <button name="action_approve" type="object" string="Aprobar" class="oe_highlight" invisible="state != 'draft'" groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_cancel" type="object" string="Cancelar" invisible="state not in ('draft', 'done')" groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_draft" type="object" string="Volver a Borrador" invisible="state != 'cancelled'" groups="amunet_equipment_calibration.group_equipment_manager"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,done,cancelled"/>
                     </header>
                     <sheet>

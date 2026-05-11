@@ -13,10 +13,12 @@
                     <button name="action_cancelar" string="Cancelar"
                             type="object" class="btn-danger"
                             confirm="¿Desea cancelar este registro de capacitación?"
-                            invisible="state == 'cancelada'"/>
+                            invisible="state == 'cancelada'"
+                            groups="amunet_competencias.group_competencias_manager"/>
                     <button name="action_reactivar" string="Reactivar"
                             type="object" class="btn-success"
-                            invisible="state != 'cancelada'"/>
+                            invisible="state != 'cancelada'"
+                            groups="amunet_competencias.group_competencias_manager"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="vigente,proxima,vencida"/>
                 </header>

@@ -32,9 +32,11 @@
                     <button name="action_verification" string="Verificar Efectividad" type="object" class="oe_highlight"
                             invisible="state != 'action_plan'"/>
                     <button name="action_close" string="Cerrar CAPA" type="object" class="oe_highlight"
-                            invisible="state != 'verification'"/>
+                            invisible="state != 'verification'"
+                            groups="amunet_quality.group_quality_manager"/>
                     <button name="action_cancel" string="Cancelar" type="object"
-                            invisible="state in ('closed', 'cancel')"/>
+                            invisible="state in ('closed', 'cancel')"
+                            groups="amunet_quality.group_quality_manager"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,investigation,action_plan,verification,closed"/>
                 </header>
                 <sheet>
