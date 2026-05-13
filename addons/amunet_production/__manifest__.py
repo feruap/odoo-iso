@@ -1,26 +1,26 @@
 {
     'name': "Amunet Módulo de Producción de Soluciones",
-    'summary': """
-        Módulo personalizado de producción y extensión del MRP (Soluciones).
-    """,
+    'summary': """Módulo personalizado de producción y extensión del MRP.""",
     'description': """
-        Extiende el flujo de Fabricación nativo para integrar:
-        - Control especializado de parámetros bioquímicos/físicos (pH).
-        - Extensión de recetas con validación estricta de caducidad y lotes por componente.
-        - Candados de finalización dependientes del área de Calidad.
-        - Emisión de reportes de finalización en formatos Zebra reducidos.
+        - (19.0.1.1.0) M2M equipos en mrp.workcenter + constraint calibracion vigente.
+        - (19.0.1.2.0) Fail-closed + state==active + excepcion documentada.
+        - (19.0.1.3.0) Reporte MO con links clickeables y seccion Trazabilidad
+          ISO 13485 / Cofepris (QC, equipos, certs, firmantes). System parameter
+          amunet_production.report_base_url para construir URLs absolutas.
     """,
     'author': "Amunet",
     'category': 'Manufacturing',
-    'version': '19.0.1.0.0',
-    'depends': ['mrp', 'stock', 'amunet_quality'],
+    'version': '19.0.1.3.0',
+    'depends': ['mrp', 'stock', 'amunet_quality', 'amunet_equipment_calibration'],
     'data': [
         'data/production_data.xml',
+        'data/system_parameters.xml',
         'security/ir.model.access.csv',
-        # 'security/production_security.xml',
         'wizard/amunet_analysis_wizard_views.xml',
         'reports/production_label_report.xml',
+        'reports/mrp_production_report.xml',
         'views/mrp_production_views.xml',
+        'views/mrp_workcenter_views.xml',
         'views/product_template_views.xml',
     ],
     'installable': True,

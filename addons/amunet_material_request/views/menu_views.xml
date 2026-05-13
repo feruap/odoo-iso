@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Menu bajo Inventario, visible para usuarios con cualquiera
+        de los 3 grupos del modulo.
+    -->
+    <menuitem id="menu_amunet_material_request_root"
+              name="Solicitudes de Material"
+              parent="stock.menu_stock_root"
+              action="action_amunet_material_request"
+              sequence="25"
+              groups="amunet_material_request.group_material_requester,amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+
+</odoo>

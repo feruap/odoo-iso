@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="amunet_view_mrp_workcenter_form_inherit" model="ir.ui.view">
+        <field name="name">amunet.mrp.workcenter.form.inherit</field>
+        <field name="model">mrp.workcenter</field>
+        <field name="inherit_id" ref="mrp.mrp_workcenter_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='resource_calendar_id']" position="after">
+                <field name="amunet_equipment_count" readonly="1"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Equipos Amunet" name="amunet_equipment">
+                    <group>
+                        <group string="Excepcion ISO 13485">
+                            <field name="amunet_no_equipment_required"
+                                   widget="boolean_toggle"/>
+                            <p class="text-muted" colspan="2"
+                               invisible="not amunet_no_equipment_required">
+                                Este workcenter esta marcado como excepcion:
+                                puede iniciar trabajo sin equipos con cert
+                                vigente. Debe haber justificacion documentada
+                                (CAPA, SOP) sustentando esta marca.
+                            </p>
+                        </group>
+                    </group>
+                    <p class="text-muted">
+                        Equipos fisicos del catalogo Amunet asignados a este
+                        centro de trabajo. El sistema valida calibracion
+                        vigente y estado operativo de TODOS los equipos antes
+                        de iniciar cada orden de trabajo en este WC.
+                        Si la lista esta vacia y no se marca la excepcion de
+                        arriba, button_start se bloquea (fail-closed).
+                    </p>
+                    <field name="amunet_equipment_ids"
+                           options="{'no_create': True, 'no_create_edit': True}">
+                        <list string="Equipos vinculados">
+                            <field name="serial_number"/>
+                            <field name="name"/>
+                            <field name="state"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

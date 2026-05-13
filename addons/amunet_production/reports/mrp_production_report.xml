@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Estilos CSS -->
+    <template id="amunet_mrp_report_styles" inherit_id="web.styles_company_report" priority="50" name="Amunet Report Styles">
+        <xpath expr="." position="inside">
+            <style>
+                .amunet-link { color: #1e40af !important; text-decoration: underline; text-decoration-style: dotted; text-decoration-thickness: 1px; }
+                .amunet-link:hover { text-decoration-style: solid; }
+                .amunet-traceability { margin-top: 24px; padding: 12px; border-left: 4px solid #1e40af; background-color: #f8fafc; }
+                .amunet-traceability h3 { color: #1e40af; margin-top: 0; font-size: 1.05rem; }
+                .amunet-traceability h4 { font-size: 0.95rem; margin-top: 12px; color: #334155; }
+                .amunet-trace-table { width: 100%; font-size: 0.85rem; }
+                .amunet-trace-table th { background-color: #e2e8f0; padding: 4px 6px; }
+                .amunet-trace-table td { padding: 3px 6px; border-bottom: 1px solid #e2e8f0; }
+                .amunet-hash { font-family: monospace; font-size: 0.75rem; word-break: break-all; color: #475569; }
+            </style>
+        </xpath>
+    </template>
+
+    <!-- Inherit del template principal -->
+    <template id="amunet_report_mrporder_inherit"
+              inherit_id="mrp.report_mrporder"
+              name="Amunet - MO con links clickeables y trazabilidad ISO">
+
+        <!-- t-set base_url al inicio del page -->
+        <xpath expr="//div[hasclass(&apos;page&apos;)]/*[1]" position="before">
+            <t t-set="amunet_base_url" t-value="(env['ir.config_parameter'].sudo().get_param('amunet_production.report_base_url') or env['ir.config_parameter'].sudo().get_param('web.base.url') or '').rstrip('/')"/>
+        </xpath>
+
+        <!-- 1) Link MO name -->
+        <xpath expr="//h2/span[@t-field='o.name']" position="replace">
+            <a t-att-href="amunet_base_url + '/odoo/action-mrp.mrp_production_action/' + str(o.id)"
+               t-att-class="'amunet-link'"
+               t-out="o.name">MRP-001</a>
+        </xpath>
+
+        <!-- 2) Source: linkear si hay lote con ese nombre -->
+        <xpath expr="//span[@t-field='o.origin']" position="replace">
+            <t t-set="origin_lot" t-value="env['stock.lot'].sudo().search([('name','=', o.origin)], limit=1)"/>
+            <t t-if="origin_lot">
+                <a t-att-href="amunet_base_url + '/odoo/action-stock.action_production_lot_form/' + str(origin_lot.id)"
+                   t-att-class="'amunet-link'"
+                   t-out="o.origin">Source</a>
+            </t>
+            <t t-else="">
+                <span t-out="o.origin">Source</span>
+            </t>
+        </xpath>
+
+        <!-- 3) Producto terminado -->
+        <xpath expr="//span[@t-field='o.product_id']" position="replace">
+            <a t-att-href="amunet_base_url + '/odoo/action-product.product_normal_action/' + str(o.product_id.id)"
+               t-att-class="'amunet-link'"
+               t-out="o.product_id.display_name">Product</a>
+        </xpath>
+
+        <!-- 4) Bloque nuevo: Lote producido + BOM -->
+        <xpath expr="//div[hasclass('row','mt32','mb32')][2]" position="after">
+            <div class="row mt16 mb16">
+                <div class="col-6" t-if="o.lot_producing_ids">
+                    <strong>Lote producido:</strong><br/>
+                    <t t-foreach="o.lot_producing_ids" t-as="lprod">
+                        <a t-att-href="amunet_base_url + '/odoo/action-stock.action_production_lot_form/' + str(lprod.id)"
+                           t-att-class="'amunet-link'"
+                           t-out="lprod.name">DEMO-LOT</a>
+                        <t t-if="not lprod_last">, </t>
+                    </t>
+                </div>
+                <div class="col-6" t-if="o.bom_id">
+                    <strong>BOM:</strong><br/>
+                    <a t-att-href="amunet_base_url + '/odoo/action-mrp.mrp_bom_form_action/' + str(o.bom_id.id)"
+                       t-att-class="'amunet-link'"
+                       t-out="o.bom_id.display_name">BOM</a>
+                </div>
+            </div>
+        </xpath>
+
+        <!-- 5) Workcenter en tabla de operations -->
+        <xpath expr="//td/span[@t-field='line2.workcenter_id.name']" position="replace">
+            <a t-att-href="amunet_base_url + '/odoo/action-mrp.mrp_workcenter_action/' + str(line2.workcenter_id.id)"
+               t-att-class="'amunet-link'"
+               t-out="line2.workcenter_id.name">WC</a>
+        </xpath>
+
+        <!-- 7) Bloque trazabilidad ISO al final del page -->
+        <xpath expr="//div[hasclass('page')]/div[hasclass('oe_structure')][last()]" position="before">
+            <t t-call="amunet_production.report_amunet_traceability"/>
+        </xpath>
+    </template>
+
+
+    <!-- Inherit del subtemplate de componentes -->
+    <template id="amunet_report_mrp_production_components_inherit"
+              inherit_id="mrp.report_mrp_production_components"
+              name="Amunet - Components con links">
+        <xpath expr="//tr[@t-foreach='o.move_raw_ids']/td[1]/span[@t-field='raw_line.product_id']" position="replace">
+            <t t-set="amunet_base_url" t-value="(env['ir.config_parameter'].sudo().get_param('amunet_production.report_base_url') or env['ir.config_parameter'].sudo().get_param('web.base.url') or '').rstrip('/')"/>
+            <a t-att-href="amunet_base_url + '/odoo/action-product.product_normal_action/' + str(raw_line.product_id.id)"
+               t-att-class="'amunet-link'"
+               t-out="raw_line.product_id.display_name">Product</a>
+            <t t-set="raw_lots" t-value="raw_line.move_line_ids.mapped('lot_id')"/>
+            <t t-if="raw_lots">
+                <br/>
+                <small>Lote(s):
+                    <t t-foreach="raw_lots" t-as="rl">
+                        <a t-att-href="amunet_base_url + '/odoo/action-stock.action_production_lot_form/' + str(rl.id)"
+                           t-att-class="'amunet-link'"
+                           t-out="rl.name">DEMO-LOT</a>
+                        <t t-if="not rl_last">, </t>
+                    </t>
+                </small>
+            </t>
+        </xpath>
+    </template>
+
+
+    <!-- Subtemplate Trazabilidad ISO 13485 -->
+    <template id="report_amunet_traceability"
+              name="Amunet - Trazabilidad ISO 13485">
+        <div class="amunet-traceability">
+            <h3>Trazabilidad ISO 13485 / Cofepris</h3>
+
+            <t t-set="qcs" t-value="env['amunet.quality.check'].sudo().search(
+                [('lot_id','in', o.lot_producing_ids.ids)])"/>
+
+            <t t-if="qcs">
+                <h4>Control de Calidad</h4>
+                <table class="amunet-trace-table table table-sm">
+                    <thead>
+                        <tr><th>QC</th><th>Estado</th><th>Resultado</th><th>Numero analisis</th><th>Hash DHR</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="qcs" t-as="qc">
+                            <td>
+                                <a t-att-href="amunet_base_url + '/odoo/action-amunet_quality.action_amunet_quality_check/' + str(qc.id)"
+                                   t-att-class="'amunet-link'"
+                                   t-out="qc.name">QC name</a>
+                            </td>
+                            <td t-out="qc.state">done</td>
+                            <td t-out="qc.global_result or ''">pass</td>
+                            <td t-out="qc.analysis_number or ''">DEMO-AN-001</td>
+                            <td>
+                                <span t-att-class="'amunet-hash'" t-out="qc.lot_id.amunet_lot_release_hash or ''">hash</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+
+            <t t-if="o.workorder_ids">
+                <h4>Ordenes de trabajo y centros de trabajo</h4>
+                <table class="amunet-trace-table table table-sm">
+                    <thead>
+                        <tr><th>WO</th><th>Work Center</th><th>Inicio</th><th>Fin</th><th>Duracion (min)</th><th>Equipos vinculados</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="o.workorder_ids.sorted(lambda w: w.date_start or False)" t-as="wo">
+                            <td t-out="wo.name">WO name</td>
+                            <td>
+                                <a t-att-href="amunet_base_url + '/odoo/action-mrp.mrp_workcenter_action/' + str(wo.workcenter_id.id)"
+                                   t-att-class="'amunet-link'"
+                                   t-out="wo.workcenter_id.code or wo.workcenter_id.name">WC</a>
+                            </td>
+                            <td t-out="wo.date_start and wo.date_start.strftime('%Y-%m-%d %H:%M') or ''">2026-05-10</td>
+                            <td t-out="wo.date_finished and wo.date_finished.strftime('%Y-%m-%d %H:%M') or ''">2026-05-10</td>
+                            <td t-out="'%.0f' % (wo.duration or 0)">60</td>
+                            <td>
+                                <t t-foreach="wo.workcenter_id.amunet_equipment_ids" t-as="eq">
+                                    <a t-att-href="amunet_base_url + '/odoo/action-amunet_equipment_calibration.action_amunet_equipment/' + str(eq.id)"
+                                       t-att-class="'amunet-link'"
+                                       t-out="eq.serial_number">CAL/XYZ</a>
+                                    <t t-if="not eq_last">, </t>
+                                </t>
+                                <small t-if="not wo.workcenter_id.amunet_equipment_ids and wo.workcenter_id.amunet_no_equipment_required"
+                                       class="text-muted">
+                                    (sin equipos - excepcion ISO autorizada)
+                                </small>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+
+            <t t-set="all_equipment" t-value="o.workorder_ids.workcenter_id.amunet_equipment_ids"/>
+            <t t-if="all_equipment">
+                <h4>Equipos calibrados</h4>
+                <table class="amunet-trace-table table table-sm">
+                    <thead>
+                        <tr><th>Codigo</th><th>Nombre</th><th>Estado</th><th>Cert vigente hasta</th><th>Laboratorio</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="all_equipment" t-as="eq">
+                            <t t-set="cal" t-value="env['amunet.equipment.calibration'].sudo().search(
+                                [('equipment_id','=', eq.id), ('state','=','done'),
+                                 ('expiration_date','&gt;=', context_timestamp(datetime.datetime.now()).date())],
+                                order='expiration_date desc', limit=1)"/>
+                            <td>
+                                <a t-att-href="amunet_base_url + '/odoo/action-amunet_equipment_calibration.action_amunet_equipment/' + str(eq.id)"
+                                   t-att-class="'amunet-link'"
+                                   t-out="eq.serial_number">CAL/XYZ</a>
+                            </td>
+                            <td t-out="eq.name">Nombre</td>
+                            <td>
+                                <span t-if="eq.state == 'active'">Operativo</span>
+                                <span t-elif="eq.state == 'maintenance'">En mantenimiento</span>
+                                <span t-elif="eq.state == 'out_of_service'">Fuera de servicio</span>
+                                <span t-else="" t-out="eq.state">state</span>
+                            </td>
+                            <td t-out="cal and cal.expiration_date or '-- sin cert vigente --'">2027-05-10</td>
+                            <td t-out="cal and cal.lab_name or ''">Laboratorio</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+
+            <t t-if="qcs">
+                <h4>Firmantes del QC</h4>
+                <table class="amunet-trace-table table table-sm">
+                    <thead><tr><th>Rol</th><th>Usuario</th><th>Login</th></tr></thead>
+                    <tbody>
+                        <t t-foreach="qcs" t-as="qc">
+                            <tr t-if="qc.user_realized_id">
+                                <td>Realizo</td>
+                                <td t-out="qc.user_realized_id.name">Analista</td>
+                                <td t-out="qc.user_realized_id.login">login</td>
+                            </tr>
+                            <tr t-if="qc.user_verified_id">
+                                <td>Verifico</td>
+                                <td t-out="qc.user_verified_id.name">Supervisor</td>
+                                <td t-out="qc.user_verified_id.login">login</td>
+                            </tr>
+                            <tr t-if="qc.user_authorized_id">
+                                <td>Autorizo / Libero</td>
+                                <td t-out="qc.user_authorized_id.name">Sanitario</td>
+                                <td t-out="qc.user_authorized_id.login">login</td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </t>
+
+            <p style="font-size:0.7rem; color:#64748b; margin-top:8px;">
+                Reporte amunet_production. Cada link lleva al expediente vivo en
+                Odoo. Si el lector usa version impresa, la URL completa esta
+                embebida en el PDF.
+            </p>
+        </div>
+    </template>
+</odoo>

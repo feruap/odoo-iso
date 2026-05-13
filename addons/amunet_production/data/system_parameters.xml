@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!--
+        URL base para los enlaces clickeables en reportes Amunet.
+        - Se inicializa con la URL de staging.
+        - Si esta vacia, el template cae al system parameter estandar
+          'web.base.url'.
+        - noupdate=1: no se sobreescribe en upgrades futuros, pero
+          tampoco se replica si alguien restaura un dump en otro
+          ambiente (porque ir.config_parameter SI se replica con la BD,
+          el operador debe ajustarlo manualmente en cada ambiente).
+    -->
+    <record id="amunet_production_report_base_url" model="ir.config_parameter">
+        <field name="key">amunet_production.report_base_url</field>
+        <field name="value">https://stagingfc.amunet.com.mx</field>
+    </record>
+</odoo>

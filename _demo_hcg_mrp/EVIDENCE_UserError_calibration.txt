@@ -1,0 +1,151 @@
+================================================================================
+EVIDENCIA: Constraint de calibracion vigente al iniciar Work Order
+amunet_production v19.0.1.1.0 - 2026-05-10 - Amunet_testing
+================================================================================
+
+ESCENARIO PROBADO:
+  - Equipo PRO/BAL/01 (Balanza analitica) vinculado a WC-PESAJE
+  - Cert de calibracion id=19 originalmente vigente hasta 2027-05-10
+  - Caducado temporalmente: calibration_date=2024-12-01, expiration_date=2025-01-01
+  - Hoy = 2026-05-10 -> cert YA VENCIDO
+
+[TEST 1] Llamar wc._amunet_check_equipment_calibration() directamente
+RESULTADO: UserError disparado.
+MENSAJE:
+> No se puede iniciar la orden de trabajo: hay equipos sin certificado de
+> calibracion vigente:
+>  - PRO/BAL/01 (Balanza analítica) en WC-PESAJE: ultima calibracion vence
+>    2025-01-01 (state=done)
+>  - CAL/MIC/03 (Micropipeta 100-1000 µL) en WC-PESAJE: sin calibracion
+>    registrada
+>
+> Sube los certificados al modulo de calibracion antes de arrancar produccion.
+
+[TEST 2] Llamar wo.button_start() sobre WO real (id=25, WC-PESAJE)
+RESULTADO: UserError disparado al arrancar la orden de trabajo (override
+de mrp.workorder.button_start aplica el constraint del WC).
+MENSAJE: igual al Test 1.
+
+[TEST 3] Despues de revertir cert a vigente (2027-05-10)
+RESULTADO PRIMERO: UserError porque CAL/MIC/03 no tenia cert.
+ACCION CORRECTORA: se crearon certs DEMO para los 4 equipos faltantes
+(CAL/CNM/02, CAL/CNM/03, CAL/CNM/04, CAL/MIC/03) con vencimiento
+2027-05-10.
+RESULTADO FINAL: 15 / 15 equipos vinculados a WCs con cert vigente.
+
+CONCLUSION:
+  El constraint cumple su funcion: ningun WC inicia trabajo sin tener
+  los certs de calibracion al dia. Esto se aplica tanto en codigo (helper
+  publico) como en la UI al pulsar "Iniciar" en una WO. Es la forma
+  formal y mantenible de hacerlo en Odoo (override de modelo, no patches
+  externos).
+
+
+================================================================================
+APENDICE - amunet_production v19.0.1.2.0 - 2026-05-10
+================================================================================
+
+CAMBIOS DE COMPORTAMIENTO:
+  - Fail-closed: workcenter sin equipos vinculados Y sin marca de excepcion
+    bloquea button_start (antes pasaba silenciosamente).
+  - Validacion adicional de equipment.state == 'active'. Si esta en
+    'maintenance' o 'out_of_service', la WO no arranca.
+  - Campo nuevo `amunet_no_equipment_required` (Boolean) en mrp.workcenter
+    para autorizar excepcion documentada (ISO 13485 requiere justificacion).
+  - Cuando se aplica la excepcion, el override de button_start publica nota
+    en el chatter de la mrp.production (mrp.workorder no es mail.thread)
+    documentando que se inicio sin equipos calibrados.
+
+----------------------------------------------------------------------
+TEST 1 - Workcenter sin equipos vinculados Y sin marca de excepcion
+----------------------------------------------------------------------
+Setup: WC-TEST-EMPTY creado vacio, amunet_no_equipment_required = False
+Llamada: WC-TEST-EMPTY._amunet_check_equipment_calibration()
+RESULTADO: UserError disparado.
+MENSAJE:
+> No se puede iniciar la orden de trabajo. Problemas en el centro de trabajo:
+>  - Workcenter WC-TEST-EMPTY: no tiene equipos vinculados ni esta marcado
+>    como "No requiere equipo calibrado". Vincula los equipos en la pestana
+>    "Equipos Amunet" o marca la excepcion explicitamente con justificacion
+>    ISO 13485.
+>
+> Soluciona la causa antes de arrancar produccion (subir certificados de
+> calibracion vigentes, reactivar equipos, vincular equipos al workcenter,
+> o marcar la excepcion amunet_no_equipment_required con justificacion ISO
+> 13485).
+ESTADO: PASS
+
+----------------------------------------------------------------------
+TEST 2 - Mismo WC con marca True
+----------------------------------------------------------------------
+Setup: amunet_no_equipment_required = True
+Llamada: WC-TEST-EMPTY._amunet_check_equipment_calibration()
+RESULTADO: pasa, devuelve {'no_equipment_required': True}
+ESTADO: PASS
+
+----------------------------------------------------------------------
+TEST 3 - Equipo en state='maintenance'
+----------------------------------------------------------------------
+Setup: PRO/BAL/01.state cambiado de 'active' a 'maintenance'
+Llamada: WC-PESAJE._amunet_check_equipment_calibration()
+RESULTADO: UserError disparado.
+MENSAJE:
+> No se puede iniciar la orden de trabajo. Problemas en el centro de trabajo:
+>  - PRO/BAL/01 (Balanza analitica) en WC-PESAJE: estado "En Mantenimiento /
+>    Calibracion" (no operativo)
+>
+> Soluciona la causa antes de arrancar produccion (subir certificados de
+> calibracion vigentes, reactivar equipos, vincular equipos al workcenter,
+> o marcar la excepcion amunet_no_equipment_required con justificacion ISO
+> 13485).
+ESTADO: PASS
+
+----------------------------------------------------------------------
+TEST 4 - Revertir state a 'active'
+----------------------------------------------------------------------
+Setup: PRO/BAL/01.state revertido a 'active'
+Llamada: WC-PESAJE._amunet_check_equipment_calibration()
+RESULTADO: pasa, devuelve {'no_equipment_required': False}
+ESTADO: PASS
+
+----------------------------------------------------------------------
+TEST 5 - button_start con WC marca True registra mensaje en chatter
+----------------------------------------------------------------------
+Setup:
+  - WC-TEST-EMPTY con amunet_no_equipment_required = True
+  - MO temporal AMP/MO/00010 + WO id=58 sobre WC-TEST-EMPTY
+Llamada: WO.button_start()
+RESULTADO: button_start retorna OK, WO pasa a state='progress'.
+Chatter de la MO padre recibe nuevo mensaje (delta +1).
+MENSAJE PUBLICADO:
+> WO **Test chatter (DEMO V120)** (id=58) iniciada sin equipos calibrados.
+> Workcenter **WC-TEST-EMPTY** esta marcado como "No requiere equipo
+> calibrado" (amunet_no_equipment_required=True). Excepcion autorizada en
+> configuracion del WC. Justificacion ISO 13485 debe estar documentada en
+> la nota del workcenter o en CAPA.
+ESTADO: PASS
+
+----------------------------------------------------------------------
+TEST EXTRA - Reproducibilidad de create_workcenters.py
+----------------------------------------------------------------------
+Setup: vaciar M2M de WC-PESAJE (4 -> 0 equipos)
+Llamada: ejecutar _demo_hcg_mrp/create_workcenters.py
+RESULTADO:
+  - WC-PESAJE: M2M actualizado (4 equipos restaurados)
+  - WC-PRETRAT, WC-LAMINADO, WC-CORTE-HOJA, WC-CORTE-TIRA, WC-ENSAMBLE,
+    WC-EMPAQ-PRIM, WC-EMPAQ-SEC: M2M ya correcto, sin cambios.
+ESTADO: PASS (idempotente)
+
+----------------------------------------------------------------------
+LIMPIEZA
+----------------------------------------------------------------------
+  - PRO/BAL/01.state revertido a 'active'
+  - WC-TEST-EMPTY (id=12) se mantiene activo en staging para futuras
+    pruebas (no afecta produccion porque no esta vinculado a ningun BOM
+    ni MO real).
+  - MO temporal AMP/MO/00010 borrada via SQL.
+
+CONCLUSION:
+  Las dos validaciones (calibracion vigente Y estado operativo) y la
+  excepcion documentada con log automatico funcionan en los 5 escenarios.
+  El comportamiento por defecto es FAIL-CLOSED: en duda, no arranca.
