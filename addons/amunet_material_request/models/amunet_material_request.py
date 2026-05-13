@@ -89,6 +89,23 @@ class AmunetMaterialRequest(models.Model):
 
     line_count = fields.Integer(compute='_compute_line_count', string='No. lineas')
 
+    # Helper para vistas: True si el usuario actual es Admin del modulo.
+    # Solo el Admin puede editar requester_id / department_id / warehouse_id
+    # (la "cabecera" de la solicitud). Solicitante y Almacen los ven solo
+    # lectura, con valores autocompletados desde su perfil.
+    is_material_manager_for_user = fields.Boolean(
+        compute='_compute_is_material_manager_for_user',
+        help='True si el usuario actual pertenece al grupo Solicitudes de '
+             'Material / Administrador. Se usa solo para condiciones de UI.',
+    )
+
+    @api.depends_context('uid')
+    def _compute_is_material_manager_for_user(self):
+        is_mgr = self.env.user.has_group(
+            'amunet_material_request.group_material_manager')
+        for rec in self:
+            rec.is_material_manager_for_user = is_mgr
+
     _PROTECTED_FIELDS = {
         'name',
         'state',
@@ -205,12 +222,21 @@ class AmunetMaterialRequest(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         if not self._is_material_manager():
+            # Forzar requester_id = usuario actual.
+            # Limpiar department_id y warehouse_id que un solicitante
+            # malicioso podria mandar en los vals desde un cliente
+            # custom; los valores reales se computan automaticamente
+            # desde el empleado del solicitante y el warehouse por
+            # defecto de la compania.
             for vals in vals_list:
                 requester_id = vals.get('requester_id')
                 if requester_id and requester_id != self.env.user.id:
                     raise UserError(_(
                         'Solo el administrador puede crear solicitudes a '
                         'nombre de otro usuario.'))
+                vals['requester_id'] = self.env.user.id
+                vals.pop('department_id', None)
+                vals.pop('warehouse_id', None)
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
                 vals['name'] = self.env['ir.sequence'].next_by_code(
