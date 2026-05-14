@@ -30,6 +30,17 @@ class AmunetRegistroCapacitacion(models.Model):
         help='Número de serie (CAP-XXXX)'
     )
 
+    # Origen: si el registro se generó automáticamente al aprobar un curso.
+    intento_id = fields.Many2one(
+        'amunet.curso.intento',
+        string='Intento de Examen (origen)',
+        readonly=True,
+        copy=False,
+        ondelete='set null',
+        help='Intento de examen de curso que generó automáticamente este '
+             'registro, si aplica. Vacío = registro capturado manualmente.'
+    )
+
     # =========================================================================
     # QUIÉN
     # =========================================================================

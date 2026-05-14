@@ -2,3 +2,13 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_amunet_registro_capacitacion_user,amunet.registro.capacitacion.user,model_amunet_registro_capacitacion,amunet_competencias.group_competencias_user,1,0,0,0
 access_amunet_registro_capacitacion_manager,amunet.registro.capacitacion.manager,model_amunet_registro_capacitacion,amunet_competencias.group_competencias_manager,1,1,1,1
 access_amunet_matriz_competencias_user,amunet.matriz.competencias.user,model_amunet_matriz_competencias,base.group_user,1,0,0,0
+access_amunet_curso_user,amunet.curso.user,model_amunet_curso,base.group_user,1,0,0,0
+access_amunet_curso_manager,amunet.curso.manager,model_amunet_curso,amunet_competencias.group_competencias_manager,1,1,1,1
+access_amunet_curso_pregunta_user,amunet.curso.pregunta.user,model_amunet_curso_pregunta,base.group_user,1,0,0,0
+access_amunet_curso_pregunta_manager,amunet.curso.pregunta.manager,model_amunet_curso_pregunta,amunet_competencias.group_competencias_manager,1,1,1,1
+access_amunet_curso_respuesta_user,amunet.curso.respuesta.user,model_amunet_curso_respuesta,base.group_user,1,0,0,0
+access_amunet_curso_respuesta_manager,amunet.curso.respuesta.manager,model_amunet_curso_respuesta,amunet_competencias.group_competencias_manager,1,1,1,1
+access_amunet_curso_intento_user,amunet.curso.intento.user,model_amunet_curso_intento,base.group_user,1,1,1,0
+access_amunet_curso_intento_manager,amunet.curso.intento.manager,model_amunet_curso_intento,amunet_competencias.group_competencias_manager,1,1,1,1
+access_amunet_curso_intento_linea_user,amunet.curso.intento.linea.user,model_amunet_curso_intento_linea,base.group_user,1,1,1,1
+access_amunet_curso_intento_linea_manager,amunet.curso.intento.linea.manager,model_amunet_curso_intento_linea,amunet_competencias.group_competencias_manager,1,1,1,1

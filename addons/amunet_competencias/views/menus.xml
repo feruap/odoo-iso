@@ -2,7 +2,7 @@
 <odoo>
 
     <!-- ══════════════════════════════════════════════════════
-         Menú: Competencias (bajo el catálogo de Calidad)
+         Menú: Recursos Humanos > Competencias  (gestión)
     ══════════════════════════════════════════════════════ -->
 
     <!-- Menú Raíz: Recursos Humanos -->
@@ -21,6 +21,24 @@
         sequence="10"
         groups="amunet_competencias.group_competencias_user"/>
 
+    <!-- Submenú: Cursos (gestión) -->
+    <menuitem
+        id="menu_amunet_curso"
+        name="Cursos"
+        parent="menu_amunet_competencias_root"
+        action="action_amunet_curso"
+        sequence="5"
+        groups="amunet_competencias.group_competencias_manager"/>
+
+    <!-- Submenú: Intentos de Examen (gestión) -->
+    <menuitem
+        id="menu_amunet_curso_intento"
+        name="Intentos de Examen"
+        parent="menu_amunet_competencias_root"
+        action="action_amunet_curso_intento"
+        sequence="8"
+        groups="amunet_competencias.group_competencias_manager"/>
+
     <!-- Submenú: Registros de Capacitación -->
     <menuitem
         id="menu_amunet_registro_capacitacion"
@@ -38,5 +56,32 @@
         action="action_amunet_matriz_competencias"
         sequence="20"
         groups="amunet_competencias.group_competencias_user"/>
+
+    <!-- ══════════════════════════════════════════════════════
+         Menú: Mi Capacitación  (autoservicio, todos los empleados)
+    ══════════════════════════════════════════════════════ -->
+
+    <menuitem
+        id="menu_mi_capacitacion_root"
+        name="Mi Capacitación"
+        web_icon="amunet_competencias,static/description/icon.png"
+        sequence="55"
+        groups="base.group_user"/>
+
+    <menuitem
+        id="menu_mis_cursos"
+        name="Mis Cursos"
+        parent="menu_mi_capacitacion_root"
+        action="action_amunet_mis_cursos"
+        sequence="10"
+        groups="base.group_user"/>
+
+    <menuitem
+        id="menu_mis_intentos"
+        name="Mis Exámenes"
+        parent="menu_mi_capacitacion_root"
+        action="action_amunet_mis_intentos"
+        sequence="20"
+        groups="base.group_user"/>
 
 </odoo>
