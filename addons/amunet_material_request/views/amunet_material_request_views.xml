@@ -91,12 +91,19 @@
                                 editables por el super-admin (Mery). Para
                                 cualquier otro usuario los campos quedan
                                 readonly y autocompletados desde el perfil.
+                                no_open evita que el solicitante pueda
+                                "abrir" el registro relacionado (perfil
+                                de usuario, departamento, almacen) que es
+                                informacion fuera del alcance del modulo.
                             -->
                             <field name="requester_id"
+                                   options="{'no_open': True, 'no_create': True}"
                                    readonly="state != 'draft' or not is_material_manager_for_user"/>
                             <field name="department_id"
+                                   options="{'no_open': True, 'no_create': True}"
                                    readonly="state != 'draft' or not is_material_manager_for_user"/>
                             <field name="warehouse_id"
+                                   options="{'no_open': True, 'no_create': True}"
                                    readonly="state != 'draft' or not is_material_manager_for_user"/>
                         </group>
                         <group>
