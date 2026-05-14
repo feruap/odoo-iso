@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!--
+            Sobreescribir los grupos del menu raiz "Empleados" para
+            quitar base.group_user (Rol / Miembro). Esto evita que
+            cualquier empleado interno vea la app de Empleados.
+
+            La eval list reemplaza completamente la asignacion existente:
+              (5, 0, 0) = unlink all groups
+              (4, ref)  = link group
+            quedando solo los 2 grupos legitimos de RH.
+
+            Como noupdate="0", este record se vuelve a aplicar en cada
+            -u amunet_hr_visibility (y tambien al instalar). Si el
+            modulo 'hr' es upgraded y vuelve a meter base.group_user,
+            con que se haga un 'odoo -u amunet_hr_visibility' (o un
+            -u all) se restaura la restriccion.
+        -->
+        <record id="hr.menu_hr_root" model="ir.ui.menu">
+            <field name="group_ids" eval="[
+                (5, 0, 0),
+                (4, ref('hr.group_hr_user')),
+                (4, ref('hr.group_hr_manager')),
+            ]"/>
+        </record>
+
+    </data>
+</odoo>
