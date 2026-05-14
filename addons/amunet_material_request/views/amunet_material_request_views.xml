@@ -83,14 +83,21 @@
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
 
+                    <field name="is_material_manager_for_user" invisible="1"/>
                     <group>
                         <group>
+                            <!--
+                                Solicitante, Area y Almacen origen solo
+                                editables por el super-admin (Mery). Para
+                                cualquier otro usuario los campos quedan
+                                readonly y autocompletados desde el perfil.
+                            -->
                             <field name="requester_id"
-                                   readonly="state != 'draft'"/>
+                                   readonly="state != 'draft' or not is_material_manager_for_user"/>
                             <field name="department_id"
-                                   readonly="state != 'draft'"/>
+                                   readonly="state != 'draft' or not is_material_manager_for_user"/>
                             <field name="warehouse_id"
-                                   readonly="state != 'draft'"/>
+                                   readonly="state != 'draft' or not is_material_manager_for_user"/>
                         </group>
                         <group>
                             <field name="request_date"/>

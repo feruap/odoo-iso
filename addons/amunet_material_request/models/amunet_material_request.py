@@ -89,6 +89,27 @@ class AmunetMaterialRequest(models.Model):
 
     line_count = fields.Integer(compute='_compute_line_count', string='No. lineas')
 
+    # Helper para vistas: True solo para usuarios autorizados a editar la
+    # cabecera (requester_id / department_id / warehouse_id) de una
+    # solicitud. Por requerimiento operativo (trazabilidad ISO), solo el
+    # usuario "desarrollo@amunet.com.mx" (Mery, super-admin de respaldo)
+    # puede modificarla. Cualquier otro usuario, incluso almacen o admin
+    # del modulo, ve los campos en solo lectura.
+    is_material_manager_for_user = fields.Boolean(
+        compute='_compute_is_material_manager_for_user',
+        help='True solo para el super-admin autorizado a editar la cabecera '
+             'de una solicitud (campos requester_id, department_id, '
+             'warehouse_id). Se usa solo para condiciones de UI.',
+    )
+
+    _CABECERA_EDITORES = ('desarrollo@amunet.com.mx',)
+
+    @api.depends_context('uid')
+    def _compute_is_material_manager_for_user(self):
+        is_editor = self.env.user.login in self._CABECERA_EDITORES
+        for rec in self:
+            rec.is_material_manager_for_user = is_editor
+
     _PROTECTED_FIELDS = {
         'name',
         'state',
@@ -205,12 +226,21 @@ class AmunetMaterialRequest(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         if not self._is_material_manager():
+            # Forzar requester_id = usuario actual.
+            # Limpiar department_id y warehouse_id que un solicitante
+            # malicioso podria mandar en los vals desde un cliente
+            # custom; los valores reales se computan automaticamente
+            # desde el empleado del solicitante y el warehouse por
+            # defecto de la compania.
             for vals in vals_list:
                 requester_id = vals.get('requester_id')
                 if requester_id and requester_id != self.env.user.id:
                     raise UserError(_(
                         'Solo el administrador puede crear solicitudes a '
                         'nombre de otro usuario.'))
+                vals['requester_id'] = self.env.user.id
+                vals.pop('department_id', None)
+                vals.pop('warehouse_id', None)
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
                 vals['name'] = self.env['ir.sequence'].next_by_code(
