@@ -321,6 +321,60 @@ class AmunetMaterialRequest(models.Model):
         next_num = seq.next_by_id()
         return f'T/{self.warehouse_id.code}/{dept_code}/{next_num}'
 
+    def _notify_warehouse_pending(self):
+        """Crea actividades para los almacenistas avisando que hay una
+        solicitud pendiente de surtir.
+
+        Una actividad por cada usuario del grupo Almacen que tenga
+        acceso al almacen origen de la solicitud (segun el modulo
+        amunet_warehouse_access cuando esta instalado). Cualquiera de
+        ellos puede tomar la solicitud; cuando lo hace, las actividades
+        de los demas se eliminan en _close_warehouse_activities.
+        """
+        self.ensure_one()
+        wh_group = self.env.ref(
+            'amunet_material_request.group_material_warehouse',
+            raise_if_not_found=False,
+        )
+        todo_act = self.env.ref(
+            'mail.mail_activity_data_todo', raise_if_not_found=False)
+        if not wh_group or not todo_act:
+            return
+        # En Odoo 19 el campo es user_ids (era users en versiones previas).
+        users = wh_group.sudo().all_user_ids.filtered(
+            lambda u: u.active and u.id != 1)
+        # Filtrar por acceso a almacen si el modulo lo trae
+        if 'warehouse_ids' in users._fields:
+            users = users.filtered(
+                lambda u: not u.warehouse_ids or self.warehouse_id in u.warehouse_ids
+            )
+        body = _(
+            'Solicitante: %(s)s\nArea: %(d)s\nLineas: %(n)s\nAlmacen: %(w)s'
+        ) % {
+            's': self.requester_id.name,
+            'd': self.department_id.name or '-',
+            'n': len(self.line_ids),
+            'w': self.warehouse_id.name,
+        }
+        for u in users:
+            self.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Surtir solicitud %s') % self.name,
+                note=body.replace('\n', '<br/>'),
+                user_id=u.id,
+            )
+
+    def _close_warehouse_activities(self):
+        """Elimina las actividades de surtido pendientes (cuando alguien
+        ya tomo la solicitud o la cancelo). Identifica solo las que
+        creamos nosotros por el 'summary'."""
+        self.ensure_one()
+        summary_prefix = _('Surtir solicitud ')
+        actividades = self.sudo().activity_ids.filtered(
+            lambda a: a.summary and a.summary.startswith(summary_prefix)
+        )
+        actividades.unlink()
+
     def action_submit(self):
         for rec in self:
             if rec.state != 'draft':
@@ -353,6 +407,9 @@ class AmunetMaterialRequest(models.Model):
             rec.message_post(body=_(
                 'Solicitud enviada y firmada por %s.'
             ) % self.env.user.display_name)
+            # Notificar a los almacenistas: aparece como actividad
+            # pendiente en su bandeja superior de Odoo.
+            rec._notify_warehouse_pending()
         return True
 
     def action_start_picking(self):
@@ -393,6 +450,9 @@ class AmunetMaterialRequest(models.Model):
             rec.message_post(body=_(
                 'Surtido iniciado. Transferencia %s creada.'
             ) % picking.name)
+            # Alguien tomo la solicitud: cerrar las actividades
+            # pendientes de los demas almacenistas.
+            rec._close_warehouse_activities()
         return True
 
     def action_confirm_delivery(self):
@@ -520,6 +580,8 @@ class AmunetMaterialRequest(models.Model):
             rec.with_context(material_request_internal_write=True).write({
                 'state': 'cancelled',
             })
+            # Limpiar las actividades de surtido pendientes
+            rec._close_warehouse_activities()
         return True
 
     def action_draft(self):
