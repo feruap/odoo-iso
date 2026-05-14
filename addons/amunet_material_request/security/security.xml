@@ -31,5 +31,19 @@
             </field>
         </record>
 
+        <!--
+            Hacer que cualquier usuario interno (base.group_user, "Rol /
+            Miembro") sea automaticamente Solicitante de Material. Asi
+            todos los empleados activos y los nuevos que se den de alta
+            quedan habilitados para crear sus propias solicitudes sin
+            necesidad de asignacion manual.
+
+            (4, ref) agrega al implied_ids existente del grupo
+            base.group_user sin reemplazar nada (no rompe otras apps).
+        -->
+        <record id="base.group_user" model="res.groups">
+            <field name="implied_ids" eval="[(4, ref('amunet_material_request.group_material_requester'))]"/>
+        </record>
+
     </data>
 </odoo>

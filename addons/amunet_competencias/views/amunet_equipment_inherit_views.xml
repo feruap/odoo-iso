@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Equipo — pestaña "Cursos de capacitación"
+         (puente equipo -> PNO -> curso)
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_equipment_form_curso" model="ir.ui.view">
+        <field name="name">amunet.equipment.form.curso</field>
+        <field name="model">amunet.equipment</field>
+        <field name="inherit_id" ref="amunet_equipment_calibration.view_amunet_equipment_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[@name='procedures']" position="after">
+                <page string="Cursos de capacitación" name="cursos">
+                    <div class="alert alert-info" role="alert">
+                        Cursos que un operador debe aprobar para quedar capacitado en
+                        este equipo. Se derivan automáticamente de los PNOs del equipo
+                        (pestaña anterior).
+                    </div>
+                    <field name="curso_count" invisible="1"/>
+                    <field name="curso_ids" readonly="1">
+                        <list string="Cursos">
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="total_preguntas"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'publicado'"
+                                   decoration-muted="state == 'borrador'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Equipo — lista: agregar contador de cursos -->
+    <record id="view_amunet_equipment_tree_curso" model="ir.ui.view">
+        <field name="name">amunet.equipment.list.curso</field>
+        <field name="model">amunet.equipment</field>
+        <field name="inherit_id" ref="amunet_equipment_calibration.view_amunet_equipment_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='authorized_user_count']" position="after">
+                <field name="curso_count" string="Cursos"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

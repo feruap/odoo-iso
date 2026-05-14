@@ -89,6 +89,27 @@ class AmunetMaterialRequest(models.Model):
 
     line_count = fields.Integer(compute='_compute_line_count', string='No. lineas')
 
+    # Helper para vistas: True solo para usuarios autorizados a editar la
+    # cabecera (requester_id / department_id / warehouse_id) de una
+    # solicitud. Por requerimiento operativo (trazabilidad ISO), solo el
+    # usuario "desarrollo@amunet.com.mx" (Mery, super-admin de respaldo)
+    # puede modificarla. Cualquier otro usuario, incluso almacen o admin
+    # del modulo, ve los campos en solo lectura.
+    is_material_manager_for_user = fields.Boolean(
+        compute='_compute_is_material_manager_for_user',
+        help='True solo para el super-admin autorizado a editar la cabecera '
+             'de una solicitud (campos requester_id, department_id, '
+             'warehouse_id). Se usa solo para condiciones de UI.',
+    )
+
+    _CABECERA_EDITORES = ('desarrollo@amunet.com.mx',)
+
+    @api.depends_context('uid')
+    def _compute_is_material_manager_for_user(self):
+        is_editor = self.env.user.login in self._CABECERA_EDITORES
+        for rec in self:
+            rec.is_material_manager_for_user = is_editor
+
     _PROTECTED_FIELDS = {
         'name',
         'state',
@@ -135,6 +156,11 @@ class AmunetMaterialRequest(models.Model):
                 'directamente. Usa las acciones del flujo.'))
 
         allowed_warehouse_fields = {'line_ids', 'note'}
+        # En 'pending_reception' el solicitante (o jefe de area que
+        # puede validar) puede capturar cantidades recibidas y notas
+        # antes de firmar. Solo se permite tocar line_ids (donde estan
+        # qty_received y line_reception_note) y reception_notes.
+        allowed_reception_fields = {'line_ids', 'reception_notes'}
         user = self.env.user
         for rec in self:
             if rec.state == 'draft' and rec.requester_id == user:
@@ -143,6 +169,12 @@ class AmunetMaterialRequest(models.Model):
                 self._is_material_warehouse()
                 and rec.state == 'in_picking'
                 and set(vals).issubset(allowed_warehouse_fields)
+            ):
+                continue
+            if (
+                rec.state == 'pending_reception'
+                and rec.can_validate_reception
+                and set(vals).issubset(allowed_reception_fields)
             ):
                 continue
             raise UserError(_(
@@ -205,12 +237,21 @@ class AmunetMaterialRequest(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         if not self._is_material_manager():
+            # Forzar requester_id = usuario actual.
+            # Limpiar department_id y warehouse_id que un solicitante
+            # malicioso podria mandar en los vals desde un cliente
+            # custom; los valores reales se computan automaticamente
+            # desde el empleado del solicitante y el warehouse por
+            # defecto de la compania.
             for vals in vals_list:
                 requester_id = vals.get('requester_id')
                 if requester_id and requester_id != self.env.user.id:
                     raise UserError(_(
                         'Solo el administrador puede crear solicitudes a '
                         'nombre de otro usuario.'))
+                vals['requester_id'] = self.env.user.id
+                vals.pop('department_id', None)
+                vals.pop('warehouse_id', None)
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
                 vals['name'] = self.env['ir.sequence'].next_by_code(
@@ -291,6 +332,60 @@ class AmunetMaterialRequest(models.Model):
         next_num = seq.next_by_id()
         return f'T/{self.warehouse_id.code}/{dept_code}/{next_num}'
 
+    def _notify_warehouse_pending(self):
+        """Crea actividades para los almacenistas avisando que hay una
+        solicitud pendiente de surtir.
+
+        Una actividad por cada usuario del grupo Almacen que tenga
+        acceso al almacen origen de la solicitud (segun el modulo
+        amunet_warehouse_access cuando esta instalado). Cualquiera de
+        ellos puede tomar la solicitud; cuando lo hace, las actividades
+        de los demas se eliminan en _close_warehouse_activities.
+        """
+        self.ensure_one()
+        wh_group = self.env.ref(
+            'amunet_material_request.group_material_warehouse',
+            raise_if_not_found=False,
+        )
+        todo_act = self.env.ref(
+            'mail.mail_activity_data_todo', raise_if_not_found=False)
+        if not wh_group or not todo_act:
+            return
+        # En Odoo 19 el campo es user_ids (era users en versiones previas).
+        users = wh_group.sudo().all_user_ids.filtered(
+            lambda u: u.active and u.id != 1)
+        # Filtrar por acceso a almacen si el modulo lo trae
+        if 'warehouse_ids' in users._fields:
+            users = users.filtered(
+                lambda u: not u.warehouse_ids or self.warehouse_id in u.warehouse_ids
+            )
+        body = _(
+            'Solicitante: %(s)s\nArea: %(d)s\nLineas: %(n)s\nAlmacen: %(w)s'
+        ) % {
+            's': self.requester_id.name,
+            'd': self.department_id.name or '-',
+            'n': len(self.line_ids),
+            'w': self.warehouse_id.name,
+        }
+        for u in users:
+            self.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Surtir solicitud %s') % self.name,
+                note=body.replace('\n', '<br/>'),
+                user_id=u.id,
+            )
+
+    def _close_warehouse_activities(self):
+        """Elimina las actividades de surtido pendientes (cuando alguien
+        ya tomo la solicitud o la cancelo). Identifica solo las que
+        creamos nosotros por el 'summary'."""
+        self.ensure_one()
+        summary_prefix = _('Surtir solicitud ')
+        actividades = self.sudo().activity_ids.filtered(
+            lambda a: a.summary and a.summary.startswith(summary_prefix)
+        )
+        actividades.unlink()
+
     def action_submit(self):
         for rec in self:
             if rec.state != 'draft':
@@ -323,6 +418,9 @@ class AmunetMaterialRequest(models.Model):
             rec.message_post(body=_(
                 'Solicitud enviada y firmada por %s.'
             ) % self.env.user.display_name)
+            # Notificar a los almacenistas: aparece como actividad
+            # pendiente en su bandeja superior de Odoo.
+            rec._notify_warehouse_pending()
         return True
 
     def action_start_picking(self):
@@ -363,6 +461,9 @@ class AmunetMaterialRequest(models.Model):
             rec.message_post(body=_(
                 'Surtido iniciado. Transferencia %s creada.'
             ) % picking.name)
+            # Alguien tomo la solicitud: cerrar las actividades
+            # pendientes de los demas almacenistas.
+            rec._close_warehouse_activities()
         return True
 
     def action_confirm_delivery(self):
@@ -490,6 +591,8 @@ class AmunetMaterialRequest(models.Model):
             rec.with_context(material_request_internal_write=True).write({
                 'state': 'cancelled',
             })
+            # Limpiar las actividades de surtido pendientes
+            rec._close_warehouse_activities()
         return True
 
     def action_draft(self):

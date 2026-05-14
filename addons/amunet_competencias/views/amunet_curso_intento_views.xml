@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Intento de Examen — Formulario (lo usa el empleado)
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_curso_intento_form" model="ir.ui.view">
+        <field name="name">amunet.curso.intento.form</field>
+        <field name="model">amunet.curso.intento</field>
+        <field name="arch" type="xml">
+            <form string="Examen">
+                <header>
+                    <button name="action_finalizar" string="Finalizar examen"
+                            type="object" class="btn-primary"
+                            invisible="state == 'terminado'"
+                            confirm="¿Finalizar el examen? No podrás cambiar tus respuestas después."/>
+                    <button name="action_view_registros" string="Ver registros generados"
+                            type="object" invisible="registro_count == 0"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Aprobado" bg_color="bg-success"
+                            invisible="state != 'terminado' or not aprobado"/>
+                    <widget name="web_ribbon" title="No aprobado" bg_color="bg-danger"
+                            invisible="state != 'terminado' or aprobado"/>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="curso_id" readonly="1"/>
+                            <field name="user_id" readonly="1"/>
+                            <field name="fecha_inicio" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="calificacion_minima"/>
+                            <field name="calificacion" readonly="1"
+                                   invisible="state != 'terminado'"/>
+                            <field name="aprobado" readonly="1"
+                                   invisible="state != 'terminado'"/>
+                            <field name="fecha_fin" readonly="1"
+                                   invisible="state != 'terminado'"/>
+                            <field name="registro_count" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Examen" name="examen">
+                            <div class="alert alert-info" role="alert"
+                                 invisible="state == 'terminado'">
+                                Responde todas las preguntas y pulsa "Finalizar examen".
+                            </div>
+                            <field name="linea_ids" readonly="state == 'terminado'">
+                                <list string="Preguntas" editable="bottom"
+                                      create="false" delete="false">
+                                    <field name="pregunta_id" column_invisible="1"/>
+                                    <field name="pregunta_texto" readonly="1"/>
+                                    <field name="puntos" readonly="1"/>
+                                    <field name="respuesta_id" required="1"
+                                           options="{'no_create': True, 'no_open': True}"/>
+                                    <field name="es_correcta" widget="boolean_toggle"
+                                           readonly="1"
+                                           column_invisible="parent.state != 'terminado'"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Material del curso" name="material">
+                            <group>
+                                <field name="video_url" widget="url" readonly="1"/>
+                            </group>
+                            <separator string="Contenido"/>
+                            <field name="descripcion" readonly="1"/>
+                            <separator string="Material de apoyo"/>
+                            <field name="material_ids" widget="many2many_binary" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Intento — Lista -->
+    <record id="view_amunet_curso_intento_list" model="ir.ui.view">
+        <field name="name">amunet.curso.intento.list</field>
+        <field name="model">amunet.curso.intento</field>
+        <field name="arch" type="xml">
+            <list string="Intentos de Examen"
+                  decoration-success="aprobado"
+                  decoration-danger="state == 'terminado' and not aprobado">
+                <field name="name"/>
+                <field name="curso_id"/>
+                <field name="user_id"/>
+                <field name="fecha_inicio"/>
+                <field name="calificacion"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'en_progreso'"
+                       decoration-success="state == 'terminado'"/>
+                <field name="aprobado"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Intento — Búsqueda -->
+    <record id="view_amunet_curso_intento_search" model="ir.ui.view">
+        <field name="name">amunet.curso.intento.search</field>
+        <field name="model">amunet.curso.intento</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="curso_id"/>
+                <field name="user_id"/>
+                <filter name="f_aprobado" string="Aprobados" domain="[('aprobado', '=', True)]"/>
+                <filter name="f_terminado" string="Terminados" domain="[('state', '=', 'terminado')]"/>
+                <filter name="f_progreso" string="En progreso" domain="[('state', '=', 'en_progreso')]"/>
+                <separator/>
+                <filter name="g_curso" string="Curso" context="{'group_by': 'curso_id'}"/>
+                <filter name="g_user" string="Usuario" context="{'group_by': 'user_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción — Intentos de Examen (gestión) -->
+    <record id="action_amunet_curso_intento" model="ir.actions.act_window">
+        <field name="name">Intentos de Examen</field>
+        <field name="res_model">amunet.curso.intento</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_curso_intento_search"/>
+    </record>
+
+</odoo>

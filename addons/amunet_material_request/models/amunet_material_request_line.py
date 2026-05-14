@@ -20,7 +20,13 @@ class AmunetMaterialRequestLine(models.Model):
     )
     uom_id = fields.Many2one(
         'uom.uom', string='UdM',
-        related='product_id.uom_id', store=True, readonly=False,
+        related='product_id.uom_id', store=True, readonly=True,
+        # readonly=True (no readonly=False): si fuera editable, al
+        # ejecutar self.uom_id = product.uom_id en el onchange Odoo
+        # intentaria propagar el valor de regreso al producto, lo cual
+        # falla para usuarios sin write en product.product (cualquier
+        # solicitante normal). La UdM SIEMPRE viene del producto, asi
+        # que mantener readonly es lo correcto.
     )
     tracking = fields.Selection(related='product_id.tracking', store=True,
                                 string='Trazabilidad')
@@ -149,7 +155,9 @@ class AmunetMaterialRequestLine(models.Model):
     @api.onchange('product_id')
     def _onchange_product_id(self):
         if self.product_id:
-            self.uom_id = self.product_id.uom_id.id
+            # uom_id se actualiza automaticamente porque es related
+            # store. Evitamos asignarlo explicitamente para no disparar
+            # un write back al producto.
             self.lot_id = False
             self.qty_supplied = 0.0
 

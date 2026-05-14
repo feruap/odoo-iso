@@ -12,5 +12,25 @@
             <field name="number_increment">1</field>
         </record>
 
+        <!-- Secuencia para Cursos -->
+        <record id="seq_amunet_curso" model="ir.sequence">
+            <field name="name">Curso de Capacitación</field>
+            <field name="code">amunet.curso</field>
+            <field name="prefix">CURSO-</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <!-- Secuencia para Intentos de Examen -->
+        <record id="seq_amunet_curso_intento" model="ir.sequence">
+            <field name="name">Intento de Examen de Curso</field>
+            <field name="code">amunet.curso.intento</field>
+            <field name="prefix">INT-</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
     </data>
 </odoo>

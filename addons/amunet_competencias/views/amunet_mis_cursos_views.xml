@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Mis Cursos — vista de autoservicio para cada empleado
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_mis_cursos_list" model="ir.ui.view">
+        <field name="name">amunet.curso.mis.list</field>
+        <field name="model">amunet.curso</field>
+        <field name="arch" type="xml">
+            <list string="Mis Cursos" create="false" edit="false"
+                  decoration-success="mi_estado == 'vigente'"
+                  decoration-warning="mi_estado == 'por_vencer'"
+                  decoration-danger="mi_estado == 'vencida'"
+                  decoration-muted="mi_estado == 'sin_iniciar'">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="total_preguntas"/>
+                <field name="calificacion_minima" string="Mín. (%)"/>
+                <field name="mi_estado"/>
+                <field name="mi_intento_count" string="Mis intentos"/>
+                <button name="action_iniciar_examen" type="object"
+                        string="Tomar curso / examen" class="btn-link"
+                        icon="fa-play"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_mis_cursos_search" model="ir.ui.view">
+        <field name="name">amunet.curso.mis.search</field>
+        <field name="model">amunet.curso</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <filter name="f_pendientes" string="Pendientes"
+                        domain="[('mi_estado', 'in', ['sin_iniciar', 'vencida'])]"/>
+                <filter name="f_vigentes" string="Vigentes"
+                        domain="[('mi_estado', '=', 'vigente')]"/>
+                <filter name="f_por_vencer" string="Por vencer"
+                        domain="[('mi_estado', '=', 'por_vencer')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción — Mis Cursos -->
+    <record id="action_amunet_mis_cursos" model="ir.actions.act_window">
+        <field name="name">Mis Cursos</field>
+        <field name="res_model">amunet.curso</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'publicado')]</field>
+        <field name="search_view_id" ref="view_amunet_mis_cursos_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aquí aparecerán tus cursos de capacitación</p>
+            <p>Abre un curso para ver el video y el material, luego presenta el examen.</p>
+        </field>
+    </record>
+
+    <!-- La acción "Mis Cursos" usa la lista propia y el formulario del empleado -->
+    <record id="action_amunet_mis_cursos_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_mis_cursos_list"/>
+        <field name="act_window_id" ref="action_amunet_mis_cursos"/>
+    </record>
+    <record id="action_amunet_mis_cursos_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_amunet_curso_form_empleado"/>
+        <field name="act_window_id" ref="action_amunet_mis_cursos"/>
+    </record>
+
+    <!-- Acción — Mis Intentos (historial propio del empleado) -->
+    <record id="action_amunet_mis_intentos" model="ir.actions.act_window">
+        <field name="name">Mis Exámenes</field>
+        <field name="res_model">amunet.curso.intento</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('user_id', '=', uid)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aquí aparecerá el historial de tus exámenes</p>
+        </field>
+    </record>
+
+</odoo>

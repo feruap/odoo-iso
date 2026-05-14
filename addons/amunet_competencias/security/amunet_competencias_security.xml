@@ -21,8 +21,44 @@
         <field name="implied_ids" eval="[(4, ref('group_competencias_user'))]"/>
         <field name="comment">
             Puede crear, editar y cancelar cualquier registro de capacitación.
-            Puede gestionar la Matriz de Competencias completa.
+            Puede gestionar la Matriz de Competencias y los Cursos completos.
         </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Reglas de registro — Cursos e Intentos de examen
+    ══════════════════════════════════════════════════════ -->
+
+    <!-- Cursos: cualquier empleado ve solo los publicados -->
+    <record id="rule_curso_publicado_user" model="ir.rule">
+        <field name="name">Cursos: empleados ven solo publicados</field>
+        <field name="model_id" ref="model_amunet_curso"/>
+        <field name="domain_force">[('state', '=', 'publicado')]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Cursos: el gestor ve todos (borradores incluidos) -->
+    <record id="rule_curso_manager" model="ir.rule">
+        <field name="name">Cursos: gestor ve todos</field>
+        <field name="model_id" ref="model_amunet_curso"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_competencias_manager'))]"/>
+    </record>
+
+    <!-- Intentos: cada empleado ve solo los propios -->
+    <record id="rule_curso_intento_own" model="ir.rule">
+        <field name="name">Intentos: solo los propios</field>
+        <field name="model_id" ref="model_amunet_curso_intento"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Intentos: el gestor ve todos -->
+    <record id="rule_curso_intento_manager" model="ir.rule">
+        <field name="name">Intentos: gestor ve todos</field>
+        <field name="model_id" ref="model_amunet_curso_intento"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_competencias_manager'))]"/>
     </record>
 
 </odoo>
