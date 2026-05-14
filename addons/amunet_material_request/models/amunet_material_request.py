@@ -156,6 +156,11 @@ class AmunetMaterialRequest(models.Model):
                 'directamente. Usa las acciones del flujo.'))
 
         allowed_warehouse_fields = {'line_ids', 'note'}
+        # En 'pending_reception' el solicitante (o jefe de area que
+        # puede validar) puede capturar cantidades recibidas y notas
+        # antes de firmar. Solo se permite tocar line_ids (donde estan
+        # qty_received y line_reception_note) y reception_notes.
+        allowed_reception_fields = {'line_ids', 'reception_notes'}
         user = self.env.user
         for rec in self:
             if rec.state == 'draft' and rec.requester_id == user:
@@ -164,6 +169,12 @@ class AmunetMaterialRequest(models.Model):
                 self._is_material_warehouse()
                 and rec.state == 'in_picking'
                 and set(vals).issubset(allowed_warehouse_fields)
+            ):
+                continue
+            if (
+                rec.state == 'pending_reception'
+                and rec.can_validate_reception
+                and set(vals).issubset(allowed_reception_fields)
             ):
                 continue
             raise UserError(_(
