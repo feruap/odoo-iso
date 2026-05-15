@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="cron_alerta_vencimiento_capacitacion" model="ir.cron">
+        <field name="name">Capacitación: aviso de vencimiento (30 días)</field>
+        <field name="model_id" ref="model_amunet_registro_capacitacion"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_alerta_vencimiento(dias=30)</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cron_reporte_mensual_capacitacion" model="ir.cron">
+        <field name="name">Capacitación: reporte mensual de cumplimiento</field>
+        <field name="model_id" ref="model_amunet_registro_capacitacion"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_reporte_mensual()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">months</field>
+        <field name="active" eval="True"/>
+    </record>
+
+</odoo>

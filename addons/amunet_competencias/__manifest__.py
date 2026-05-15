@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Competencias y Capacitación (ISO 13485 §6.2)',
-    'version': '19.0.3.0.0',
+    'version': '19.0.4.0.0',
     'category': 'Quality',
     'summary': 'Cursos, exámenes, planes de estudio, matriz de competencias y bloqueo de firma por competencia vencida',
     'description': """
@@ -56,6 +56,9 @@
         'views/amunet_registro_capacitacion_views.xml',
         'views/amunet_matriz_competencias_views.xml',
         'views/menus.xml',
+
+        # Crons (alertas y reporte mensual)
+        'data/cron_alertas.xml',
     ],
     'installable': True,
     'application': True,
