@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Plan de Estudios — Formulario / Lista
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_plan_estudios_form" model="ir.ui.view">
+        <field name="name">amunet.plan.estudios.form</field>
+        <field name="model">amunet.plan.estudios</field>
+        <field name="arch" type="xml">
+            <form string="Plan de Estudios">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_empleados" type="object"
+                                class="oe_stat_button" icon="fa-users">
+                            <field name="empleado_count" widget="statinfo" string="Empleados"/>
+                        </button>
+                        <button name="action_view_avance" type="object"
+                                class="oe_stat_button" icon="fa-bar-chart">
+                            <span class="o_stat_text">Ver avance</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Ej. Capacitación — Operador de Inyección"/></h1>
+                        <field name="code" readonly="1"/>
+                    </div>
+                    <group>
+                        <group string="¿A quién aplica?">
+                            <field name="job_ids" widget="many2many_tags"/>
+                            <field name="department_ids" widget="many2many_tags"/>
+                        </group>
+                        <group string="Resumen">
+                            <field name="curso_count"/>
+                            <field name="empleado_count"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        Define los cursos que debe llevar este puesto o departamento.
+                        El avance de cada empleado se calcula con los cursos marcados como obligatorios.
+                    </div>
+                    <separator string="Cursos del plan"/>
+                    <field name="linea_ids">
+                        <list string="Cursos" editable="bottom">
+                            <field name="secuencia" widget="handle"/>
+                            <field name="curso_id"/>
+                            <field name="obligatorio" widget="boolean_toggle"/>
+                        </list>
+                    </field>
+                    <separator string="Notas"/>
+                    <field name="notes" nolabel="1" placeholder="Descripción del plan..."/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_amunet_plan_estudios_list" model="ir.ui.view">
+        <field name="name">amunet.plan.estudios.list</field>
+        <field name="model">amunet.plan.estudios</field>
+        <field name="arch" type="xml">
+            <list string="Planes de Estudio">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="job_ids" widget="many2many_tags" optional="show"/>
+                <field name="department_ids" widget="many2many_tags" optional="show"/>
+                <field name="curso_count"/>
+                <field name="empleado_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_plan_estudios_search" model="ir.ui.view">
+        <field name="name">amunet.plan.estudios.search</field>
+        <field name="model">amunet.plan.estudios</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="job_ids"/>
+                <field name="department_ids"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_amunet_plan_estudios" model="ir.actions.act_window">
+        <field name="name">Planes de Estudio</field>
+        <field name="res_model">amunet.plan.estudios</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_plan_estudios_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea tu primer plan de estudios</p>
+            <p>Un plan define qué cursos debe llevar cada puesto o departamento.</p>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Tablero de Avance de Capacitación (sobre hr.employee)
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_avance_list" model="ir.ui.view">
+        <field name="name">amunet.avance.capacitacion.list</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <list string="Avance de Capacitación" create="false" edit="false"
+                  decoration-success="amunet_avance &gt;= 100"
+                  decoration-warning="amunet_avance &gt; 0 and amunet_avance &lt; 100"
+                  decoration-danger="amunet_cursos_requeridos &gt; 0 and amunet_avance == 0">
+                <field name="name"/>
+                <field name="job_id"/>
+                <field name="department_id"/>
+                <field name="amunet_cursos_requeridos" string="Requeridos"/>
+                <field name="amunet_cursos_vigentes" string="Al corriente"/>
+                <field name="amunet_cursos_pendientes" string="Pendientes"/>
+                <field name="amunet_avance" string="Avance (%)" widget="progressbar"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_avance_search" model="ir.ui.view">
+        <field name="name">amunet.avance.capacitacion.search</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="job_id"/>
+                <field name="department_id"/>
+                <filter name="group_department" string="Departamento"
+                        context="{'group_by': 'department_id'}"/>
+                <filter name="group_job" string="Puesto"
+                        context="{'group_by': 'job_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_amunet_avance_capacitacion" model="ir.actions.act_window">
+        <field name="name">Avance de Capacitación</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_amunet_avance_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Avance de capacitación del personal</p>
+            <p>Muestra, por empleado, cuántos cursos de su plan de estudios tiene al corriente.</p>
+        </field>
+    </record>
+
+    <record id="action_amunet_avance_capacitacion_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_avance_list"/>
+        <field name="act_window_id" ref="action_amunet_avance_capacitacion"/>
+    </record>
+
+</odoo>

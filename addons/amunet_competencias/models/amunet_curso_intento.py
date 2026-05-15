@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from odoo import models, fields, api
 from odoo.exceptions import UserError
@@ -35,6 +36,10 @@ class AmunetCursoIntento(models.Model):
     fecha_inicio = fields.Datetime(
         string='Inicio', default=fields.Datetime.now, readonly=True)
     fecha_fin = fields.Datetime(string='Fin', readonly=True)
+    fecha_limite = fields.Datetime(
+        string='Fecha limite', compute='_compute_fecha_limite',
+        help='Hora maxima para finalizar el examen, segun el tiempo limite '
+             'del curso.')
 
     state = fields.Selection([
         ('en_progreso', 'En progreso'),
@@ -54,9 +59,18 @@ class AmunetCursoIntento(models.Model):
         related='curso_id.calificacion_minima',
         string='Minima para aprobar (%)')
 
+    tiempo_limite_examen = fields.Integer(
+        related='curso_id.tiempo_limite_examen',
+        string='Tiempo limite (min)')
+    fuera_de_tiempo = fields.Boolean(
+        string='Finalizado fuera de tiempo', default=False, readonly=True,
+        help='El examen se finalizo despues del tiempo limite. En ese caso '
+             'no se considera aprobado aunque la calificacion sea suficiente.')
+
     descripcion = fields.Html(
         related='curso_id.descripcion', string='Contenido del curso')
-    video_url = fields.Char(related='curso_id.video_url', string='Video')
+    video_ids = fields.One2many(
+        related='curso_id.video_ids', string='Videos del curso')
     material_ids = fields.Many2many(
         related='curso_id.material_ids', string='Material de apoyo')
 
@@ -71,8 +85,17 @@ class AmunetCursoIntento(models.Model):
             rec.employee_id = self.env['hr.employee'].sudo().search(
                 [('user_id', '=', rec.user_id.id)], limit=1)
 
+    @api.depends('fecha_inicio', 'tiempo_limite_examen')
+    def _compute_fecha_limite(self):
+        for rec in self:
+            if rec.fecha_inicio and rec.tiempo_limite_examen > 0:
+                rec.fecha_limite = rec.fecha_inicio + timedelta(
+                    minutes=rec.tiempo_limite_examen)
+            else:
+                rec.fecha_limite = False
+
     @api.depends('linea_ids.es_correcta', 'linea_ids.puntos',
-                 'curso_id.calificacion_minima')
+                 'curso_id.calificacion_minima', 'fuera_de_tiempo')
     def _compute_calificacion(self):
         for intento in self:
             total = sum(intento.linea_ids.mapped('puntos'))
@@ -82,7 +105,8 @@ class AmunetCursoIntento(models.Model):
                 obtenidos / total * 100.0) if total else 0.0
             intento.aprobado = (
                 total > 0
-                and intento.calificacion >= intento.curso_id.calificacion_minima)
+                and intento.calificacion >= intento.curso_id.calificacion_minima
+                and not intento.fuera_de_tiempo)
 
     def _compute_registro_count(self):
         for rec in self:
@@ -106,14 +130,26 @@ class AmunetCursoIntento(models.Model):
             raise UserError(
                 "Debe responder todas las preguntas antes de finalizar "
                 "(faltan %d)." % len(sin_responder))
+        ahora = fields.Datetime.now()
+        # Control de tiempo limite del examen
+        fuera = False
+        if self.tiempo_limite_examen > 0 and self.fecha_inicio:
+            limite = self.fecha_inicio + timedelta(minutes=self.tiempo_limite_examen)
+            if ahora > limite:
+                fuera = True
         self.write({
             'state': 'terminado',
-            'fecha_fin': fields.Datetime.now(),
+            'fecha_fin': ahora,
+            'fuera_de_tiempo': fuera,
         })
         self.invalidate_recordset(['calificacion', 'aprobado'])
         if self.aprobado:
             self._generar_registros()
             msg = "Examen aprobado con %.1f%%." % self.calificacion
+        elif fuera:
+            msg = ("Examen finalizado FUERA DE TIEMPO (%.1f%%). No se considera "
+                   "aprobado. Debe repetirse dentro del tiempo limite."
+                   % self.calificacion)
         else:
             msg = ("Examen no aprobado (%.1f%%, minimo %.1f%%)."
                    % (self.calificacion, self.curso_id.calificacion_minima))

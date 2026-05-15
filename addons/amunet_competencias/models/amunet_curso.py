@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import timedelta
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
 
@@ -8,7 +9,7 @@ _logger = logging.getLogger(__name__)
 
 class AmunetCurso(models.Model):
     """
-    Curso de capacitacion. Reune en una sola ficha el contenido (video,
+    Curso de capacitacion. Reune en una sola ficha el contenido (videos,
     material escrito, PDFs) y el examen. Al aprobar el examen se genera
     automaticamente un registro de capacitacion vigente.
 
@@ -33,11 +34,12 @@ class AmunetCurso(models.Model):
         string='Contenido escrito', sanitize=True,
         help='Material escrito del curso: instrucciones, teoria, resumen del PNO.')
 
-    video_url = fields.Char(
-        string='Enlace de video',
-        help='URL del video del curso (YouTube, Vimeo, enlace interno, etc.)')
-    video_file = fields.Binary(string='Video (archivo)', attachment=True)
-    video_filename = fields.Char(string='Nombre del archivo de video')
+    video_ids = fields.One2many(
+        'amunet.curso.video', 'curso_id', string='Videos del curso',
+        help='Uno o varios videos, en orden. YouTube y Vimeo se reproducen '
+             'embebidos dentro de la pagina.')
+    video_count = fields.Integer(
+        string='No. de videos', compute='_compute_video_count')
 
     material_ids = fields.Many2many(
         'ir.attachment',
@@ -70,6 +72,21 @@ class AmunetCurso(models.Model):
         string='Calificacion minima (%)', default=80.0, required=True,
         help='Porcentaje minimo de aciertos para aprobar el examen.')
 
+    tiempo_minimo_estudio = fields.Integer(
+        string='Tiempo minimo de estudio (min)', default=0,
+        help='Minutos que el empleado debe dedicar al contenido antes de poder '
+             'presentar el examen. 0 = sin minimo.')
+    tiempo_limite_examen = fields.Integer(
+        string='Tiempo limite del examen (min)', default=0,
+        help='Minutos maximos para presentar el examen una vez iniciado. '
+             '0 = sin limite.')
+
+    revision_requerida = fields.Boolean(
+        string='Revision requerida', default=False, tracking=True,
+        help='Se marca automaticamente cuando cambia la version de un PNO '
+             'vinculado. Indica que el contenido y el examen deben revisarse.')
+    revision_motivo = fields.Char(string='Motivo de revision', readonly=True)
+
     pregunta_ids = fields.One2many(
         'amunet.curso.pregunta', 'curso_id', string='Preguntas del examen')
     total_preguntas = fields.Integer(
@@ -96,6 +113,18 @@ class AmunetCurso(models.Model):
         search='_search_mi_estado')
     mi_intento_count = fields.Integer(
         string='Mis intentos', compute='_compute_mi_estado')
+
+    mi_estudio_inicio = fields.Datetime(
+        string='Inicie el estudio', compute='_compute_mi_estudio')
+    mi_puede_examinar = fields.Boolean(
+        string='Puedo presentar el examen', compute='_compute_mi_estudio')
+    mi_estudio_mensaje = fields.Char(
+        string='Aviso de estudio', compute='_compute_mi_estudio')
+
+    @api.depends('video_ids')
+    def _compute_video_count(self):
+        for curso in self:
+            curso.video_count = len(curso.video_ids)
 
     @api.depends('pregunta_ids')
     def _compute_total_preguntas(self):
@@ -149,6 +178,36 @@ class AmunetCurso(models.Model):
                 estado = 'vigente' if aprob else 'sin_iniciar'
             curso.mi_estado = estado
 
+    @api.depends_context('uid')
+    def _compute_mi_estudio(self):
+        Estudio = self.env['amunet.curso.estudio'].sudo()
+        uid = self.env.uid
+        now = fields.Datetime.now()
+        for curso in self:
+            estudio = Estudio.search([
+                ('curso_id', '=', curso.id), ('user_id', '=', uid)], limit=1)
+            curso.mi_estudio_inicio = estudio.fecha_inicio if estudio else False
+            minimo = curso.tiempo_minimo_estudio or 0
+            if minimo <= 0:
+                curso.mi_puede_examinar = True
+                curso.mi_estudio_mensaje = False
+            elif not estudio:
+                curso.mi_puede_examinar = False
+                curso.mi_estudio_mensaje = (
+                    'Pulsa "Comenzar el curso" y dedica al menos %d minuto(s) '
+                    'al contenido antes de presentar el examen.' % minimo)
+            else:
+                transcurrido = (now - estudio.fecha_inicio).total_seconds() / 60.0
+                if transcurrido >= minimo:
+                    curso.mi_puede_examinar = True
+                    curso.mi_estudio_mensaje = False
+                else:
+                    faltan = int(minimo - transcurrido) + 1
+                    curso.mi_puede_examinar = False
+                    curso.mi_estudio_mensaje = (
+                        'Sigue revisando el contenido. Podras presentar el '
+                        'examen en aproximadamente %d minuto(s).' % faltan)
+
     def _search_mi_estado(self, operator, value):
         """Permite filtrar "Mis Cursos" por el estado del usuario actual."""
         cursos = self.search([('state', '=', 'publicado')])
@@ -180,12 +239,18 @@ class AmunetCurso(models.Model):
                 raise ValidationError(
                     "La calificacion minima debe estar entre 1 y 100.")
 
-    @api.constrains('validez_meses')
-    def _check_validez(self):
+    @api.constrains('validez_meses', 'tiempo_minimo_estudio', 'tiempo_limite_examen')
+    def _check_tiempos(self):
         for curso in self:
             if curso.validez_meses < 0:
                 raise ValidationError(
                     "La vigencia en meses no puede ser negativa.")
+            if curso.tiempo_minimo_estudio < 0:
+                raise ValidationError(
+                    "El tiempo minimo de estudio no puede ser negativo.")
+            if curso.tiempo_limite_examen < 0:
+                raise ValidationError(
+                    "El tiempo limite del examen no puede ser negativo.")
 
     def action_publicar(self):
         for curso in self:
@@ -206,12 +271,49 @@ class AmunetCurso(models.Model):
     def action_volver_borrador(self):
         self.write({'state': 'borrador'})
 
+    def action_marcar_revisado(self):
+        """Libera la marca de revision tras revisar el curso."""
+        for curso in self:
+            curso.revision_requerida = False
+            curso.revision_motivo = False
+            curso.message_post(body='Revision del curso liberada por %s.'
+                               % self.env.user.name)
+
+    def action_comenzar_estudio(self):
+        """Registra el inicio de estudio del usuario actual para este curso."""
+        self.ensure_one()
+        Estudio = self.env['amunet.curso.estudio'].sudo()
+        estudio = Estudio.search([
+            ('curso_id', '=', self.id), ('user_id', '=', self.env.uid)], limit=1)
+        if not estudio:
+            Estudio.create({'curso_id': self.id, 'user_id': self.env.uid})
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
     def action_iniciar_examen(self):
         self.ensure_one()
         if self.state != 'publicado':
             raise UserError("Este curso aun no esta publicado.")
         if not self.pregunta_ids:
             raise UserError("Este curso no tiene examen configurado.")
+        # Control de tiempo minimo de estudio
+        if self.tiempo_minimo_estudio > 0:
+            Estudio = self.env['amunet.curso.estudio'].sudo()
+            estudio = Estudio.search([
+                ('curso_id', '=', self.id),
+                ('user_id', '=', self.env.uid)], limit=1)
+            if not estudio:
+                raise UserError(
+                    "Antes de presentar el examen debes pulsar 'Comenzar el "
+                    "curso' y dedicar al menos %d minuto(s) al contenido."
+                    % self.tiempo_minimo_estudio)
+            transcurrido = (fields.Datetime.now() - estudio.fecha_inicio
+                            ).total_seconds() / 60.0
+            if transcurrido < self.tiempo_minimo_estudio:
+                faltan = int(self.tiempo_minimo_estudio - transcurrido) + 1
+                raise UserError(
+                    "Aun no puedes presentar el examen. Debes dedicar al menos "
+                    "%d minuto(s) al contenido; faltan aproximadamente %d "
+                    "minuto(s)." % (self.tiempo_minimo_estudio, faltan))
         intento = self.env['amunet.curso.intento'].create({
             'curso_id': self.id,
             'user_id': self.env.uid,
