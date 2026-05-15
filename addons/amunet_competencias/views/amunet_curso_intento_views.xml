@@ -23,6 +23,18 @@
                             invisible="state != 'terminado' or not aprobado"/>
                     <widget name="web_ribbon" title="No aprobado" bg_color="bg-danger"
                             invisible="state != 'terminado' or aprobado"/>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not fuera_de_tiempo">
+                        <strong>Examen finalizado fuera de tiempo.</strong>
+                        Se superó el tiempo límite, por lo que no se considera aprobado
+                        aunque la calificación fuera suficiente. Debe repetirse.
+                    </div>
+                    <div class="alert alert-info" role="alert"
+                         invisible="state == 'terminado' or tiempo_limite_examen == 0">
+                        <strong>Examen con tiempo límite.</strong>
+                        Tienes <field name="tiempo_limite_examen" readonly="1"/> minutos.
+                        Fecha límite para finalizar: <field name="fecha_limite" readonly="1"/>.
+                    </div>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
@@ -31,12 +43,15 @@
                             <field name="curso_id" readonly="1"/>
                             <field name="user_id" readonly="1"/>
                             <field name="fecha_inicio" readonly="1"/>
+                            <field name="tiempo_limite_examen" invisible="1"/>
                         </group>
                         <group>
                             <field name="calificacion_minima"/>
                             <field name="calificacion" readonly="1"
                                    invisible="state != 'terminado'"/>
                             <field name="aprobado" readonly="1"
+                                   invisible="state != 'terminado'"/>
+                            <field name="fuera_de_tiempo" readonly="1"
                                    invisible="state != 'terminado'"/>
                             <field name="fecha_fin" readonly="1"
                                    invisible="state != 'terminado'"/>
@@ -64,9 +79,8 @@
                             </field>
                         </page>
                         <page string="Material del curso" name="material">
-                            <group>
-                                <field name="video_url" widget="url" readonly="1"/>
-                            </group>
+                            <separator string="Videos del curso"/>
+                            <field name="video_ids" readonly="1"/>
                             <separator string="Contenido"/>
                             <field name="descripcion" readonly="1"/>
                             <separator string="Material de apoyo"/>
@@ -92,6 +106,7 @@
                 <field name="user_id"/>
                 <field name="fecha_inicio"/>
                 <field name="calificacion"/>
+                <field name="fuera_de_tiempo" string="Fuera de tiempo" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'en_progreso'"
                        decoration-success="state == 'terminado'"/>
@@ -111,6 +126,7 @@
                 <filter name="f_aprobado" string="Aprobados" domain="[('aprobado', '=', True)]"/>
                 <filter name="f_terminado" string="Terminados" domain="[('state', '=', 'terminado')]"/>
                 <filter name="f_progreso" string="En progreso" domain="[('state', '=', 'en_progreso')]"/>
+                <filter name="f_fuera_tiempo" string="Fuera de tiempo" domain="[('fuera_de_tiempo', '=', True)]"/>
                 <separator/>
                 <filter name="g_curso" string="Curso" context="{'group_by': 'curso_id'}"/>
                 <filter name="g_user" string="Usuario" context="{'group_by': 'user_id'}"/>

@@ -5,7 +5,6 @@
          Menú: Recursos Humanos > Competencias  (gestión)
     ══════════════════════════════════════════════════════ -->
 
-    <!-- Menú Raíz: Recursos Humanos -->
     <menuitem
         id="menu_hr_root"
         name="Recursos Humanos"
@@ -13,7 +12,6 @@
         sequence="50"
         groups="amunet_competencias.group_competencias_user"/>
 
-    <!-- Menú padre: Competencias -->
     <menuitem
         id="menu_amunet_competencias_root"
         name="Competencias"
@@ -21,7 +19,6 @@
         sequence="10"
         groups="amunet_competencias.group_competencias_user"/>
 
-    <!-- Submenú: Cursos (gestión) -->
     <menuitem
         id="menu_amunet_curso"
         name="Cursos"
@@ -30,7 +27,14 @@
         sequence="5"
         groups="amunet_competencias.group_competencias_manager"/>
 
-    <!-- Submenú: Intentos de Examen (gestión) -->
+    <menuitem
+        id="menu_amunet_plan_estudios"
+        name="Planes de Estudio"
+        parent="menu_amunet_competencias_root"
+        action="action_amunet_plan_estudios"
+        sequence="6"
+        groups="amunet_competencias.group_competencias_manager"/>
+
     <menuitem
         id="menu_amunet_curso_intento"
         name="Intentos de Examen"
@@ -39,7 +43,14 @@
         sequence="8"
         groups="amunet_competencias.group_competencias_manager"/>
 
-    <!-- Submenú: Registros de Capacitación -->
+    <menuitem
+        id="menu_amunet_avance_capacitacion"
+        name="Avance de Capacitación"
+        parent="menu_amunet_competencias_root"
+        action="action_amunet_avance_capacitacion"
+        sequence="9"
+        groups="amunet_competencias.group_competencias_manager"/>
+
     <menuitem
         id="menu_amunet_registro_capacitacion"
         name="Registros de Capacitación"
@@ -48,7 +59,6 @@
         sequence="10"
         groups="amunet_competencias.group_competencias_user"/>
 
-    <!-- Submenú: Matriz de Competencias -->
     <menuitem
         id="menu_amunet_matriz_competencias"
         name="Matriz de Competencias"

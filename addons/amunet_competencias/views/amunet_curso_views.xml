@@ -14,6 +14,9 @@
                             class="btn-primary" invisible="state == 'publicado'"/>
                     <button name="action_volver_borrador" string="Volver a borrador"
                             type="object" invisible="state == 'borrador'"/>
+                    <button name="action_marcar_revisado" string="Marcar revisión hecha"
+                            type="object" class="btn-warning"
+                            invisible="not revision_requerida"/>
                     <button name="action_iniciar_examen" string="Presentar examen (prueba)"
                             type="object" invisible="state != 'publicado'"/>
                     <field name="state" widget="statusbar" statusbar_visible="borrador,publicado"/>
@@ -29,6 +32,12 @@
                             <field name="intento_count" widget="statinfo" string="Intentos"/>
                         </button>
                     </div>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not revision_requerida">
+                        <strong>Revisión requerida.</strong>
+                        <field name="revision_motivo" readonly="1" nolabel="1"/>
+                        Revisa el contenido y el examen, luego pulsa “Marcar revisión hecha”.
+                    </div>
                     <div class="oe_title">
                         <label for="name"/>
                         <h1><field name="name" placeholder="Ej. Operación del termociclador"/></h1>
@@ -38,20 +47,21 @@
                         <group string="Evaluación">
                             <field name="calificacion_minima"/>
                             <field name="validez_meses"/>
+                            <field name="tiempo_minimo_estudio"/>
+                            <field name="tiempo_limite_examen"/>
                         </group>
                         <group string="Resumen">
                             <field name="total_preguntas"/>
+                            <field name="video_count"/>
                             <field name="equipment_count" string="Equipos que lo requieren"/>
+                            <field name="revision_requerida" readonly="1"/>
                             <field name="active" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Contenido" name="contenido">
-                            <group>
-                                <field name="video_url" widget="url" placeholder="https://..."/>
-                                <field name="video_file" filename="video_filename" widget="binary"/>
-                                <field name="video_filename" invisible="1"/>
-                            </group>
+                            <separator string="Videos del curso"/>
+                            <field name="video_ids"/>
                             <separator string="Material escrito"/>
                             <field name="descripcion" placeholder="Contenido escrito del curso..."/>
                         </page>
@@ -116,13 +126,15 @@
         <field name="name">amunet.curso.list</field>
         <field name="model">amunet.curso</field>
         <field name="arch" type="xml">
-            <list string="Cursos">
+            <list string="Cursos" decoration-warning="revision_requerida">
                 <field name="code"/>
                 <field name="name"/>
+                <field name="video_count" string="Videos"/>
                 <field name="total_preguntas"/>
                 <field name="calificacion_minima"/>
                 <field name="validez_meses"/>
                 <field name="equipment_count" string="Equipos"/>
+                <field name="revision_requerida" string="Rev."/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'publicado'"
                        decoration-muted="state == 'borrador'"/>
@@ -143,21 +155,34 @@
                         domain="[('state', '=', 'publicado')]"/>
                 <filter name="f_borrador" string="Borradores"
                         domain="[('state', '=', 'borrador')]"/>
+                <filter name="f_revision" string="Revisión requerida"
+                        domain="[('revision_requerida', '=', True)]"/>
             </search>
         </field>
     </record>
 
-    <!-- Curso — Formulario simplificado para el empleado (solo contenido) -->
+    <!-- Curso — Formulario simplificado para el empleado -->
     <record id="view_amunet_curso_form_empleado" model="ir.ui.view">
         <field name="name">amunet.curso.form.empleado</field>
         <field name="model">amunet.curso</field>
         <field name="arch" type="xml">
             <form string="Curso" create="false" edit="false">
                 <header>
+                    <button name="action_comenzar_estudio" string="Comenzar el curso"
+                            type="object" class="btn-primary"
+                            invisible="tiempo_minimo_estudio == 0 or mi_estudio_inicio"/>
                     <button name="action_iniciar_examen" string="Presentar examen"
-                            type="object" class="btn-primary"/>
+                            type="object" class="btn-primary"
+                            invisible="not mi_puede_examinar"/>
                 </header>
                 <sheet>
+                    <field name="tiempo_minimo_estudio" invisible="1"/>
+                    <field name="mi_estudio_inicio" invisible="1"/>
+                    <field name="mi_puede_examinar" invisible="1"/>
+                    <div class="alert alert-info" role="alert"
+                         invisible="not mi_estudio_mensaje">
+                        <field name="mi_estudio_mensaje" readonly="1" nolabel="1"/>
+                    </div>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                         <field name="code" readonly="1"/>
@@ -172,13 +197,8 @@
                             <field name="validez_meses" readonly="1"/>
                         </group>
                     </group>
-                    <group string="Video del curso">
-                        <field name="video_url" widget="url" readonly="1" nolabel="1"/>
-                        <field name="video_file" filename="video_filename"
-                               widget="binary" readonly="1" nolabel="1"
-                               invisible="not video_file"/>
-                        <field name="video_filename" invisible="1"/>
-                    </group>
+                    <separator string="Videos del curso"/>
+                    <field name="video_ids" readonly="1"/>
                     <separator string="Contenido"/>
                     <field name="descripcion" readonly="1"/>
                     <separator string="Material de apoyo"/>
@@ -196,7 +216,7 @@
         <field name="search_view_id" ref="view_amunet_curso_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Crea tu primer curso de capacitación</p>
-            <p>Cada curso reúne el video, el material PDF y el examen. Al aprobar,
+            <p>Cada curso reúne videos, material PDF y el examen. Al aprobar,
                se genera el registro de capacitación.</p>
         </field>
     </record>

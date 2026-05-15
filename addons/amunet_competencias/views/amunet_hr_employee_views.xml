@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Empleado — pestaña "Capacitación" (avance de cursos)
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_hr_employee_form_capacitacion" model="ir.ui.view">
+        <field name="name">hr.employee.form.capacitacion</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Capacitación" name="amunet_capacitacion">
+                    <group>
+                        <group string="Avance">
+                            <field name="amunet_cursos_requeridos"/>
+                            <field name="amunet_cursos_vigentes"/>
+                            <field name="amunet_cursos_pendientes"/>
+                            <field name="amunet_avance" widget="progressbar"/>
+                        </group>
+                    </group>
+                    <separator string="Planes de estudio aplicables"/>
+                    <field name="amunet_plan_ids" readonly="1">
+                        <list string="Planes">
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="curso_count"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
