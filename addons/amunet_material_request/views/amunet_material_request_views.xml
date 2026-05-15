@@ -68,9 +68,17 @@
 
                 <sheet>
                     <div class="oe_button_box" name="button_box">
+                        <!--
+                            Boton "Transferencia" visible solo a almacenistas
+                            y administradores. El solicitante NO lo ve: es
+                            informacion tecnica del documento de stock que
+                            ademas requeriria permisos de stock que el
+                            solicitante no tiene.
+                        -->
                         <button name="action_view_picking" type="object"
                                 class="oe_stat_button" icon="fa-truck"
-                                invisible="not picking_id">
+                                invisible="not picking_id"
+                                groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Transferencia</span>
                                 <field name="picking_state"/>
@@ -111,7 +119,8 @@
                             <field name="required_date"
                                    readonly="state not in ('draft','submitted')"/>
                             <field name="picking_id" readonly="1"
-                                   invisible="not picking_id"/>
+                                   invisible="not picking_id"
+                                   groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
                         </group>
                     </group>
 
