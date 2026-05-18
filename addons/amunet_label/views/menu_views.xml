@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        App top-level "Etiquetas" en el AppSwitcher.
+        Visible solo a los grupos del modulo.
+    -->
+    <menuitem id="menu_amunet_label_root"
+              name="Etiquetas"
+              sequence="85"
+              web_icon="amunet_label,static/description/icon.png"
+              groups="amunet_label.group_label_user,amunet_label.group_label_manager"/>
+
+    <menuitem id="menu_amunet_label_print"
+              name="Generar etiquetas de caja"
+              parent="menu_amunet_label_root"
+              action="action_amunet_label_print_wizard_menu"
+              sequence="10"/>
+
+</odoo>

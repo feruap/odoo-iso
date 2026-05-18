@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!--
+            Accion de reporte para imprimir las etiquetas de caja.
+            QWeb-pdf, paperformat custom Tabloid.
+        -->
+        <record id="action_report_caja_label" model="ir.actions.report">
+            <field name="name">Etiquetas de caja</field>
+            <field name="model">amunet.label.print.wizard</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">amunet_label.report_caja_label</field>
+            <field name="report_file">amunet_label.report_caja_label</field>
+            <field name="paperformat_id" ref="amunet_label.paperformat_tabloid_label"/>
+            <field name="print_report_name">'Etiquetas-%s-%s' % (object.product_id.default_code or 'SIN-REF', object.lot_name)</field>
+        </record>
+
+    </data>
+</odoo>

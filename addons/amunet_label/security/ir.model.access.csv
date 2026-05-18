@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_label_print_wizard_user,amunet.label.print.wizard user,model_amunet_label_print_wizard,group_label_user,1,1,1,1
+access_label_print_wizard_manager,amunet.label.print.wizard manager,model_amunet_label_print_wizard,group_label_manager,1,1,1,1
