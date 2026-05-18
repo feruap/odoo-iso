@@ -551,12 +551,32 @@ class AmunetMaterialRequest(models.Model):
                         'avail': line.lot_available_qty,
                     })
             # Sincronizar stock.move.lines con los lotes y cantidades elegidas
+            # Si la linea fue agregada por el almacenista despues de
+            # 'Iniciar Surtido' (no tiene move correspondiente), creamos
+            # el stock.move sobre el mismo picking y lo confirmamos/reservamos.
+            consumption_loc = rec._get_consumption_location()
+            ptype = rec._get_internal_picking_type()
+            src_loc = ptype.default_location_src_id or rec.warehouse_id.lot_stock_id
             for line in rec.line_ids:
                 moves = rec.picking_id.move_ids.filtered(
                     lambda m, prod=line.product_id: m.product_id.id == prod.id
                 )
                 if not moves:
-                    continue
+                    # Linea agregada por el almacenista durante surtido:
+                    # creamos su stock.move asociado al picking actual.
+                    new_move = self.env['stock.move'].sudo().create({
+                        'picking_id': rec.picking_id.id,
+                        'name': line.product_id.display_name,
+                        'product_id': line.product_id.id,
+                        'product_uom_qty': line.qty_requested,
+                        'product_uom': line.uom_id.id,
+                        'location_id': src_loc.id,
+                        'location_dest_id': consumption_loc.id,
+                        'company_id': rec.warehouse_id.company_id.id,
+                    })
+                    new_move._action_confirm()
+                    new_move._action_assign()
+                    moves = new_move
                 move = moves[0]
                 # Limpiar move_lines actuales y crear una sola con lote
                 move.move_line_ids.unlink()
