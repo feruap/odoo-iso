@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_amunet_label_print_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.label.print.wizard.form</field>
+        <field name="model">amunet.label.print.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generar etiquetas de caja">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Generador de etiquetas de caja</h1>
+                        <p class="text-muted">
+                            Configura los datos y pulsa "Generar PDF".
+                            El sistema arma hojas Tabloid 11x17" con
+                            grid 3x6 (18 etiquetas por hoja). Si
+                            necesitas mas de 18, agrega hojas
+                            automaticamente.
+                        </p>
+                    </div>
+                    <group>
+                        <group string="Producto">
+                            <field name="product_id"
+                                   options="{'no_create': True}"/>
+                            <field name="product_name"/>
+                            <field name="product_ref"/>
+                        </group>
+                        <group string="Lote">
+                            <field name="lot_name" placeholder="0526/01/CAB"/>
+                            <field name="expiration_date_text" placeholder="2028-02"/>
+                            <field name="quantity"/>
+                        </group>
+                    </group>
+                    <group string="Contenido que se imprimira (configurado en el producto)">
+                        <field name="product_caja_contiene" nolabel="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_print_labels" string="Generar PDF"
+                            type="object" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_label_print_wizard" model="ir.actions.act_window">
+        <field name="name">Generar etiquetas de caja</field>
+        <field name="res_model">amunet.label.print.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_type">action</field>
+    </record>
+
+    <!--
+        Action que se dispara desde el menu top-level: abre el wizard
+        directamente en modo formulario.
+    -->
+    <record id="action_amunet_label_print_wizard_menu" model="ir.actions.act_window">
+        <field name="name">Generar etiquetas de caja</field>
+        <field name="res_model">amunet.label.print.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_amunet_label_print_wizard_form"/>
+        <field name="target">current</field>
+    </record>
+
+</odoo>

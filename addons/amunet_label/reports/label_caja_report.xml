@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Plantilla del reporte de etiquetas de caja.
+        Layout: hoja Tabloid 11x17", grid 3 columnas x 6 filas = 18
+        etiquetas por hoja. Cada etiqueta mide aproximadamente 89.7 x
+        69 mm.
+
+        Estructura:
+        * Cada etiqueta es un <div class="label-card">
+        * Contiene un encabezado "Contiene:", la lista de items por linea
+        * Pie con LOT, REF y Caducidad
+
+        Si la cantidad excede 18, wkhtmltopdf hace el page-break solo
+        por la regla CSS .label-card:nth-child(18n+1) y el flex-wrap.
+    -->
+
+    <template id="report_caja_label">
+        <t t-call="web.html_container">
+            <t t-set="data" t-value="docs[0].get_label_data()"/>
+            <t t-call="web.basic_layout">
+                <div class="amunet-label-sheet">
+                    <t t-foreach="data['labels']" t-as="idx">
+                        <div class="label-card">
+                            <div class="label-product">
+                                <t t-out="data['product_name']"/>
+                            </div>
+                            <div class="label-header">Contiene:</div>
+                            <div class="label-content">
+                                <ul class="label-list">
+                                    <t t-foreach="data['contiene_lines']" t-as="ln">
+                                        <li t-out="ln"/>
+                                    </t>
+                                </ul>
+                            </div>
+                            <div class="label-footer">
+                                <span class="label-lot">
+                                    <strong>LOT</strong> <t t-out="data['lot_name']"/>
+                                </span>
+                                <span class="label-ref">
+                                    <strong>REF</strong> <t t-out="data['product_ref']"/>
+                                </span>
+                                <span class="label-exp">
+                                    <span class="hourglass">&#9203;</span> <t t-out="data['expiration']"/>
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <!--
+                    Estilos inline para evitar dependencias de assets.
+                    Tabloid 11x17" = 279mm x 432mm.
+                    Restando margenes del paperformat (5/5/6/12), el
+                    area util queda ~269 x 414 mm.
+                    Cada etiqueta: 89.7 mm ancho x 69 mm alto.
+                    Grid 3 x 6 = ~269.1mm x ~414mm. Coincide.
+                -->
+                <style>
+                    @page { size: 279mm 432mm; margin: 0; }
+                    body { margin: 0; padding: 0; }
+                    .amunet-label-sheet {
+                        display: flex;
+                        flex-wrap: wrap;
+                        align-content: flex-start;
+                        width: 269.1mm;
+                        margin: 0 auto;
+                        padding: 0;
+                    }
+                    .label-card {
+                        width: 89.7mm;
+                        height: 69mm;
+                        box-sizing: border-box;
+                        padding: 4mm 5mm 3mm 5mm;
+                        border: 0.2mm solid #DCE6F1;
+                        background: linear-gradient(135deg, #FFFFFF 70%, #E8F0F8 100%);
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        font-family: Arial, sans-serif;
+                        font-size: 8pt;
+                        color: #000;
+                        overflow: hidden;
+                        page-break-inside: avoid;
+                    }
+                    .label-product {
+                        font-weight: bold;
+                        font-size: 10pt;
+                        text-align: center;
+                        margin-bottom: 1.5mm;
+                        color: #1F4E79;
+                    }
+                    .label-header {
+                        font-weight: bold;
+                        font-size: 9pt;
+                        margin-bottom: 1mm;
+                    }
+                    .label-content { flex: 1; }
+                    .label-list {
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        font-size: 7.5pt;
+                        line-height: 1.25;
+                    }
+                    .label-list li {
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .label-list li::before {
+                        content: '-';
+                        margin-right: 1mm;
+                    }
+                    .label-footer {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        border-top: 0.3mm solid #99B3CC;
+                        padding-top: 1.5mm;
+                        font-size: 7.5pt;
+                    }
+                    .label-footer strong {
+                        margin-right: 1mm;
+                    }
+                    .label-exp .hourglass {
+                        font-size: 9pt;
+                        margin-right: 1mm;
+                    }
+                    /* Cada 18 etiquetas: salto de pagina forzado */
+                    .label-card:nth-of-type(18n+1):not(:first-of-type) {
+                        page-break-before: always;
+                    }
+                </style>
+            </t>
+        </t>
+    </template>
+
+</odoo>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Agregar pestania "Etiqueta de caja" en el form del producto
+        para capturar la lista "Contiene:". Solo editable por el
+        grupo Etiquetas / Administrador.
+    -->
+    <record id="view_product_template_form_etiqueta" model="ir.ui.view">
+        <field name="name">product.template.form.etiqueta</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Etiqueta de caja"
+                      name="caja_etiqueta"
+                      groups="amunet_label.group_label_user">
+                    <field name="is_label_manager_for_user" invisible="1"/>
+                    <group string="Datos para la etiqueta">
+                        <field name="nombre_etiqueta"
+                               placeholder="Nombre corto que aparecera en la etiqueta (ej. AFP)"
+                               readonly="not is_label_manager_for_user"/>
+                    </group>
+                    <group string="Contenido de la caja">
+                        <field name="caja_contiene"
+                               nolabel="1"
+                               placeholder="-10 Pruebas rápidas de COVID19 IgG/IgM&#10;-10 Goteros&#10;-10 Lancetas&#10;-Instructivo de uso"
+                               readonly="not is_label_manager_for_user"/>
+                    </group>
+                    <p class="text-muted">
+                        Una linea por item. Estos textos se imprimen tal cual
+                        bajo "Contiene:" en cada etiqueta de la caja del
+                        producto. Solo el Administrador de Etiquetas puede
+                        modificarlos.
+                    </p>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+</odoo>

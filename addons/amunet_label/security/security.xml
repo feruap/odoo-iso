@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!--
+            Grupo "Etiquetas / Usuario": cualquier empleado autorizado
+            a generar PDFs de etiquetas. NO puede editar el campo
+            "Contenido de la caja" del producto (ese campo solo lo
+            controla el Admin de Etiquetas o cualquier user con
+            permisos altos sobre productos).
+        -->
+        <record id="group_label_user" model="res.groups">
+            <field name="name">Etiquetas / Usuario</field>
+            <field name="implied_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+            <field name="comment">
+                Puede abrir el wizard de generacion de etiquetas y
+                producir PDFs para impresion. No edita la lista
+                "Contenido de la caja" del producto.
+            </field>
+        </record>
+
+        <!--
+            Grupo "Etiquetas / Administrador": ademas de generar
+            etiquetas, edita la lista "Contenido de la caja" en los
+            productos.
+        -->
+        <record id="group_label_manager" model="res.groups">
+            <field name="name">Etiquetas / Administrador</field>
+            <field name="implied_ids" eval="[(6, 0, [ref('group_label_user')])]"/>
+            <field name="comment">
+                Acceso completo: genera etiquetas y configura el
+                "Contenido de la caja" de cada producto.
+            </field>
+        </record>
+
+    </data>
+</odoo>
