@@ -47,19 +47,30 @@
         <field name="code">
 # Buscar si el usuario ya tiene PIN
 pin_record = env['amunet.quality.signature.pin'].search([('user_id', '=', env.user.id)], limit=1)
-if not pin_record:
-    pin_record = env['amunet.quality.signature.pin'].create({'user_id': env.user.id, 'pin': ''})
-
 action = {
     'type': 'ir.actions.act_window',
     'name': 'Mi PIN de Firma',
     'res_model': 'amunet.quality.signature.pin',
-    'res_id': pin_record.id,
     'view_mode': 'form',
     'target': 'new',
+    'context': {'default_user_id': env.user.id},
 }
+if pin_record:
+    action['res_id'] = pin_record.id
         </field>
     </record>
+
+    <menuitem id="menu_my_profile_root"
+              name="Mi Perfil"
+              groups="base.group_user"
+              sequence="5"/>
+
+    <menuitem id="menu_my_profile_signature_pin"
+              name="Mi firma electrónica"
+              parent="menu_my_profile_root"
+              action="action_open_my_pin"
+              groups="base.group_user"
+              sequence="10"/>
 
     <menuitem id="menu_quality_my_pin"
               name="Mi PIN de Firma"

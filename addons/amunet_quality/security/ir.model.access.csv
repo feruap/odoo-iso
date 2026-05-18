@@ -12,6 +12,7 @@ access_amunet_quality_point,amunet.quality.point,model_amunet_quality_point,base
 access_amunet_quality_procedure,amunet.quality.procedure,model_amunet_quality_procedure,base.group_user,1,1,1,1
 access_amunet_quality_additional_info_field,amunet.quality.additional.info.field,model_amunet_quality_additional_info_field,base.group_user,1,1,1,1
 access_amunet_quality_additional_info_config,amunet.quality.additional.info.config,model_amunet_quality_additional_info_config,base.group_user,1,1,1,1
+access_amunet_quality_signature_pin_internal_user,amunet.quality.signature.pin internal user,model_amunet_quality_signature_pin,base.group_user,1,1,1,0
 access_amunet_quality_signature_pin,amunet.quality.signature.pin system,model_amunet_quality_signature_pin,base.group_system,1,1,1,1
 access_amunet_quality_signature_pin_user,amunet.quality.signature.pin user,model_amunet_quality_signature_pin,amunet_quality.group_quality_user,1,1,1,0
 access_amunet_quality_signature_pin_supervisor,amunet.quality.signature.pin supervisor,model_amunet_quality_signature_pin,amunet_quality.group_quality_supervisor,1,1,1,0
