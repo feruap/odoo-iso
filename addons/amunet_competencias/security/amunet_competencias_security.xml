@@ -55,6 +55,20 @@
         <field name="groups" eval="[(4, ref('group_competencias_manager'))]"/>
     </record>
 
+    <record id="rule_curso_intento_linea_own" model="ir.rule">
+        <field name="name">Lineas de examen: solo intentos propios</field>
+        <field name="model_id" ref="model_amunet_curso_intento_linea"/>
+        <field name="domain_force">[('intento_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="rule_curso_intento_linea_manager" model="ir.rule">
+        <field name="name">Lineas de examen: gestor ve todas</field>
+        <field name="model_id" ref="model_amunet_curso_intento_linea"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_competencias_manager'))]"/>
+    </record>
+
     <record id="rule_curso_estudio_own" model="ir.rule">
         <field name="name">Sesiones de estudio: solo las propias</field>
         <field name="model_id" ref="model_amunet_curso_estudio"/>

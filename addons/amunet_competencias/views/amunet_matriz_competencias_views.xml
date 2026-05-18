@@ -55,15 +55,41 @@
         </field>
     </record>
 
+    <record id="view_amunet_matriz_competencias_pivot" model="ir.ui.view">
+        <field name="name">amunet.registro.capacitacion.matriz.pivot</field>
+        <field name="model">amunet.registro.capacitacion</field>
+        <field name="arch" type="xml">
+            <pivot string="Matriz de Competencias">
+                <field name="department_id" type="row"/>
+                <field name="user_id" type="row"/>
+                <field name="procedure_id" type="col"/>
+                <field name="state" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_amunet_matriz_competencias_graph" model="ir.ui.view">
+        <field name="name">amunet.registro.capacitacion.matriz.graph</field>
+        <field name="model">amunet.registro.capacitacion</field>
+        <field name="arch" type="xml">
+            <graph string="Cumplimiento de Capacitación" type="bar" stacked="1">
+                <field name="department_id"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
     <!-- ══════════════════════════════════════════════════════
          Acción de ventana — Matriz de Competencias
     ══════════════════════════════════════════════════════ -->
     <record id="action_amunet_matriz_competencias" model="ir.actions.act_window">
         <field name="name">Matriz de Competencias</field>
         <field name="res_model">amunet.registro.capacitacion</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,pivot,graph,form</field>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'list', 'view_id': ref('view_amunet_matriz_competencias_list')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_amunet_matriz_competencias_pivot')}),
+            (0, 0, {'view_mode': 'graph', 'view_id': ref('view_amunet_matriz_competencias_graph')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('amunet_competencias.view_amunet_registro_capacitacion_form')}),
         ]"/>
         <field name="search_view_id" ref="view_amunet_matriz_competencias_search"/>

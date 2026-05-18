@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
 import logging
+from urllib.parse import urlparse
 from odoo import models, fields, api
+from odoo.tools import html_escape
 
 _logger = logging.getLogger(__name__)
 
@@ -83,7 +85,11 @@ class AmunetCursoVideo(models.Model):
 
         # 4. Cualquier otro enlace
         if url:
-            return (f'<a href="{url}" target="_blank" rel="noopener">'
+            parsed = urlparse(url)
+            if parsed.scheme not in ('http', 'https'):
+                return '<p style="color:#888;">Enlace de video no permitido.</p>'
+            safe_url = html_escape(url)
+            return (f'<a href="{safe_url}" target="_blank" rel="noopener">'
                     f'Abrir el video en una pestana nueva</a>')
 
         return '<p style="color:#888;">Sin video configurado.</p>'

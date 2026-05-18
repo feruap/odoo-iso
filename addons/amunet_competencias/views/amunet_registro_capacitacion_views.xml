@@ -19,6 +19,10 @@
                             type="object" class="btn-success"
                             invisible="state != 'cancelada'"
                             groups="amunet_competencias.group_competencias_manager"/>
+                    <button name="action_programar_renovacion" string="Programar renovación"
+                            type="object" class="btn-primary"
+                            invisible="state == 'cancelada'"
+                            groups="amunet_competencias.group_competencias_manager"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="vigente,proxima,vencida"/>
                 </header>
@@ -124,6 +128,7 @@
                 <field name="user_id"/>
                 <field name="procedure_id"/>
                 <field name="parameter_id"/>
+                <field name="trainer_id"/>
                 <separator/>
                 <filter name="vigentes" string="Vigentes"
                         domain="[('state', '=', 'vigente')]"/>
@@ -131,6 +136,14 @@
                         domain="[('state', '=', 'proxima')]"/>
                 <filter name="vencidas" string="Vencidas"
                         domain="[('state', '=', 'vencida')]"/>
+                <filter name="pendientes_renovar" string="Pendientes de renovar"
+                        domain="[('state', 'in', ['proxima', 'vencida'])]"/>
+                <filter name="sin_evidencia" string="Sin evidencia"
+                        domain="[('certificate_file', '=', False)]"/>
+                <filter name="virtuales" string="Virtuales"
+                        domain="[('training_type', '=', 'virtual')]"/>
+                <filter name="externas" string="Externas"
+                        domain="[('training_type', '=', 'externo')]"/>
                 <separator/>
                 <filter name="mis_capacitaciones" string="Mis capacitaciones"
                         domain="[('user_id', '=', uid)]"/>
@@ -139,7 +152,29 @@
                 <filter name="group_procedure" string="Agrupar por Procedimiento" context="{'group_by': 'procedure_id'}"/>
                 <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
                 <filter name="group_dept" string="Agrupar por Departamento" context="{'group_by': 'department_id'}"/>
+                <filter name="group_training_type" string="Agrupar por Modalidad" context="{'group_by': 'training_type'}"/>
+                <filter name="group_trainer" string="Agrupar por Instructor" context="{'group_by': 'trainer_id'}"/>
+                <filter name="group_expiry_month" string="Agrupar por Mes de vencimiento" context="{'group_by': 'expiry_date:month'}"/>
             </search>
+        </field>
+    </record>
+
+    <record id="view_amunet_registro_capacitacion_calendar" model="ir.ui.view">
+        <field name="name">amunet.registro.capacitacion.calendar</field>
+        <field name="model">amunet.registro.capacitacion</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario de Renovaciones"
+                      date_start="expiry_date"
+                      color="state"
+                      event_open_popup="true"
+                      quick_create="false"
+                      mode="month">
+                <field name="user_id"/>
+                <field name="procedure_id"/>
+                <field name="parameter_id"/>
+                <field name="state"/>
+                <field name="trainer_id"/>
+            </calendar>
         </field>
     </record>
 
@@ -149,7 +184,7 @@
     <record id="action_amunet_registro_capacitacion" model="ir.actions.act_window">
         <field name="name">Registros de Capacitación</field>
         <field name="res_model">amunet.registro.capacitacion</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,form,calendar</field>
         <field name="search_view_id" ref="view_amunet_registro_capacitacion_search"/>
         <field name="context">{'search_default_vigentes': 1}</field>
         <field name="help" type="html">
@@ -161,6 +196,24 @@
                 pueda validar automáticamente su competencia al momento de firmar.
             </p>
         </field>
+    </record>
+
+    <record id="action_amunet_calendario_renovaciones" model="ir.actions.act_window">
+        <field name="name">Calendario de Renovaciones</field>
+        <field name="res_model">amunet.registro.capacitacion</field>
+        <field name="view_mode">calendar,list,form</field>
+        <field name="view_id" ref="view_amunet_registro_capacitacion_calendar"/>
+        <field name="search_view_id" ref="view_amunet_registro_capacitacion_search"/>
+        <field name="context">{'search_default_pendientes_renovar': 1}</field>
+    </record>
+
+    <record id="action_server_programar_renovacion" model="ir.actions.server">
+        <field name="name">Programar renovación</field>
+        <field name="model_id" ref="model_amunet_registro_capacitacion"/>
+        <field name="binding_model_id" ref="model_amunet_registro_capacitacion"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_programar_renovacion()</field>
     </record>
 
 </odoo>

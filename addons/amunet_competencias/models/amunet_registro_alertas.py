@@ -2,6 +2,7 @@
 import logging
 from datetime import timedelta
 from odoo import models, fields, api
+from odoo.tools import html_escape
 
 _logger = logging.getLogger(__name__)
 
@@ -57,7 +58,9 @@ class AmunetRegistroAlertas(models.Model):
                 "<tr><td style='padding:5px;border-bottom:1px solid #ccc;'>%s</td>"
                 "<td style='padding:5px;border-bottom:1px solid #ccc;'>%s</td>"
                 "<td style='padding:5px;border-bottom:1px solid #ccc;'>%s</td></tr>" % (
-                    (r.user_id.name or ''), scope, r.expiry_date))
+                    html_escape(r.user_id.name or ''),
+                    html_escape(scope or '-'),
+                    html_escape(str(r.expiry_date or ''))))
         html = (
             "<div style='font-family:Arial,sans-serif;font-size:13px;color:#333;'>"
             "<p>Hola,</p>"

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
 
@@ -164,17 +165,28 @@ class AmunetCurso(models.Model):
                     ('state', '!=', 'cancelada'),
                 ])
                 if regs:
-                    estados = regs.mapped('state')
-                    if 'vigente' in estados:
+                    requeridos = set(curso.procedure_ids.ids)
+                    vigentes = set(regs.filtered(
+                        lambda r: r.state == 'vigente').mapped('procedure_id').ids)
+                    proximos = set(regs.filtered(
+                        lambda r: r.state == 'proxima').mapped('procedure_id').ids)
+                    if requeridos <= vigentes:
                         estado = 'vigente'
-                    elif 'proxima' in estados:
+                    elif requeridos <= (vigentes | proximos):
                         estado = 'por_vencer'
                     else:
                         estado = 'vencida'
             else:
-                aprob = Intento.search_count([
+                domain = [
                     ('curso_id', '=', curso.id), ('user_id', '=', uid),
-                    ('state', '=', 'terminado'), ('aprobado', '=', True)])
+                    ('state', '=', 'terminado'), ('aprobado', '=', True),
+                ]
+                if curso.validez_meses > 0:
+                    vigente_desde = fields.Datetime.to_datetime(
+                        fields.Date.today()
+                        - relativedelta(months=curso.validez_meses))
+                    domain.append(('fecha_fin', '>=', vigente_desde))
+                aprob = Intento.search_count(domain)
                 estado = 'vigente' if aprob else 'sin_iniciar'
             curso.mi_estado = estado
 
@@ -282,14 +294,19 @@ class AmunetCurso(models.Model):
     def action_comenzar_estudio(self):
         """Registra el inicio de estudio del usuario actual para este curso."""
         self.ensure_one()
-        Estudio = self.env['amunet.curso.estudio'].sudo()
+        if self.state != 'publicado':
+            raise UserError("Este curso aun no esta publicado.")
+        Estudio = self.env['amunet.curso.estudio']
         estudio = Estudio.search([
             ('curso_id', '=', self.id), ('user_id', '=', self.env.uid)], limit=1)
         if not estudio:
-            Estudio.create({'curso_id': self.id, 'user_id': self.env.uid})
+            Estudio.with_context(amunet_study_start=True).create({
+                'curso_id': self.id,
+                'user_id': self.env.uid,
+            })
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
-    def action_iniciar_examen(self):
+    def _check_user_can_start_exam(self, user):
         self.ensure_one()
         if self.state != 'publicado':
             raise UserError("Este curso aun no esta publicado.")
@@ -300,7 +317,7 @@ class AmunetCurso(models.Model):
             Estudio = self.env['amunet.curso.estudio'].sudo()
             estudio = Estudio.search([
                 ('curso_id', '=', self.id),
-                ('user_id', '=', self.env.uid)], limit=1)
+                ('user_id', '=', user.id)], limit=1)
             if not estudio:
                 raise UserError(
                     "Antes de presentar el examen debes pulsar 'Comenzar el "
@@ -314,7 +331,13 @@ class AmunetCurso(models.Model):
                     "Aun no puedes presentar el examen. Debes dedicar al menos "
                     "%d minuto(s) al contenido; faltan aproximadamente %d "
                     "minuto(s)." % (self.tiempo_minimo_estudio, faltan))
-        intento = self.env['amunet.curso.intento'].create({
+        return True
+
+    def action_iniciar_examen(self):
+        self.ensure_one()
+        self._check_user_can_start_exam(self.env.user)
+        intento = self.env['amunet.curso.intento'].with_context(
+            amunet_exam_start=True).create({
             'curso_id': self.id,
             'user_id': self.env.uid,
             'linea_ids': [(0, 0, {'pregunta_id': p.id})

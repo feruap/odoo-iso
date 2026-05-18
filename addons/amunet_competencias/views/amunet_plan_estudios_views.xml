@@ -125,6 +125,16 @@
                 <field name="name"/>
                 <field name="job_id"/>
                 <field name="department_id"/>
+                <separator/>
+                <filter name="pendientes" string="Con pendientes"
+                        domain="[('amunet_cursos_pendientes', '&gt;', 0)]"/>
+                <filter name="al_corriente" string="Al corriente"
+                        domain="[('amunet_cursos_requeridos', '&gt;', 0), ('amunet_cursos_pendientes', '=', 0)]"/>
+                <filter name="sin_plan" string="Sin plan asignado"
+                        domain="[('amunet_cursos_requeridos', '=', 0)]"/>
+                <filter name="avance_cero" string="0% avance"
+                        domain="[('amunet_cursos_requeridos', '&gt;', 0), ('amunet_avance', '=', 0)]"/>
+                <separator/>
                 <filter name="group_department" string="Departamento"
                         context="{'group_by': 'department_id'}"/>
                 <filter name="group_job" string="Puesto"
