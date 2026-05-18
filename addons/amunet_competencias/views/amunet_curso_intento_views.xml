@@ -74,6 +74,7 @@
                                            options="{'no_create': True, 'no_open': True}"/>
                                     <field name="es_correcta" widget="boolean_toggle"
                                            readonly="1"
+                                           groups="amunet_competencias.group_competencias_manager"
                                            column_invisible="parent.state != 'terminado'"/>
                                 </list>
                             </field>

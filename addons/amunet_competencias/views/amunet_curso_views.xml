@@ -88,7 +88,8 @@
                                     <field name="respuesta_ids">
                                         <list string="Respuestas" editable="bottom">
                                             <field name="texto"/>
-                                            <field name="es_correcta" widget="boolean_toggle"/>
+                                            <field name="es_correcta" widget="boolean_toggle"
+                                                   groups="amunet_competencias.group_competencias_manager"/>
                                         </list>
                                     </field>
                                 </form>

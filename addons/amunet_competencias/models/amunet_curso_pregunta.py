@@ -48,4 +48,6 @@ class AmunetCursoRespuesta(models.Model):
     curso_id = fields.Many2one(
         related='pregunta_id.curso_id', store=True, string='Curso')
     texto = fields.Char(string='Respuesta', required=True)
-    es_correcta = fields.Boolean(string='Es correcta')
+    es_correcta = fields.Boolean(
+        string='Es correcta',
+        groups='amunet_competencias.group_competencias_manager')

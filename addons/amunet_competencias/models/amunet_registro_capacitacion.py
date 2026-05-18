@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import timedelta
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
@@ -243,3 +244,60 @@ class AmunetRegistroCapacitacion(models.Model):
                     f"No se puede reactivar '{rec.name}': la fecha de caducidad ya pasó. "
                     "Actualice la fecha de caducidad primero."
                 )
+
+    def _get_responsable_renovacion(self):
+        """Usuario responsable para actividades de renovación de capacitación."""
+        self.ensure_one()
+        if self.trainer_id and self.trainer_id.active:
+            return self.trainer_id
+        if self.env.user.has_group('amunet_competencias.group_competencias_manager'):
+            return self.env.user
+        grupo = self.env.ref(
+            'amunet_competencias.group_competencias_manager',
+            raise_if_not_found=False)
+        if grupo:
+            gestor = grupo.sudo().users.filtered('active')[:1]
+            if gestor:
+                return gestor
+        return self.env.user
+
+    def action_programar_renovacion(self):
+        """Crea o actualiza actividades para renovar capacitaciones."""
+        if not self.env.user.has_group(
+                'amunet_competencias.group_competencias_manager'):
+            raise ValidationError(
+                "Solo el Gestor de Capacitación puede programar renovaciones.")
+        activity_type = self.env.ref(
+            'mail.mail_activity_data_todo', raise_if_not_found=False)
+        if not activity_type:
+            raise ValidationError(
+                "No se encontró el tipo de actividad 'Por hacer'.")
+        today = fields.Date.today()
+        for rec in self:
+            responsable = rec._get_responsable_renovacion()
+            deadline = rec.expiry_date - timedelta(days=7) if rec.expiry_date else today
+            if deadline < today:
+                deadline = today
+            scope = rec.procedure_id.display_name or rec.parameter_id.display_name or 'sin alcance'
+            summary = 'Renovar capacitación'
+            note = (
+                'Renovar capacitación de %s para %s. Vence: %s.'
+                % (rec.user_id.display_name, scope, rec.expiry_date or 'sin fecha'))
+            existing = rec.activity_ids.filtered(
+                lambda a: a.activity_type_id == activity_type
+                and a.summary == summary)
+            if existing:
+                existing.write({
+                    'date_deadline': deadline,
+                    'user_id': responsable.id,
+                    'note': note,
+                })
+            else:
+                rec.activity_schedule(
+                    activity_type_id=activity_type.id,
+                    summary=summary,
+                    note=note,
+                    user_id=responsable.id,
+                    date_deadline=deadline,
+                )
+        return True

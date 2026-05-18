@@ -12,7 +12,7 @@ access_amunet_curso_respuesta_user,amunet.curso.respuesta.user,model_amunet_curs
 access_amunet_curso_respuesta_manager,amunet.curso.respuesta.manager,model_amunet_curso_respuesta,amunet_competencias.group_competencias_manager,1,1,1,1
 access_amunet_curso_intento_user,amunet.curso.intento.user,model_amunet_curso_intento,base.group_user,1,1,1,0
 access_amunet_curso_intento_manager,amunet.curso.intento.manager,model_amunet_curso_intento,amunet_competencias.group_competencias_manager,1,1,1,1
-access_amunet_curso_intento_linea_user,amunet.curso.intento.linea.user,model_amunet_curso_intento_linea,base.group_user,1,1,1,1
+access_amunet_curso_intento_linea_user,amunet.curso.intento.linea.user,model_amunet_curso_intento_linea,base.group_user,1,1,1,0
 access_amunet_curso_intento_linea_manager,amunet.curso.intento.linea.manager,model_amunet_curso_intento_linea,amunet_competencias.group_competencias_manager,1,1,1,1
 access_amunet_curso_estudio_user,amunet.curso.estudio.user,model_amunet_curso_estudio,base.group_user,1,1,1,0
 access_amunet_curso_estudio_manager,amunet.curso.estudio.manager,model_amunet_curso_estudio,amunet_competencias.group_competencias_manager,1,1,1,1

@@ -60,6 +60,14 @@
         groups="amunet_competencias.group_competencias_user"/>
 
     <menuitem
+        id="menu_amunet_calendario_renovaciones"
+        name="Calendario de Renovaciones"
+        parent="menu_amunet_competencias_root"
+        action="action_amunet_calendario_renovaciones"
+        sequence="11"
+        groups="amunet_competencias.group_competencias_manager"/>
+
+    <menuitem
         id="menu_amunet_matriz_competencias"
         name="Matriz de Competencias"
         parent="menu_amunet_competencias_root"
