@@ -17,5 +17,19 @@
                   parent="menu_amunet_equipment_root" 
                   action="action_amunet_equipment" 
                   sequence="10"/>
+
+        <menuitem id="menu_amunet_calibration_program"
+                  name="Programas Anuales"
+                  parent="menu_amunet_equipment_root"
+                  action="action_amunet_calibration_program"
+                  sequence="20"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_calibration_program_matrix"
+                  name="Matriz FVA"
+                  parent="menu_amunet_equipment_root"
+                  action="action_amunet_calibration_program_line"
+                  sequence="30"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
     </data>
 </odoo>

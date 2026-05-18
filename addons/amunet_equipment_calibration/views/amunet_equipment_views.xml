@@ -103,6 +103,18 @@
             <field name="arch" type="xml">
                 <search>
                     <field name="name"/>
+                    <field name="serial_number"/>
+                    <field name="department"/>
+                    <field name="procedure_ids"/>
+                    <separator/>
+                    <filter name="active" string="Activos" domain="[('state', '=', 'active')]"/>
+                    <filter name="maintenance" string="En mantenimiento/calibración" domain="[('state', '=', 'maintenance')]"/>
+                    <filter name="out_of_service" string="Fuera de servicio" domain="[('state', '=', 'out_of_service')]"/>
+                    <filter name="without_pno" string="Sin PNO vinculado" domain="[('procedure_ids', '=', False)]"/>
+                    <filter name="without_next_calibration" string="Sin próxima calibración" domain="[('calibration_required', '=', True), ('next_calibration_date', '=', False)]"/>
+                    <separator/>
+                    <filter name="group_department" string="Agrupar por departamento" context="{'group_by': 'department'}"/>
+                    <filter name="group_state" string="Agrupar por estado" context="{'group_by': 'state'}"/>
                 </search>
             </field>
         </record>

@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_amunet_calibration_program_form" model="ir.ui.view">
+            <field name="name">amunet.calibration.program.form</field>
+            <field name="model">amunet.calibration.program</field>
+            <field name="arch" type="xml">
+                <form string="Programa Anual de Calibración">
+                    <header>
+                        <button name="action_reconcile" type="object" string="Reconciliar equipos"
+                                class="btn-primary" invisible="state in ('applied', 'cancelled')"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_approve_ready_lines" type="object" string="Aprobar líneas listas"
+                                invisible="state not in ('review', 'approved')"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_apply_approved_lines" type="object" string="Aplicar a equipos"
+                                class="btn-primary" invisible="state not in ('approved', 'review')"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,review,approved,applied"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="year"/>
+                                <field name="source_document_file" filename="source_document_filename"/>
+                                <field name="source_document_filename" invisible="1"/>
+                            </group>
+                            <group>
+                                <field name="matched_line_count"/>
+                                <field name="mismatch_line_count"/>
+                                <field name="na_line_count"/>
+                            </group>
+                        </group>
+                        <group string="Notas">
+                            <field name="notes" nolabel="1"/>
+                        </group>
+                        <notebook>
+                            <page string="Matriz FVA" name="lines">
+                                <field name="line_ids" context="{'default_program_id': id}">
+                                    <list string="Líneas del programa" decoration-danger="match_state == 'missing'"
+                                          decoration-warning="match_state == 'mismatch'"
+                                          decoration-success="review_state == 'applied'">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="identification_code"/>
+                                        <field name="fva_equipment_name"/>
+                                        <field name="equipment_id"/>
+                                        <field name="service_type"/>
+                                        <field name="planned_month"/>
+                                        <field name="program_status" widget="badge"
+                                               decoration-info="program_status == 'p'"
+                                               decoration-muted="program_status == 'na'"/>
+                                        <field name="match_state" widget="badge"
+                                               decoration-success="match_state == 'matched'"
+                                               decoration-warning="match_state == 'mismatch'"
+                                               decoration-danger="match_state == 'missing'"/>
+                                        <field name="department_suggested"/>
+                                        <field name="department_final"/>
+                                        <field name="pno_candidate_ids" widget="many2many_tags" optional="hide"/>
+                                        <field name="pno_approved_ids" widget="many2many_tags"/>
+                                        <field name="review_state" widget="badge"
+                                               decoration-info="review_state == 'reviewed'"
+                                               decoration-success="review_state in ('approved', 'applied')"
+                                               decoration-muted="review_state == 'no_apply'"/>
+                                    </list>
+                                    <form string="Línea del programa">
+                                        <header>
+                                            <button name="action_reconcile" type="object" string="Reconciliar"
+                                                    class="btn-primary"
+                                                    groups="amunet_equipment_calibration.group_equipment_manager"/>
+                                            <button name="action_use_candidate_pnos" type="object" string="Usar PNOs candidatos"
+                                                    groups="amunet_equipment_calibration.group_equipment_manager"/>
+                                            <button name="action_approve_line" type="object" string="Aprobar línea"
+                                                    groups="amunet_equipment_calibration.group_equipment_manager"/>
+                                            <button name="action_apply_to_equipment" type="object" string="Aplicar a equipo"
+                                                    class="btn-primary"
+                                                    groups="amunet_equipment_calibration.group_equipment_manager"/>
+                                            <field name="review_state" widget="statusbar"
+                                                   statusbar_visible="pending,reviewed,approved,applied"/>
+                                        </header>
+                                        <sheet>
+                                            <div class="oe_title">
+                                                <h1><field name="name" readonly="1"/></h1>
+                                            </div>
+                                            <group>
+                                                <group string="FVA-002">
+                                                    <field name="program_id"/>
+                                                    <field name="sequence"/>
+                                                    <field name="fva_equipment_name"/>
+                                                    <field name="brand_model_raw"/>
+                                                    <field name="identification_code"/>
+                                                    <field name="service_type"/>
+                                                    <field name="planned_month"/>
+                                                    <field name="program_status"/>
+                                                </group>
+                                                <group string="Reconciliación">
+                                                    <field name="equipment_id"/>
+                                                    <field name="match_state"/>
+                                                    <field name="parsed_brand"/>
+                                                    <field name="parsed_model"/>
+                                                    <field name="area_prefix"/>
+                                                    <field name="equipment_family"/>
+                                                    <field name="requires_calibration"/>
+                                                </group>
+                                            </group>
+                                            <group>
+                                                <group string="Área">
+                                                    <field name="department_suggested"/>
+                                                    <field name="department_final"/>
+                                                    <field name="department_review_note"/>
+                                                </group>
+                                                <group string="PNOs">
+                                                    <field name="pno_candidate_ids" widget="many2many_tags"/>
+                                                    <field name="pno_approved_ids" widget="many2many_tags"/>
+                                                </group>
+                                            </group>
+                                            <group string="Diferencias">
+                                                <field name="mismatch_notes" nolabel="1"/>
+                                            </group>
+                                            <group string="Notas de revisión">
+                                                <field name="notes" nolabel="1"/>
+                                            </group>
+                                        </sheet>
+                                        <chatter/>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_amunet_calibration_program_list" model="ir.ui.view">
+            <field name="name">amunet.calibration.program.list</field>
+            <field name="model">amunet.calibration.program</field>
+            <field name="arch" type="xml">
+                <list string="Programas de Calibración">
+                    <field name="name"/>
+                    <field name="year"/>
+                    <field name="total_line_count"/>
+                    <field name="matched_line_count"/>
+                    <field name="missing_line_count"/>
+                    <field name="pending_review_count"/>
+                    <field name="applied_line_count"/>
+                    <field name="state" widget="badge"
+                           decoration-info="state == 'review'"
+                           decoration-success="state in ('approved', 'applied')"
+                           decoration-muted="state == 'cancelled'"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_amunet_calibration_program_search" model="ir.ui.view">
+            <field name="name">amunet.calibration.program.search</field>
+            <field name="model">amunet.calibration.program</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="year"/>
+                    <filter name="en_revision" string="En revisión" domain="[('state', '=', 'review')]"/>
+                    <filter name="aplicados" string="Aplicados" domain="[('state', '=', 'applied')]"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_amunet_calibration_program_line_list" model="ir.ui.view">
+            <field name="name">amunet.calibration.program.line.list</field>
+            <field name="model">amunet.calibration.program.line</field>
+            <field name="arch" type="xml">
+                <list string="Matriz de Calibración FVA" decoration-danger="match_state == 'missing'"
+                      decoration-warning="match_state == 'mismatch'"
+                      decoration-success="review_state == 'applied'">
+                    <field name="program_id"/>
+                    <field name="identification_code"/>
+                    <field name="fva_equipment_name"/>
+                    <field name="equipment_id"/>
+                    <field name="service_type"/>
+                    <field name="planned_date"/>
+                    <field name="program_status" widget="badge"/>
+                    <field name="department_suggested"/>
+                    <field name="department_final"/>
+                    <field name="match_state" widget="badge"
+                           decoration-success="match_state == 'matched'"
+                           decoration-warning="match_state == 'mismatch'"
+                           decoration-danger="match_state == 'missing'"/>
+                    <field name="review_state" widget="badge"
+                           decoration-success="review_state in ('approved', 'applied')"
+                           decoration-muted="review_state == 'no_apply'"/>
+                    <field name="pno_approved_ids" widget="many2many_tags" optional="hide"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_amunet_calibration_program_line_form" model="ir.ui.view">
+            <field name="name">amunet.calibration.program.line.form</field>
+            <field name="model">amunet.calibration.program.line</field>
+            <field name="arch" type="xml">
+                <form string="Línea de Programa FVA">
+                    <header>
+                        <button name="action_reconcile" type="object" string="Reconciliar"
+                                class="btn-primary"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_use_candidate_pnos" type="object" string="Usar PNOs candidatos"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_approve_line" type="object" string="Aprobar línea"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_apply_to_equipment" type="object" string="Aplicar a equipo"
+                                class="btn-primary"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <field name="review_state" widget="statusbar"
+                               statusbar_visible="pending,reviewed,approved,applied"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name" readonly="1"/></h1>
+                        </div>
+                        <group>
+                            <group string="FVA-002">
+                                <field name="program_id"/>
+                                <field name="fva_equipment_name"/>
+                                <field name="brand_model_raw"/>
+                                <field name="identification_code"/>
+                                <field name="service_type"/>
+                                <field name="planned_month"/>
+                                <field name="program_status"/>
+                            </group>
+                            <group string="Equipo Odoo">
+                                <field name="equipment_id"/>
+                                <field name="match_state"/>
+                                <field name="parsed_brand"/>
+                                <field name="parsed_model"/>
+                                <field name="requires_calibration"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Área">
+                                <field name="department_suggested"/>
+                                <field name="department_final"/>
+                                <field name="department_review_note"/>
+                            </group>
+                            <group string="PNOs">
+                                <field name="pno_candidate_ids" widget="many2many_tags"/>
+                                <field name="pno_approved_ids" widget="many2many_tags"/>
+                            </group>
+                        </group>
+                        <group string="Diferencias">
+                            <field name="mismatch_notes" nolabel="1"/>
+                        </group>
+                        <group string="Notas de revisión">
+                            <field name="notes" nolabel="1"/>
+                        </group>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_amunet_calibration_program_line_search" model="ir.ui.view">
+            <field name="name">amunet.calibration.program.line.search</field>
+            <field name="model">amunet.calibration.program.line</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="identification_code"/>
+                    <field name="fva_equipment_name"/>
+                    <field name="equipment_id"/>
+                    <field name="department_final"/>
+                    <field name="pno_approved_ids"/>
+                    <separator/>
+                    <filter name="missing" string="Faltan crear" domain="[('match_state', '=', 'missing')]"/>
+                    <filter name="mismatch" string="Con diferencias" domain="[('match_state', '=', 'mismatch')]"/>
+                    <filter name="pending" string="Pendientes de revisar" domain="[('review_state', '=', 'pending')]"/>
+                    <filter name="approved" string="Aprobadas" domain="[('review_state', '=', 'approved')]"/>
+                    <filter name="applied" string="Aplicadas" domain="[('review_state', '=', 'applied')]"/>
+                    <filter name="no_pno" string="Sin PNO aprobado" domain="[('pno_approved_ids', '=', False), ('program_status', '!=', 'na')]"/>
+                    <filter name="na" string="No aplica" domain="[('program_status', '=', 'na')]"/>
+                    <separator/>
+                    <filter name="group_program" string="Programa" context="{'group_by': 'program_id'}"/>
+                    <filter name="group_area" string="Área aprobada" context="{'group_by': 'department_final'}"/>
+                    <filter name="group_match" string="Estado de coincidencia" context="{'group_by': 'match_state'}"/>
+                    <filter name="group_review" string="Estado de revisión" context="{'group_by': 'review_state'}"/>
+                    <filter name="group_month" string="Mes programado" context="{'group_by': 'planned_date:month'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_amunet_calibration_program_line_calendar" model="ir.ui.view">
+            <field name="name">amunet.calibration.program.line.calendar</field>
+            <field name="model">amunet.calibration.program.line</field>
+            <field name="arch" type="xml">
+                <calendar string="Calendario FVA" date_start="planned_date"
+                          color="department_final" event_open_popup="true"
+                          quick_create="false" mode="month">
+                    <field name="identification_code"/>
+                    <field name="fva_equipment_name"/>
+                    <field name="service_type"/>
+                    <field name="program_status"/>
+                    <field name="department_final"/>
+                </calendar>
+            </field>
+        </record>
+
+        <record id="view_amunet_calibration_program_line_pivot" model="ir.ui.view">
+            <field name="name">amunet.calibration.program.line.pivot</field>
+            <field name="model">amunet.calibration.program.line</field>
+            <field name="arch" type="xml">
+                <pivot string="Matriz FVA">
+                    <field name="department_final" type="row"/>
+                    <field name="service_type" type="col"/>
+                    <field name="match_state" type="col"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="view_amunet_calibration_program_line_graph" model="ir.ui.view">
+            <field name="name">amunet.calibration.program.line.graph</field>
+            <field name="model">amunet.calibration.program.line</field>
+            <field name="arch" type="xml">
+                <graph string="Programa por Área" type="bar" stacked="1">
+                    <field name="department_final"/>
+                    <field name="review_state"/>
+                </graph>
+            </field>
+        </record>
+
+        <record id="action_amunet_calibration_program" model="ir.actions.act_window">
+            <field name="name">Programas Anuales</field>
+            <field name="res_model">amunet.calibration.program</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_amunet_calibration_program_search"/>
+        </record>
+
+        <record id="action_amunet_calibration_program_line" model="ir.actions.act_window">
+            <field name="name">Matriz FVA</field>
+            <field name="res_model">amunet.calibration.program.line</field>
+            <field name="view_mode">list,form,calendar,pivot,graph</field>
+            <field name="search_view_id" ref="view_amunet_calibration_program_line_search"/>
+        </record>
+
+        <record id="action_amunet_calibration_program_line_missing" model="ir.actions.act_window">
+            <field name="name">Equipos faltantes FVA</field>
+            <field name="res_model">amunet.calibration.program.line</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('match_state', '=', 'missing')]</field>
+            <field name="search_view_id" ref="view_amunet_calibration_program_line_search"/>
+        </record>
+
+        <record id="action_amunet_calibration_program_line_pending" model="ir.actions.act_window">
+            <field name="name">Líneas pendientes de revisión</field>
+            <field name="res_model">amunet.calibration.program.line</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('review_state', '=', 'pending')]</field>
+            <field name="search_view_id" ref="view_amunet_calibration_program_line_search"/>
+        </record>
+
+        <record id="action_amunet_calibration_program_line_applied" model="ir.actions.act_window">
+            <field name="name">Líneas aplicadas a equipos</field>
+            <field name="res_model">amunet.calibration.program.line</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('review_state', '=', 'applied')]</field>
+            <field name="search_view_id" ref="view_amunet_calibration_program_line_search"/>
+        </record>
+
+        <record id="action_server_reconcile_program_lines" model="ir.actions.server">
+            <field name="name">Reconciliar contra equipos</field>
+            <field name="model_id" ref="model_amunet_calibration_program_line"/>
+            <field name="binding_model_id" ref="model_amunet_calibration_program_line"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">action = records.action_reconcile()</field>
+        </record>
+
+        <record id="action_server_approve_program_lines" model="ir.actions.server">
+            <field name="name">Aprobar líneas FVA</field>
+            <field name="model_id" ref="model_amunet_calibration_program_line"/>
+            <field name="binding_model_id" ref="model_amunet_calibration_program_line"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">action = records.action_approve_line()</field>
+        </record>
+
+        <record id="action_server_apply_program_lines" model="ir.actions.server">
+            <field name="name">Aplicar líneas aprobadas a equipos</field>
+            <field name="model_id" ref="model_amunet_calibration_program_line"/>
+            <field name="binding_model_id" ref="model_amunet_calibration_program_line"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">action = records.action_apply_to_equipment()</field>
+        </record>
+    </data>
+</odoo>
