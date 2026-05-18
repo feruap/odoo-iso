@@ -131,12 +131,20 @@
                                 <list editable="bottom"
                                       decoration-success="reception_status == 'complete'"
                                       decoration-warning="reception_status == 'partial'">
+                                    <!--
+                                        product_id y qty_requested editables
+                                        tanto en draft (solicitante) como en
+                                        in_picking (almacenista agrega lineas
+                                        extra). El backend impide cambiar
+                                        estos campos en lineas existentes
+                                        durante in_picking.
+                                    -->
                                     <field name="product_id"
-                                           readonly="parent.state != 'draft'"/>
+                                           readonly="parent.state not in ('draft', 'in_picking')"/>
                                     <field name="uom_id" optional="hide"/>
                                     <field name="tracking" optional="hide"/>
                                     <field name="qty_requested"
-                                           readonly="parent.state != 'draft'"/>
+                                           readonly="parent.state not in ('draft', 'in_picking')"/>
                                     <field name="qty_supplied"
                                            readonly="parent.state != 'in_picking'"
                                            column_invisible="parent.state == 'draft'"/>
