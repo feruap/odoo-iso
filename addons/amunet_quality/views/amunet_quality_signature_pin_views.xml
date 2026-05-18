@@ -34,8 +34,8 @@
     <record id="action_my_signature_pin" model="ir.actions.act_window">
         <field name="name">Mi PIN de Firma</field>
         <field name="res_model">amunet.quality.signature.pin</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('user_id', '=', uid)]</field>
         <field name="context">{'default_user_id': uid}</field>
     </record>
 
@@ -68,13 +68,13 @@ if pin_record:
     <menuitem id="menu_my_profile_signature_pin"
               name="Mi firma electrónica"
               parent="menu_my_profile_root"
-              action="action_open_my_pin"
+              action="action_my_signature_pin"
               groups="base.group_user"
               sequence="10"/>
 
     <menuitem id="menu_quality_my_pin"
               name="Mi PIN de Firma"
               parent="amunet_quality.menu_quality_config"
-              action="action_open_my_pin"
+              action="action_my_signature_pin"
               sequence="90"/>
 </odoo>
