@@ -386,6 +386,49 @@ class AmunetMaterialRequest(models.Model):
         )
         actividades.unlink()
 
+    def _notify_requester_ready(self):
+        """Crea una actividad para el solicitante avisandole que su
+        material ya esta surtido y listo para recoger. Se invoca al
+        confirmar la entrega (estado pasa de in_picking a pending_reception).
+        La actividad aparece en la bandeja superior del solicitante en
+        cualquier app de Odoo.
+        """
+        self.ensure_one()
+        if not self.requester_id:
+            return
+        todo_act = self.env.ref(
+            'mail.mail_activity_data_todo', raise_if_not_found=False)
+        if not todo_act:
+            return
+        body = _(
+            'Tu material ya esta surtido y puedes pasar por el.\n'
+            'Solicitud: %(s)s\n'
+            'Almacen: %(w)s\n'
+            'Surtido por: %(u)s'
+        ) % {
+            's': self.name,
+            'w': self.warehouse_id.name,
+            'u': self.env.user.display_name,
+        }
+        self.sudo().activity_schedule(
+            'mail.mail_activity_data_todo',
+            summary=_('Recoger material - %s') % self.name,
+            note=body.replace('\n', '<br/>'),
+            user_id=self.requester_id.id,
+        )
+
+    def _close_requester_activities(self):
+        """Elimina la actividad de 'Recoger material' del solicitante.
+        Se invoca cuando el solicitante valida la recepcion (cierra el
+        ciclo) o cuando la solicitud se cancela. Identifica solo las
+        actividades creadas por _notify_requester_ready via el summary."""
+        self.ensure_one()
+        summary_prefix = _('Recoger material - ')
+        actividades = self.sudo().activity_ids.filtered(
+            lambda a: a.summary and a.summary.startswith(summary_prefix)
+        )
+        actividades.unlink()
+
     def action_submit(self):
         for rec in self:
             if rec.state != 'draft':
@@ -533,6 +576,9 @@ class AmunetMaterialRequest(models.Model):
                 'Entrega confirmada y firmada por %s. '
                 'Queda pendiente la validacion de recepcion por el solicitante.'
             ) % self.env.user.display_name)
+            # Notificar al solicitante: aparece como actividad pendiente
+            # en su bandeja superior de Odoo ("Recoger material - SMP/...").
+            rec._notify_requester_ready()
         return True
 
     def action_validate_reception(self):
@@ -571,6 +617,8 @@ class AmunetMaterialRequest(models.Model):
                     ' <b>Recepcion PARCIAL</b>: hay diferencias entre lo '
                     'surtido y lo recibido. Revisar observaciones por linea.')
             rec.message_post(body=body)
+            # Cerrar la actividad "Recoger material" del solicitante
+            rec._close_requester_activities()
         return True
 
     def action_cancel(self):
@@ -591,8 +639,11 @@ class AmunetMaterialRequest(models.Model):
             rec.with_context(material_request_internal_write=True).write({
                 'state': 'cancelled',
             })
-            # Limpiar las actividades de surtido pendientes
+            # Limpiar las actividades de surtido pendientes y la del
+            # solicitante (si la solicitud ya estaba surtida y aun no
+            # validada al cancelar).
             rec._close_warehouse_activities()
+            rec._close_requester_activities()
         return True
 
     def action_draft(self):
