@@ -6,6 +6,16 @@
         <field name="model">amunet.label.print.wizard</field>
         <field name="arch" type="xml">
             <form string="Generar etiquetas de caja">
+                <!--
+                    Boton en el header para que aparezca incluso cuando
+                    el wizard se abre con target='current' (como pantalla
+                    principal). Los botones del footer solo se ven en
+                    modo modal (target='new').
+                -->
+                <header>
+                    <button name="action_print_labels" string="Generar PDF"
+                            type="object" class="btn-primary oe_highlight"/>
+                </header>
                 <sheet>
                     <div class="oe_title">
                         <h1>Generador de etiquetas de caja</h1>
