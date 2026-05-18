@@ -43,9 +43,23 @@ class AmunetMaterialRequest(models.Model):
     warehouse_id = fields.Many2one(
         'stock.warehouse', string='Almacen origen',
         required=True, tracking=True,
-        default=lambda self: self.env['stock.warehouse'].search(
-            [('company_id', '=', self.env.company.id)], limit=1),
+        # Las solicitudes de material siempre salen del Almacen de
+        # Materia Prima (AMP). Forzamos el default con sudo() para que
+        # sea independiente del usuario que crea la solicitud (incluso
+        # si esta restringido a otro almacen via amunet_warehouse_access).
+        # Si no existe el AMP, cae al primer warehouse de la compania.
+        default=lambda self: self._default_warehouse_id(),
     )
+
+    @api.model
+    def _default_warehouse_id(self):
+        wh_su = self.env['stock.warehouse'].sudo()
+        amp = wh_su.search([('code', '=', 'AMP')], limit=1)
+        if amp:
+            return amp.id
+        fallback = wh_su.search(
+            [('company_id', '=', self.env.company.id)], limit=1)
+        return fallback.id if fallback else False
 
     picking_id = fields.Many2one(
         'stock.picking', string='Transferencia', readonly=True, copy=False,
