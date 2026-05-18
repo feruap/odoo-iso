@@ -16,7 +16,12 @@
                       name="caja_etiqueta"
                       groups="amunet_label.group_label_user">
                     <field name="is_label_manager_for_user" invisible="1"/>
-                    <group>
+                    <group string="Datos para la etiqueta">
+                        <field name="nombre_etiqueta"
+                               placeholder="Nombre corto que aparecera en la etiqueta (ej. AFP)"
+                               readonly="not is_label_manager_for_user"/>
+                    </group>
+                    <group string="Contenido de la caja">
                         <field name="caja_contiene"
                                nolabel="1"
                                placeholder="-10 Pruebas rápidas de COVID19 IgG/IgM&#10;-10 Goteros&#10;-10 Lancetas&#10;-Instructivo de uso"

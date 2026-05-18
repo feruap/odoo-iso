@@ -19,7 +19,6 @@ class AmunetLabelPrintWizard(models.TransientModel):
         'product.product',
         string='Producto',
         required=True,
-        domain="[('is_storable', '=', True)]",
         help='Producto al que pertenece el lote a etiquetar. De aqui se '
              'toman el nombre comercial, el REF (codigo interno) y la '
              'lista "Contiene de la caja".',
@@ -90,17 +89,21 @@ class AmunetLabelPrintWizard(models.TransientModel):
     def get_label_data(self):
         """Devuelve la info que el reporte QWeb usa para renderizar
         cada etiqueta. La lista 'contiene' viene como lista de strings
-        ya separada por linea (sin guiones ni vacios)."""
+        ya separada por linea (sin guiones ni vacios). Para el nombre
+        del producto prioriza nombre_etiqueta (corto comercial) y cae
+        a name si esta vacio."""
         self.ensure_one()
         contiene_raw = self.product_caja_contiene or ''
         contiene_lines = [
             line for line in contiene_raw.splitlines() if line.strip()
         ]
-        # range(N) sirve para que QWeb itere N veces con t-foreach
+        prod = self.product_id
+        nombre_display = (prod.product_tmpl_id.nombre_etiqueta or '').strip() \
+            or prod.name
         labels = list(range(self.quantity))
         return {
-            'product_name': self.product_id.name,
-            'product_ref': self.product_id.default_code,
+            'product_name': nombre_display,
+            'product_ref': prod.default_code,
             'lot_name': self.lot_name,
             'expiration': self.expiration_date_text,
             'contiene_lines': contiene_lines,

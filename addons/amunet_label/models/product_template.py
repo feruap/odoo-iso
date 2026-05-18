@@ -21,6 +21,18 @@ class ProductTemplate(models.Model):
              'cual; respeta el orden y los guiones.',
     )
 
+    # Nombre corto que aparecera en la etiqueta de caja, distinto del
+    # nombre largo regulatorio que vive en `name`. Si esta vacio, el
+    # reporte cae al `name` del producto. Util para casos como:
+    # name      = "Prueba rápida de AFP (Alfa-fetoproteína)"
+    # nombre_etiqueta = "AFP"
+    nombre_etiqueta = fields.Char(
+        string='Nombre en etiqueta',
+        help='Nombre corto/comercial que aparece en la etiqueta de caja. '
+             'Si se deja vacio, en la etiqueta sale el nombre largo del '
+             'producto (campo name).',
+    )
+
     # Helper para condiciones de vista: True si el usuario actual es
     # Admin del modulo Etiquetas. Permite mostrar el campo en solo
     # lectura al Usuario y editable al Admin sin tener que llamar
