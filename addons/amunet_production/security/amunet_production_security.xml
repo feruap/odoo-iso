@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_production_operator" model="res.groups">
+        <field name="name">Produccion / Operador</field>
+        <field name="implied_ids" eval="[
+            (4, ref('base.group_user')),
+            (4, ref('amunet_material_request.group_material_requester'))
+        ]"/>
+        <field name="comment">
+            Ejecuta ordenes de trabajo desde Mi trabajo de produccion. No crea ni edita ordenes de fabricacion.
+        </field>
+    </record>
+
+    <record id="group_production_supervisor" model="res.groups">
+        <field name="name">Produccion / Supervisor</field>
+        <field name="implied_ids" eval="[
+            (4, ref('amunet_production.group_production_operator')),
+            (4, ref('mrp.group_mrp_user')),
+            (4, ref('stock.group_stock_user')),
+            (4, ref('stock.group_tracking_lot'))
+        ]"/>
+        <field name="comment">
+            Crea, confirma y da seguimiento a ordenes de fabricacion. Supervisa el trabajo de operadores.
+        </field>
+    </record>
+</odoo>
