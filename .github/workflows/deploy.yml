@@ -7,6 +7,11 @@ on:
     branches:
       - main
       - staging
+
+concurrency:
+  group: odoo-deploy-server
+  cancel-in-progress: false
+
 jobs:
   deploy-staging:
     name: Deploy to Staging
@@ -25,10 +30,15 @@ jobs:
           chmod 600 /tmp/deploy_key
           cat > /tmp/deploy_staging.sh << 'SCRIPT'
           set -e
+          LOCK_FILE=/tmp/odoo-deploy.lock
+          exec 9>"$LOCK_FILE"
+          echo "Esperando candado global de deploy..."
+          flock -w 1800 9 || { echo "ERROR: no se pudo obtener el candado de deploy en 30 minutos"; exit 1; }
+          echo "Candado global de deploy adquirido."
           cd /opt/odoo/staging
           git fetch origin
           git checkout staging 2>/dev/null || git checkout -b staging origin/staging
-          git reset --hard origin/staging
+          git pull --ff-only origin staging
           docker compose -f docker-compose.staging.yml build --no-cache web-staging
           docker compose -f docker-compose.staging.yml up -d --force-recreate
           echo "Esperando que Odoo staging este listo..."
@@ -91,9 +101,15 @@ jobs:
           chmod 600 /tmp/deploy_key
           cat > /tmp/deploy_production.sh << 'SCRIPT'
           set -e
+          LOCK_FILE=/tmp/odoo-deploy.lock
+          exec 9>"$LOCK_FILE"
+          echo "Esperando candado global de deploy..."
+          flock -w 1800 9 || { echo "ERROR: no se pudo obtener el candado de deploy en 30 minutos"; exit 1; }
+          echo "Candado global de deploy adquirido."
           cd /opt/odoo/production
           git fetch origin
-          git reset --hard origin/main
+          git checkout main 2>/dev/null || git checkout -b main origin/main
+          git pull --ff-only origin main
           docker compose -f docker-compose.production.yml build --no-cache web-production
           docker compose -f docker-compose.production.yml up -d
           echo "Esperando que Odoo produccion este listo..."
