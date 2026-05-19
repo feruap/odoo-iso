@@ -254,6 +254,36 @@ class AmunetQualityCheck(models.Model):
         help='Transferencia de inventario generada al confirmar muestreo'
     )
 
+    sampling_stage = fields.Selection([
+        ('receipt', 'Recepcion'),
+        ('in_process', 'Proceso'),
+        ('final_release', 'Liberacion final'),
+    ], string='Etapa de muestreo', default='receipt',
+        help='Etapa usada para seleccionar el plan de muestreo aplicable')
+
+    sampling_plan_id = fields.Many2one(
+        'amunet.quality.sampling.plan',
+        string='Plan de muestreo',
+        tracking=True,
+        help='Plan aprobado que justifica la cantidad muestreada'
+    )
+
+    suggested_qty_sampling = fields.Float(
+        string='Muestra sugerida',
+        digits='Product Unit of Measure',
+        help='Cantidad sugerida por el plan de muestreo para el lote'
+    )
+
+    sampling_plan_summary = fields.Html(
+        string='Resumen del plan',
+        compute='_compute_sampling_plan_summary'
+    )
+
+    sampling_deviation_reason = fields.Text(
+        string='Justificacion de desviacion de muestra',
+        help='Obligatoria si la cantidad muestreada difiere del plan sugerido'
+    )
+
     # ========================================================================
     # NUMERAL 5: ANÁLISIS/RESULTADOS
     # ========================================================================
@@ -803,6 +833,86 @@ class AmunetQualityCheck(models.Model):
 
             record.lot_qty_available = total_qty
 
+    def _get_sampling_lot_qty(self):
+        self.ensure_one()
+        return self.original_qty_received or self.lot_qty_available or 0.0
+
+    @api.depends(
+        'sampling_plan_id',
+        'suggested_qty_sampling',
+        'product_id',
+        'sampling_stage',
+        'lot_qty_available',
+        'original_qty_received',
+    )
+    def _compute_sampling_plan_summary(self):
+        for record in self:
+            plan = record.sampling_plan_id
+            if not plan:
+                record.sampling_plan_summary = (
+                    '<p><b>Sin plan aplicable.</b> Calidad puede capturar la muestra, '
+                    'pero debe justificar el criterio usado si el producto requiere liberacion regulada.</p>'
+                )
+                continue
+            qty = record.suggested_qty_sampling or plan.compute_sample_qty(record._get_sampling_lot_qty())
+            acceptance = (
+                'Critico Ac/Re: %s/%s | Mayor Ac/Re: %s/%s | Menor Ac/Re: %s/%s'
+                % (
+                    plan.critical_accept, plan.critical_reject,
+                    plan.major_accept, plan.major_reject,
+                    plan.minor_accept, plan.minor_reject,
+                )
+            )
+            note = plan.functional_sample_note or ''
+            basis = plan.regulatory_basis or ''
+            record.sampling_plan_summary = (
+                '<p><b>%s</b> (%s). Muestra sugerida: <b>%s</b>.</p>'
+                '<p>%s</p><p>%s</p><p>%s</p>'
+                % (plan.name, plan.code, qty, acceptance, note, basis)
+            )
+
+    def _set_sampling_plan_suggestion(self, force=False):
+        Plan = self.env['amunet.quality.sampling.plan']
+        for record in self:
+            if not record.product_id:
+                continue
+            stage = record.sampling_stage or Plan.infer_stage_for_check(record)
+            lot_qty = record._get_sampling_lot_qty()
+            plan = Plan.find_applicable_plan(record.product_id, lot_qty, stage)
+            suggested = plan.compute_sample_qty(lot_qty) if plan else 0.0
+            vals = {
+                'sampling_stage': stage,
+                'sampling_plan_id': plan.id if plan else False,
+                'suggested_qty_sampling': suggested,
+            }
+            if plan and suggested and not record.sampling_confirmed and (force or not record.qty_sampling):
+                vals['qty_sampling'] = suggested
+                if not record.sampling_uom_id and record.product_id.uom_id:
+                    vals['sampling_uom_id'] = record.product_id.uom_id.id
+                vals['qty_analyzed'] = suggested
+                vals['qty_to_return'] = 0.0 if record.test_destructiveness == 'destructive' else suggested
+            record.update(vals)
+
+    def action_apply_sampling_plan(self):
+        self.ensure_one()
+        self._set_sampling_plan_suggestion(force=True)
+        if not self.sampling_plan_id:
+            raise UserError(
+                'No se encontro un plan de muestreo aplicable para este producto, etapa y cantidad de lote.'
+            )
+        self.message_post(
+            body=(
+                'Plan de muestreo aplicado: %s. Muestra sugerida: %s %s.'
+                % (
+                    self.sampling_plan_id.display_name,
+                    self.suggested_qty_sampling,
+                    self.sampling_uom_id.name or self.product_id.uom_id.name or '',
+                )
+            ),
+            message_type='notification'
+        )
+        return True
+
     @api.onchange('qty_sampling')
     def _onchange_suggest_qty_fields(self):
         """
@@ -1204,8 +1314,9 @@ class AmunetQualityCheck(models.Model):
             # Cargar parámetros si no hay líneas existentes o si se cambió el producto
             if not self.test_line_ids or not self.test_line_ids.filtered(lambda l: l.parameter_id):
                 self._load_product_parameters()
+            self._set_sampling_plan_suggestion(force=False)
 
-    @api.onchange('lot_id', 'product_id', 'picking_id')
+    @api.onchange('lot_id', 'product_id', 'picking_id', 'sampling_stage', 'lot_qty_available', 'original_qty_received')
     def _onchange_lot_id(self):
         """
         Actualiza fechas y proveedor cuando cambia el lote.
@@ -1229,6 +1340,8 @@ class AmunetQualityCheck(models.Model):
         # Recalcular cantidad disponible si hay lote y producto
         if self.lot_id and self.product_id:
             self._compute_lot_qty_available()
+        if self.product_id:
+            self._set_sampling_plan_suggestion(force=False)
 
     # ========================================================================
     # CONSTRAINTS
@@ -1341,6 +1454,7 @@ class AmunetQualityCheck(models.Model):
         # Pre-cargar parámetros del producto
         for record in records:
             record._load_product_parameters()
+            record._set_sampling_plan_suggestion(force=False)
 
         return records
 
@@ -1535,6 +1649,16 @@ class AmunetQualityCheck(models.Model):
                 'La cantidad analizada no puede exceder la cantidad muestreada'
             )
 
+        self._set_sampling_plan_suggestion(force=False)
+        if self.sampling_plan_id and self.suggested_qty_sampling:
+            rounding = self.sampling_uom_id.rounding or self.product_id.uom_id.rounding or 0.01
+            delta = abs((self.qty_sampling or 0.0) - self.suggested_qty_sampling)
+            if delta > rounding and not self.sampling_deviation_reason:
+                raise ValidationError(
+                    'La cantidad muestreada difiere del plan aprobado. '
+                    'Capture una justificacion de desviacion o aplique el plan de muestreo.'
+                )
+
         # Validar que no exceda stock disponible
         qty_in_product_uom = self._convert_qty_to_product_uom(
             self.qty_sampling,
@@ -1580,6 +1704,10 @@ class AmunetQualityCheck(models.Model):
         self._load_product_parameters()
 
         msg = f'Muestreo confirmado: {self.qty_sampling} {self.sampling_uom_id.name or ""}.'
+        if self.sampling_plan_id:
+            msg += f' Plan: {self.sampling_plan_id.code}.'
+        if self.sampling_deviation_reason:
+            msg += f' Desviacion justificada: {self.sampling_deviation_reason}.'
         if sampling_move:
             msg += f' Transferencia: {sampling_move.name}'
         msg += ' Proceda a registrar los resultados.'
@@ -3161,5 +3289,3 @@ class AmunetQualityCheck(models.Model):
             if record.state != 'draft':
                 raise UserError(_("No se pueden eliminar controles de calidad que no estén en estado 'Borrador'. Por favor, use 'Archivar' o 'Cancelar' con justificación si es necesario."))
         return super().unlink()
-
-

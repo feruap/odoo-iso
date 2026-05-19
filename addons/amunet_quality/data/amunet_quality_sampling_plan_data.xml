@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="sampling_plan_equipment_receipt_100" model="amunet.quality.sampling.plan">
+        <field name="name">Equipos comprados - inspeccion 100%</field>
+        <field name="code">SMP-EQ-REC-100</field>
+        <field name="sequence">10</field>
+        <field name="family">equipment_resale</field>
+        <field name="stage">receipt</field>
+        <field name="method">full</field>
+        <field name="critical_accept">0</field>
+        <field name="critical_reject">1</field>
+        <field name="major_accept">0</field>
+        <field name="major_reject">1</field>
+        <field name="minor_accept">1</field>
+        <field name="minor_reject">2</field>
+        <field name="functional_sample_note">Inspeccion serializada: revisar cada equipo recibido, accesorios, identidad/modelo, estado fisico y funcionalidad basica.</field>
+        <field name="regulatory_basis">Regla conservadora para equipos comprados de bajo volumen y alto valor. No aplica AQL por lote masivo.</field>
+    </record>
+
+    <record id="sampling_plan_uncut_receipt_aql" model="amunet.quality.sampling.plan">
+        <field name="name">Hoja impregnada / hoja maestra - recepcion</field>
+        <field name="code">SMP-HM-REC-AQL</field>
+        <field name="sequence">20</field>
+        <field name="family">uncut_sheet</field>
+        <field name="stage">receipt</field>
+        <field name="method">aql_table</field>
+        <field name="min_qty">3</field>
+        <field name="max_qty">50</field>
+        <field name="critical_accept">0</field>
+        <field name="critical_reject">1</field>
+        <field name="major_accept">2</field>
+        <field name="major_reject">3</field>
+        <field name="minor_accept">5</field>
+        <field name="minor_reject">6</field>
+        <field name="functional_sample_note">Complementar con submuestra funcional destructiva de hojas seleccionadas de inicio/medio/final del lote cuando aplique al ensayo.</field>
+        <field name="regulatory_basis">Plan base para uncut sheets: documental por lote, visual/dimensional por tabla AQL base, funcionalidad por submuestra tecnica.</field>
+    </record>
+
+    <record id="sampling_plan_cassette_receipt_aql" model="amunet.quality.sampling.plan">
+        <field name="name">Cassette / cartucho - recepcion</field>
+        <field name="code">SMP-CAR-REC-AQL</field>
+        <field name="sequence">30</field>
+        <field name="family">cassette</field>
+        <field name="stage">receipt</field>
+        <field name="method">aql_table</field>
+        <field name="min_qty">3</field>
+        <field name="max_qty">200</field>
+        <field name="critical_accept">0</field>
+        <field name="critical_reject">1</field>
+        <field name="major_accept">3</field>
+        <field name="major_reject">4</field>
+        <field name="minor_accept">7</field>
+        <field name="minor_reject">8</field>
+        <field name="functional_sample_note">Evaluar defectos visuales, ventana, cierre, rebaba, deformidad, alineacion y compatibilidad con tira.</field>
+        <field name="regulatory_basis">Plan base para componentes plasticos masivos con inspeccion por atributos.</field>
+    </record>
+
+    <record id="sampling_plan_biological_raw_receipt" model="amunet.quality.sampling.plan">
+        <field name="name">Materia prima biologica critica - minimo tecnico</field>
+        <field name="code">SMP-BIO-REC-TEC</field>
+        <field name="sequence">40</field>
+        <field name="family">biological_raw</field>
+        <field name="stage">receipt</field>
+        <field name="method">technical_minimum</field>
+        <field name="fixed_qty">1</field>
+        <field name="critical_accept">0</field>
+        <field name="critical_reject">1</field>
+        <field name="major_accept">0</field>
+        <field name="major_reject">1</field>
+        <field name="minor_accept">0</field>
+        <field name="minor_reject">1</field>
+        <field name="functional_sample_note">No usar AQL. Tomar alicuota minima definida por SOP, verificando COA, identidad, concentracion, lote, proveedor y condicion de transporte.</field>
+        <field name="regulatory_basis">Regla tecnica para materiales de bajo volumen y alto impacto diagnostico.</field>
+    </record>
+
+    <record id="sampling_plan_buffer_solution_receipt" model="amunet.quality.sampling.plan">
+        <field name="name">Buffer / solucion - recepcion o lote interno</field>
+        <field name="code">SMP-SOL-REC-TEC</field>
+        <field name="sequence">50</field>
+        <field name="family">buffer_solution</field>
+        <field name="stage">receipt</field>
+        <field name="method">technical_minimum</field>
+        <field name="fixed_qty">1</field>
+        <field name="critical_accept">0</field>
+        <field name="critical_reject">1</field>
+        <field name="major_accept">0</field>
+        <field name="major_reject">1</field>
+        <field name="minor_accept">1</field>
+        <field name="minor_reject">2</field>
+        <field name="functional_sample_note">Muestreo tecnico segun SOP: particulas, color, pH/conductividad u otra VAMA aplicable.</field>
+        <field name="regulatory_basis">La muestra depende del volumen/receta y de si el analisis es destructivo.</field>
+    </record>
+
+    <record id="sampling_plan_finished_rdt_final" model="amunet.quality.sampling.plan">
+        <field name="name">Producto terminado RDT - liberacion final</field>
+        <field name="code">SMP-RDT-FIN-AQL</field>
+        <field name="sequence">60</field>
+        <field name="family">finished_rdt</field>
+        <field name="stage">final_release</field>
+        <field name="method">aql_table</field>
+        <field name="min_qty">3</field>
+        <field name="max_qty">200</field>
+        <field name="critical_accept">0</field>
+        <field name="critical_reject">1</field>
+        <field name="major_accept">3</field>
+        <field name="major_reject">4</field>
+        <field name="minor_accept">7</field>
+        <field name="minor_reject">8</field>
+        <field name="functional_sample_note">Complementar con prueba funcional con controles positivos/negativos segun SOP del ensayo.</field>
+        <field name="regulatory_basis">Liberacion final combina inspeccion visual/empaque por atributos y submuestra funcional tecnica.</field>
+    </record>
+
+    <record id="sampling_plan_packaging_receipt_aql" model="amunet.quality.sampling.plan">
+        <field name="name">Empaque / material impreso - recepcion</field>
+        <field name="code">SMP-EMP-REC-AQL</field>
+        <field name="sequence">70</field>
+        <field name="family">packaging</field>
+        <field name="stage">receipt</field>
+        <field name="method">aql_table</field>
+        <field name="min_qty">3</field>
+        <field name="max_qty">200</field>
+        <field name="critical_accept">0</field>
+        <field name="critical_reject">1</field>
+        <field name="major_accept">3</field>
+        <field name="major_reject">4</field>
+        <field name="minor_accept">7</field>
+        <field name="minor_reject">8</field>
+        <field name="functional_sample_note">Identidad, version, legibilidad, lote/caducidad si aplica, dimensiones y estado del empaque.</field>
+        <field name="regulatory_basis">Material impreso y empaque pueden afectar identificacion, uso correcto y trazabilidad.</field>
+    </record>
+</odoo>
