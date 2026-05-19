@@ -27,6 +27,14 @@ class HrEmployee(models.Model):
         search='_search_amunet_avance',
         help='Porcentaje de cursos del plan de estudios que el empleado '
              'tiene con capacitacion vigente.')
+    amunet_training_status = fields.Selection([
+        ('no_plan', 'Sin plan'),
+        ('complete', 'Completo'),
+        ('gap', 'Con brecha'),
+    ], string='Estado capacitacion', compute='_compute_amunet_avance')
+    amunet_training_next_step = fields.Char(
+        string='Siguiente paso',
+        compute='_compute_amunet_avance')
 
     @api.depends('job_id', 'department_id', 'user_id')
     def _compute_amunet_avance(self):
@@ -81,6 +89,15 @@ class HrEmployee(models.Model):
             emp.amunet_cursos_vigentes = vigentes
             emp.amunet_cursos_pendientes = total - vigentes
             emp.amunet_avance = (vigentes / total * 100.0) if total else 0.0
+            if not total:
+                emp.amunet_training_status = 'no_plan'
+                emp.amunet_training_next_step = 'Asignar plan de estudios'
+            elif emp.amunet_cursos_pendientes:
+                emp.amunet_training_status = 'gap'
+                emp.amunet_training_next_step = 'Programar o completar cursos pendientes'
+            else:
+                emp.amunet_training_status = 'complete'
+                emp.amunet_training_next_step = 'Sin accion inmediata'
 
     def _match_number(self, left, operator, right):
         if operator == '=':

@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_equipment_workqueue_list" model="ir.ui.view">
+        <field name="name">amunet.equipment.workqueue.list</field>
+        <field name="model">amunet.equipment</field>
+        <field name="arch" type="xml">
+            <list string="Equipos - trabajo operativo" create="0" delete="0"
+                  decoration-danger="state == 'out_of_service'"
+                  decoration-warning="state == 'maintenance'">
+                <button name="action_schedule_maintenance" type="object"
+                        icon="fa-wrench" title="Programar mantenimiento"/>
+                <field name="name" string="Equipo"/>
+                <field name="department" string="Area"/>
+                <field name="state" string="Estado" widget="badge"/>
+                <field name="calibration_work_status" string="Metrologia" widget="badge"/>
+                <field name="calibration_next_step" string="Siguiente metrologia"/>
+                <field name="next_calibration_date" string="Vence calibracion"/>
+                <field name="maintenance_status" string="Mantenimiento" widget="badge"/>
+                <field name="maintenance_next_step" string="Siguiente mantenimiento"/>
+                <field name="next_maintenance_date" string="Proximo mantenimiento"/>
+                <field name="maintenance_responsible_id" string="Responsable"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_equipment_workqueue_form" model="ir.ui.view">
+        <field name="name">amunet.equipment.workqueue.form</field>
+        <field name="model">amunet.equipment</field>
+        <field name="arch" type="xml">
+            <form string="Equipo - trabajo operativo" create="0" delete="0">
+                <header>
+                    <button name="action_schedule_maintenance" type="object"
+                            string="Programar mantenimiento" class="oe_highlight"
+                            groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
+                    <button name="action_view_maintenance_lines" type="object"
+                            string="Ver mantenimientos"/>
+                    <field name="state" widget="statusbar" statusbar_visible="active,maintenance,out_of_service"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Equipo">
+                            <field name="serial_number" readonly="1"/>
+                            <field name="brand" readonly="1"/>
+                            <field name="model_name" readonly="1"/>
+                            <field name="department" readonly="1"/>
+                            <field name="location_id" readonly="1"/>
+                        </group>
+                        <group string="Metrologia">
+                            <field name="calibration_required" readonly="1"/>
+                            <field name="calibration_work_status" readonly="1"/>
+                            <field name="calibration_next_step" readonly="1"/>
+                            <field name="next_calibration_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Mantenimiento">
+                        <field name="maintenance_required"/>
+                        <field name="maintenance_frequency_days"/>
+                        <field name="maintenance_responsible_id"/>
+                        <field name="maintenance_status" readonly="1"/>
+                        <field name="maintenance_next_step" readonly="1"/>
+                        <field name="next_maintenance_date" readonly="1"/>
+                        <field name="maintenance_open_count" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Mantenimientos">
+                            <field name="maintenance_line_ids" readonly="1">
+                                <list create="0" delete="0" edit="0">
+                                    <field name="scheduled_date"/>
+                                    <field name="maintenance_type"/>
+                                    <field name="responsible_id"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="next_step"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_amunet_maintenance_list" model="ir.ui.view">
+        <field name="name">amunet.equipment.maintenance.list</field>
+        <field name="model">amunet.equipment.maintenance</field>
+        <field name="arch" type="xml">
+            <list string="Mantenimientos" create="1" delete="0"
+                  decoration-danger="due_status == 'overdue'"
+                  decoration-warning="due_status in ('due_today', 'due_soon')"
+                  decoration-success="state == 'done'">
+                <button name="action_start" type="object" icon="fa-play"
+                        title="Iniciar" invisible="state not in ('draft', 'scheduled')"/>
+                <button name="action_done" type="object" icon="fa-check"
+                        title="Cerrar" invisible="state not in ('draft', 'scheduled', 'in_progress')"/>
+                <field name="scheduled_date"/>
+                <field name="equipment_id"/>
+                <field name="maintenance_type"/>
+                <field name="responsible_id"/>
+                <field name="due_status" widget="badge"/>
+                <field name="next_step"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_maintenance_form" model="ir.ui.view">
+        <field name="name">amunet.equipment.maintenance.form</field>
+        <field name="model">amunet.equipment.maintenance</field>
+        <field name="arch" type="xml">
+            <form string="Mantenimiento">
+                <header>
+                    <button name="action_schedule" type="object" string="Programar"
+                            invisible="state != 'draft'"/>
+                    <button name="action_start" type="object" string="Iniciar"
+                            class="oe_highlight" invisible="state not in ('draft', 'scheduled')"/>
+                    <button name="action_done" type="object" string="Cerrar"
+                            class="oe_highlight" invisible="state not in ('draft', 'scheduled', 'in_progress')"/>
+                    <button name="action_cancel" type="object" string="Cancelar"
+                            invisible="state in ('done', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,done"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="equipment_id" options="{'no_create': True}"/>
+                            <field name="maintenance_type"/>
+                            <field name="responsible_id"/>
+                            <field name="scheduled_date"/>
+                        </group>
+                        <group>
+                            <field name="due_status" readonly="1"/>
+                            <field name="next_step" readonly="1"/>
+                            <field name="started_date" readonly="1"/>
+                            <field name="completed_date" readonly="1"/>
+                            <field name="duration_hours"/>
+                        </group>
+                    </group>
+                    <group string="Evidencia">
+                        <field name="evidence_file" filename="evidence_filename"/>
+                        <field name="evidence_filename" invisible="1"/>
+                    </group>
+                    <group string="Notas">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_amunet_maintenance_search" model="ir.ui.view">
+        <field name="name">amunet.equipment.maintenance.search</field>
+        <field name="model">amunet.equipment.maintenance</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="equipment_id"/>
+                <field name="responsible_id"/>
+                <filter name="mine" string="Mis mantenimientos"
+                        domain="[('responsible_id', '=', uid)]"/>
+                <filter name="open" string="Abiertos"
+                        domain="[('state', 'in', ['draft', 'scheduled', 'in_progress'])]"/>
+                <filter name="done" string="Realizados"
+                        domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="group_responsible" string="Responsable" context="{'group_by': 'responsible_id'}"/>
+                <filter name="group_equipment" string="Equipo" context="{'group_by': 'equipment_id'}"/>
+                <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_amunet_calibration_workqueue_line_list" model="ir.ui.view">
+        <field name="name">amunet.calibration.program.line.workqueue.list</field>
+        <field name="model">amunet.calibration.program.line</field>
+        <field name="arch" type="xml">
+            <list string="Mi trabajo metrologia" create="0" delete="0"
+                  decoration-danger="workqueue_priority == 'blocked'"
+                  decoration-warning="workqueue_priority == 'review'"
+                  decoration-success="workqueue_priority == 'ready'">
+                <button name="action_reconcile" type="object" icon="fa-refresh"
+                        title="Reconciliar"/>
+                <button name="action_approve_line" type="object" icon="fa-check"
+                        title="Aprobar" invisible="review_state in ('approved', 'applied', 'no_apply')"/>
+                <button name="action_apply_to_equipment" type="object" icon="fa-share"
+                        title="Aplicar a equipo" invisible="review_state != 'approved'"/>
+                <field name="planned_date"/>
+                <field name="identification_code"/>
+                <field name="fva_equipment_name"/>
+                <field name="equipment_id"/>
+                <field name="department_final"/>
+                <field name="match_state" widget="badge"/>
+                <field name="review_state" widget="badge"/>
+                <field name="workqueue_priority" widget="badge"/>
+                <field name="workqueue_next_step"/>
+                <field name="workqueue_blocker"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_amunet_metrology_my_work" model="ir.actions.act_window">
+        <field name="name">Mi trabajo metrologia</field>
+        <field name="res_model">amunet.calibration.program.line</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('program_status', '!=', 'na'), ('review_state', 'not in', ['applied', 'no_apply'])]</field>
+        <field name="view_id" ref="view_amunet_calibration_workqueue_line_list"/>
+        <field name="search_view_id" ref="view_amunet_calibration_program_line_search"/>
+    </record>
+
+    <record id="action_amunet_calibration_equipment_work" model="ir.actions.act_window">
+        <field name="name">Equipos a revisar</field>
+        <field name="res_model">amunet.equipment</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('calibration_required', '=', True)]</field>
+        <field name="view_id" ref="view_amunet_equipment_workqueue_list"/>
+        <field name="search_view_id" ref="view_amunet_equipment_search"/>
+    </record>
+
+    <record id="action_amunet_maintenance_my_work" model="ir.actions.act_window">
+        <field name="name">Mi mantenimiento</field>
+        <field name="res_model">amunet.equipment.maintenance</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', 'in', ['draft', 'scheduled', 'in_progress'])]</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="view_id" ref="view_amunet_maintenance_list"/>
+        <field name="search_view_id" ref="view_amunet_maintenance_search"/>
+    </record>
+
+    <record id="action_amunet_maintenance_my_work_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_maintenance_list"/>
+        <field name="act_window_id" ref="action_amunet_maintenance_my_work"/>
+    </record>
+
+    <record id="action_amunet_maintenance_my_work_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_amunet_maintenance_form"/>
+        <field name="act_window_id" ref="action_amunet_maintenance_my_work"/>
+    </record>
+
+    <record id="action_amunet_maintenance_equipment_work" model="ir.actions.act_window">
+        <field name="name">Equipos mantenimiento</field>
+        <field name="res_model">amunet.equipment</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('maintenance_required', '=', True)]</field>
+        <field name="view_id" ref="view_amunet_equipment_workqueue_list"/>
+        <field name="search_view_id" ref="view_amunet_equipment_search"/>
+    </record>
+
+    <record id="action_amunet_equipment_workqueue_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_equipment_workqueue_list"/>
+        <field name="act_window_id" ref="action_amunet_calibration_equipment_work"/>
+    </record>
+
+    <record id="action_amunet_equipment_workqueue_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_amunet_equipment_workqueue_form"/>
+        <field name="act_window_id" ref="action_amunet_calibration_equipment_work"/>
+    </record>
+
+    <record id="action_amunet_maintenance_equipment_work_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_equipment_workqueue_list"/>
+        <field name="act_window_id" ref="action_amunet_maintenance_equipment_work"/>
+    </record>
+
+    <record id="action_amunet_maintenance_equipment_work_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_amunet_equipment_workqueue_form"/>
+        <field name="act_window_id" ref="action_amunet_maintenance_equipment_work"/>
+    </record>
+
+    <menuitem id="menu_amunet_metrology_work"
+              name="Mi trabajo metrologia"
+              parent="menu_amunet_equipment_root"
+              action="action_amunet_metrology_my_work"
+              sequence="1"
+              groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+    <menuitem id="menu_amunet_calibration_equipment_work"
+              name="Equipos a revisar"
+              parent="menu_amunet_equipment_root"
+              action="action_amunet_calibration_equipment_work"
+              sequence="2"
+              groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+    <menuitem id="menu_amunet_maintenance_root"
+              name="Mantenimiento"
+              parent="menu_validation_root"
+              sequence="20"
+              groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
+
+    <menuitem id="menu_amunet_maintenance_my_work"
+              name="Mi mantenimiento"
+              parent="menu_amunet_maintenance_root"
+              action="action_amunet_maintenance_my_work"
+              sequence="10"
+              groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
+
+    <menuitem id="menu_amunet_maintenance_equipment_work"
+              name="Equipos mantenimiento"
+              parent="menu_amunet_maintenance_root"
+              action="action_amunet_maintenance_equipment_work"
+              sequence="20"
+              groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
+</odoo>

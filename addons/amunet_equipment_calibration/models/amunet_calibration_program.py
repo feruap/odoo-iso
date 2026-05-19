@@ -189,6 +189,18 @@ class AmunetCalibrationProgramLine(models.Model):
     parsed_model = fields.Char(string='Modelo sugerido')
     mismatch_notes = fields.Text(string='Diferencias / hallazgos')
     notes = fields.Text(string='Notas de revision')
+    workqueue_priority = fields.Selection([
+        ('blocked', 'Bloqueante'),
+        ('review', 'Revisar'),
+        ('ready', 'Lista'),
+        ('done', 'Terminado'),
+    ], string='Prioridad', compute='_compute_workqueue_guidance')
+    workqueue_next_step = fields.Char(
+        string='Siguiente paso',
+        compute='_compute_workqueue_guidance')
+    workqueue_blocker = fields.Char(
+        string='Bloqueo / hallazgo',
+        compute='_compute_workqueue_guidance')
 
     @api.depends('identification_code', 'fva_equipment_name')
     def _compute_name(self):
@@ -196,6 +208,50 @@ class AmunetCalibrationProgramLine(models.Model):
             line.name = '%s - %s' % (
                 line.identification_code or 'Sin codigo',
                 line.fva_equipment_name or 'Equipo')
+
+    @api.depends(
+        'program_status',
+        'match_state',
+        'review_state',
+        'department_final',
+        'equipment_id',
+        'pno_approved_ids',
+        'mismatch_notes',
+    )
+    def _compute_workqueue_guidance(self):
+        for line in self:
+            if line.program_status == 'na':
+                line.workqueue_priority = 'done'
+                line.workqueue_next_step = 'Sin accion: no aplica en FVA'
+                line.workqueue_blocker = False
+            elif line.review_state == 'applied':
+                line.workqueue_priority = 'done'
+                line.workqueue_next_step = 'Aplicado al equipo'
+                line.workqueue_blocker = False
+            elif line.match_state == 'missing':
+                line.workqueue_priority = 'blocked'
+                line.workqueue_next_step = 'Crear o vincular equipo en Odoo'
+                line.workqueue_blocker = 'Equipo FVA no encontrado en Odoo'
+            elif line.match_state == 'mismatch':
+                line.workqueue_priority = 'review'
+                line.workqueue_next_step = 'Resolver diferencia FVA vs Odoo'
+                line.workqueue_blocker = line.mismatch_notes or 'Diferencia pendiente'
+            elif not line.department_final:
+                line.workqueue_priority = 'review'
+                line.workqueue_next_step = 'Confirmar area aprobada'
+                line.workqueue_blocker = 'Area sin aprobar'
+            elif not line.pno_approved_ids:
+                line.workqueue_priority = 'review'
+                line.workqueue_next_step = 'Aprobar PNOs aplicables'
+                line.workqueue_blocker = 'PNOs sin aprobar'
+            elif line.review_state == 'approved':
+                line.workqueue_priority = 'ready'
+                line.workqueue_next_step = 'Aplicar a equipo'
+                line.workqueue_blocker = False
+            else:
+                line.workqueue_priority = 'ready'
+                line.workqueue_next_step = 'Aprobar linea FVA'
+                line.workqueue_blocker = False
 
     @api.depends('identification_code')
     def _compute_code_parts(self):

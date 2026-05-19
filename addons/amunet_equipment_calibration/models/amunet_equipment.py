@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
-from datetime import date
+from odoo.exceptions import AccessError, ValidationError
+from datetime import date, timedelta
+
+EQUIPMENT_MANAGER_GROUP = 'amunet_equipment_calibration.group_equipment_manager'
+MAINTENANCE_TECH_GROUP = 'amunet_equipment_calibration.group_maintenance_technician'
 
 class AmunetEquipment(models.Model):
     _name = 'amunet.equipment'
@@ -81,6 +84,52 @@ class AmunetEquipment(models.Model):
         help='Cantidad de usuarios con capacitación vigente para operar este equipo.'
     )
 
+    calibration_work_status = fields.Selection([
+        ('no_required', 'No requiere'),
+        ('missing', 'Sin certificado vigente'),
+        ('expired', 'Vencida'),
+        ('due_soon', 'Por vencer'),
+        ('current', 'Vigente'),
+    ], string='Estado metrologico', compute='_compute_workqueue_status')
+    calibration_next_step = fields.Char(
+        string='Siguiente paso metrologia',
+        compute='_compute_workqueue_status')
+
+    maintenance_required = fields.Boolean(
+        string='Requiere mantenimiento',
+        default=True,
+        tracking=True)
+    maintenance_frequency_days = fields.Integer(
+        string='Frecuencia mantenimiento (dias)',
+        default=180,
+        tracking=True)
+    maintenance_responsible_id = fields.Many2one(
+        'res.users',
+        string='Responsable mantenimiento',
+        tracking=True)
+    maintenance_line_ids = fields.One2many(
+        'amunet.equipment.maintenance',
+        'equipment_id',
+        string='Historial de mantenimiento')
+    next_maintenance_date = fields.Date(
+        string='Proximo mantenimiento',
+        compute='_compute_workqueue_status')
+    maintenance_status = fields.Selection([
+        ('no_required', 'No requiere'),
+        ('missing', 'Sin programa'),
+        ('overdue', 'Vencido'),
+        ('due_soon', 'Por vencer'),
+        ('scheduled', 'Programado'),
+        ('in_progress', 'En curso'),
+        ('current', 'Vigente'),
+    ], string='Estado mantenimiento', compute='_compute_workqueue_status')
+    maintenance_next_step = fields.Char(
+        string='Siguiente paso mantenimiento',
+        compute='_compute_workqueue_status')
+    maintenance_open_count = fields.Integer(
+        string='Mantenimientos abiertos',
+        compute='_compute_workqueue_status')
+
     @api.depends('calibration_line_ids.state', 'calibration_line_ids.expiration_date')
     def _compute_next_calibration(self):
         for equipment in self:
@@ -94,6 +143,75 @@ class AmunetEquipment(models.Model):
     def _compute_authorized_user_count(self):
         for eq in self:
             eq.authorized_user_count = len(eq.get_authorized_users())
+
+    @api.depends(
+        'calibration_required',
+        'next_calibration_date',
+        'maintenance_required',
+        'maintenance_frequency_days',
+        'maintenance_line_ids.state',
+        'maintenance_line_ids.scheduled_date',
+        'maintenance_line_ids.completed_date',
+    )
+    def _compute_workqueue_status(self):
+        today = fields.Date.today()
+        warning_limit = today + timedelta(days=30)
+        for eq in self:
+            if not eq.calibration_required:
+                eq.calibration_work_status = 'no_required'
+                eq.calibration_next_step = 'Sin accion metrologica'
+            elif not eq.next_calibration_date:
+                eq.calibration_work_status = 'missing'
+                eq.calibration_next_step = 'Registrar certificado o reconciliar FVA'
+            elif eq.next_calibration_date < today:
+                eq.calibration_work_status = 'expired'
+                eq.calibration_next_step = 'Bloquear equipo y cargar calibracion vigente'
+            elif eq.next_calibration_date <= warning_limit:
+                eq.calibration_work_status = 'due_soon'
+                eq.calibration_next_step = 'Programar calibracion antes del vencimiento'
+            else:
+                eq.calibration_work_status = 'current'
+                eq.calibration_next_step = 'Sin accion inmediata'
+
+            open_lines = eq.maintenance_line_ids.filtered(
+                lambda line: line.state in ('draft', 'scheduled', 'in_progress'))
+            eq.maintenance_open_count = len(open_lines)
+            if not eq.maintenance_required:
+                eq.next_maintenance_date = False
+                eq.maintenance_status = 'no_required'
+                eq.maintenance_next_step = 'Sin accion de mantenimiento'
+                continue
+
+            scheduled = open_lines.sorted(lambda line: line.scheduled_date or date.max)
+            done = eq.maintenance_line_ids.filtered(
+                lambda line: line.state == 'done' and line.completed_date)
+            last_done = done.sorted(lambda line: line.completed_date, reverse=True)[:1]
+            if scheduled:
+                next_date = scheduled[0].scheduled_date
+            elif last_done and eq.maintenance_frequency_days:
+                next_date = last_done.completed_date + timedelta(days=eq.maintenance_frequency_days)
+            else:
+                next_date = False
+
+            eq.next_maintenance_date = next_date
+            if open_lines.filtered(lambda line: line.state == 'in_progress'):
+                eq.maintenance_status = 'in_progress'
+                eq.maintenance_next_step = 'Cerrar mantenimiento y anexar evidencia'
+            elif scheduled:
+                eq.maintenance_status = 'scheduled'
+                eq.maintenance_next_step = 'Ejecutar mantenimiento programado'
+            elif not next_date:
+                eq.maintenance_status = 'missing'
+                eq.maintenance_next_step = 'Programar mantenimiento preventivo'
+            elif next_date < today:
+                eq.maintenance_status = 'overdue'
+                eq.maintenance_next_step = 'Ejecutar mantenimiento vencido'
+            elif next_date <= warning_limit:
+                eq.maintenance_status = 'due_soon'
+                eq.maintenance_next_step = 'Programar mantenimiento proximo'
+            else:
+                eq.maintenance_status = 'current'
+                eq.maintenance_next_step = 'Sin accion inmediata'
 
     @api.constrains('state', 'next_calibration_date', 'calibration_required')
     def _check_calibration_validity(self):
@@ -177,5 +295,57 @@ class AmunetEquipment(models.Model):
             'res_model': 'res.users',
             'view_mode': 'list,form',
             'domain': [('id', 'in', users.ids)],
+            'target': 'current',
+        }
+
+    def _check_maintenance_access(self):
+        if not (
+            self.env.user.has_group(EQUIPMENT_MANAGER_GROUP)
+            or self.env.user.has_group(MAINTENANCE_TECH_GROUP)
+        ):
+            raise AccessError('Solo Metrologia/Mantenimiento puede programar mantenimientos.')
+
+    def action_schedule_maintenance(self):
+        self._check_maintenance_access()
+        Maintenance = self.env['amunet.equipment.maintenance'].sudo()
+        for equipment in self:
+            open_line = equipment.maintenance_line_ids.filtered(
+                lambda line: line.state in ('draft', 'scheduled', 'in_progress'))[:1]
+            if open_line:
+                maintenance = open_line
+            else:
+                scheduled_date = equipment.next_maintenance_date or fields.Date.today()
+                maintenance = Maintenance.create({
+                    'equipment_id': equipment.id,
+                    'responsible_id': (
+                        equipment.maintenance_responsible_id.id
+                        or self.env.user.id
+                    ),
+                    'scheduled_date': scheduled_date,
+                    'state': 'scheduled',
+                    'maintenance_type': 'preventive',
+                })
+                equipment.message_post(
+                    body='Mantenimiento programado para %s por %s.'
+                    % (scheduled_date, self.env.user.display_name))
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Mantenimiento',
+                'res_model': 'amunet.equipment.maintenance',
+                'res_id': maintenance.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        return True
+
+    def action_view_maintenance_lines(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Mantenimientos',
+            'res_model': 'amunet.equipment.maintenance',
+            'view_mode': 'list,form',
+            'domain': [('equipment_id', '=', self.id)],
+            'context': {'default_equipment_id': self.id},
             'target': 'current',
         }
