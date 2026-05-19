@@ -4,15 +4,15 @@
         <field name="name">amunet.quality.signature.wizard.form</field>
         <field name="model">amunet.quality.signature.wizard</field>
         <field name="arch" type="xml">
-            <form string="Firma Electrónica">
+            <form string="Firma electronica nominal">
                 <group>
                     <div class="alert alert-info" role="alert">
-                        <strong>Seguridad:</strong> Para firmar este documento, ingrese su <strong>Contraseña</strong> o su <strong>PIN de Firma</strong>.
+                        <strong>Firma nominal:</strong> Use su <strong>contrasena personal de Odoo</strong> o su <strong>PIN de firma</strong>.
                         <br/>
-                        <small class="text-muted">Esto confirma su identidad y autoriza la acción conforme a 21 CFR Part 11.</small>
+                        <small class="text-muted">La firma queda ligada a su usuario, fecha/hora y significado de firma. Debe contar con capacitacion vigente en el PNO aplicable.</small>
                     </div>
                     <group>
-                        <field name="password" password="True" string="Contraseña o PIN"/>
+                        <field name="password" password="True" string="Contrasena personal o PIN"/>
                         <field name="signature_type" invisible="1"/>
                         <field name="check_ids" invisible="1"/>
                     </group>

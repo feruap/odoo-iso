@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_amunet_production_analysis_wizard,amunet.production.analysis.wizard,model_amunet_production_analysis_wizard,base.group_user,1,1,1,1
+access_amunet_lot_dossier_user,amunet.lot.dossier user,model_amunet_lot_dossier,base.group_user,1,1,1,0
+access_amunet_lot_dossier_manager,amunet.lot.dossier manager,model_amunet_lot_dossier,amunet_quality.group_quality_manager,1,1,1,1
