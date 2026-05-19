@@ -4,6 +4,7 @@
 from . import amunet_quality_parameter
 from . import amunet_quality_check
 from . import amunet_quality_point
+from . import amunet_quality_sampling_plan
 from . import amunet_quality_test_line
 from . import product_template
 from . import product_product

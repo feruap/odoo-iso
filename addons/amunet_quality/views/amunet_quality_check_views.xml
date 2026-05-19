@@ -55,6 +55,10 @@
                             type="object" class="oe_highlight"
                             invisible="state != 'in_progress' or not info_reviewed or sampling_confirmed"/>
 
+                    <button name="action_apply_sampling_plan" string="Aplicar plan de muestreo"
+                            type="object"
+                            invisible="state != 'in_progress' or not info_reviewed or sampling_confirmed"/>
+
                     <button name="action_edit_sampling" string="Editar muestreo"
                             type="object"
                             invisible="state != 'in_progress' or not sampling_confirmed"
@@ -253,6 +257,13 @@
                             </div>
                         </group>
                         <group>
+                            <field name="sampling_stage"
+                                   readonly="sampling_confirmed"/>
+                            <field name="sampling_plan_id"
+                                   readonly="sampling_confirmed"
+                                   options="{'no_create': True}"/>
+                            <field name="suggested_qty_sampling"
+                                   readonly="1"/>
                             <field name="sampling_date"
                                    readonly="sampling_confirmed"
                                    required="info_reviewed"/>
@@ -265,8 +276,17 @@
                             <field name="qty_analyzed"
                                    readonly="sampling_confirmed"/>
                             <field name="qty_to_return" readonly="sampling_confirmed"/>
+                            <field name="sampling_deviation_reason"
+                                   readonly="sampling_confirmed"
+                                   invisible="not sampling_plan_id"/>
                             <field name="sampling_move_id" readonly="1"
                                    invisible="not sampling_move_id"/>
+                        </group>
+                        <group colspan="4" col="1">
+                            <field name="sampling_plan_summary"
+                                   nolabel="1"
+                                   readonly="1"
+                                   widget="html"/>
                         </group>
                     </group>
 

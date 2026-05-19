@@ -156,7 +156,7 @@ class StockPicking(models.Model):
                 continue
             
             if not picking.amunet_qc_ids:
-                qc_created = self.env['amunet.quality.point'].apply_quality_points(picking)
+                qc_created = self.env['amunet.quality.point'].sudo().apply_quality_points(picking)
                 if qc_created:
                     _logger.info(f"Created {qc_created} quality check(s) for picking {picking.name}")
                     
@@ -164,7 +164,7 @@ class StockPicking(models.Model):
             if picking.amunet_qc_ids:
                 qc_location = picking.amunet_qc_ids[0]._get_quality_control_location()
                 if qc_location and picking.location_dest_id != qc_location:
-                    DestLine = self.env['amunet.quality.check.destination']
+                    DestLine = self.env['amunet.quality.check.destination'].sudo()
                     for qc in picking.amunet_qc_ids:
                         if not qc.destination_line_ids:
                             product_moves = picking.move_ids.filtered(
@@ -276,7 +276,7 @@ class StockPicking(models.Model):
             if picking.amunet_disposition_qc_id:
                 continue
             if picking.amunet_qc_ids:
-                picking.amunet_qc_ids.write({
+                picking.amunet_qc_ids.sudo().write({
                     'inventory_validator_id': self.env.user.id
                 })
                 for qc in picking.amunet_qc_ids:
@@ -289,7 +289,7 @@ class StockPicking(models.Model):
                             ).mapped(lambda ml: ml.quantity if hasattr(ml, 'quantity') else (ml.qty_done if hasattr(ml, 'qty_done') else 0.0)))
                         if qty_received > 0:
                             try:
-                                qc.write({'original_qty_received': qty_received})
+                                qc.sudo().write({'original_qty_received': qty_received})
                                 _logger.info(f"Guardada cantidad original recibida {qty_received} para QC {qc.name}")
                             except Exception as e:
                                 _logger.error(f"Error al guardar cantidad recibida para QC {qc.name}: {str(e)}")
@@ -329,7 +329,7 @@ class StockPicking(models.Model):
                         )
 
                     # Cerrar el QC y registrar la confirmación
-                    qc._finalize_after_reception(qty_done)
+                    qc.sudo()._finalize_after_reception(qty_done)
                     _logger.info(
                         f"QC {qc.name} cerrado tras validación de recepción final "
                         f"por {self.env.user.name}. qty_done={qty_done}"
@@ -347,7 +347,7 @@ class StockPicking(models.Model):
         
         # Si no hay QCs Amunet, crearlos automáticamente
         if not self.amunet_qc_ids:
-            qc_created = self.env['amunet.quality.point'].apply_quality_points(self)
+            qc_created = self.env['amunet.quality.point'].sudo().apply_quality_points(self)
             if qc_created:
                 _logger.info(f"Created {qc_created} quality check(s) when opening QC view for picking {self.name}")
             else:

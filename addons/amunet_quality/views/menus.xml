@@ -27,6 +27,13 @@
               action="action_amunet_quality_point"
               sequence="20"/>
 
+    <menuitem id="menu_quality_sampling_plan"
+              name="Planes de muestreo"
+              parent="menu_quality_config"
+              action="action_amunet_quality_sampling_plan"
+              groups="amunet_quality.group_quality_manager,amunet_quality.group_quality_supervisor,base.group_erp_manager"
+              sequence="30"/>
+
     <menuitem id="menu_additional_info_field"
               name="Información adicional"
               parent="menu_quality_config"
