@@ -17,7 +17,7 @@
                     <button name="action_speaker_confirm"
                             string="Confirmar Ponente"
                             type="object" class="btn-primary"
-                            invisible="state != 'draft' or speaker_confirmed"/>
+                            invisible="state != 'draft' or speaker_confirmed or not is_speaker_for_user"/>
                     <button name="action_hr_approve"
                             string="Aprobar RH"
                             type="object" class="btn-primary"
@@ -81,6 +81,11 @@
                         <page string="Participantes y asistencia"
                               name="participants">
                             <group>
+                                <field name="department_ids"
+                                       widget="many2many_tags"
+                                       options="{'no_create': True, 'color_field': 'color'}"
+                                       placeholder="Elige uno o varios departamentos para agregar TODOS sus empleados activos a Participantes"
+                                       readonly="state in ('done','cancelled') and not is_hr_user_for_user"/>
                                 <field name="participant_ids"
                                        widget="many2many_tags"
                                        options="{'no_create': True}"

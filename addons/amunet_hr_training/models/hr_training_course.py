@@ -65,13 +65,37 @@ class HrTrainingCourse(models.Model):
         'res.users', string='Aprobo por RH', readonly=True, copy=False)
 
     # Participantes y pase de lista
+    department_ids = fields.Many2many(
+        'hr.department',
+        'hr_training_course_department_rel',
+        'course_id', 'department_id',
+        string='Áreas / Departamentos',
+        help='Atajo: al elegir uno o varios departamentos, todos sus '
+             'empleados activos se agregan automaticamente al campo '
+             'Participantes. Quitar un departamento NO quita los '
+             'empleados ya agregados (hay que retirarlos uno por uno).',
+    )
     participant_ids = fields.Many2many(
         'hr.employee',
         'hr_training_course_employee_rel',
         'course_id', 'employee_id',
         string='Participantes (RH)',
-        help='Empleados convocados a la capacitacion (definidos por RH).',
+        help='Empleados convocados a la capacitacion (definidos por RH). '
+             'Se llenan manualmente o automaticamente al elegir un '
+             'departamento.',
     )
+
+    @api.onchange('department_ids')
+    def _onchange_department_ids(self):
+        """Cuando se agregan departamentos, sumar sus empleados
+        activos al m2m de participantes (no quitar los existentes)."""
+        if not self.department_ids:
+            return
+        new_emps = self.env['hr.employee']
+        for dept in self.department_ids:
+            new_emps |= dept.member_ids.filtered(lambda e: e.active)
+        if new_emps:
+            self.participant_ids |= new_emps
     attendance_ids = fields.One2many(
         'hr.training.attendance', 'course_id',
         string='Pase de lista', copy=False,
@@ -128,16 +152,20 @@ class HrTrainingCourse(models.Model):
             if rec.state != 'draft':
                 raise UserError(_(
                     'Solo se puede confirmar un curso en Borrador.'))
-            # Solo el ponente puede confirmar (o un manager de RH como fallback)
+            # Solo el ponente asignado puede confirmar.
+            # No hay fallback de HR: la firma del ponente queda como
+            # evidencia de que es la persona que efectivamente impartira
+            # el curso.
             is_speaker = bool(
                 rec.speaker_id.user_id
                 and rec.speaker_id.user_id.id == self.env.user.id
             )
-            is_hr_mgr = self.env.user.has_group('hr.group_hr_manager')
-            if not (is_speaker or is_hr_mgr):
+            if not is_speaker:
                 raise UserError(_(
-                    'Solo el ponente asignado (%(p)s) o un Administrador '
-                    'de RH puede confirmar este curso.'
+                    'Solo el ponente asignado (%(p)s) puede pulsar '
+                    '"Confirmar Ponente". Si el ponente no tiene cuenta '
+                    'en Odoo o esta indisponible, edita primero el campo '
+                    '"Ponente" antes de confirmar.'
                 ) % {'p': rec.speaker_id.name})
             rec.write({
                 'speaker_confirmed': True,
