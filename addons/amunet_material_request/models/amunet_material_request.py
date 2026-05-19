@@ -250,13 +250,10 @@ class AmunetMaterialRequest(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        if not self._is_material_manager():
-            # Forzar requester_id = usuario actual.
-            # Limpiar department_id y warehouse_id que un solicitante
-            # malicioso podria mandar en los vals desde un cliente
-            # custom; los valores reales se computan automaticamente
-            # desde el empleado del solicitante y el warehouse por
-            # defecto de la compania.
+        is_mgr = self._is_material_manager()
+        if not is_mgr:
+            # Solicitante puro: siempre su propio user_id, sin tocar
+            # department_id ni warehouse_id (se computan / default).
             for vals in vals_list:
                 requester_id = vals.get('requester_id')
                 if requester_id and requester_id != self.env.user.id:
@@ -266,20 +263,35 @@ class AmunetMaterialRequest(models.Model):
                 vals['requester_id'] = self.env.user.id
                 vals.pop('department_id', None)
                 vals.pop('warehouse_id', None)
-            # Bloquear creacion si el solicitante ya tiene otra
-            # solicitud en estado 'draft' (Borrador). Debe enviarla
-            # o cancelarla antes de empezar una nueva. El admin del
-            # modulo NO esta limitado.
+            # Solicitante: solo puede tener 1 borrador a la vez.
             existing = self.sudo().search_count([
                 ('requester_id', '=', self.env.user.id),
                 ('state', '=', 'draft'),
             ])
-            # Si ya hay >0 en draft y se va a crear al menos 1 nueva,
-            # bloqueamos para evitar acumular borradores sin cerrar.
             if existing >= 1 and vals_list:
                 raise UserError(_(
                     'Ya tienes una solicitud en Borrador. Envia o cancela '
                     'esa solicitud antes de empezar una nueva.'))
+        else:
+            # Admin del modulo: puede crear varias a nombre de OTROS
+            # usuarios. Pero a NOMBRE PROPIO sigue limitado a 1
+            # borrador, igual que cualquier solicitante.
+            own_in_batch = 0
+            for vals in vals_list:
+                req_id = vals.get('requester_id') or self.env.user.id
+                if req_id == self.env.user.id:
+                    own_in_batch += 1
+            if own_in_batch > 0:
+                existing_own = self.sudo().search_count([
+                    ('requester_id', '=', self.env.user.id),
+                    ('state', '=', 'draft'),
+                ])
+                if existing_own + own_in_batch > 1:
+                    raise UserError(_(
+                        'Ya tienes una solicitud en Borrador a tu nombre. '
+                        'Envia o cancela esa antes de crear otra a tu '
+                        'nombre. Puedes crear borradores a nombre de '
+                        'OTROS usuarios sin limite.'))
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
                 vals['name'] = self.env['ir.sequence'].next_by_code(
