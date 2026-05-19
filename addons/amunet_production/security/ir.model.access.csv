@@ -2,3 +2,13 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_amunet_production_analysis_wizard,amunet.production.analysis.wizard,model_amunet_production_analysis_wizard,base.group_user,1,1,1,1
 access_amunet_lot_dossier_user,amunet.lot.dossier user,model_amunet_lot_dossier,base.group_user,1,1,1,0
 access_amunet_lot_dossier_manager,amunet.lot.dossier manager,model_amunet_lot_dossier,amunet_quality.group_quality_manager,1,1,1,1
+access_mrp_production_amunet_operator,mrp.production amunet operator,mrp.model_mrp_production,amunet_production.group_production_operator,1,0,0,0
+access_mrp_workorder_amunet_operator,mrp.workorder amunet operator,mrp.model_mrp_workorder,amunet_production.group_production_operator,1,1,0,0
+access_mrp_workcenter_amunet_operator,mrp.workcenter amunet operator,mrp.model_mrp_workcenter,amunet_production.group_production_operator,1,0,0,0
+access_mrp_routing_workcenter_amunet_operator,mrp.routing.workcenter amunet operator,mrp.model_mrp_routing_workcenter,amunet_production.group_production_operator,1,0,0,0
+access_mrp_workcenter_productivity_amunet_operator,mrp.workcenter.productivity amunet operator,mrp.model_mrp_workcenter_productivity,amunet_production.group_production_operator,1,1,1,0
+access_mrp_workcenter_productivity_loss_amunet_operator,mrp.workcenter.productivity.loss amunet operator,mrp.model_mrp_workcenter_productivity_loss,amunet_production.group_production_operator,1,0,0,0
+access_stock_move_amunet_operator,stock.move amunet operator,stock.model_stock_move,amunet_production.group_production_operator,1,0,0,0
+access_stock_move_line_amunet_operator,stock.move.line amunet operator,stock.model_stock_move_line,amunet_production.group_production_operator,1,0,0,0
+access_stock_lot_amunet_operator,stock.lot amunet operator,stock.model_stock_lot,amunet_production.group_production_operator,1,0,0,0
+access_stock_scrap_amunet_operator,stock.scrap amunet operator,stock.model_stock_scrap,amunet_production.group_production_operator,1,0,0,0
