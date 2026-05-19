@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_rrhh_renewal_list" model="ir.ui.view">
+        <field name="name">amunet.registro.capacitacion.rrhh.work.list</field>
+        <field name="model">amunet.registro.capacitacion</field>
+        <field name="arch" type="xml">
+            <list string="Renovaciones pendientes" create="0" delete="0"
+                  decoration-danger="state == 'vencida'"
+                  decoration-warning="state == 'proxima'">
+                <button name="action_programar_renovacion" type="object"
+                        icon="fa-calendar" title="Programar renovacion"/>
+                <field name="user_id" string="Persona"/>
+                <field name="department_id" string="Area"/>
+                <field name="procedure_id" string="SOP"/>
+                <field name="parameter_id" string="Parametro"/>
+                <field name="expiry_date" string="Vence"/>
+                <field name="days_to_expiry" string="Dias"/>
+                <field name="state" string="Estado" widget="badge"/>
+                <field name="workqueue_next_step"/>
+                <field name="workqueue_blocker"/>
+                <field name="trainer_id" string="Responsable"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_rrhh_employee_gap_list" model="ir.ui.view">
+        <field name="name">hr.employee.training.gap.list</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <list string="Brechas de capacitacion" create="0" delete="0"
+                  decoration-danger="amunet_training_status == 'gap'"
+                  decoration-muted="amunet_training_status == 'no_plan'">
+                <field name="name" string="Persona"/>
+                <field name="department_id" string="Area"/>
+                <field name="job_id" string="Puesto"/>
+                <field name="amunet_training_status" string="Estado" widget="badge"/>
+                <field name="amunet_training_next_step"/>
+                <field name="amunet_cursos_requeridos"/>
+                <field name="amunet_cursos_vigentes"/>
+                <field name="amunet_cursos_pendientes"/>
+                <field name="amunet_avance" widget="progressbar"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_rrhh_course_review_list" model="ir.ui.view">
+        <field name="name">amunet.curso.rrhh.review.list</field>
+        <field name="model">amunet.curso</field>
+        <field name="arch" type="xml">
+            <list string="Cursos por revisar" create="0" delete="0"
+                  decoration-warning="revision_requerida">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="state" widget="badge"/>
+                <field name="revision_requerida"/>
+                <field name="revision_motivo"/>
+                <field name="procedure_ids" widget="many2many_tags"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_amunet_rrhh_renewals_work" model="ir.actions.act_window">
+        <field name="name">Mi trabajo RRHH</field>
+        <field name="res_model">amunet.registro.capacitacion</field>
+        <field name="view_mode">list,form,calendar</field>
+        <field name="domain">[('state', 'in', ['proxima', 'vencida'])]</field>
+        <field name="context">{'search_default_pendientes_renovar': 1}</field>
+        <field name="view_id" ref="view_amunet_rrhh_renewal_list"/>
+        <field name="search_view_id" ref="view_amunet_registro_capacitacion_search"/>
+    </record>
+
+    <record id="action_amunet_rrhh_renewals_work_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_rrhh_renewal_list"/>
+        <field name="act_window_id" ref="action_amunet_rrhh_renewals_work"/>
+    </record>
+
+    <record id="action_amunet_rrhh_renewals_work_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_amunet_registro_capacitacion_form"/>
+        <field name="act_window_id" ref="action_amunet_rrhh_renewals_work"/>
+    </record>
+
+    <record id="action_amunet_rrhh_training_gaps" model="ir.actions.act_window">
+        <field name="name">Brechas por persona</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('amunet_cursos_pendientes', '>', 0)]</field>
+        <field name="view_id" ref="view_amunet_rrhh_employee_gap_list"/>
+    </record>
+
+    <record id="action_amunet_rrhh_course_reviews" model="ir.actions.act_window">
+        <field name="name">Cursos por revisar</field>
+        <field name="res_model">amunet.curso</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('revision_requerida', '=', True)]</field>
+        <field name="view_id" ref="view_amunet_rrhh_course_review_list"/>
+    </record>
+
+    <record id="action_amunet_mi_capacitacion_trabajo" model="ir.actions.act_window">
+        <field name="name">Mi trabajo de capacitacion</field>
+        <field name="res_model">amunet.curso</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'publicado')]</field>
+        <field name="context">{'search_default_f_pendientes': 1}</field>
+        <field name="search_view_id" ref="view_amunet_mis_cursos_search"/>
+    </record>
+
+    <record id="action_amunet_mi_capacitacion_trabajo_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_mis_cursos_list"/>
+        <field name="act_window_id" ref="action_amunet_mi_capacitacion_trabajo"/>
+    </record>
+
+    <record id="action_amunet_mi_capacitacion_trabajo_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_amunet_curso_form_empleado"/>
+        <field name="act_window_id" ref="action_amunet_mi_capacitacion_trabajo"/>
+    </record>
+
+    <menuitem id="menu_amunet_rrhh_work"
+              name="Mi trabajo"
+              parent="menu_amunet_competencias_root"
+              action="action_amunet_rrhh_renewals_work"
+              sequence="1"
+              groups="amunet_competencias.group_competencias_manager"/>
+
+    <menuitem id="menu_amunet_rrhh_training_gaps"
+              name="Brechas por persona"
+              parent="menu_amunet_competencias_root"
+              action="action_amunet_rrhh_training_gaps"
+              sequence="2"
+              groups="amunet_competencias.group_competencias_manager"/>
+
+    <menuitem id="menu_amunet_rrhh_course_reviews"
+              name="Cursos por revisar"
+              parent="menu_amunet_competencias_root"
+              action="action_amunet_rrhh_course_reviews"
+              sequence="3"
+              groups="amunet_competencias.group_competencias_manager"/>
+
+    <menuitem id="menu_mi_capacitacion_trabajo"
+              name="Mi trabajo"
+              parent="menu_mi_capacitacion_root"
+              action="action_amunet_mi_capacitacion_trabajo"
+              sequence="1"
+              groups="base.group_user"/>
+</odoo>

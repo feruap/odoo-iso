@@ -152,6 +152,12 @@ class AmunetRegistroCapacitacion(models.Model):
         help='Archivo PDF, imagen o cualquier evidencia documental'
     )
     certificate_filename = fields.Char(string='Nombre archivo')
+    workqueue_next_step = fields.Char(
+        string='Siguiente paso',
+        compute='_compute_workqueue_guidance')
+    workqueue_blocker = fields.Char(
+        string='Bloqueo / hallazgo',
+        compute='_compute_workqueue_guidance')
 
     # =========================================================================
     # MÉTODOS COMPUTADOS
@@ -190,6 +196,28 @@ class AmunetRegistroCapacitacion(models.Model):
                 rec.state = 'proxima'
             else:
                 rec.state = 'vigente'
+
+    @api.depends('state', 'certificate_file', 'expiry_date', 'procedure_id', 'parameter_id')
+    def _compute_workqueue_guidance(self):
+        for rec in self:
+            if rec.state == 'vencida':
+                rec.workqueue_next_step = 'Renovar capacitacion antes de permitir firma'
+                rec.workqueue_blocker = 'Capacitacion vencida'
+            elif rec.state == 'proxima':
+                rec.workqueue_next_step = 'Programar renovacion'
+                rec.workqueue_blocker = False
+            elif not rec.certificate_file:
+                rec.workqueue_next_step = 'Anexar evidencia documental'
+                rec.workqueue_blocker = 'Sin evidencia'
+            elif not rec.procedure_id and not rec.parameter_id:
+                rec.workqueue_next_step = 'Definir alcance SOP o parametro'
+                rec.workqueue_blocker = 'Alcance incompleto'
+            elif rec.state == 'cancelada':
+                rec.workqueue_next_step = 'Sin accion'
+                rec.workqueue_blocker = 'Registro cancelado'
+            else:
+                rec.workqueue_next_step = 'Sin accion inmediata'
+                rec.workqueue_blocker = False
 
     # =========================================================================
     # VALIDACIONES
