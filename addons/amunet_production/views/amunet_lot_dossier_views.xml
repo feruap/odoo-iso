@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_lot_dossier_list" model="ir.ui.view">
+        <field name="name">amunet.lot.dossier.list</field>
+        <field name="model">amunet.lot.dossier</field>
+        <field name="arch" type="xml">
+            <list string="Expedientes digitales de lote"
+                  decoration-success="release_state == 'released'"
+                  decoration-warning="finding_count &gt; 0">
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="production_id"/>
+                <field name="release_state" widget="badge"
+                       decoration-success="release_state == 'released'"
+                       decoration-warning="release_state != 'released'"/>
+                <field name="quality_check_count"/>
+                <field name="material_request_count"/>
+                <field name="equipment_count"/>
+                <field name="training_count"/>
+                <field name="finding_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_lot_dossier_form" model="ir.ui.view">
+        <field name="name">amunet.lot.dossier.form</field>
+        <field name="model">amunet.lot.dossier</field>
+        <field name="arch" type="xml">
+            <form string="Expediente digital de lote">
+                <header>
+                    <button name="action_open_lot" type="object" string="Lote" class="btn-secondary"/>
+                    <button name="action_open_production" type="object" string="MO" class="btn-secondary"
+                            invisible="not production_id"/>
+                    <button name="action_open_quality_checks" type="object" string="QC" class="btn-secondary"
+                            invisible="quality_check_count == 0"/>
+                    <button name="action_open_material_requests" type="object" string="Materiales" class="btn-secondary"
+                            invisible="material_request_count == 0"/>
+                    <button name="action_open_equipment" type="object" string="Equipos" class="btn-secondary"
+                            invisible="equipment_count == 0"/>
+                    <button name="action_open_training" type="object" string="Capacitacion" class="btn-secondary"
+                            invisible="training_count == 0"/>
+                    <field name="release_state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_quality_checks" type="object" class="oe_stat_button" icon="fa-flask"
+                                invisible="quality_check_count == 0">
+                            <field name="quality_check_count" widget="statinfo" string="QC"/>
+                        </button>
+                        <button name="action_open_material_requests" type="object" class="oe_stat_button" icon="fa-truck"
+                                invisible="material_request_count == 0">
+                            <field name="material_request_count" widget="statinfo" string="Solicitudes"/>
+                        </button>
+                        <button name="action_open_equipment" type="object" class="oe_stat_button" icon="fa-cogs"
+                                invisible="equipment_count == 0">
+                            <field name="equipment_count" widget="statinfo" string="Equipos"/>
+                        </button>
+                        <button name="action_open_training" type="object" class="oe_stat_button" icon="fa-graduation-cap"
+                                invisible="training_count == 0">
+                            <field name="training_count" widget="statinfo" string="Capacitacion"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="lot_id" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="production_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="release_state" readonly="1" widget="badge"
+                                   decoration-success="release_state == 'released'"
+                                   decoration-warning="release_state != 'released'"/>
+                            <field name="released_by_id" readonly="1"/>
+                            <field name="released_date" readonly="1"/>
+                            <field name="release_hash" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Resumen ejecutivo" name="summary">
+                            <field name="summary_html" nolabel="1" readonly="1"/>
+                            <field name="findings_html" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Personas" name="people">
+                            <field name="people_html" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Manufactura y equipos" name="production">
+                            <field name="production_html" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Materiales" name="materials">
+                            <field name="material_html" nolabel="1" readonly="1"/>
+                            <field name="material_request_ids" readonly="1" nolabel="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="department_id"/>
+                                    <field name="warehouse_id"/>
+                                    <field name="state"/>
+                                    <field name="picking_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Calidad y firmas" name="quality">
+                            <field name="quality_html" nolabel="1" readonly="1"/>
+                            <field name="quality_check_ids" readonly="1" nolabel="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="lot_id"/>
+                                    <field name="state"/>
+                                    <field name="global_result"/>
+                                    <field name="user_realized_id"/>
+                                    <field name="user_verified_id"/>
+                                    <field name="user_authorized_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Capacitacion" name="training">
+                            <field name="training_html" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Snapshot DHR" name="snapshot" invisible="release_state != 'released'">
+                            <field name="release_snapshot" nolabel="1" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_amunet_lot_dossier_search" model="ir.ui.view">
+        <field name="name">amunet.lot.dossier.search</field>
+        <field name="model">amunet.lot.dossier</field>
+        <field name="arch" type="xml">
+            <search string="Expedientes digitales">
+                <field name="name"/>
+                <field name="lot_id"/>
+                <field name="product_id"/>
+                <field name="production_id"/>
+                <filter name="released" string="Liberados" domain="[('release_state', '=', 'released')]"/>
+                <separator/>
+                <filter name="group_product" string="Producto" context="{'group_by': 'product_id'}"/>
+                <filter name="group_release" string="Liberacion" context="{'group_by': 'release_state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_amunet_lot_dossier" model="ir.actions.act_window">
+        <field name="name">Expedientes digitales de lote</field>
+        <field name="res_model">amunet.lot.dossier</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_lot_dossier_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea un expediente digital desde un lote liberado o selecciona un lote para consolidar su trazabilidad.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_amunet_lot_dossier"
+              name="Expedientes digitales de lote"
+              parent="amunet_quality.menu_quality_operations"
+              action="action_amunet_lot_dossier"
+              sequence="5"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary,amunet_quality.group_quality_manager"/>
+</odoo>
