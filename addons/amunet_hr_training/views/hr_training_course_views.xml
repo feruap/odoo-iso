@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================ FORM ============================ -->
+    <record id="view_hr_training_course_form" model="ir.ui.view">
+        <field name="name">hr.training.course.form</field>
+        <field name="model">hr.training.course</field>
+        <field name="arch" type="xml">
+            <form string="Capacitacion">
+                <header>
+                    <!--
+                        Boton "Confirmar Ponente":
+                        visible solo si state='draft' y NO esta ya confirmado.
+                        Solo el ponente o un manager de RH puede pulsarlo
+                        (la validacion real corre en el modelo).
+                    -->
+                    <button name="action_speaker_confirm"
+                            string="Confirmar Ponente"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft' or speaker_confirmed"/>
+                    <button name="action_hr_approve"
+                            string="Aprobar RH"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft' or hr_confirmed"
+                            groups="hr.group_hr_user"/>
+                    <button name="action_done"
+                            string="Marcar Realizado"
+                            type="object" class="btn-primary"
+                            invisible="state != 'confirmed'"
+                            groups="hr.group_hr_user"/>
+                    <button name="action_cancel"
+                            string="Cancelar"
+                            type="object"
+                            invisible="state in ('cancelled','done')"
+                            groups="hr.group_hr_user"/>
+                    <button name="action_reset_to_draft"
+                            string="Regresar a Borrador"
+                            type="object"
+                            invisible="state != 'cancelled'"
+                            groups="hr.group_hr_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,confirmed,done"/>
+                    <!-- Helpers invisibles para attrs / readonly -->
+                    <field name="is_speaker_for_user" invisible="1"/>
+                    <field name="is_hr_user_for_user" invisible="1"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name"
+                                   placeholder="Nombre de la capacitacion"
+                                   readonly="state in ('confirmed','done','cancelled') and not is_hr_user_for_user"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Ponente y fechas">
+                            <field name="speaker_id"
+                                   options="{'no_create': True}"
+                                   readonly="state != 'draft' and not is_hr_user_for_user"/>
+                            <field name="date_start"
+                                   readonly="state in ('done','cancelled')"/>
+                            <field name="date_end"
+                                   readonly="state in ('done','cancelled')"/>
+                        </group>
+                        <group string="Aprobaciones">
+                            <field name="speaker_confirmed" readonly="1"/>
+                            <field name="speaker_confirmed_date" readonly="1"
+                                   invisible="not speaker_confirmed"/>
+                            <field name="hr_confirmed" readonly="1"/>
+                            <field name="hr_confirmed_date" readonly="1"
+                                   invisible="not hr_confirmed"/>
+                            <field name="hr_confirmed_by" readonly="1"
+                                   invisible="not hr_confirmed"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Participantes y asistencia"
+                              name="participants">
+                            <group>
+                                <field name="participant_ids"
+                                       widget="many2many_tags"
+                                       options="{'no_create': True}"
+                                       readonly="state in ('done','cancelled') and not is_hr_user_for_user"/>
+                            </group>
+                            <separator string="Pase de lista"/>
+                            <field name="attendance_ids"
+                                   readonly="state == 'cancelled'">
+                                <list editable="bottom">
+                                    <field name="employee_id"
+                                           options="{'no_create': True}"/>
+                                    <field name="attendance"/>
+                                    <field name="on_time"/>
+                                    <field name="grade"/>
+                                    <field name="notes"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas SGC" name="sgc_notes">
+                            <field name="sgc_notes"
+                                   placeholder="Observaciones del Sistema de Gestion de Calidad (no aparecen en correos a participantes)"/>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================ LIST ============================ -->
+    <record id="view_hr_training_course_list" model="ir.ui.view">
+        <field name="name">hr.training.course.list</field>
+        <field name="model">hr.training.course</field>
+        <field name="arch" type="xml">
+            <list string="Capacitaciones"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state == 'confirmed'"
+                  decoration-muted="state == 'cancelled'"
+                  decoration-primary="state == 'done'">
+                <field name="name"/>
+                <field name="speaker_id"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'confirmed'"
+                       decoration-primary="state == 'done'"
+                       decoration-danger="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================ CALENDAR ============================ -->
+    <record id="view_hr_training_course_calendar" model="ir.ui.view">
+        <field name="name">hr.training.course.calendar</field>
+        <field name="model">hr.training.course</field>
+        <field name="arch" type="xml">
+            <calendar string="Capacitaciones"
+                      date_start="date_start"
+                      date_stop="date_end"
+                      mode="month"
+                      color="state">
+                <field name="name"/>
+                <field name="speaker_id"/>
+                <field name="state" invisible="1"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- ============================ SEARCH ============================ -->
+    <record id="view_hr_training_course_search" model="ir.ui.view">
+        <field name="name">hr.training.course.search</field>
+        <field name="model">hr.training.course</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="speaker_id"/>
+                <filter name="f_draft" string="Borrador"
+                        domain="[('state','=','draft')]"/>
+                <filter name="f_confirmed" string="Confirmado"
+                        domain="[('state','=','confirmed')]"/>
+                <filter name="f_done" string="Realizado"
+                        domain="[('state','=','done')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================ ACTION ============================ -->
+    <record id="action_hr_training_course" model="ir.actions.act_window">
+        <field name="name">Capacitaciones</field>
+        <field name="res_model">hr.training.course</field>
+        <field name="view_mode">list,form,calendar</field>
+        <field name="search_view_id" ref="view_hr_training_course_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nueva capacitacion</p>
+            <p>Programa la capacitacion, define ponente, fechas y los
+            empleados que deben asistir. Tras la doble aprobacion
+            (ponente + RH) se envian las invitaciones automaticamente.</p>
+        </field>
+    </record>
+
+</odoo>

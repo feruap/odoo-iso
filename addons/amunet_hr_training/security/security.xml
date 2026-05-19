@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!--
+            Record rule: cualquier empleado interno puede LEER los cursos
+            (para verlos como participante), pero solo RH puede crear/
+            modificar/borrar. La logica de acciones (action_speaker_confirm,
+            action_hr_approve, action_cancel) ya impide cambios fuera del
+            flujo.
+        -->
+        <record id="rule_training_course_employee_read" model="ir.rule">
+            <field name="name">hr.training.course: empleados leen</field>
+            <field name="model_id" ref="model_hr_training_course"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
+        <record id="rule_training_course_hr_full" model="ir.rule">
+            <field name="name">hr.training.course: RH acceso total</field>
+            <field name="model_id" ref="model_hr_training_course"/>
+            <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
+        <record id="rule_training_attendance_employee_read" model="ir.rule">
+            <field name="name">hr.training.attendance: empleados leen su pase</field>
+            <field name="model_id" ref="model_hr_training_attendance"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        </record>
+
+        <record id="rule_training_attendance_hr_full" model="ir.rule">
+            <field name="name">hr.training.attendance: RH acceso total</field>
+            <field name="model_id" ref="model_hr_training_attendance"/>
+            <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
+    </data>
+</odoo>

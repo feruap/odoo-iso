@@ -266,6 +266,20 @@ class AmunetMaterialRequest(models.Model):
                 vals['requester_id'] = self.env.user.id
                 vals.pop('department_id', None)
                 vals.pop('warehouse_id', None)
+            # Bloquear creacion si el solicitante ya tiene otra
+            # solicitud en estado 'draft' (Borrador). Debe enviarla
+            # o cancelarla antes de empezar una nueva. El admin del
+            # modulo NO esta limitado.
+            existing = self.sudo().search_count([
+                ('requester_id', '=', self.env.user.id),
+                ('state', '=', 'draft'),
+            ])
+            # Si ya hay >0 en draft y se va a crear al menos 1 nueva,
+            # bloqueamos para evitar acumular borradores sin cerrar.
+            if existing >= 1 and vals_list:
+                raise UserError(_(
+                    'Ya tienes una solicitud en Borrador. Envia o cancela '
+                    'esa solicitud antes de empezar una nueva.'))
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
                 vals['name'] = self.env['ir.sequence'].next_by_code(

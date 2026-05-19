@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!--
+            Plantilla de invitacion a participantes cuando el curso
+            queda Confirmado. Se envia a participantes + ponente.
+        -->
+        <record id="mail_template_training_invitation" model="mail.template">
+            <field name="name">Capacitacion - Invitacion al curso</field>
+            <field name="model_id" ref="model_hr_training_course"/>
+            <field name="subject">Invitacion: {{ object.name }}</field>
+            <field name="email_from">{{ user.email_formatted or user.company_id.email_formatted }}</field>
+            <field name="partner_to">{{ ' ,'.join([str(p.id) for p in object.participant_ids.mapped('work_contact_id') if p and p.email] + ([str(object.speaker_id.work_contact_id.id)] if object.speaker_id.work_contact_id and object.speaker_id.work_contact_id.email else [])) }}</field>
+            <field name="body_html" type="html">
+<div style="font-family: Arial, sans-serif; color: #1f2d3d;">
+    <p>Hola,</p>
+    <p>Te confirmamos tu participacion en la capacitacion:</p>
+    <table style="border-collapse: collapse; margin: 10px 0;">
+        <tr><td style="padding: 4px 12px 4px 0;"><b>Capacitacion:</b></td><td t-out="object.name or ''"/></tr>
+        <tr><td style="padding: 4px 12px 4px 0;"><b>Ponente:</b></td><td t-out="object.speaker_id.name or '-'"/></tr>
+        <tr><td style="padding: 4px 12px 4px 0;"><b>Inicio:</b></td><td t-out="object.date_start or '-'"/></tr>
+        <tr><td style="padding: 4px 12px 4px 0;"><b>Fin:</b></td><td t-out="object.date_end or '-'"/></tr>
+    </table>
+    <p>Tu asistencia es importante para mantener vigentes las
+    competencias requeridas en nuestro Sistema de Gestion de Calidad.</p>
+    <p>Si por algun motivo no puedes asistir, avisa a Recursos Humanos
+    con anticipacion.</p>
+    <p>Saludos,<br/>Recursos Humanos - Amunet</p>
+</div>
+            </field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+        <!--
+            Plantilla de recordatorio al ponente cuando faltan 7 dias
+            y el curso sigue en Borrador. Disparado por el cron.
+        -->
+        <record id="mail_template_training_speaker_reminder" model="mail.template">
+            <field name="name">Capacitacion - Recordatorio al ponente</field>
+            <field name="model_id" ref="model_hr_training_course"/>
+            <field name="subject">Recordatorio: prepara tu capacitacion en 7 dias</field>
+            <field name="email_from">{{ user.email_formatted or user.company_id.email_formatted }}</field>
+            <field name="partner_to">{{ object.speaker_id.work_contact_id.id if object.speaker_id.work_contact_id else '' }}</field>
+            <field name="body_html" type="html">
+<div style="font-family: Arial, sans-serif; color: #1f2d3d;">
+    <p>Hola <t t-out="object.speaker_id.name or ''"/>,</p>
+    <p>Te recordamos que estas asignado como <b>ponente</b> de la
+    capacitacion <b t-out="object.name or ''"/>, programada para
+    <t t-out="object.date_start or '-'"/>.</p>
+    <p>Faltan 7 dias y el curso aun esta en estado <b>Borrador</b>.
+    Por favor:</p>
+    <ul>
+        <li>Prepara el material y las dinamicas a usar.</li>
+        <li>Entra a Odoo y confirma tu participacion pulsando
+            "Confirmar Ponente" en el curso.</li>
+        <li>Coordina con Recursos Humanos cualquier dependencia.</li>
+    </ul>
+    <p>Recursos Humanos - Amunet</p>
+</div>
+            </field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
