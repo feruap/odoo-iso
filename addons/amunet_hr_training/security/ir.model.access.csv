@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_training_course_employee,hr.training.course employee read,model_hr_training_course,base.group_user,1,0,0,0
+access_hr_training_course_hr_user,hr.training.course hr_user,model_hr_training_course,hr.group_hr_user,1,1,1,1
+access_hr_training_course_hr_manager,hr.training.course hr_manager,model_hr_training_course,hr.group_hr_manager,1,1,1,1
+access_hr_training_attendance_employee,hr.training.attendance employee read,model_hr_training_attendance,base.group_user,1,0,0,0
+access_hr_training_attendance_hr_user,hr.training.attendance hr_user,model_hr_training_attendance,hr.group_hr_user,1,1,1,1
+access_hr_training_attendance_hr_manager,hr.training.attendance hr_manager,model_hr_training_attendance,hr.group_hr_manager,1,1,1,1

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Menu de Capacitaciones bajo la app Empleados.
+        Visible solo para Recursos Humanos (group_hr_user / manager).
+        El acceso de empleados a SU propia capacitacion lo cubren
+        las record rules + el modulo amunet_competencias para el
+        autoservicio "Mis Cursos".
+    -->
+    <menuitem id="menu_hr_training_root"
+              name="Capacitaciones"
+              parent="hr.menu_hr_root"
+              sequence="50"
+              groups="hr.group_hr_user"/>
+
+    <menuitem id="menu_hr_training_course"
+              name="Programacion"
+              parent="menu_hr_training_root"
+              action="action_hr_training_course"
+              sequence="10"/>
+
+</odoo>
