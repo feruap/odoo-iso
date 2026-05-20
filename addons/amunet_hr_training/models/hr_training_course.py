@@ -1,6 +1,26 @@
 # -*- coding: utf-8 -*-
+import base64
+import logging
+from datetime import timedelta
+from io import BytesIO
+
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+
+_logger = logging.getLogger(__name__)
+
+try:
+    import qrcode
+except ImportError:  # pragma: no cover
+    qrcode = None
+    _logger.warning(
+        "amunet_hr_training: la libreria python 'qrcode' no esta "
+        "instalada. El QR de auto-asistencia no podra generarse. "
+        "Instalala con: pip install qrcode[pil]")
+
+# Tolerancia de retraso para marcar on_time=True al escanear el QR.
+# 10 minutos despues de date_start se considera "a tiempo".
+QR_LATE_TOLERANCE_MINUTES = 10
 
 
 class HrTrainingCourse(models.Model):
@@ -101,6 +121,23 @@ class HrTrainingCourse(models.Model):
         string='Pase de lista', copy=False,
     )
 
+    # Auto-asistencia por QR
+    qr_attendance_url = fields.Char(
+        string='URL de auto-asistencia',
+        compute='_compute_qr_code', store=False, readonly=True,
+        help='URL que codifica el QR. El participante (logueado) la abre '
+             'desde su celular y queda registrada su asistencia.',
+    )
+    qr_code = fields.Binary(
+        string='Codigo QR',
+        compute='_compute_qr_code', store=False, readonly=True,
+        attachment=False,
+        help='QR de auto-asistencia. El ponente lo proyecta al inicio del '
+             'curso; los participantes lo escanean con su celular (con '
+             'sesion iniciada en Odoo) y se marca su asistencia y '
+             'puntualidad automaticamente.',
+    )
+
     # Datos SGC y notas
     sgc_notes = fields.Html(
         string='Notas internas SGC',
@@ -143,6 +180,103 @@ class HrTrainingCourse(models.Model):
             if rec.date_start and rec.date_end and rec.date_end < rec.date_start:
                 raise ValidationError(_(
                     'La fecha de fin no puede ser anterior a la de inicio.'))
+
+    # ============================
+    # QR de auto-asistencia
+    # ============================
+    def _compute_qr_code(self):
+        base = self.env['ir.config_parameter'].sudo().get_param(
+            'web.base.url', '') or ''
+        base = base.rstrip('/')
+        for rec in self:
+            if not rec.id or not base:
+                rec.qr_code = False
+                rec.qr_attendance_url = False
+                continue
+            url = '%s/training/attend/%s' % (base, rec.id)
+            rec.qr_attendance_url = url
+            if not qrcode:
+                rec.qr_code = False
+                continue
+            try:
+                img = qrcode.make(url, box_size=10, border=2)
+                buf = BytesIO()
+                img.save(buf, format='PNG')
+                rec.qr_code = base64.b64encode(buf.getvalue())
+            except Exception:
+                _logger.exception(
+                    'No se pudo generar QR del curso %s', rec.id)
+                rec.qr_code = False
+
+    def action_show_qr_fullscreen(self):
+        """Abre una vista limpia con el QR enorme para proyectar."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('QR de auto-asistencia'),
+            'res_model': 'hr.training.course',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'view_id': self.env.ref(
+                'amunet_hr_training.view_hr_training_course_qr_fullscreen'
+            ).id,
+            'target': 'new',
+            'context': {'dialog_size': 'extra-large'},
+        }
+
+    def register_qr_attendance(self, employee):
+        """Registra (o crea) la linea de asistencia del empleado al
+        escanear el QR.
+
+        Devuelve (success: bool, message: str, on_time: bool|None).
+        """
+        self.ensure_one()
+        if not employee:
+            return False, _(
+                'Tu usuario de Odoo no esta vinculado a un empleado. '
+                'Acude con Recursos Humanos.'), None
+        if self.state == 'cancelled':
+            return False, _(
+                'Esta capacitacion fue cancelada y no admite '
+                'registro de asistencia.'), None
+        if self.state == 'done':
+            return False, _(
+                'Esta capacitacion ya fue marcada como Realizada. '
+                'Tu asistencia debio quedar registrada durante el evento.'
+            ), None
+        if employee.id not in self.participant_ids.ids:
+            return False, _(
+                'No estas registrado en esta capacitacion. Acude con '
+                'Recursos Humanos para que te agreguen.'), None
+        # Asegurar que existe linea de asistencia para este empleado.
+        Attend = self.env['hr.training.attendance'].sudo()
+        line = Attend.search([
+            ('course_id', '=', self.id),
+            ('employee_id', '=', employee.id),
+        ], limit=1)
+        if not line:
+            line = Attend.create({
+                'course_id': self.id,
+                'employee_id': employee.id,
+            })
+        # Calcular puntualidad: tolerancia de N minutos despues de date_start
+        now = fields.Datetime.now()
+        on_time = True
+        if self.date_start:
+            limit = self.date_start + timedelta(
+                minutes=QR_LATE_TOLERANCE_MINUTES)
+            on_time = now <= limit
+        line.write({
+            'attendance': 'attended',
+            'on_time': on_time,
+        })
+        self.message_post(body=_(
+            'Auto-asistencia por QR: %(emp)s (%(state)s).'
+        ) % {
+            'emp': employee.name,
+            'state': _('a tiempo') if on_time else _('con retraso'),
+        })
+        return True, _('Asistencia registrada correctamente.'), on_time
 
     # ============================
     # Acciones de estado

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Templates QWeb usados por el controlador /training/attend/<id>.
+        Diseno auto-contenido (sin layout de website) para que funcione
+        aun sin el modulo 'website' instalado y se vea bien en celular.
+    -->
+
+    <template id="training_attend_layout" name="Training Attend Layout">
+        <html lang="es">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title><t t-esc="title or 'Capacitacion'"/></title>
+                <style>
+                    body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0; padding:0; background:#f5f6f7; }
+                    .wrap { max-width:480px; margin:40px auto; background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.08); padding:32px 24px; text-align:center; }
+                    .icon { font-size:64px; margin-bottom:12px; line-height:1; }
+                    .icon-ok { color:#28a745; }
+                    .icon-err { color:#d9534f; }
+                    h1 { font-size:22px; margin:8px 0 16px 0; color:#222; }
+                    p { font-size:16px; color:#444; line-height:1.5; }
+                    .course-name { font-weight:600; color:#0d6efd; margin-top:16px; font-size:18px; }
+                    .meta { font-size:13px; color:#888; margin-top:24px; }
+                    .badge-late { display:inline-block; padding:6px 14px; border-radius:20px; background:#fff3cd; color:#856404; font-weight:600; font-size:14px; margin-top:8px; }
+                    .badge-ontime { display:inline-block; padding:6px 14px; border-radius:20px; background:#d4edda; color:#155724; font-weight:600; font-size:14px; margin-top:8px; }
+                </style>
+            </head>
+            <body>
+                <div class="wrap">
+                    <t t-out="0"/>
+                </div>
+            </body>
+        </html>
+    </template>
+
+    <!-- Pagina de exito -->
+    <template id="training_attend_success" name="Training Attend Success">
+        <t t-call="amunet_hr_training.training_attend_layout">
+            <t t-set="title">Asistencia registrada</t>
+            <div class="icon icon-ok">&#10004;</div>
+            <h1>!Asistencia registrada con exito!</h1>
+            <p>Tu puntualidad tambien ha sido guardada.</p>
+            <div class="course-name" t-esc="course.name"/>
+            <div t-if="on_time" class="badge-ontime">A tiempo</div>
+            <div t-if="not on_time" class="badge-late">Con retraso</div>
+            <p class="meta">
+                Usuario: <span t-esc="employee.name"/><br/>
+                Curso: <span t-esc="course.name"/><br/>
+                Inicio programado: <span t-esc="course.date_start" t-options="{'widget': 'datetime'}"/>
+            </p>
+        </t>
+    </template>
+
+    <!-- Pagina de error -->
+    <template id="training_attend_error" name="Training Attend Error">
+        <t t-call="amunet_hr_training.training_attend_layout">
+            <t t-set="title">No se pudo registrar tu asistencia</t>
+            <div class="icon icon-err">&#9888;</div>
+            <h1 t-esc="title"/>
+            <p t-esc="message"/>
+            <div t-if="course" class="course-name" t-esc="course.name"/>
+        </t>
+    </template>
+
+    <!--
+        Vista "form" fullscreen del QR: se abre como popup al pulsar
+        "Proyectar QR". Solo se muestra el nombre del curso y el QR
+        grande, sin botones ni distracciones.
+    -->
+    <record id="view_hr_training_course_qr_fullscreen" model="ir.ui.view">
+        <field name="name">hr.training.course.qr.fullscreen</field>
+        <field name="model">hr.training.course</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <form string="Proyectar QR" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="text-center" style="padding:24px;">
+                        <h1 style="font-size:36px; margin-bottom:8px;">
+                            <field name="name" readonly="1" nolabel="1"/>
+                        </h1>
+                        <div style="font-size:18px; color:#666; margin-bottom:24px;">
+                            <field name="date_start" readonly="1" nolabel="1"/>
+                        </div>
+                        <div style="display:flex; justify-content:center;">
+                            <field name="qr_code" widget="image"
+                                   options="{'size': [560, 560]}"
+                                   readonly="1" nolabel="1"/>
+                        </div>
+                        <div style="margin-top:16px; font-size:14px; color:#888;">
+                            Escanea el codigo con la camara de tu celular.
+                            Necesitas estar logueado en Odoo.
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>
