@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_change_control_search" model="ir.ui.view">
+        <field name="name">amunet.change.control.search</field>
+        <field name="model">amunet.change.control</field>
+        <field name="arch" type="xml">
+            <search string="Desviaciones y cambios">
+                <field name="name"/>
+                <field name="title"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="production_id"/>
+                <field name="quality_check_id"/>
+                <filter name="open" string="Abiertas" domain="[('state', 'not in', ('closed', 'cancel', 'rejected'))]"/>
+                <filter name="lot_scope" string="Solo lote" domain="[('scope', '=', 'lot')]"/>
+                <filter name="permanent" string="Permanentes" domain="[('scope', '=', 'permanent')]"/>
+                <filter name="print_pending" string="Impresion pendiente" domain="[('print_status', 'in', ('pending', 'requested'))]"/>
+                <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_type" string="Tipo" context="{'group_by': 'request_type'}"/>
+                <filter name="group_product" string="Producto" context="{'group_by': 'product_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_amunet_change_control_list" model="ir.ui.view">
+        <field name="name">amunet.change.control.list</field>
+        <field name="model">amunet.change.control</field>
+        <field name="arch" type="xml">
+            <list string="Desviaciones y cambios"
+                  decoration-danger="state == 'rejected'"
+                  decoration-warning="state in ('evaluation', 'print_requested')"
+                  decoration-success="state in ('implemented', 'closed')">
+                <field name="name"/>
+                <field name="title"/>
+                <field name="request_type"/>
+                <field name="scope"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="state" widget="badge"/>
+                <field name="print_status" widget="badge"/>
+                <field name="requested_by_id"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_change_control_form" model="ir.ui.view">
+        <field name="name">amunet.change.control.form</field>
+        <field name="model">amunet.change.control</field>
+        <field name="arch" type="xml">
+            <form string="Desviacion / Cambio">
+                <header>
+                    <button name="action_submit" string="Enviar a evaluacion" type="object" class="oe_highlight"
+                            invisible="state != 'draft'"
+                            groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_production.group_production_supervisor,amunet_change_control.group_change_control_documentation"/>
+                    <button name="action_quality_approve" string="Aprobar Calidad" type="object" class="oe_highlight"
+                            invisible="state != 'evaluation'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_sanitary_approve" string="Aprobar Responsable" type="object" class="oe_highlight"
+                            invisible="state != 'quality_approved'"
+                            groups="amunet_quality.group_quality_sanitary,amunet_quality.group_quality_manager"/>
+                    <button name="action_documentation_ready" string="Documentacion lista" type="object"
+                            invisible="state not in ('quality_approved', 'sanitary_approved')"
+                            groups="amunet_change_control.group_change_control_documentation,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_request_print" string="Solicitar impresion" type="object"
+                            invisible="state not in ('sanitary_approved', 'documentation_ready') or not print_required"
+                            groups="amunet_change_control.group_change_control_documentation,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_mark_print_done" string="Marcar impresion lista" type="object"
+                            invisible="print_status != 'requested'"
+                            groups="amunet_change_control.group_change_control_documentation,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_implement" string="Implementar" type="object" class="oe_highlight"
+                            invisible="state not in ('sanitary_approved', 'documentation_ready', 'print_requested')"
+                            groups="amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_close" string="Cerrar" type="object"
+                            invisible="state != 'implemented'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_reject" string="Rechazar" type="object"
+                            invisible="state in ('closed', 'rejected', 'cancel')"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"/>
+                    <button name="action_cancel" string="Cancelar" type="object"
+                            invisible="state in ('closed', 'cancel')"
+                            groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_production.group_production_supervisor,amunet_change_control.group_change_control_documentation"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,evaluation,quality_approved,sanitary_approved,documentation_ready,print_requested,implemented,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <label for="title" class="oe_edit_only"/>
+                        <h2><field name="title" placeholder="Resumen corto de la desviacion o cambio"/></h2>
+                    </div>
+
+                    <group>
+                        <group string="Clasificacion">
+                            <field name="request_type"/>
+                            <field name="scope"/>
+                            <field name="requested_by_id" readonly="1"/>
+                            <field name="effective_date"/>
+                        </group>
+                        <group string="Trazabilidad">
+                            <field name="product_id"/>
+                            <field name="lot_id"/>
+                            <field name="production_id"/>
+                            <field name="quality_check_id"/>
+                            <field name="picking_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Evaluacion">
+                            <group string="Materiales" invisible="request_type not in ('material_substitution', 'other')">
+                                <field name="original_material_id"/>
+                                <field name="substitute_material_id"/>
+                            </group>
+                            <group string="Condicion de uso" invisible="request_type not in ('lot_instruction_change', 'document_change', 'other')">
+                                <field name="current_instruction" placeholder="Instruccion vigente, por ejemplo: usar 3 gotas."/>
+                                <field name="proposed_instruction" placeholder="Instruccion propuesta, por ejemplo: usar 4 gotas para este lote."/>
+                            </group>
+                            <group>
+                                <field name="rationale" placeholder="Evidencia, pruebas realizadas y justificacion tecnica."/>
+                                <field name="risk_assessment" placeholder="Riesgo para paciente, resultado, lote, etiquetado/documentacion."/>
+                                <field name="disposition" placeholder="Decision propuesta: usar, reprocesar, rechazar, cambiar documento, imprimir addendum."/>
+                            </group>
+                        </page>
+
+                        <page string="Documentos">
+                            <group>
+                                <group>
+                                    <field name="document_change_required"/>
+                                    <field name="document_change_scope"/>
+                                    <field name="source_document_id"/>
+                                    <field name="target_document_id"/>
+                                </group>
+                                <group>
+                                    <field name="documentation_user_id"/>
+                                    <field name="print_required"/>
+                                    <field name="print_status" readonly="1"/>
+                                    <field name="print_quantity"/>
+                                </group>
+                            </group>
+                            <group>
+                                <field name="print_description" placeholder="Cantidad, version, lote y entrega requerida para manuales/instructivos."/>
+                            </group>
+                        </page>
+
+                        <page string="Aprobaciones">
+                            <group>
+                                <group string="Calidad">
+                                    <field name="quality_approved_by_id" readonly="1"/>
+                                    <field name="quality_approved_date" readonly="1"/>
+                                </group>
+                                <group string="Responsable">
+                                    <field name="sanitary_approved_by_id" readonly="1"/>
+                                    <field name="sanitary_approved_date" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="Implementacion">
+                                <field name="implemented_by_id" readonly="1"/>
+                                <field name="implemented_date" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_change_control" model="ir.actions.act_window">
+        <field name="name">Desviaciones y cambios</field>
+        <field name="res_model">amunet.change.control</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="search_view_id" ref="view_amunet_change_control_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registre una desviacion, cambio de lote o cambio documental controlado.
+            </p>
+        </field>
+    </record>
+</odoo>

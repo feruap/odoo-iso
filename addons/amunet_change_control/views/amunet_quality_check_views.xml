@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_quality_check_form_change_control" model="ir.ui.view">
+        <field name="name">amunet.quality.check.form.change.control</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="inherit_id" ref="amunet_quality.view_amunet_quality_check_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="change_control_count" invisible="1"/>
+                <button name="action_create_change_control"
+                        string="Crear desviacion/cambio"
+                        type="object"
+                        class="btn-secondary"
+                        groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_change_controls"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-random"
+                        invisible="change_control_count == 0">
+                    <field name="change_control_count" widget="statinfo" string="Desv/Cambios"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>
