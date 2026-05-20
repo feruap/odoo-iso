@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rework_order_user,amunet.rework.order user,model_amunet_rework_order,base.group_user,1,0,0,0
+access_rework_order_quality_user,amunet.rework.order quality user,model_amunet_rework_order,amunet_quality.group_quality_user,1,1,1,0
+access_rework_order_quality_supervisor,amunet.rework.order quality supervisor,model_amunet_rework_order,amunet_quality.group_quality_supervisor,1,1,1,0
+access_rework_order_quality_manager,amunet.rework.order quality manager,model_amunet_rework_order,amunet_quality.group_quality_manager,1,1,1,1
+access_rework_order_production_supervisor,amunet.rework.order production supervisor,model_amunet_rework_order,amunet_production.group_production_supervisor,1,1,1,0
+access_rework_order_material_manager,amunet.rework.order material manager,model_amunet_rework_order,amunet_material_request.group_material_manager,1,1,0,0
+access_rework_order_line_user,amunet.rework.order.line user,model_amunet_rework_order_line,base.group_user,1,0,0,0
+access_rework_order_line_quality,amunet.rework.order.line quality,model_amunet_rework_order_line,amunet_quality.group_quality_supervisor,1,1,1,1
+access_rework_order_line_production,amunet.rework.order.line production,model_amunet_rework_order_line,amunet_production.group_production_supervisor,1,1,1,1

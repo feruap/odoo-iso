@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_quality_check_form_rework_inherit" model="ir.ui.view">
+        <field name="name">amunet.quality.check.form.rework.inherit</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="inherit_id" ref="amunet_quality.view_amunet_quality_check_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_create_capa']" position="after">
+                <button name="action_create_rework_order" string="No conformidad / reproceso"
+                        type="object" class="btn-danger"
+                        invisible="global_result != 'fail' or state not in ('done', 'pending')"
+                        groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_rework_orders"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-retweet"
+                        invisible="rework_order_count == 0">
+                    <field name="rework_order_count" widget="statinfo" string="Reprocesos"/>
+                </button>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <field name="rework_order_count" invisible="1"/>
+            </xpath>
+            <xpath expr="//div[contains(@class, 'alert-danger')]" position="inside">
+                <button name="action_create_rework_order"
+                        string="Registrar reproceso"
+                        type="object"
+                        class="btn-link"
+                        invisible="state not in ('done', 'pending')"
+                        groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

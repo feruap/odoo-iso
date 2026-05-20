@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_packaging_presentation_search" model="ir.ui.view">
+        <field name="name">amunet.packaging.presentation.search</field>
+        <field name="model">amunet.packaging.presentation</field>
+        <field name="arch" type="xml">
+            <search string="Presentaciones autorizadas">
+                <field name="name"/>
+                <field name="product_tmpl_id"/>
+                <field name="woo_sku"/>
+                <filter name="authorized" string="Autorizadas" domain="[('is_authorized', '=', True)]"/>
+                <filter name="woocommerce" string="WooCommerce" domain="[('authorization_source', '=', 'woocommerce')]"/>
+                <filter name="group_product" string="Producto" context="{'group_by': 'product_tmpl_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_packaging_presentation_list" model="ir.ui.view">
+        <field name="name">amunet.packaging.presentation.list</field>
+        <field name="model">amunet.packaging.presentation</field>
+        <field name="arch" type="xml">
+            <list string="Presentaciones autorizadas"
+                  decoration-muted="not active"
+                  decoration-danger="not is_authorized">
+                <field name="name"/>
+                <field name="product_tmpl_id"/>
+                <field name="package_qty"/>
+                <field name="woo_sku"/>
+                <field name="authorization_source"/>
+                <field name="is_authorized" widget="boolean_toggle"/>
+                <field name="trend_piece_qty_180"/>
+                <field name="last_trend_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_packaging_presentation_form" model="ir.ui.view">
+        <field name="name">amunet.packaging.presentation.form</field>
+        <field name="model">amunet.packaging.presentation</field>
+        <field name="arch" type="xml">
+            <form string="Presentacion autorizada">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Producto">
+                            <field name="active"/>
+                            <field name="product_tmpl_id"/>
+                            <field name="product_id"/>
+                            <field name="package_qty"/>
+                            <field name="is_authorized"/>
+                            <field name="authorization_source"/>
+                        </group>
+                        <group string="WooCommerce">
+                            <field name="woo_product_id"/>
+                            <field name="woo_variation_id"/>
+                            <field name="woo_sku"/>
+                            <field name="woo_name"/>
+                        </group>
+                    </group>
+                    <group string="Materiales esperados">
+                        <group>
+                            <field name="box_component_id"/>
+                            <field name="label_required"/>
+                            <field name="label_component_id"/>
+                        </group>
+                        <group>
+                            <field name="manual_required"/>
+                            <field name="manual_component_id"/>
+                        </group>
+                    </group>
+                    <group string="Tendencia 180 dias">
+                        <field name="trend_box_qty_180"/>
+                        <field name="trend_piece_qty_180"/>
+                        <field name="last_trend_date"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_packaging_presentation" model="ir.actions.act_window">
+        <field name="name">Presentaciones autorizadas</field>
+        <field name="res_model">amunet.packaging.presentation</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_authorized': 1}</field>
+        <field name="search_view_id" ref="view_packaging_presentation_search"/>
+    </record>
+</odoo>

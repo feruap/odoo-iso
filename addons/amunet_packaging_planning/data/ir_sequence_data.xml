@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_amunet_packaging_plan" model="ir.sequence">
+        <field name="name">Plan de Empaque Amunet</field>
+        <field name="code">amunet.packaging.plan</field>
+        <field name="prefix">PE/%(year)s/</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+
+    <record id="seq_amunet_packaging_rework" model="ir.sequence">
+        <field name="name">Reacondicionamiento Amunet</field>
+        <field name="code">amunet.packaging.rework</field>
+        <field name="prefix">RA/%(year)s/</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+</odoo>

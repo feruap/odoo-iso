@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_packaging_rework_search" model="ir.ui.view">
+        <field name="name">amunet.packaging.rework.search</field>
+        <field name="model">amunet.packaging.rework</field>
+        <field name="arch" type="xml">
+            <search string="Reacondicionamientos">
+                <field name="name"/>
+                <field name="product_tmpl_id"/>
+                <field name="lot_name"/>
+                <filter name="open" string="Abiertos" domain="[('state', 'not in', ('done', 'cancel'))]"/>
+                <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_product" string="Producto" context="{'group_by': 'product_tmpl_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_packaging_rework_list" model="ir.ui.view">
+        <field name="name">amunet.packaging.rework.list</field>
+        <field name="model">amunet.packaging.rework</field>
+        <field name="arch" type="xml">
+            <list string="Reacondicionamientos"
+                  decoration-warning="state == 'qc_review'"
+                  decoration-success="state in ('approved', 'done')">
+                <field name="name"/>
+                <field name="product_tmpl_id"/>
+                <field name="lot_name"/>
+                <field name="source_presentation_id"/>
+                <field name="source_box_qty"/>
+                <field name="source_piece_qty"/>
+                <field name="target_presentation_id"/>
+                <field name="target_box_qty"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_packaging_rework_form" model="ir.ui.view">
+        <field name="name">amunet.packaging.rework.form</field>
+        <field name="model">amunet.packaging.rework</field>
+        <field name="arch" type="xml">
+            <form string="Reacondicionamiento">
+                <header>
+                    <button name="action_submit_qc" string="Enviar a Calidad" type="object" class="oe_highlight"
+                            invisible="state != 'draft'"
+                            groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor"/>
+                    <button name="action_quality_approve" string="Aprobar Calidad" type="object" class="oe_highlight"
+                            invisible="state != 'qc_review'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_open_label_wizard" string="Imprimir etiquetas" type="object"
+                            invisible="state not in ('approved', 'done') or not label_required"/>
+                    <button name="action_mark_print_ready" string="Etiquetas/manuales listos" type="object"
+                            invisible="state != 'approved'"
+                            groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor"/>
+                    <button name="action_done" string="Cerrar reacondicionamiento" type="object" class="oe_highlight"
+                            invisible="state != 'approved'"
+                            groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor"/>
+                    <button name="action_cancel" string="Cancelar" type="object"
+                            invisible="state in ('done', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,qc_review,approved,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Producto y lote">
+                            <field name="product_tmpl_id"/>
+                            <field name="lot_id"/>
+                            <field name="lot_name"/>
+                            <field name="expiration_text"/>
+                            <field name="location_id"/>
+                        </group>
+                        <group string="Conversion">
+                            <field name="source_presentation_id"/>
+                            <field name="source_box_qty"/>
+                            <field name="source_piece_qty"/>
+                            <field name="target_presentation_id"/>
+                            <field name="target_box_qty"/>
+                            <field name="target_piece_qty"/>
+                        </group>
+                    </group>
+                    <group string="Impresion y manuales">
+                        <group>
+                            <field name="label_required"/>
+                            <field name="label_printed"/>
+                        </group>
+                        <group>
+                            <field name="manual_required"/>
+                            <field name="manual_ready"/>
+                        </group>
+                    </group>
+                    <group string="Motivo">
+                        <field name="reason" nolabel="1"/>
+                    </group>
+                    <group string="Calidad">
+                        <field name="quality_notes" nolabel="1"/>
+                        <field name="quality_approved_by_id"/>
+                        <field name="quality_approved_date"/>
+                    </group>
+                    <group string="Cierre">
+                        <field name="requested_by_id"/>
+                        <field name="done_by_id"/>
+                        <field name="done_date"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_packaging_rework" model="ir.actions.act_window">
+        <field name="name">Reacondicionamientos</field>
+        <field name="res_model">amunet.packaging.rework</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="search_view_id" ref="view_packaging_rework_search"/>
+    </record>
+</odoo>

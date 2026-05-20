@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="amunet_production.menu_amunet_production_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(4, ref('amunet_material_request.group_material_warehouse'))]"/>
+    </record>
+
+    <menuitem id="menu_packaging_planning_root"
+              name="Empaque"
+              parent="amunet_production.menu_amunet_production_root"
+              sequence="30"
+              groups="amunet_packaging_planning.group_packaging_user,amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor,amunet_material_request.group_material_warehouse"/>
+
+    <menuitem id="menu_packaging_plan"
+              name="Planes de empaque"
+              parent="menu_packaging_planning_root"
+              action="action_packaging_plan"
+              sequence="10"
+              groups="amunet_packaging_planning.group_packaging_user,amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor"/>
+
+    <menuitem id="menu_packaging_rework"
+              name="Reacondicionamiento"
+              parent="menu_packaging_planning_root"
+              action="action_packaging_rework"
+              sequence="20"
+              groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor,amunet_material_request.group_material_warehouse"/>
+
+    <menuitem id="menu_packaging_presentation"
+              name="Presentaciones autorizadas"
+              parent="menu_packaging_planning_root"
+              action="action_packaging_presentation"
+              sequence="30"
+              groups="amunet_packaging_planning.group_packaging_user,amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_material_request.group_material_warehouse"/>
+
+    <menuitem id="menu_woo_sales_trend"
+              name="Tendencia WooCommerce"
+              parent="menu_packaging_planning_root"
+              action="action_woo_sales_trend"
+              sequence="40"
+              groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor"/>
+</odoo>

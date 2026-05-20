@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_amunet_rework_quality_operations"
+              name="No conformidad / reproceso"
+              parent="amunet_quality.menu_quality_operations"
+              action="action_amunet_rework_order"
+              sequence="25"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+
+    <menuitem id="menu_amunet_rework_quality"
+              name="No conformidad y reproceso"
+              parent="amunet_quality.menu_quality_regulatory"
+              action="action_amunet_rework_order"
+              sequence="25"
+              groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"/>
+
+    <menuitem id="menu_amunet_rework_production"
+              name="No conformidad / reproceso"
+              parent="amunet_production.menu_amunet_production_root"
+              action="action_amunet_rework_order"
+              sequence="25"
+              groups="amunet_production.group_production_supervisor"/>
+</odoo>

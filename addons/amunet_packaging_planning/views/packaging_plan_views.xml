@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_packaging_plan_search" model="ir.ui.view">
+        <field name="name">amunet.packaging.plan.search</field>
+        <field name="model">amunet.packaging.plan</field>
+        <field name="arch" type="xml">
+            <search string="Planes de empaque">
+                <field name="name"/>
+                <field name="production_id"/>
+                <field name="product_id"/>
+                <field name="lot_name"/>
+                <filter name="open" string="Abiertos" domain="[('state', 'not in', ('done', 'cancel'))]"/>
+                <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_product" string="Producto" context="{'group_by': 'product_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_packaging_plan_list" model="ir.ui.view">
+        <field name="name">amunet.packaging.plan.list</field>
+        <field name="model">amunet.packaging.plan</field>
+        <field name="arch" type="xml">
+            <list string="Planes de empaque"
+                  decoration-info="state == 'suggested'"
+                  decoration-success="state in ('approved', 'done')"
+                  decoration-danger="not has_exact_mix and state in ('suggested', 'approved')">
+                <field name="name"/>
+                <field name="production_id"/>
+                <field name="product_id"/>
+                <field name="product_qty"/>
+                <field name="total_approved_pieces"/>
+                <field name="total_approved_boxes"/>
+                <field name="has_exact_mix" widget="boolean"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_packaging_plan_form" model="ir.ui.view">
+        <field name="name">amunet.packaging.plan.form</field>
+        <field name="model">amunet.packaging.plan</field>
+        <field name="arch" type="xml">
+            <form string="Plan de empaque">
+                <header>
+                    <button name="action_generate_suggestion" string="Calcular sugerencia Woo" type="object" class="oe_highlight"
+                            invisible="state not in ('draft', 'suggested')"/>
+                    <button name="action_approve" string="Aprobar mezcla" type="object" class="oe_highlight"
+                            invisible="state != 'suggested'"
+                            groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_open_label_wizard" string="Imprimir etiquetas" type="object"
+                            invisible="state not in ('approved', 'done')"/>
+                    <button name="action_close" string="Cerrar" type="object"
+                            invisible="state != 'approved'"
+                            groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor"/>
+                    <button name="action_cancel" string="Cancelar" type="object"
+                            invisible="state in ('done', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,suggested,approved,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Orden">
+                            <field name="production_id"/>
+                            <field name="product_id"/>
+                            <field name="product_qty"/>
+                            <field name="lot_name"/>
+                            <field name="expiration_text"/>
+                        </group>
+                        <group string="Tendencia">
+                            <field name="trend_days"/>
+                            <field name="trend_date_from"/>
+                            <field name="trend_date_to"/>
+                            <field name="has_exact_mix" widget="boolean"/>
+                            <field name="total_approved_pieces"/>
+                            <field name="total_approved_boxes"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="trend_source_note" nolabel="1" readonly="1"/>
+                    </group>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="presentation_id"/>
+                            <field name="package_qty"/>
+                            <field name="trend_piece_qty"/>
+                            <field name="trend_ratio"/>
+                            <field name="target_piece_qty"/>
+                            <field name="suggested_box_qty"/>
+                            <field name="suggested_piece_qty"/>
+                            <field name="approved_box_qty"/>
+                            <field name="approved_piece_qty"/>
+                            <field name="label_qty"/>
+                            <field name="manual_qty"/>
+                        </list>
+                    </field>
+                    <group string="Notas">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                    <group string="Aprobacion">
+                        <field name="approved_by_id"/>
+                        <field name="approved_date"/>
+                        <field name="closed_by_id"/>
+                        <field name="closed_date"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_packaging_plan" model="ir.actions.act_window">
+        <field name="name">Planes de empaque</field>
+        <field name="res_model">amunet.packaging.plan</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="search_view_id" ref="view_packaging_plan_search"/>
+    </record>
+</odoo>
