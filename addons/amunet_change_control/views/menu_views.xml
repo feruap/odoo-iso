@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_amunet_change_control"
+              name="Desviaciones y cambios"
+              parent="amunet_quality.menu_quality_regulatory"
+              action="action_amunet_change_control"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary,amunet_quality.group_quality_manager,amunet_production.group_production_supervisor,amunet_change_control.group_change_control_documentation"
+              sequence="15"/>
+</odoo>

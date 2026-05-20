@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_amunet_change_control_user,amunet.change.control user,model_amunet_change_control,base.group_user,1,0,0,0
+access_amunet_change_control_quality_user,amunet.change.control quality user,model_amunet_change_control,amunet_quality.group_quality_user,1,1,1,0
+access_amunet_change_control_production_supervisor,amunet.change.control production supervisor,model_amunet_change_control,amunet_production.group_production_supervisor,1,1,1,0
+access_amunet_change_control_supervisor,amunet.change.control supervisor,model_amunet_change_control,amunet_quality.group_quality_supervisor,1,1,1,0
+access_amunet_change_control_sanitary,amunet.change.control sanitary,model_amunet_change_control,amunet_quality.group_quality_sanitary,1,1,1,0
+access_amunet_change_control_manager,amunet.change.control manager,model_amunet_change_control,amunet_quality.group_quality_manager,1,1,1,1
+access_amunet_change_control_documentation,amunet.change.control documentation,model_amunet_change_control,amunet_change_control.group_change_control_documentation,1,1,1,0
