@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mrp_production_form_pilot_preflight_inherit" model="ir.ui.view">
+        <field name="name">mrp.production.form.pilot.preflight.inherit</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_run_pilot_preflight"
+                        string="Validar piloto"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="state in ('done', 'cancel')"
+                        groups="amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <field name="pilot_preflight_count" invisible="1"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_pilot_preflights"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-check-square-o"
+                        invisible="pilot_preflight_count == 0">
+                    <field name="pilot_preflight_count" widget="statinfo" string="Preflights"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

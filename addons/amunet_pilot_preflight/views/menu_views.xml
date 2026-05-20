@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_amunet_pilot_preflight_production"
+              name="Preflight piloto"
+              parent="amunet_production.menu_amunet_production_root"
+              action="action_amunet_pilot_preflight"
+              sequence="12"
+              groups="amunet_production.group_production_supervisor"/>
+
+    <menuitem id="menu_amunet_pilot_preflight_quality"
+              name="Preflight piloto"
+              parent="amunet_quality.menu_quality_operations"
+              action="action_amunet_pilot_preflight"
+              sequence="12"
+              groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+
+    <menuitem id="menu_amunet_pilot_preflight_material"
+              name="Preflight piloto"
+              parent="amunet_material_request.menu_amunet_material_request_root"
+              action="action_amunet_pilot_preflight"
+              sequence="20"
+              groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+</odoo>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_pilot_preflight_search" model="ir.ui.view">
+        <field name="name">amunet.pilot.preflight.search</field>
+        <field name="model">amunet.pilot.preflight</field>
+        <field name="arch" type="xml">
+            <search string="Preflight piloto">
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="production_id"/>
+                <filter name="open" string="Abiertos" domain="[('state', 'not in', ('accepted', 'cancel'))]"/>
+                <filter name="blocked" string="Con bloqueos" domain="[('state', '=', 'blocked')]"/>
+                <filter name="warning" string="Con advertencias" domain="[('state', '=', 'warning')]"/>
+                <filter name="ready" string="Listos" domain="[('state', 'in', ('ready', 'accepted'))]"/>
+                <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_product" string="Producto" context="{'group_by': 'product_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_amunet_pilot_preflight_list" model="ir.ui.view">
+        <field name="name">amunet.pilot.preflight.list</field>
+        <field name="model">amunet.pilot.preflight</field>
+        <field name="arch" type="xml">
+            <list string="Preflight piloto"
+                  decoration-danger="state == 'blocked'"
+                  decoration-warning="state == 'warning'"
+                  decoration-success="state in ('ready', 'accepted')">
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="product_qty"/>
+                <field name="route_type"/>
+                <field name="state" widget="badge"/>
+                <field name="block_count"/>
+                <field name="warning_count"/>
+                <field name="pass_count"/>
+                <field name="readiness_score"/>
+                <field name="next_step"/>
+                <field name="last_check_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_pilot_preflight_form" model="ir.ui.view">
+        <field name="name">amunet.pilot.preflight.form</field>
+        <field name="model">amunet.pilot.preflight</field>
+        <field name="arch" type="xml">
+            <form string="Preflight del piloto">
+                <header>
+                    <button name="action_run_checks" string="Validar preflight" type="object" class="oe_highlight"
+                            invisible="state == 'cancel'"/>
+                    <button name="action_accept_for_pilot" string="Aceptar para piloto" type="object" class="oe_highlight"
+                            invisible="state not in ('ready', 'warning')"/>
+                    <button name="action_cancel" string="Cancelar" type="object"
+                            invisible="state in ('accepted', 'cancel')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,blocked,warning,ready,accepted"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <div class="alert alert-danger" role="alert" invisible="state != 'blocked'">
+                        Hay bloqueos. No conviene iniciar el piloto hasta resolver el primer bloqueo mostrado en "Siguiente paso".
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="state != 'warning'">
+                        No hay bloqueos, pero quedan advertencias. El responsable debe aceptarlas de forma consciente.
+                    </div>
+                    <div class="alert alert-success" role="alert" invisible="state not in ('ready', 'accepted')">
+                        El piloto esta listo para iniciar bajo el flujo normal de produccion y calidad.
+                    </div>
+                    <div class="alert alert-info" role="alert" invisible="not next_step">
+                        <strong>Siguiente paso:</strong>
+                        <field name="next_step" readonly="1" class="d-inline" nolabel="1"/>
+                    </div>
+
+                    <group>
+                        <group string="Piloto">
+                            <field name="production_id"/>
+                            <field name="product_id"/>
+                            <field name="product_qty"/>
+                            <field name="product_uom_id" readonly="1"/>
+                            <field name="route_type"/>
+                            <field name="bom_id"/>
+                        </group>
+                        <group string="Resumen">
+                            <field name="block_count" readonly="1"/>
+                            <field name="warning_count" readonly="1"/>
+                            <field name="pass_count" readonly="1"/>
+                            <field name="readiness_score" readonly="1"/>
+                            <field name="last_check_date" readonly="1"/>
+                            <field name="checked_by_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Responsables del piloto">
+                        <group>
+                            <field name="production_user_id"/>
+                            <field name="warehouse_user_id"/>
+                            <field name="packaging_user_id"/>
+                        </group>
+                        <group>
+                            <field name="quality_user_id"/>
+                            <field name="quality_supervisor_id"/>
+                            <field name="accepted_by_id" readonly="1" invisible="not accepted_by_id"/>
+                            <field name="accepted_date" readonly="1" invisible="not accepted_date"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Checklist">
+                            <field name="line_ids" readonly="1">
+                                <list decoration-danger="status == 'block'"
+                                      decoration-warning="status == 'warn'"
+                                      decoration-success="status == 'pass'">
+                                    <field name="related_model_id" column_invisible="True"/>
+                                    <field name="related_res_id" column_invisible="True"/>
+                                    <button name="action_open_related" type="object" icon="fa-external-link"
+                                            title="Abrir relacionado"
+                                            invisible="not related_model_id or not related_res_id"/>
+                                    <field name="sequence" optional="hide"/>
+                                    <field name="section"/>
+                                    <field name="status" widget="badge"
+                                           decoration-success="status == 'pass'"
+                                           decoration-warning="status == 'warn'"
+                                           decoration-danger="status == 'block'"
+                                           decoration-muted="status == 'na'"/>
+                                    <field name="name"/>
+                                    <field name="detail"/>
+                                    <field name="action_hint"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_pilot_preflight" model="ir.actions.act_window">
+        <field name="name">Preflight piloto</field>
+        <field name="res_model">amunet.pilot.preflight</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="search_view_id" ref="view_amunet_pilot_preflight_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Valide aqui si el piloto esta listo antes de crear o confirmar la orden.
+            </p>
+        </field>
+    </record>
+</odoo>
