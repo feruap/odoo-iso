@@ -63,11 +63,26 @@ if not finished_category:
 if not finished_category:
     raise Exception('No encontre categoria de producto terminado inmunologico')
 
+def _find_workcenter(primary_code, fallback_codes, fallback_names):
+    workcenter = Workcenter.search([('code', '=', primary_code)], limit=1)
+    if workcenter:
+        return workcenter
+    for code in fallback_codes:
+        workcenter = Workcenter.search([('code', '=', code)], limit=1)
+        if workcenter:
+            return workcenter
+    for name in fallback_names:
+        workcenter = Workcenter.search([('name', 'ilike', name)], limit=1)
+        if workcenter:
+            return workcenter
+    return Workcenter.browse()
+
+
 workcenters = {
-    'corte': Workcenter.search([('code', '=', 'WC-CORTE-TIRA')], limit=1),
-    'ensamble': Workcenter.search([('code', '=', 'WC-ENSAMBLE')], limit=1),
-    'control': Workcenter.search([('code', '=', 'WC-ENSAMBLE')], limit=1),
-    'empaque': Workcenter.search([('code', '=', 'WC-EMPAQ-PRIM')], limit=1),
+    'corte': _find_workcenter('WC-CORTE-TIRA', ['LAM', 'PROD'], ['Corte', 'Laminad']),
+    'ensamble': _find_workcenter('WC-ENSAMBLE', ['PROD'], ['Ensamble', 'Produccion']),
+    'control': _find_workcenter('WC-CONTROL-PROCESO', ['CC', 'PROD'], ['Control de Calidad']),
+    'empaque': _find_workcenter('WC-EMPAQ-PRIM', ['PROD', 'APT'], ['Empaque', 'Acondicionado']),
 }
 missing_wc = [key for key, wc in workcenters.items() if not wc]
 if missing_wc:
