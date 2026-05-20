@@ -17,7 +17,7 @@
 
                 <!-- Ocultar botones nativos no requeridos -->
                 <xpath expr="//button[@name='action_confirm']" position="attributes">
-                    <attribute name="invisible">1</attribute>
+                    <attribute name="invisible">state != 'draft' or amunet_is_solution_product</attribute>
                 </xpath>
                 <xpath expr="//button[@name='action_start']" position="attributes">
                     <attribute name="invisible">1</attribute>
@@ -34,7 +34,7 @@
 
                 <!-- Lote: renombrar label y hacerlo visible desde borrador -->
                 <xpath expr="//label[@for='lot_producing_ids']" position="attributes">
-                    <attribute name="string">Lote de Solución (Asignado)</attribute>
+                    <attribute name="string">Lote de produccion (Asignado)</attribute>
                     <attribute name="invisible">state == 'cancel' or product_tracking in ('none', False) or (state == 'done' and product_tracking == 'serial' and product_qty &gt; 1)</attribute>
                 </xpath>
                 <!-- Div contenedor del campo nativo: Oculto en borrador porque no existe lote físico aún -->
@@ -88,14 +88,15 @@
                     <attribute name="invisible">1</attribute>
                 </xpath>
 
-                <!-- Filtrar por soluciones en el selector de producto -->
+                <!-- Permitir fabricar productos con BoM: soluciones y pruebas rapidas ruta corta. -->
                 <xpath expr="//field[@name='product_id']" position="attributes">
-                    <attribute name="domain">[('categ_id.name', 'ilike', 'Solucion')]</attribute>
+                    <attribute name="domain">[('bom_ids', '!=', False)]</attribute>
                 </xpath>
 
                 <!-- Categoria del producto seleccionado (solo lectura) -->
                 <xpath expr="//field[@name='product_id']" position="after">
                     <field name="amunet_product_categ_id" string="Categoria" readonly="1"/>
+                    <field name="amunet_is_solution_product" invisible="1"/>
                 </xpath>
                 <!-- Ocultar widget nativo date_start; mostrar campo computado con formato DD/MM/YY HH:MM AM/PM -->
                 <xpath expr="//field[@name='date_start']" position="attributes">

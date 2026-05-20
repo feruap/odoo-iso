@@ -11,6 +11,7 @@
                 <field name="workcenter_id"/>
                 <filter name="ready" string="Listas para iniciar" domain="[('state', '=', 'ready')]"/>
                 <filter name="progress" string="En progreso" domain="[('state', '=', 'progress')]"/>
+                <filter name="actionable" string="Accionables" domain="[('state', 'in', ('ready', 'progress'))]"/>
                 <filter name="blocked" string="En espera" domain="[('state', '=', 'blocked')]"/>
             </search>
         </field>
@@ -20,7 +21,7 @@
         <field name="name">mrp.workorder.operator.kanban</field>
         <field name="model">mrp.workorder</field>
         <field name="arch" type="xml">
-            <kanban create="0" delete="0" group_create="0" class="o_kanban_mobile">
+            <kanban create="0" delete="0" group_create="0" class="o_kanban_mobile o_kanban_dashboard">
                 <field name="name"/>
                 <field name="state"/>
                 <field name="production_id"/>
@@ -34,8 +35,8 @@
                 <field name="amunet_operator_quality_status"/>
                 <field name="amunet_operator_time_status"/>
                 <templates>
-                    <t t-name="kanban-box">
-                        <div class="oe_kanban_global_click">
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click p-3">
                             <div class="o_kanban_record_top">
                                 <div class="o_kanban_record_headings">
                                     <strong class="o_kanban_record_title">
@@ -52,21 +53,25 @@
                             <div class="o_kanban_record_body mt-2">
                                 <div><strong>Producto:</strong> <field name="product_id"/></div>
                                 <div><strong>Area:</strong> <field name="workcenter_id"/></div>
-                                <div><strong>Siguiente:</strong> <field name="amunet_operator_next_step"/></div>
-                                <div><strong>Material:</strong> <field name="amunet_operator_material_status"/></div>
+                                <div class="mt-2"><strong>Siguiente paso:</strong> <field name="amunet_operator_next_step"/></div>
+                                <div><strong>Materiales:</strong> <field name="amunet_operator_material_status"/></div>
                                 <div><strong>Calidad:</strong> <field name="amunet_operator_quality_status"/></div>
                                 <div><strong>Tiempo:</strong> <field name="amunet_operator_time_status"/></div>
+                                <div class="mt-2">
+                                    <strong>Cantidad:</strong>
+                                    <field name="qty_produced"/> / <field name="qty_remaining"/>
+                                </div>
                             </div>
-                            <div class="o_kanban_record_bottom mt-3">
+                            <div class="o_kanban_record_bottom mt-3 d-grid gap-2">
                                 <button t-if="record.state.raw_value == 'ready'"
                                         name="action_amunet_operator_start"
                                         type="object"
-                                        class="btn btn-primary"
+                                        class="btn btn-primary btn-lg"
                                         string="Iniciar"/>
                                 <button t-if="record.state.raw_value == 'progress'"
                                         name="action_amunet_operator_finish"
                                         type="object"
-                                        class="btn btn-success"
+                                        class="btn btn-success btn-lg"
                                         string="Terminar"/>
                                 <button name="action_amunet_open_production"
                                         type="object"
@@ -181,11 +186,11 @@
     <record id="action_amunet_operator_workorders" model="ir.actions.act_window">
         <field name="name">Mi trabajo de produccion</field>
         <field name="res_model">mrp.workorder</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('state', 'not in', ('done', 'cancel'))]</field>
-        <field name="context">{}</field>
+        <field name="context">{'search_default_actionable': 1}</field>
         <field name="search_view_id" ref="view_mrp_workorder_operator_search"/>
-        <field name="view_id" ref="view_mrp_workorder_operator_list"/>
+        <field name="view_id" ref="view_mrp_workorder_operator_kanban"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_empty_folder">
                 No hay operaciones abiertas para produccion.
@@ -197,18 +202,38 @@
         </field>
     </record>
 
-    <record id="action_amunet_operator_workorders_view_list" model="ir.actions.act_window.view">
+    <record id="action_amunet_operator_workorders_view_kanban" model="ir.actions.act_window.view">
         <field name="sequence" eval="1"/>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_mrp_workorder_operator_kanban"/>
+        <field name="act_window_id" ref="action_amunet_operator_workorders"/>
+    </record>
+
+    <record id="action_amunet_operator_workorders_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
         <field name="view_mode">list</field>
         <field name="view_id" ref="view_mrp_workorder_operator_list"/>
         <field name="act_window_id" ref="action_amunet_operator_workorders"/>
     </record>
 
     <record id="action_amunet_operator_workorders_view_form" model="ir.actions.act_window.view">
-        <field name="sequence" eval="2"/>
+        <field name="sequence" eval="3"/>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_mrp_workorder_operator_form"/>
         <field name="act_window_id" ref="action_amunet_operator_workorders"/>
+    </record>
+
+    <record id="action_amunet_short_production_new" model="ir.actions.act_window">
+        <field name="name">Nueva produccion corta</field>
+        <field name="res_model">mrp.production</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'default_origin': 'RUTA-CORTA'}</field>
+        <field name="help" type="html">
+            <p>
+                Cree una orden para productos fabricados con hoja impregnada comprada, cassette y buffer/accesorios.
+            </p>
+        </field>
     </record>
 
     <menuitem id="menu_amunet_production_root"
@@ -223,6 +248,13 @@
               action="action_amunet_operator_workorders"
               sequence="10"
               groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor"/>
+
+    <menuitem id="menu_amunet_short_production_new"
+              name="Nueva produccion corta"
+              parent="menu_amunet_production_root"
+              action="action_amunet_short_production_new"
+              sequence="15"
+              groups="amunet_production.group_production_supervisor"/>
 
     <menuitem id="menu_amunet_supervisor_mo"
               name="Ordenes de fabricacion"

@@ -314,6 +314,22 @@ class AmunetQualityCheck(models.Model):
         store=True,
         help='Resultado global del análisis')
 
+    workqueue_priority = fields.Selection([
+        ('ready', 'Listo'),
+        ('review', 'Revisar'),
+        ('waiting', 'Espera externa'),
+        ('blocked', 'Bloqueante'),
+        ('done', 'Cerrado'),
+    ], string='Prioridad', compute='_compute_workqueue_guidance')
+
+    workqueue_next_step = fields.Char(
+        string='Siguiente paso',
+        compute='_compute_workqueue_guidance')
+
+    workqueue_blocker = fields.Char(
+        string='Bloqueo',
+        compute='_compute_workqueue_guidance')
+
     # ========== Campos de Conteo Jerárquico (Epic-031) ==========
 
     progress = fields.Float(
@@ -1040,6 +1056,62 @@ class AmunetQualityCheck(models.Model):
                 record.global_result = 'pass'
             else:
                 record.global_result = 'pending'
+
+    @api.depends(
+        'state',
+        'info_reviewed',
+        'sampling_confirmed',
+        'qty_sampling',
+        'global_result',
+        'parameters_pending',
+        'user_realized_id',
+        'user_verified_id',
+        'user_authorized_id',
+        'final_reception_picking_id',
+    )
+    def _compute_workqueue_guidance(self):
+        for record in self:
+            priority = 'ready'
+            blocker = False
+
+            if record.state == 'draft':
+                next_step = 'Iniciar analisis'
+            elif record.state == 'in_progress':
+                if not record.info_reviewed:
+                    priority = 'review'
+                    next_step = 'Revisar informacion de lote'
+                elif not record.sampling_confirmed:
+                    priority = 'review'
+                    next_step = 'Capturar muestra y confirmar muestreo'
+                    if not record.qty_sampling:
+                        blocker = 'Falta cantidad de muestra'
+                elif record.global_result == 'pending':
+                    priority = 'blocked'
+                    next_step = 'Capturar resultados pendientes'
+                    blocker = 'Faltan resultados de determinaciones'
+                elif not record.user_realized_id:
+                    next_step = 'Analista QC: firmar Realizo'
+                elif not record.user_verified_id:
+                    next_step = 'Supervisor QC: firmar Verifico'
+                elif not record.user_authorized_id:
+                    next_step = 'Responsable Sanitario: firmar Autorizo'
+                else:
+                    next_step = 'Finalizar control'
+            elif record.state == 'pending':
+                priority = 'blocked'
+                next_step = 'Resolver disposicion del lote'
+                blocker = 'El dictamen requiere disposicion/CAPA'
+            elif record.state == 'awaiting_reception':
+                priority = 'waiting'
+                next_step = 'Almacen: confirmar recepcion final'
+                blocker = 'Pendiente recepcion de ingreso'
+            else:
+                priority = 'done'
+                next_step = 'Finalizado'
+
+            record.workqueue_priority = priority
+            record.workqueue_next_step = next_step
+            record.workqueue_blocker = blocker
 
     @api.depends('test_line_ids.verdict')
     def _compute_parameter_counts(self):

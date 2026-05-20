@@ -8,7 +8,7 @@ class MrpProduction(models.Model):
     # Campos requeridos para Módulo de Soluciones
     quality_ph_initial = fields.Float(string='pH Inicial Objetivo', compute='_compute_quality_params', store=True, readonly=False)
     quality_ph_final = fields.Float(string='pH Final Obtenido')
-    solution_lot_id = fields.Char(string='Lote de Solución', copy=False, help="Lote asignado a la solución final (interno)")
+    solution_lot_id = fields.Char(string='Lote de produccion', copy=False, help="Lote asignado al producto final (interno)")
 
     amunet_scheduled_date_display = fields.Char(
         string='Fecha Programada',
@@ -60,6 +60,12 @@ class MrpProduction(models.Model):
         store=False,
     )
 
+    amunet_is_solution_product = fields.Boolean(
+        string='Es solucion',
+        compute='_compute_product_categ',
+        store=False,
+    )
+
     # Ocultar botones nativos de produccion (Produce / Produce All)
     show_produce = fields.Boolean(compute='_compute_show_produce_amunet', store=False)
     show_produce_all = fields.Boolean(compute='_compute_show_produce_amunet', store=False)
@@ -72,7 +78,10 @@ class MrpProduction(models.Model):
     @api.depends('product_id')
     def _compute_product_categ(self):
         for rec in self:
-            rec.amunet_product_categ_id = rec.product_id.categ_id if rec.product_id else False
+            category = rec.product_id.categ_id if rec.product_id else False
+            category_name = (category.complete_name or category.name or '') if category else ''
+            rec.amunet_product_categ_id = category
+            rec.amunet_is_solution_product = 'solucion' in category_name.lower()
 
     @api.depends('product_id')
     def _compute_quality_params(self):
@@ -158,6 +167,9 @@ class MrpProduction(models.Model):
         warnings = []
         bom = self.env['mrp.bom'].search([('product_tmpl_id', '=', product.product_tmpl_id.id), '|', ('company_id', '=', False), ('company_id', '=', self.company_id.id)], limit=1)
         if bom:
+            if not self._origin.id and self.product_qty == bom.product_qty:
+                return
+
             # Conversion nativa UoM
             if self.product_uom_id and bom.product_uom_id:
                 production_qty_bom_uom = self.product_uom_id._compute_quantity(self.product_qty or 1.0, bom.product_uom_id)
@@ -240,8 +252,76 @@ class MrpProduction(models.Model):
             else:
                 prod.solution_lot_id = ''
 
+    def _amunet_complete_workorder_workcenters(self, vals):
+        """Completa work centers cuando la UI manda work orders parciales."""
+        commands = vals.get('workorder_ids') or []
+        if not commands:
+            return
+
+        bom = self.env['mrp.bom']
+        if vals.get('bom_id'):
+            bom = self.env['mrp.bom'].browse(vals['bom_id']).exists()
+
+        operations_by_name = {}
+        if bom:
+            operations_by_name = {
+                operation.name: operation
+                for operation in bom.operation_ids
+                if operation.name
+            }
+
+        cleaned_commands = []
+        changed = False
+
+        for command in commands:
+            if not (
+                isinstance(command, (list, tuple))
+                and len(command) >= 3
+                and command[0] == 0
+                and isinstance(command[2], dict)
+            ):
+                cleaned_commands.append(command)
+                continue
+
+            workorder_vals = command[2]
+            if not workorder_vals and bom:
+                # The web client can send empty virtual work orders when the
+                # field is invisible. Dropping them lets MRP rebuild the real
+                # work orders from the BoM operations.
+                changed = True
+                continue
+
+            if workorder_vals.get('workcenter_id'):
+                cleaned_commands.append(command)
+                continue
+
+            operation = self.env['mrp.routing.workcenter']
+            operation_id = workorder_vals.get('operation_id')
+            if isinstance(operation_id, int):
+                operation = self.env['mrp.routing.workcenter'].browse(operation_id).exists()
+
+            if not operation and workorder_vals.get('name'):
+                operation = operations_by_name.get(workorder_vals['name'], operation)
+
+            if operation and operation.workcenter_id:
+                workorder_vals['workcenter_id'] = operation.workcenter_id.id
+
+            cleaned_commands.append(command)
+
+        if changed:
+            if cleaned_commands:
+                vals['workorder_ids'] = cleaned_commands
+            else:
+                vals.pop('workorder_ids', None)
+
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            # This is a product master-data flag exposed as a related field.
+            # During MO creation, the web client sends the displayed value back;
+            # production users must not write product configuration.
+            vals.pop('amunet_sys_req_qc', None)
+            self._amunet_complete_workorder_workcenters(vals)
         productions = super().create(vals_list)
         productions._auto_generate_lot_draft()
         return productions

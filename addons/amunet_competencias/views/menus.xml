@@ -10,14 +10,14 @@
         name="Recursos Humanos"
         web_icon="amunet_competencias,static/description/icon.png"
         sequence="50"
-        groups="amunet_competencias.group_competencias_user"/>
+        groups="amunet_competencias.group_competencias_manager"/>
 
     <menuitem
         id="menu_amunet_competencias_root"
         name="Competencias"
         parent="menu_hr_root"
         sequence="10"
-        groups="amunet_competencias.group_competencias_user"/>
+        groups="amunet_competencias.group_competencias_manager"/>
 
     <menuitem
         id="menu_amunet_curso"
@@ -57,7 +57,7 @@
         parent="menu_amunet_competencias_root"
         action="action_amunet_registro_capacitacion"
         sequence="10"
-        groups="amunet_competencias.group_competencias_user"/>
+        groups="amunet_competencias.group_competencias_manager"/>
 
     <menuitem
         id="menu_amunet_calendario_renovaciones"
@@ -73,7 +73,7 @@
         parent="menu_amunet_competencias_root"
         action="action_amunet_matriz_competencias"
         sequence="20"
-        groups="amunet_competencias.group_competencias_user"/>
+        groups="amunet_competencias.group_competencias_manager"/>
 
     <!-- ══════════════════════════════════════════════════════
          Menú: Mi Capacitación  (autoservicio, todos los empleados)
@@ -101,5 +101,21 @@
         action="action_amunet_mis_intentos"
         sequence="20"
         groups="base.group_user"/>
+
+    <record id="menu_hr_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('amunet_competencias.group_competencias_manager')])]"/>
+    </record>
+
+    <record id="menu_amunet_competencias_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('amunet_competencias.group_competencias_manager')])]"/>
+    </record>
+
+    <record id="menu_amunet_registro_capacitacion" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('amunet_competencias.group_competencias_manager')])]"/>
+    </record>
+
+    <record id="menu_amunet_matriz_competencias" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('amunet_competencias.group_competencias_manager')])]"/>
+    </record>
 
 </odoo>

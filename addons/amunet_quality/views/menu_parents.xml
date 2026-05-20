@@ -10,7 +10,8 @@
     <menuitem id="menu_quality_operations"
               name="Operaciones"
               parent="menu_quality_root"
-              sequence="10"/>
+              sequence="10"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"/>
 
     <!-- Menú Raíz: Sistema de Gestión de Calidad (SGC) -->
     <menuitem id="menu_sgc_root"
@@ -23,11 +24,13 @@
     <menuitem id="menu_quality_regulatory"
               name="Regulatorio"
               parent="menu_sgc_root"
-              sequence="50"/>
+              sequence="50"
+              groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"/>
 
     <!-- Submenú: Configuración -->
     <menuitem id="menu_quality_config"
               name="Configuración"
               parent="menu_quality_root"
-              sequence="90"/>
+              sequence="90"
+              groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,base.group_erp_manager"/>
 </odoo>
