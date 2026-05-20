@@ -4,8 +4,8 @@
         <field name="name">amunet.production.analysis.wizard.form</field>
         <field name="model">amunet.production.analysis.wizard</field>
         <field name="arch" type="xml">
-            <form string="Confirmar Análisis a Laboratorio">
-                <alert message="Estás a punto de bloquear la edición de esta orden y mandarla a Cola de Análisis Clínico." type="warning"/>
+            <form string="Confirmar solicitud a Control de Calidad">
+                <alert message="Estás a punto de enviar esta orden a Control de Calidad para liberación final." type="warning"/>
                 
                 <sheet>
                     <group>
@@ -17,7 +17,7 @@
                             <field name="solution_expiration_date"/>
                             <field name="solution_lot_id"/>
                         </group>
-                        <group>
+                        <group invisible="not quality_ph_initial and not quality_ph_final">
                             <label for="quality_ph_initial" string="Lecturas de pH"/>
                             <div class="o_row">
                                 <span>Inicial: </span><field name="quality_ph_initial"/>
@@ -25,8 +25,18 @@
                             </div>
                         </group>
                     </group>
+
+                    <group string="Muestreo para liberación final">
+                        <group>
+                            <field name="sampling_plan_id" readonly="1" options="{'no_open': True}"/>
+                            <field name="suggested_qty_sampling" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="sampling_plan_summary" readonly="1" nolabel="1"/>
+                        </group>
+                    </group>
                     
-                    <separator string="Reactivos Involucrados (Validados)"/>
+                    <separator string="Materiales utilizados y validados"/>
                     <field name="move_raw_ids" readonly="1">
                         <list>
                             <field name="product_id"/>
@@ -39,7 +49,7 @@
                 </sheet>
                 
                 <footer>
-                    <button string="Confirmar Análisis" name="action_confirm_analysis" type="object" class="btn-success"/>
+                    <button string="Enviar a Calidad" name="action_confirm_analysis" type="object" class="btn-success"/>
                     <button string="Cancelar / Regresar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -47,7 +57,7 @@
     </record>
 
     <record id="action_amunet_analysis_wizard" model="ir.actions.act_window">
-        <field name="name">Confirmar Análisis a Laboratorio</field>
+        <field name="name">Confirmar solicitud a Control de Calidad</field>
         <field name="res_model">amunet.production.analysis.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
