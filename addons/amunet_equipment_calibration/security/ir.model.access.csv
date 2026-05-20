@@ -1,6 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_amunet_equipment_user,amunet.equipment.user,model_amunet_equipment,base.group_user,1,0,0,0
 access_amunet_equipment_manager,amunet.equipment.manager,model_amunet_equipment,amunet_equipment_calibration.group_equipment_manager,1,1,1,1
+access_amunet_equipment_maintenance_tech_equipment,amunet.equipment.maintenance.tech.equipment,model_amunet_equipment,amunet_equipment_calibration.group_maintenance_technician,1,1,0,0
 access_amunet_equipment_calibration_user,amunet.equipment.calibration.user,model_amunet_equipment_calibration,base.group_user,1,0,0,0
 access_amunet_equipment_calibration_manager,amunet.equipment.calibration.manager,model_amunet_equipment_calibration,amunet_equipment_calibration.group_equipment_manager,1,1,1,1
 access_amunet_calibration_program_user,amunet.calibration.program.user,model_amunet_calibration_program,base.group_user,1,0,0,0
