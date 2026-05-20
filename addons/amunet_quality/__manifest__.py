@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Control de Calidad',
-    'version': '19.0.3.6.0',
+    'version': '19.0.3.7.0',
     'category': 'Quality',
     'summary': 'Sistema de Control de Calidad con Parámetros Jerárquicos',
     'description': """
@@ -50,6 +50,7 @@
         'views/amunet_quality_sampling_plan_views.xml',
         'views/amunet_quality_additional_info_views.xml',
         'views/amunet_quality_check_views.xml',
+        'views/amunet_quality_workqueue_views.xml',
         'views/amunet_quality_signature_pin_views.xml',
         'views/res_users_views.xml',
         'views/product_template_views.xml',

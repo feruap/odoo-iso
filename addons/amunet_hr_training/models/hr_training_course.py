@@ -1,6 +1,26 @@
 # -*- coding: utf-8 -*-
+import base64
+import logging
+from datetime import timedelta
+from io import BytesIO
+
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+
+_logger = logging.getLogger(__name__)
+
+try:
+    import qrcode
+except ImportError:  # pragma: no cover
+    qrcode = None
+    _logger.warning(
+        "amunet_hr_training: la libreria python 'qrcode' no esta "
+        "instalada. El QR de auto-asistencia no podra generarse. "
+        "Instalala con: pip install qrcode[pil]")
+
+# Tolerancia de retraso para marcar on_time=True al escanear el QR.
+# 10 minutos despues de date_start se considera "a tiempo".
+QR_LATE_TOLERANCE_MINUTES = 10
 
 
 class HrTrainingCourse(models.Model):
@@ -65,16 +85,57 @@ class HrTrainingCourse(models.Model):
         'res.users', string='Aprobo por RH', readonly=True, copy=False)
 
     # Participantes y pase de lista
+    department_ids = fields.Many2many(
+        'hr.department',
+        'hr_training_course_department_rel',
+        'course_id', 'department_id',
+        string='Áreas / Departamentos',
+        help='Atajo: al elegir uno o varios departamentos, todos sus '
+             'empleados activos se agregan automaticamente al campo '
+             'Participantes. Quitar un departamento NO quita los '
+             'empleados ya agregados (hay que retirarlos uno por uno).',
+    )
     participant_ids = fields.Many2many(
         'hr.employee',
         'hr_training_course_employee_rel',
         'course_id', 'employee_id',
         string='Participantes (RH)',
-        help='Empleados convocados a la capacitacion (definidos por RH).',
+        help='Empleados convocados a la capacitacion (definidos por RH). '
+             'Se llenan manualmente o automaticamente al elegir un '
+             'departamento.',
     )
+
+    @api.onchange('department_ids')
+    def _onchange_department_ids(self):
+        """Cuando se agregan departamentos, sumar sus empleados
+        activos al m2m de participantes (no quitar los existentes)."""
+        if not self.department_ids:
+            return
+        new_emps = self.env['hr.employee']
+        for dept in self.department_ids:
+            new_emps |= dept.member_ids.filtered(lambda e: e.active)
+        if new_emps:
+            self.participant_ids |= new_emps
     attendance_ids = fields.One2many(
         'hr.training.attendance', 'course_id',
         string='Pase de lista', copy=False,
+    )
+
+    # Auto-asistencia por QR
+    qr_attendance_url = fields.Char(
+        string='URL de auto-asistencia',
+        compute='_compute_qr_code', store=False, readonly=True,
+        help='URL que codifica el QR. El participante (logueado) la abre '
+             'desde su celular y queda registrada su asistencia.',
+    )
+    qr_code = fields.Binary(
+        string='Codigo QR',
+        compute='_compute_qr_code', store=False, readonly=True,
+        attachment=False,
+        help='QR de auto-asistencia. El ponente lo proyecta al inicio del '
+             'curso; los participantes lo escanean con su celular (con '
+             'sesion iniciada en Odoo) y se marca su asistencia y '
+             'puntualidad automaticamente.',
     )
 
     # Datos SGC y notas
@@ -121,6 +182,103 @@ class HrTrainingCourse(models.Model):
                     'La fecha de fin no puede ser anterior a la de inicio.'))
 
     # ============================
+    # QR de auto-asistencia
+    # ============================
+    def _compute_qr_code(self):
+        base = self.env['ir.config_parameter'].sudo().get_param(
+            'web.base.url', '') or ''
+        base = base.rstrip('/')
+        for rec in self:
+            if not rec.id or not base:
+                rec.qr_code = False
+                rec.qr_attendance_url = False
+                continue
+            url = '%s/training/attend/%s' % (base, rec.id)
+            rec.qr_attendance_url = url
+            if not qrcode:
+                rec.qr_code = False
+                continue
+            try:
+                img = qrcode.make(url, box_size=10, border=2)
+                buf = BytesIO()
+                img.save(buf, format='PNG')
+                rec.qr_code = base64.b64encode(buf.getvalue())
+            except Exception:
+                _logger.exception(
+                    'No se pudo generar QR del curso %s', rec.id)
+                rec.qr_code = False
+
+    def action_show_qr_fullscreen(self):
+        """Abre una vista limpia con el QR enorme para proyectar."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('QR de auto-asistencia'),
+            'res_model': 'hr.training.course',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'view_id': self.env.ref(
+                'amunet_hr_training.view_hr_training_course_qr_fullscreen'
+            ).id,
+            'target': 'new',
+            'context': {'dialog_size': 'extra-large'},
+        }
+
+    def register_qr_attendance(self, employee):
+        """Registra (o crea) la linea de asistencia del empleado al
+        escanear el QR.
+
+        Devuelve (success: bool, message: str, on_time: bool|None).
+        """
+        self.ensure_one()
+        if not employee:
+            return False, _(
+                'Tu usuario de Odoo no esta vinculado a un empleado. '
+                'Acude con Recursos Humanos.'), None
+        if self.state == 'cancelled':
+            return False, _(
+                'Esta capacitacion fue cancelada y no admite '
+                'registro de asistencia.'), None
+        if self.state == 'done':
+            return False, _(
+                'Esta capacitacion ya fue marcada como Realizada. '
+                'Tu asistencia debio quedar registrada durante el evento.'
+            ), None
+        if employee.id not in self.participant_ids.ids:
+            return False, _(
+                'No estas registrado en esta capacitacion. Acude con '
+                'Recursos Humanos para que te agreguen.'), None
+        # Asegurar que existe linea de asistencia para este empleado.
+        Attend = self.env['hr.training.attendance'].sudo()
+        line = Attend.search([
+            ('course_id', '=', self.id),
+            ('employee_id', '=', employee.id),
+        ], limit=1)
+        if not line:
+            line = Attend.create({
+                'course_id': self.id,
+                'employee_id': employee.id,
+            })
+        # Calcular puntualidad: tolerancia de N minutos despues de date_start
+        now = fields.Datetime.now()
+        on_time = True
+        if self.date_start:
+            limit = self.date_start + timedelta(
+                minutes=QR_LATE_TOLERANCE_MINUTES)
+            on_time = now <= limit
+        line.write({
+            'attendance': 'attended',
+            'on_time': on_time,
+        })
+        self.message_post(body=_(
+            'Auto-asistencia por QR: %(emp)s (%(state)s).'
+        ) % {
+            'emp': employee.name,
+            'state': _('a tiempo') if on_time else _('con retraso'),
+        })
+        return True, _('Asistencia registrada correctamente.'), on_time
+
+    # ============================
     # Acciones de estado
     # ============================
     def action_speaker_confirm(self):
@@ -128,16 +286,20 @@ class HrTrainingCourse(models.Model):
             if rec.state != 'draft':
                 raise UserError(_(
                     'Solo se puede confirmar un curso en Borrador.'))
-            # Solo el ponente puede confirmar (o un manager de RH como fallback)
+            # Solo el ponente asignado puede confirmar.
+            # No hay fallback de HR: la firma del ponente queda como
+            # evidencia de que es la persona que efectivamente impartira
+            # el curso.
             is_speaker = bool(
                 rec.speaker_id.user_id
                 and rec.speaker_id.user_id.id == self.env.user.id
             )
-            is_hr_mgr = self.env.user.has_group('hr.group_hr_manager')
-            if not (is_speaker or is_hr_mgr):
+            if not is_speaker:
                 raise UserError(_(
-                    'Solo el ponente asignado (%(p)s) o un Administrador '
-                    'de RH puede confirmar este curso.'
+                    'Solo el ponente asignado (%(p)s) puede pulsar '
+                    '"Confirmar Ponente". Si el ponente no tiene cuenta '
+                    'en Odoo o esta indisponible, edita primero el campo '
+                    '"Ponente" antes de confirmar.'
                 ) % {'p': rec.speaker_id.name})
             rec.write({
                 'speaker_confirmed': True,

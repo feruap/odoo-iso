@@ -17,7 +17,7 @@
                     <button name="action_speaker_confirm"
                             string="Confirmar Ponente"
                             type="object" class="btn-primary"
-                            invisible="state != 'draft' or speaker_confirmed"/>
+                            invisible="state != 'draft' or speaker_confirmed or not is_speaker_for_user"/>
                     <button name="action_hr_approve"
                             string="Aprobar RH"
                             type="object" class="btn-primary"
@@ -38,6 +38,11 @@
                             type="object"
                             invisible="state != 'cancelled'"
                             groups="hr.group_hr_manager"/>
+                    <button name="action_show_qr_fullscreen"
+                            string="Proyectar QR"
+                            type="object" icon="fa-qrcode"
+                            invisible="state not in ('confirmed','done')"
+                            help="Abre el QR en grande para proyectarlo. Los participantes lo escanean con su celular y se registra su asistencia."/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,confirmed,done"/>
                     <!-- Helpers invisibles para attrs / readonly -->
@@ -46,6 +51,26 @@
                 </header>
 
                 <sheet>
+                    <!--
+                        Banner de aprobaciones pendientes. Solo en Borrador.
+                        Tres variantes excluyentes segun lo que falte.
+                    -->
+                    <div class="alert alert-warning text-center" role="alert"
+                         invisible="state != 'draft' or speaker_confirmed or hr_confirmed">
+                        <i class="fa fa-clock-o me-2" title="Pendiente"/>
+                        <strong>Pendiente:</strong> firma del Ponente y aprobacion de RH para confirmar el curso.
+                    </div>
+                    <div class="alert alert-warning text-center" role="alert"
+                         invisible="state != 'draft' or not speaker_confirmed or hr_confirmed">
+                        <i class="fa fa-clock-o me-2" title="Pendiente"/>
+                        <strong>Pendiente:</strong> aprobacion de RH. (Ponente ya firmo.)
+                    </div>
+                    <div class="alert alert-warning text-center" role="alert"
+                         invisible="state != 'draft' or speaker_confirmed or not hr_confirmed">
+                        <i class="fa fa-clock-o me-2" title="Pendiente"/>
+                        <strong>Pendiente:</strong> firma del Ponente. (RH ya aprobo.)
+                    </div>
+
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only"/>
                         <h1>
@@ -81,6 +106,11 @@
                         <page string="Participantes y asistencia"
                               name="participants">
                             <group>
+                                <field name="department_ids"
+                                       widget="many2many_tags"
+                                       options="{'no_create': True, 'color_field': 'color'}"
+                                       placeholder="Elige uno o varios departamentos para agregar TODOS sus empleados activos a Participantes"
+                                       readonly="state in ('done','cancelled') and not is_hr_user_for_user"/>
                                 <field name="participant_ids"
                                        widget="many2many_tags"
                                        options="{'no_create': True}"
@@ -102,6 +132,24 @@
                         <page string="Notas SGC" name="sgc_notes">
                             <field name="sgc_notes"
                                    placeholder="Observaciones del Sistema de Gestion de Calidad (no aparecen en correos a participantes)"/>
+                        </page>
+                        <page string="QR de auto-asistencia" name="qr_attendance"
+                              invisible="state not in ('confirmed','done')">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Como funciona:</strong> el ponente
+                                proyecta este QR al inicio del curso. Los
+                                participantes lo escanean con la camara de su
+                                celular (con sesion iniciada en Odoo) y queda
+                                registrada su asistencia y puntualidad
+                                (tolerancia 10 min).
+                            </div>
+                            <group>
+                                <field name="qr_code" widget="image"
+                                       options="{'size': [320, 320]}"
+                                       readonly="1" nolabel="1"/>
+                                <field name="qr_attendance_url" readonly="1"
+                                       widget="CopyClipboardChar"/>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>

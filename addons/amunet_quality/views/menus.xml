@@ -19,12 +19,14 @@
               name="Parámetros de calidad"
               parent="menu_quality_config"
               action="action_amunet_quality_parameter"
+              groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,base.group_erp_manager"
               sequence="10"/>
 
     <menuitem id="menu_quality_point"
               name="Puntos de control"
               parent="menu_quality_config"
               action="action_amunet_quality_point"
+              groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,base.group_erp_manager"
               sequence="20"/>
 
     <menuitem id="menu_quality_sampling_plan"
@@ -38,6 +40,7 @@
               name="Información adicional"
               parent="menu_quality_config"
               action="action_additional_info_field"
+              groups="amunet_quality.group_quality_manager,base.group_erp_manager"
               sequence="50"/>
 
     <menuitem id="menu_quality_signature_permissions"
@@ -52,12 +55,14 @@
               name="Incidentes Tecnovigilancia"
               parent="menu_quality_regulatory"
               action="action_amunet_quality_tecno_incident"
+              groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"
               sequence="10"/>
 
     <menuitem id="menu_quality_capa"
               name="CAPAs (Acciones Correctivas)"
               parent="menu_quality_regulatory"
               action="action_amunet_quality_capa"
+              groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"
               sequence="20"/>
 
     <!-- Configurar icono del menú principal en el menú de aplicaciones -->

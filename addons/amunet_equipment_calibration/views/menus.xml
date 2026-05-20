@@ -5,18 +5,21 @@
         <menuitem id="menu_validation_root"
                   name="Validación"
                   web_icon="amunet_equipment_calibration,static/description/icon.png"
-                  sequence="60"/>
+                  sequence="60"
+                  groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
 
         <menuitem id="menu_amunet_equipment_root" 
                   name="Equipos" 
                   parent="menu_validation_root" 
-                  sequence="10"/>
+                  sequence="10"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
 
         <menuitem id="menu_amunet_equipment_inventory" 
                   name="Inventario de Equipos" 
                   parent="menu_amunet_equipment_root" 
                   action="action_amunet_equipment" 
-                  sequence="10"/>
+                  sequence="10"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
 
         <menuitem id="menu_amunet_calibration_program"
                   name="Programas Anuales"

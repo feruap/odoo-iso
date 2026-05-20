@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_quality_my_work_list" model="ir.ui.view">
+        <field name="name">amunet.quality.check.my.work.list</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="arch" type="xml">
+            <list string="Mi trabajo Calidad" delete="0"
+                  decoration-danger="workqueue_priority == 'blocked'"
+                  decoration-warning="workqueue_priority == 'review'"
+                  decoration-info="workqueue_priority == 'waiting'"
+                  decoration-success="workqueue_priority == 'ready'">
+                <button name="action_start" type="object" icon="fa-play"
+                        title="Iniciar analisis" invisible="state != 'draft'"
+                        groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                <button name="action_review_info" type="object" icon="fa-search"
+                        title="Revisar informacion" invisible="state != 'in_progress' or info_reviewed"
+                        groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                <button name="action_confirm_sampling" type="object" icon="fa-flask"
+                        title="Confirmar muestreo" invisible="state != 'in_progress' or not info_reviewed or sampling_confirmed"
+                        groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                <button name="action_sign_realized" type="object" icon="fa-pencil"
+                        title="Firmar Realizo"
+                        invisible="not sampling_confirmed or user_realized_id or state == 'done' or global_result == 'pending'"
+                        groups="amunet_quality.group_quality_user"/>
+                <button name="action_sign_verified" type="object" icon="fa-check-square-o"
+                        title="Firmar Verifico"
+                        invisible="not user_realized_id or user_verified_id or state == 'done' or global_result == 'pending'"
+                        groups="amunet_quality.group_quality_supervisor"/>
+                <button name="action_sign_authorized" type="object" icon="fa-gavel"
+                        title="Firmar Autorizo"
+                        invisible="not user_verified_id or user_authorized_id or state == 'done' or global_result == 'pending'"
+                        groups="amunet_quality.group_quality_sanitary"/>
+                <field name="name" string="Control"/>
+                <field name="product_id" string="Producto"/>
+                <field name="lot_name_amunet" string="Lote"/>
+                <field name="state" string="Estado" widget="badge"/>
+                <field name="global_result" string="Dictamen" widget="badge"/>
+                <field name="workqueue_priority" string="Prioridad" widget="badge"/>
+                <field name="workqueue_next_step" string="Siguiente paso"/>
+                <field name="workqueue_blocker" string="Pendiente"/>
+                <field name="user_realized_id" string="Realizo"/>
+                <field name="user_verified_id" string="Verifico"/>
+                <field name="user_authorized_id" string="Autorizo"/>
+                <field name="progress" widget="progressbar"/>
+                <field name="info_reviewed" column_invisible="1"/>
+                <field name="sampling_confirmed" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_amunet_quality_my_work" model="ir.actions.act_window">
+        <field name="name">Mi trabajo Calidad</field>
+        <field name="res_model">amunet.quality.check</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', 'not in', ['done'])]</field>
+        <field name="view_id" ref="view_amunet_quality_my_work_list"/>
+        <field name="search_view_id" ref="view_amunet_quality_check_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No hay controles de calidad abiertos.
+            </p>
+            <p>
+                Aqui aparecen los analisis por iniciar, revisar, firmar o liberar.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_amunet_quality_my_work_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_quality_my_work_list"/>
+        <field name="act_window_id" ref="action_amunet_quality_my_work"/>
+    </record>
+
+    <record id="action_amunet_quality_my_work_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_amunet_quality_check_form"/>
+        <field name="act_window_id" ref="action_amunet_quality_my_work"/>
+    </record>
+
+    <menuitem id="menu_quality_my_work"
+              name="Mi trabajo"
+              parent="menu_quality_root"
+              action="action_amunet_quality_my_work"
+              sequence="1"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary,amunet_quality.group_quality_manager"/>
+</odoo>
