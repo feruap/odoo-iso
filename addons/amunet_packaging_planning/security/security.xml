@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_packaging_user" model="res.groups">
+        <field name="name">Empaque / Usuario</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">
+            Puede consultar presentaciones autorizadas, planes de empaque y reacondicionamientos.
+        </field>
+    </record>
+
+    <record id="group_packaging_manager" model="res.groups">
+        <field name="name">Empaque / Responsable</field>
+        <field name="implied_ids" eval="[
+            (4, ref('amunet_packaging_planning.group_packaging_user')),
+            (4, ref('amunet_label.group_label_user'))
+        ]"/>
+        <field name="comment">
+            Administra presentaciones autorizadas, aprueba planes y ejecuta reacondicionamientos.
+        </field>
+    </record>
+</odoo>

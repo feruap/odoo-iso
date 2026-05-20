@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mrp_production_form_packaging_planning" model="ir.ui.view">
+        <field name="name">mrp.production.form.packaging.planning</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="packaging_plan_count" invisible="1"/>
+                <button name="action_create_packaging_plan"
+                        string="Planear empaque"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="state in ('cancel',) or not product_id"
+                        groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_manager"/>
+                <button name="action_view_packaging_plans"
+                        string="Ver planes empaque"
+                        type="object"
+                        invisible="packaging_plan_count == 0"
+                        groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_user,amunet_quality.group_quality_supervisor"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

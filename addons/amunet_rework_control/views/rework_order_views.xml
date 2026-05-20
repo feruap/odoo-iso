@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_rework_order_search" model="ir.ui.view">
+        <field name="name">amunet.rework.order.search</field>
+        <field name="model">amunet.rework.order</field>
+        <field name="arch" type="xml">
+            <search string="No conformidades y reprocesos">
+                <field name="name"/>
+                <field name="title"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="lot_name"/>
+                <field name="production_id"/>
+                <field name="origin_quality_check_id"/>
+                <filter name="open" string="Abiertas" domain="[('state', 'not in', ('closed', 'scrap', 'cancel'))]"/>
+                <filter name="my_pending" string="Mis pendientes" domain="[('state', 'in', ('draft', 'qc_review', 'approved', 'material_request', 'in_rework', 'ready_qc', 'retest'))]"/>
+                <filter name="needs_quality" string="Pendiente Calidad" domain="[('state', 'in', ('qc_review', 'ready_qc', 'retest'))]"/>
+                <filter name="needs_production" string="Pendiente Produccion" domain="[('state', 'in', ('approved', 'material_request', 'in_rework'))]"/>
+                <filter name="needs_material" string="Con material" domain="[('material_request_id', '!=', False)]"/>
+                <separator/>
+                <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_product" string="Producto" context="{'group_by': 'product_id'}"/>
+                <filter name="group_disposition" string="Disposicion" context="{'group_by': 'disposition'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_amunet_rework_order_list" model="ir.ui.view">
+        <field name="name">amunet.rework.order.list</field>
+        <field name="model">amunet.rework.order</field>
+        <field name="arch" type="xml">
+            <list string="No conformidades y reprocesos"
+                  decoration-info="state in ('qc_review', 'ready_qc')"
+                  decoration-warning="state in ('approved', 'material_request', 'in_rework', 'retest')"
+                  decoration-success="state == 'closed'"
+                  decoration-danger="state == 'scrap'">
+                <field name="name"/>
+                <field name="title"/>
+                <field name="product_id"/>
+                <field name="lot_name"/>
+                <field name="qty_nonconforming"/>
+                <field name="state" widget="badge"/>
+                <field name="disposition" widget="badge"/>
+                <field name="next_step"/>
+                <field name="material_request_state" optional="show" widget="badge"/>
+                <field name="reanalysis_result" optional="show" widget="badge"/>
+                <field name="quality_approved_by_id" optional="show"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_rework_order_form" model="ir.ui.view">
+        <field name="name">amunet.rework.order.form</field>
+        <field name="model">amunet.rework.order</field>
+        <field name="arch" type="xml">
+            <form string="No conformidad / reproceso">
+                <header>
+                    <button name="action_submit_review" string="Enviar a Calidad" type="object" class="oe_highlight"
+                            invisible="state != 'draft'"
+                            groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_production.group_production_supervisor"/>
+                    <button name="action_quality_approve_rework" string="Aprobar reproceso" type="object" class="oe_highlight"
+                            invisible="state != 'qc_review' or disposition != 'rework'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_mark_scrap" string="Rechazar / scrap" type="object" class="btn-secondary"
+                            invisible="state not in ('qc_review', 'approved', 'material_request', 'in_rework', 'ready_qc', 'retest')"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"
+                            confirm="Esta accion deja trazabilidad de rechazo/scrap para este lote. Continuar?"/>
+                    <button name="action_create_material_request" string="Solicitar material" type="object" class="oe_highlight"
+                            invisible="state != 'approved'"
+                            groups="amunet_production.group_production_supervisor"/>
+                    <button name="action_start_rework" string="Iniciar reproceso" type="object" class="oe_highlight"
+                            invisible="state not in ('approved', 'material_request')"
+                            groups="amunet_production.group_production_supervisor"/>
+                    <button name="action_ready_for_qc" string="Listo para re-QC" type="object" class="oe_highlight"
+                            invisible="state != 'in_rework'"
+                            groups="amunet_production.group_production_supervisor"/>
+                    <button name="action_create_retest_qc" string="Crear re-QC" type="object" class="oe_highlight"
+                            invisible="state != 'ready_qc'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_close" string="Cerrar" type="object" class="oe_highlight"
+                            invisible="state != 'retest'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_create_capa" string="Crear CAPA" type="object"
+                            invisible="state in ('draft', 'closed', 'scrap', 'cancel') or capa_id"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_create_change_control" string="Control de cambio" type="object"
+                            invisible="state in ('draft', 'closed', 'scrap', 'cancel') or change_control_id"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,qc_review,approved,material_request,in_rework,ready_qc,retest,closed"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_material_request" type="object"
+                                class="oe_stat_button" icon="fa-list-alt"
+                                invisible="not material_request_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Material</span>
+                                <field name="material_request_state"/>
+                            </div>
+                        </button>
+                        <button name="action_view_reanalysis_check" type="object"
+                                class="oe_stat_button" icon="fa-flask"
+                                invisible="not reanalysis_check_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Re-QC</span>
+                                <field name="reanalysis_result"/>
+                            </div>
+                        </button>
+                        <button name="action_view_capa" type="object"
+                                class="oe_stat_button" icon="fa-exclamation-triangle"
+                                invisible="not capa_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">CAPA</span>
+                            </div>
+                        </button>
+                        <button name="action_view_change_control" type="object"
+                                class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="not change_control_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Cambio</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <field name="material_request_id" invisible="1"/>
+                    <field name="reanalysis_check_id" invisible="1"/>
+                    <field name="capa_id" invisible="1"/>
+                    <field name="change_control_id" invisible="1"/>
+                    <field name="permanent_change_required" invisible="1"/>
+                    <field name="capa_required" invisible="1"/>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <label for="title" class="oe_edit_only"/>
+                        <h2><field name="title" placeholder="Ej. Falla de migracion en cassette lote X"/></h2>
+                    </div>
+
+                    <div class="alert alert-info" role="alert" invisible="not next_step">
+                        <strong>Siguiente paso:</strong>
+                        <field name="next_step" readonly="1" class="d-inline" nolabel="1"/>
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="state != 'material_request'">
+                        Abra el boton "Material". Si la solicitud esta en borrador, Produccion debe revisar lineas y dar "Firmar y Enviar".
+                        Despues Almacen surte y Produccion valida la recepcion.
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'scrap'">
+                        Lote/sub-lote rechazado. Conservar la evidencia y destino fisico del material.
+                    </div>
+
+                    <group>
+                        <group string="Origen">
+                            <field name="origin_quality_check_id" readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+                            <field name="production_id" readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+                            <field name="product_id" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Lote y cantidad">
+                            <field name="lot_id" readonly="state != 'draft'"/>
+                            <field name="lot_name" readonly="state != 'draft'" placeholder="Lote si no existe registro stock.lot"/>
+                            <field name="qty_nonconforming" readonly="state not in ('draft', 'qc_review')"/>
+                            <field name="uom_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="1. Falla y contencion">
+                            <group>
+                                <field name="failure_description"
+                                       placeholder="Describa que observo Calidad: migracion incompleta, fondo alto, senal baja, armado, etc."
+                                       readonly="state not in ('draft', 'qc_review')"/>
+                                <field name="failed_parameter_summary"
+                                       placeholder="Parametro, muestra o condicion fallida."
+                                       readonly="state not in ('draft', 'qc_review')"/>
+                                <field name="containment_action"
+                                       placeholder="Como se retuvo, identifico y separo el lote/sub-lote."
+                                       readonly="state not in ('draft', 'qc_review')"/>
+                            </group>
+                        </page>
+                        <page string="2. Disposicion Calidad">
+                            <group>
+                                <group>
+                                    <field name="disposition" readonly="state not in ('draft', 'qc_review')"/>
+                                    <field name="permanent_change_required" readonly="state not in ('draft', 'qc_review')"/>
+                                    <field name="capa_required" readonly="state not in ('draft', 'qc_review')"/>
+                                </group>
+                                <group>
+                                    <field name="quality_approved_by_id" readonly="1"/>
+                                    <field name="quality_approved_date" readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <field name="investigation_notes"
+                                       placeholder="Causa probable, revision de materiales, equipo y proceso."
+                                       readonly="state not in ('draft', 'qc_review')"/>
+                                <field name="risk_assessment"
+                                       placeholder="Impacto potencial en seguridad, desempeno, liberacion y etiquetado."
+                                       readonly="state not in ('draft', 'qc_review')"/>
+                                <field name="rework_instruction"
+                                       placeholder="Instruccion aprobada: que cambiar, limites, controles y evidencia requerida."
+                                       readonly="state not in ('draft', 'qc_review')"/>
+                            </group>
+                        </page>
+                        <page string="3. Material">
+                            <div class="alert alert-info" role="alert" invisible="state not in ('approved', 'material_request')">
+                                Produccion captura aqui el material extra. El boton "Solicitar material" genera la solicitud formal.
+                                Al abrirla, Produccion debe dar "Firmar y Enviar" para que Almacen la vea como pendiente.
+                            </div>
+                            <field name="material_line_ids" readonly="state not in ('draft', 'qc_review', 'approved')">
+                                <list editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="qty_requested"/>
+                                    <field name="uom_id" readonly="1"/>
+                                    <field name="preferred_lot_id"/>
+                                    <field name="reason"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="4. Ejecucion Produccion">
+                            <group>
+                                <group>
+                                    <field name="qty_reworked" readonly="state != 'in_rework'"/>
+                                    <field name="qty_scrap" readonly="state != 'in_rework'"/>
+                                </group>
+                                <group>
+                                    <field name="reworked_by_id" readonly="1"/>
+                                    <field name="reworked_date" readonly="1"/>
+                                </group>
+                            </group>
+                            <field name="production_notes"
+                                   placeholder="Registre que se hizo, cantidad, tiempo, material usado y cualquier desviacion observada."
+                                   readonly="state != 'in_rework'"/>
+                        </page>
+                        <page string="5. Re-QC y cierre">
+                            <group>
+                                <group>
+                                    <field name="reanalysis_check_id" readonly="1"/>
+                                    <field name="reanalysis_result" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="closed_by_id" readonly="1"/>
+                                    <field name="closed_date" readonly="1"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-info" role="alert" invisible="state != 'retest'">
+                                Complete el re-QC en Calidad. Solo se puede cerrar este registro si el re-QC queda finalizado y aprobado.
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_rework_order" model="ir.actions.act_window">
+        <field name="name">No conformidad y reproceso</field>
+        <field name="res_model">amunet.rework.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="search_view_id" ref="view_amunet_rework_order_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registre aqui el reproceso controlado de un lote no conforme.
+            </p>
+            <p>
+                El flujo conserva evidencia de Calidad, Produccion, Almacen, re-QC y cierre.
+            </p>
+        </field>
+    </record>
+</odoo>
