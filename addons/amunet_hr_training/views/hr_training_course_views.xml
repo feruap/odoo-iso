@@ -46,6 +46,26 @@
                 </header>
 
                 <sheet>
+                    <!--
+                        Banner de aprobaciones pendientes. Solo en Borrador.
+                        Tres variantes excluyentes segun lo que falte.
+                    -->
+                    <div class="alert alert-warning text-center" role="alert"
+                         invisible="state != 'draft' or speaker_confirmed or hr_confirmed">
+                        <i class="fa fa-clock-o me-2"/>
+                        <strong>Pendiente:</strong> firma del Ponente y aprobacion de RH para confirmar el curso.
+                    </div>
+                    <div class="alert alert-warning text-center" role="alert"
+                         invisible="state != 'draft' or not speaker_confirmed or hr_confirmed">
+                        <i class="fa fa-clock-o me-2"/>
+                        <strong>Pendiente:</strong> aprobacion de RH. (Ponente ya firmo.)
+                    </div>
+                    <div class="alert alert-warning text-center" role="alert"
+                         invisible="state != 'draft' or speaker_confirmed or not hr_confirmed">
+                        <i class="fa fa-clock-o me-2"/>
+                        <strong>Pendiente:</strong> firma del Ponente. (RH ya aprobo.)
+                    </div>
+
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only"/>
                         <h1>
