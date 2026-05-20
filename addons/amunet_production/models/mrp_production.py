@@ -321,6 +321,10 @@ class MrpProduction(models.Model):
             # During MO creation, the web client sends the displayed value back;
             # production users must not write product configuration.
             vals.pop('amunet_sys_req_qc', None)
+            if vals.get('product_id') and not vals.get('quality_analysis_status'):
+                product = self.env['product.product'].browse(vals['product_id']).exists()
+                if product and (product.amunet_req_quality_control or product.qc_required):
+                    vals['quality_analysis_status'] = 'to_request'
             self._amunet_complete_workorder_workcenters(vals)
         productions = super().create(vals_list)
         productions._auto_generate_lot_draft()
