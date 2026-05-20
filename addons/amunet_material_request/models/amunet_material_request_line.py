@@ -104,16 +104,28 @@ class AmunetMaterialRequestLine(models.Model):
             request = line.request_id
             if request.state == 'draft' and request.requester_id == user:
                 continue
-            # Almacenista en 'in_picking': permitido
-            #  - crear lineas nuevas (agregar material extra al surtir)
-            #  - escribir solo lot_id y qty_supplied en lineas existentes
+            # Almacenista: permisos especiales sobre las lineas.
+            #  - CREAR lineas nuevas ("anexar material") mientras la
+            #    solicitud este activa: draft, submitted o in_picking.
+            #    Esto permite al super-almacenista o al equipo de
+            #    almacen agregar piezas que el solicitante olvido o
+            #    que el surtidor identifico como necesarias.
+            #  - WRITE: solo lot_id y qty_supplied y solo en
+            #    'in_picking' (su trabajo de surtir).
             if (
                 not unlink
                 and is_warehouse
-                and request.state == 'in_picking'
                 and (
-                    is_create_call
-                    or set(vals).issubset(warehouse_write_fields)
+                    (
+                        is_create_call
+                        and request.state in (
+                            'draft', 'submitted', 'in_picking'
+                        )
+                    )
+                    or (
+                        request.state == 'in_picking'
+                        and set(vals).issubset(warehouse_write_fields)
+                    )
                 )
             ):
                 continue
