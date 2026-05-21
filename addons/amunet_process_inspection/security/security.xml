@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Reglas de visibilidad:
+        - Operador / supervisor de Produccion: ve TODAS las inspecciones
+          (necesita visibilidad para coordinar el flujo).
+        - Analista / Supervisor / Manager de QC: ve TODAS las
+          inspecciones (rol de calidad).
+        - Almacenista (Almacen MP): ve TODAS las inspecciones (solo
+          lectura via ACL, no escritura ni firma).
+        - Otros usuarios: no ven nada.
+
+        Las restricciones de firma (quien puede pulsar 'Firmar')
+        viven en el codigo del modelo (action_sign).
+    -->
+
+    <record id="rule_process_inspection_company" model="ir.rule">
+        <field name="name">Inspeccion de proceso: multi-company</field>
+        <field name="model_id" ref="model_amunet_process_inspection"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="global" eval="True"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================ FORM ============================ -->
+    <record id="view_amunet_process_inspection_form" model="ir.ui.view">
+        <field name="name">amunet.process.inspection.form</field>
+        <field name="model">amunet.process.inspection</field>
+        <field name="arch" type="xml">
+            <form string="Inspeccion de proceso">
+                <header>
+                    <button name="action_sign" string="Firmar"
+                            type="object" class="btn-primary"
+                            invisible="state == 'signed'"
+                            help="Firma la inspeccion. Una vez firmada queda inmutable."/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,signed"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box"/>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Orden y estacion">
+                            <field name="production_id"
+                                   readonly="state == 'signed'"
+                                   options="{'no_create': True}"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="workcenter_id"
+                                   readonly="state == 'signed'"
+                                   options="{'no_create': True}"/>
+                            <field name="workorder_id"
+                                   readonly="state == 'signed'"
+                                   options="{'no_create': True}"
+                                   domain="[('production_id','=',production_id)]"/>
+                            <field name="inspection_type"
+                                   readonly="state == 'signed'"/>
+                        </group>
+                        <group string="Lote">
+                            <field name="lot_id"
+                                   readonly="state == 'signed'"
+                                   options="{'no_create': True}"/>
+                            <field name="lot_name"
+                                   readonly="state == 'signed'"
+                                   invisible="lot_id"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Inspector">
+                            <field name="inspector_id" readonly="1"/>
+                            <field name="inspection_date"
+                                   readonly="state == 'signed'"/>
+                        </group>
+                        <group string="Resultado">
+                            <field name="qty_inspected"
+                                   readonly="state == 'signed'"/>
+                            <field name="qty_removed"
+                                   readonly="state == 'signed'"/>
+                            <field name="removal_reason"
+                                   readonly="state == 'signed'"
+                                   invisible="qty_removed == 0"
+                                   required="qty_removed > 0"/>
+                            <field name="result"
+                                   readonly="state == 'signed'"
+                                   required="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="Observaciones"/>
+                    <field name="notes"
+                           readonly="state == 'signed'"
+                           placeholder="Detalle del retiro, contexto, instrumentos usados, etc."/>
+
+                    <group invisible="state != 'signed'">
+                        <group string="Firma">
+                            <field name="signed_by_id" readonly="1"/>
+                            <field name="signed_date" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================ LIST ============================ -->
+    <record id="view_amunet_process_inspection_list" model="ir.ui.view">
+        <field name="name">amunet.process.inspection.list</field>
+        <field name="model">amunet.process.inspection</field>
+        <field name="arch" type="xml">
+            <list string="Inspecciones de proceso"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state == 'signed' and result == 'conforme'"
+                  decoration-warning="state == 'signed' and result == 'conforme_con_retiros'"
+                  decoration-danger="state == 'signed' and result == 'detener'">
+                <field name="name"/>
+                <field name="inspection_date"/>
+                <field name="production_id"/>
+                <field name="workcenter_id"/>
+                <field name="inspection_type"/>
+                <field name="lot_id"/>
+                <field name="inspector_id"/>
+                <field name="qty_inspected"/>
+                <field name="qty_removed"/>
+                <field name="result"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'signed'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================ SEARCH ============================ -->
+    <record id="view_amunet_process_inspection_search" model="ir.ui.view">
+        <field name="name">amunet.process.inspection.search</field>
+        <field name="model">amunet.process.inspection</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="production_id"/>
+                <field name="workcenter_id"/>
+                <field name="lot_id"/>
+                <field name="inspector_id"/>
+                <field name="product_id"/>
+
+                <filter name="f_mine" string="Mis inspecciones"
+                        domain="[('inspector_id','=', uid)]"/>
+                <separator/>
+                <filter name="f_draft" string="Borrador"
+                        domain="[('state','=','draft')]"/>
+                <filter name="f_signed" string="Firmadas"
+                        domain="[('state','=','signed')]"/>
+                <separator/>
+                <filter name="f_qc" string="QC formal"
+                        domain="[('inspection_type','=','qc_formal')]"/>
+                <filter name="f_sup" string="Supervision produccion"
+                        domain="[('inspection_type','=','production_supervision')]"/>
+                <separator/>
+                <filter name="f_retiros" string="Con piezas retiradas"
+                        domain="[('qty_removed','>',0)]"/>
+                <filter name="f_detener" string="Detener proceso"
+                        domain="[('result','=','detener')]"/>
+
+                <separator/>
+                <filter name="g_production" string="Orden de produccion"
+                        context="{'group_by': 'production_id'}"/>
+                <filter name="g_workcenter" string="Estacion"
+                        context="{'group_by': 'workcenter_id'}"/>
+                <filter name="g_type" string="Tipo"
+                        context="{'group_by': 'inspection_type'}"/>
+                <filter name="g_inspector" string="Inspector"
+                        context="{'group_by': 'inspector_id'}"/>
+                <filter name="g_state" string="Estado"
+                        context="{'group_by': 'state'}"/>
+                <filter name="g_date" string="Mes"
+                        context="{'group_by': 'inspection_date:month'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================ ACTION ============================ -->
+    <record id="action_amunet_process_inspection" model="ir.actions.act_window">
+        <field name="name">Inspecciones de proceso</field>
+        <field name="res_model">amunet.process.inspection</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_process_inspection_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nueva inspeccion de proceso</p>
+            <p>Documenta los retiros de piezas durante el flujo
+            productivo. NO sustituye la liberacion de lote (eso vive
+            en Calidad).</p>
+        </field>
+    </record>
+
+</odoo>

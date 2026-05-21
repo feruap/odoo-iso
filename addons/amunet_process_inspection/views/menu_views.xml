@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Menu de Inspecciones de proceso, dentro del modulo de Manufactura
+        nativo de Odoo (visible solo para usuarios de Produccion o QC).
+    -->
+    <menuitem id="menu_amunet_process_inspection_root"
+              name="Inspecciones de proceso"
+              parent="mrp.menu_mrp_root"
+              sequence="25"/>
+
+    <menuitem id="menu_amunet_process_inspection_all"
+              name="Todas"
+              parent="menu_amunet_process_inspection_root"
+              action="action_amunet_process_inspection"
+              sequence="10"/>
+
+</odoo>
