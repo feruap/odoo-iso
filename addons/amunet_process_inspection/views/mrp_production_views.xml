@@ -22,6 +22,19 @@
                 </button>
             </xpath>
 
+            <!--
+                Mostrar el tipo de linea (route_type) y el flag de
+                aprobacion del preflight en la cabecera.
+            -->
+            <xpath expr="//field[@name='product_id']" position="before">
+                <field name="route_type"
+                       readonly="state != 'draft'"/>
+                <field name="preflight_approved" readonly="1"
+                       widget="boolean_toggle"
+                       invisible="state != 'draft'"
+                       help="True si existe un preflight aprobado para esta orden. Requisito DURO para confirmar."/>
+            </xpath>
+
             <!-- Pestana al final del notebook -->
             <xpath expr="//notebook" position="inside">
                 <page string="Inspecciones de proceso"

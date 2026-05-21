@@ -32,6 +32,9 @@ Folio: INP/MMAA/NNN con reinicio mensual.
         'mail',
         'amunet_production',
         'amunet_lot',
+        'amunet_pilot_preflight',
+        'amunet_quality',
+        'amunet_material_request',
     ],
     'data': [
         'security/security.xml',
