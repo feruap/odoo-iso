@@ -105,28 +105,20 @@ class AmunetMaterialRequestLine(models.Model):
             if request.state == 'draft' and request.requester_id == user:
                 continue
             # Almacenista: permisos especiales sobre las lineas.
-            #  - CREAR lineas nuevas ("anexar material") mientras la
-            #    solicitud este activa: draft, submitted o in_picking.
-            #    Esto permite al super-almacenista o al equipo de
-            #    almacen agregar piezas que el solicitante olvido o
-            #    que el surtidor identifico como necesarias.
-            #  - WRITE: solo lot_id y qty_supplied y solo en
-            #    'in_picking' (su trabajo de surtir).
+            # Mientras la solicitud este en estado ACTIVO
+            # (draft / submitted / in_picking), el almacenista
+            # (group_material_warehouse) puede CREAR, MODIFICAR y
+            # BORRAR lineas libremente. Esto cubre los casos de:
+            #  - anexar piezas faltantes,
+            #  - ajustar la cantidad pedida o surtida,
+            #  - cambiar el lote asignado,
+            #  - retirar una linea que ya no aplica.
+            # En estados de cierre (pending_reception, closed,
+            # cancelled) el almacenista pierde el permiso porque la
+            # solicitud ya no admite cambios operativos.
             if (
-                not unlink
-                and is_warehouse
-                and (
-                    (
-                        is_create_call
-                        and request.state in (
-                            'draft', 'submitted', 'in_picking'
-                        )
-                    )
-                    or (
-                        request.state == 'in_picking'
-                        and set(vals).issubset(warehouse_write_fields)
-                    )
-                )
+                is_warehouse
+                and request.state in ('draft', 'submitted', 'in_picking')
             ):
                 continue
             # Validador (solicitante o jefe de area) en pending_reception
