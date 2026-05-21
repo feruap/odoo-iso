@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_process_inspection_prod_op,Inspeccion proceso / operador prod,model_amunet_process_inspection,amunet_production.group_production_operator,1,1,1,0
+access_process_inspection_prod_sup,Inspeccion proceso / supervisor prod,model_amunet_process_inspection,amunet_production.group_production_supervisor,1,1,1,0
+access_process_inspection_qc_user,Inspeccion proceso / analista QC,model_amunet_process_inspection,amunet_quality.group_quality_user,1,1,1,0
+access_process_inspection_qc_sup,Inspeccion proceso / supervisor QC,model_amunet_process_inspection,amunet_quality.group_quality_supervisor,1,1,1,1
+access_process_inspection_qc_mgr,Inspeccion proceso / manager QC,model_amunet_process_inspection,amunet_quality.group_quality_manager,1,1,1,1
+access_process_inspection_warehouse,Inspeccion proceso / almacenista,model_amunet_process_inspection,amunet_material_request.group_material_warehouse,1,0,0,0

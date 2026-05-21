@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Pestana nueva 'Inspecciones de proceso' en el formulario de
+        mrp.production + boton smartbutton arriba.
+    -->
+    <record id="view_mrp_production_form_inspection" model="ir.ui.view">
+        <field name="name">mrp.production.form.process.inspection</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+
+            <!-- Smart button para ver inspecciones rapido -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_process_inspections"
+                        type="object" class="oe_stat_button"
+                        icon="fa-check-square-o"
+                        invisible="process_inspection_count == 0">
+                    <field name="process_inspection_count"
+                           string="Inspecciones" widget="statinfo"/>
+                </button>
+            </xpath>
+
+            <!--
+                Mostrar el tipo de linea (route_type) y el flag de
+                aprobacion del preflight en la cabecera.
+            -->
+            <xpath expr="//field[@name='product_id']" position="before">
+                <field name="route_type"
+                       readonly="state != 'draft'"/>
+                <field name="preflight_approved" readonly="1"
+                       widget="boolean_toggle"
+                       invisible="state != 'draft'"
+                       help="True si existe un preflight aprobado para esta orden. Requisito DURO para confirmar."/>
+            </xpath>
+
+            <!-- Pestana al final del notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Inspecciones de proceso"
+                      name="process_inspections">
+                    <field name="process_inspection_ids" readonly="1">
+                        <list decoration-info="state == 'draft'"
+                              decoration-success="state == 'signed' and result == 'conforme'"
+                              decoration-warning="state == 'signed' and result == 'conforme_con_retiros'"
+                              decoration-danger="state == 'signed' and result == 'detener'">
+                            <field name="name"/>
+                            <field name="workcenter_id"/>
+                            <field name="inspection_type"/>
+                            <field name="inspection_date"/>
+                            <field name="inspector_id"/>
+                            <field name="qty_inspected"/>
+                            <field name="qty_removed"/>
+                            <field name="result"/>
+                            <field name="state" widget="badge"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
