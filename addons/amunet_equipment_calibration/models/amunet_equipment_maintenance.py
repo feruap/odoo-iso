@@ -58,6 +58,44 @@ class AmunetEquipmentMaintenance(models.Model):
         ('cancelled', 'Cancelado'),
     ], string='Prioridad', compute='_compute_due_status')
     next_step = fields.Char(string='Siguiente paso', compute='_compute_due_status')
+    procedure_ids = fields.Many2many(
+        'amunet.quality.procedure',
+        string='PNOs aplicables al equipo',
+        related='equipment_id.procedure_ids',
+        readonly=True)
+    procedure_count = fields.Integer(
+        string='PNOs',
+        compute='_compute_work_instructions')
+    work_instruction = fields.Text(
+        string='Que se debe hacer',
+        compute='_compute_work_instructions')
+    required_evidence = fields.Text(
+        string='Evidencia requerida',
+        compute='_compute_work_instructions')
+    training_status = fields.Selection([
+        ('no_pno', 'Sin PNO vinculado'),
+        ('no_responsible', 'Sin responsable'),
+        ('authorized', 'Responsable autorizado'),
+        ('review', 'Revisar capacitacion'),
+    ], string='Capacitacion', compute='_compute_work_instructions')
+    training_guidance = fields.Char(
+        string='Guia de capacitacion',
+        compute='_compute_work_instructions')
+    checklist_done = fields.Text(
+        string='Checklist ejecutado',
+        help='Describe los pasos ejecutados, limpieza, inspeccion, ajustes y verificaciones.')
+    result = fields.Selection([
+        ('pending', 'Pendiente'),
+        ('conforme', 'Conforme'),
+        ('no_conforme', 'No conforme'),
+    ], string='Resultado', default='pending', required=True, tracking=True)
+    nonconformity_notes = fields.Text(string='Hallazgo / no conformidad')
+    evidence_exception_reason = fields.Char(
+        string='Justificacion sin evidencia',
+        help='Usar solo si no aplica archivo de evidencia; queda trazado en chatter.')
+    performed_by_id = fields.Many2one(
+        'res.users', string='Realizo', readonly=True, tracking=True)
+    performed_at = fields.Datetime(string='Fecha/hora de cierre', readonly=True, tracking=True)
     notes = fields.Text(string='Trabajo realizado / notas')
     evidence_file = fields.Binary(string='Evidencia', attachment=True)
     evidence_filename = fields.Char(string='Nombre archivo')
@@ -101,6 +139,63 @@ class AmunetEquipmentMaintenance(models.Model):
                 record.due_status = 'scheduled'
                 record.next_step = 'Esperar fecha programada'
 
+    @api.depends('equipment_id', 'equipment_id.procedure_ids', 'responsible_id', 'maintenance_type')
+    def _compute_work_instructions(self):
+        type_labels = dict(self._fields['maintenance_type'].selection)
+        for record in self:
+            procedures = record.procedure_ids
+            record.procedure_count = len(procedures)
+            type_label = type_labels.get(record.maintenance_type, 'Mantenimiento')
+
+            if not record.equipment_id:
+                record.work_instruction = 'Selecciona un equipo para ver el trabajo requerido.'
+                record.required_evidence = 'Sin equipo seleccionado.'
+                record.training_status = 'no_responsible'
+                record.training_guidance = 'Selecciona equipo y responsable.'
+                continue
+
+            if procedures:
+                pno_names = ', '.join(
+                    ('%s %s' % (p.code or '', p.name or '')).strip()
+                    for p in procedures
+                )
+                record.work_instruction = (
+                    'Ejecutar mantenimiento %s del equipo %s conforme a los PNOs '
+                    'vinculados. Abrir los PNOs antes de iniciar, seguir el checklist '
+                    'controlado, registrar cualquier ajuste y cerrar con resultado.'
+                ) % (type_label.lower(), record.equipment_id.display_name)
+                record.required_evidence = (
+                    'Adjuntar evidencia del mantenimiento: checklist firmado, foto, '
+                    'reporte interno/externo o registro equivalente. PNOs: %s'
+                ) % pno_names
+            else:
+                record.work_instruction = (
+                    'Hallazgo: este equipo no tiene PNO vinculado. No hay instruccion '
+                    'controlada visible para el tecnico. Metrologia debe vincular el '
+                    'PNO de mantenimiento/limpieza/operacion antes de usarlo como '
+                    'evidencia paperless completa.'
+                )
+                record.required_evidence = (
+                    'Adjuntar evidencia del trabajo realizado y documentar que el PNO '
+                    'esta pendiente de vinculacion.'
+                )
+
+            if not procedures:
+                record.training_status = 'no_pno'
+                record.training_guidance = 'Vincular PNOs para poder evaluar capacitacion.'
+            elif not record.responsible_id:
+                record.training_status = 'no_responsible'
+                record.training_guidance = 'Asignar responsable.'
+            elif record.responsible_id in record.equipment_id.get_authorized_users():
+                record.training_status = 'authorized'
+                record.training_guidance = 'Responsable con capacitacion vigente para los PNOs vinculados.'
+            else:
+                record.training_status = 'review'
+                record.training_guidance = (
+                    'RRHH/Metrologia debe revisar capacitacion vigente del responsable '
+                    'contra los PNOs del equipo.'
+                )
+
     def _check_write_access(self):
         if not (
             self.env.user.has_group(EQUIPMENT_MANAGER_GROUP)
@@ -127,19 +222,51 @@ class AmunetEquipmentMaintenance(models.Model):
                 body='Mantenimiento iniciado por %s.' % self.env.user.display_name)
         return True
 
+    def action_view_procedures(self):
+        self.ensure_one()
+        return {
+            'name': 'PNOs aplicables a %s' % self.equipment_id.display_name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'amunet.quality.procedure',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.procedure_ids.ids)],
+            'context': {'create': False},
+            'target': 'current',
+        }
+
+    def _check_close_requirements(self):
+        for record in self:
+            if not record.checklist_done:
+                raise UserError('Antes de cerrar, captura el checklist ejecutado.')
+            if record.result == 'pending':
+                raise UserError('Antes de cerrar, selecciona Resultado: Conforme o No conforme.')
+            if not record.evidence_file and not record.evidence_exception_reason:
+                raise UserError(
+                    'Antes de cerrar, adjunta evidencia o explica por que no aplica archivo.')
+            if record.result == 'no_conforme' and not record.nonconformity_notes:
+                raise UserError('Para resultado No conforme, captura el hallazgo/no conformidad.')
+
     def action_done(self):
         self._check_write_access()
         for record in self:
             if record.state not in ('draft', 'scheduled', 'in_progress'):
                 raise UserError('Solo se puede cerrar un mantenimiento abierto.')
+            record._check_close_requirements()
             record.write({
                 'state': 'done',
                 'completed_date': fields.Date.today(),
+                'performed_by_id': self.env.user.id,
+                'performed_at': fields.Datetime.now(),
             })
-            if record.equipment_id.state == 'maintenance':
+            if record.result == 'no_conforme':
+                record.equipment_id.sudo().write({'state': 'out_of_service'})
+                record.equipment_id.sudo().message_post(
+                    body='Mantenimiento cerrado NO CONFORME por %s. Hallazgo: %s'
+                    % (self.env.user.display_name, record.nonconformity_notes))
+            elif record.equipment_id.state == 'maintenance':
                 record.equipment_id.sudo().write({'state': 'active'})
-            record.equipment_id.sudo().message_post(
-                body='Mantenimiento cerrado por %s.' % self.env.user.display_name)
+                record.equipment_id.sudo().message_post(
+                    body='Mantenimiento cerrado conforme por %s.' % self.env.user.display_name)
         return True
 
     def action_cancel(self):
