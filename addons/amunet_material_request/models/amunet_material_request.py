@@ -594,9 +594,10 @@ class AmunetMaterialRequest(models.Model):
                 if not moves:
                     # Linea agregada por el almacenista durante surtido:
                     # creamos su stock.move asociado al picking actual.
+                    # Nota: en Odoo 19 stock.move ya no tiene el campo
+                    # 'name' (se autoreplica del picking via reference).
                     new_move = self.env['stock.move'].sudo().create({
                         'picking_id': rec.picking_id.id,
-                        'name': line.product_id.display_name,
                         'product_id': line.product_id.id,
                         'product_uom_qty': line.qty_requested,
                         'product_uom': line.uom_id.id,
