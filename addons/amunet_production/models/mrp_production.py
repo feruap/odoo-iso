@@ -440,6 +440,29 @@ class MrpProduction(models.Model):
                     pass
         return super().action_confirm()
 
+    def _get_move_raw_values(self, product, product_uom_qty, product_uom, operation_id=False, bom_line=False):
+        """Override Amunet:
+        Redondea HACIA ARRIBA la cantidad de componentes cuando el
+        producto se mide en unidades enteras (no admite fracciones).
+        Caso real: VIH tiene 0.1 viales por unidad; para fabricar 75
+        kits hacen falta 7.5 viales -> se piden 8 (no se puede pedir
+        medio vial al almacen).
+        Se aplica solo cuando la UoM del COMPONENTE es 'Unidades'
+        (uom.product_uom_unit). Para componentes en cm, ml, kg, etc.
+        se respeta el decimal.
+        """
+        import math
+        if product and product_uom_qty and not isinstance(product, dict):
+            unit_uom = self.env.ref(
+                'uom.product_uom_unit', raise_if_not_found=False)
+            uom = product_uom or product.uom_id
+            if unit_uom and uom and uom.id == unit_uom.id:
+                product_uom_qty = math.ceil(product_uom_qty)
+        return super()._get_move_raw_values(
+            product, product_uom_qty, product_uom,
+            operation_id=operation_id, bom_line=bom_line,
+        )
+
     def _prepare_stock_lot_values(self):
         """Override Amunet:
         Si el producto tiene mo_sequence_id (formato Amunet), el lote

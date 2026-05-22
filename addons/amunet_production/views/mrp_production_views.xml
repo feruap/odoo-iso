@@ -45,7 +45,8 @@
                 <!-- Campo previsualizado en borrador -->
                 <xpath expr="//div[field[@name='lot_producing_ids']]" position="after">
                     <div class="o_row" invisible="state != 'draft' or product_tracking in ('none', False)">
-                        <field name="solution_lot_id" readonly="0" decoration-warning="1" class="fw-bold"/>
+                        <field name="solution_lot_id" readonly="0" decoration-warning="1" class="fw-bold"
+                               invisible="not amunet_is_solution_product"/>
                         <span class="text-muted ms-2">(Editable antes de confirmar)</span>
                     </div>
                 </xpath>
