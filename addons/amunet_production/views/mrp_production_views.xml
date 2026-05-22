@@ -117,6 +117,7 @@
                 -->
                 <xpath expr="//div[@name='date_start']/field[@name='date_start']" position="attributes">
                     <attribute name="widget">datetime</attribute>
+                    <attribute name="options">{'numeric': true}</attribute>
                 </xpath>
                 <xpath expr="//div[@name='date_start']" position="after">
                     <field name="amunet_scheduled_date_display"
