@@ -255,7 +255,7 @@ class MrpProduction(models.Model):
                 user_tz = self.env.user.tz or 'UTC'
                 utc_dt = rec.date_start.replace(tzinfo=pytz.utc)
                 local_dt = utc_dt.astimezone(pytz.timezone(user_tz))
-                rec.amunet_scheduled_date_display = local_dt.strftime('%d.%m.%y %H:%M')
+                rec.amunet_scheduled_date_display = local_dt.strftime('%d.%m.%y %I:%M %p')
             else:
                 rec.amunet_scheduled_date_display = ''
 
