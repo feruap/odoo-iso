@@ -106,7 +106,16 @@
                     <field name="amunet_product_categ_id" string="Categoria" readonly="1"/>
                     <field name="amunet_is_solution_product" invisible="1"/>
                 </xpath>
-                <!-- Fecha programada: editable (antes era readonly) -->
+                <!--
+                    Fecha programada: forzar widget='datetime' para que
+                    respete el formato del lang (DD.MM.YY HH:MM). Sin
+                    esto, Odoo 19 usa por defecto un widget "amigable"
+                    que muestra "26 may, 11:40 a.m." y solo en hover
+                    o edicion respeta el formato del lang.
+                -->
+                <xpath expr="//field[@name='date_start']" position="attributes">
+                    <attribute name="widget">datetime</attribute>
+                </xpath>
                 <xpath expr="//div[@name='date_start']" position="after">
                     <field name="amunet_scheduled_date_display"
                            readonly="1" class="text-muted"
