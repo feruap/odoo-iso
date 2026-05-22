@@ -10,7 +10,7 @@
     """,
     'author': "Amunet",
     'category': 'Manufacturing',
-    'version': '19.0.1.26.0',
+    'version': '19.0.1.27.0',
     'depends': [
         'mrp',
         'stock',

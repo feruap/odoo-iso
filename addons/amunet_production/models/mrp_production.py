@@ -104,15 +104,17 @@ class MrpProduction(models.Model):
                 rec.quality_analysis_status = 'none'
 
             # Calculo de caducidad en formato Amunet "YYYY-MM":
-            # Toma la duracion configurada en el producto
-            # (amunet_expiration_text del template, ej. "24 meses"
-            # o "2 años") y la suma a la fecha programada de la MO
-            # (date_start, fallback a hoy).
+            # 1. Si el producto define duracion (amunet_expiration_text
+            #    del template, ej. "24 meses" o "2 años"), se usa esa.
+            # 2. Si NO define duracion, default Amunet = 2 anos (24 meses).
+            # El campo en la MO sigue editable manualmente para
+            # excepciones.
             from datetime import timedelta
             from dateutil.relativedelta import relativedelta
+            DEFAULT_MONTHS = 24  # 2 anos
             base_text = product.amunet_expiration_text or ''
             txt = base_text.lower()
-            months_to_add = 0
+            months_to_add = DEFAULT_MONTHS
             try:
                 val = float(
                     ''.join(c for c in txt if c.isdigit() or c == '.'))
@@ -121,19 +123,16 @@ class MrpProduction(models.Model):
                 elif 'mes' in txt:
                     months_to_add = int(val)
                 elif 'dia' in txt or 'día' in txt:
-                    months_to_add = int(val / 30) or 0
+                    months_to_add = int(val / 30) or DEFAULT_MONTHS
             except Exception:
+                # texto del producto no parseable -> usar default 24 meses
                 pass
 
             base_date = rec.date_start or fields.Datetime.now()
-            if months_to_add > 0:
-                expiration = base_date + relativedelta(months=months_to_add)
-                rec.solution_expiration_date = expiration
-                # Formato exacto pedido por el operador: YYYY-MM
-                rec.amunet_expiration_text = expiration.strftime('%Y-%m')
-            else:
-                rec.solution_expiration_date = False
-                rec.amunet_expiration_text = False
+            expiration = base_date + relativedelta(months=months_to_add)
+            rec.solution_expiration_date = expiration
+            # Formato exacto pedido por el operador: YYYY-MM
+            rec.amunet_expiration_text = expiration.strftime('%Y-%m')
 
     @api.constrains('amunet_expiration_text')
     def _check_expiration_text_format(self):
