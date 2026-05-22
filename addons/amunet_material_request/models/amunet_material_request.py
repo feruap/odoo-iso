@@ -169,20 +169,24 @@ class AmunetMaterialRequest(models.Model):
                 'No puedes modificar campos de estado, transferencia o firmas '
                 'directamente. Usa las acciones del flujo.'))
 
-        allowed_warehouse_fields = {'line_ids', 'note'}
         # En 'pending_reception' el solicitante (o jefe de area que
         # puede validar) puede capturar cantidades recibidas y notas
         # antes de firmar. Solo se permite tocar line_ids (donde estan
         # qty_received y line_reception_note) y reception_notes.
         allowed_reception_fields = {'line_ids', 'reception_notes'}
         user = self.env.user
+        is_warehouse = self._is_material_warehouse()
         for rec in self:
             if rec.state == 'draft' and rec.requester_id == user:
                 continue
+            # Almacenista (group_material_warehouse): permiso amplio en
+            # estados activos. Puede modificar la cabecera (line_ids,
+            # note, etc.) en draft, submitted o in_picking. Los campos
+            # PROTEGIDOS (state, name, picking_id, firmas) siguen
+            # bloqueados arriba.
             if (
-                self._is_material_warehouse()
-                and rec.state == 'in_picking'
-                and set(vals).issubset(allowed_warehouse_fields)
+                is_warehouse
+                and rec.state in ('draft', 'submitted', 'in_picking')
             ):
                 continue
             if (
