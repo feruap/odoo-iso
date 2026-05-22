@@ -42,13 +42,14 @@
                     <attribute name="invisible">state in ('draft', 'cancel') or product_tracking in ('none', False) or (state == 'done' and product_tracking == 'serial' and product_qty &gt; 1)</attribute>
                 </xpath>
 
-                <!-- Campo previsualizado en borrador -->
+                <!--
+                    Campo solution_lot_id retirado por completo de la
+                    UI. Sigue existiendo en el modelo por
+                    compatibilidad (heredado del flujo de Soluciones)
+                    pero no se muestra a ningun usuario.
+                -->
                 <xpath expr="//div[field[@name='lot_producing_ids']]" position="after">
-                    <div class="o_row" invisible="state != 'draft' or product_tracking in ('none', False)">
-                        <field name="solution_lot_id" readonly="0" decoration-warning="1" class="fw-bold"
-                               invisible="not amunet_is_solution_product"/>
-                        <span class="text-muted ms-2">(Editable antes de confirmar)</span>
-                    </div>
+                    <field name="solution_lot_id" invisible="1"/>
                 </xpath>
 
                 <!-- Ocultar botón nativo de generar lote en borrador (todas las variantes) -->
