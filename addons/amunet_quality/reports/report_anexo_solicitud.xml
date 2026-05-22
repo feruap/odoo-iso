@@ -69,7 +69,7 @@
                                 padding:          3px 6px;
                                 height:           23px;
                                 vertical-align:   middle;">
-                                <t t-esc="o.analysis_date and o.analysis_date.strftime('%d/%m/%Y') or ''"/>
+                                <t t-esc="o.analysis_date and o.analysis_date.strftime('%d.%m.%y') or ''"/>
                             </td>
                             <td style="
                                 width:            13%;
