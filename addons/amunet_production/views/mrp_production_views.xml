@@ -143,15 +143,24 @@
                     <attribute name="column_invisible">False</attribute>
                 </xpath>
 
-                <!-- 3. Insertar Disolucion y Valido despues de Cantidad Utilizada -->
+                <!--
+                    Disolucion y Valido: columnas especificas del flujo
+                    de Soluciones (linea larga). Se ocultan en linea
+                    corta usando column_invisible con la flag del
+                    producto padre.
+                -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='quantity']" position="after">
-                    <field name="amunet_dissolution" widget="boolean_toggle" string="Disolucion"/>
+                    <field name="amunet_dissolution"
+                        widget="boolean_toggle"
+                        string="Disolucion"
+                        column_invisible="not parent.amunet_is_solution_product"/>
                     <field name="amunet_is_valid"
                         widget="boolean"
                         readonly="1"
                         string="Valido"
                         decoration-success="amunet_is_valid == True"
-                        decoration-danger="amunet_is_valid == False"/>
+                        decoration-danger="amunet_is_valid == False"
+                        column_invisible="not parent.amunet_is_solution_product"/>
                 </xpath>
 
                 <!-- Ocultar badge de disponibilidad nativo -->
