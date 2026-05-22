@@ -11,7 +11,13 @@
 
                 <!-- Botones de accion en header -->
                 <xpath expr="//header" position="inside">
-                    <button name="action_request_analysis" string="Confirmar análisis" type="object" class="oe_highlight" invisible="state == 'done' or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"/>
+                    <!--
+                        'Confirmar analisis' aparece solo cuando la
+                        MO esta TERMINADA (to_close o done) y el
+                        producto requiere analisis de QC. Es el
+                        momento de mandar muestra al laboratorio.
+                    -->
+                    <button name="action_request_analysis" string="Confirmar análisis" type="object" class="oe_highlight" invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"/>
                     <button name="%(amunet_production.action_report_production_zebra_label)d" string="Imprimir Etiqueta" type="action" class="oe_highlight" invisible="not amunet_all_ingredients_valid"/>
                 </xpath>
 
