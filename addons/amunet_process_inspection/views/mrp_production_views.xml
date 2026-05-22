@@ -35,6 +35,37 @@
                        help="True si existe un preflight aprobado para esta orden. Requisito DURO para confirmar."/>
             </xpath>
 
+            <!--
+                Gate visual del preflight:
+                Cuando route_type es 'short' o 'long' y todavia no se
+                aprobo el preflight, ocultar TODOS los botones de
+                accion (Confirmar, Asignar, Iniciar, Marcar hecho,
+                Planificar, etc.) EXCEPTO 'Cancelar' y 'Validar
+                piloto'. Asi el usuario solo puede pulsar Validar
+                piloto o cancelar, lo que refuerza la regla SGC.
+            -->
+            <xpath expr="//button[@name='action_confirm']" position="attributes">
+                <attribute name="invisible">state != 'draft' or amunet_is_solution_product or (not preflight_approved and route_type in ('short','long'))</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_assign']" position="attributes">
+                <attribute name="invisible">state not in ('confirmed','progress') or (not preflight_approved and route_type in ('short','long'))</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_start']" position="attributes">
+                <attribute name="invisible">state not in ('confirmed','progress','to_close') or (not preflight_approved and route_type in ('short','long'))</attribute>
+            </xpath>
+            <xpath expr="//button[@name='button_mark_done']" position="attributes">
+                <attribute name="invisible">state not in ('confirmed','progress','to_close') or (not preflight_approved and route_type in ('short','long'))</attribute>
+            </xpath>
+            <xpath expr="//button[@name='button_plan']" position="attributes">
+                <attribute name="invisible">state not in ('confirmed') or (not preflight_approved and route_type in ('short','long'))</attribute>
+            </xpath>
+            <xpath expr="//button[@name='button_unplan']" position="attributes">
+                <attribute name="invisible">state not in ('confirmed') or (not preflight_approved and route_type in ('short','long'))</attribute>
+            </xpath>
+            <xpath expr="//button[@name='do_unreserve']" position="attributes">
+                <attribute name="invisible">state not in ('confirmed','progress') or (not preflight_approved and route_type in ('short','long'))</attribute>
+            </xpath>
+
             <!-- Pestana al final del notebook -->
             <xpath expr="//notebook" position="inside">
                 <page string="Inspecciones de proceso"
