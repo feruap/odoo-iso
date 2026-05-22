@@ -73,10 +73,12 @@
                         </span>
                     </div>
 
-                    <label for="solution_expiration_date" string="Caducidad"/>
+                    <label for="amunet_expiration_text" string="Caducidad (YYYY-MM)"/>
                     <div class="o_row">
-                        <field name="solution_expiration_date" force_save="1"/>
-                        <field name="amunet_expiration_text" readonly="1" force_save="1" class="text-muted"/>
+                        <field name="amunet_expiration_text"
+                               placeholder="2026-05"
+                               force_save="1"/>
+                        <field name="solution_expiration_date" invisible="1"/>
                     </div>
                     <field name="quality_analysis_status" readonly="1" force_save="1" decoration-info="quality_analysis_status == 'requested'" decoration-success="quality_analysis_status == 'approved'" decoration-danger="quality_analysis_status == 'rejected'"/>
                     <field name="amunet_all_ingredients_valid" invisible="1"/>
@@ -98,12 +100,11 @@
                     <field name="amunet_product_categ_id" string="Categoria" readonly="1"/>
                     <field name="amunet_is_solution_product" invisible="1"/>
                 </xpath>
-                <!-- Ocultar widget nativo date_start; mostrar campo computado con formato DD/MM/YY HH:MM AM/PM -->
-                <xpath expr="//field[@name='date_start']" position="attributes">
-                    <attribute name="invisible">1</attribute>
-                </xpath>
+                <!-- Fecha programada: editable (antes era readonly) -->
                 <xpath expr="//div[@name='date_start']" position="after">
-                    <field name="amunet_scheduled_date_display" readonly="1"/>
+                    <field name="amunet_scheduled_date_display"
+                           readonly="1" class="text-muted"
+                           invisible="state not in ('confirmed','progress','to_close','done')"/>
                 </xpath>
 
                 <!-- TABLA DE INGREDIENTES orden: producto | por consumir | lote | cant.utilizada | disolucion | valido -->

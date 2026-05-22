@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api, Command
+from odoo import models, fields, api, Command, _
 from odoo.exceptions import UserError
 
 class MrpProduction(models.Model):
@@ -83,7 +83,7 @@ class MrpProduction(models.Model):
             rec.amunet_product_categ_id = category
             rec.amunet_is_solution_product = 'solucion' in category_name.lower()
 
-    @api.depends('product_id')
+    @api.depends('product_id', 'date_start')
     def _compute_quality_params(self):
         for rec in self:
             if not rec.product_id:
@@ -96,7 +96,6 @@ class MrpProduction(models.Model):
 
             product = rec.product_id
             rec.quality_ph_initial = product.amunet_initial_ph
-            rec.amunet_expiration_text = product.amunet_expiration_text
             rec.amunet_sys_weighing_range = product.amunet_weighing_range_text
 
             if product.amunet_req_quality_control:
@@ -104,19 +103,51 @@ class MrpProduction(models.Model):
             else:
                 rec.quality_analysis_status = 'none'
 
-            if product.amunet_expiration_text:
-                txt = product.amunet_expiration_text.lower()
-                from datetime import timedelta
-                days_to_add = 0
-                try:
-                    val = float(''.join(c for c in txt if c.isdigit() or c == '.'))
-                    if 'mes' in txt: days_to_add = val * 30
-                    elif 'año' in txt or 'ano' in txt: days_to_add = val * 365
-                    elif 'dia' in txt or 'día' in txt: days_to_add = val
-                except:
-                    pass
-                if days_to_add > 0:
-                    rec.solution_expiration_date = fields.Datetime.now() + timedelta(days=days_to_add)
+            # Calculo de caducidad en formato Amunet "YYYY-MM":
+            # Toma la duracion configurada en el producto
+            # (amunet_expiration_text del template, ej. "24 meses"
+            # o "2 años") y la suma a la fecha programada de la MO
+            # (date_start, fallback a hoy).
+            from datetime import timedelta
+            from dateutil.relativedelta import relativedelta
+            base_text = product.amunet_expiration_text or ''
+            txt = base_text.lower()
+            months_to_add = 0
+            try:
+                val = float(
+                    ''.join(c for c in txt if c.isdigit() or c == '.'))
+                if 'año' in txt or 'ano' in txt:
+                    months_to_add = int(val * 12)
+                elif 'mes' in txt:
+                    months_to_add = int(val)
+                elif 'dia' in txt or 'día' in txt:
+                    months_to_add = int(val / 30) or 0
+            except Exception:
+                pass
+
+            base_date = rec.date_start or fields.Datetime.now()
+            if months_to_add > 0:
+                expiration = base_date + relativedelta(months=months_to_add)
+                rec.solution_expiration_date = expiration
+                # Formato exacto pedido por el operador: YYYY-MM
+                rec.amunet_expiration_text = expiration.strftime('%Y-%m')
+            else:
+                rec.solution_expiration_date = False
+                rec.amunet_expiration_text = False
+
+    @api.constrains('amunet_expiration_text')
+    def _check_expiration_text_format(self):
+        """Valida el formato YYYY-MM cuando el usuario edita manualmente."""
+        import re
+        pattern = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
+        for rec in self:
+            if rec.amunet_expiration_text and not pattern.match(
+                    rec.amunet_expiration_text):
+                from odoo.exceptions import ValidationError
+                raise ValidationError(_(
+                    'El formato de caducidad debe ser YYYY-MM '
+                    '(ejemplo: 2026-05). Recibido: "%s"'
+                ) % rec.amunet_expiration_text)
 
     @api.onchange('product_id')
     def _onchange_product_expiration(self):
@@ -326,7 +357,25 @@ class MrpProduction(models.Model):
                 if product and (product.amunet_req_quality_control or product.qc_required):
                     vals['quality_analysis_status'] = 'to_request'
             self._amunet_complete_workorder_workcenters(vals)
+            # Folio Amunet de la MO: si el producto tiene
+            # mo_sequence_id (formato MMAA/NN/ABR), usar esa
+            # secuencia en lugar de la generica del picking_type.
+            # Asi una MO de VIH 1.2 queda con folio "0526/01/VIH".
+            if vals.get('product_id') and (
+                not vals.get('name') or vals.get('name') == '/'
+            ):
+                product = self.env['product.product'].browse(
+                    vals['product_id']).exists()
+                mo_seq = product and product.product_tmpl_id.mo_sequence_id
+                if mo_seq:
+                    vals['name'] = mo_seq.next_by_id()
         productions = super().create(vals_list)
+        # Forzar recompute de los campos de calidad/caducidad. El
+        # compute @api.depends('product_id','date_start') a veces no
+        # se dispara con cache fresco en create. Esto garantiza que
+        # amunet_expiration_text y solution_expiration_date queden
+        # poblados desde el inicio.
+        productions._compute_quality_params()
         productions._auto_generate_lot_draft()
         return productions
 
@@ -390,6 +439,22 @@ class MrpProduction(models.Model):
                 except Exception:
                     pass
         return super().action_confirm()
+
+    def _prepare_stock_lot_values(self):
+        """Override Amunet:
+        Si el producto tiene mo_sequence_id (formato Amunet), el lote
+        del producto fabricado HEREDA el folio de la MO en lugar de
+        consumir una secuencia distinta. Asi: MO=0526/01/VIH y el
+        stock.lot del kit fabricado tambien sera 0526/01/VIH.
+        """
+        self.ensure_one()
+        if self.product_id.product_tmpl_id.mo_sequence_id and self.name:
+            return {
+                'product_id': self.product_id.id,
+                'company_id': self.company_id.id,
+                'name': self.name,
+            }
+        return super()._prepare_stock_lot_values()
 
     def action_request_analysis(self):
         """Valida estado/reactivos/checklist y abre el Wizard de análisis"""
