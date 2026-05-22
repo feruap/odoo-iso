@@ -32,10 +32,14 @@
                     <attribute name="invisible">1</attribute>
                 </xpath>
 
-                <!-- Lote: renombrar label y hacerlo visible desde borrador -->
+                <!--
+                    Lote: ocultar label en los mismos estados que el
+                    campo (incluido 'draft') para que no quede el
+                    label huerfano sin valor abajo.
+                -->
                 <xpath expr="//label[@for='lot_producing_ids']" position="attributes">
-                    <attribute name="string">Lote de produccion (Asignado)</attribute>
-                    <attribute name="invisible">state == 'cancel' or product_tracking in ('none', False) or (state == 'done' and product_tracking == 'serial' and product_qty &gt; 1)</attribute>
+                    <attribute name="string">Lote producido</attribute>
+                    <attribute name="invisible">state in ('draft', 'cancel') or product_tracking in ('none', False) or (state == 'done' and product_tracking == 'serial' and product_qty &gt; 1)</attribute>
                 </xpath>
                 <!-- Div contenedor del campo nativo: Oculto en borrador porque no existe lote físico aún -->
                 <xpath expr="//div[field[@name='lot_producing_ids']]" position="attributes">
