@@ -1,76 +1,143 @@
 # BACKLOG maestro - Implementacion Odoo Amunet (fuente de verdad de planificacion)
-# UNICO escritor: agente PM (sesion Claude 'pm'). Los demas agentes PIDEN cambios.
-# Rama: pm/backlog. Estados: backlog | listo_para_tomar | en_progreso |
-#   en_staging | esperando_aprobacion | en_produccion | bloqueada | cancelada
-# Ver backlog/MAPA_AREAS.yaml (enrutamiento) y backlog/ISO13485.yaml (cobertura).
-version: 1
+# UNICO escritor: agente PM. Rama: pm/backlog.
+# Estados: backlog | listo_para_tomar | en_progreso | en_staging |
+#   esperando_aprobacion | en_produccion | bloqueada | cancelada
+version: 2
 actualizado: 2026-05-25
 tareas:
   - id: T-0001
-    titulo: "Acceso multiusuario aislado al agente Claude (ensayo, rrhh, pm)"
+    titulo: "Acceso multiusuario aislado al agente Claude"
     area: nucleo
     modulos: []
     responsable_agente: desarrollo
     estado: en_produccion
     depende_de: []
-    criterio_aceptacion: "Cada usuario entra a su sesion Claude aislada via Authelia; restriccion por rol; notificacion por correo."
     riesgo_regulatorio: bajo
     clausula_iso: ""
-    evidencia: "https://agentfc.amunet.com.mx"
     aprobador: fernando
     fecha_alta: 2026-05-25
-    notas: "Infra del agente, no Odoo."
   - id: T-0002
-    titulo: "Project Manager: backlog + agente PM + sondas"
+    titulo: "Project Manager: backlog + agente PM + sondas + email semanal + espejo issues"
     area: nucleo
     modulos: []
     responsable_agente: pm
     estado: en_progreso
     depende_de: [T-0001]
-    criterio_aceptacion: "BACKLOG.yaml, MAPA_AREAS.yaml e ISO13485.yaml en repo; agente pm operativo; reporte que-falta."
     riesgo_regulatorio: bajo
-    clausula_iso: ""
-    evidencia: ""
     aprobador: desarrollo
-    rama_git: pm/backlog
     fecha_alta: 2026-05-25
-    notas: "Fase 0+1 del diseno del PM."
   - id: T-0003
     titulo: "Calificacion IQ/OQ/PQ de equipos e instalaciones"
     area: ensayo
     modulos: [amunet_equipment_calibration]
     responsable_agente: ensayo
-    estado: backlog
+    estado: listo_para_tomar
     depende_de: []
-    criterio_aceptacion: "Registrar protocolo IQ/OQ/PQ por equipo con firma/PIN, fecha y evidencia; trazable y exportable."
     riesgo_regulatorio: alto
     clausula_iso: "7.5.6 / 7.6"
     aprobador: desarrollo
+    criterio_aceptacion: "Registrar protocolo IQ/OQ/PQ por equipo con criterios, firma/PIN, fecha y evidencia; trazable y exportable."
+    especificacion_ui: "Menu Calibracion>Calificaciones; lista (equipo,tipo,fecha,estado con color); formulario con pestanas datos/criterios(lineas)/evidencia/firma; boton Firmar-Aprobar con PIN; smart button en el equipo; filtros por tipo/estado; reporte PDF del protocolo."
     fecha_alta: 2026-05-25
-    notas: "Semilla; validar alcance con Mery."
   - id: T-0004
     titulo: "Mantenimiento preventivo/correctivo de equipos"
     area: ensayo
     modulos: [amunet_equipment_calibration]
     responsable_agente: ensayo
-    estado: backlog
+    estado: listo_para_tomar
     depende_de: [T-0003]
-    criterio_aceptacion: "Plan de mantenimiento por equipo, ordenes e historial trazable."
     riesgo_regulatorio: medio
     clausula_iso: "6.3 / 7.5"
     aprobador: desarrollo
+    criterio_aceptacion: "Plan de mantenimiento por equipo, ordenes (prev/corr) con checklist e historial trazable; generacion preventiva automatica."
+    especificacion_ui: "Menu Calibracion>Mantenimiento; vista lista y calendario de ordenes; formulario orden (equipo,tipo,fecha prog,responsable,checklist,estado); cron preventivo; smart button en equipo; alertas de vencimiento."
     fecha_alta: 2026-05-25
-    notas: "Semilla."
   - id: T-0005
     titulo: "Matriz de competencias y vigencias de capacitacion"
     area: rrhh
     modulos: [amunet_competencias, amunet_hr_training]
     responsable_agente: rrhh
-    estado: backlog
+    estado: listo_para_tomar
     depende_de: []
-    criterio_aceptacion: "Matriz por puesto/SOP con vigencias; bloqueo pre-PIN documentado."
     riesgo_regulatorio: alto
     clausula_iso: "6.2"
     aprobador: desarrollo
+    criterio_aceptacion: "Matriz empleado x competencia/SOP con semaforo de vigencia; bloqueo pre-PIN documentado; exportable."
+    especificacion_ui: "Menu Capacitacion>Matriz de competencias; vista matriz (empleado x SOP) con semaforo (vigente/por vencer/vencido); filtros por puesto/depto; tablero de vencimientos; reporte exportable."
     fecha_alta: 2026-05-25
-    notas: "Semilla; toca Calidad por bloqueo pre-PIN."
+  - id: T-0006
+    titulo: "Gestor de documentos controlados (DMS)"
+    area: documentacion
+    modulos: [amunet_documentos]
+    responsable_agente: documentacion
+    estado: listo_para_tomar
+    depende_de: []
+    riesgo_regulatorio: alto
+    clausula_iso: "4.2.4 / 4.2.5"
+    aprobador: desarrollo
+    criterio_aceptacion: "Alta de documento controlado, publicar version nueva (la anterior pasa a obsoleta), trazable quien/cuando, lista de distribucion y firmas; exportable."
+    especificacion_ui: "Modulo nuevo amunet_documentos. Menu Documentacion>Documentos controlados; lista (codigo,titulo,version,estado,vigencia con color); formulario con pestanas Version/Historial/Distribucion/Firmas; boton Publicar nueva version; boton Aprobar con PIN; reporte PDF Maestro de documentos."
+    fecha_alta: 2026-05-25
+  - id: T-0007
+    titulo: "Tablero de avance de capacitacion y alertas de vencimiento"
+    area: rrhh
+    modulos: [amunet_competencias, amunet_hr_training]
+    responsable_agente: rrhh
+    estado: listo_para_tomar
+    depende_de: [T-0005]
+    riesgo_regulatorio: medio
+    clausula_iso: "6.2"
+    aprobador: desarrollo
+    criterio_aceptacion: "Dashboard de % avance por puesto/depto; actividades/alertas automaticas X dias antes del vencimiento."
+    especificacion_ui: "Menu Capacitacion>Tablero; graficas de avance; lista de pendientes por empleado; cron de alertas que crea actividad al responsable."
+    fecha_alta: 2026-05-25
+  - id: T-0008
+    titulo: "Control de cambios documentales e impresion controlada"
+    area: documentacion
+    modulos: [amunet_change_control]
+    responsable_agente: documentacion
+    estado: listo_para_tomar
+    depende_de: [T-0006]
+    riesgo_regulatorio: medio
+    clausula_iso: "4.2"
+    aprobador: desarrollo
+    criterio_aceptacion: "Solicitud de cambio documental con flujo y aprobacion trazable; impresion controlada que registra usuario/fecha y marca copias no controladas."
+    especificacion_ui: "Menu Documentacion>Solicitudes de cambio; formulario con estados y botones de aprobacion; registro de impresiones con sello usuario/fecha."
+    fecha_alta: 2026-05-25
+  - id: T-0009
+    titulo: "Acciones correctivas y preventivas (CAPA)"
+    area: calidad
+    modulos: []
+    responsable_agente: desarrollo
+    estado: backlog
+    depende_de: []
+    riesgo_regulatorio: alto
+    clausula_iso: "8.5"
+    aprobador: fernando
+    criterio_aceptacion: "Modulo CAPA: origen, analisis de causa, acciones, responsables, fechas, verificacion de eficacia; trazable."
+    notas: "HUECO SIN CUBRIR. Pertenece a Calidad; requiere crear el agente del area Calidad (no asignado a ensayo/rrhh/documentacion)."
+    fecha_alta: 2026-05-25
+  - id: T-0010
+    titulo: "Control de producto no conforme"
+    area: calidad
+    modulos: [amunet_rework_control, amunet_quality]
+    responsable_agente: desarrollo
+    estado: backlog
+    depende_de: []
+    riesgo_regulatorio: alto
+    clausula_iso: "8.2.4"
+    aprobador: fernando
+    notas: "Pertenece a Calidad (area futura)."
+    fecha_alta: 2026-05-25
+  - id: T-0011
+    titulo: "Programa de auditorias internas"
+    area: auditorias
+    modulos: [amunet_auditorias]
+    responsable_agente: desarrollo
+    estado: backlog
+    depende_de: []
+    riesgo_regulatorio: medio
+    clausula_iso: "8.2.x"
+    aprobador: fernando
+    notas: "Area futura."
+    fecha_alta: 2026-05-25

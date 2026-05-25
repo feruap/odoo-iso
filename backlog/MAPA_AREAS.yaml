@@ -10,16 +10,21 @@ areas:
     agente: rrhh
     aprobador: desarrollo
     modulos: [amunet_hr_training, amunet_competencias, amunet_hr_visibility, hr]
+  documentacion:
+    descripcion: "Control de documentos y registros (ISO 13485 4.2)"
+    agente: documentacion
+    aprobador: desarrollo
+    modulos: [amunet_change_control, amunet_documentos]
   produccion:
-    descripcion: "Produccion (area futura, sin agente aun)"
+    descripcion: "Produccion (area futura)"
     agente: desarrollo
     aprobador: desarrollo
     modulos: [amunet_production, amunet_transfer_bom, amunet_pilot_preflight]
   calidad:
-    descripcion: "Calidad (area futura)"
+    descripcion: "Calidad: no conformidades y CAPA (area futura, requiere agente)"
     agente: desarrollo
     aprobador: fernando
-    modulos: [amunet_quality, amunet_process_inspection, amunet_rework_control, amunet_change_control]
+    modulos: [amunet_quality, amunet_process_inspection, amunet_rework_control]
   lotes:
     descripcion: "Lotes y etiquetado (area futura)"
     agente: desarrollo
@@ -36,7 +41,7 @@ areas:
     aprobador: desarrollo
     modulos: [amunet_warehouse_access, amunet_material_request, amunet_packaging_planning]
   nucleo:
-    descripcion: "Base Odoo, config global, web_responsive, infra del agente"
+    descripcion: "Base Odoo, config global, infra del agente"
     agente: desarrollo
     aprobador: fernando
     modulos: [web_responsive]
