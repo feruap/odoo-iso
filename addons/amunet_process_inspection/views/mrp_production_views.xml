@@ -38,32 +38,28 @@
             <!--
                 Gate visual del preflight:
                 Cuando route_type es 'short' o 'long' y todavia no se
-                aprobo el preflight, ocultar TODOS los botones de
-                accion (Confirmar, Asignar, Iniciar, Marcar hecho,
-                Planificar, etc.) EXCEPTO 'Cancelar' y 'Validar
-                piloto'. Asi el usuario solo puede pulsar Validar
-                piloto o cancelar, lo que refuerza la regla SGC.
+                aprobo el preflight, ocultar los botones que SI tienen
+                funcion (Confirmar, Asignar, Planificar) para que el
+                usuario solo pueda Validar piloto o Cancelar.
+
+                NOTA: action_start, do_unreserve, button_unplan y
+                button_mark_done NO se tocan aqui. Su visibilidad la
+                controla amunet_production (los dos primeros se ocultan
+                siempre porque cada workorder tiene su propio inicio;
+                button_unplan y button_mark_done se controlan via campo
+                amunet_can_produce y por reglas nativas).
             -->
             <xpath expr="//button[@name='action_confirm']" position="attributes">
                 <attribute name="invisible">state != 'draft' or amunet_is_solution_product or (not preflight_approved and route_type in ('short','long'))</attribute>
             </xpath>
             <xpath expr="//button[@name='action_assign']" position="attributes">
-                <attribute name="invisible">state not in ('confirmed','progress') or (not preflight_approved and route_type in ('short','long'))</attribute>
-            </xpath>
-            <xpath expr="//button[@name='action_start']" position="attributes">
-                <attribute name="invisible">state not in ('confirmed','progress','to_close') or (not preflight_approved and route_type in ('short','long'))</attribute>
-            </xpath>
-            <xpath expr="//button[@name='button_mark_done']" position="attributes">
-                <attribute name="invisible">state not in ('confirmed','progress','to_close') or (not preflight_approved and route_type in ('short','long'))</attribute>
+                <attribute name="invisible">state in ('draft','done','cancel') or not reserve_visible or (not preflight_approved and route_type in ('short','long'))</attribute>
             </xpath>
             <xpath expr="//button[@name='button_plan']" position="attributes">
-                <attribute name="invisible">state not in ('confirmed') or (not preflight_approved and route_type in ('short','long'))</attribute>
+                <attribute name="invisible">state not in ('confirmed','progress','to_close') or not workorder_ids or is_planned or (not preflight_approved and route_type in ('short','long'))</attribute>
             </xpath>
             <xpath expr="//button[@name='button_unplan']" position="attributes">
-                <attribute name="invisible">state not in ('confirmed') or (not preflight_approved and route_type in ('short','long'))</attribute>
-            </xpath>
-            <xpath expr="//button[@name='do_unreserve']" position="attributes">
-                <attribute name="invisible">state not in ('confirmed','progress') or (not preflight_approved and route_type in ('short','long'))</attribute>
+                <attribute name="invisible">not is_planned or state in ('cancel','done') or (not preflight_approved and route_type in ('short','long'))</attribute>
             </xpath>
 
             <!-- Pestana al final del notebook -->
