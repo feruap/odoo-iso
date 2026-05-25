@@ -1,0 +1,76 @@
+# BACKLOG maestro - Implementacion Odoo Amunet (fuente de verdad de planificacion)
+# UNICO escritor: agente PM (sesion Claude 'pm'). Los demas agentes PIDEN cambios.
+# Rama: pm/backlog. Estados: backlog | listo_para_tomar | en_progreso |
+#   en_staging | esperando_aprobacion | en_produccion | bloqueada | cancelada
+# Ver backlog/MAPA_AREAS.yaml (enrutamiento) y backlog/ISO13485.yaml (cobertura).
+version: 1
+actualizado: 2026-05-25
+tareas:
+  - id: T-0001
+    titulo: "Acceso multiusuario aislado al agente Claude (ensayo, rrhh, pm)"
+    area: nucleo
+    modulos: []
+    responsable_agente: desarrollo
+    estado: en_produccion
+    depende_de: []
+    criterio_aceptacion: "Cada usuario entra a su sesion Claude aislada via Authelia; restriccion por rol; notificacion por correo."
+    riesgo_regulatorio: bajo
+    clausula_iso: ""
+    evidencia: "https://agentfc.amunet.com.mx"
+    aprobador: fernando
+    fecha_alta: 2026-05-25
+    notas: "Infra del agente, no Odoo."
+  - id: T-0002
+    titulo: "Project Manager: backlog + agente PM + sondas"
+    area: nucleo
+    modulos: []
+    responsable_agente: pm
+    estado: en_progreso
+    depende_de: [T-0001]
+    criterio_aceptacion: "BACKLOG.yaml, MAPA_AREAS.yaml e ISO13485.yaml en repo; agente pm operativo; reporte que-falta."
+    riesgo_regulatorio: bajo
+    clausula_iso: ""
+    evidencia: ""
+    aprobador: desarrollo
+    rama_git: pm/backlog
+    fecha_alta: 2026-05-25
+    notas: "Fase 0+1 del diseno del PM."
+  - id: T-0003
+    titulo: "Calificacion IQ/OQ/PQ de equipos e instalaciones"
+    area: ensayo
+    modulos: [amunet_equipment_calibration]
+    responsable_agente: ensayo
+    estado: backlog
+    depende_de: []
+    criterio_aceptacion: "Registrar protocolo IQ/OQ/PQ por equipo con firma/PIN, fecha y evidencia; trazable y exportable."
+    riesgo_regulatorio: alto
+    clausula_iso: "7.5.6 / 7.6"
+    aprobador: desarrollo
+    fecha_alta: 2026-05-25
+    notas: "Semilla; validar alcance con Mery."
+  - id: T-0004
+    titulo: "Mantenimiento preventivo/correctivo de equipos"
+    area: ensayo
+    modulos: [amunet_equipment_calibration]
+    responsable_agente: ensayo
+    estado: backlog
+    depende_de: [T-0003]
+    criterio_aceptacion: "Plan de mantenimiento por equipo, ordenes e historial trazable."
+    riesgo_regulatorio: medio
+    clausula_iso: "6.3 / 7.5"
+    aprobador: desarrollo
+    fecha_alta: 2026-05-25
+    notas: "Semilla."
+  - id: T-0005
+    titulo: "Matriz de competencias y vigencias de capacitacion"
+    area: rrhh
+    modulos: [amunet_competencias, amunet_hr_training]
+    responsable_agente: rrhh
+    estado: backlog
+    depende_de: []
+    criterio_aceptacion: "Matriz por puesto/SOP con vigencias; bloqueo pre-PIN documentado."
+    riesgo_regulatorio: alto
+    clausula_iso: "6.2"
+    aprobador: desarrollo
+    fecha_alta: 2026-05-25
+    notas: "Semilla; toca Calidad por bloqueo pre-PIN."

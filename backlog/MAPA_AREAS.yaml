@@ -1,0 +1,46 @@
+# Mapa modulo -> area -> agente responsable -> aprobador. Fuente unica, versionada.
+areas:
+  ensayo:
+    descripcion: "Validacion de equipos/instalaciones, mantenimiento, calibraciones"
+    agente: ensayo
+    aprobador: desarrollo
+    modulos: [amunet_equipment_calibration]
+  rrhh:
+    descripcion: "Capacitacion, competencias (ISO 13485 6.2), empleados"
+    agente: rrhh
+    aprobador: desarrollo
+    modulos: [amunet_hr_training, amunet_competencias, amunet_hr_visibility, hr]
+  produccion:
+    descripcion: "Produccion (area futura, sin agente aun)"
+    agente: desarrollo
+    aprobador: desarrollo
+    modulos: [amunet_production, amunet_transfer_bom, amunet_pilot_preflight]
+  calidad:
+    descripcion: "Calidad (area futura)"
+    agente: desarrollo
+    aprobador: fernando
+    modulos: [amunet_quality, amunet_process_inspection, amunet_rework_control, amunet_change_control]
+  lotes:
+    descripcion: "Lotes y etiquetado (area futura)"
+    agente: desarrollo
+    aprobador: desarrollo
+    modulos: [amunet_lot, amunet_label]
+  auditorias:
+    descripcion: "Auditorias (area futura)"
+    agente: desarrollo
+    aprobador: fernando
+    modulos: [amunet_auditorias]
+  almacen:
+    descripcion: "Almacen (area futura)"
+    agente: desarrollo
+    aprobador: desarrollo
+    modulos: [amunet_warehouse_access, amunet_material_request, amunet_packaging_planning]
+  nucleo:
+    descripcion: "Base Odoo, config global, web_responsive, infra del agente"
+    agente: desarrollo
+    aprobador: fernando
+    modulos: [web_responsive]
+reglas:
+  - "Tarea que toca dos areas -> riesgo cruce -> responsable desarrollo."
+  - "Modulo de area sin agente -> estado backlog, responsable desarrollo."
+  - "riesgo_regulatorio alto -> requiere aprobador explicito; no se cierra solo."

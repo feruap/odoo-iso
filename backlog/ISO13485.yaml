@@ -1,0 +1,33 @@
+# Checklist de cobertura ISO 13485 (base de la sonda regulatoria del PM).
+# cobertura: cubierto | parcial | sin_cubrir. La confirma un humano de calidad.
+version: 1
+actualizado: 2026-05-25
+clausulas:
+  - clausula: "4.2.4/4.2.5 Control de documentos y registros"
+    modulos: [amunet_change_control]
+    cobertura: parcial
+    tareas: []
+  - clausula: "6.2 Competencia, formacion y toma de conciencia"
+    modulos: [amunet_competencias, amunet_hr_training]
+    cobertura: parcial
+    tareas: [T-0005]
+  - clausula: "6.3/7.5 Infraestructura, mantenimiento y control de produccion"
+    modulos: [amunet_equipment_calibration, amunet_production, amunet_process_inspection]
+    cobertura: parcial
+    tareas: [T-0004]
+  - clausula: "7.5.6 Validacion de procesos / 7.6 Equipos de seguimiento y medicion"
+    modulos: [amunet_equipment_calibration]
+    cobertura: parcial
+    tareas: [T-0003]
+  - clausula: "8.2.4 Control de producto no conforme"
+    modulos: [amunet_rework_control, amunet_quality]
+    cobertura: parcial
+    tareas: []
+  - clausula: "8.5 Acciones correctivas y preventivas (CAPA)"
+    modulos: []
+    cobertura: sin_cubrir
+    tareas: []
+  - clausula: "8.2.x Auditorias internas"
+    modulos: [amunet_auditorias]
+    cobertura: parcial
+    tareas: []
