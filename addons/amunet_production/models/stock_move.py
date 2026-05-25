@@ -10,6 +10,38 @@ class StockMove(models.Model):
     amunet_ph_adjustment = fields.Char(string='Ajuste de pH')
     amunet_lot_id = fields.Many2one('stock.lot', string='Lote')
 
+    # Cantidad que el almacen registra al surtir. Es distinta a
+    # 'quantity' (cantidad utilizada/consumida nativa Odoo): esta la
+    # captura almacen al entregar, 'quantity' la concilia produccion al
+    # validar el surtido o cerrar la MO. Espeja qty_supplied de
+    # amunet_material_request_line para mantener vocabulario.
+    amunet_qty_supplied = fields.Float(
+        string='Cantidad surtida',
+        digits='Product Unit of Measure',
+        tracking=True,
+        copy=False,
+    )
+
+    # Flag de UI: True si el usuario actual puede editar la cantidad
+    # teorica (product_uom_qty) y la utilizada (quantity). Almacen puro
+    # NO debe modificarlas; solo produccion. Mery tiene ambos grupos en
+    # staging asi que sigue pudiendo editar.
+    amunet_user_can_edit_consume = fields.Boolean(
+        string='Puede editar consumo',
+        compute='_compute_amunet_user_can_edit_consume',
+    )
+
+    @api.depends_context('uid')
+    def _compute_amunet_user_can_edit_consume(self):
+        user = self.env.user
+        can_edit = (
+            user.has_group('amunet_production.group_production_supervisor')
+            or user.has_group('amunet_production.group_production_operator')
+            or user.has_group('mrp.group_mrp_user')
+        )
+        for rec in self:
+            rec.amunet_user_can_edit_consume = can_edit
+
     amunet_is_valid = fields.Boolean(
         string='Valido',
         compute='_compute_amunet_is_valid',

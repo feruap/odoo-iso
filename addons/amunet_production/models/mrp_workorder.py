@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from markupsafe import Markup
 
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 
@@ -24,6 +24,47 @@ class MrpWorkorder(models.Model):
         string='Tiempo',
         compute='_compute_amunet_operator_guidance',
     )
+
+    # ============================
+    # Flujo de Surtido (workcenter AMP)
+    # ============================
+    # Espeja el flujo de amunet_material_request:
+    #   pending             -> Almacen no inicia
+    #   in_progress         -> Almacen surtiendo (timer corriendo)
+    #   awaiting_reception  -> Almacen confirmo, espera firma de produccion
+    #   received            -> Produccion valido, WO done, libera siguiente
+    amunet_is_supply_workorder = fields.Boolean(
+        string='Es surtido (AMP)',
+        compute='_compute_is_supply_workorder',
+        store=True,
+    )
+    amunet_supply_state = fields.Selection([
+        ('pending', 'Pendiente de iniciar'),
+        ('in_progress', 'Surtiendo'),
+        ('awaiting_reception', 'Esperando recepcion de produccion'),
+        ('received', 'Recibido'),
+    ], string='Estado del surtido', default='pending', copy=False, tracking=True)
+    amunet_supplied_by_id = fields.Many2one(
+        'res.users', string='Surtido por', readonly=True, copy=False,
+    )
+    amunet_supplied_date = fields.Datetime(
+        string='Fecha de surtido', readonly=True, copy=False,
+    )
+    amunet_received_by_id = fields.Many2one(
+        'res.users', string='Recibido por', readonly=True, copy=False,
+    )
+    amunet_received_date = fields.Datetime(
+        string='Fecha de recepcion', readonly=True, copy=False,
+    )
+    amunet_supply_moves = fields.One2many(
+        related='production_id.move_raw_ids',
+        string='Materiales a surtir',
+    )
+
+    @api.depends('workcenter_id.code')
+    def _compute_is_supply_workorder(self):
+        for wo in self:
+            wo.amunet_is_supply_workorder = (wo.workcenter_id.code or '') == 'AMP'
 
     def _compute_amunet_operator_guidance(self):
         material_labels = {
@@ -129,6 +170,140 @@ class MrpWorkorder(models.Model):
             'views': [(view.id, 'form')] if view else [(False, 'form')],
             'target': 'current',
         }
+
+    # ============================
+    # Acciones del flujo de Surtido (AMP)
+    # ============================
+    def _amunet_check_warehouse_role(self):
+        if not (
+            self.env.user.has_group('amunet_material_request.group_material_warehouse')
+            or self.env.user.has_group('amunet_material_request.group_material_manager')
+        ):
+            raise AccessError(_(
+                'Solo personal del grupo de Almacen puede surtir materiales.'))
+
+    def _amunet_check_production_supervisor(self):
+        if not self.env.user.has_group('amunet_production.group_production_supervisor'):
+            raise AccessError(_(
+                'Solo el supervisor de produccion puede recibir/aceptar el material entregado.'))
+
+    def action_amunet_start_supply(self):
+        self.ensure_one()
+        if not self.amunet_is_supply_workorder:
+            raise UserError(_('Esta accion solo aplica al workorder de Surtido (AMP).'))
+        self._amunet_check_warehouse_role()
+        if self.amunet_supply_state != 'pending':
+            raise UserError(_(
+                'El surtido ya esta iniciado (estado actual: %s).') % self.amunet_supply_state)
+        if self.state in ('done', 'cancel'):
+            raise UserError(_('La operacion ya esta cerrada.'))
+        if self.state in ('pending', 'waiting', 'blocked'):
+            raise UserError(_(
+                'La operacion no esta lista para iniciar. Confirme la MO '
+                'o complete operaciones previas.'))
+        self.sudo().button_start()
+        self.write({'amunet_supply_state': 'in_progress'})
+        # Una vez que un almacenista toma el surtido, cerramos las
+        # actividades pendientes del resto del grupo (mismo patron que
+        # amunet_material_request).
+        if self.production_id:
+            self.production_id._amunet_close_warehouse_supply_activities()
+            self.production_id.sudo().message_post(body=Markup(_(
+                'Surtido de materiales iniciado por <b>%s</b>.'
+            )) % self.env.user.name)
+        return True
+
+    def action_amunet_confirm_supply(self):
+        """Almacen confirma surtido: valida lote + cantidad surtida en
+        cada componente raw, corta el intervalo del timer (sin cerrar
+        la WO), deja la WO esperando recepcion de produccion y notifica.
+        Espeja amunet_material_request.action_confirm_delivery.
+        """
+        self.ensure_one()
+        if not self.amunet_is_supply_workorder:
+            raise UserError(_('Esta accion solo aplica al workorder de Surtido (AMP).'))
+        self._amunet_check_warehouse_role()
+        if self.amunet_supply_state != 'in_progress':
+            raise UserError(_(
+                'Solo se puede confirmar surtido cuando esta en progreso.'))
+        # Validacion espejo de amunet_material_request (lineas 564-582):
+        # cada componente debe tener qty_supplied > 0 y, si el producto
+        # es trazable, lote asignado en move_line_ids.
+        errores = []
+        for move in self.production_id.move_raw_ids:
+            if move.state == 'cancel':
+                continue
+            if (move.amunet_qty_supplied or 0.0) <= 0.0:
+                errores.append(_(
+                    '  - %s: cantidad surtida = 0'
+                ) % move.product_id.display_name)
+                continue
+            tracking = move.product_id.tracking
+            if tracking in ('lot', 'serial'):
+                lotes_validos = move.move_line_ids.filtered(lambda l: l.lot_id)
+                if not lotes_validos:
+                    errores.append(_(
+                        '  - %s: hay cantidades sin lote asignado'
+                    ) % move.product_id.display_name)
+        if errores:
+            raise UserError(_(
+                'Faltan datos por capturar:\n%s'
+            ) % '\n'.join(errores))
+        # Pausar timer sin cerrar la WO.
+        if hasattr(self, 'end_all'):
+            self.sudo().end_all()
+        elif hasattr(self, 'end_previous'):
+            self.sudo().end_previous(doall=True)
+        now = fields.Datetime.now()
+        self.write({
+            'amunet_supply_state': 'awaiting_reception',
+            'amunet_supplied_by_id': self.env.user.id,
+            'amunet_supplied_date': now,
+        })
+        if self.production_id:
+            self.production_id._amunet_notify_production_supply_ready()
+            self.production_id.sudo().message_post(body=Markup(_(
+                'Surtido confirmado por almacen (<b>%s</b>). '
+                'Esperando recepcion de produccion.'
+            )) % self.env.user.name)
+        return True
+
+    def action_amunet_receive_supply(self):
+        """Produccion recibe/acepta el material entregado: copia
+        qty_supplied -> quantity (conciliacion del surtido), cierra la
+        WO (libera siguiente operacion) y notifica.
+        """
+        self.ensure_one()
+        if not self.amunet_is_supply_workorder:
+            raise UserError(_('Esta accion solo aplica al workorder de Surtido (AMP).'))
+        self._amunet_check_production_supervisor()
+        if self.amunet_supply_state != 'awaiting_reception':
+            raise UserError(_(
+                'No hay surtido pendiente de recepcion en esta operacion.'))
+        # Conciliacion del surtido: copiamos qty_supplied -> quantity
+        # en cada componente raw para que la MO refleje lo entregado.
+        # Produccion puede ajustar mas adelante (en button_mark_done).
+        for move in self.production_id.move_raw_ids:
+            if move.state == 'cancel':
+                continue
+            qty = move.amunet_qty_supplied or 0.0
+            if qty > 0:
+                move.sudo().write({'quantity': qty})
+        # Cerrar la WO -> libera la siguiente en la ruta.
+        self.sudo().button_finish()
+        now = fields.Datetime.now()
+        self.write({
+            'amunet_supply_state': 'received',
+            'amunet_received_by_id': self.env.user.id,
+            'amunet_received_date': now,
+        })
+        if self.production_id:
+            self.production_id._amunet_close_production_supply_activities()
+            self.production_id.sudo().message_post(body=Markup(_(
+                'Surtido recibido y aceptado por produccion (<b>%s</b>). '
+                'Liberando siguiente operacion.'
+            )) % self.env.user.name)
+        return True
 
     def button_start(self):
         """Valida calibraciones / estado de equipos antes de arrancar.

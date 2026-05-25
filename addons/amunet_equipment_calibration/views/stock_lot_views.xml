@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_stock_lot_form_amunet_equipment_serial" model="ir.ui.view">
+        <field name="name">stock.lot.form.amunet.equipment.serial</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='description']" position="after">
+                <field name="amunet_allow_multi_serial" invisible="1"/>
+                <group string="Series del fabricante"
+                       name="amunet_equipment_serials"
+                       invisible="not amunet_allow_multi_serial">
+                    <p class="text-muted" colspan="2">
+                        Registra aqui los numeros de serie del fabricante
+                        para cada unidad fisica que entro bajo este lote
+                        Amunet.
+                    </p>
+                    <field name="amunet_serial_ids" nolabel="1" colspan="2">
+                        <list editable="bottom">
+                            <field name="serial_number"/>
+                            <field name="notes" optional="hide"/>
+                            <field name="active" optional="hide"/>
+                        </list>
+                    </field>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

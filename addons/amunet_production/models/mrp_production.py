@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api, Command
+from odoo import models, fields, api, Command, _
 from odoo.exceptions import UserError
 
 class MrpProduction(models.Model):
@@ -66,7 +66,51 @@ class MrpProduction(models.Model):
         store=False,
     )
 
+    # Surtido a nivel MO: vinculos al workorder de Surtido (AMP) para
+    # exponer los botones del flujo (Iniciar/Confirmar/Recibir) en la
+    # vista MO sin que el almacenista tenga que abrir el workorder.
+    amunet_supply_workorder_id = fields.Many2one(
+        'mrp.workorder',
+        string='Workorder de Surtido',
+        compute='_compute_amunet_supply_workorder',
+        store=True,
+    )
+    amunet_supply_state = fields.Selection(
+        related='amunet_supply_workorder_id.amunet_supply_state',
+        string='Estado del surtido',
+        store=True,
+    )
+
+    @api.depends('workorder_ids.workcenter_id.code')
+    def _compute_amunet_supply_workorder(self):
+        for mo in self:
+            wo = mo.workorder_ids.filtered(
+                lambda w: (w.workcenter_id.code or '') == 'AMP'
+            )[:1]
+            mo.amunet_supply_workorder_id = wo or False
+
+    def action_amunet_mo_start_supply(self):
+        self.ensure_one()
+        if not self.amunet_supply_workorder_id:
+            raise UserError(_('Esta orden no tiene workorder de Surtido (AMP).'))
+        return self.amunet_supply_workorder_id.action_amunet_start_supply()
+
+    def action_amunet_mo_confirm_supply(self):
+        self.ensure_one()
+        if not self.amunet_supply_workorder_id:
+            raise UserError(_('Esta orden no tiene workorder de Surtido (AMP).'))
+        return self.amunet_supply_workorder_id.action_amunet_confirm_supply()
+
+    def action_amunet_mo_receive_supply(self):
+        self.ensure_one()
+        if not self.amunet_supply_workorder_id:
+            raise UserError(_('Esta orden no tiene workorder de Surtido (AMP).'))
+        return self.amunet_supply_workorder_id.action_amunet_receive_supply()
+
     # Ocultar botones nativos de produccion (Produce / Produce All)
+    # El boton "Producir" Amunet vive al final del header y se controla
+    # con amunet_can_produce. Los nativos siempre False para que el
+    # nativo button_mark_done quede oculto.
     show_produce = fields.Boolean(compute='_compute_show_produce_amunet', store=False)
     show_produce_all = fields.Boolean(compute='_compute_show_produce_amunet', store=False)
 
@@ -74,6 +118,28 @@ class MrpProduction(models.Model):
         for rec in self:
             rec.show_produce = False
             rec.show_produce_all = False
+
+    # Boton "Producir" Amunet: visible solo cuando la MO esta en una
+    # fase donde tiene sentido cerrar y TODAS las workorders estan
+    # concluidas (done o cancel). Si la MO no tiene workorders se
+    # habilita en cuanto entra a confirmed/progress/to_close.
+    amunet_can_produce = fields.Boolean(
+        compute='_compute_amunet_can_produce', store=False,
+        string='Listo para producir',
+    )
+
+    @api.depends('state', 'workorder_ids.state')
+    def _compute_amunet_can_produce(self):
+        for rec in self:
+            if rec.state not in ('confirmed', 'progress', 'to_close'):
+                rec.amunet_can_produce = False
+                continue
+            if rec.workorder_ids:
+                rec.amunet_can_produce = all(
+                    wo.state in ('done', 'cancel') for wo in rec.workorder_ids
+                )
+            else:
+                rec.amunet_can_produce = True
 
     @api.depends('product_id')
     def _compute_product_categ(self):
@@ -83,7 +149,7 @@ class MrpProduction(models.Model):
             rec.amunet_product_categ_id = category
             rec.amunet_is_solution_product = 'solucion' in category_name.lower()
 
-    @api.depends('product_id')
+    @api.depends('product_id', 'date_start')
     def _compute_quality_params(self):
         for rec in self:
             if not rec.product_id:
@@ -96,7 +162,6 @@ class MrpProduction(models.Model):
 
             product = rec.product_id
             rec.quality_ph_initial = product.amunet_initial_ph
-            rec.amunet_expiration_text = product.amunet_expiration_text
             rec.amunet_sys_weighing_range = product.amunet_weighing_range_text
 
             if product.amunet_req_quality_control:
@@ -104,19 +169,50 @@ class MrpProduction(models.Model):
             else:
                 rec.quality_analysis_status = 'none'
 
-            if product.amunet_expiration_text:
-                txt = product.amunet_expiration_text.lower()
-                from datetime import timedelta
-                days_to_add = 0
-                try:
-                    val = float(''.join(c for c in txt if c.isdigit() or c == '.'))
-                    if 'mes' in txt: days_to_add = val * 30
-                    elif 'año' in txt or 'ano' in txt: days_to_add = val * 365
-                    elif 'dia' in txt or 'día' in txt: days_to_add = val
-                except:
-                    pass
-                if days_to_add > 0:
-                    rec.solution_expiration_date = fields.Datetime.now() + timedelta(days=days_to_add)
+            # Calculo de caducidad en formato Amunet "YYYY-MM":
+            # 1. Si el producto define duracion (amunet_expiration_text
+            #    del template, ej. "24 meses" o "2 años"), se usa esa.
+            # 2. Si NO define duracion, default Amunet = 2 anos (24 meses).
+            # El campo en la MO sigue editable manualmente para
+            # excepciones.
+            from datetime import timedelta
+            from dateutil.relativedelta import relativedelta
+            DEFAULT_MONTHS = 24  # 2 anos
+            base_text = product.amunet_expiration_text or ''
+            txt = base_text.lower()
+            months_to_add = DEFAULT_MONTHS
+            try:
+                val = float(
+                    ''.join(c for c in txt if c.isdigit() or c == '.'))
+                if 'año' in txt or 'ano' in txt:
+                    months_to_add = int(val * 12)
+                elif 'mes' in txt:
+                    months_to_add = int(val)
+                elif 'dia' in txt or 'día' in txt:
+                    months_to_add = int(val / 30) or DEFAULT_MONTHS
+            except Exception:
+                # texto del producto no parseable -> usar default 24 meses
+                pass
+
+            base_date = rec.date_start or fields.Datetime.now()
+            expiration = base_date + relativedelta(months=months_to_add)
+            rec.solution_expiration_date = expiration
+            # Formato exacto pedido por el operador: YYYY-MM
+            rec.amunet_expiration_text = expiration.strftime('%Y-%m')
+
+    @api.constrains('amunet_expiration_text')
+    def _check_expiration_text_format(self):
+        """Valida el formato YYYY-MM cuando el usuario edita manualmente."""
+        import re
+        pattern = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
+        for rec in self:
+            if rec.amunet_expiration_text and not pattern.match(
+                    rec.amunet_expiration_text):
+                from odoo.exceptions import ValidationError
+                raise ValidationError(_(
+                    'El formato de caducidad debe ser YYYY-MM '
+                    '(ejemplo: 2026-05). Recibido: "%s"'
+                ) % rec.amunet_expiration_text)
 
     @api.onchange('product_id')
     def _onchange_product_expiration(self):
@@ -224,7 +320,7 @@ class MrpProduction(models.Model):
                 user_tz = self.env.user.tz or 'UTC'
                 utc_dt = rec.date_start.replace(tzinfo=pytz.utc)
                 local_dt = utc_dt.astimezone(pytz.timezone(user_tz))
-                rec.amunet_scheduled_date_display = local_dt.strftime('%d/%m/%y %I:%M %p')
+                rec.amunet_scheduled_date_display = local_dt.strftime('%d.%m.%y %I:%M %p')
             else:
                 rec.amunet_scheduled_date_display = ''
 
@@ -326,7 +422,25 @@ class MrpProduction(models.Model):
                 if product and (product.amunet_req_quality_control or product.qc_required):
                     vals['quality_analysis_status'] = 'to_request'
             self._amunet_complete_workorder_workcenters(vals)
+            # Folio Amunet de la MO: si el producto tiene
+            # mo_sequence_id (formato MMAA/NN/ABR), usar esa
+            # secuencia en lugar de la generica del picking_type.
+            # Asi una MO de VIH 1.2 queda con folio "0526/01/VIH".
+            if vals.get('product_id') and (
+                not vals.get('name') or vals.get('name') == '/'
+            ):
+                product = self.env['product.product'].browse(
+                    vals['product_id']).exists()
+                mo_seq = product and product.product_tmpl_id.mo_sequence_id
+                if mo_seq:
+                    vals['name'] = mo_seq.next_by_id()
         productions = super().create(vals_list)
+        # Forzar recompute de los campos de calidad/caducidad. El
+        # compute @api.depends('product_id','date_start') a veces no
+        # se dispara con cache fresco en create. Esto garantiza que
+        # amunet_expiration_text y solution_expiration_date queden
+        # poblados desde el inicio.
+        productions._compute_quality_params()
         productions._auto_generate_lot_draft()
         return productions
 
@@ -373,7 +487,7 @@ class MrpProduction(models.Model):
                     tmpl_id = prod.product_id.product_tmpl_id.id
                     seq = self.env['ir.sequence'].search([('code', '=', f'amunet.lot.sequence.{tmpl_id}')], limit=1)
                     predicted = seq.get_next_char(seq.number_next_actual) if seq else ""
-                    
+
                     if prod.solution_lot_id and prod.solution_lot_id != predicted:
                         # El usuario lo editó manualmente. Respetamos su nombre y creamos el lote explícitamente (sin consumir secuencia).
                         lot_vals = {
@@ -384,12 +498,164 @@ class MrpProduction(models.Model):
                     else:
                         # No lo editó. Usamos la creación oficial de Odoo que consume la secuencia en BD.
                         lot_vals = prod._prepare_stock_lot_values()
-                        
+
                     prod.lot_producing_ids = [Command.create(lot_vals)]
                     prod.solution_lot_id = lot_vals.get('name', prod.solution_lot_id)
                 except Exception:
                     pass
-        return super().action_confirm()
+        res = super().action_confirm()
+        # Notificar a almacen que hay una MO pendiente de surtir.
+        # Reutiliza el patron de amunet_material_request._notify_warehouse_pending.
+        for prod in self:
+            prod._amunet_notify_warehouse_pending_supply()
+        return res
+
+    def _amunet_notify_warehouse_pending_supply(self):
+        """Crea actividades para los almacenistas avisando que hay una
+        MO pendiente de surtir. Espeja el patron de
+        amunet_material_request._notify_warehouse_pending (lineas 379-420).
+
+        Una actividad por cada usuario activo del grupo
+        amunet_material_request.group_material_warehouse. Se eliminan
+        cuando almacen toma el surtido (en
+        action_amunet_start_supply de mrp.workorder).
+        """
+        self.ensure_one()
+        wh_group = self.env.ref(
+            'amunet_material_request.group_material_warehouse',
+            raise_if_not_found=False,
+        )
+        todo_act = self.env.ref(
+            'mail.mail_activity_data_todo', raise_if_not_found=False)
+        if not wh_group or not todo_act:
+            return
+        users = wh_group.sudo().all_user_ids.filtered(
+            lambda u: u.active and u.id != 1)
+        if not users:
+            return
+        # Construir link al menu Inventario -> Operaciones -> Surtido
+        # de produccion para que el almacenista entre por su modulo
+        # natural, no por Produccion.
+        action = self.env.ref(
+            'amunet_production.action_amunet_warehouse_supply_workorders',
+            raise_if_not_found=False,
+        )
+        link_html = ''
+        if action:
+            link_html = (
+                '<br/><br/><a href="/odoo/action-%s" class="btn btn-primary">'
+                'Abrir surtido en Inventario</a>'
+            ) % action.id
+        body = _(
+            'Producto: %(p)s\nCantidad: %(q)s %(u)s\nComponentes: %(n)s\nOrigen: %(o)s'
+        ) % {
+            'p': self.product_id.display_name,
+            'q': self.product_qty,
+            'u': self.product_uom_id.name or '',
+            'n': len(self.move_raw_ids),
+            'o': self.origin or '-',
+        }
+        note_html = body.replace('\n', '<br/>') + link_html
+        for u in users:
+            self.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Surtir produccion %s') % self.name,
+                note=note_html,
+                user_id=u.id,
+            )
+
+    def _amunet_close_warehouse_supply_activities(self):
+        """Elimina las actividades de surtido pendientes (cuando alguien
+        ya tomo el surtido o se completo). Identifica solo las que
+        creamos por el prefijo del summary.
+        """
+        self.ensure_one()
+        prefix = _('Surtir produccion ')
+        acts = self.sudo().activity_ids.filtered(
+            lambda a: a.summary and a.summary.startswith(prefix)
+        )
+        acts.unlink()
+
+    def _amunet_notify_production_supply_ready(self):
+        """Avisa al supervisor de produccion que el almacen confirmo el
+        surtido y esta pendiente de validacion. Patron espejo de
+        amunet_material_request._notify_requester_ready.
+        """
+        self.ensure_one()
+        prod_group = self.env.ref(
+            'amunet_production.group_production_supervisor',
+            raise_if_not_found=False,
+        )
+        todo_act = self.env.ref(
+            'mail.mail_activity_data_todo', raise_if_not_found=False)
+        if not prod_group or not todo_act:
+            return
+        users = prod_group.sudo().all_user_ids.filtered(
+            lambda u: u.active and u.id != 1)
+        if not users:
+            return
+        body = _(
+            'Almacen confirmo el surtido y espera tu validacion.\n'
+            'MO: %(m)s\nProducto: %(p)s\nSurtido por: %(u)s'
+        ) % {
+            'm': self.name,
+            'p': self.product_id.display_name,
+            'u': self.env.user.display_name,
+        }
+        for u in users:
+            self.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Validar surtido %s') % self.name,
+                note=body.replace('\n', '<br/>'),
+                user_id=u.id,
+            )
+
+    def _amunet_close_production_supply_activities(self):
+        self.ensure_one()
+        prefix = _('Validar surtido ')
+        acts = self.sudo().activity_ids.filtered(
+            lambda a: a.summary and a.summary.startswith(prefix)
+        )
+        acts.unlink()
+
+    def _get_move_raw_values(self, product, product_uom_qty, product_uom, operation_id=False, bom_line=False):
+        """Override Amunet:
+        Redondea HACIA ARRIBA la cantidad de componentes cuando el
+        producto se mide en unidades enteras (no admite fracciones).
+        Caso real: VIH tiene 0.1 viales por unidad; para fabricar 75
+        kits hacen falta 7.5 viales -> se piden 8 (no se puede pedir
+        medio vial al almacen).
+        Se aplica solo cuando la UoM del COMPONENTE es 'Unidades'
+        (uom.product_uom_unit). Para componentes en cm, ml, kg, etc.
+        se respeta el decimal.
+        """
+        import math
+        if product and product_uom_qty and not isinstance(product, dict):
+            unit_uom = self.env.ref(
+                'uom.product_uom_unit', raise_if_not_found=False)
+            uom = product_uom or product.uom_id
+            if unit_uom and uom and uom.id == unit_uom.id:
+                product_uom_qty = math.ceil(product_uom_qty)
+        return super()._get_move_raw_values(
+            product, product_uom_qty, product_uom,
+            operation_id=operation_id, bom_line=bom_line,
+        )
+
+    def _prepare_stock_lot_values(self):
+        """Override Amunet:
+        Si el producto tiene mo_sequence_id (formato Amunet), el lote
+        del producto fabricado HEREDA el folio de la MO en lugar de
+        consumir una secuencia distinta. Asi: MO=0526/01/VIH y el
+        stock.lot del kit fabricado tambien sera 0526/01/VIH.
+        """
+        self.ensure_one()
+        if self.product_id.product_tmpl_id.mo_sequence_id and self.name:
+            return {
+                'product_id': self.product_id.id,
+                'company_id': self.company_id.id,
+                'name': self.name,
+            }
+        return super()._prepare_stock_lot_values()
 
     def action_request_analysis(self):
         """Valida estado/reactivos/checklist y abre el Wizard de análisis"""

@@ -150,14 +150,34 @@
         <field name="name">mrp.workorder.operator.form</field>
         <field name="model">mrp.workorder</field>
         <field name="arch" type="xml">
-            <form string="Trabajo de produccion" create="0" delete="0" edit="0">
+            <form string="Trabajo de produccion" create="0" delete="0">
                 <header>
-                    <button name="action_amunet_operator_start" string="Iniciar operacion" type="object" class="oe_highlight" invisible="state != 'ready'"/>
-                    <button name="action_amunet_operator_finish" string="Terminar operacion" type="object" class="oe_highlight" invisible="state != 'progress'"/>
+                    <!-- Botones del flujo generico (no aplica a surtido AMP) -->
+                    <button name="action_amunet_operator_start" string="Iniciar operacion" type="object" class="oe_highlight"
+                            invisible="state != 'ready' or amunet_is_supply_workorder"/>
+                    <button name="action_amunet_operator_finish" string="Terminar operacion" type="object" class="oe_highlight"
+                            invisible="state != 'progress' or amunet_is_supply_workorder"/>
+
+                    <!-- Botones del flujo de Surtido (workcenter AMP) -->
+                    <button name="action_amunet_start_supply" string="Iniciar Surtido" type="object" class="oe_highlight"
+                            invisible="not amunet_is_supply_workorder or amunet_supply_state != 'pending' or state != 'ready'"
+                            groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+                    <button name="action_amunet_confirm_supply" string="Confirmar Surtido" type="object" class="oe_highlight"
+                            invisible="not amunet_is_supply_workorder or amunet_supply_state != 'in_progress'"
+                            groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+                    <button name="action_amunet_receive_supply" string="Recibir / Aceptar entrega" type="object" class="oe_highlight"
+                            invisible="not amunet_is_supply_workorder or amunet_supply_state != 'awaiting_reception'"
+                            groups="amunet_production.group_production_supervisor"/>
+
                     <button name="action_amunet_open_production" string="Ver orden" type="object"/>
                     <field name="state" widget="statusbar" statusbar_visible="blocked,ready,progress,done"/>
                 </header>
                 <sheet>
+                    <field name="amunet_is_supply_workorder" invisible="1"/>
+                    <field name="amunet_supply_state" invisible="not amunet_is_supply_workorder" widget="badge"
+                           decoration-info="amunet_supply_state == 'in_progress'"
+                           decoration-warning="amunet_supply_state == 'awaiting_reception'"
+                           decoration-success="amunet_supply_state == 'received'"/>
                     <group>
                         <group>
                             <field name="name" string="Operacion" readonly="1"/>
@@ -172,12 +192,49 @@
                             <field name="amunet_operator_time_status" readonly="1"/>
                         </group>
                     </group>
-                    <group string="Cantidad y tiempo">
+                    <group string="Cantidad y tiempo" invisible="amunet_is_supply_workorder">
                         <field name="qty_remaining" string="Cantidad por producir" readonly="1"/>
                         <field name="qty_produced" string="Cantidad realizada" readonly="1"/>
                         <field name="duration_expected" string="Duracion esperada" readonly="1"/>
                         <field name="duration" string="Tiempo real" readonly="1"/>
                     </group>
+                    <group invisible="not amunet_is_supply_workorder">
+                        <group string="Tiempo de surtido">
+                            <field name="duration_expected" string="Duracion esperada" readonly="1"/>
+                            <field name="duration" string="Tiempo real" readonly="1"/>
+                        </group>
+                        <group string="Trazabilidad del surtido">
+                            <field name="amunet_supplied_by_id" readonly="1"/>
+                            <field name="amunet_supplied_date" readonly="1"/>
+                            <field name="amunet_received_by_id" readonly="1"/>
+                            <field name="amunet_received_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook invisible="not amunet_is_supply_workorder">
+                        <page string="Materiales a surtir" name="amunet_supply_moves">
+                            <!--
+                                Vista del almacenista durante el surtido:
+                                solo ve Cantidad surtida + Lote. La columna
+                                nativa 'quantity' (cantidad utilizada/consumida)
+                                NO se muestra hasta la conciliacion final.
+                            -->
+                            <field name="amunet_supply_moves"
+                                   readonly="amunet_supply_state in ('awaiting_reception','received') or state in ('done','cancel')">
+                                <list editable="bottom" create="0" delete="0">
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="product_uom_qty" string="Cantidad solicitada" readonly="1"/>
+                                    <field name="amunet_qty_supplied" string="Cantidad surtida"/>
+                                    <field name="product_uom" string="UoM" readonly="1"/>
+                                    <field name="move_line_ids" widget="one2many" mode="list" string="Lotes">
+                                        <list editable="bottom">
+                                            <field name="lot_id"/>
+                                            <field name="quantity" string="Cantidad por lote"/>
+                                        </list>
+                                    </field>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
@@ -223,6 +280,82 @@
         <field name="act_window_id" ref="action_amunet_operator_workorders"/>
     </record>
 
+    <!--
+        Inherit de la vista nativa de mrp.workorder: agrega los botones
+        del flujo de Surtido (Iniciar / Confirmar / Recibir) + badge
+        de estado + pestaña 'Materiales a surtir'. Asi el supervisor de
+        produccion que entre via 'MO -> Ordenes de trabajo' ve lo mismo
+        que el almacenista en 'Mi trabajo'.
+    -->
+    <record id="view_mrp_workorder_form_amunet_supply_inherit" model="ir.ui.view">
+        <field name="name">mrp.workorder.form.amunet.supply.inherit</field>
+        <field name="model">mrp.workorder</field>
+        <field name="inherit_id" ref="mrp.mrp_production_workorder_form_view_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_amunet_start_supply" string="Iniciar Surtido" type="object" class="oe_highlight"
+                        invisible="not amunet_is_supply_workorder or amunet_supply_state != 'pending' or state != 'ready'"
+                        groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+                <button name="action_amunet_confirm_supply" string="Confirmar Surtido" type="object" class="oe_highlight"
+                        invisible="not amunet_is_supply_workorder or amunet_supply_state != 'in_progress'"
+                        groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+                <button name="action_amunet_receive_supply" string="Recibir / Aceptar entrega" type="object" class="oe_highlight"
+                        invisible="not amunet_is_supply_workorder or amunet_supply_state != 'awaiting_reception'"
+                        groups="amunet_production.group_production_supervisor"/>
+            </xpath>
+
+            <xpath expr="//sheet" position="inside">
+                <field name="amunet_is_supply_workorder" invisible="1"/>
+                <group invisible="not amunet_is_supply_workorder">
+                    <group string="Estado del surtido">
+                        <field name="amunet_supply_state" widget="badge"
+                               decoration-info="amunet_supply_state == 'in_progress'"
+                               decoration-warning="amunet_supply_state == 'awaiting_reception'"
+                               decoration-success="amunet_supply_state == 'received'"/>
+                    </group>
+                    <group string="Trazabilidad del surtido">
+                        <field name="amunet_supplied_by_id" readonly="1"/>
+                        <field name="amunet_supplied_date" readonly="1"/>
+                        <field name="amunet_received_by_id" readonly="1"/>
+                        <field name="amunet_received_date" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+
+            <!--
+                Ocultar la pestaña nativa 'Componentes' en TODOS los
+                workorders. Es la vista tecnica filtrada por
+                bom_line.operation_id; en el flujo Amunet es redundante
+                porque la pestaña 'Materiales a surtir' ya muestra el
+                listado completo y editable.
+            -->
+            <xpath expr="//notebook/page[@name='components']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Materiales a surtir" name="amunet_supply_moves"
+                      invisible="not amunet_is_supply_workorder">
+                    <field name="amunet_supply_moves"
+                           readonly="amunet_supply_state in ('awaiting_reception','received') or state in ('done','cancel')">
+                        <list editable="bottom" create="0" delete="0">
+                            <field name="product_id" readonly="1"/>
+                            <field name="product_uom_qty" string="Cantidad solicitada" readonly="1"/>
+                            <field name="amunet_qty_supplied" string="Cantidad surtida"/>
+                            <field name="product_uom" string="UoM" readonly="1"/>
+                            <field name="move_line_ids" widget="one2many" mode="list" string="Lotes">
+                                <list editable="bottom">
+                                    <field name="lot_id"/>
+                                    <field name="quantity" string="Cantidad por lote"/>
+                                </list>
+                            </field>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
     <record id="action_amunet_short_production_new" model="ir.actions.act_window">
         <field name="name">Nueva produccion corta</field>
         <field name="res_model">mrp.production</field>
@@ -262,4 +395,69 @@
               action="mrp.mrp_production_action"
               sequence="20"
               groups="amunet_production.group_production_supervisor"/>
+
+    <!--
+        Menu y accion para que el ALMACEN haga surtido sin entrar al
+        modulo de Produccion. Vive bajo Inventario -> Operaciones.
+        Filtra los workorders de Surtido (workcenter.code='AMP') que
+        estan pendientes de surtido, en surtido o esperando recepcion.
+    -->
+    <!--
+        Lista de MOs pendientes/en surtido. Cuando el almacenista da
+        click en una fila se abre directamente el FORMULARIO DEL MO
+        (no del workorder) para que pueda surtir sin moverse.
+    -->
+    <record id="view_mrp_production_supply_warehouse_list" model="ir.ui.view">
+        <field name="name">mrp.production.supply.warehouse.list</field>
+        <field name="model">mrp.production</field>
+        <field name="arch" type="xml">
+            <list create="0" delete="0" edit="0"
+                  decoration-success="amunet_supply_state == 'received'"
+                  decoration-info="amunet_supply_state == 'in_progress'"
+                  decoration-warning="amunet_supply_state == 'awaiting_reception'">
+                <field name="name" string="Orden de fabricacion"/>
+                <field name="product_id" string="Producto"/>
+                <field name="product_qty" string="Cantidad a producir"/>
+                <field name="state" string="Estado MO"/>
+                <field name="amunet_supply_state" string="Estado del surtido"
+                       widget="badge"
+                       decoration-info="amunet_supply_state == 'in_progress'"
+                       decoration-warning="amunet_supply_state == 'awaiting_reception'"
+                       decoration-success="amunet_supply_state == 'received'"/>
+                <field name="origin" string="Origen"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_amunet_warehouse_supply_workorders" model="ir.actions.act_window">
+        <field name="name">Surtido de produccion</field>
+        <field name="res_model">mrp.production</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('amunet_supply_workorder_id', '!=', False), ('amunet_supply_state', 'in', ('pending', 'in_progress', 'awaiting_reception'))]</field>
+        <field name="view_id" ref="view_mrp_production_supply_warehouse_list"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No hay ordenes pendientes de surtir.
+            </p>
+            <p>
+                Cuando produccion confirme una orden, aqui apareceran las ordenes
+                que necesitan ser surtidas desde almacen.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_amunet_warehouse_supply_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_mrp_production_supply_warehouse_list"/>
+        <field name="act_window_id" ref="action_amunet_warehouse_supply_workorders"/>
+    </record>
+
+    <menuitem id="menu_amunet_warehouse_supply"
+              name="Surtido de produccion"
+              parent="stock.menu_stock_warehouse_mgmt"
+              action="action_amunet_warehouse_supply_workorders"
+              sequence="25"
+              groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager,stock.group_stock_user"/>
+
 </odoo>

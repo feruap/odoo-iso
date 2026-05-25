@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from . import mrp_production
 from . import stock_move
+from . import stock_picking
 from . import product_template
 from . import amunet_quality_check_inherit
 from . import mrp_workcenter

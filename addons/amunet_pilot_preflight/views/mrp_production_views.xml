@@ -5,7 +5,14 @@
         <field name="model">mrp.production</field>
         <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//header" position="inside">
+            <!--
+                Insertar 'Validar piloto' como PRIMER boton del header
+                para reforzar que es el paso obligatorio antes de
+                cualquier accion en la MO. Se inserta ANTES del primer
+                boton nativo (state widget se renderiza al final del
+                header automaticamente).
+            -->
+            <xpath expr="//header/button[1]" position="before">
                 <button name="action_run_pilot_preflight"
                         string="Validar piloto"
                         type="object"

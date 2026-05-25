@@ -290,7 +290,7 @@
                                border: 1px solid #4472C4; padding: 4px 6px;">
                         Fecha:
                         <span style="font-weight: normal;">
-                            <t t-esc="o.analysis_date and o.analysis_date.strftime('%d/%m/%Y') or (o.date_done and o.date_done.strftime('%d/%m/%Y')) or ''"/>
+                            <t t-esc="o.analysis_date and o.analysis_date.strftime('%d.%m.%y') or (o.date_done and o.date_done.strftime('%d.%m.%y')) or ''"/>
                         </span>
                     </td>
                     <td colspan="3"

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Inspecciones de proceso',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Manufacturing',
     'summary': 'Inspecciones operativas durante el proceso productivo '
                '(ISO 13485 §8.2.5). NO sustituye la liberacion de lote.',
