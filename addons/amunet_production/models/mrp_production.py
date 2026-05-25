@@ -66,7 +66,51 @@ class MrpProduction(models.Model):
         store=False,
     )
 
+    # Surtido a nivel MO: vinculos al workorder de Surtido (AMP) para
+    # exponer los botones del flujo (Iniciar/Confirmar/Recibir) en la
+    # vista MO sin que el almacenista tenga que abrir el workorder.
+    amunet_supply_workorder_id = fields.Many2one(
+        'mrp.workorder',
+        string='Workorder de Surtido',
+        compute='_compute_amunet_supply_workorder',
+        store=True,
+    )
+    amunet_supply_state = fields.Selection(
+        related='amunet_supply_workorder_id.amunet_supply_state',
+        string='Estado del surtido',
+        store=True,
+    )
+
+    @api.depends('workorder_ids.workcenter_id.code')
+    def _compute_amunet_supply_workorder(self):
+        for mo in self:
+            wo = mo.workorder_ids.filtered(
+                lambda w: (w.workcenter_id.code or '') == 'AMP'
+            )[:1]
+            mo.amunet_supply_workorder_id = wo or False
+
+    def action_amunet_mo_start_supply(self):
+        self.ensure_one()
+        if not self.amunet_supply_workorder_id:
+            raise UserError(_('Esta orden no tiene workorder de Surtido (AMP).'))
+        return self.amunet_supply_workorder_id.action_amunet_start_supply()
+
+    def action_amunet_mo_confirm_supply(self):
+        self.ensure_one()
+        if not self.amunet_supply_workorder_id:
+            raise UserError(_('Esta orden no tiene workorder de Surtido (AMP).'))
+        return self.amunet_supply_workorder_id.action_amunet_confirm_supply()
+
+    def action_amunet_mo_receive_supply(self):
+        self.ensure_one()
+        if not self.amunet_supply_workorder_id:
+            raise UserError(_('Esta orden no tiene workorder de Surtido (AMP).'))
+        return self.amunet_supply_workorder_id.action_amunet_receive_supply()
+
     # Ocultar botones nativos de produccion (Produce / Produce All)
+    # El boton "Producir" Amunet vive al final del header y se controla
+    # con amunet_can_produce. Los nativos siempre False para que el
+    # nativo button_mark_done quede oculto.
     show_produce = fields.Boolean(compute='_compute_show_produce_amunet', store=False)
     show_produce_all = fields.Boolean(compute='_compute_show_produce_amunet', store=False)
 
@@ -74,6 +118,28 @@ class MrpProduction(models.Model):
         for rec in self:
             rec.show_produce = False
             rec.show_produce_all = False
+
+    # Boton "Producir" Amunet: visible solo cuando la MO esta en una
+    # fase donde tiene sentido cerrar y TODAS las workorders estan
+    # concluidas (done o cancel). Si la MO no tiene workorders se
+    # habilita en cuanto entra a confirmed/progress/to_close.
+    amunet_can_produce = fields.Boolean(
+        compute='_compute_amunet_can_produce', store=False,
+        string='Listo para producir',
+    )
+
+    @api.depends('state', 'workorder_ids.state')
+    def _compute_amunet_can_produce(self):
+        for rec in self:
+            if rec.state not in ('confirmed', 'progress', 'to_close'):
+                rec.amunet_can_produce = False
+                continue
+            if rec.workorder_ids:
+                rec.amunet_can_produce = all(
+                    wo.state in ('done', 'cancel') for wo in rec.workorder_ids
+                )
+            else:
+                rec.amunet_can_produce = True
 
     @api.depends('product_id')
     def _compute_product_categ(self):
@@ -421,7 +487,7 @@ class MrpProduction(models.Model):
                     tmpl_id = prod.product_id.product_tmpl_id.id
                     seq = self.env['ir.sequence'].search([('code', '=', f'amunet.lot.sequence.{tmpl_id}')], limit=1)
                     predicted = seq.get_next_char(seq.number_next_actual) if seq else ""
-                    
+
                     if prod.solution_lot_id and prod.solution_lot_id != predicted:
                         # El usuario lo editó manualmente. Respetamos su nombre y creamos el lote explícitamente (sin consumir secuencia).
                         lot_vals = {
@@ -432,12 +498,125 @@ class MrpProduction(models.Model):
                     else:
                         # No lo editó. Usamos la creación oficial de Odoo que consume la secuencia en BD.
                         lot_vals = prod._prepare_stock_lot_values()
-                        
+
                     prod.lot_producing_ids = [Command.create(lot_vals)]
                     prod.solution_lot_id = lot_vals.get('name', prod.solution_lot_id)
                 except Exception:
                     pass
-        return super().action_confirm()
+        res = super().action_confirm()
+        # Notificar a almacen que hay una MO pendiente de surtir.
+        # Reutiliza el patron de amunet_material_request._notify_warehouse_pending.
+        for prod in self:
+            prod._amunet_notify_warehouse_pending_supply()
+        return res
+
+    def _amunet_notify_warehouse_pending_supply(self):
+        """Crea actividades para los almacenistas avisando que hay una
+        MO pendiente de surtir. Espeja el patron de
+        amunet_material_request._notify_warehouse_pending (lineas 379-420).
+
+        Una actividad por cada usuario activo del grupo
+        amunet_material_request.group_material_warehouse. Se eliminan
+        cuando almacen toma el surtido (en
+        action_amunet_start_supply de mrp.workorder).
+        """
+        self.ensure_one()
+        wh_group = self.env.ref(
+            'amunet_material_request.group_material_warehouse',
+            raise_if_not_found=False,
+        )
+        todo_act = self.env.ref(
+            'mail.mail_activity_data_todo', raise_if_not_found=False)
+        if not wh_group or not todo_act:
+            return
+        users = wh_group.sudo().all_user_ids.filtered(
+            lambda u: u.active and u.id != 1)
+        if not users:
+            return
+        # Construir link al menu Inventario -> Operaciones -> Surtido
+        # de produccion para que el almacenista entre por su modulo
+        # natural, no por Produccion.
+        action = self.env.ref(
+            'amunet_production.action_amunet_warehouse_supply_workorders',
+            raise_if_not_found=False,
+        )
+        link_html = ''
+        if action:
+            link_html = (
+                '<br/><br/><a href="/odoo/action-%s" class="btn btn-primary">'
+                'Abrir surtido en Inventario</a>'
+            ) % action.id
+        body = _(
+            'Producto: %(p)s\nCantidad: %(q)s %(u)s\nComponentes: %(n)s\nOrigen: %(o)s'
+        ) % {
+            'p': self.product_id.display_name,
+            'q': self.product_qty,
+            'u': self.product_uom_id.name or '',
+            'n': len(self.move_raw_ids),
+            'o': self.origin or '-',
+        }
+        note_html = body.replace('\n', '<br/>') + link_html
+        for u in users:
+            self.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Surtir produccion %s') % self.name,
+                note=note_html,
+                user_id=u.id,
+            )
+
+    def _amunet_close_warehouse_supply_activities(self):
+        """Elimina las actividades de surtido pendientes (cuando alguien
+        ya tomo el surtido o se completo). Identifica solo las que
+        creamos por el prefijo del summary.
+        """
+        self.ensure_one()
+        prefix = _('Surtir produccion ')
+        acts = self.sudo().activity_ids.filtered(
+            lambda a: a.summary and a.summary.startswith(prefix)
+        )
+        acts.unlink()
+
+    def _amunet_notify_production_supply_ready(self):
+        """Avisa al supervisor de produccion que el almacen confirmo el
+        surtido y esta pendiente de validacion. Patron espejo de
+        amunet_material_request._notify_requester_ready.
+        """
+        self.ensure_one()
+        prod_group = self.env.ref(
+            'amunet_production.group_production_supervisor',
+            raise_if_not_found=False,
+        )
+        todo_act = self.env.ref(
+            'mail.mail_activity_data_todo', raise_if_not_found=False)
+        if not prod_group or not todo_act:
+            return
+        users = prod_group.sudo().all_user_ids.filtered(
+            lambda u: u.active and u.id != 1)
+        if not users:
+            return
+        body = _(
+            'Almacen confirmo el surtido y espera tu validacion.\n'
+            'MO: %(m)s\nProducto: %(p)s\nSurtido por: %(u)s'
+        ) % {
+            'm': self.name,
+            'p': self.product_id.display_name,
+            'u': self.env.user.display_name,
+        }
+        for u in users:
+            self.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Validar surtido %s') % self.name,
+                note=body.replace('\n', '<br/>'),
+                user_id=u.id,
+            )
+
+    def _amunet_close_production_supply_activities(self):
+        self.ensure_one()
+        prefix = _('Validar surtido ')
+        acts = self.sudo().activity_ids.filtered(
+            lambda a: a.summary and a.summary.startswith(prefix)
+        )
+        acts.unlink()
 
     def _get_move_raw_values(self, product, product_uom_qty, product_uom, operation_id=False, bom_line=False):
         """Override Amunet:

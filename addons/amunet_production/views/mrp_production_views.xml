@@ -12,6 +12,23 @@
                 <!-- Botones de accion en header -->
                 <xpath expr="//header" position="inside">
                     <!--
+                        Botones del FLUJO DE SURTIDO. Aparecen aqui en
+                        la MO (no solo en el workorder) para que el
+                        almacenista pueda surtir sin moverse de pantalla.
+                        Cada uno delega en el workorder de Surtido (AMP)
+                        de esta MO via wrappers de mrp.production.
+                    -->
+                    <button name="action_amunet_mo_start_supply" string="Iniciar Surtido" type="object" class="oe_highlight"
+                            invisible="not amunet_supply_workorder_id or amunet_supply_state != 'pending'"
+                            groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+                    <button name="action_amunet_mo_confirm_supply" string="Confirmar Surtido" type="object" class="oe_highlight"
+                            invisible="not amunet_supply_workorder_id or amunet_supply_state != 'in_progress'"
+                            groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+                    <button name="action_amunet_mo_receive_supply" string="Recibir / Aceptar entrega" type="object" class="oe_highlight"
+                            invisible="not amunet_supply_workorder_id or amunet_supply_state != 'awaiting_reception'"
+                            groups="amunet_production.group_production_supervisor"/>
+
+                    <!--
                         'Confirmar analisis' aparece solo cuando la
                         MO esta TERMINADA (to_close o done) y el
                         producto requiere analisis de QC. Es el
@@ -19,6 +36,20 @@
                     -->
                     <button name="action_request_analysis" string="Confirmar análisis" type="object" class="oe_highlight" invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"/>
                     <button name="%(amunet_production.action_report_production_zebra_label)d" string="Imprimir Etiqueta" type="action" class="oe_highlight" invisible="not amunet_all_ingredients_valid"/>
+                    <!--
+                        'Producir' es el ultimo paso: marca la MO como
+                        hecha. Visible solo cuando todas las workorders
+                        estan concluidas (done o cancel). Llama al
+                        metodo nativo button_mark_done.
+                    -->
+                    <button name="button_mark_done" string="Producir" type="object" class="oe_highlight" invisible="not amunet_can_produce"/>
+                    <field name="amunet_can_produce" invisible="1"/>
+                    <field name="amunet_supply_workorder_id" invisible="1"/>
+                    <field name="amunet_supply_state" widget="badge"
+                           invisible="not amunet_supply_workorder_id"
+                           decoration-info="amunet_supply_state == 'in_progress'"
+                           decoration-warning="amunet_supply_state == 'awaiting_reception'"
+                           decoration-success="amunet_supply_state == 'received'"/>
                 </xpath>
 
                 <!-- Ocultar botones nativos no requeridos -->
@@ -31,12 +62,12 @@
                 <xpath expr="//button[@name='do_unreserve']" position="attributes">
                     <attribute name="invisible">1</attribute>
                 </xpath>
-                <xpath expr="//button[@name='button_plan']" position="attributes">
-                    <attribute name="invisible">1</attribute>
-                </xpath>
-                <xpath expr="//button[@name='button_unplan']" position="attributes">
-                    <attribute name="invisible">1</attribute>
-                </xpath>
+                <!--
+                    button_plan y button_unplan dejan la regla nativa
+                    de mrp.production. El gate adicional de preflight
+                    se aplica en amunet_process_inspection.
+                -->
+
 
                 <!--
                     Lote: ocultar label en los mismos estados que el
@@ -133,20 +164,47 @@
 
                 <!-- TABLA DE INGREDIENTES orden: producto | por consumir | lote | cant.utilizada | disolucion | valido -->
 
-                <!-- 1. Lote del ingrediente despues de "Por consumir" -->
+                <!--
+                    1. Insertar Lote, Cantidad surtida y el flag
+                    invisible que controla si el usuario puede editar
+                    consumo. Va DESPUES de la columna visible 'Por
+                    consumir'.
+                -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_uom_qty'][@widget='mrp_should_consume']" position="after">
+                    <field name="amunet_user_can_edit_consume" column_invisible="True"/>
                     <field name="amunet_lot_id"
                         domain="[('product_id', '=', product_id)]"
                         context="{'default_product_id': product_id}"
                         options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
                         string="Lote"
                         optional="show"/>
+                    <!--
+                        Cantidad surtida: lo que el almacen registra al
+                        entregar el material. Editable cuando el surtido
+                        esta en pending/in_progress; readonly despues.
+                    -->
+                    <field name="amunet_qty_supplied"
+                        string="Cantidad surtida"
+                        readonly="parent.amunet_supply_state in ('awaiting_reception','received') or parent.state in ('done','cancel')"
+                        optional="show"/>
                 </xpath>
 
-                <!-- 2. Renombrar Cantidad Utilizada y asegurar visibilidad -->
+                <!--
+                    2. Quitar widget 'mrp_should_consume' (muestra solo
+                    la cantidad teorica) y bloquear edicion al almacen
+                    en la columna 'Por consumir'.
+                -->
+                <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_uom_qty'][@widget='mrp_should_consume']" position="attributes">
+                    <attribute name="widget"/>
+                    <attribute name="readonly">not amunet_user_can_edit_consume or (parent.state != 'draft' and ((parent.state not in ('confirmed', 'progress', 'to_close') and not parent.is_planned) or (parent.is_locked and state != 'draft')))</attribute>
+                </xpath>
+
+                <!-- 2. Renombrar Cantidad Utilizada, asegurar visibilidad
+                     y bloquear edicion al almacen. -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='quantity']" position="attributes">
                     <attribute name="string">Cantidad Utilizada</attribute>
                     <attribute name="column_invisible">False</attribute>
+                    <attribute name="readonly">not amunet_user_can_edit_consume</attribute>
                 </xpath>
 
                 <!--
