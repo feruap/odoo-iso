@@ -108,8 +108,8 @@ tareas:
     titulo: "Acciones correctivas y preventivas (CAPA)"
     area: calidad
     modulos: []
-    responsable_agente: desarrollo
-    estado: backlog
+    responsable_agente: calidad
+    estado: listo_para_tomar
     depende_de: []
     riesgo_regulatorio: alto
     clausula_iso: "8.5"
@@ -121,8 +121,8 @@ tareas:
     titulo: "Control de producto no conforme"
     area: calidad
     modulos: [amunet_rework_control, amunet_quality]
-    responsable_agente: desarrollo
-    estado: backlog
+    responsable_agente: calidad
+    estado: listo_para_tomar
     depende_de: []
     riesgo_regulatorio: alto
     clausula_iso: "8.2.4"
@@ -133,8 +133,8 @@ tareas:
     titulo: "Programa de auditorias internas"
     area: auditorias
     modulos: [amunet_auditorias]
-    responsable_agente: desarrollo
-    estado: backlog
+    responsable_agente: calidad
+    estado: listo_para_tomar
     depende_de: []
     riesgo_regulatorio: medio
     clausula_iso: "8.2.x"

@@ -22,7 +22,7 @@ areas:
     modulos: [amunet_production, amunet_transfer_bom, amunet_pilot_preflight]
   calidad:
     descripcion: "Calidad: no conformidades y CAPA (area futura, requiere agente)"
-    agente: desarrollo
+    agente: calidad
     aprobador: fernando
     modulos: [amunet_quality, amunet_process_inspection, amunet_rework_control]
   lotes:
