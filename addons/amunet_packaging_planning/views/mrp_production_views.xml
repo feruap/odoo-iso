@@ -5,16 +5,29 @@
         <field name="model">mrp.production</field>
         <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
         <field name="arch" type="xml">
+            <!--
+                Solo declaramos los botones y el campo. El orden final
+                en el header y la logica de cascade (oe_highlight
+                condicional) se aplican desde amunet_pilot_preflight
+                (que depende de este modulo y puede reposicionar tras
+                conocer ambas vistas).
+            -->
             <xpath expr="//header" position="inside">
                 <field name="packaging_plan_count" invisible="1"/>
+                <field name="amunet_packaging_plan_approved" invisible="1"/>
                 <button name="action_create_packaging_plan"
-                        string="Planear empaque"
+                        string="Planear presentación"
                         type="object"
                         class="oe_highlight"
-                        invisible="state in ('cancel',) or not product_id"
+                        invisible="state in ('cancel',) or not product_id or amunet_packaging_plan_approved"
+                        groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_manager"/>
+                <button name="action_create_packaging_plan"
+                        string="Planear presentación"
+                        type="object"
+                        invisible="state in ('cancel',) or not product_id or not amunet_packaging_plan_approved"
                         groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_manager"/>
                 <button name="action_view_packaging_plans"
-                        string="Ver planes empaque"
+                        string="Ver planes de presentación"
                         type="object"
                         invisible="packaging_plan_count == 0"
                         groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_user,amunet_quality.group_quality_supervisor"/>

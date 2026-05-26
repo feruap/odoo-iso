@@ -128,18 +128,24 @@ class MrpProduction(models.Model):
         string='Listo para producir',
     )
 
-    @api.depends('state', 'workorder_ids.state')
+    @api.depends('state', 'workorder_ids.state', 'amunet_sys_req_qc', 'quality_analysis_status')
     def _compute_amunet_can_produce(self):
         for rec in self:
             if rec.state not in ('confirmed', 'progress', 'to_close'):
                 rec.amunet_can_produce = False
                 continue
             if rec.workorder_ids:
-                rec.amunet_can_produce = all(
-                    wo.state in ('done', 'cancel') for wo in rec.workorder_ids
-                )
+                wos_done = all(wo.state in ('done', 'cancel') for wo in rec.workorder_ids)
             else:
-                rec.amunet_can_produce = True
+                wos_done = True
+            # Gate de QC: si el producto requiere control de calidad, el
+            # analisis debe estar APROBADO antes de permitir 'Producir'.
+            # Asi el producto no entra al inventario de PT hasta que QC
+            # confirma. ISO 13485 / Cofepris.
+            qc_ok = True
+            if rec.amunet_sys_req_qc:
+                qc_ok = rec.quality_analysis_status == 'approved'
+            rec.amunet_can_produce = wos_done and qc_ok
 
     @api.depends('product_id')
     def _compute_product_categ(self):
@@ -325,26 +331,18 @@ class MrpProduction(models.Model):
                 rec.amunet_scheduled_date_display = ''
 
     def _auto_generate_lot_draft(self, force_recreate=False):
-        """Pre-visualiza el nombre del lote en draft SIN crearlo en base de datos"""
+        """Pre-visualiza el nombre del lote en draft SIN crearlo en BD.
+
+        Politica Amunet: lote = folio del MO. Aqui solo previsualizamos
+        ese nombre para que el supervisor lo vea antes de confirmar.
+        """
         for prod in self:
             if prod.state != 'draft':
                 continue
-                
-            # NUNCA reservamos/creamos lote físico en draft para evitar lotes fantasma
+            # NUNCA reservamos/creamos lote fisico en draft para evitar lotes fantasma
             prod.lot_producing_ids = [Command.clear()]
-            
             if prod.product_id and prod.product_id.tracking != 'none':
-                # Predicción del nombre leyendo la secuencia sin consumirla
-                tmpl_id = prod.product_id.product_tmpl_id.id
-                seq = self.env['ir.sequence'].search([('code', '=', f'amunet.lot.sequence.{tmpl_id}')], limit=1)
-                if seq:
-                    try:
-                        next_number = seq.get_next_char(seq.number_next_actual)
-                        prod.solution_lot_id = next_number
-                    except Exception:
-                        prod.solution_lot_id = "Auto-Lote"
-                else:
-                    prod.solution_lot_id = "Generación Automática"
+                prod.solution_lot_id = prod.name or 'Auto-Lote'
             else:
                 prod.solution_lot_id = ''
 
@@ -480,27 +478,21 @@ class MrpProduction(models.Model):
         self._auto_generate_lot_draft()
 
     def action_confirm(self):
-        # Crear fisicamente el lote ahora que se esta confirmando el analisis
+        # Crear fisicamente el lote ahora que se esta confirmando.
+        # Politica Amunet: el lote del producto terminado tiene EL MISMO
+        # nombre que el folio de la MO (ej. MO 0526/04/IGE -> lote
+        # 0526/04/IGE). Un solo identificador por batch para
+        # trazabilidad simplificada (ISO 13485 / Cofepris).
         for prod in self:
             if prod.state == 'draft' and prod.product_id and prod.product_id.tracking != 'none' and not prod.lot_producing_ids:
                 try:
-                    tmpl_id = prod.product_id.product_tmpl_id.id
-                    seq = self.env['ir.sequence'].search([('code', '=', f'amunet.lot.sequence.{tmpl_id}')], limit=1)
-                    predicted = seq.get_next_char(seq.number_next_actual) if seq else ""
-
-                    if prod.solution_lot_id and prod.solution_lot_id != predicted:
-                        # El usuario lo editó manualmente. Respetamos su nombre y creamos el lote explícitamente (sin consumir secuencia).
-                        lot_vals = {
-                            'name': prod.solution_lot_id,
-                            'product_id': prod.product_id.id,
-                            'company_id': prod.company_id.id,
-                        }
-                    else:
-                        # No lo editó. Usamos la creación oficial de Odoo que consume la secuencia en BD.
-                        lot_vals = prod._prepare_stock_lot_values()
-
+                    lot_vals = {
+                        'name': prod.name,
+                        'product_id': prod.product_id.id,
+                        'company_id': prod.company_id.id,
+                    }
                     prod.lot_producing_ids = [Command.create(lot_vals)]
-                    prod.solution_lot_id = lot_vals.get('name', prod.solution_lot_id)
+                    prod.solution_lot_id = prod.name
                 except Exception:
                     pass
         res = super().action_confirm()
@@ -673,18 +665,22 @@ class MrpProduction(models.Model):
         if not self.amunet_all_ingredients_valid:
             raise UserError('Todos los reactivos deben estar marcados como Válidos para proceder.')
 
-        # Validar checklist operativa antes de mostrar el wizard
-        missing = []
-        if self.amunet_sys_req_history and not self.amunet_check_history_log:
-            missing.append("Registro en Bitácoras")
-        if self.amunet_sys_req_calc and not self.amunet_check_calculations:
-            missing.append("Cálculos Realizados")
-        if self.amunet_sys_req_dilution and not self.amunet_check_dilution:
-            missing.append("Dilución de Reactivos")
-        if self.amunet_sys_req_aforar and not self.amunet_check_aforar:
-            missing.append("Aforar")
-        if missing:
-            raise UserError('Completa las siguientes actividades operativas antes de solicitar el análisis:\n- ' + '\n- '.join(missing))
+        # Validar checklist operativa: bitacoras, calculos, dilucion y
+        # aforar son requisitos del flujo de SOLUCIONES (preparacion
+        # quimica). Para kits y otros productos no aplican porque no
+        # hay preparacion de mezclas.
+        if self.amunet_is_solution_product:
+            missing = []
+            if self.amunet_sys_req_history and not self.amunet_check_history_log:
+                missing.append("Registro en Bitácoras")
+            if self.amunet_sys_req_calc and not self.amunet_check_calculations:
+                missing.append("Cálculos Realizados")
+            if self.amunet_sys_req_dilution and not self.amunet_check_dilution:
+                missing.append("Dilución de Reactivos")
+            if self.amunet_sys_req_aforar and not self.amunet_check_aforar:
+                missing.append("Aforar")
+            if missing:
+                raise UserError('Completa las siguientes actividades operativas antes de solicitar el análisis:\n- ' + '\n- '.join(missing))
 
         return {
             'name': 'Confirmar Solicitud de Análisis',

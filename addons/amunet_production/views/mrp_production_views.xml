@@ -19,7 +19,7 @@
                         de esta MO via wrappers de mrp.production.
                     -->
                     <button name="action_amunet_mo_start_supply" string="Iniciar Surtido" type="object" class="oe_highlight"
-                            invisible="not amunet_supply_workorder_id or amunet_supply_state != 'pending'"
+                            invisible="state not in ('confirmed','progress','to_close') or not amunet_supply_workorder_id or amunet_supply_state != 'pending'"
                             groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
                     <button name="action_amunet_mo_confirm_supply" string="Confirmar Surtido" type="object" class="oe_highlight"
                             invisible="not amunet_supply_workorder_id or amunet_supply_state != 'in_progress'"
@@ -34,7 +34,9 @@
                         producto requiere analisis de QC. Es el
                         momento de mandar muestra al laboratorio.
                     -->
-                    <button name="action_request_analysis" string="Confirmar análisis" type="object" class="oe_highlight" invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"/>
+                    <button name="action_request_analysis" string="Solicitar análisis" type="object" class="oe_highlight"
+                            invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"
+                            groups="amunet_production.group_production_supervisor"/>
                     <button name="%(amunet_production.action_report_production_zebra_label)d" string="Imprimir Etiqueta" type="action" class="oe_highlight" invisible="not amunet_all_ingredients_valid"/>
                     <!--
                         'Producir' es el ultimo paso: marca la MO como

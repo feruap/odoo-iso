@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import fields, models, _
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 
@@ -17,9 +17,22 @@ class MrpProduction(models.Model):
         compute='_compute_packaging_plan_count',
     )
 
+    amunet_packaging_plan_approved = fields.Boolean(
+        string='Plan de presentacion aprobado',
+        compute='_compute_amunet_packaging_plan_approved',
+        store=True,
+    )
+
     def _compute_packaging_plan_count(self):
         for rec in self:
             rec.packaging_plan_count = len(rec.packaging_plan_ids)
+
+    @api.depends('packaging_plan_ids.state')
+    def _compute_amunet_packaging_plan_approved(self):
+        for rec in self:
+            rec.amunet_packaging_plan_approved = any(
+                p.state in ('approved', 'done') for p in rec.packaging_plan_ids
+            )
 
     def action_create_packaging_plan(self):
         self.ensure_one()
@@ -56,29 +69,29 @@ class MrpProduction(models.Model):
         }
 
     def action_confirm(self):
-        """Gate de Amunet: para MOs con route_type 'short' o 'long', no
-        permitir confirmar sin un plan de empaque APROBADO (o cerrado).
-        Razon: el plan define las presentaciones a fabricar y por tanto
-        la cantidad de empaque secundario que debe surtir almacen. Sin
-        plan no se puede dimensionar el surtido.
+        """Gate de Amunet: no permitir confirmar la MO sin un plan de
+        presentacion APROBADO (o cerrado). El plan define las
+        presentaciones a fabricar y por tanto la cantidad de empaque
+        secundario que debe surtir almacen.
 
-        Soluciones y resale no requieren plan (no se empacan en
+        Soluciones internas se exceptuan (no se empacan en
         presentaciones secundarias).
         """
         for prod in self:
-            route_type = getattr(prod, 'route_type', False)
-            if route_type in ('short', 'long'):
-                aprobados = prod.packaging_plan_ids.filtered(
-                    lambda p: p.state in ('approved', 'done')
-                )
-                if not aprobados:
-                    raise UserError(_(
-                        'Antes de confirmar la orden %(mo)s, aprueba un '
-                        'plan de empaque. El plan define las presentaciones '
-                        'a fabricar y cuanta caja/etiqueta debe surtir '
-                        'almacen.\n\n'
-                        'Pulsa el boton "Planear empaque" para crearlo, '
-                        'genera la sugerencia, ajusta si es necesario y '
-                        'aprueba antes de confirmar.'
-                    ) % {'mo': prod.name})
+            # Soluciones no llevan plan de presentacion
+            if getattr(prod, 'amunet_is_solution_product', False):
+                continue
+            aprobados = prod.packaging_plan_ids.filtered(
+                lambda p: p.state in ('approved', 'done')
+            )
+            if not aprobados:
+                raise UserError(_(
+                    'Antes de confirmar la orden %(mo)s, aprueba un '
+                    'plan de presentacion. El plan define las '
+                    'presentaciones a fabricar y cuanta caja/etiqueta '
+                    'debe surtir almacen.\n\n'
+                    'Pulsa el boton "Planear presentación" para '
+                    'crearlo, genera la sugerencia, ajusta si es '
+                    'necesario y aprueba antes de confirmar.'
+                ) % {'mo': prod.name})
         return super().action_confirm()
