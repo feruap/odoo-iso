@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_documentos_user" model="res.groups">
+        <field name="name">Documentos: Usuario</field>
+    </record>
+    <record id="group_documentos_manager" model="res.groups">
+        <field name="name">Documentos: Responsable</field>
+        <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
+    </record>
+</odoo>
