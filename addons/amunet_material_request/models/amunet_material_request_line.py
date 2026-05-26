@@ -157,7 +157,7 @@ class AmunetMaterialRequestLine(models.Model):
             ])
             line.stock_available = sum(quants.mapped('quantity')) - sum(quants.mapped('reserved_quantity'))
 
-    @api.depends('lot_id', 'request_id.warehouse_id')
+    @api.depends('lot_id', 'request_id.warehouse_id', 'request_id.picking_id')
     def _compute_lot_available_qty(self):
         for line in self:
             if not line.lot_id or not line.request_id.warehouse_id:
@@ -168,7 +168,23 @@ class AmunetMaterialRequestLine(models.Model):
                 ('location_id.warehouse_id', '=', line.request_id.warehouse_id.id),
                 ('location_id.usage', '=', 'internal'),
             ])
-            line.lot_available_qty = sum(quants.mapped('quantity')) - sum(quants.mapped('reserved_quantity'))
+            total_qty = sum(quants.mapped('quantity'))
+            total_reserved = sum(quants.mapped('reserved_quantity'))
+            # Sumar de vuelta la reserva del propio picking de esta
+            # solicitud: cuando action_start_picking creo el picking,
+            # este reservo qty_supplied del mismo lote. Sin esto, el
+            # cierre falla pidiendo stock que ya esta apartado para
+            # esa misma solicitud (caso reportado 2026-05-26 en
+            # SMP/26/00024).
+            own_picking = line.request_id.picking_id
+            own_reserved = 0.0
+            if own_picking and own_picking.state not in ('done', 'cancel'):
+                own_reserved = sum(
+                    ml.quantity
+                    for ml in own_picking.move_line_ids
+                    if ml.lot_id == line.lot_id
+                )
+            line.lot_available_qty = total_qty - total_reserved + own_reserved
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
