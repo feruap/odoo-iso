@@ -141,3 +141,64 @@ tareas:
     aprobador: fernando
     notas: "Area futura."
     fecha_alta: 2026-05-25
+  - id: T-0012
+    titulo: "Validacion de procesos de fabricacion de las pruebas (IVD)"
+    area: ensayo
+    modulos: [amunet_equipment_calibration]
+    responsable_agente: ensayo
+    estado: listo_para_tomar
+    depende_de: []
+    riesgo_regulatorio: alto
+    clausula_iso: "7.5.6"
+    aprobador: desarrollo
+    criterio_aceptacion: "Protocolos de validacion de procesos criticos (dispensado/laminado/corte/ensamble) con parametros, resultados, criterios y revalidacion; trazable."
+    fecha_alta: 2026-05-25
+  - id: T-0013
+    titulo: "Expediente digital de capacitacion por empleado"
+    area: rrhh
+    modulos: [amunet_competencias, amunet_hr_training]
+    responsable_agente: rrhh
+    estado: listo_para_tomar
+    depende_de: [T-0005]
+    riesgo_regulatorio: medio
+    clausula_iso: "6.2"
+    aprobador: desarrollo
+    criterio_aceptacion: "Expediente por empleado con evidencias, examenes, calificaciones y certificados; exportable para auditoria."
+    fecha_alta: 2026-05-25
+  - id: T-0014
+    titulo: "Control de registros (retencion, proteccion, recuperacion, disposicion)"
+    area: documentacion
+    modulos: [amunet_documentos]
+    responsable_agente: documentacion
+    estado: listo_para_tomar
+    depende_de: [T-0006]
+    riesgo_regulatorio: medio
+    clausula_iso: "4.2.5"
+    aprobador: desarrollo
+    criterio_aceptacion: "Maestro de registros con periodo de retencion, proteccion, recuperacion y disposicion controlada."
+    fecha_alta: 2026-05-25
+  - id: T-0015
+    titulo: "Quejas de cliente y tecnovigilancia (reporte a Cofepris)"
+    area: calidad
+    modulos: [amunet_quality]
+    responsable_agente: calidad
+    estado: listo_para_tomar
+    depende_de: []
+    riesgo_regulatorio: alto
+    clausula_iso: "8.2.1"
+    aprobador: fernando
+    criterio_aceptacion: "Registro de quejas, evaluacion, reporte de eventos adversos a Cofepris y enlace a CAPA; trazable."
+    notas: "Critico por ser dispositivo de diagnostico humano (IVD)."
+    fecha_alta: 2026-05-25
+  - id: T-0016
+    titulo: "Gestion de riesgos del producto (ISO 14971)"
+    area: calidad
+    modulos: [amunet_quality]
+    responsable_agente: calidad
+    estado: listo_para_tomar
+    depende_de: []
+    riesgo_regulatorio: alto
+    clausula_iso: "ISO 14971 / 7.1"
+    aprobador: fernando
+    criterio_aceptacion: "Registro de analisis de riesgo por producto (peligros, severidad, probabilidad, controles) ligado a CAPA y diseno."
+    fecha_alta: 2026-05-25
