@@ -23,4 +23,43 @@
             Crea, confirma y da seguimiento a ordenes de fabricacion. Supervisa el trabajo de operadores.
         </field>
     </record>
+
+    <!--
+        Reglas de visibilidad para usuarios de almacen sobre MOs y
+        workorders: solo pueden ver MOs en estado confirmed / progress
+        / to_close (donde almacen tiene algo que hacer). No ven draft
+        ni cancel ni done. Aplica a TODOS los usuarios que tengan
+        group_material_warehouse, sin importar por que ruta acceden.
+
+        En Odoo, si un usuario esta en varios grupos y solo uno tiene
+        regla restrictiva sobre el modelo, esa regla aplica. Los demas
+        grupos del usuario (mrp.group_mrp_user, stock.group_stock_user)
+        no tienen reglas propias en mrp.production y por tanto no
+        compensan -> la regla del warehouse prevalece. Verificado el
+        mismo patron con group_material_requester sobre stock.move.line.
+
+        Supervisores de produccion NO tienen group_material_warehouse,
+        asi que esta regla NO los afecta -> ven todas las MOs.
+    -->
+    <record id="mrp_production_rule_material_warehouse_confirmed_only" model="ir.rule">
+        <field name="name">MOs: almacen ve solo confirmadas/en progreso</field>
+        <field name="model_id" ref="mrp.model_mrp_production"/>
+        <field name="domain_force">[('state', 'in', ('confirmed', 'progress', 'to_close'))]</field>
+        <field name="groups" eval="[(4, ref('amunet_material_request.group_material_warehouse'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="mrp_workorder_rule_material_warehouse_confirmed_only" model="ir.rule">
+        <field name="name">Workorders: almacen ve solo de MOs confirmadas/en progreso</field>
+        <field name="model_id" ref="mrp.model_mrp_workorder"/>
+        <field name="domain_force">[('production_id.state', 'in', ('confirmed', 'progress', 'to_close'))]</field>
+        <field name="groups" eval="[(4, ref('amunet_material_request.group_material_warehouse'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
 </odoo>
