@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_documento_list" model="ir.ui.view">
+        <field name="name">amunet.documento.list</field>
+        <field name="model">amunet.documento</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state == 'vigente'" decoration-warning="state == 'en_revision'" decoration-muted="state == 'obsoleto'">
+                <field name="codigo"/>
+                <field name="name"/>
+                <field name="tipo"/>
+                <field name="version_actual"/>
+                <field name="responsable_id"/>
+                <field name="fecha_vigencia"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_documento_form" model="ir.ui.view">
+        <field name="name">amunet.documento.form</field>
+        <field name="model">amunet.documento</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_en_revision" string="Enviar a revision" type="object" class="btn-primary" invisible="state != 'borrador'"/>
+                    <button name="action_aprobar" string="Aprobar y publicar" type="object" class="btn-primary" invisible="state != 'en_revision'"/>
+                    <button name="action_nueva_version" string="Publicar nueva version" type="object" invisible="state != 'vigente'"/>
+                    <button name="action_obsoleto" string="Marcar obsoleto" type="object" invisible="state not in ('vigente','en_revision')"/>
+                    <button name="action_volver_borrador" string="Volver a borrador" type="object" invisible="state not in ('en_revision','obsoleto')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="borrador,en_revision,vigente,obsoleto"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="codigo" readonly="1"/></h1>
+                        <h2><field name="name" placeholder="Titulo del documento"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="tipo"/>
+                            <field name="version_actual"/>
+                            <field name="responsable_id"/>
+                        </group>
+                        <group>
+                            <field name="fecha_vigencia"/>
+                            <field name="fecha_publicacion"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Version actual">
+                            <field name="archivo" filename="archivo_filename"/>
+                            <field name="archivo_filename" invisible="1"/>
+                        </page>
+                        <page string="Historial de versiones">
+                            <field name="version_ids">
+                                <list>
+                                    <field name="version"/>
+                                    <field name="fecha"/>
+                                    <field name="archivo" filename="archivo_filename"/>
+                                    <field name="archivo_filename" column_invisible="1"/>
+                                    <field name="aprobado_por_id"/>
+                                    <field name="cambios"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Distribucion">
+                            <field name="distribucion_ids">
+                                <list editable="bottom">
+                                    <field name="usuario_id"/>
+                                    <field name="acuse"/>
+                                    <field name="fecha_acuse"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Firmas">
+                            <group>
+                                <group>
+                                    <field name="firma_revisa_id"/>
+                                    <field name="fecha_revisa"/>
+                                </group>
+                                <group>
+                                    <field name="firma_aprueba_id"/>
+                                    <field name="fecha_aprueba"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_amunet_documento_search" model="ir.ui.view">
+        <field name="name">amunet.documento.search</field>
+        <field name="model">amunet.documento</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="codigo"/>
+                <field name="name"/>
+                <field name="responsable_id"/>
+                <separator/>
+                <filter name="f_vigente" string="Vigentes" domain="[('state','=','vigente')]"/>
+                <filter name="f_revision" string="En revision" domain="[('state','=','en_revision')]"/>
+                <filter name="f_obsoleto" string="Obsoletos" domain="[('state','=','obsoleto')]"/>
+                <separator/>
+                <filter name="g_tipo" string="Tipo" context="{'group_by':'tipo'}"/>
+                <filter name="g_state" string="Estado" context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_amunet_documento" model="ir.actions.act_window">
+        <field name="name">Documentos controlados</field>
+        <field name="res_model">amunet.documento</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_documento_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea tu primer documento controlado</p>
+            <p>Lleva codigo, version, vigencia, distribucion y firmas bajo ISO 13485 (4.2).</p>
+        </field>
+    </record>
+</odoo>

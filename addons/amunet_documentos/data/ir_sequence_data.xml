@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="seq_amunet_documento" model="ir.sequence">
+        <field name="name">Documento Controlado</field>
+        <field name="code">amunet.documento</field>
+        <field name="prefix">DOC-</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

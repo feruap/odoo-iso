@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_amunet_documentos_root" name="Documentacion"
+              sequence="90" groups="group_documentos_user"/>
+    <menuitem id="menu_amunet_documentos_docs" name="Documentos controlados"
+              parent="menu_amunet_documentos_root"
+              action="action_amunet_documento" sequence="10"/>
+</odoo>
