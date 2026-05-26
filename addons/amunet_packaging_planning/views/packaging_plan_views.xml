@@ -28,8 +28,6 @@
                 <field name="production_id"/>
                 <field name="product_id"/>
                 <field name="product_qty"/>
-                <field name="total_approved_pieces"/>
-                <field name="total_approved_boxes"/>
                 <field name="has_exact_mix" widget="boolean"/>
                 <field name="state" widget="badge"/>
             </list>
@@ -69,12 +67,10 @@
                             <field name="expiration_text"/>
                         </group>
                         <group string="Tendencia">
-                            <field name="trend_days"/>
+                            <field name="trend_months"/>
                             <field name="trend_date_from"/>
                             <field name="trend_date_to"/>
                             <field name="has_exact_mix" widget="boolean"/>
-                            <field name="total_approved_pieces"/>
-                            <field name="total_approved_boxes"/>
                         </group>
                     </group>
                     <group>
@@ -89,8 +85,6 @@
                             <field name="target_piece_qty"/>
                             <field name="suggested_box_qty"/>
                             <field name="suggested_piece_qty"/>
-                            <field name="approved_box_qty"/>
-                            <field name="approved_piece_qty"/>
                             <field name="label_qty"/>
                             <field name="manual_qty"/>
                         </list>

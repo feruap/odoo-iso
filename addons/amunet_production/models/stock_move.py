@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 
 class StockMove(models.Model):
@@ -49,18 +50,33 @@ class StockMove(models.Model):
         help='Automatico: cantidad dentro del rango de pesaje y disolucion confirmada si aplica.'
     )
 
-    @api.depends('quantity', 'product_uom_qty', 'product_id', 'amunet_dissolution')
+    @api.depends('quantity', 'product_uom_qty', 'product_id', 'amunet_dissolution', 'raw_material_production_id.product_id.categ_id')
     def _compute_amunet_is_valid(self):
         for move in self:
             qty_used = move.quantity
-            qty_required = move.product_uom_qty
             product = move.product_id
 
             if not qty_used or qty_used <= 0:
                 move.amunet_is_valid = False
                 continue
 
-            # Parsear delta desde rango de pesaje del producto (formato: ± 0.0007)
+            # Detectar si la MO es de tipo Solucion (categoria del
+            # producto a fabricar contiene 'solucion'). Solo en ese
+            # flujo aplican los checks estrictos de rango de pesaje y
+            # disolucion. Para kits y otros productos, basta con que
+            # la cantidad utilizada sea > 0.
+            mo_product = move.raw_material_production_id.product_id
+            categ = mo_product.categ_id if mo_product else False
+            categ_name = (categ.complete_name or categ.name or '') if categ else ''
+            es_solucion = 'solucion' in categ_name.lower()
+
+            if not es_solucion:
+                # Kit / otro: validez = cantidad utilizada positiva
+                move.amunet_is_valid = True
+                continue
+
+            # Flujo Solucion: check de rango de pesaje + disolucion
+            qty_required = move.product_uom_qty
             range_text = (product.product_tmpl_id.amunet_weighing_range_text or '') if product else ''
             delta = 0.0
             if range_text:
@@ -76,9 +92,52 @@ class StockMove(models.Model):
             else:
                 in_range = qty_used > 0
 
-            # La columna de disolucion funciona como un checklist, se requiere que este activada para validar
             if not move.amunet_dissolution:
                 move.amunet_is_valid = False
                 continue
 
             move.amunet_is_valid = in_range
+
+    def _action_done(self, cancel_backorder=False):
+        """Gate SGC de salida: bloquea movimientos que sacan un lote
+        fuera del inventario interno (a customer/transit) si el lote
+        fue producido por una MO que aun no tiene QC aprobado.
+
+        Aplica solo cuando el producto requiere control de calidad
+        (qc_required = True). Para productos sin QC, no afecta.
+
+        ISO 13485 / Cofepris: producto NO se libera al mercado sin
+        autorizacion de QC.
+        """
+        for move in self:
+            if move.location_id.usage != 'internal':
+                continue
+            if move.location_dest_id.usage not in ('customer', 'transit'):
+                continue
+            for ml in move.move_line_ids:
+                if not ml.lot_id or ml.quantity <= 0:
+                    continue
+                product = ml.product_id or move.product_id
+                if not product.product_tmpl_id.qc_required:
+                    continue
+                # Buscar la MO que produjo este lote (a traves de
+                # lot_producing_ids; usa 'in' porque es Many2many).
+                mo = self.env['mrp.production'].sudo().search([
+                    ('lot_producing_ids', 'in', ml.lot_id.id),
+                ], limit=1)
+                if mo and mo.quality_analysis_status != 'approved':
+                    raise UserError(_(
+                        'No se puede liberar el lote %(lot)s del producto '
+                        '%(prod)s. El analisis de calidad del MO %(mo)s '
+                        'esta en estado "%(qc)s", no esta aprobado todavia. '
+                        'Espera la aprobacion de QC antes de sacar el '
+                        'producto del inventario interno.'
+                    ) % {
+                        'lot': ml.lot_id.name,
+                        'prod': product.display_name,
+                        'mo': mo.name,
+                        'qc': dict(mo._fields['quality_analysis_status'].selection).get(
+                            mo.quality_analysis_status, mo.quality_analysis_status
+                        ),
+                    })
+        return super()._action_done(cancel_backorder=cancel_backorder)

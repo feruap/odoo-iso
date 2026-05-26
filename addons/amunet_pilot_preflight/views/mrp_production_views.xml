@@ -4,22 +4,83 @@
         <field name="name">mrp.production.form.pilot.preflight.inherit</field>
         <field name="model">mrp.production</field>
         <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <!--
+            Prioridad 40: aplicamos DESPUES de amunet_process_inspection
+            (priority 16) para que nuestro override de action_confirm
+            gane sobre el de inspeccion (que no contempla los nuevos
+            campos amunet_packaging_plan_approved / preflight_accepted).
+        -->
+        <field name="priority">40</field>
         <field name="arch" type="xml">
             <!--
-                Insertar 'Validar piloto' como PRIMER boton del header
-                para reforzar que es el paso obligatorio antes de
-                cualquier accion en la MO. Se inserta ANTES del primer
-                boton nativo (state widget se renderiza al final del
-                header automaticamente).
+                Limpiamos los botones que packaging_planning inserto al
+                final del header — los re-insertamos al INICIO del
+                header en el orden correcto con cascade visual.
+            -->
+            <xpath expr="//header/button[@name='action_create_packaging_plan'][1]" position="replace">
+            </xpath>
+            <xpath expr="//header/button[@name='action_create_packaging_plan']" position="replace">
+            </xpath>
+            <xpath expr="//header/button[@name='action_view_packaging_plans']" position="replace">
+            </xpath>
+
+            <!--
+                Cascade visual de los 3 pasos del flujo (en el header,
+                de izquierda a derecha):
+
+                  PASO 1: Planear presentacion
+                    oe_highlight cuando: no hay plan aprobado
+                    gris       cuando: plan ya aprobado
+                  PASO 2: Validar piloto
+                    oe_highlight cuando: plan aprobado y preflight no aceptado
+                    gris       cuando: plan no aprobado (futuro) o piloto ya aceptado
+                  PASO 3: Confirmar (action_confirm nativo)
+                    oe_highlight cuando: plan aprobado Y preflight aceptado
+                    gris       cuando: faltan prerequisitos
+
+                Asi el usuario ve la cadena de activacion como semaforo
+                de los pasos.
             -->
             <xpath expr="//header/button[1]" position="before">
+                <field name="amunet_packaging_plan_approved" invisible="1"/>
+                <field name="amunet_preflight_accepted" invisible="1"/>
+                <field name="packaging_plan_count" invisible="1"/>
+
+                <!-- PASO 1: Planear presentacion -->
+                <button name="action_create_packaging_plan"
+                        string="Planear presentación"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="state in ('cancel',) or not product_id or amunet_packaging_plan_approved"
+                        groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_manager"/>
+                <button name="action_create_packaging_plan"
+                        string="Planear presentación"
+                        type="object"
+                        invisible="state in ('cancel',) or not product_id or not amunet_packaging_plan_approved"
+                        groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_manager"/>
+
+                <!-- PASO 2: Validar piloto -->
                 <button name="action_run_pilot_preflight"
                         string="Validar piloto"
                         type="object"
                         class="oe_highlight"
-                        invisible="state in ('done', 'cancel')"
+                        invisible="state in ('done', 'cancel') or not amunet_packaging_plan_approved or amunet_preflight_accepted"
                         groups="amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                <button name="action_run_pilot_preflight"
+                        string="Validar piloto"
+                        type="object"
+                        invisible="state in ('done', 'cancel') or (amunet_packaging_plan_approved and not amunet_preflight_accepted)"
+                        groups="amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+
+                <!-- Boton auxiliar 'Ver planes de presentacion' -->
+                <button name="action_view_packaging_plans"
+                        string="Ver planes de presentación"
+                        type="object"
+                        invisible="packaging_plan_count == 0"
+                        groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_user,amunet_quality.group_quality_supervisor"/>
             </xpath>
+
+            <!-- Mantener integraciones previas del modulo preflight -->
             <xpath expr="//sheet" position="inside">
                 <field name="pilot_preflight_count" invisible="1"/>
             </xpath>
@@ -31,6 +92,23 @@
                         invisible="pilot_preflight_count == 0">
                     <field name="pilot_preflight_count" widget="statinfo" string="Preflights"/>
                 </button>
+            </xpath>
+
+            <!--
+                PASO 3: Confirmar nativo. Resaltado solo cuando los 2
+                pasos previos estan listos; muteado (gris) cuando no.
+                Patron: nativo con oe_highlight visible si listo, twin
+                gris visible si NO listo.
+            -->
+            <xpath expr="//button[@name='action_confirm']" position="attributes">
+                <attribute name="invisible">state != 'draft' or amunet_is_solution_product or not amunet_packaging_plan_approved or not amunet_preflight_accepted</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_confirm']" position="after">
+                <button name="action_confirm"
+                        string="Confirmar"
+                        type="object"
+                        data-hotkey="q"
+                        invisible="state != 'draft' or amunet_is_solution_product or (amunet_packaging_plan_approved and amunet_preflight_accepted)"/>
             </xpath>
         </field>
     </record>

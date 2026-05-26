@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import fields, models, _
+from odoo import api, fields, models, _
 
 
 class MrpProduction(models.Model):
@@ -15,10 +15,22 @@ class MrpProduction(models.Model):
         string='Preflights',
         compute='_compute_pilot_preflight_count',
     )
+    amunet_preflight_accepted = fields.Boolean(
+        string='Piloto aceptado',
+        compute='_compute_amunet_preflight_accepted',
+        store=True,
+    )
 
     def _compute_pilot_preflight_count(self):
         for rec in self:
             rec.pilot_preflight_count = len(rec.pilot_preflight_ids)
+
+    @api.depends('pilot_preflight_ids.state')
+    def _compute_amunet_preflight_accepted(self):
+        for rec in self:
+            rec.amunet_preflight_accepted = any(
+                p.state == 'accepted' for p in rec.pilot_preflight_ids
+            )
 
     def action_run_pilot_preflight(self):
         self.ensure_one()

@@ -39,7 +39,7 @@ class AmunetPackagingPlan(models.Model):
         readonly=True,
     )
     product_qty = fields.Float(
-        string='Piezas a empacar',
+        string='Piezas teóricas a empacar',
         related='production_id.product_qty',
         readonly=True,
     )
@@ -57,7 +57,7 @@ class AmunetPackagingPlan(models.Model):
         readonly=False,
     )
 
-    trend_days = fields.Integer(string='Dias de tendencia', default=180, required=True)
+    trend_months = fields.Integer(string='Meses de tendencia', default=6, required=True)
     trend_date_from = fields.Date(string='Desde', compute='_compute_trend_dates', store=True)
     trend_date_to = fields.Date(string='Hasta', compute='_compute_trend_dates', store=True)
     trend_source_note = fields.Text(string='Fuente / criterio de tendencia')
@@ -77,11 +77,11 @@ class AmunetPackagingPlan(models.Model):
         copy=True,
     )
     total_approved_pieces = fields.Float(
-        string='Piezas aprobadas',
+        string='Piezas planeadas',
         compute='_compute_totals',
     )
     total_approved_boxes = fields.Float(
-        string='Cajas aprobadas',
+        string='Cajas planeadas',
         compute='_compute_totals',
     )
     total_suggested_pieces = fields.Float(
@@ -114,13 +114,14 @@ class AmunetPackagingPlan(models.Model):
             rec.lot_name = ', '.join(lots) or rec.production_id.solution_lot_id or ''
             rec.expiration_text = rec.production_id.amunet_expiration_text or ''
 
-    @api.depends('trend_days')
+    @api.depends('trend_months')
     def _compute_trend_dates(self):
+        from dateutil.relativedelta import relativedelta
         today = fields.Date.context_today(self)
         for rec in self:
-            days = rec.trend_days or 180
+            months = rec.trend_months or 6
             rec.trend_date_to = today
-            rec.trend_date_from = fields.Date.subtract(today, days=days)
+            rec.trend_date_from = today - relativedelta(months=months)
 
     @api.depends('line_ids.suggested_box_qty', 'line_ids.suggested_piece_qty', 'line_ids.approved_box_qty', 'line_ids.approved_piece_qty', 'product_qty')
     def _compute_totals(self):
@@ -237,8 +238,8 @@ class AmunetPackagingPlan(models.Model):
                 'line_ids': line_commands,
                 'state': 'suggested',
                 'trend_source_note': _(
-                    'Sugerencia calculada con ventas WooCommerce de los ultimos %s dias. Woo sugiere demanda; Odoo valida presentaciones autorizadas.'
-                ) % rec.trend_days,
+                    'Sugerencia calculada con ventas WooCommerce de los ultimos %s meses. Woo sugiere demanda; Odoo valida presentaciones autorizadas.'
+                ) % rec.trend_months,
             })
             rec.message_post(body=_('Mezcla sugerida a partir de tendencia WooCommerce.'))
 
@@ -326,9 +327,9 @@ class AmunetPackagingPlanLine(models.Model):
         compute='_compute_pieces',
         store=True,
     )
-    approved_box_qty = fields.Integer(string='Cajas aprobadas')
+    approved_box_qty = fields.Integer(string='Cajas planeadas')
     approved_piece_qty = fields.Integer(
-        string='Piezas aprobadas',
+        string='Piezas planeadas',
         compute='_compute_pieces',
         store=True,
     )
