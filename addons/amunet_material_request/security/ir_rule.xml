@@ -45,5 +45,87 @@
             <field name="groups" eval="[(4, ref('group_material_warehouse'))]"/>
         </record>
 
+        <!--
+            Solicitante: lectura limitada a pickings cuyo 'origin' sea
+            el nombre de UNA solicitud donde el usuario es solicitante.
+            Asi puede ver la transferencia ligada a su propia solicitud
+            cuando valida recepcion, pero no las del flujo general.
+            stock.group_stock_user / manager NO heredan esta restriccion
+            (su ACL nativa les da acceso amplio).
+        -->
+        <record id="stock_picking_rule_material_requester" model="ir.rule">
+            <field name="name">Transferencias: solicitante ve solo las de sus solicitudes</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="domain_force">[('origin', 'in', [r.name for r in user.env['amunet.material.request'].sudo().search([('requester_id','=',user.id)])])]</field>
+            <field name="groups" eval="[(4, ref('group_material_requester'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="stock_move_rule_material_requester" model="ir.rule">
+            <field name="name">Movimientos: solicitante ve solo los de sus solicitudes</field>
+            <field name="model_id" ref="stock.model_stock_move"/>
+            <field name="domain_force">[('picking_id.origin', 'in', [r.name for r in user.env['amunet.material.request'].sudo().search([('requester_id','=',user.id)])])]</field>
+            <field name="groups" eval="[(4, ref('group_material_requester'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="stock_move_line_rule_material_requester" model="ir.rule">
+            <field name="name">Lineas de movimiento: solicitante ve solo las de sus solicitudes</field>
+            <field name="model_id" ref="stock.model_stock_move_line"/>
+            <field name="domain_force">[('picking_id.origin', 'in', [r.name for r in user.env['amunet.material.request'].sudo().search([('requester_id','=',user.id)])])]</field>
+            <field name="groups" eval="[(4, ref('group_material_requester'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!--
+            Reglas PERMISIVAS para usuarios de Inventario (stock_user,
+            stock_manager). En Odoo, si un usuario esta en varios grupos
+            y SOLO uno tiene record rule, esa regla restringe sin que
+            los otros grupos compensen. Estas reglas explicitas con
+            dominio [1=1] garantizan que stock_user/manager mantengan
+            acceso amplio aun cuando coincidan con group_material_requester.
+        -->
+        <record id="stock_picking_rule_amunet_stock_user_all" model="ir.rule">
+            <field name="name">Transferencias: stock user/manager ve todas (compensa rule de solicitante)</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('stock.group_stock_user')), (4, ref('stock.group_stock_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="stock_move_rule_amunet_stock_user_all" model="ir.rule">
+            <field name="name">Movimientos: stock user/manager ve todos (compensa rule de solicitante)</field>
+            <field name="model_id" ref="stock.model_stock_move"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('stock.group_stock_user')), (4, ref('stock.group_stock_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="stock_move_line_rule_amunet_stock_user_all" model="ir.rule">
+            <field name="name">Lineas de movimiento: stock user/manager ve todas (compensa rule de solicitante)</field>
+            <field name="model_id" ref="stock.model_stock_move_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('stock.group_stock_user')), (4, ref('stock.group_stock_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
     </data>
 </odoo>
