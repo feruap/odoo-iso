@@ -61,12 +61,13 @@ class AmunetQualityProcedure(models.Model):
     category = fields.Selection([
         ('operacion', 'Operación'),
         ('limpieza', 'Limpieza'),
+        ('mantenimiento', 'Mantenimiento'),
         ('general', 'General'),
     ],
         string='Categoría',
         index=True,
         tracking=True,
-        help='Clasificación del PNO. Operación / Limpieza se asignan por el título del PNO; '
+        help='Clasificación del PNO. Operación / Limpieza / Mantenimiento se asignan por el título del PNO; '
              'los Generales (PNOs transversales como almacén, gestión de calidad, etc.) los '
              'dicta el responsable de Validación.'
     )
