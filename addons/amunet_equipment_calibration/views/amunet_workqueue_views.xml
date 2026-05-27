@@ -324,36 +324,16 @@
     </record>
 
     <menuitem id="menu_amunet_metrology_work"
-              name="Mi trabajo metrologia"
-              parent="menu_amunet_equipment_root"
+              name="Mi trabajo metrología"
+              parent="menu_amunet_para_usuario_root"
               action="action_amunet_metrology_my_work"
-              sequence="1"
+              sequence="10"
               groups="amunet_equipment_calibration.group_equipment_manager"/>
-
-    <menuitem id="menu_amunet_calibration_equipment_work"
-              name="Equipos a revisar"
-              parent="menu_amunet_equipment_root"
-              action="action_amunet_calibration_equipment_work"
-              sequence="2"
-              groups="amunet_equipment_calibration.group_equipment_manager"/>
-
-    <menuitem id="menu_amunet_maintenance_root"
-              name="Mantenimiento"
-              parent="menu_validation_root"
-              sequence="20"
-              groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
 
     <menuitem id="menu_amunet_maintenance_my_work"
               name="Mi mantenimiento"
-              parent="menu_amunet_maintenance_root"
+              parent="menu_amunet_para_usuario_root"
               action="action_amunet_maintenance_my_work"
-              sequence="10"
-              groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
-
-    <menuitem id="menu_amunet_maintenance_equipment_work"
-              name="Equipos mantenimiento"
-              parent="menu_amunet_maintenance_root"
-              action="action_amunet_maintenance_equipment_work"
               sequence="20"
               groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
 </odoo>

@@ -48,6 +48,7 @@
                                         <field name="identification_code"/>
                                         <field name="fva_equipment_name"/>
                                         <field name="equipment_id"/>
+                                        <field name="parent_equipment_id" string="Pertenece a" optional="show"/>
                                         <field name="service_type"/>
                                         <field name="planned_month"/>
                                         <field name="program_status" widget="badge"
@@ -98,6 +99,7 @@
                                                 </group>
                                                 <group string="Reconciliación">
                                                     <field name="equipment_id"/>
+                                                    <field name="parent_equipment_id" readonly="1"/>
                                                     <field name="match_state"/>
                                                     <field name="parsed_brand"/>
                                                     <field name="parsed_model"/>
