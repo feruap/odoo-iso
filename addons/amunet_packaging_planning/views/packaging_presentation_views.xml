@@ -59,17 +59,37 @@
                             <field name="woo_name"/>
                         </group>
                     </group>
-                    <group string="Materiales esperados">
-                        <group>
-                            <field name="box_component_id"/>
-                            <field name="label_required"/>
-                            <field name="label_component_id"/>
-                        </group>
-                        <group>
-                            <field name="manual_required"/>
-                            <field name="manual_component_id"/>
-                        </group>
-                    </group>
+                    <notebook>
+                        <page string="Componentes secundarios" name="components">
+                            <p class="text-muted">
+                                Componentes de empaque secundario que se consumen por cada caja fisica
+                                producida (caja, instructivo, vial de corrimiento, bolsa, etc.). Al aprobar
+                                un plan de empaque, las cantidades se calculan como
+                                <code>cajas planeadas x cantidad por caja</code> y se aplican a la
+                                orden de fabricacion.
+                            </p>
+                            <field name="component_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="qty_per_box"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Deprecated" name="legacy">
+                            <p class="text-warning">
+                                Estos 3 campos quedan por compatibilidad. La nueva configuracion se
+                                hace en la pestana "Componentes secundarios".
+                            </p>
+                            <group>
+                                <field name="box_component_id"/>
+                                <field name="label_required"/>
+                                <field name="label_component_id"/>
+                                <field name="manual_required"/>
+                                <field name="manual_component_id"/>
+                            </group>
+                        </page>
+                    </notebook>
                     <group string="Tendencia 180 dias">
                         <field name="trend_box_qty_180"/>
                         <field name="trend_piece_qty_180"/>

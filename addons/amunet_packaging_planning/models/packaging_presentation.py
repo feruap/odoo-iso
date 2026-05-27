@@ -51,11 +51,19 @@ class AmunetPackagingPresentation(models.Model):
         help='Si esta desmarcado, no puede usarse para planear empaque ni reacondicionar.',
     )
 
-    box_component_id = fields.Many2one('product.product', string='Caja / funda')
-    label_component_id = fields.Many2one('product.product', string='Etiqueta')
-    manual_component_id = fields.Many2one('product.product', string='Manual / instructivo')
+    box_component_id = fields.Many2one('product.product', string='Caja / funda (deprecated)')
+    label_component_id = fields.Many2one('product.product', string='Etiqueta (deprecated)')
+    manual_component_id = fields.Many2one('product.product', string='Manual / instructivo (deprecated)')
     label_required = fields.Boolean(string='Requiere etiqueta', default=True)
     manual_required = fields.Boolean(string='Requiere manual', default=True)
+
+    component_ids = fields.One2many(
+        'amunet.packaging.presentation.component',
+        'presentation_id',
+        string='Componentes secundarios',
+        help='Componentes de empaque secundario (caja, instructivo, vial, bolsa, etc.) que se '
+             'consumen por cada caja fisica producida de esta presentacion.',
+    )
 
     trend_line_ids = fields.One2many(
         'amunet.woo.sales.trend',
@@ -163,3 +171,36 @@ class AmunetPackagingPresentation(models.Model):
         else:
             rec = self.create(vals)
         return rec
+
+
+class AmunetPackagingPresentationComponent(models.Model):
+    _name = 'amunet.packaging.presentation.component'
+    _description = 'Componente secundario de presentacion de empaque'
+    _order = 'presentation_id, sequence, id'
+
+    presentation_id = fields.Many2one(
+        'amunet.packaging.presentation',
+        required=True,
+        ondelete='cascade',
+    )
+    sequence = fields.Integer(default=10)
+    product_id = fields.Many2one(
+        'product.product',
+        string='Componente',
+        required=True,
+        domain="[('default_code', '!=', False)]",
+    )
+    qty_per_box = fields.Float(
+        string='Cantidad por caja',
+        default=1.0,
+        required=True,
+        help='Unidades consumidas de este componente por cada caja fisica producida.',
+    )
+
+    @api.constrains('qty_per_box')
+    def _check_qty_positive(self):
+        for rec in self:
+            if rec.qty_per_box <= 0:
+                raise ValidationError(_(
+                    'La cantidad por caja debe ser mayor a cero (componente %(c)s).'
+                ) % {'c': rec.product_id.display_name})

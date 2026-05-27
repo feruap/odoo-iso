@@ -58,8 +58,18 @@ class AmunetPackagingPlan(models.Model):
     )
 
     trend_months = fields.Integer(string='Meses de tendencia', default=6, required=True)
-    trend_date_from = fields.Date(string='Desde', compute='_compute_trend_dates', store=True)
-    trend_date_to = fields.Date(string='Hasta', compute='_compute_trend_dates', store=True)
+    trend_date_from = fields.Date(string='Desde (fecha)', compute='_compute_trend_dates', store=True)
+    trend_date_to = fields.Date(string='Hasta (fecha)', compute='_compute_trend_dates', store=True)
+    trend_date_from_display = fields.Char(
+        string='Desde',
+        compute='_compute_trend_dates_display',
+        store=True,
+    )
+    trend_date_to_display = fields.Char(
+        string='Hasta',
+        compute='_compute_trend_dates_display',
+        store=True,
+    )
     trend_source_note = fields.Text(string='Fuente / criterio de tendencia')
 
     state = fields.Selection([
@@ -122,6 +132,12 @@ class AmunetPackagingPlan(models.Model):
             months = rec.trend_months or 6
             rec.trend_date_to = today
             rec.trend_date_from = today - relativedelta(months=months)
+
+    @api.depends('trend_date_from', 'trend_date_to')
+    def _compute_trend_dates_display(self):
+        for rec in self:
+            rec.trend_date_from_display = rec.trend_date_from.strftime('%d.%m.%y') if rec.trend_date_from else ''
+            rec.trend_date_to_display = rec.trend_date_to.strftime('%d.%m.%y') if rec.trend_date_to else ''
 
     @api.depends('line_ids.suggested_box_qty', 'line_ids.suggested_piece_qty', 'line_ids.approved_box_qty', 'line_ids.approved_piece_qty', 'product_qty')
     def _compute_totals(self):
@@ -252,12 +268,61 @@ class AmunetPackagingPlan(models.Model):
                 raise UserError(_(
                     'La mezcla aprobada debe sumar exactamente %s piezas. Actualmente suma %s.'
                 ) % (rec.product_qty, rec.total_approved_pieces))
+            # 3B: solo se puede aprobar/modificar el plan si la MO esta en draft o confirmed
+            if rec.production_id.state not in ('draft', 'confirmed'):
+                raise UserError(_(
+                    'No se puede aprobar el plan: la orden de fabricacion %(mo)s '
+                    'esta en estado "%(state)s". Solo se puede aprobar cuando la '
+                    'orden esta en Borrador o Confirmada.'
+                ) % {'mo': rec.production_id.name, 'state': rec.production_id.state})
+            # 2B: cada linea con aprobada > 0 debe tener componentes secundarios configurados
+            for line in rec.line_ids.filtered(lambda l: l.approved_box_qty > 0):
+                if not line.presentation_id.component_ids:
+                    raise UserError(_(
+                        'La presentacion "%(pres)s" no tiene componentes secundarios '
+                        'configurados (caja, instructivo, vial, etc.). Configurarlos '
+                        'antes de aprobar el plan.\n\nIr a Configuracion > Presentaciones '
+                        'y editar la presentacion para agregarle componentes.'
+                    ) % {'pres': line.presentation_id.name})
+            rec._sync_secondary_components_to_production()
             rec.write({
                 'state': 'approved',
                 'approved_by_id': self.env.user.id,
                 'approved_date': fields.Datetime.now(),
             })
-            rec.message_post(body=_('Plan de empaque aprobado.'))
+            rec.message_post(body=_('Plan de empaque aprobado. Componentes secundarios sincronizados con la orden.'))
+
+    def _sync_secondary_components_to_production(self):
+        """Por cada linea aprobada del plan, sumar componentes secundarios de
+        la presentacion (qty = approved_box_qty * qty_per_box) y aplicarlos
+        a los move_raw_ids de la MO: si el producto ya existe como move, se
+        actualiza product_uom_qty; si no, se crea un move nuevo.
+        """
+        self.ensure_one()
+        needed = {}  # product_id -> qty total
+        for line in self.line_ids.filtered(lambda l: l.approved_box_qty > 0):
+            for comp in line.presentation_id.component_ids:
+                qty = line.approved_box_qty * (comp.qty_per_box or 1.0)
+                needed[comp.product_id.id] = needed.get(comp.product_id.id, 0.0) + qty
+
+        production = self.production_id
+        existing_by_product = {m.product_id.id: m for m in production.move_raw_ids}
+        for product_id, qty in needed.items():
+            move = existing_by_product.get(product_id)
+            if move:
+                move.product_uom_qty = qty
+            else:
+                product = self.env['product.product'].browse(product_id)
+                production.move_raw_ids = [(0, 0, {
+                    'product_id': product.id,
+                    'product_uom_qty': qty,
+                    'product_uom': product.uom_id.id,
+                    'location_id': production.location_src_id.id,
+                    'location_dest_id': production.production_location_id.id,
+                    'raw_material_production_id': production.id,
+                    'origin': production.name,
+                    'company_id': production.company_id.id,
+                })]
 
     def action_close(self):
         for rec in self:
@@ -344,13 +409,13 @@ class AmunetPackagingPlanLine(models.Model):
         store=True,
     )
 
-    @api.depends('suggested_box_qty', 'approved_box_qty', 'package_qty', 'presentation_id.label_required', 'presentation_id.manual_required')
+    @api.depends('suggested_box_qty', 'approved_box_qty', 'package_qty')
     def _compute_pieces(self):
         for line in self:
             line.suggested_piece_qty = (line.suggested_box_qty or 0) * (line.package_qty or 0)
             line.approved_piece_qty = (line.approved_box_qty or 0) * (line.package_qty or 0)
-            line.label_qty = line.approved_box_qty if line.presentation_id.label_required else 0
-            line.manual_qty = line.approved_box_qty if line.presentation_id.manual_required else 0
+            line.label_qty = line.approved_box_qty or 0
+            line.manual_qty = line.approved_box_qty or 0
 
     @api.constrains('suggested_box_qty', 'approved_box_qty')
     def _check_box_qty(self):
