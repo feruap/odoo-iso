@@ -13,7 +13,7 @@ class AmunetEquipment(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(string='Nombre del Equipo', required=True, tracking=True)
-    serial_number = fields.Char(string='Número de Serie / Fabricante', tracking=True)
+    serial_number = fields.Char(string='Código/ID', tracking=True)
     brand = fields.Char(string='Marca')
     model_name = fields.Char(string='Modelo')
     department = fields.Selection([
