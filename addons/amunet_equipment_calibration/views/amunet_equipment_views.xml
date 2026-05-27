@@ -13,14 +13,10 @@
                     <field name="model_name"/>
                     <field name="department"/>
                     <field name="parent_equipment_id" optional="show" string="Equipo padre"/>
-                    <field name="is_deseable" optional="show" string="Deseable"/>
                     <field name="location_id" optional="hide"/>
-                    <field name="state" widget="badge"
-                           decoration-success="state == 'active'"
-                           decoration-warning="state == 'maintenance'"
-                           decoration-danger="state == 'out_of_service'"/>
-                    <field name="child_equipment_count" string="Accesorios" optional="show"/>
                     <field name="authorized_user_count" string="Autoriz." optional="hide"/>
+                    <field name="is_deseable" column_invisible="1"/>
+                    <field name="state" column_invisible="1"/>
                 </list>
             </field>
         </record>
