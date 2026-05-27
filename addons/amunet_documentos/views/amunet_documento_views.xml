@@ -4,13 +4,19 @@
         <field name="name">amunet.documento.list</field>
         <field name="model">amunet.documento</field>
         <field name="arch" type="xml">
-            <list decoration-success="state == 'vigente'" decoration-warning="state == 'en_revision'" decoration-muted="state == 'obsoleto'">
+            <list decoration-success="state == 'vigente'"
+                  decoration-warning="state == 'en_revision'"
+                  decoration-muted="state == 'obsoleto'"
+                  decoration-danger="state == 'vigente' and dias_a_vigencia &lt;= 30">
                 <field name="codigo"/>
+                <field name="area"/>
                 <field name="name"/>
                 <field name="tipo"/>
                 <field name="version_actual"/>
                 <field name="responsable_id"/>
+                <field name="fecha_emision"/>
                 <field name="fecha_vigencia"/>
+                <field name="dias_a_vigencia" optional="show"/>
                 <field name="state" widget="badge"/>
             </list>
         </field>
@@ -22,45 +28,352 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_en_revision" string="Enviar a revision" type="object" class="btn-primary" invisible="state != 'borrador'"/>
-                    <button name="action_aprobar" string="Aprobar y publicar" type="object" class="btn-primary" invisible="state != 'en_revision'"/>
-                    <button name="action_nueva_version" string="Publicar nueva version" type="object" invisible="state != 'vigente'"/>
-                    <button name="action_obsoleto" string="Marcar obsoleto" type="object" invisible="state not in ('vigente','en_revision')"/>
-                    <button name="action_volver_borrador" string="Volver a borrador" type="object" invisible="state not in ('en_revision','obsoleto')"/>
-                    <field name="state" widget="statusbar" statusbar_visible="borrador,en_revision,vigente,obsoleto"/>
+                    <button name="action_en_revision" string="Enviar a revision"
+                            type="object" class="btn-primary"
+                            invisible="state != 'borrador'"/>
+                    <button name="action_aprobar_revision" string="Aprobar revision"
+                            type="object" class="btn-primary"
+                            invisible="state != 'en_revision' or firma_revisa_id"/>
+                    <button name="action_aprobar" string="Aprobar y publicar"
+                            type="object" class="btn-primary"
+                            invisible="state != 'en_revision' or not firma_revisa_id"/>
+                    <button name="action_nueva_version" string="Publicar nueva version"
+                            type="object" class="btn-primary"
+                            invisible="state != 'vigente'"/>
+                    <button name="action_obsoleto" string="Marcar obsoleto"
+                            type="object"
+                            invisible="state not in ('vigente','en_revision')"
+                            confirm="El documento pasara a obsoleto y dejara de ser de uso. Continuar?"/>
+                    <button name="action_volver_borrador" string="Volver a borrador"
+                            type="object"
+                            invisible="state not in ('en_revision','obsoleto')"/>
+                    <button name="action_open_sugerencia_wizard"
+                            string="Sugerir cambio" type="object"
+                            invisible="state != 'en_revision'"
+                            icon="fa-lightbulb-o"
+                            help="Propon un cambio a una seccion. El elaborador decide si lo acepta o lo rechaza."/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,en_revision,vigente,obsoleto"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object"
+                                name="action_obsoleto" icon="fa-archive"
+                                invisible="state != 'vigente'">
+                            <field name="dias_a_vigencia" widget="statinfo"
+                                   string="Dias p/revision"/>
+                        </button>
+                    </div>
+                    <div class="alert alert-warning mb16" role="alert" style="padding:16px;"
+                         invisible="state != 'en_revision' or revisor_id != uid or firma_revisa_id">
+                        <h3 class="mt0" style="margin-top:0;">Te toca revisar este documento</h3>
+                        <p>Abre la pestana <b>"Archivo de la version actual"</b>, lee el archivo.
+                           Si esta bien, pulsa el boton verde de abajo para firmar tu revision.
+                           El autorizador recibira su tarea en automatico.</p>
+                        <button name="action_aprobar_revision"
+                                string="Aprobar revision"
+                                type="object" class="btn btn-success btn-lg"
+                                icon="fa-check"/>
+                        <hr/>
+                        <p><b>Si necesita correcciones</b>, escribe el motivo y devuelvelo al elaborador:</p>
+                        <field name="motivo_devolucion" nolabel="1"
+                               placeholder="Ej: faltan referencias a NOM-241-2025; redactar de nuevo el paso 3 de Desarrollo del proceso."/>
+                        <button name="action_volver_borrador"
+                                string="Devolver a borrador"
+                                type="object" class="btn btn-warning"
+                                icon="fa-undo"/>
+                    </div>
+                    <div class="alert alert-success mb16" role="alert" style="padding:16px;"
+                         invisible="state != 'en_revision' or autorizador_id != uid or not firma_revisa_id or firma_aprueba_id">
+                        <h3 class="mt0" style="margin-top:0;">Te toca autorizar este documento</h3>
+                        <p>Ya fue revisado y firmado por
+                           <field name="firma_revisa_id" readonly="1" nolabel="1" class="oe_inline"/>.
+                           Si estas conforme, pulsa el boton verde de abajo para autorizarlo y publicarlo como vigente.</p>
+                        <button name="action_aprobar"
+                                string="Aprobar y publicar"
+                                type="object" class="btn btn-success btn-lg"
+                                icon="fa-check"/>
+                        <hr/>
+                        <p><b>Si necesita correcciones</b>, escribe el motivo y devuelvelo al elaborador:</p>
+                        <field name="motivo_devolucion" nolabel="1"
+                               placeholder="Ej: corregir nombres del responsable sanitario, ajustar version en encabezado."/>
+                        <button name="action_volver_borrador"
+                                string="Devolver a borrador"
+                                type="object" class="btn btn-warning"
+                                icon="fa-undo"/>
+                    </div>
+                    <div class="alert alert-warning mb16" role="alert" style="padding:16px;"
+                         invisible="sugerencias_pendientes_count == 0 or elabora_id != uid">
+                        <h3 class="mt0" style="margin-top:0;">Tienes sugerencias por decidir</h3>
+                        <p>Hay <field name="sugerencias_pendientes_count" readonly="1" nolabel="1" class="oe_inline"/>
+                           sugerencia(s) de cambio pendiente(s) en este documento. Ve a la pestana
+                           <b>"Sugerencias"</b> y decide si las aceptas o rechazas.</p>
+                    </div>
+                    <div class="alert alert-info mb16" role="alert" style="padding:16px;"
+                         invisible="state != 'borrador' or elabora_id != uid">
+                        <h3 class="mt0" style="margin-top:0;">Documento en borrador</h3>
+                        <p>Este documento esta en tus manos. Cuando termines:</p>
+                        <ol>
+                            <li>Sube el archivo en la pestana <b>"Archivo de la version actual"</b>.</li>
+                            <li>En la pestana <b>"Firmas controladas"</b> asigna quien debe revisarlo y quien debe autorizarlo.</li>
+                            <li>Pulsa el boton azul de arriba <b>"Enviar a revision"</b>.</li>
+                        </ol>
+                        <p>Si te lo regresaron para correcciones, mira el chat de abajo para el motivo.</p>
+                    </div>
                     <div class="oe_title">
-                        <h1><field name="codigo" readonly="1"/></h1>
-                        <h2><field name="name" placeholder="Titulo del documento"/></h2>
+                        <h1>
+                            <field name="codigo" readonly="state == 'vigente'"
+                                   placeholder="Codigo (ej. PNOGE-001)"/>
+                        </h1>
+                        <h2>
+                            <field name="name" placeholder="Titulo del documento"
+                                   readonly="state == 'vigente'"/>
+                        </h2>
                     </div>
                     <group>
                         <group>
-                            <field name="tipo"/>
-                            <field name="version_actual"/>
+                            <field name="area" readonly="state == 'vigente'"/>
+                            <field name="tipo" readonly="state == 'vigente'"/>
+                            <field name="version_actual" readonly="state == 'vigente'"/>
+                            <field name="sustituye_version"/>
                             <field name="responsable_id"/>
                         </group>
                         <group>
+                            <field name="fecha_emision"/>
                             <field name="fecha_vigencia"/>
                             <field name="fecha_publicacion"/>
+                            <field name="dias_a_vigencia"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="Version actual">
-                            <field name="archivo" filename="archivo_filename"/>
+                        <page string="Objetivo" name="objetivo"
+                              invisible="tipo not in ('pno','manual','instructivo')">
+                            <field name="seccion_objetivo" readonly="state == 'vigente'"
+                                   placeholder="Describe el proposito o razon de ser del documento."/>
+                        </page>
+                        <page string="Alcance" name="alcance"
+                              invisible="tipo not in ('pno','manual','instructivo')">
+                            <field name="seccion_alcance" readonly="state == 'vigente'"
+                                   placeholder="Areas o procesos donde aplica el documento."/>
+                        </page>
+                        <page string="Introduccion" name="introduccion"
+                              invisible="tipo != 'manual'">
+                            <field name="seccion_introduccion" readonly="state == 'vigente'"
+                                   placeholder="Resumen general de lo que el lector encontrara."/>
+                        </page>
+                        <page string="Mision y Vision" name="mision_vision"
+                              invisible="tipo != 'manual'">
+                            <field name="seccion_mision_vision" readonly="state == 'vigente'"/>
+                        </page>
+                        <page string="Responsabilidades" name="responsabilidades"
+                              invisible="tipo not in ('pno','instructivo')">
+                            <field name="seccion_responsabilidades" readonly="state == 'vigente'"
+                                   placeholder="Por puesto: De todo el personal, Del Responsable Sanitario, Del area de Documentacion, etc."/>
+                        </page>
+                        <page string="Organigrama" name="organigrama"
+                              invisible="tipo != 'manual'">
+                            <field name="seccion_organigrama" readonly="state == 'vigente'"/>
+                        </page>
+                        <page string="Terminos y definiciones" name="terminos"
+                              invisible="tipo not in ('pno','manual','instructivo')">
+                            <field name="seccion_terminos_definiciones" readonly="state == 'vigente'"
+                                   placeholder="Define los terminos y siglas usados en el documento. Tip: usa una tabla con columnas Concepto / Definicion."/>
+                        </page>
+                        <page string="Condiciones generales" name="condiciones"
+                              invisible="tipo not in ('pno','manual','instructivo')">
+                            <field name="seccion_condiciones_generales" readonly="state == 'vigente'"
+                                   placeholder="Indicaciones generales aplicables al documento."/>
+                        </page>
+                        <page string="Desarrollo del proceso" name="desarrollo"
+                              invisible="tipo not in ('pno','manual','instructivo')">
+                            <div class="alert alert-info" role="alert" style="margin-bottom:8px;">
+                                Captura paso a paso lo que se hace. Cada renglon es una actividad de la tabla
+                                "Actividad / Descripcion / Responsable / Registro" segun el Anexo 2 de PNOGE-001.
+                                Usa el manejador de la izquierda para reordenar.
+                            </div>
+                            <field name="actividad_ids" readonly="state == 'vigente'">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="actividad" required="1"/>
+                                    <field name="descripcion" widget="html"/>
+                                    <field name="responsable"/>
+                                    <field name="registro"/>
+                                </list>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="sequence"/>
+                                                <field name="actividad" required="1"
+                                                       placeholder="Verbo en infinitivo. Ej: Determinar que se requiere."/>
+                                            </group>
+                                            <group>
+                                                <field name="responsable"
+                                                       placeholder="Puesto o rol. Ej: Elaborador, Documentacion."/>
+                                                <field name="registro"
+                                                       placeholder="Que se registra. Ej: Firma de Conocimiento, No Aplica."/>
+                                            </group>
+                                        </group>
+                                        <field name="descripcion"
+                                               placeholder="Detalle paso a paso, notas, referencias a anexos."/>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Formatos derivados" name="formatos"
+                              invisible="tipo not in ('pno','instructivo')">
+                            <field name="seccion_formatos_derivados" readonly="state == 'vigente'"
+                                   placeholder="Lista los formatos mencionados en este documento. 'No aplica' si no genera formatos."/>
+                        </page>
+                        <page string="Referencias bibliograficas" name="referencias"
+                              invisible="tipo not in ('pno','manual','instructivo')">
+                            <field name="seccion_referencias" readonly="state == 'vigente'"
+                                   placeholder="Lista las normas, libros y articulos consultados. Para fabricacion de IVD cita NOM-241-SSA1-2025, ISO 13485 e ISO 14971."/>
+                        </page>
+                        <page string="Anexos" name="anexos"
+                              invisible="tipo not in ('pno','manual','instructivo')">
+                            <field name="seccion_anexos" readonly="state == 'vigente'"
+                                   placeholder="Tablas, diagramas, imagenes y otra informacion complementaria. Numera como Anexo 1, Anexo 2, etc."/>
+                        </page>
+                        <page string="Contenido libre" name="contenido_libre"
+                              invisible="tipo in ('pno','manual','instructivo')">
+                            <field name="contenido_html" readonly="state == 'vigente'"
+                                   placeholder="Cuerpo del documento sin estructura predefinida."/>
+                        </page>
+                        <page string="Archivo Word adjunto" name="archivo_word">
+                            <div class="alert alert-warning" role="alert"
+                                 invisible="archivo or state == 'borrador'"
+                                 style="margin-bottom:8px;">
+                                No hay archivo Word adjunto. Si capturaste el contenido en las pestanas
+                                de secciones, no necesitas adjuntar nada.
+                            </div>
+                            <p style="font-size:12px; color:#666;">
+                                <i>Solo es necesario para documentos migrados desde Word.</i>
+                            </p>
+                            <field name="archivo" filename="archivo_filename"
+                                   readonly="state == 'vigente'"/>
                             <field name="archivo_filename" invisible="1"/>
                         </page>
+                        <page string="Sugerencias" name="sugerencias">
+                            <field name="sugerencias_pendientes_count" invisible="1"/>
+                            <div class="alert alert-info" role="alert" style="margin-bottom:8px;">
+                                Aqui llegan los cambios que el revisor o el autorizador proponen mientras el documento esta en revision.
+                                Cada sugerencia tiene un texto original (como esta) y un texto propuesto (como quedaria).
+                                <b>Acepta</b> para aplicar el cambio, o <b>Rechaza</b> indicando el motivo.
+                            </div>
+                            <field name="sugerencia_ids">
+                                <list decoration-warning="state == 'pendiente'"
+                                      decoration-success="state == 'aceptada'"
+                                      decoration-muted="state == 'rechazada'">
+                                    <field name="fecha_creacion"/>
+                                    <field name="seccion"/>
+                                    <field name="creado_por_id"/>
+                                    <field name="motivo"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="decidido_por_id" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Firmas controladas">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Como funciona:</strong> antes de mandar a revision asigna
+                                quien va a <b>revisar</b> y quien va a <b>autorizar</b>. Al pulsar
+                                "Enviar a revision" el sistema le pone una tarea pendiente al revisor.
+                                Cuando el revisor pulsa "Aprobar revision", el autorizador recibe la
+                                tarea para autorizar. Cada quien firma con su clic.
+                                <br/><strong>PNOGE-001:</strong> quien elabora NO puede autorizar.
+                            </div>
+                            <group>
+                                <group string="Asignaciones">
+                                    <field name="elabora_id"
+                                           readonly="state in ('en_revision','vigente','obsoleto')"/>
+                                    <field name="fecha_elabora"
+                                           readonly="state in ('en_revision','vigente','obsoleto')"/>
+                                    <field name="allowed_revisor_ids" invisible="1"/>
+                                    <field name="allowed_autorizador_ids" invisible="1"/>
+                                    <field name="firma_config_id" readonly="1"
+                                           help="Politica de firmas que aplica a este documento segun su area."/>
+                                    <field name="revisor_id"
+                                           readonly="state in ('vigente','obsoleto') or firma_revisa_id"
+                                           domain="[('id', 'in', allowed_revisor_ids)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="autorizador_id"
+                                           readonly="state in ('vigente','obsoleto') or firma_aprueba_id"
+                                           domain="[('id', 'in', allowed_autorizador_ids)]"
+                                           options="{'no_create': True}"/>
+                                </group>
+                                <group string="Firmas registradas">
+                                    <field name="firma_revisa_id"/>
+                                    <field name="fecha_revisa"/>
+                                    <field name="firma_aprueba_id"/>
+                                    <field name="fecha_aprueba"/>
+                                </group>
+                            </group>
+                            <group string="Firmas snapshot (migracion inicial)"
+                                   invisible="not firmas_snapshot">
+                                <field name="firmas_snapshot" nolabel="1" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Nueva version" invisible="state != 'vigente'">
+                            <div class="alert alert-warning" role="alert">
+                                Cuando publiques nueva version, la actual pasara a "Obsoleto" automaticamente
+                                y se guardara en el historial. Debes capturar el cambio y la justificacion
+                                antes de pulsar "Publicar nueva version".
+                            </div>
+                            <group>
+                                <field name="descripcion_cambio_pendiente"
+                                       placeholder="Que cambio respecto a la version vigente (descripcion breve)"/>
+                                <field name="justificacion_pendiente"
+                                       placeholder="Por que se cambia (auditoria, mejora, deteccion en proceso, etc)"/>
+                            </group>
+                        </page>
                         <page string="Historial de versiones">
-                            <field name="version_ids">
+                            <field name="version_ids" readonly="1">
                                 <list>
                                     <field name="version"/>
                                     <field name="fecha"/>
+                                    <field name="fecha_emision"/>
+                                    <field name="fecha_obsolescencia"/>
+                                    <field name="elaboro_id"/>
+                                    <field name="aprobado_por_id"/>
+                                    <field name="descripcion_cambio"/>
                                     <field name="archivo" filename="archivo_filename"/>
                                     <field name="archivo_filename" column_invisible="1"/>
-                                    <field name="aprobado_por_id"/>
-                                    <field name="cambios"/>
+                                    <field name="state_historico" widget="badge"/>
                                 </list>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="version"/>
+                                                <field name="fecha"/>
+                                                <field name="fecha_emision"/>
+                                                <field name="fecha_obsolescencia"/>
+                                            </group>
+                                            <group>
+                                                <field name="elaboro_id"/>
+                                                <field name="reviso_id"/>
+                                                <field name="aprobado_por_id"/>
+                                                <field name="state_historico"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <field name="descripcion_cambio"/>
+                                            <field name="justificacion"/>
+                                        </group>
+                                        <notebook>
+                                            <page string="Contenido (snapshot)"
+                                                  invisible="not contenido_html">
+                                                <field name="contenido_html" readonly="1"/>
+                                            </page>
+                                            <page string="Archivo Word">
+                                                <field name="archivo" filename="archivo_filename"/>
+                                                <field name="archivo_filename" invisible="1"/>
+                                            </page>
+                                        </notebook>
+                                    </sheet>
+                                </form>
                             </field>
                         </page>
                         <page string="Distribucion">
@@ -71,18 +384,6 @@
                                     <field name="fecha_acuse"/>
                                 </list>
                             </field>
-                        </page>
-                        <page string="Firmas">
-                            <group>
-                                <group>
-                                    <field name="firma_revisa_id"/>
-                                    <field name="fecha_revisa"/>
-                                </group>
-                                <group>
-                                    <field name="firma_aprueba_id"/>
-                                    <field name="fecha_aprueba"/>
-                                </group>
-                            </group>
                         </page>
                     </notebook>
                 </sheet>
@@ -99,11 +400,28 @@
                 <field name="codigo"/>
                 <field name="name"/>
                 <field name="responsable_id"/>
+                <field name="revisor_id"/>
+                <field name="autorizador_id"/>
+                <field name="area"/>
+                <separator/>
+                <filter name="f_por_revisar_mio" string="Mis documentos por revisar"
+                        domain="[('state','=','en_revision'),('revisor_id','=',uid),('firma_revisa_id','=',False)]"/>
+                <filter name="f_por_autorizar_mio" string="Mis documentos por autorizar"
+                        domain="[('state','=','en_revision'),('autorizador_id','=',uid),('firma_revisa_id','!=',False),('firma_aprueba_id','=',False)]"/>
+                <filter name="f_mios_borrador" string="Mis documentos a corregir / borrador"
+                        domain="[('state','=','borrador'),('elabora_id','=',uid)]"/>
                 <separator/>
                 <filter name="f_vigente" string="Vigentes" domain="[('state','=','vigente')]"/>
                 <filter name="f_revision" string="En revision" domain="[('state','=','en_revision')]"/>
+                <filter name="f_borrador" string="Borrador" domain="[('state','=','borrador')]"/>
                 <filter name="f_obsoleto" string="Obsoletos" domain="[('state','=','obsoleto')]"/>
                 <separator/>
+                <filter name="f_vencen_pronto" string="Vencen en 60 dias"
+                        domain="[('state','=','vigente'),('fecha_vigencia','&gt;=',context_today().strftime('%Y-%m-%d')),('fecha_vigencia','&lt;=',(context_today() + relativedelta(days=60)).strftime('%Y-%m-%d'))]"/>
+                <filter name="f_vencidos" string="Vencidos"
+                        domain="[('state','=','vigente'),('fecha_vigencia','&lt;',context_today().strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="g_area" string="Area" context="{'group_by':'area'}"/>
                 <filter name="g_tipo" string="Tipo" context="{'group_by':'tipo'}"/>
                 <filter name="g_state" string="Estado" context="{'group_by':'state'}"/>
             </search>
@@ -117,7 +435,54 @@
         <field name="search_view_id" ref="view_amunet_documento_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Crea tu primer documento controlado</p>
-            <p>Lleva codigo, version, vigencia, distribucion y firmas bajo ISO 13485 (4.2).</p>
+            <p>Codigo, version, vigencia, distribucion y firmas bajo ISO 13485 (4.2)
+            y NOM-241-SSA1-2025 (5.2).</p>
+        </field>
+    </record>
+
+    <record id="action_amunet_documento_lista_maestra" model="ir.actions.act_window">
+        <field name="name">Lista maestra de documentos vigentes</field>
+        <field name="res_model">amunet.documento</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','vigente')]</field>
+        <field name="context">{'search_default_g_area': 1}</field>
+        <field name="search_view_id" ref="view_amunet_documento_search"/>
+    </record>
+
+    <record id="action_amunet_documento_por_revisar" model="ir.actions.act_window">
+        <field name="name">Mis documentos por revisar</field>
+        <field name="res_model">amunet.documento</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','en_revision'),('revisor_id','=',uid),('firma_revisa_id','=',False)]</field>
+        <field name="search_view_id" ref="view_amunet_documento_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No tienes documentos por revisar</p>
+            <p>Cuando alguien te asigne como revisor de un documento, aparecera aqui y en tu bandeja de actividades.</p>
+        </field>
+    </record>
+
+    <record id="action_amunet_documento_por_autorizar" model="ir.actions.act_window">
+        <field name="name">Mis documentos por autorizar</field>
+        <field name="res_model">amunet.documento</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','en_revision'),('autorizador_id','=',uid),('firma_revisa_id','!=',False),('firma_aprueba_id','=',False)]</field>
+        <field name="search_view_id" ref="view_amunet_documento_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No tienes documentos por autorizar</p>
+            <p>Cuando un revisor termine de revisar un documento donde tu eres el autorizador, aparecera aqui.</p>
+        </field>
+    </record>
+
+    <record id="action_amunet_documento_a_corregir" model="ir.actions.act_window">
+        <field name="name">Mis documentos a corregir / borrador</field>
+        <field name="res_model">amunet.documento</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','borrador'),('elabora_id','=',uid)]</field>
+        <field name="search_view_id" ref="view_amunet_documento_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No tienes documentos en borrador</p>
+            <p>Aqui apareceran los documentos que estes elaborando o que te hayan devuelto para corregir.
+            Si un revisor o autorizador te devuelve uno, mira el chat del documento para ver el motivo.</p>
         </field>
     </record>
 </odoo>

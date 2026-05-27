@@ -152,6 +152,15 @@ class AmunetCalibrationProgramLine(models.Model):
     ], default='p', required=True, tracking=True)
 
     equipment_id = fields.Many2one('amunet.equipment', string='Equipo en Odoo', tracking=True)
+    parent_equipment_id = fields.Many2one(
+        'amunet.equipment',
+        string='Equipo padre',
+        related='equipment_id.parent_equipment_id',
+        store=True,
+        readonly=True,
+        help='Equipo crudo al que pertenece el instrumento que calibra '
+             '(ej. la bomba a la que pertenece este manómetro/vacuómetro).'
+    )
     match_state = fields.Selection([
         ('pending', 'Sin revisar'),
         ('matched', 'Encontrado'),
@@ -273,12 +282,22 @@ class AmunetCalibrationProgramLine(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         records._normalize_from_fva()
+        records.mapped('equipment_id')._sync_calibration_required_from_lines()
         return records
 
     def write(self, vals):
+        before = self.mapped('equipment_id') if {'equipment_id', 'program_status'} & set(vals) else self.env['amunet.equipment']
         res = super().write(vals)
         if {'brand_model_raw', 'identification_code', 'fva_equipment_name', 'program_status'} & set(vals):
             self._normalize_from_fva()
+        if {'equipment_id', 'program_status'} & set(vals):
+            (before | self.mapped('equipment_id'))._sync_calibration_required_from_lines()
+        return res
+
+    def unlink(self):
+        equipos = self.mapped('equipment_id')
+        res = super().unlink()
+        equipos._sync_calibration_required_from_lines()
         return res
 
     def _normalize_from_fva(self):

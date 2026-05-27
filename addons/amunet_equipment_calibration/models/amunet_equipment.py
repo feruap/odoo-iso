@@ -35,6 +35,46 @@ class AmunetEquipment(models.Model):
     ], string='Departamento', tracking=True)
     location_id = fields.Many2one('stock.location', string='Ubicación')
 
+    parent_equipment_id = fields.Many2one(
+        'amunet.equipment',
+        string='Equipo padre',
+        ondelete='restrict',
+        tracking=True,
+        help='Equipo al que pertenece este accesorio o instrumento '
+             '(ej. la bomba a la que pertenece un manómetro). '
+             'Si está vacío, este es un equipo "crudo" (raíz).'
+    )
+    child_equipment_ids = fields.One2many(
+        'amunet.equipment',
+        'parent_equipment_id',
+        string='Accesorios / instrumentos'
+    )
+    child_equipment_count = fields.Integer(
+        string='Accesorios',
+        compute='_compute_child_equipment_count'
+    )
+    parent_equipment_group = fields.Char(
+        string='Equipo padre',
+        compute='_compute_parent_equipment_group',
+        store=True,
+        help='Texto para agrupación: nombre del padre o "No aplica" si es equipo crudo.'
+    )
+
+    is_deseable = fields.Boolean(
+        string='Deseable',
+        default=False,
+        tracking=True,
+        help='Marcar si este equipo está físicamente pero no entra al programa de '
+             'calibración / mantenimiento. Queda "olvidado por ahora" hasta que '
+             'se decida promoverlo o darlo de baja.'
+    )
+    oficial_status_group = fields.Char(
+        string='Clasificación',
+        compute='_compute_oficial_status_group',
+        store=True,
+        help='Etiqueta para agrupación: "Oficial" o "DESEABLES".'
+    )
+
     state = fields.Selection([
         ('active', 'Activo'),
         ('maintenance', 'En Mantenimiento / Calibración'),
@@ -130,6 +170,76 @@ class AmunetEquipment(models.Model):
     maintenance_open_count = fields.Integer(
         string='Mantenimientos abiertos',
         compute='_compute_workqueue_status')
+
+    def _compute_child_equipment_count(self):
+        for eq in self:
+            eq.child_equipment_count = len(eq.child_equipment_ids)
+
+    @api.depends('parent_equipment_id', 'parent_equipment_id.name', 'parent_equipment_id.serial_number')
+    def _compute_parent_equipment_group(self):
+        for eq in self:
+            p = eq.parent_equipment_id
+            if not p:
+                eq.parent_equipment_group = 'No aplica'
+            elif p.serial_number:
+                eq.parent_equipment_group = f"{p.serial_number} — {p.name}"
+            else:
+                eq.parent_equipment_group = p.name
+
+    @api.depends('is_deseable')
+    def _compute_oficial_status_group(self):
+        for eq in self:
+            eq.oficial_status_group = 'Deseables' if eq.is_deseable else 'Oficial'
+
+    def _sync_calibration_required_from_lines(self):
+        """Ajusta calibration_required en función de las líneas del programa:
+        - Si alguna línea tiene program_status='p' (Pendiente) -> True.
+        - Si todas las líneas son 'na' (no aplica) -> False.
+        - Si no tiene líneas: no cambiar (decisión manual).
+        """
+        ProgramLine = self.env['amunet.calibration.program.line'].sudo()
+        for eq in self:
+            lines = ProgramLine.search([('equipment_id', '=', eq.id)])
+            if not lines:
+                continue
+            statuses = set(lines.mapped('program_status'))
+            target = False if statuses and statuses.issubset({'na', 'cancelled'}) else True
+            if eq.calibration_required != target:
+                eq.calibration_required = target
+
+    @api.constrains('parent_equipment_id')
+    def _check_parent_equipment(self):
+        for eq in self:
+            if not eq.parent_equipment_id:
+                continue
+            if eq.parent_equipment_id.id == eq.id:
+                raise ValidationError(
+                    f"El equipo '{eq.name}' no puede ser su propio padre."
+                )
+            if eq.parent_equipment_id.parent_equipment_id:
+                raise ValidationError(
+                    f"El equipo padre '{eq.parent_equipment_id.name}' ya es un "
+                    f"accesorio de otro equipo. Solo se admite un nivel de jerarquía "
+                    f"(equipo crudo → accesorio); no se admite anidar accesorios de accesorios."
+                )
+            if eq.child_equipment_ids:
+                raise ValidationError(
+                    f"El equipo '{eq.name}' ya tiene accesorios y no puede a su vez "
+                    f"colgar de otro equipo padre."
+                )
+
+    def action_view_child_equipments(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Accesorios de {self.name}',
+            'res_model': 'amunet.equipment',
+            'view_mode': 'list,form',
+            'domain': [('parent_equipment_id', '=', self.id)],
+            'context': {'default_parent_equipment_id': self.id,
+                        'default_department': self.department,
+                        'default_location_id': self.location_id.id},
+        }
 
     @api.depends('calibration_line_ids.state', 'calibration_line_ids.expiration_date')
     def _compute_next_calibration(self):
