@@ -56,7 +56,7 @@
                   groups="amunet_equipment_calibration.group_equipment_manager"/>
 
         <menuitem id="menu_amunet_calibration_program"
-                  name="Programa anual"
+                  name="Calibración"
                   parent="menu_amunet_programas_root"
                   action="action_amunet_calibration_program"
                   sequence="10"
