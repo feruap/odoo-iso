@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_lista_maestra" model="ir.actions.report">
+        <field name="name">Lista Maestra de Documentos</field>
+        <field name="model">amunet.documento</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_documentos.report_lista_maestra</field>
+        <field name="report_file">amunet_documentos.report_lista_maestra</field>
+        <field name="print_report_name">'Lista_Maestra_%s' % (object.codigo if len(docs) == 1 else 'Documentos')</field>
+        <field name="binding_model_id" ref="model_amunet_documento"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_ficha_documento" model="ir.actions.report">
+        <field name="name">Ficha del Documento (Encabezado controlado)</field>
+        <field name="model">amunet.documento</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_documentos.report_ficha_documento</field>
+        <field name="report_file">amunet_documentos.report_ficha_documento</field>
+        <field name="print_report_name">'Ficha_%s_v%s' % (object.codigo, object.version_actual)</field>
+        <field name="binding_model_id" ref="model_amunet_documento"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_lista_maestra">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <h2 style="text-align:center;">Lista Maestra de Documentos Controlados</h2>
+                    <p style="text-align:center;">
+                        <strong>Generado:</strong>
+                        <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        | <strong>Total:</strong> <span t-esc="len(docs)"/> documento(s)
+                    </p>
+                    <table class="table table-sm table-bordered" style="font-size:11px;">
+                        <thead style="background-color:#e9ecef;">
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Area</th>
+                                <th>Tipo</th>
+                                <th>Titulo</th>
+                                <th>Version</th>
+                                <th>Emision</th>
+                                <th>Proxima revision</th>
+                                <th>Responsable</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="docs" t-as="d">
+                                <td><strong t-esc="d.codigo"/></td>
+                                <td t-esc="dict(d._fields['area'].selection).get(d.area, '')"/>
+                                <td t-esc="dict(d._fields['tipo'].selection).get(d.tipo, '')"/>
+                                <td t-esc="d.name"/>
+                                <td t-esc="d.version_actual"/>
+                                <td t-esc="d.fecha_emision and d.fecha_emision.strftime('%d/%m/%Y') or ''"/>
+                                <td t-esc="d.fecha_vigencia and d.fecha_vigencia.strftime('%d/%m/%Y') or ''"/>
+                                <td t-esc="d.responsable_id.name or ''"/>
+                                <td t-esc="dict(d._fields['state'].selection).get(d.state, '')"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:9px; margin-top:20px;">
+                        Documento generado automaticamente por el sistema de gestion de calidad.
+                        Cumple con NOM-241-SSA1-2025 seccion 5.2 e ISO 13485 4.2.4.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_ficha_documento">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="d">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 style="text-align:center;">Ficha de Documento Controlado</h2>
+                        <table class="table table-sm table-bordered" style="margin-top:20px;">
+                            <tr>
+                                <th style="width:30%; background-color:#f1f3f5;">Codigo</th>
+                                <td><strong t-esc="d.codigo"/></td>
+                                <th style="width:20%; background-color:#f1f3f5;">Version</th>
+                                <td t-esc="d.version_actual"/>
+                            </tr>
+                            <tr>
+                                <th style="background-color:#f1f3f5;">Titulo</th>
+                                <td colspan="3"><strong t-esc="d.name"/></td>
+                            </tr>
+                            <tr>
+                                <th style="background-color:#f1f3f5;">Area</th>
+                                <td t-esc="dict(d._fields['area'].selection).get(d.area, '')"/>
+                                <th style="background-color:#f1f3f5;">Tipo</th>
+                                <td t-esc="dict(d._fields['tipo'].selection).get(d.tipo, '')"/>
+                            </tr>
+                            <tr>
+                                <th style="background-color:#f1f3f5;">Sustituye version</th>
+                                <td t-esc="d.sustituye_version or 'N/A (primera version)'"/>
+                                <th style="background-color:#f1f3f5;">Estado</th>
+                                <td t-esc="dict(d._fields['state'].selection).get(d.state, '')"/>
+                            </tr>
+                            <tr>
+                                <th style="background-color:#f1f3f5;">Fecha de emision</th>
+                                <td t-esc="d.fecha_emision and d.fecha_emision.strftime('%d/%m/%Y') or ''"/>
+                                <th style="background-color:#f1f3f5;">Proxima revision</th>
+                                <td t-esc="d.fecha_vigencia and d.fecha_vigencia.strftime('%d/%m/%Y') or ''"/>
+                            </tr>
+                            <tr>
+                                <th style="background-color:#f1f3f5;">Responsable</th>
+                                <td colspan="3" t-esc="d.responsable_id.name or ''"/>
+                            </tr>
+                        </table>
+
+                        <h4 style="margin-top:30px;">Firmas controladas</h4>
+                        <table class="table table-sm table-bordered">
+                            <thead style="background-color:#e9ecef;">
+                                <tr><th>Concepto</th><th>Nombre</th><th>Fecha</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Elaboro</strong></td>
+                                    <td t-esc="d.elabora_id.name or ''"/>
+                                    <td t-esc="d.fecha_elabora and d.fecha_elabora.strftime('%d/%m/%Y') or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reviso</strong></td>
+                                    <td t-esc="d.firma_revisa_id.name or ''"/>
+                                    <td t-esc="d.fecha_revisa and d.fecha_revisa.strftime('%d/%m/%Y') or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Autorizo</strong></td>
+                                    <td t-esc="d.firma_aprueba_id.name or ''"/>
+                                    <td t-esc="d.fecha_aprueba and d.fecha_aprueba.strftime('%d/%m/%Y') or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div t-if="d.version_ids" style="margin-top:30px;">
+                            <h4>Control de cambios</h4>
+                            <table class="table table-sm table-bordered" style="font-size:10px;">
+                                <thead style="background-color:#e9ecef;">
+                                    <tr>
+                                        <th>Version</th>
+                                        <th>Fecha</th>
+                                        <th>Descripcion del cambio</th>
+                                        <th>Justificacion</th>
+                                        <th>Aprobado por</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="d.version_ids" t-as="v">
+                                        <td t-esc="v.version"/>
+                                        <td t-esc="v.fecha and v.fecha.strftime('%d/%m/%Y') or ''"/>
+                                        <td t-esc="v.descripcion_cambio or ''"/>
+                                        <td t-esc="v.justificacion or ''"/>
+                                        <td t-esc="v.aprobado_por_id.name or ''"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p style="font-size:9px; margin-top:30px; border-top:1px solid #999; padding-top:8px;">
+                            <strong>Documento confidencial.</strong> Uso exclusivo de AMUNET S.A. de C.V.
+                            Esta ficha es la identificacion controlada del documento bajo
+                            NOM-241-SSA1-2025 (5.2) e ISO 13485 (4.2.4). El archivo del documento se
+                            distribuye por separado. Las copias impresas sin esta ficha se consideran
+                            "Copia no controlada".
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
