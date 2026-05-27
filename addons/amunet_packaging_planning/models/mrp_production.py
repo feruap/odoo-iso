@@ -45,6 +45,7 @@ class MrpProduction(models.Model):
                 'view_mode': 'form',
                 'res_id': existing[0].id,
             }
+        self._amunet_check_packaging_plan_prerequisites()
         plan = self.env['amunet.packaging.plan'].create({
             'production_id': self.id,
         })
@@ -56,6 +57,25 @@ class MrpProduction(models.Model):
             'view_mode': 'form',
             'res_id': plan.id,
         }
+
+    def _amunet_check_packaging_plan_prerequisites(self):
+        self.ensure_one()
+        missing = []
+        if not self.amunet_expiration_text:
+            missing.append(_('Caducidad'))
+        if not self.date_start:
+            missing.append(_('Fecha de inicio programada'))
+        if not self.bom_id:
+            missing.append(_('Lista de materiales (BoM)'))
+        if not self.product_qty or self.product_qty <= 0:
+            missing.append(_('Cantidad a producir'))
+        if missing:
+            raise UserError(_(
+                'Para planear la presentacion de la orden %(mo)s, primero '
+                'completa la informacion del encabezado de la orden: %(list)s.\n\n'
+                'Cierra esta ventana, llena los campos en la orden y vuelve '
+                'a pulsar "Planear presentacion".'
+            ) % {'mo': self.name, 'list': ', '.join(missing)})
 
     def action_view_packaging_plans(self):
         self.ensure_one()

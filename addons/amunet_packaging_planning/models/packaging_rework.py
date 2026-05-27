@@ -40,7 +40,7 @@ class AmunetPackagingRework(models.Model):
     )
     lot_id = fields.Many2one('stock.lot', string='Lote')
     lot_name = fields.Char(string='Lote texto', tracking=True)
-    expiration_text = fields.Char(string='Caducidad etiqueta')
+    expiration_text = fields.Char(string='Caducidad')
     location_id = fields.Many2one('stock.location', string='Ubicacion', domain="[('usage', '=', 'internal')]")
 
     source_box_qty = fields.Integer(string='Cajas origen', required=True, default=1, tracking=True)
