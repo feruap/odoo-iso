@@ -68,8 +68,8 @@
                         </group>
                         <group string="Tendencia">
                             <field name="trend_months"/>
-                            <field name="trend_date_from"/>
-                            <field name="trend_date_to"/>
+                            <field name="trend_date_from_display"/>
+                            <field name="trend_date_to_display"/>
                             <field name="has_exact_mix" widget="boolean"/>
                         </group>
                     </group>
@@ -83,10 +83,10 @@
                             <field name="trend_piece_qty"/>
                             <field name="trend_ratio"/>
                             <field name="target_piece_qty"/>
-                            <field name="suggested_box_qty"/>
+                            <field name="suggested_box_qty" readonly="1"/>
                             <field name="suggested_piece_qty"/>
+                            <field name="approved_box_qty"/>
                             <field name="label_qty"/>
-                            <field name="manual_qty"/>
                         </list>
                     </field>
                     <group string="Notas">
