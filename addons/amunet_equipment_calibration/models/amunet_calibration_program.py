@@ -19,7 +19,7 @@ def _check_equipment_manager(env):
 DEPARTMENT_SELECTION = [
     ('ALMACÉN DE MATERIA PRIMA', 'Almacén de Materia Prima'),
     ('SOLUCIONES', 'Soluciones'),
-    ('LECTURA Y SECADO', 'Lectura y Secado'),
+    ('LECTURA Y PRETRATAMIENTO', 'Lectura y Pretratamiento'),
     ('INYECCIÓN', 'Inyección'),
     ('LAMINADO, SECADO Y CORTE', 'Laminado, Secado y Corte'),
     ('ENCARTUCHADO', 'Encartuchado'),
@@ -31,6 +31,7 @@ DEPARTMENT_SELECTION = [
     ('DESARROLLO', 'Desarrollo'),
     ('ALMACÉN DE PRODUCTO TERMINADO', 'Almacén de Producto Terminado'),
     ('PRODUCCIÓN DE DESARROLLO MOLECULAR', 'Producción de Desarrollo Molecular'),
+    ('VALIDACIÓN', 'Validación'),
 ]
 
 MONTH_SELECTION = [
@@ -323,12 +324,12 @@ class AmunetCalibrationProgramLine(models.Model):
             return 'ALMACÉN DE PRODUCTO TERMINADO', False
         if prefix == 'PRO':
             if family in ('AGO', 'HOR'):
-                return 'LECTURA Y SECADO', False
+                return 'LECTURA Y PRETRATAMIENTO', False
             if family in ('BOM',):
                 return 'INYECCIÓN', False
             return 'SOLUCIONES', False
         if prefix == 'VAL':
-            return 'CONTROL DE CALIDAD', 'Prefijo VAL no existe como area en Odoo; confirmar si debe ser Validacion o Control de Calidad.'
+            return 'VALIDACIÓN', False
         return False, 'No se pudo sugerir area desde el codigo.'
 
     def _find_pno_candidates(self):

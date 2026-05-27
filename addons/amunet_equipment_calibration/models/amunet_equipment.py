@@ -19,7 +19,7 @@ class AmunetEquipment(models.Model):
     department = fields.Selection([
         ('ALMACÉN DE MATERIA PRIMA', 'Almacén de Materia Prima'),
         ('SOLUCIONES', 'Soluciones'),
-        ('LECTURA Y SECADO', 'Lectura y Secado'),
+        ('LECTURA Y PRETRATAMIENTO', 'Lectura y Pretratamiento'),
         ('INYECCIÓN', 'Inyección'),
         ('LAMINADO, SECADO Y CORTE', 'Laminado, Secado y Corte'),
         ('ENCARTUCHADO', 'Encartuchado'),
@@ -31,6 +31,7 @@ class AmunetEquipment(models.Model):
         ('DESARROLLO', 'Desarrollo'),
         ('ALMACÉN DE PRODUCTO TERMINADO', 'Almacén de Producto Terminado'),
         ('PRODUCCIÓN DE DESARROLLO MOLECULAR', 'Producción de Desarrollo Molecular'),
+        ('VALIDACIÓN', 'Validación'),
     ], string='Departamento', tracking=True)
     location_id = fields.Many2one('stock.location', string='Ubicación')
 

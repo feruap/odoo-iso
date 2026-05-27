@@ -51,10 +51,10 @@ class AmunetPackagingPlan(models.Model):
         tracking=True,
     )
     expiration_text = fields.Char(
-        string='Caducidad etiqueta',
+        string='Caducidad',
         compute='_compute_lot_name',
         store=True,
-        readonly=False,
+        readonly=True,
     )
 
     trend_months = fields.Integer(string='Meses de tendencia', default=6, required=True)
