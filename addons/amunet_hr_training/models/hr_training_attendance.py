@@ -18,6 +18,8 @@ class HrTrainingAttendance(models.Model):
         string='Capacitacion',
         required=True, ondelete='cascade', index=True,
     )
+    course_date = fields.Datetime(
+        related='course_id.date_start', string='Fecha del curso', store=False)
     employee_id = fields.Many2one(
         'hr.employee',
         string='Participante',

@@ -5,3 +5,6 @@ access_hr_training_course_hr_manager,hr.training.course hr_manager,model_hr_trai
 access_hr_training_attendance_employee,hr.training.attendance employee read,model_hr_training_attendance,base.group_user,1,0,0,0
 access_hr_training_attendance_hr_user,hr.training.attendance hr_user,model_hr_training_attendance,hr.group_hr_user,1,1,1,1
 access_hr_training_attendance_hr_manager,hr.training.attendance hr_manager,model_hr_training_attendance,hr.group_hr_manager,1,1,1,1
+access_hr_training_evidence_employee,hr.training.evidence employee read,model_hr_training_evidence,base.group_user,1,0,0,0
+access_hr_training_evidence_hr_user,hr.training.evidence hr_user,model_hr_training_evidence,hr.group_hr_user,1,1,1,1
+access_hr_training_evidence_hr_manager,hr.training.evidence hr_manager,model_hr_training_evidence,hr.group_hr_manager,1,1,1,1
