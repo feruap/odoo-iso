@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_line_hide_prices" model="ir.ui.view">
+        <field name="name">purchase.order.line.hide.prices</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']//field[@name='price_unit']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']//field[@name='price_subtotal']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

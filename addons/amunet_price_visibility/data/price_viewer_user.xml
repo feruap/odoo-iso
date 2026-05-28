@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Asigna por defecto a fernando.ruiz@amunet.com.mx -->
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'fernando.ruiz@amunet.com.mx')]"/>
+            </function>
+            <value eval="{'group_ids': [(4, ref('amunet_price_visibility.group_price_viewer'))]}"/>
+        </function>
+    </data>
+</odoo>
