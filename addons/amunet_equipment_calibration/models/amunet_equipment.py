@@ -77,9 +77,9 @@ class AmunetEquipment(models.Model):
 
     state = fields.Selection([
         ('active', 'Activo'),
-        ('maintenance', 'En Mantenimiento / Calibración'),
-        ('out_of_service', 'Fuera de Servicio')
-    ], string='Estado', default='active', tracking=True, required=True)
+        ('maintenance', 'Paro / Pausa'),
+        ('out_of_service', 'Inactivo'),
+    ], string='Estatus', default='active', tracking=True, required=True)
 
     calibration_line_ids = fields.One2many(
         'amunet.equipment.calibration',
