@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="group_price_viewer" model="res.groups">
+            <field name="name">Amunet / Ver precios</field>
+            <field name="comment">Usuarios autorizados a ver precios de costo, venta y de proveedor en todo Odoo.</field>
+        </record>
+    </data>
+</odoo>

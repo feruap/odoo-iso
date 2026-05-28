@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="supplierinfo_tree_hide_price" model="ir.ui.view">
+        <field name="name">product.supplierinfo.tree.hide.price</field>
+        <field name="model">product.supplierinfo</field>
+        <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="price" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </field>
+        </field>
+    </record>
+
+    <record id="supplierinfo_form_hide_price" model="ir.ui.view">
+        <field name="name">product.supplierinfo.form.hide.price</field>
+        <field name="model">product.supplierinfo</field>
+        <field name="inherit_id" ref="product.product_supplierinfo_form_view"/>
+        <field name="arch" type="xml">
+            <field name="price" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </field>
+        </field>
+    </record>
+</odoo>
