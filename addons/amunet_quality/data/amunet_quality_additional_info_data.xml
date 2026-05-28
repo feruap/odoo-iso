@@ -32,5 +32,25 @@
             <field name="sequence">30</field>
         </record>
 
+        <!-- Campo 4: Dimensiones externas - Largo (cartuchos) -->
+        <record id="field_external_length" model="amunet.quality.additional.info.field">
+            <field name="code">external_length</field>
+            <field name="name">Dimensiones externas - Largo</field>
+            <field name="field_type">decimal</field>
+            <field name="uom">mm</field>
+            <field name="placeholder">Ingrese el largo en mm</field>
+            <field name="sequence">5</field>
+        </record>
+
+        <!-- Campo 5: Dimensiones externas - Ancho (cartuchos) -->
+        <record id="field_external_width" model="amunet.quality.additional.info.field">
+            <field name="code">external_width</field>
+            <field name="name">Dimensiones externas - Ancho</field>
+            <field name="field_type">decimal</field>
+            <field name="uom">mm</field>
+            <field name="placeholder">Ingrese el ancho en mm</field>
+            <field name="sequence">7</field>
+        </record>
+
     </data>
 </odoo>
