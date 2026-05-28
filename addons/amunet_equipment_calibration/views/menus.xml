@@ -62,6 +62,13 @@
                   sequence="10"
                   groups="amunet_equipment_calibration.group_equipment_manager"/>
 
+        <menuitem id="menu_amunet_maintenance_program"
+                  name="Mantenimiento"
+                  parent="menu_amunet_programas_root"
+                  action="action_amunet_maintenance_program"
+                  sequence="20"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
         <!-- =================================================================
              SECCIÓN 3: PARA EL USUARIO (bandejas personales)
              ================================================================= -->

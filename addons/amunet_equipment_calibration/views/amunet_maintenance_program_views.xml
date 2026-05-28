@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ── Programa (cabecera) ─────────────────────────────────────── -->
+        <record id="view_amunet_maintenance_program_form" model="ir.ui.view">
+            <field name="name">amunet.maintenance.program.form</field>
+            <field name="model">amunet.maintenance.program</field>
+            <field name="arch" type="xml">
+                <form string="Programa Anual de Mantenimiento">
+                    <header>
+                        <button name="action_reconcile" type="object"
+                                string="Reconciliar equipos" class="btn-primary"
+                                invisible="state in ('closed', 'cancelled')"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_generate_orders" type="object"
+                                string="Generar órdenes de mantenimiento"
+                                invisible="state not in ('approved', 'active')"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_approve" type="object" string="Aprobar"
+                                invisible="state != 'draft'"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_activate" type="object" string="Activar"
+                                invisible="state != 'approved'"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <button name="action_close" type="object" string="Cerrar programa"
+                                invisible="state != 'active'"
+                                groups="amunet_equipment_calibration.group_equipment_manager"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,approved,active,closed"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="year"/>
+                                <field name="source_document_file"
+                                       filename="source_document_filename"/>
+                                <field name="source_document_filename" invisible="1"/>
+                            </group>
+                            <group>
+                                <field name="total_line_count" string="Total actividades"/>
+                                <field name="matched_line_count" string="Equipos encontrados"/>
+                                <field name="missing_line_count" string="Equipos faltantes"/>
+                                <field name="done_line_count" string="Realizados"/>
+                                <field name="pending_line_count" string="Pendientes"/>
+                            </group>
+                        </group>
+                        <group string="Notas">
+                            <field name="notes" nolabel="1"/>
+                        </group>
+                        <notebook>
+                            <page string="Actividades del programa" name="lines">
+                                <field name="line_ids" context="{'default_program_id': id}">
+                                    <list string="Actividades"
+                                          decoration-danger="match_state == 'missing'"
+                                          decoration-success="program_status == 'done'"
+                                          decoration-muted="program_status in ('cancelled', 'na')">
+                                        <field name="identification_code" string="Código"/>
+                                        <field name="mva_equipment_name" string="Equipo"/>
+                                        <field name="equipment_id" string="En Odoo"/>
+                                        <field name="department" string="Área"/>
+                                        <field name="month"/>
+                                        <field name="activity_type" widget="badge"
+                                               decoration-info="activity_type == 'GP'"
+                                               decoration-warning="activity_type == 'LP'"
+                                               decoration-success="activity_type in ('RP', 'CP', 'FP')"/>
+                                        <field name="program_status" widget="badge"
+                                               decoration-success="program_status == 'done'"
+                                               decoration-muted="program_status in ('cancelled', 'na')"/>
+                                        <field name="match_state" widget="badge"
+                                               decoration-success="match_state == 'matched'"
+                                               decoration-danger="match_state == 'missing'"
+                                               decoration-muted="match_state == 'pending'"/>
+                                        <field name="maintenance_id" optional="show"/>
+                                    </list>
+                                    <form string="Actividad del programa">
+                                        <header>
+                                            <button name="action_reconcile" type="object"
+                                                    string="Reconciliar"
+                                                    class="btn-primary"
+                                                    groups="amunet_equipment_calibration.group_equipment_manager"/>
+                                            <field name="program_status" widget="statusbar"
+                                                   statusbar_visible="p,done,cancelled"/>
+                                        </header>
+                                        <sheet>
+                                            <div class="oe_title">
+                                                <h1><field name="name" readonly="1"/></h1>
+                                            </div>
+                                            <group>
+                                                <group string="MVA">
+                                                    <field name="program_id"/>
+                                                    <field name="mva_equipment_name"/>
+                                                    <field name="identification_code"/>
+                                                    <field name="area_name"/>
+                                                    <field name="month"/>
+                                                    <field name="activity_type"/>
+                                                    <field name="program_status"/>
+                                                </group>
+                                                <group string="Reconciliación">
+                                                    <field name="equipment_id"/>
+                                                    <field name="match_state"/>
+                                                    <field name="area_prefix" readonly="1"/>
+                                                    <field name="equipment_family" readonly="1"/>
+                                                    <field name="department"/>
+                                                </group>
+                                            </group>
+                                            <group>
+                                                <field name="maintenance_id" readonly="1"/>
+                                                <field name="planned_date" readonly="1"/>
+                                            </group>
+                                            <group string="Notas">
+                                                <field name="notes" nolabel="1"/>
+                                            </group>
+                                        </sheet>
+                                        <chatter/>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_amunet_maintenance_program_list" model="ir.ui.view">
+            <field name="name">amunet.maintenance.program.list</field>
+            <field name="model">amunet.maintenance.program</field>
+            <field name="arch" type="xml">
+                <list string="Programas de Mantenimiento">
+                    <field name="name"/>
+                    <field name="year"/>
+                    <field name="total_line_count" string="Actividades"/>
+                    <field name="matched_line_count" string="Encontrados"/>
+                    <field name="missing_line_count" string="Faltantes"/>
+                    <field name="done_line_count" string="Realizados"/>
+                    <field name="pending_line_count" string="Pendientes"/>
+                    <field name="state" widget="badge"
+                           decoration-info="state == 'approved'"
+                           decoration-success="state in ('active', 'closed')"
+                           decoration-muted="state == 'cancelled'"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_amunet_maintenance_program_search" model="ir.ui.view">
+            <field name="name">amunet.maintenance.program.search</field>
+            <field name="model">amunet.maintenance.program</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="year"/>
+                    <filter name="activos" string="Activos" domain="[('state', '=', 'active')]"/>
+                    <filter name="aprobados" string="Aprobados" domain="[('state', '=', 'approved')]"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- ── Líneas (vista independiente con filtros) ────────────────── -->
+        <record id="view_amunet_maintenance_program_line_list" model="ir.ui.view">
+            <field name="name">amunet.maintenance.program.line.list</field>
+            <field name="model">amunet.maintenance.program.line</field>
+            <field name="arch" type="xml">
+                <list string="Matriz de Mantenimiento MVA"
+                      decoration-danger="match_state == 'missing'"
+                      decoration-success="program_status == 'done'"
+                      decoration-muted="program_status in ('cancelled', 'na')">
+                    <field name="program_id"/>
+                    <field name="identification_code" string="Código"/>
+                    <field name="mva_equipment_name" string="Equipo (MVA)"/>
+                    <field name="equipment_id" string="En Odoo"/>
+                    <field name="department" string="Área"/>
+                    <field name="planned_date"/>
+                    <field name="activity_type" widget="badge"
+                           decoration-info="activity_type == 'GP'"
+                           decoration-warning="activity_type == 'LP'"
+                           decoration-success="activity_type in ('RP', 'CP', 'FP')"/>
+                    <field name="program_status" widget="badge"
+                           decoration-success="program_status == 'done'"
+                           decoration-muted="program_status in ('cancelled', 'na')"/>
+                    <field name="match_state" widget="badge"
+                           decoration-success="match_state == 'matched'"
+                           decoration-danger="match_state == 'missing'"/>
+                    <field name="maintenance_id" optional="show"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_amunet_maintenance_program_line_search" model="ir.ui.view">
+            <field name="name">amunet.maintenance.program.line.search</field>
+            <field name="model">amunet.maintenance.program.line</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="identification_code"/>
+                    <field name="mva_equipment_name"/>
+                    <field name="equipment_id"/>
+                    <field name="department"/>
+                    <field name="program_id"/>
+                    <separator/>
+                    <filter name="faltantes" string="Faltan en sistema"
+                            domain="[('match_state', '=', 'missing')]"/>
+                    <filter name="pendientes" string="Pendientes de ejecutar"
+                            domain="[('program_status', '=', 'p'), ('match_state', '=', 'matched')]"/>
+                    <filter name="realizados" string="Realizados"
+                            domain="[('program_status', '=', 'done')]"/>
+                    <filter name="sin_orden" string="Sin orden generada"
+                            domain="[('maintenance_id', '=', False), ('match_state', '=', 'matched'), ('program_status', '=', 'p')]"/>
+                    <separator/>
+                    <filter name="gp" string="Mantenimiento general (GP)"
+                            domain="[('activity_type', '=', 'GP')]"/>
+                    <filter name="lp" string="Limpieza preventiva (LP)"
+                            domain="[('activity_type', '=', 'LP')]"/>
+                    <filter name="rp" string="Revisión preventiva (RP)"
+                            domain="[('activity_type', '=', 'RP')]"/>
+                    <separator/>
+                    <filter name="group_program" string="Programa" context="{'group_by': 'program_id'}"/>
+                    <filter name="group_area" string="Área" context="{'group_by': 'department'}"/>
+                    <filter name="group_mes" string="Mes" context="{'group_by': 'planned_date:month'}"/>
+                    <filter name="group_actividad" string="Tipo de actividad" context="{'group_by': 'activity_type'}"/>
+                    <filter name="group_estado" string="Estado" context="{'group_by': 'program_status'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_amunet_maintenance_program_line_calendar" model="ir.ui.view">
+            <field name="name">amunet.maintenance.program.line.calendar</field>
+            <field name="model">amunet.maintenance.program.line</field>
+            <field name="arch" type="xml">
+                <calendar string="Calendario MVA" date_start="planned_date"
+                          color="department" event_open_popup="true"
+                          quick_create="false" mode="month">
+                    <field name="identification_code"/>
+                    <field name="mva_equipment_name"/>
+                    <field name="activity_type"/>
+                    <field name="department"/>
+                    <field name="program_status"/>
+                </calendar>
+            </field>
+        </record>
+
+        <record id="view_amunet_maintenance_program_line_pivot" model="ir.ui.view">
+            <field name="name">amunet.maintenance.program.line.pivot</field>
+            <field name="model">amunet.maintenance.program.line</field>
+            <field name="arch" type="xml">
+                <pivot string="Matriz de Mantenimiento">
+                    <field name="department" type="row"/>
+                    <field name="activity_type" type="col"/>
+                    <field name="program_status" type="col"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!-- ── Actions ────────────────────────────────────────────────── -->
+        <record id="action_amunet_maintenance_program" model="ir.actions.act_window">
+            <field name="name">Programa de Mantenimiento</field>
+            <field name="res_model">amunet.maintenance.program</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_amunet_maintenance_program_search"/>
+        </record>
+
+        <record id="action_amunet_maintenance_program_line" model="ir.actions.act_window">
+            <field name="name">Matriz MVA</field>
+            <field name="res_model">amunet.maintenance.program.line</field>
+            <field name="view_mode">list,form,calendar,pivot</field>
+            <field name="search_view_id" ref="view_amunet_maintenance_program_line_search"/>
+        </record>
+
+        <record id="action_server_reconcile_mva_lines" model="ir.actions.server">
+            <field name="name">Reconciliar contra equipos</field>
+            <field name="model_id" ref="model_amunet_maintenance_program_line"/>
+            <field name="binding_model_id" ref="model_amunet_maintenance_program_line"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">action = records.action_reconcile()</field>
+        </record>
+
+    </data>
+</odoo>
