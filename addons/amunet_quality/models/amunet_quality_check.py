@@ -690,6 +690,18 @@ class AmunetQualityCheck(models.Model):
         help='Observaciones generales con posibilidad de adjuntar imágenes'
     )
 
+    additional_info_external_length = fields.Float(
+        string='Dimensiones externas - Largo',
+        digits=(16, 2),
+        help='Largo externo del cartucho (mm)'
+    )
+
+    additional_info_external_width = fields.Float(
+        string='Dimensiones externas - Ancho',
+        digits=(16, 2),
+        help='Ancho externo del cartucho (mm)'
+    )
+
     # ========================================================================
     # NUMERAL 7 & 8: REFERENCIAS Y ANEXOS
     # ========================================================================
@@ -764,6 +776,18 @@ class AmunetQualityCheck(models.Model):
         help='True si el campo está activo en la configuración del producto'
     )
 
+    show_additional_info_external_length = fields.Boolean(
+        string='Mostrar: Dim ext. Largo',
+        compute='_compute_additional_info_visibility',
+        help='True si el campo está activo en la configuración del producto'
+    )
+
+    show_additional_info_external_width = fields.Boolean(
+        string='Mostrar: Dim ext. Ancho',
+        compute='_compute_additional_info_visibility',
+        help='True si el campo está activo en la configuración del producto'
+    )
+
     # ========== Campos Computed de Obligatoriedad ==========
 
     required_additional_info_avg_length = fields.Boolean(
@@ -784,6 +808,18 @@ class AmunetQualityCheck(models.Model):
         help='True si el campo es obligatorio en la configuración del producto'
     )
 
+    required_additional_info_external_length = fields.Boolean(
+        string='Requerido: Dim ext. Largo',
+        compute='_compute_additional_info_required',
+        help='True si el campo es obligatorio en la configuración del producto'
+    )
+
+    required_additional_info_external_width = fields.Boolean(
+        string='Requerido: Dim ext. Ancho',
+        compute='_compute_additional_info_required',
+        help='True si el campo es obligatorio en la configuración del producto'
+    )
+
     # ========== Campos Computed de Placeholders ==========
 
     placeholder_additional_info_avg_length = fields.Char(
@@ -800,6 +836,18 @@ class AmunetQualityCheck(models.Model):
 
     placeholder_additional_info_observations = fields.Char(
         string='Placeholder: Observaciones',
+        compute='_compute_additional_info_placeholders',
+        help='Texto placeholder del campo'
+    )
+
+    placeholder_additional_info_external_length = fields.Char(
+        string='Placeholder: Dim ext. Largo',
+        compute='_compute_additional_info_placeholders',
+        help='Texto placeholder del campo'
+    )
+
+    placeholder_additional_info_external_width = fields.Char(
+        string='Placeholder: Dim ext. Ancho',
         compute='_compute_additional_info_placeholders',
         help='Texto placeholder del campo'
     )
@@ -1232,6 +1280,8 @@ class AmunetQualityCheck(models.Model):
                 record.show_additional_info_avg_length = False
                 record.show_additional_info_cv_percent = False
                 record.show_additional_info_observations = False
+                record.show_additional_info_external_length = False
+                record.show_additional_info_external_width = False
                 continue
 
             product_tmpl = record.product_id.product_tmpl_id
@@ -1241,6 +1291,8 @@ class AmunetQualityCheck(models.Model):
                 record.show_additional_info_avg_length = False
                 record.show_additional_info_cv_percent = False
                 record.show_additional_info_observations = False
+                record.show_additional_info_external_length = False
+                record.show_additional_info_external_width = False
                 continue
 
             # Buscar configuración por código de campo
@@ -1255,10 +1307,18 @@ class AmunetQualityCheck(models.Model):
             observations_config = config_ids.filtered(
                 lambda c: c.field_id.code == 'observations' and c.active
             )
+            external_length_config = config_ids.filtered(
+                lambda c: c.field_id.code == 'external_length' and c.active
+            )
+            external_width_config = config_ids.filtered(
+                lambda c: c.field_id.code == 'external_width' and c.active
+            )
 
             record.show_additional_info_avg_length = bool(avg_length_config)
             record.show_additional_info_cv_percent = bool(cv_percent_config)
             record.show_additional_info_observations = bool(observations_config)
+            record.show_additional_info_external_length = bool(external_length_config)
+            record.show_additional_info_external_width = bool(external_width_config)
 
     @api.depends('product_id')
     def _compute_additional_info_required(self):
@@ -1274,6 +1334,8 @@ class AmunetQualityCheck(models.Model):
                     record.required_additional_info_avg_length = False
                     record.required_additional_info_cv_percent = False
                     record.required_additional_info_observations = False
+                    record.required_additional_info_external_length = False
+                    record.required_additional_info_external_width = False
                     continue
 
                 product_tmpl = record.product_id.product_tmpl_id
@@ -1283,6 +1345,8 @@ class AmunetQualityCheck(models.Model):
                     record.required_additional_info_avg_length = False
                     record.required_additional_info_cv_percent = False
                     record.required_additional_info_observations = False
+                    record.required_additional_info_external_length = False
+                    record.required_additional_info_external_width = False
                     continue
 
                 # Buscar configuración por código de campo
@@ -1297,6 +1361,12 @@ class AmunetQualityCheck(models.Model):
                 observations_config = config_ids.filtered(
                     lambda c: c.field_id.code == 'observations' and c.active
                 )
+                external_length_config = config_ids.filtered(
+                    lambda c: c.field_id.code == 'external_length' and c.active
+                )
+                external_width_config = config_ids.filtered(
+                    lambda c: c.field_id.code == 'external_width' and c.active
+                )
 
                 record.required_additional_info_avg_length = (
                     bool(avg_length_config) and avg_length_config[0].required
@@ -1307,12 +1377,20 @@ class AmunetQualityCheck(models.Model):
                 record.required_additional_info_observations = (
                     bool(observations_config) and observations_config[0].required
                 )
+                record.required_additional_info_external_length = (
+                    bool(external_length_config) and external_length_config[0].required
+                )
+                record.required_additional_info_external_width = (
+                    bool(external_width_config) and external_width_config[0].required
+                )
             except Exception as e:
                 _logger.error(f"Error in _compute_additional_info_required for record {record.id}: {str(e)}")
                 # Set defaults on error
                 record.required_additional_info_avg_length = False
                 record.required_additional_info_cv_percent = False
                 record.required_additional_info_observations = False
+                record.required_additional_info_external_length = False
+                record.required_additional_info_external_width = False
 
     @api.depends('product_id')
     def _compute_additional_info_placeholders(self):
@@ -1326,6 +1404,8 @@ class AmunetQualityCheck(models.Model):
                 record.placeholder_additional_info_avg_length = ''
                 record.placeholder_additional_info_cv_percent = ''
                 record.placeholder_additional_info_observations = ''
+                record.placeholder_additional_info_external_length = ''
+                record.placeholder_additional_info_external_width = ''
                 continue
 
             product_tmpl = record.product_id.product_tmpl_id
@@ -1334,6 +1414,8 @@ class AmunetQualityCheck(models.Model):
                 record.placeholder_additional_info_avg_length = ''
                 record.placeholder_additional_info_cv_percent = ''
                 record.placeholder_additional_info_observations = ''
+                record.placeholder_additional_info_external_length = ''
+                record.placeholder_additional_info_external_width = ''
                 continue
 
             # Buscar configuración por código de campo
@@ -1348,6 +1430,12 @@ class AmunetQualityCheck(models.Model):
             observations_config = config_ids.filtered(
                 lambda c: c.field_id.code == 'observations' and c.active
             )
+            external_length_config = config_ids.filtered(
+                lambda c: c.field_id.code == 'external_length' and c.active
+            )
+            external_width_config = config_ids.filtered(
+                lambda c: c.field_id.code == 'external_width' and c.active
+            )
 
             record.placeholder_additional_info_avg_length = (
                 avg_length_config[0].placeholder if avg_length_config and avg_length_config[0].placeholder else ''
@@ -1357,6 +1445,12 @@ class AmunetQualityCheck(models.Model):
             )
             record.placeholder_additional_info_observations = (
                 observations_config[0].placeholder if observations_config and observations_config[0].placeholder else 'Escriba aquí las observaciones generales.'
+            )
+            record.placeholder_additional_info_external_length = (
+                external_length_config[0].placeholder if external_length_config and external_length_config[0].placeholder else ''
+            )
+            record.placeholder_additional_info_external_width = (
+                external_width_config[0].placeholder if external_width_config and external_width_config[0].placeholder else ''
             )
 
     # ========================================================================

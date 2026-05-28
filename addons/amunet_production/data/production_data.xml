@@ -3,4 +3,11 @@
     <data noupdate="1">
         <!-- Products are maintained dynamically in the database via python scripts -->
     </data>
+
+    <data>
+        <!-- Renombrar menú raíz de Manufactura a Producción -->
+        <record id="mrp.menu_mrp_root" model="ir.ui.menu">
+            <field name="name">Producción</field>
+        </record>
+    </data>
 </odoo>

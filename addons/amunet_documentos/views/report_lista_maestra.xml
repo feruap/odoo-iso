@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_lista_maestra" model="ir.actions.report">
+        <field name="name">Lista Maestra de Documentos</field>
+        <field name="model">amunet.documento</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_documentos.report_lista_maestra</field>
+        <field name="report_file">amunet_documentos.report_lista_maestra</field>
+        <field name="print_report_name">'Lista_Maestra_%s' % (object.codigo if len(docs) == 1 else 'Documentos')</field>
+        <field name="binding_model_id" ref="model_amunet_documento"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_ficha_documento" model="ir.actions.report">
+        <field name="name">Ficha del Documento (Encabezado controlado)</field>
+        <field name="model">amunet.documento</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_documentos.report_ficha_documento</field>
+        <field name="report_file">amunet_documentos.report_ficha_documento</field>
+        <field name="print_report_name">'Ficha_%s_v%s' % (object.codigo, object.version_actual)</field>
+        <field name="binding_model_id" ref="model_amunet_documento"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_lista_maestra">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <h2 style="text-align:center;">Lista Maestra de Documentos Controlados</h2>
+                    <p style="text-align:center;">
+                        <strong>Generado:</strong>
+                        <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        | <strong>Total:</strong> <span t-esc="len(docs)"/> documento(s)
+                    </p>
+                    <table class="table table-sm table-bordered" style="font-size:11px;">
+                        <thead style="background-color:#e9ecef;">
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Area</th>
+                                <th>Tipo</th>
+                                <th>Titulo</th>
+                                <th>Version</th>
+                                <th>Emision</th>
+                                <th>Proxima revision</th>
+                                <th>Responsable</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="docs" t-as="d">
+                                <td><strong t-esc="d.codigo"/></td>
+                                <td t-esc="dict(d._fields['area'].selection).get(d.area, '')"/>
+                                <td t-esc="dict(d._fields['tipo'].selection).get(d.tipo, '')"/>
+                                <td t-esc="d.name"/>
+                                <td t-esc="d.version_actual"/>
+                                <td t-esc="d.fecha_emision and d.fecha_emision.strftime('%d/%m/%Y') or ''"/>
+                                <td t-esc="d.fecha_vigencia and d.fecha_vigencia.strftime('%d/%m/%Y') or ''"/>
+                                <td t-esc="d.responsable_id.name or ''"/>
+                                <td t-esc="dict(d._fields['state'].selection).get(d.state, '')"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_ficha_documento">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="d">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 style="text-align:center;">Ficha de Documento Controlado</h2>
+                        <table class="table table-sm table-bordered" style="margin-top:20px;">
+                            <tr>
+                                <th style="width:30%; background-color:#f1f3f5;">Codigo</th>
+                                <td><strong t-esc="d.codigo"/></td>
+                                <th style="width:20%; background-color:#f1f3f5;">Version</th>
+                                <td t-esc="d.version_actual"/>
+                            </tr>
+                            <tr>
+                                <th style="background-color:#f1f3f5;">Titulo</th>
+                                <td colspan="3"><strong t-esc="d.name"/></td>
+                            </tr>
+                            <tr>
+                                <th style="background-color:#f1f3f5;">Area</th>
+                                <td t-esc="dict(d._fields['area'].selection).get(d.area, '')"/>
+                                <th style="background-color:#f1f3f5;">Tipo</th>
+                                <td t-esc="dict(d._fields['tipo'].selection).get(d.tipo, '')"/>
+                            </tr>
+                            <tr>
+                                <th style="background-color:#f1f3f5;">Fecha de emision</th>
+                                <td t-esc="d.fecha_emision and d.fecha_emision.strftime('%d/%m/%Y') or ''"/>
+                                <th style="background-color:#f1f3f5;">Proxima revision</th>
+                                <td t-esc="d.fecha_vigencia and d.fecha_vigencia.strftime('%d/%m/%Y') or ''"/>
+                            </tr>
+                            <tr>
+                                <th style="background-color:#f1f3f5;">Responsable</th>
+                                <td colspan="3" t-esc="d.responsable_id.name or ''"/>
+                            </tr>
+                        </table>
+                        <h4 style="margin-top:30px;">Firmas controladas</h4>
+                        <table class="table table-sm table-bordered">
+                            <thead style="background-color:#e9ecef;">
+                                <tr><th>Concepto</th><th>Nombre</th><th>Fecha</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Elaboro</strong></td>
+                                    <td t-esc="d.elabora_id.name or ''"/>
+                                    <td t-esc="d.fecha_elabora and d.fecha_elabora.strftime('%d/%m/%Y') or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reviso</strong></td>
+                                    <td t-esc="d.firma_revisa_id.name or ''"/>
+                                    <td t-esc="d.fecha_revisa and d.fecha_revisa.strftime('%d/%m/%Y') or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Autorizo</strong></td>
+                                    <td t-esc="d.firma_aprueba_id.name or ''"/>
+                                    <td t-esc="d.fecha_aprueba and d.fecha_aprueba.strftime('%d/%m/%Y') or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         REPORTE: Documento Controlado Completo (todas las secciones + firmas)
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Formato de papel para documentos controlados: margenes equilibrados -->
+    <record id="paperformat_documento_controlado" model="report.paperformat">
+        <field name="name">Documento Controlado Amunet</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">20</field>
+        <field name="margin_bottom">22</field>
+        <field name="margin_left">15</field>
+        <field name="margin_right">15</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">10</field>
+        <field name="dpi">96</field>
+    </record>
+
+    <record id="action_report_documento_completo" model="ir.actions.report">
+        <field name="name">Documento Controlado (completo)</field>
+        <field name="model">amunet.documento</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_documentos.report_documento_completo</field>
+        <field name="report_file">amunet_documentos.report_documento_completo</field>
+        <field name="print_report_name">'%s_v%s_%s' % (object.codigo, object.version_actual, object.state.upper())</field>
+        <field name="binding_model_id" ref="model_amunet_documento"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_documento_controlado"/>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         Layout personalizado para documentos controlados:
+         - Encabezado bubble sin direccion ni RFC
+         - Pie con leyenda legal en todas las paginas
+         ══════════════════════════════════════════════════════════════════ -->
+    <template id="documento_external_layout">
+        <t t-if="not company" t-set="company" t-value="res_company"/>
+        <t t-set="layout_background_url" t-value="''"/>
+
+        <!-- Marca de agua: fuera del article para aparecer en TODAS las paginas -->
+        <t t-if="company.logo">
+            <div style="
+                position:fixed; top:46%; left:50%;
+                transform:translate(-50%, -50%);
+                opacity:0.07; z-index:0; pointer-events:none;
+            ">
+                <img t-att-src="image_data_uri(company.logo)"
+                     style="width:300px; height:auto;" alt=""/>
+            </div>
+        </t>
+
+        <!-- ENCABEZADO: altura cero, solo SVG decorativo -->
+        <div t-attf-class="header o_company_#{company.id}_layout"
+             style="height:0; overflow:visible; padding:0; margin:0; line-height:0;">
+            <svg t-attf-class="o_shape_bubble_1 z-n1 {{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}}"
+                 width="1100" height="1100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="550" cy="550" r="550" t-att-fill="company.primary_color" fill-opacity=".1"/>
+            </svg>
+        </div>
+
+        <!-- CUERPO -->
+        <div t-attf-class="article o_report_layout_bubble o_table_boxed-rounded o_company_#{company.id}_layout"
+             t-att-data-oe-model="o and o._name"
+             t-att-data-oe-id="o and o.id"
+             t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-out="0"/>
+        </div>
+
+        <!-- PIE: leyenda legal + numero de pagina en todas las paginas -->
+        <div t-attf-class="footer o_company_#{company.id}_layout {{report_type != 'pdf' and 'position-relative mt-auto mx-n5'}}">
+            <svg t-attf-class="{{report_type == 'pdf' and 'position-fixed start-0'}}"
+                 width="500" height="228" viewBox="0 0 500 228" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M500 228H0V6.52743C26.3323 2.23278 53.3561 0 80.9008 0C256.522 0 410.969 90.7656 500 228Z"
+                      t-att-fill="company.secondary_color" fill-opacity=".1"/>
+            </svg>
+            <div t-attf-class="o_footer_content {{report_type != 'pdf' and 'position-absolute end-0 start-0 bottom-0 mx-5'}} pt-3 text-center">
+                <div class="border-top pt-2">
+                    <span style="font-size:8.5px; color:#444; display:block; margin-bottom:2px;">
+                        El contenido de este documento es propiedad de AMUNET S.A. de C.V.
+                        Queda prohibida su reproduccion sin previa autorizacion.
+                    </span>
+                </div>
+                <span t-if="report_type == 'pdf'" class="text-muted" style="font-size:9px;">
+                    Pagina <span class="page"/> / <span class="topage"/>
+                </span>
+            </div>
+        </div>
+    </template>
+
+    <template id="report_documento_completo">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="amunet_documentos.documento_external_layout">
+                    <div class="page">
+
+                        <!-- Marca de agua para estados no vigentes -->
+                        <t t-if="doc.state != 'vigente'">
+                            <div style="
+                                position:fixed; top:40%; left:5%;
+                                font-size:72px; font-weight:900; letter-spacing:6px;
+                                color:rgba(180,0,0,0.10); transform:rotate(-35deg);
+                                pointer-events:none; z-index:0; white-space:nowrap;
+                            ">
+                                <t t-esc="dict(doc._fields['state'].selection).get(doc.state,'').upper()"/>
+                            </div>
+                        </t>
+
+                        <!-- ── Encabezado del documento ── -->
+                        <table style="width:100%;border-collapse:collapse;margin-bottom:12px;" border="1">
+                            <!-- Fila superior: logo + nombre de empresa -->
+                            <tr>
+                                <td style="width:13%;padding:6px 10px;background:#1565c0;vertical-align:middle;text-align:center;">
+                                    <t t-if="doc.env.company.logo">
+                                        <img t-att-src="image_data_uri(doc.env.company.logo)"
+                                             style="height:38px;width:auto;display:block;margin:0 auto;" alt=""/>
+                                    </t>
+                                </td>
+                                <td colspan="3" style="padding:6px 12px;background:#1565c0;vertical-align:middle;">
+                                    <span style="color:white;font-size:1.1em;font-weight:bold;letter-spacing:0.5px;">
+                                        <t t-esc="doc.env.company.name"/>
+                                    </span>
+                                </td>
+                            </tr>
+                            <!-- Tipo de documento + código -->
+                            <tr>
+                                <td colspan="2" style="text-align:center;padding:7px;background:#1565c0;color:white;">
+                                    <strong>
+                                        <t t-esc="dict(doc._fields['tipo'].selection).get(doc.tipo,'').upper()"/>
+                                    </strong>
+                                </td>
+                                <td style="width:22%;padding:6px;background:#f1f3f5;"><strong>Codigo</strong></td>
+                                <td style="width:18%;padding:6px;"><strong t-esc="doc.codigo"/></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align:center;padding:8px;font-size:1.1em;">
+                                    <strong t-esc="doc.name"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:22%;padding:6px;background:#f1f3f5;"><strong>Area</strong></td>
+                                <td style="padding:6px;" t-esc="dict(doc._fields['area'].selection).get(doc.area,'')"/>
+                                <td style="padding:6px;background:#f1f3f5;"><strong>Version</strong></td>
+                                <td style="padding:6px;" t-esc="doc.version_actual"/>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px;background:#f1f3f5;"><strong>Responsable</strong></td>
+                                <td style="padding:6px;" t-esc="doc.responsable_id.name or ''"/>
+                                <td style="padding:6px;background:#f1f3f5;"><strong>Estado</strong></td>
+                                <td style="padding:6px;">
+                                    <strong t-esc="dict(doc._fields['state'].selection).get(doc.state,'').upper()"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px;background:#f1f3f5;"><strong>Fecha emision</strong></td>
+                                <td style="padding:6px;" t-esc="doc.fecha_emision and doc.fecha_emision.strftime('%d/%m/%Y') or 'N/A'"/>
+                                <td style="padding:6px;background:#f1f3f5;"><strong>Proxima revision</strong></td>
+                                <td style="padding:6px;" t-esc="doc.fecha_vigencia and doc.fecha_vigencia.strftime('%d/%m/%Y') or 'N/A'"/>
+                            </tr>
+                            <t t-if="doc.sustituye_version">
+                                <tr>
+                                    <td style="padding:6px;background:#f1f3f5;"><strong>Sustituye version</strong></td>
+                                    <td colspan="3" style="padding:6px;" t-esc="doc.sustituye_version"/>
+                                </tr>
+                            </t>
+                        </table>
+
+                        <!-- ── Secciones estructuradas (PNO / Manual / Instructivo) ── -->
+                        <t t-if="doc.tipo in ('pno', 'manual', 'instructivo')">
+
+                            <t t-if="doc.seccion_objetivo">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Objetivo</h3>
+                                <div t-out="doc.seccion_objetivo"/>
+                            </t>
+
+                            <t t-if="doc.seccion_alcance">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Alcance</h3>
+                                <div t-out="doc.seccion_alcance"/>
+                            </t>
+
+                            <t t-if="doc.tipo == 'manual' and doc.seccion_introduccion">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Introduccion</h3>
+                                <div t-out="doc.seccion_introduccion"/>
+                            </t>
+
+                            <t t-if="doc.tipo == 'manual' and doc.seccion_mision_vision">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Mision y Vision</h3>
+                                <div t-out="doc.seccion_mision_vision"/>
+                            </t>
+
+                            <t t-if="doc.tipo == 'manual' and doc.seccion_organigrama">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Organigrama</h3>
+                                <div t-out="doc.seccion_organigrama"/>
+                            </t>
+
+                            <!-- Responsabilidades: solo tabla estructurada -->
+                            <t t-if="doc.responsabilidad_ids">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Responsabilidades</h3>
+                                <table class="table table-sm table-bordered" style="width:100%;">
+                                    <thead style="background:#e3f2fd;">
+                                        <tr>
+                                            <th style="width:30%;">Rol / Puesto</th>
+                                            <th>Responsabilidades</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="doc.responsabilidad_ids" t-as="resp">
+                                            <td style="vertical-align:top;font-weight:bold;" t-esc="resp.rol"/>
+                                            <td><div t-out="resp.descripcion"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- Terminos y definiciones: solo tabla estructurada -->
+                            <t t-if="doc.termino_ids">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Terminos y Definiciones</h3>
+                                <table class="table table-sm table-bordered" style="width:100%;">
+                                    <thead style="background:#e3f2fd;">
+                                        <tr>
+                                            <th style="width:25%;">Concepto</th>
+                                            <th>Definicion</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="doc.termino_ids" t-as="t">
+                                            <td style="vertical-align:top;font-weight:bold;" t-esc="t.concepto"/>
+                                            <td><div t-out="t.definicion"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <t t-if="doc.seccion_condiciones_generales">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Condiciones Generales</h3>
+                                <div t-out="doc.seccion_condiciones_generales"/>
+                            </t>
+
+                            <!-- Desarrollo del proceso (actividades) -->
+                            <!-- Cada actividad es su propia tabla con page-break-inside:avoid
+                                 para evitar espacios en blanco entre actividades en el PDF -->
+                            <t t-if="doc.actividad_ids">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Desarrollo del Proceso</h3>
+                                <!-- Encabezado de columnas (solo una vez) -->
+                                <table style="width:100%;border-collapse:collapse;margin-bottom:0;" border="1">
+                                    <thead style="background:#e3f2fd;">
+                                        <tr>
+                                            <th style="width:25%;padding:5px;">Actividad</th>
+                                            <th style="padding:5px;">Descripcion</th>
+                                            <th style="width:18%;padding:5px;">Responsable</th>
+                                            <th style="width:18%;padding:5px;">Registro</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                                <!-- Una tabla por actividad: page-break-inside:avoid elimina
+                                     los espacios en blanco sin cortar el contenido a la mitad -->
+                                <t t-foreach="doc.actividad_ids" t-as="act">
+                                    <table style="width:100%;border-collapse:collapse;margin-top:-1px;page-break-inside:avoid;" border="1">
+                                        <tbody>
+                                            <tr>
+                                                <td style="width:25%;vertical-align:top;font-weight:bold;padding:5px;" t-esc="act.actividad"/>
+                                                <td style="padding:5px;"><div style="margin:0;" t-out="act.descripcion"/></td>
+                                                <td style="width:18%;vertical-align:top;padding:5px;" t-esc="act.responsable or ''"/>
+                                                <td style="width:18%;vertical-align:top;padding:5px;" t-esc="act.registro or ''"/>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </t>
+                            </t>
+
+                            <t t-if="doc.seccion_formatos_derivados">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Formatos Derivados</h3>
+                                <div t-out="doc.seccion_formatos_derivados"/>
+                            </t>
+
+                            <t t-if="doc.seccion_referencias">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Referencias Bibliograficas</h3>
+                                <div t-out="doc.seccion_referencias"/>
+                            </t>
+
+                            <t t-if="doc.seccion_anexos">
+                                <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Anexos</h3>
+                                <div t-out="doc.seccion_anexos"/>
+                            </t>
+
+                        </t><!-- fin secciones estructuradas -->
+
+                        <!-- ── Contenido libre (otros tipos) ── -->
+                        <t t-if="doc.tipo not in ('pno', 'manual', 'instructivo') and doc.contenido_html">
+                            <div t-out="doc.contenido_html"/>
+                        </t>
+
+                        <!-- ── Historial de control de cambios ── -->
+                        <t t-if="doc.version_ids">
+                            <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:24px;">Control de Cambios</h3>
+                            <table class="table table-sm table-bordered" style="font-size:10px;width:100%;">
+                                <thead style="background:#e3f2fd;">
+                                    <tr>
+                                        <th>Version</th>
+                                        <th>Fecha emision</th>
+                                        <th>Descripcion del cambio</th>
+                                        <th>Elaboro</th>
+                                        <th>Autorizo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.version_ids" t-as="v">
+                                        <td t-esc="v.version"/>
+                                        <td t-esc="v.fecha_emision and v.fecha_emision.strftime('%d/%m/%Y') or ''"/>
+                                        <td t-esc="v.descripcion_cambio or ''"/>
+                                        <td t-esc="v.elaboro_id.name or ''"/>
+                                        <td t-esc="v.aprobado_por_id.name or ''"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- ── Firmas de conocimiento ── -->
+                        <div style="margin-top:30px;page-break-inside:avoid;">
+                            <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;">Firmas de Conocimiento</h3>
+                            <table style="width:100%;border-collapse:collapse;font-size:11px;" border="1">
+                                <thead style="background:#1565c0;color:white;">
+                                    <tr>
+                                        <th style="padding:8px;text-align:center;">Concepto</th>
+                                        <th style="padding:8px;text-align:center;">Nombre</th>
+                                        <th style="padding:8px;text-align:center;">Firma</th>
+                                        <th style="padding:8px;text-align:center;">Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding:8px;background:#f1f3f5;font-weight:bold;">Elaboro</td>
+                                        <td style="padding:8px;" t-esc="doc.elabora_id.name or ''"/>
+                                        <td style="padding:25px;"/>
+                                        <td style="padding:8px;" t-esc="doc.fecha_elabora and doc.fecha_elabora.strftime('%d/%m/%Y') or ''"/>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:8px;background:#f1f3f5;font-weight:bold;">Reviso</td>
+                                        <td style="padding:8px;" t-esc="doc.firma_revisa_id.name or doc.revisor_id.name or ''"/>
+                                        <td style="padding:25px;"/>
+                                        <td style="padding:8px;" t-esc="doc.fecha_revisa and doc.fecha_revisa.strftime('%d/%m/%Y') or ''"/>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:8px;background:#f1f3f5;font-weight:bold;">Autorizo</td>
+                                        <td style="padding:8px;" t-esc="doc.firma_aprueba_id.name or doc.autorizador_id.name or ''"/>
+                                        <td style="padding:25px;"/>
+                                        <td style="padding:8px;" t-esc="doc.fecha_aprueba and doc.fecha_aprueba.strftime('%d/%m/%Y') or ''"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p style="font-size:9px;color:#888;margin-top:6px;text-align:right;">
+                                <t t-esc="doc.codigo"/> v<t t-esc="doc.version_actual"/>
+                                — Impreso: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                            </p>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

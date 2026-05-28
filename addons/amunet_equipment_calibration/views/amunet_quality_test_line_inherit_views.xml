@@ -48,5 +48,50 @@
                 </xpath>
             </field>
         </record>
+        <!-- Agrega campo department a la lista de PNOs -->
+        <record id="view_amunet_quality_procedure_list_dept_inherit" model="ir.ui.view">
+            <field name="name">amunet.quality.procedure.list.dept.inherit</field>
+            <field name="model">amunet.quality.procedure</field>
+            <field name="inherit_id" ref="amunet_quality.view_amunet_quality_procedure_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='category']" position="before">
+                    <field name="department" optional="show"
+                           widget="badge"
+                           decoration-muted="not department"
+                           column_invisible="context.get('default_category') == 'general'"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Agrega filtros y agrupador por department al buscador de PNOs -->
+        <record id="view_amunet_quality_procedure_search_dept_inherit" model="ir.ui.view">
+            <field name="name">amunet.quality.procedure.search.dept.inherit</field>
+            <field name="model">amunet.quality.procedure</field>
+            <field name="inherit_id" ref="amunet_quality.view_amunet_quality_procedure_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@name='group_category']" position="after">
+                    <filter name="group_department" string="Área / Subcategoría"
+                            context="{'group_by': 'department'}"/>
+                    <separator/>
+                    <filter name="dept_general" string="General"
+                            domain="[('department', '=', 'GENERAL')]"/>
+                    <filter name="dept_sin_area" string="Sin área asignada"
+                            domain="[('department', '=', False)]"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Agrega campo department al formulario de PNO -->
+        <record id="view_amunet_quality_procedure_form_dept_inherit" model="ir.ui.view">
+            <field name="name">amunet.quality.procedure.form.dept.inherit</field>
+            <field name="model">amunet.quality.procedure</field>
+            <field name="inherit_id" ref="amunet_quality.view_amunet_quality_procedure_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='category']" position="after">
+                    <field name="department"
+                           invisible="category == 'general'"/>
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>

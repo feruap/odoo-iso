@@ -354,9 +354,9 @@
                     </div>
 
                     <!-- INFORMACIÓN ADICIONAL -->
-                    <group string="Información Adicional" 
-                           invisible="not sampling_confirmed or not (show_additional_info_avg_length or show_additional_info_cv_percent or show_additional_info_observations)">
-                        
+                    <group string="Información Adicional"
+                           invisible="not sampling_confirmed or not (show_additional_info_avg_length or show_additional_info_cv_percent or show_additional_info_observations or show_additional_info_external_length or show_additional_info_external_width)">
+
                         <div class="text-muted mb-2" invisible="state == 'done'">
                              Estos campos son informativos y no afectan el dictamen automático.
                         </div>
@@ -365,14 +365,36 @@
                             <field name="show_additional_info_avg_length" invisible="1"/>
                             <field name="show_additional_info_cv_percent" invisible="1"/>
                             <field name="show_additional_info_observations" invisible="1"/>
+                            <field name="show_additional_info_external_length" invisible="1"/>
+                            <field name="show_additional_info_external_width" invisible="1"/>
                             <!-- Requeridos invisibles -->
                             <field name="required_additional_info_avg_length" invisible="1"/>
                             <field name="required_additional_info_cv_percent" invisible="1"/>
                             <field name="required_additional_info_observations" invisible="1"/>
+                            <field name="required_additional_info_external_length" invisible="1"/>
+                            <field name="required_additional_info_external_width" invisible="1"/>
                             <!-- Placeholders -->
                             <field name="placeholder_additional_info_avg_length" invisible="1"/>
                             <field name="placeholder_additional_info_cv_percent" invisible="1"/>
                             <field name="placeholder_additional_info_observations" invisible="1"/>
+                            <field name="placeholder_additional_info_external_length" invisible="1"/>
+                            <field name="placeholder_additional_info_external_width" invisible="1"/>
+
+                            <field name="additional_info_external_length"
+                                   invisible="not show_additional_info_external_length"
+                                   required="required_additional_info_external_length"
+                                   readonly="state == 'done'"
+                                   widget="dynamic_placeholder_float"
+                                   options="{'placeholder_field': 'placeholder_additional_info_external_length'}"
+                                   string="Dimensiones externas - Largo (mm)"/>
+
+                            <field name="additional_info_external_width"
+                                   invisible="not show_additional_info_external_width"
+                                   required="required_additional_info_external_width"
+                                   readonly="state == 'done'"
+                                   widget="dynamic_placeholder_float"
+                                   options="{'placeholder_field': 'placeholder_additional_info_external_width'}"
+                                   string="Dimensiones externas - Ancho (mm)"/>
 
                             <field name="additional_info_avg_length"
                                    invisible="not show_additional_info_avg_length"

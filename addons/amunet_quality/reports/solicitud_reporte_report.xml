@@ -207,6 +207,29 @@
                         </t>
                     </table>
 
+                    <t t-set="_show_info_adicional" t-value="o.show_additional_info_external_length or o.show_additional_info_external_width or o.show_additional_info_cv_percent or o.show_additional_info_avg_length"/>
+                    <div t-if="_show_info_adicional" style="font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 14pt;">
+                        Información adicional
+                    </div>
+                    <table t-if="_show_info_adicional" class="tabla-full tabla-datos" style="margin-bottom: 10px;">
+                        <tr t-if="o.show_additional_info_external_length or o.show_additional_info_external_width">
+                            <td style="width: 35%; background-color: #f2f2f2; font-weight: bold;">DIMENSIONES EXTERNAS</td>
+                            <td style="width: 65%;">
+                                <t t-if="o.show_additional_info_external_length">Largo: <span t-esc="'%.2f' % o.additional_info_external_length if o.additional_info_external_length else '___'"/> mm</t>
+                                <t t-if="o.show_additional_info_external_length and o.show_additional_info_external_width">  ·  </t>
+                                <t t-if="o.show_additional_info_external_width">Ancho: <span t-esc="'%.2f' % o.additional_info_external_width if o.additional_info_external_width else '___'"/> mm</t>
+                            </td>
+                        </tr>
+                        <tr t-if="o.show_additional_info_cv_percent">
+                            <td style="background-color: #f2f2f2; font-weight: bold;">COEFICIENTE DE VARIACIÓN</td>
+                            <td><span t-esc="'%.2f' % o.additional_info_cv_percent if o.additional_info_cv_percent else '___'"/> %</td>
+                        </tr>
+                        <tr t-if="o.show_additional_info_avg_length">
+                            <td style="background-color: #f2f2f2; font-weight: bold;">PROMEDIO DE LARGO</td>
+                            <td><span t-esc="'%.2f' % o.additional_info_avg_length if o.additional_info_avg_length else '___'"/> cm</td>
+                        </tr>
+                    </table>
+
                     <div style="font-weight: bold; margin-top: 15px; font-size: 14pt;">
                         7.- Referencias
                     </div>

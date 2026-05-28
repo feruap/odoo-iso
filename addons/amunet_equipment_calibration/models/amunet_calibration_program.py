@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import calendar
 from datetime import date
 from odoo import models, fields, api
 from odoo.exceptions import AccessError, UserError
@@ -274,7 +275,10 @@ class AmunetCalibrationProgramLine(models.Model):
     def _compute_planned_date(self):
         for line in self:
             if line.program_id.year and line.planned_month:
-                line.planned_date = date(line.program_id.year, int(line.planned_month), 1)
+                yr = line.program_id.year
+                mo = int(line.planned_month)
+                last_day = calendar.monthrange(yr, mo)[1]
+                line.planned_date = date(yr, mo, last_day)
             else:
                 line.planned_date = False
 

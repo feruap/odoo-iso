@@ -9,14 +9,15 @@
                 <list string="Equipos de Medición" decoration-danger="state == 'out_of_service'" decoration-warning="state == 'maintenance'" decoration-muted="parent_equipment_id != False or is_deseable" decoration-info="is_deseable">
                     <field name="name"/>
                     <field name="serial_number"/>
-                    <field name="brand"/>
-                    <field name="model_name"/>
                     <field name="department"/>
-                    <field name="parent_equipment_id" optional="show" string="Equipo padre"/>
+                    <field name="state" string="Estatus" widget="badge"
+                           decoration-success="state == 'active'"
+                           decoration-warning="state == 'maintenance'"
+                           decoration-danger="state == 'out_of_service'"/>
                     <field name="location_id" optional="hide"/>
                     <field name="authorized_user_count" string="Autoriz." optional="hide"/>
                     <field name="is_deseable" column_invisible="1"/>
-                    <field name="state" column_invisible="1"/>
+                    <field name="parent_equipment_id" column_invisible="1"/>
                 </list>
             </field>
         </record>
@@ -28,7 +29,7 @@
             <field name="arch" type="xml">
                 <form string="Equipo de Medición">
                     <header>
-                        <field name="state" widget="statusbar" statusbar_visible="active,maintenance,out_of_service"/>
+                        <field name="state" widget="statusbar" statusbar_visible="active,maintenance,out_of_service" string="Estatus"/>
                     </header>
                     <sheet>
                         <!-- Badge de Estado -->
@@ -64,9 +65,11 @@
                             </group>
                             <group>
                                 <field name="location_id"/>
-                                <field name="is_deseable"/>
-                                <field name="calibration_required"/>
-                                <field name="next_calibration_date" decoration-danger="next_calibration_date &lt; current_date"/>
+                                <field name="is_deseable" invisible="1"/>
+                                <field name="calibration_required" invisible="1"/>
+                                <field name="next_calibration_date"
+                                       decoration-danger="next_calibration_date &lt; current_date"
+                                       invisible="not calibration_required"/>
                             </group>
                         </group>
 
@@ -87,7 +90,8 @@
                                     </list>
                                 </field>
                             </page>
-                            <page string="Historial de Calibraciones" name="calibrations">
+                            <page string="Historial de Calibraciones" name="calibrations"
+                                  invisible="not calibration_required">
                                 <field name="calibration_line_ids">
                                     <list string="Calibraciones" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'">
                                         <field name="calibration_date"/>
