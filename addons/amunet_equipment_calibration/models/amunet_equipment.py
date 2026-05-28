@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import calendar
 from odoo import models, fields, api
 from odoo.exceptions import AccessError, ValidationError
 from datetime import date, timedelta
@@ -243,13 +244,26 @@ class AmunetEquipment(models.Model):
 
     @api.depends('calibration_line_ids.state', 'calibration_line_ids.expiration_date')
     def _compute_next_calibration(self):
+        ProgramLine = self.env['amunet.calibration.program.line']
         for equipment in self:
-            active_calibrations = equipment.calibration_line_ids.filtered(lambda c: c.state == 'done')
-            if active_calibrations:
-                latest_calibration = active_calibrations.sorted(key=lambda c: c.expiration_date, reverse=True)[0]
-                equipment.next_calibration_date = latest_calibration.expiration_date
+            done_cals = equipment.calibration_line_ids.filtered(lambda c: c.state == 'done')
+            if done_cals:
+                latest = done_cals.sorted(key=lambda c: c.expiration_date, reverse=True)[0]
+                equipment.next_calibration_date = latest.expiration_date
             else:
-                equipment.next_calibration_date = False
+                # Sin certificado: usar último día del mes programado en el FVA
+                fva = ProgramLine.search([
+                    ('equipment_id', '=', equipment.id),
+                    ('program_status', '!=', 'na'),
+                    ('planned_month', '!=', False),
+                ], order='program_id desc', limit=1)
+                if fva and fva.program_id.year:
+                    yr = fva.program_id.year
+                    mo = int(fva.planned_month)
+                    last_day = calendar.monthrange(yr, mo)[1]
+                    equipment.next_calibration_date = date(yr, mo, last_day)
+                else:
+                    equipment.next_calibration_date = False
 
     def _compute_authorized_user_count(self):
         for eq in self:
@@ -354,6 +368,80 @@ class AmunetEquipment(models.Model):
                 f"🔴 El sistema ha cambiado automáticamente el estado a 'Fuera de Servicio'. "
                 f"Motivo: La calibración caducó el {eq.next_calibration_date}."
             ))
+
+    @api.model
+    def _cron_send_calibration_reminders(self):
+        """Envía recordatorio el día 1, 15 y último día del mes a los gestores,
+        listando equipos calibrables del FVA que aún no tienen certificado vigente."""
+        today = date.today()
+        last_day = calendar.monthrange(today.year, today.month)[1]
+        if today.day not in (1, 15, last_day):
+            return
+
+        if today.day == 1:
+            aviso = 'INICIO DE MES'
+            intro = 'Este mes inicia el periodo de calibración para los siguientes equipos. Coordina el envío al laboratorio o la visita del proveedor:'
+        elif today.day == 15:
+            aviso = 'MITAD DE MES'
+            intro = 'Llevamos 15 días del mes de calibración. Estos equipos aún no tienen certificado registrado en el sistema:'
+        else:
+            aviso = 'ÚLTIMO AVISO — FIN DE MES'
+            intro = 'Hoy es el último día del periodo de calibración. Los siguientes equipos deben tener su certificado cargado antes de mañana o pasarán a estado Inactivo:'
+
+        month_str = str(today.month).zfill(2)
+        ProgramLine = self.env['amunet.calibration.program.line']
+        fva_lines = ProgramLine.search([
+            ('planned_month', '=', month_str),
+            ('program_status', '!=', 'na'),
+            ('equipment_id', '!=', False),
+        ])
+
+        pending = self.env['amunet.equipment']
+        for line in fva_lines:
+            eq = line.equipment_id
+            done = eq.calibration_line_ids.filtered(
+                lambda c: c.state == 'done' and c.expiration_date and c.expiration_date >= today
+            )
+            if not done:
+                pending |= eq
+
+        if not pending:
+            return
+
+        rows = ''.join(
+            f'<tr><td style="padding:4px 8px">{eq.serial_number or ""}</td>'
+            f'<td style="padding:4px 8px">{eq.name}</td>'
+            f'<td style="padding:4px 8px">{eq.department or ""}</td></tr>'
+            for eq in pending.sorted('department')
+        )
+        body = (
+            f'<p>{intro}</p>'
+            f'<table border="1" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px">'
+            f'<tr style="background:#f0f0f0"><th style="padding:4px 8px">Código</th>'
+            f'<th style="padding:4px 8px">Equipo</th>'
+            f'<th style="padding:4px 8px">Área</th></tr>'
+            f'{rows}</table>'
+            f'<p>Ver en sistema: '
+            f'<a href="https://stagingfc.amunet.com.mx/odoo/equipos-calibracion">Equipos → Calibración</a></p>'
+        )
+
+        group = self.env.ref(
+            'amunet_equipment_calibration.group_equipment_manager',
+            raise_if_not_found=False,
+        )
+        emails = ','.join(
+            u.email for u in (group.users if group else self.env['res.users'])
+            if u.email
+        )
+        if not emails:
+            return
+
+        self.env['mail.mail'].sudo().create({
+            'subject': f'[Calibración {month_str}/{today.year}] {aviso} — {len(pending)} equipo(s) pendiente(s)',
+            'body_html': body,
+            'email_to': emails,
+            'auto_delete': True,
+        }).send()
 
     # ========================================================================
     # API DE AUTORIZACIÓN
