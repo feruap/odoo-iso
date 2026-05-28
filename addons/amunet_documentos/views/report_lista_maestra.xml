@@ -131,6 +131,24 @@
     <!-- ═══════════════════════════════════════════════════════════════════
          REPORTE: Documento Controlado Completo (todas las secciones + firmas)
          ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Formato de papel para documentos controlados: margenes equilibrados -->
+    <record id="paperformat_documento_controlado" model="report.paperformat">
+        <field name="name">Documento Controlado Amunet</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">20</field>
+        <field name="margin_bottom">22</field>
+        <field name="margin_left">15</field>
+        <field name="margin_right">15</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">10</field>
+        <field name="dpi">96</field>
+    </record>
+
     <record id="action_report_documento_completo" model="ir.actions.report">
         <field name="name">Documento Controlado (completo)</field>
         <field name="model">amunet.documento</field>
@@ -140,25 +158,73 @@
         <field name="print_report_name">'%s_v%s_%s' % (object.codigo, object.version_actual, object.state.upper())</field>
         <field name="binding_model_id" ref="model_amunet_documento"/>
         <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_documento_controlado"/>
     </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         Layout personalizado para documentos controlados:
+         - Encabezado bubble sin direccion ni RFC
+         - Pie con leyenda legal en todas las paginas
+         ══════════════════════════════════════════════════════════════════ -->
+    <template id="documento_external_layout">
+        <t t-if="not company" t-set="company" t-value="res_company"/>
+        <t t-set="layout_background_url" t-value="''"/>
+
+        <!-- Marca de agua: fuera del article para aparecer en TODAS las paginas -->
+        <t t-if="company.logo">
+            <div style="
+                position:fixed; top:46%; left:50%;
+                transform:translate(-50%, -50%);
+                opacity:0.07; z-index:0; pointer-events:none;
+            ">
+                <img t-att-src="image_data_uri(company.logo)"
+                     style="width:300px; height:auto;" alt=""/>
+            </div>
+        </t>
+
+        <!-- ENCABEZADO: altura cero, solo SVG decorativo -->
+        <div t-attf-class="header o_company_#{company.id}_layout"
+             style="height:0; overflow:visible; padding:0; margin:0; line-height:0;">
+            <svg t-attf-class="o_shape_bubble_1 z-n1 {{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}}"
+                 width="1100" height="1100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="550" cy="550" r="550" t-att-fill="company.primary_color" fill-opacity=".1"/>
+            </svg>
+        </div>
+
+        <!-- CUERPO -->
+        <div t-attf-class="article o_report_layout_bubble o_table_boxed-rounded o_company_#{company.id}_layout"
+             t-att-data-oe-model="o and o._name"
+             t-att-data-oe-id="o and o.id"
+             t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-out="0"/>
+        </div>
+
+        <!-- PIE: leyenda legal + numero de pagina en todas las paginas -->
+        <div t-attf-class="footer o_company_#{company.id}_layout {{report_type != 'pdf' and 'position-relative mt-auto mx-n5'}}">
+            <svg t-attf-class="{{report_type == 'pdf' and 'position-fixed start-0'}}"
+                 width="500" height="228" viewBox="0 0 500 228" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M500 228H0V6.52743C26.3323 2.23278 53.3561 0 80.9008 0C256.522 0 410.969 90.7656 500 228Z"
+                      t-att-fill="company.secondary_color" fill-opacity=".1"/>
+            </svg>
+            <div t-attf-class="o_footer_content {{report_type != 'pdf' and 'position-absolute end-0 start-0 bottom-0 mx-5'}} pt-3 text-center">
+                <div class="border-top pt-2">
+                    <span style="font-size:8.5px; color:#444; display:block; margin-bottom:2px;">
+                        El contenido de este documento es propiedad de AMUNET S.A. de C.V.
+                        Queda prohibida su reproduccion sin previa autorizacion.
+                    </span>
+                </div>
+                <span t-if="report_type == 'pdf'" class="text-muted" style="font-size:9px;">
+                    Pagina <span class="page"/> / <span class="topage"/>
+                </span>
+            </div>
+        </div>
+    </template>
 
     <template id="report_documento_completo">
         <t t-call="web.html_container">
-
-            <!-- ── Leyenda legal: fuera del div.page para que position:fixed funcione en wkhtmltopdf ── -->
-            <div style="
-                position:fixed; bottom:0; left:0; right:0;
-                background:white; border-top:1px solid #bbb;
-                text-align:center; font-size:9px; color:#333;
-                padding:5px 20px; z-index:9000;
-            ">
-                El contenido de este documento es propiedad de AMUNET S.A. de C.V.
-                Queda prohibida su reproduccion sin previa autorizacion.
-            </div>
-
             <t t-foreach="docs" t-as="doc">
-                <t t-call="web.external_layout">
-                    <div class="page" style="padding-bottom:35px;">
+                <t t-call="amunet_documentos.documento_external_layout">
+                    <div class="page">
 
                         <!-- Marca de agua para estados no vigentes -->
                         <t t-if="doc.state != 'vigente'">
@@ -174,6 +240,21 @@
 
                         <!-- ── Encabezado del documento ── -->
                         <table style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:11px;" border="1">
+                            <!-- Fila superior: logo + nombre de empresa -->
+                            <tr>
+                                <td style="width:13%;padding:6px 10px;background:#1565c0;vertical-align:middle;text-align:center;">
+                                    <t t-if="doc.env.company.logo">
+                                        <img t-att-src="image_data_uri(doc.env.company.logo)"
+                                             style="height:38px;width:auto;display:block;margin:0 auto;" alt=""/>
+                                    </t>
+                                </td>
+                                <td colspan="3" style="padding:6px 12px;background:#1565c0;vertical-align:middle;">
+                                    <span style="color:white;font-size:13px;font-weight:bold;letter-spacing:0.5px;">
+                                        <t t-esc="doc.env.company.name"/>
+                                    </span>
+                                </td>
+                            </tr>
+                            <!-- Tipo de documento + código -->
                             <tr>
                                 <td colspan="2" style="text-align:center;padding:7px;background:#1565c0;color:white;">
                                     <strong style="font-size:11px;">
@@ -244,52 +325,42 @@
                                 <div t-out="doc.seccion_organigrama"/>
                             </t>
 
-                            <!-- Responsabilidades: tabla estructurada + texto libre -->
-                            <t t-if="doc.responsabilidad_ids or doc.seccion_responsabilidades">
+                            <!-- Responsabilidades: solo tabla estructurada -->
+                            <t t-if="doc.responsabilidad_ids">
                                 <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Responsabilidades</h3>
-                                <t t-if="doc.responsabilidad_ids">
-                                    <table class="table table-sm table-bordered" style="font-size:11px;width:100%;">
-                                        <thead style="background:#e3f2fd;">
-                                            <tr>
-                                                <th style="width:30%;">Rol / Puesto</th>
-                                                <th>Responsabilidades</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr t-foreach="doc.responsabilidad_ids" t-as="resp">
-                                                <td style="vertical-align:top;font-weight:bold;" t-esc="resp.rol"/>
-                                                <td><div t-out="resp.descripcion"/></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </t>
-                                <t t-if="doc.seccion_responsabilidades">
-                                    <div t-out="doc.seccion_responsabilidades"/>
-                                </t>
+                                <table class="table table-sm table-bordered" style="width:100%;">
+                                    <thead style="background:#e3f2fd;">
+                                        <tr>
+                                            <th style="width:30%;">Rol / Puesto</th>
+                                            <th>Responsabilidades</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="doc.responsabilidad_ids" t-as="resp">
+                                            <td style="vertical-align:top;font-weight:bold;" t-esc="resp.rol"/>
+                                            <td><div t-out="resp.descripcion"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </t>
 
-                            <!-- Terminos y definiciones -->
-                            <t t-if="doc.termino_ids or doc.seccion_terminos_definiciones">
+                            <!-- Terminos y definiciones: solo tabla estructurada -->
+                            <t t-if="doc.termino_ids">
                                 <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Terminos y Definiciones</h3>
-                                <t t-if="doc.termino_ids">
-                                    <table class="table table-sm table-bordered" style="font-size:11px;width:100%;">
-                                        <thead style="background:#e3f2fd;">
-                                            <tr>
-                                                <th style="width:25%;">Concepto</th>
-                                                <th>Definicion</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr t-foreach="doc.termino_ids" t-as="t">
-                                                <td style="vertical-align:top;font-weight:bold;" t-esc="t.concepto"/>
-                                                <td><div t-out="t.definicion"/></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </t>
-                                <t t-if="doc.seccion_terminos_definiciones">
-                                    <div t-out="doc.seccion_terminos_definiciones"/>
-                                </t>
+                                <table class="table table-sm table-bordered" style="width:100%;">
+                                    <thead style="background:#e3f2fd;">
+                                        <tr>
+                                            <th style="width:25%;">Concepto</th>
+                                            <th>Definicion</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="doc.termino_ids" t-as="t">
+                                            <td style="vertical-align:top;font-weight:bold;" t-esc="t.concepto"/>
+                                            <td><div t-out="t.definicion"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </t>
 
                             <t t-if="doc.seccion_condiciones_generales">
@@ -298,28 +369,37 @@
                             </t>
 
                             <!-- Desarrollo del proceso (actividades) -->
+                            <!-- Cada actividad es su propia tabla con page-break-inside:avoid
+                                 para evitar espacios en blanco entre actividades en el PDF -->
                             <t t-if="doc.actividad_ids">
                                 <h3 style="border-bottom:2px solid #1565c0;color:#1565c0;margin-top:18px;">Desarrollo del Proceso</h3>
-                                <table class="table table-sm table-bordered" style="font-size:11px;width:100%;">
+                                <!-- Encabezado de columnas (solo una vez) -->
+                                <table style="width:100%;border-collapse:collapse;margin-bottom:0;" border="1">
                                     <thead style="background:#e3f2fd;">
                                         <tr>
-                                            <th style="width:5%;">#</th>
-                                            <th style="width:25%;">Actividad</th>
-                                            <th>Descripcion</th>
-                                            <th style="width:18%;">Responsable</th>
-                                            <th style="width:18%;">Registro</th>
+                                            <th style="width:5%;padding:5px;text-align:center;">#</th>
+                                            <th style="width:22%;padding:5px;">Actividad</th>
+                                            <th style="padding:5px;">Descripcion</th>
+                                            <th style="width:16%;padding:5px;">Responsable</th>
+                                            <th style="width:16%;padding:5px;">Registro</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr t-foreach="doc.actividad_ids" t-as="act">
-                                            <td style="text-align:center;" t-esc="act.sequence"/>
-                                            <td style="vertical-align:top;font-weight:bold;" t-esc="act.actividad"/>
-                                            <td><div t-out="act.descripcion"/></td>
-                                            <td style="vertical-align:top;" t-esc="act.responsable or ''"/>
-                                            <td style="vertical-align:top;" t-esc="act.registro or ''"/>
-                                        </tr>
-                                    </tbody>
                                 </table>
+                                <!-- Una tabla por actividad: page-break-inside:avoid elimina
+                                     los espacios en blanco sin cortar el contenido a la mitad -->
+                                <t t-foreach="doc.actividad_ids" t-as="act">
+                                    <table style="width:100%;border-collapse:collapse;margin-top:-1px;page-break-inside:avoid;" border="1">
+                                        <tbody>
+                                            <tr>
+                                                <td style="width:5%;text-align:center;vertical-align:top;padding:5px;" t-esc="act.sequence"/>
+                                                <td style="width:22%;vertical-align:top;font-weight:bold;padding:5px;" t-esc="act.actividad"/>
+                                                <td style="padding:5px;"><div style="margin:0;" t-out="act.descripcion"/></td>
+                                                <td style="width:16%;vertical-align:top;padding:5px;" t-esc="act.responsable or ''"/>
+                                                <td style="width:16%;vertical-align:top;padding:5px;" t-esc="act.registro or ''"/>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </t>
                             </t>
 
                             <t t-if="doc.seccion_formatos_derivados">
