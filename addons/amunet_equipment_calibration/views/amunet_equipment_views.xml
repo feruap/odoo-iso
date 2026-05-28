@@ -6,18 +6,17 @@
             <field name="name">amunet.equipment.list</field>
             <field name="model">amunet.equipment</field>
             <field name="arch" type="xml">
-                <list string="Equipos de Medición" decoration-danger="state == 'out_of_service'" decoration-warning="state == 'maintenance'">
+                <list string="Equipos de Medición" decoration-danger="state == 'out_of_service'" decoration-warning="state == 'maintenance'" decoration-muted="parent_equipment_id != False or is_deseable" decoration-info="is_deseable">
                     <field name="name"/>
                     <field name="serial_number"/>
                     <field name="brand"/>
                     <field name="model_name"/>
                     <field name="department"/>
-                    <field name="location_id"/>
-                    <field name="state" widget="badge" 
-                           decoration-success="state == 'active'" 
-                           decoration-warning="state == 'maintenance'" 
-                           decoration-danger="state == 'out_of_service'"/>
-                    <field name="authorized_user_count" string="Autoriz."/>
+                    <field name="parent_equipment_id" optional="show" string="Equipo padre"/>
+                    <field name="location_id" optional="hide"/>
+                    <field name="authorized_user_count" string="Autoriz." optional="hide"/>
+                    <field name="is_deseable" column_invisible="1"/>
+                    <field name="state" column_invisible="1"/>
                 </list>
             </field>
         </record>
@@ -33,10 +32,20 @@
                     </header>
                     <sheet>
                         <!-- Badge de Estado -->
-                        <widget name="web_ribbon" title="Fuera de Servicio" bg_color="bg-danger" 
+                        <widget name="web_ribbon" title="Fuera de Servicio" bg_color="bg-danger"
                                 invisible="state != 'out_of_service'"/>
-                        <widget name="web_ribbon" title="Activo" bg_color="bg-success" 
-                                invisible="state != 'active'"/>
+                        <widget name="web_ribbon" title="Activo" bg_color="bg-success"
+                                invisible="state != 'active' or is_deseable"/>
+                        <widget name="web_ribbon" title="Deseable" bg_color="bg-info"
+                                invisible="not is_deseable"/>
+
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_child_equipments" type="object"
+                                    class="oe_stat_button" icon="fa-puzzle-piece"
+                                    invisible="child_equipment_count == 0">
+                                <field name="child_equipment_count" widget="statinfo" string="Accesorios"/>
+                            </button>
+                        </div>
 
                         <div class="oe_title">
                             <h1>
@@ -49,15 +58,35 @@
                                 <field name="brand"/>
                                 <field name="model_name"/>
                                 <field name="department"/>
+                                <field name="parent_equipment_id"
+                                       options="{'no_create': True}"
+                                       domain="[('parent_equipment_id','=',False),('id','!=',id)]"/>
                             </group>
                             <group>
                                 <field name="location_id"/>
+                                <field name="is_deseable"/>
                                 <field name="calibration_required"/>
                                 <field name="next_calibration_date" decoration-danger="next_calibration_date &lt; current_date"/>
                             </group>
                         </group>
-                        
+
                         <notebook>
+                            <page string="Accesorios / instrumentos" name="children"
+                                  invisible="parent_equipment_id != False">
+                                <field name="child_equipment_ids" context="{'default_department': department, 'default_location_id': location_id, 'default_parent_equipment_id': id}">
+                                    <list string="Accesorios" editable="bottom">
+                                        <field name="serial_number"/>
+                                        <field name="name"/>
+                                        <field name="brand"/>
+                                        <field name="model_name"/>
+                                        <field name="calibration_required"/>
+                                        <field name="state" widget="badge"
+                                               decoration-success="state == 'active'"
+                                               decoration-warning="state == 'maintenance'"
+                                               decoration-danger="state == 'out_of_service'"/>
+                                    </list>
+                                </field>
+                            </page>
                             <page string="Historial de Calibraciones" name="calibrations">
                                 <field name="calibration_line_ids">
                                     <list string="Calibraciones" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'">
@@ -105,7 +134,16 @@
                     <field name="name"/>
                     <field name="serial_number"/>
                     <field name="department"/>
+                    <field name="parent_equipment_id"/>
                     <field name="procedure_ids"/>
+                    <separator/>
+                    <filter name="only_oficial" string="Solo oficiales" domain="[('is_deseable', '=', False)]"/>
+                    <filter name="only_deseables" string="Solo Deseables" domain="[('is_deseable', '=', True)]"/>
+                    <filter name="only_calibrables" string="Solo calibrables" domain="[('calibration_required', '=', True)]"/>
+                    <filter name="only_with_maintenance" string="Solo con mantenimiento" domain="[('maintenance_required', '=', True)]"/>
+                    <separator/>
+                    <filter name="only_root" string="Solo equipos crudos (sin padre)" domain="[('parent_equipment_id', '=', False)]"/>
+                    <filter name="only_accessory" string="Solo accesorios" domain="[('parent_equipment_id', '!=', False)]"/>
                     <separator/>
                     <filter name="active" string="Activos" domain="[('state', '=', 'active')]"/>
                     <filter name="maintenance" string="En mantenimiento/calibración" domain="[('state', '=', 'maintenance')]"/>
@@ -114,23 +152,82 @@
                     <filter name="without_next_calibration" string="Sin próxima calibración" domain="[('calibration_required', '=', True), ('next_calibration_date', '=', False)]"/>
                     <separator/>
                     <filter name="group_department" string="Agrupar por departamento" context="{'group_by': 'department'}"/>
+                    <filter name="group_oficial_status" string="Agrupar por clasificación (Deseables)" context="{'group_by': 'oficial_status_group'}"/>
+                    <filter name="group_parent" string="Agrupar por equipo padre" context="{'group_by': 'parent_equipment_group'}"/>
                     <filter name="group_state" string="Agrupar por estado" context="{'group_by': 'state'}"/>
                 </search>
             </field>
         </record>
 
-        <!-- Action -->
+        <!-- Action principal "General": todos los oficiales, agrupados por departamento -->
         <record id="action_amunet_equipment" model="ir.actions.act_window">
-            <field name="name">Equipos de Medición</field>
+            <field name="name">Equipos · General</field>
             <field name="res_model">amunet.equipment</field>
             <field name="view_mode">list,form</field>
             <field name="search_view_id" ref="view_amunet_equipment_search"/>
+            <field name="context">{'search_default_only_root': 1, 'search_default_only_oficial': 1, 'search_default_group_department': 1}</field>
+            <field name="domain">[]</field>
             <field name="help" type="html">
               <p class="o_view_nocontent_smiling_face">
                 Crea tu primer equipo de medición
               </p>
               <p>
                 Lleva el control del inventario de instrumentos y gestiona sus calibraciones para cumplir con la norma ISO 13485.
+              </p>
+            </field>
+        </record>
+
+        <!-- Action específica para "Calibración": solo oficiales + calibrables, agrupados por área -->
+        <record id="action_amunet_equipment_calibration_only" model="ir.actions.act_window">
+            <field name="name">Equipos · Calibración</field>
+            <field name="res_model">amunet.equipment</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_amunet_equipment_search"/>
+            <field name="context">{'search_default_only_root': 1, 'search_default_only_oficial': 1, 'search_default_only_calibrables': 1, 'search_default_group_department': 1}</field>
+            <field name="domain">[('is_deseable', '=', False), ('calibration_required', '=', True)]</field>
+            <field name="help" type="html">
+              <p class="o_view_nocontent_smiling_face">
+                No hay equipos calibrables registrados.
+              </p>
+              <p>
+                Esta sección lista únicamente los equipos oficiales que entran al programa de calibración del año.
+              </p>
+            </field>
+        </record>
+
+        <!-- Action específica para Mantenimiento: oficiales con mantenimiento, lista por próxima fecha -->
+        <record id="action_amunet_equipment_maintenance_only" model="ir.actions.act_window">
+            <field name="name">Equipos · Mantenimiento</field>
+            <field name="res_model">amunet.equipment</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_amunet_equipment_search"/>
+            <field name="context">{'search_default_only_root': 1, 'search_default_only_oficial': 1, 'search_default_only_with_maintenance': 1, 'search_default_group_department': 1}</field>
+            <field name="domain">[('is_deseable', '=', False), ('maintenance_required', '=', True)]</field>
+            <field name="help" type="html">
+              <p class="o_view_nocontent_smiling_face">
+                No hay equipos con mantenimiento programado.
+              </p>
+              <p>
+                Esta sección lista equipos oficiales con mantenimiento periódico, mostrando su próxima fecha y estado.
+              </p>
+            </field>
+        </record>
+
+        <!-- Action específica para Deseables agrupados por área -->
+        <record id="action_amunet_equipment_deseables" model="ir.actions.act_window">
+            <field name="name">Equipos · Deseables</field>
+            <field name="res_model">amunet.equipment</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_amunet_equipment_search"/>
+            <field name="context">{'search_default_only_deseables': 1, 'search_default_group_department': 1}</field>
+            <field name="domain">[('is_deseable', '=', True)]</field>
+            <field name="help" type="html">
+              <p class="o_view_nocontent_smiling_face">
+                No hay equipos Deseables.
+              </p>
+              <p>
+                Esta sección lista equipos que están físicamente en alguna área pero no entran al programa de calibración / mantenimiento.
+                Si está vacía, todo el inventario es oficial.
               </p>
             </field>
         </record>

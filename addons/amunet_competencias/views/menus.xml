@@ -27,6 +27,15 @@
         sequence="5"
         groups="amunet_competencias.group_competencias_manager"/>
 
+    <!-- Acceso a Cursos también desde Validación > Documentación -->
+    <menuitem
+        id="menu_amunet_curso_en_validacion"
+        name="Cursos"
+        parent="amunet_equipment_calibration.menu_amunet_documentacion_section"
+        action="action_amunet_curso"
+        sequence="40"
+        groups="amunet_competencias.group_competencias_manager,amunet_equipment_calibration.group_equipment_manager"/>
+
     <menuitem
         id="menu_amunet_plan_estudios"
         name="Planes de Estudio"

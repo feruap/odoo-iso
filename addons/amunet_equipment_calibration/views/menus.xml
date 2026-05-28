@@ -1,37 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Menú Raíz: Validación -->
+        <!-- =================================================================
+             APP RAÍZ: Validación
+             ================================================================= -->
         <menuitem id="menu_validation_root"
                   name="Validación"
                   web_icon="amunet_equipment_calibration,static/description/icon.png"
                   sequence="60"
                   groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
 
-        <menuitem id="menu_amunet_equipment_root" 
-                  name="Equipos" 
-                  parent="menu_validation_root" 
+        <!-- =================================================================
+             SECCIÓN 1: EQUIPOS
+             ================================================================= -->
+        <menuitem id="menu_amunet_equipment_root"
+                  name="Equipos"
+                  parent="menu_validation_root"
                   sequence="10"
                   groups="amunet_equipment_calibration.group_equipment_manager"/>
 
-        <menuitem id="menu_amunet_equipment_inventory" 
-                  name="Inventario de Equipos" 
-                  parent="menu_amunet_equipment_root" 
-                  action="action_amunet_equipment" 
-                  sequence="10"
-                  groups="amunet_equipment_calibration.group_equipment_manager"/>
-
-        <menuitem id="menu_amunet_calibration_program"
-                  name="Programas Anuales"
+        <menuitem id="menu_amunet_unidades"
+                  name="Unidades"
                   parent="menu_amunet_equipment_root"
-                  action="action_amunet_calibration_program"
+                  sequence="10"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_unidades_general"
+                  name="General"
+                  parent="menu_amunet_unidades"
+                  action="action_amunet_equipment"
+                  sequence="10"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_unidades_calibracion"
+                  name="Calibración"
+                  parent="menu_amunet_unidades"
+                  action="action_amunet_equipment_calibration_only"
                   sequence="20"
                   groups="amunet_equipment_calibration.group_equipment_manager"/>
 
-        <menuitem id="menu_amunet_calibration_program_matrix"
-                  name="Matriz FVA"
-                  parent="menu_amunet_equipment_root"
-                  action="action_amunet_calibration_program_line"
+        <menuitem id="menu_amunet_equipment_deseables"
+                  name="Deseables"
+                  parent="menu_amunet_unidades"
+                  action="action_amunet_equipment_deseables"
+                  sequence="30"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <!-- =================================================================
+             SECCIÓN 2: PROGRAMAS
+             ================================================================= -->
+        <menuitem id="menu_amunet_programas_root"
+                  name="Programas"
+                  parent="menu_validation_root"
+                  sequence="20"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_calibration_program"
+                  name="Calibración"
+                  parent="menu_amunet_programas_root"
+                  action="action_amunet_calibration_program"
+                  sequence="10"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_maintenance_program"
+                  name="Mantenimiento"
+                  parent="menu_amunet_programas_root"
+                  action="action_amunet_maintenance_program"
+                  sequence="20"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <!-- =================================================================
+             SECCIÓN 3: PARA EL USUARIO (bandejas personales)
+             ================================================================= -->
+        <menuitem id="menu_amunet_para_usuario_root"
+                  name="Para el usuario"
+                  parent="menu_validation_root"
+                  sequence="25"
+                  groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
+
+        <!-- Los items "Mi trabajo metrología" y "Mi mantenimiento" se cuelgan aquí
+             desde amunet_workqueue_views.xml -->
+
+        <!-- =================================================================
+             SECCIÓN 4: DOCUMENTACIÓN (de equipos)
+             ================================================================= -->
+        <menuitem id="menu_amunet_documentacion_section"
+                  name="Documentación"
+                  parent="menu_validation_root"
+                  sequence="30"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_documentacion_pnos_operacion"
+                  name="Operación (PNO's)"
+                  parent="menu_amunet_documentacion_section"
+                  action="amunet_quality.action_amunet_quality_procedure_operacion"
+                  sequence="10"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_documentacion_pnos_limpieza"
+                  name="Limpieza (PNO's)"
+                  parent="menu_amunet_documentacion_section"
+                  action="amunet_quality.action_amunet_quality_procedure_limpieza"
+                  sequence="20"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_documentacion_pnos_mantenimiento"
+                  name="Mantenimiento (PNO's)"
+                  parent="menu_amunet_documentacion_section"
+                  action="amunet_quality.action_amunet_quality_procedure_mantenimiento"
+                  sequence="25"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_documentacion_pnos_general"
+                  name="Generales (PNO's)"
+                  parent="menu_amunet_documentacion_section"
+                  action="amunet_quality.action_amunet_quality_procedure_general"
                   sequence="30"
                   groups="amunet_equipment_calibration.group_equipment_manager"/>
     </data>

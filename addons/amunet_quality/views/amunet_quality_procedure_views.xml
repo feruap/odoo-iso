@@ -8,9 +8,18 @@
             <search>
                 <field name="name"/>
                 <field name="code"/>
+                <field name="category"/>
                 <field name="product_ids"/>
                 <filter name="filter_active" string="Vigentes" domain="[('active', '=', True)]"/>
                 <filter name="filter_archived" string="Archivados" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="cat_operacion" string="Operación" domain="[('category', '=', 'operacion')]"/>
+                <filter name="cat_limpieza" string="Limpieza" domain="[('category', '=', 'limpieza')]"/>
+                <filter name="cat_mantenimiento" string="Mantenimiento" domain="[('category', '=', 'mantenimiento')]"/>
+                <filter name="cat_general" string="Generales" domain="[('category', '=', 'general')]"/>
+                <filter name="cat_pendiente" string="Sin categoría" domain="[('category', '=', False)]"/>
+                <separator/>
+                <filter name="group_category" string="Agrupar por categoría" context="{'group_by': 'category'}"/>
                 <filter name="group_code" string="Código de Documento" context="{'group_by': 'code'}"/>
             </search>
         </field>
@@ -24,10 +33,16 @@
             <list string="Procedimientos (SOPs)">
                 <field name="code"/>
                 <field name="name"/>
+                <field name="category" widget="badge"
+                       decoration-info="category == 'operacion'"
+                       decoration-success="category == 'limpieza'"
+                       decoration-muted="category == 'mantenimiento'"
+                       decoration-warning="category == 'general'"
+                       column_invisible="context.get('default_category')"/>
                 <field name="version"/>
                 <field name="active" widget="boolean_toggle"/>
-                <field name="create_date"/>
-                <field name="write_date"/>
+                <field name="create_date" optional="hide"/>
+                <field name="write_date" optional="hide"/>
             </list>
         </field>
     </record>
@@ -56,6 +71,7 @@
                             <field name="document_file" filename="document_filename" widget="binary"/>
                             <field name="document_filename" invisible="1"/>
                             <field name="active"/>
+                            <field name="category"/>
                         </group>
                         <group>
                             <field name="product_ids" widget="many2many_tags"/>
@@ -70,7 +86,7 @@
         </field>
     </record>
 
-    <!-- ACTION -->
+    <!-- ACTION GENÉRICA: todos los PNOs -->
     <record id="action_amunet_quality_procedure" model="ir.actions.act_window">
         <field name="name">Control de Documentos (SOPs)</field>
         <field name="res_model">amunet.quality.procedure</field>
@@ -81,9 +97,42 @@
                 Cargar un nuevo Procedimiento Operativo (SOP)
             </p>
             <p>
-                Gestione los documentos controlados (ISO 13485). 
+                Gestione los documentos controlados (ISO 13485).
                 Al cargar una nueva versión con el mismo código, la anterior se archivará automáticamente.
             </p>
         </field>
+    </record>
+
+    <!-- ACTIONS POR CATEGORÍA -->
+    <record id="action_amunet_quality_procedure_operacion" model="ir.actions.act_window">
+        <field name="name">PNOs · Operación</field>
+        <field name="res_model">amunet.quality.procedure</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('category', '=', 'operacion')]</field>
+        <field name="context">{'default_category': 'operacion'}</field>
+    </record>
+
+    <record id="action_amunet_quality_procedure_limpieza" model="ir.actions.act_window">
+        <field name="name">PNOs · Limpieza</field>
+        <field name="res_model">amunet.quality.procedure</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('category', '=', 'limpieza')]</field>
+        <field name="context">{'default_category': 'limpieza'}</field>
+    </record>
+
+    <record id="action_amunet_quality_procedure_mantenimiento" model="ir.actions.act_window">
+        <field name="name">PNOs · Mantenimiento</field>
+        <field name="res_model">amunet.quality.procedure</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('category', '=', 'mantenimiento')]</field>
+        <field name="context">{'default_category': 'mantenimiento'}</field>
+    </record>
+
+    <record id="action_amunet_quality_procedure_general" model="ir.actions.act_window">
+        <field name="name">PNOs · Generales</field>
+        <field name="res_model">amunet.quality.procedure</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('category', '=', 'general')]</field>
+        <field name="context">{'default_category': 'general'}</field>
     </record>
 </odoo>
