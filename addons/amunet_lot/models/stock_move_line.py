@@ -10,10 +10,10 @@ class StockMoveLine(models.Model):
     # ============================================================================
     qty_demanded = fields.Float(
         string='Cantidad solicitada',
-        related='move_id.product_uom_qty',
-        readonly=True,
-        store=False,
-        help='Cantidad pedida en el traslado (del movimiento padre).',
+        digits='Product Unit of Measure',
+        store=True,
+        copy=True,
+        help='Cantidad pedida en el traslado. Editable antes de marcar movimiento realizado.',
     )
 
     factory_lot_id = fields.Many2one(

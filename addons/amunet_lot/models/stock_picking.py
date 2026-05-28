@@ -145,7 +145,7 @@ class StockPicking(models.Model):
                     'name': line.product_id.display_name,
                     'product_id': line.product_id.id,
                     'product_uom': line.product_uom_id.id or line.product_id.uom_id.id,
-                    'product_uom_qty': line.quantity or 1.0,
+                    'product_uom_qty': line.qty_demanded or line.quantity or 1.0,
                     'picking_id': picking.id,
                     'location_id': picking.location_id.id,
                     'location_dest_id': picking.location_dest_id.id,
@@ -182,6 +182,10 @@ class StockPicking(models.Model):
         for rec in self:
             if rec.picking_type_code != 'internal':
                 raise UserError(_('Acción solo válida para traslados internos.'))
+            # Precargar quantity = qty_demanded como punto de partida para la verificación
+            for line in rec.move_line_ids:
+                if not line.quantity and line.qty_demanded:
+                    line.quantity = line.qty_demanded
             rec.transfer_done_by_operator = True
             rec.transfer_done_by = self.env.user
             rec.transfer_done_date = fields.Datetime.now()

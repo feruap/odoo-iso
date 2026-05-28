@@ -151,8 +151,8 @@
                                domain="[('product_id', '=', product_id)]"
                                options="{'no_create': True, 'no_open': True}"
                                context="{'default_product_id': product_id}"/>
-                        <field name="qty_demanded" string="Cant. solicitada" readonly="1"/>
-                        <field name="quantity" string="Cant. real" force_save="1"/>
+                        <field name="qty_demanded" string="Cant. solicitada" readonly="parent.transfer_done_by_operator"/>
+                        <field name="quantity" string="Cant. real" force_save="1" readonly="not parent.transfer_done_by_operator"/>
                         <field name="product_uom_id" string="Unidad" options="{'no_open': True}" readonly="1"/>
                         <field name="lot_name" column_invisible="True"/>
                         <field name="factory_lot_id" column_invisible="True"/>
