@@ -65,7 +65,7 @@
                             </group>
                             <group>
                                 <field name="location_id"/>
-                                <field name="is_deseable"/>
+                                <field name="is_deseable" invisible="1"/>
                                 <field name="calibration_required" invisible="1"/>
                                 <field name="next_calibration_date"
                                        decoration-danger="next_calibration_date &lt; current_date"

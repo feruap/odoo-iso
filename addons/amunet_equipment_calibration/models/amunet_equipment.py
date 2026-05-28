@@ -77,7 +77,7 @@ class AmunetEquipment(models.Model):
 
     state = fields.Selection([
         ('active', 'Activo'),
-        ('maintenance', 'Paro / Pausa'),
+        ('maintenance', 'Pausa'),
         ('out_of_service', 'Inactivo'),
     ], string='Estatus', default='active', tracking=True, required=True)
 
