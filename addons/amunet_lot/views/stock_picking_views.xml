@@ -1,64 +1,191 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Heredar vista formulario de stock.picking para mostrar vista detallada condicional -->
     <record id="view_picking_form_inherit_amunet_lot_detailed_operations" model="ir.ui.view">
         <field name="name">stock.picking.form.inherit.amunet.lot.detailed.operations</field>
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//label[@for='partner_id' and @string='Contact']" position="attributes">
-                <attribute name="string">Solicitado por</attribute>
+
+            <!-- Statusbar nativo para outgoing/internal: ocultar para internos -->
+            <xpath expr="//field[@name='state'][@widget='statusbar'][@statusbar_visible='draft,confirmed,assigned,done']" position="attributes">
+                <attribute name="invisible">picking_type_code == 'internal'</attribute>
+            </xpath>
+            <!-- Statusbar de 5 pasos propio para traslados internos -->
+            <xpath expr="//field[@name='state'][@widget='statusbar'][@statusbar_visible='draft,confirmed,assigned,done']" position="after">
+                <field name="transfer_flow_state"
+                       widget="statusbar"
+                       statusbar_visible="draft,waiting,approved,executed,verified"
+                       invisible="picking_type_code != 'internal'"/>
             </xpath>
 
+            <!-- Botones del header: flujo de traslados internos -->
+
+            <!-- Ocultar "Mark as Todo" para internos; reemplazar con "Registrar traslado" -->
+            <xpath expr="//button[@name='action_confirm'][@class='oe_highlight']" position="attributes">
+                <attribute name="invisible">picking_type_code == 'internal' or state != 'draft'</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_confirm'][@class='oe_highlight']" position="after">
+                <button name="action_confirm"
+                        string="Registrar traslado"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="picking_type_code != 'internal' or state != 'draft'"/>
+            </xpath>
+
+            <!-- Ocultar "Check Availability" para internos (auto-asignado al confirmar) -->
+            <xpath expr="//button[@name='action_assign'][@class='oe_highlight']" position="attributes">
+                <attribute name="invisible">picking_type_code == 'internal' or not show_check_availability</attribute>
+            </xpath>
+
+            <!-- Ocultar ambos botones "Validate" para internos -->
+            <xpath expr="//button[@name='button_validate'][@class='oe_highlight']" position="attributes">
+                <attribute name="invisible">picking_type_code == 'internal' or state in ('draft', 'confirmed', 'done', 'cancel')</attribute>
+            </xpath>
+            <xpath expr="//button[@name='button_validate'][@class='o_btn_validate']" position="attributes">
+                <attribute name="invisible">picking_type_code == 'internal' or state in ('waiting', 'assigned', 'done', 'cancel')</attribute>
+            </xpath>
+
+            <!-- Botones del flujo propio (antes del primer Validate) -->
+            <xpath expr="//button[@name='button_validate'][@class='oe_highlight']" position="before">
+                <button name="action_transfer_approve"
+                        string="Aprobar traslado"
+                        type="object"
+                        class="oe_highlight"
+                        groups="amunet_material_request.group_material_warehouse"
+                        invisible="picking_type_code != 'internal' or state not in ('confirmed', 'assigned') or transfer_approved"/>
+                <button name="action_transfer_mark_done"
+                        string="Marcar movimiento realizado"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="picking_type_code != 'internal' or not transfer_approved or transfer_done_by_operator or state not in ('confirmed', 'assigned')"/>
+                <button name="action_transfer_verify"
+                        string="Verificar e ingresar al inventario"
+                        type="object"
+                        class="btn-success"
+                        groups="amunet_material_request.group_material_warehouse"
+                        invisible="picking_type_code != 'internal' or not transfer_done_by_operator or transfer_verified or state not in ('confirmed', 'assigned')"/>
+            </xpath>
+
+            <!-- Campos auxiliares de control (invisibles) -->
             <xpath expr="//field[@name='origin']" position="after">
                 <field name="is_quality_control" invisible="1"/>
                 <field name="is_storage" invisible="1"/>
                 <field name="is_reception" invisible="1"/>
+                <field name="transfer_approved" invisible="1"/>
+                <field name="transfer_done_by_operator" invisible="1"/>
+                <field name="transfer_verified" invisible="1"/>
+                <field name="transfer_flow_state" invisible="1"/>
             </xpath>
 
-            <!--
-                Modificar el campo move_ids para ocultarlo cuando:
-                - state in ('done', 'cancel') OR
-                - (is_quality_control and state == 'assigned') OR
-                - (picking_type_code == 'internal' and state == 'assigned')
-            -->
+            <!-- Etiqueta dinámica: "Solicitado por" / "Dirección de entrega" / "Recibir de" -->
+            <xpath expr="//div[hasclass('o_td_label') and .//label[@for='partner_id']]" position="replace">
+                <div class="o_td_label">
+                    <label for="partner_id" string="Dirección de entrega" style="font-weight:bold;"
+                           invisible="picking_type_code != 'outgoing'"/>
+                    <label for="partner_id" string="Recibir de" style="font-weight:bold;"
+                           invisible="picking_type_code != 'incoming'"/>
+                    <label for="partner_id" string="Solicitado por" style="font-weight:bold;"
+                           invisible="picking_type_code in ['incoming', 'outgoing']"/>
+                </div>
+            </xpath>
+
+            <!-- "Solicitado por" no editable para internos -->
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="readonly">picking_type_code == 'internal'</attribute>
+            </xpath>
+
+            <!-- Ocultar "Documento de origen" para internos -->
+            <xpath expr="//field[@name='origin']" position="attributes">
+                <attribute name="invisible">picking_type_code == 'internal'</attribute>
+            </xpath>
+
+            <!-- Tipo de operación: readonly para internos -->
+            <xpath expr="//field[@name='picking_type_id']" position="attributes">
+                <attribute name="readonly">picking_type_code == 'internal'</attribute>
+            </xpath>
+
+            <!-- Fecha: ocultar scheduled_date para internos, mostrar date_display editable DD.MM.AA -->
+            <xpath expr="//field[@name='scheduled_date']" position="attributes">
+                <attribute name="invisible">picking_type_code == 'internal'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='scheduled_date']" position="after">
+                <field name="date_display"
+                       invisible="picking_type_code != 'internal'"
+                       string="Fecha (DD.MM.AA)"/>
+            </xpath>
+
+            <!-- Paquetes: ocultar para internos -->
+            <xpath expr="//button[@name='action_see_packages']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_see_package_histories']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_put_in_pack']" position="attributes">
+                <attribute name="invisible">picking_type_code == 'internal'</attribute>
+            </xpath>
+
+            <!-- move_ids: oculto siempre para internos -->
             <xpath expr="//page[@name='operations']/field[@name='move_ids']" position="attributes">
-                <attribute name="invisible">state in ('done', 'cancel') or (is_quality_control and state == 'assigned') or (picking_type_code == 'internal' and state == 'assigned')</attribute>
+                <attribute name="invisible">state in ('done', 'cancel') or (is_quality_control and state == 'assigned') or picking_type_code == 'internal'</attribute>
             </xpath>
 
-            <!-- Cambiar etiqueta de columna "Números de serie" en move_ids -->
+            <!-- Renombrar columna lot_ids en move_ids (para no-internos) -->
             <xpath expr="//page[@name='operations']/field[@name='move_ids']//field[@name='lot_ids']" position="attributes">
                 <attribute name="string">Números de serie/lote Amunet</attribute>
             </xpath>
 
-            <!--
-                Agregar el campo move_line_ids después de move_ids para mostrarlo cuando:
-                - state in ('done', 'cancel') OR
-                - (is_quality_control and state == 'assigned') OR
-                - (picking_type_code == 'internal' and state == 'assigned')
-            -->
+            <!-- move_line_ids: visible en TODOS los estados para internos (incluido borrador) -->
             <xpath expr="//page[@name='operations']/field[@name='move_ids']" position="after">
                 <field name="move_line_ids"
-                       invisible="state not in ('done', 'cancel') and not (is_quality_control and state == 'assigned') and not (picking_type_code == 'internal' and state == 'assigned')"
+                       invisible="state not in ('done', 'cancel') and not (is_quality_control and state == 'assigned') and picking_type_code != 'internal'"
                        readonly="0"
                        mode="list"
                        string="Operaciones detalladas"
                        nolabel="1"
-                       context="{}">
-                    <list string="Operaciones Detalladas" create="1" edit="1" delete="1" no_open="1">
-                        <field name="product_id" string="Producto" widget="many2one" />
-                        <field name="lot_name" string="Número de serie/lote Amunet" />
-                        <field name="factory_lot_id" string="Número de serie/lote de fábrica" options="{'no_open': True}"/>
-                        <field name="manufacturing_date" string="Fecha de fabricación" />
-                        <field name="lot_id" string="Lote UUID" column_invisible="True"/>
-                        <field name="quantity" string="Cantidad" />
-                        <field name="product_uom_id" string="Unidad" options="{'no_open': True}"/>
-                        <field name="location_id" string="Ubicación origen" options="{'no_open': True}"/>
-                        <field name="location_dest_id" string="Almacenar en" options="{'no_open': True}"/>
+                       context="{'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_picking_id': id}">
+                    <list string="Operaciones Detalladas" create="1" edit="1" delete="1" no_open="1" editable="bottom">
+                        <field name="product_id" string="Producto" widget="many2one"/>
+                        <field name="lot_id"
+                               string="Lote Amunet"
+                               domain="[('product_id', '=', product_id)]"
+                               options="{'no_create': True, 'no_open': True}"
+                               context="{'default_product_id': product_id}"/>
+                        <field name="qty_demanded" string="Cant. solicitada" readonly="1"/>
+                        <field name="quantity" string="Cant. real" force_save="1"/>
+                        <field name="product_uom_id" string="Unidad" options="{'no_open': True}" readonly="1"/>
+                        <field name="lot_name" column_invisible="True"/>
+                        <field name="factory_lot_id" column_invisible="True"/>
+                        <field name="manufacturing_date" column_invisible="True"/>
+                        <field name="location_id" column_invisible="True"/>
+                        <field name="location_dest_id" column_invisible="True"/>
                     </list>
                 </field>
             </xpath>
+
+            <!-- Pestaña Aprobación (después de Operaciones) -->
+            <xpath expr="//page[@name='operations']" position="after">
+                <page string="Aprobación" name="transfer_approval"
+                      invisible="picking_type_code != 'internal'">
+                    <group>
+                        <group string="Aprobación de traslado">
+                            <field name="transfer_approved_by" readonly="1"/>
+                            <field name="transfer_approved_date" readonly="1"/>
+                        </group>
+                        <group string="Realización física">
+                            <field name="transfer_done_by" readonly="1"/>
+                            <field name="transfer_done_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Verificación de recepción">
+                            <field name="transfer_verified_by" readonly="1"/>
+                            <field name="transfer_verified_date" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
         </field>
     </record>
 </odoo>
-

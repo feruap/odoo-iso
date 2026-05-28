@@ -8,6 +8,14 @@ class StockMoveLine(models.Model):
     # ============================================================================
     # Campo factory_lot_id - Restaurado con solución definitiva
     # ============================================================================
+    qty_demanded = fields.Float(
+        string='Cantidad solicitada',
+        related='move_id.product_uom_qty',
+        readonly=True,
+        store=False,
+        help='Cantidad pedida en el traslado (del movimiento padre).',
+    )
+
     factory_lot_id = fields.Many2one(
         'amunet.lot.factory',
         string='Número de serie/lote de fábrica',
