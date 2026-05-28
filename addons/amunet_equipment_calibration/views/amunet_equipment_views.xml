@@ -46,6 +46,11 @@
                                     invisible="child_equipment_count == 0">
                                 <field name="child_equipment_count" widget="statinfo" string="Accesorios"/>
                             </button>
+                            <button name="action_view_expediente" type="object"
+                                    class="oe_stat_button" icon="fa-certificate"
+                                    invisible="expediente_count == 0">
+                                <field name="expediente_count" widget="statinfo" string="Expediente"/>
+                            </button>
                         </div>
 
                         <div class="oe_title">

@@ -47,6 +47,16 @@
                   groups="amunet_equipment_calibration.group_equipment_manager"/>
 
         <!-- =================================================================
+             SECCIÓN 1b: CALIFICACIONES
+             ================================================================= -->
+        <menuitem id="menu_amunet_calificacion_expedientes"
+                  name="Expedientes de Calificación"
+                  parent="menu_amunet_unidades"
+                  action="amunet_equipment_calibration.action_amunet_expediente"
+                  sequence="30"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <!-- =================================================================
              SECCIÓN 2: PROGRAMAS
              ================================================================= -->
         <menuitem id="menu_amunet_programas_root"
