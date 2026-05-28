@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_firma_config_list" model="ir.ui.view">
+        <field name="name">amunet.documento.firma.config.list</field>
+        <field name="model">amunet.documento.firma.config</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="area"/>
+                <field name="revisor_default_id"/>
+                <field name="autorizador_default_id"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_firma_config_form" model="ir.ui.view">
+        <field name="name">amunet.documento.firma.config.form</field>
+        <field name="model">amunet.documento.firma.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archivado" bg_color="bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Ej: Firmas para PNOs Generales"/></h1>
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        Define quien puede revisar y quien puede autorizar los documentos de esta area.
+                        Al crear un nuevo documento, los campos de Revisor y Autorizador se llenaran solos
+                        con los "por defecto" que pongas aqui, y el desplegable solo mostrara a los usuarios
+                        de las listas. Si dejas una lista vacia, cualquiera puede ser asignado.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="area"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="descripcion" placeholder="Notas internas (opcional)"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Quienes revisan">
+                            <group>
+                                <field name="revisor_default_id" options="{'no_create': True}"/>
+                            </group>
+                            <separator string="Lista de usuarios autorizados para revisar"/>
+                            <field name="revisor_user_ids" options="{'no_create': True}">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="login"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Quienes autorizan">
+                            <group>
+                                <field name="autorizador_default_id" options="{'no_create': True}"/>
+                            </group>
+                            <separator string="Lista de usuarios autorizados para autorizar"/>
+                            <field name="autorizador_user_ids" options="{'no_create': True}">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="login"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_firma_config" model="ir.actions.act_window">
+        <field name="name">Politicas de firmas</field>
+        <field name="res_model">amunet.documento.firma.config</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea tu primera politica de firmas</p>
+        </field>
+    </record>
+</odoo>

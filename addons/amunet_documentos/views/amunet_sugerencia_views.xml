@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_sugerencia_list" model="ir.ui.view">
+        <field name="name">amunet.documento.sugerencia.list</field>
+        <field name="model">amunet.documento.sugerencia</field>
+        <field name="arch" type="xml">
+            <list decoration-warning="state == 'pendiente'"
+                  decoration-success="state == 'aceptada'"
+                  decoration-muted="state == 'rechazada'">
+                <field name="fecha_creacion"/>
+                <field name="documento_codigo"/>
+                <field name="seccion"/>
+                <field name="creado_por_id"/>
+                <field name="motivo"/>
+                <field name="state" widget="badge"/>
+                <field name="decidido_por_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_sugerencia_form" model="ir.ui.view">
+        <field name="name">amunet.documento.sugerencia.form</field>
+        <field name="model">amunet.documento.sugerencia</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_aceptar" string="Aceptar"
+                            type="object" class="btn-success"
+                            icon="fa-check"
+                            invisible="state != 'pendiente'"
+                            confirm="El texto propuesto reemplazara el texto actual de esa seccion del documento. Continuar?"/>
+                    <button name="action_rechazar" string="Rechazar"
+                            type="object" class="btn-danger"
+                            icon="fa-times"
+                            invisible="state != 'pendiente'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pendiente,aceptada,rechazada"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="documento_id" readonly="state != 'pendiente'"
+                                   options="{'no_create': True}"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="seccion" readonly="state != 'pendiente'"/>
+                            <field name="creado_por_id" readonly="1"/>
+                            <field name="fecha_creacion" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="decidido_por_id" readonly="1"
+                                   invisible="state == 'pendiente'"/>
+                            <field name="fecha_decision" readonly="1"
+                                   invisible="state == 'pendiente'"/>
+                        </group>
+                    </group>
+                    <group string="Motivo del cambio">
+                        <field name="motivo" nolabel="1" readonly="state != 'pendiente'"
+                               placeholder="Por que propones este cambio."/>
+                    </group>
+                    <notebook>
+                        <page string="Texto actual (como esta hoy)">
+                            <field name="texto_original" readonly="1"/>
+                        </page>
+                        <page string="Texto propuesto (como quedaria)">
+                            <field name="texto_propuesto" readonly="state != 'pendiente'"
+                                   placeholder="Edita aqui dejando solo el contenido final."/>
+                        </page>
+                    </notebook>
+                    <group string="Motivo del rechazo" invisible="state != 'rechazada' and not motivo_rechazo">
+                        <field name="motivo_rechazo" nolabel="1"
+                               readonly="state != 'pendiente'"
+                               placeholder="(Obligatorio si rechazas) Por que rechazas el cambio."/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_sugerencia" model="ir.actions.act_window">
+        <field name="name">Sugerencias de cambio</field>
+        <field name="res_model">amunet.documento.sugerencia</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_amunet_sugerencia_mis_pendientes" model="ir.actions.act_window">
+        <field name="name">Sugerencias por decidir (mias)</field>
+        <field name="res_model">amunet.documento.sugerencia</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','pendiente'),('documento_id.elabora_id','=',uid)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No tienes sugerencias por decidir</p>
+        </field>
+    </record>
+</odoo>
