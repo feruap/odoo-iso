@@ -67,7 +67,9 @@
                                 <field name="location_id"/>
                                 <field name="is_deseable"/>
                                 <field name="calibration_required"/>
-                                <field name="next_calibration_date" decoration-danger="next_calibration_date &lt; current_date"/>
+                                <field name="next_calibration_date"
+                                       decoration-danger="next_calibration_date &lt; current_date"
+                                       invisible="not calibration_required"/>
                             </group>
                         </group>
 
@@ -88,7 +90,8 @@
                                     </list>
                                 </field>
                             </page>
-                            <page string="Historial de Calibraciones" name="calibrations">
+                            <page string="Historial de Calibraciones" name="calibrations"
+                                  invisible="not calibration_required">
                                 <field name="calibration_line_ids">
                                     <list string="Calibraciones" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'">
                                         <field name="calibration_date"/>
