@@ -17,6 +17,7 @@ Diferencia clave con amunet_lot_sequence:
         'stock',
         'mail',
         'product_expiry',
+        'amunet_material_request',
     ],
     'data': [
         'security/ir.model.access.csv',
