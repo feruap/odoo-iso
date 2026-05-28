@@ -239,7 +239,7 @@
                         </t>
 
                         <!-- ── Encabezado del documento ── -->
-                        <table style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:11px;" border="1">
+                        <table style="width:100%;border-collapse:collapse;margin-bottom:12px;" border="1">
                             <!-- Fila superior: logo + nombre de empresa -->
                             <tr>
                                 <td style="width:13%;padding:6px 10px;background:#1565c0;vertical-align:middle;text-align:center;">
@@ -249,7 +249,7 @@
                                     </t>
                                 </td>
                                 <td colspan="3" style="padding:6px 12px;background:#1565c0;vertical-align:middle;">
-                                    <span style="color:white;font-size:13px;font-weight:bold;letter-spacing:0.5px;">
+                                    <span style="color:white;font-size:1.1em;font-weight:bold;letter-spacing:0.5px;">
                                         <t t-esc="doc.env.company.name"/>
                                     </span>
                                 </td>
@@ -257,7 +257,7 @@
                             <!-- Tipo de documento + código -->
                             <tr>
                                 <td colspan="2" style="text-align:center;padding:7px;background:#1565c0;color:white;">
-                                    <strong style="font-size:11px;">
+                                    <strong>
                                         <t t-esc="dict(doc._fields['tipo'].selection).get(doc.tipo,'').upper()"/>
                                     </strong>
                                 </td>
@@ -265,7 +265,7 @@
                                 <td style="width:18%;padding:6px;"><strong t-esc="doc.codigo"/></td>
                             </tr>
                             <tr>
-                                <td colspan="4" style="text-align:center;padding:8px;font-size:13px;">
+                                <td colspan="4" style="text-align:center;padding:8px;font-size:1.1em;">
                                     <strong t-esc="doc.name"/>
                                 </td>
                             </tr>
@@ -377,11 +377,10 @@
                                 <table style="width:100%;border-collapse:collapse;margin-bottom:0;" border="1">
                                     <thead style="background:#e3f2fd;">
                                         <tr>
-                                            <th style="width:5%;padding:5px;text-align:center;">#</th>
-                                            <th style="width:22%;padding:5px;">Actividad</th>
+                                            <th style="width:25%;padding:5px;">Actividad</th>
                                             <th style="padding:5px;">Descripcion</th>
-                                            <th style="width:16%;padding:5px;">Responsable</th>
-                                            <th style="width:16%;padding:5px;">Registro</th>
+                                            <th style="width:18%;padding:5px;">Responsable</th>
+                                            <th style="width:18%;padding:5px;">Registro</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -391,11 +390,10 @@
                                     <table style="width:100%;border-collapse:collapse;margin-top:-1px;page-break-inside:avoid;" border="1">
                                         <tbody>
                                             <tr>
-                                                <td style="width:5%;text-align:center;vertical-align:top;padding:5px;" t-esc="act.sequence"/>
-                                                <td style="width:22%;vertical-align:top;font-weight:bold;padding:5px;" t-esc="act.actividad"/>
+                                                <td style="width:25%;vertical-align:top;font-weight:bold;padding:5px;" t-esc="act.actividad"/>
                                                 <td style="padding:5px;"><div style="margin:0;" t-out="act.descripcion"/></td>
-                                                <td style="width:16%;vertical-align:top;padding:5px;" t-esc="act.responsable or ''"/>
-                                                <td style="width:16%;vertical-align:top;padding:5px;" t-esc="act.registro or ''"/>
+                                                <td style="width:18%;vertical-align:top;padding:5px;" t-esc="act.responsable or ''"/>
+                                                <td style="width:18%;vertical-align:top;padding:5px;" t-esc="act.registro or ''"/>
                                             </tr>
                                         </tbody>
                                     </table>
