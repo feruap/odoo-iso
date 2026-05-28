@@ -13,6 +13,7 @@ class AmunetEquipment(models.Model):
     _description = 'Equipo de Medición (ISO 13485 Cláusula 7.6)'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
+    active = fields.Boolean(default=True)
     name = fields.Char(string='Nombre del Equipo', required=True, tracking=True)
     serial_number = fields.Char(string='Código/ID', tracking=True)
     brand = fields.Char(string='Marca')
