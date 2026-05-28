@@ -692,36 +692,36 @@ MPCAR_DATA = [
   "mpcar": "MPCAR10",
   "sphm": "SPHMC10",
   "ref": "DTH-121",
-  "price": null,
-  "date": null
+  "price": None,
+  "date": None
  },
  {
   "mpcar": "MPCAR11",
   "sphm": "SPHMC11",
   "ref": "DAM-121",
-  "price": null,
-  "date": null
+  "price": None,
+  "date": None
  },
  {
   "mpcar": "MPCAR12",
   "sphm": "SPHMC12",
   "ref": "DCO-121",
-  "price": null,
-  "date": null
+  "price": None,
+  "date": None
  },
  {
   "mpcar": "MPCAR13",
   "sphm": "SPHMC13",
   "ref": "DME-121",
-  "price": null,
-  "date": null
+  "price": None,
+  "date": None
  },
  {
   "mpcar": "MPCAR14",
   "sphm": "SPHMC14",
   "ref": "DOP-121",
-  "price": null,
-  "date": null
+  "price": None,
+  "date": None
  },
  {
   "mpcar": "MPCAR16",
@@ -853,8 +853,8 @@ MPCAR_DATA = [
   "mpcar": "MPCAR63",
   "sphm": "SPHMC63",
   "ref": "DFY-121",
-  "price": null,
-  "date": null
+  "price": None,
+  "date": None
  },
  {
   "mpcar": "MPCAR64",
