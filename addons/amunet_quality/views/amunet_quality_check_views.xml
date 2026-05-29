@@ -205,7 +205,7 @@
                             <field name="product_id" readonly="state != 'draft'"/>
                         </group>
                         <group>
-                            <field name="product_description" readonly="state not in ('draft','in_progress')"/>
+                            <field name="product_description" string="Uso previsto" readonly="state not in ('draft','in_progress')"/>
                         </group>
                     </group>
 
