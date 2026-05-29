@@ -13,6 +13,7 @@ class MrpProduction(models.Model):
     amunet_scheduled_date_display = fields.Char(
         string='Fecha Programada',
         compute='_compute_scheduled_date_display',
+        inverse='_inverse_scheduled_date_display',
         store=False
     )
     
@@ -150,6 +151,8 @@ class MrpProduction(models.Model):
         compute='_compute_reconciliation_has_surplus', store=False)
     amunet_has_supplied_moves = fields.Boolean(
         compute='_compute_amunet_has_supplied_moves', store=False)
+    amunet_all_workorders_done = fields.Boolean(
+        compute='_compute_amunet_all_workorders_done', store=False)
 
     @api.depends('move_raw_ids.amunet_qty_supplied', 'move_raw_ids.amunet_qty_used')
     def _compute_reconciliation_has_surplus(self):
@@ -166,6 +169,16 @@ class MrpProduction(models.Model):
                 (m.amunet_qty_supplied or 0) > 0
                 for m in rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
             )
+
+    @api.depends('workorder_ids.state')
+    def _compute_amunet_all_workorders_done(self):
+        for rec in self:
+            if not rec.workorder_ids:
+                rec.amunet_all_workorders_done = True
+            else:
+                rec.amunet_all_workorders_done = all(
+                    wo.state in ('done', 'cancel') for wo in rec.workorder_ids
+                )
 
     def action_initiate_reconciliation(self):
         self.ensure_one()
@@ -445,9 +458,24 @@ class MrpProduction(models.Model):
                 user_tz = self.env.user.tz or 'UTC'
                 utc_dt = rec.date_start.replace(tzinfo=pytz.utc)
                 local_dt = utc_dt.astimezone(pytz.timezone(user_tz))
-                rec.amunet_scheduled_date_display = local_dt.strftime('%d.%m.%y %I:%M %p')
+                rec.amunet_scheduled_date_display = local_dt.strftime('%d.%m.%y')
             else:
                 rec.amunet_scheduled_date_display = ''
+
+    def _inverse_scheduled_date_display(self):
+        import pytz
+        from datetime import datetime
+        for rec in self:
+            val = (rec.amunet_scheduled_date_display or '').strip()
+            if not val:
+                continue
+            try:
+                user_tz = self.env.user.tz or 'UTC'
+                local_dt = datetime.strptime(val, '%d.%m.%y')
+                local_dt = pytz.timezone(user_tz).localize(local_dt)
+                rec.date_start = local_dt.astimezone(pytz.utc).replace(tzinfo=None)
+            except ValueError:
+                pass
 
     def _auto_generate_lot_draft(self, force_recreate=False):
         """Pre-visualiza el nombre del lote en draft SIN crearlo en BD.

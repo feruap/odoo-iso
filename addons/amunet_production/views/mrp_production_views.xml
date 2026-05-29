@@ -48,7 +48,7 @@
                     <button name="action_initiate_reconciliation"
                             string="Iniciar conciliación"
                             type="object" class="oe_highlight"
-                            invisible="reconciliation_state != 'pending' or not amunet_has_supplied_moves or state not in ('confirmed','progress','to_close','done')"
+                            invisible="reconciliation_state != 'pending' or not amunet_has_supplied_moves or state not in ('confirmed','progress','to_close','done') or not amunet_all_workorders_done"
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor"/>
                     <button name="action_validate_reconciliation"
                             string="Validar conciliación"
@@ -64,6 +64,7 @@
                     <button name="button_mark_done" string="Producir" type="object" class="oe_highlight" invisible="not amunet_can_produce"/>
                     <field name="amunet_can_produce" invisible="1"/>
                     <field name="amunet_has_supplied_moves" invisible="1"/>
+                    <field name="amunet_all_workorders_done" invisible="1"/>
                     <field name="reconciliation_state" invisible="1"/>
                     <field name="reconciliation_has_surplus" invisible="1"/>
                     <field name="amunet_supply_workorder_id" invisible="1"/>
@@ -165,23 +166,12 @@
                     <field name="amunet_product_categ_id" string="Categoria" readonly="1"/>
                     <field name="amunet_is_solution_product" invisible="1"/>
                 </xpath>
-                <!--
-                    Fecha programada: forzar widget='datetime' en el
-                    field del FORM (dentro de <div name='date_start'>)
-                    para que respete el formato del lang
-                    (DD.MM.YY HH:MM). Sin esto, Odoo 19 usa por
-                    defecto un widget "amigable" que muestra "26 may,
-                    11:40 a.m." y solo en hover/edicion respeta el
-                    formato del lang.
-                -->
-                <xpath expr="//div[@name='date_start']/field[@name='date_start']" position="attributes">
-                    <attribute name="widget">datetime</attribute>
-                    <attribute name="options">{'numeric': true}</attribute>
-                </xpath>
-                <xpath expr="//div[@name='date_start']" position="after">
+                <!-- Fecha programada: reemplazar campo nativo por display DD.MM.AA editable -->
+                <xpath expr="//div[@name='date_start']/field[@name='date_start']" position="replace">
+                    <field name="date_start" invisible="1"/>
                     <field name="amunet_scheduled_date_display"
-                           readonly="1" class="text-muted"
-                           invisible="state not in ('confirmed','progress','to_close','done')"/>
+                           placeholder="DD.MM.AA"
+                           force_save="1"/>
                 </xpath>
 
                 <!-- TABLA DE INGREDIENTES orden: producto | por consumir | lote | cant.utilizada | disolucion | valido -->
@@ -280,12 +270,13 @@
                         </group>
                         <field name="move_raw_ids" nolabel="1" readonly="0"
                                invisible="reconciliation_state == 'pending'">
-                            <list string="Materiales" create="0" delete="0" no_open="1">
+                            <list string="Materiales" create="0" delete="0" no_open="1" editable="bottom">
                                 <field name="product_id" readonly="1"/>
                                 <field name="amunet_lot_id" readonly="1" optional="show"/>
                                 <field name="product_uom" readonly="1" string="U.M." optional="show"/>
                                 <field name="amunet_qty_supplied" readonly="1" string="Surtido"/>
                                 <field name="amunet_qty_used" string="Utilizado"
+                                       force_save="1"
                                        readonly="parent.reconciliation_state in ('validated','completed')"/>
                                 <field name="amunet_qty_surplus" readonly="1" string="Sobrante"
                                        decoration-warning="amunet_qty_surplus &gt; 0"
@@ -293,6 +284,11 @@
                             </list>
                         </field>
                     </page>
+                </xpath>
+
+                <!-- Responsable: solo Alma o Alondra -->
+                <xpath expr="//field[@name='user_id']" position="attributes">
+                    <attribute name="domain">[('login', 'in', ['s.produccion@amunet.com.mx', 'produccionsub@amunet.com.mx'])]</attribute>
                 </xpath>
 
             </field>

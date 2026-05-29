@@ -31,7 +31,6 @@ class AmunetEquipment(models.Model):
         ('CONTROL DE CALIDAD', 'Control de Calidad'),
         ('DESARROLLO', 'Desarrollo'),
         ('ALMACÉN DE PRODUCTO TERMINADO', 'Almacén de Producto Terminado'),
-        ('PRODUCCIÓN DE DESARROLLO MOLECULAR', 'Producción de Desarrollo Molecular'),
         ('VALIDACIÓN', 'Validación'),
     ], string='Departamento', tracking=True)
     location_id = fields.Many2one('stock.location', string='Ubicación')
@@ -176,6 +175,25 @@ class AmunetEquipment(models.Model):
         string='Expedientes de Calificación',
         compute='_compute_expediente_count',
     )
+    expediente_ids = fields.One2many(
+        'amunet.equipment.expediente',
+        'equipment_id',
+        string='Expedientes de Calificación',
+    )
+    expediente_state = fields.Selection([
+        ('en_proceso', 'En proceso'),
+        ('vigente', 'Vigente'),
+        ('obsoleto', 'Obsoleto'),
+    ], string='Estado calificación', compute='_compute_expediente_state')
+
+    has_calibratable_children = fields.Boolean(
+        compute='_compute_has_calibratable_children',
+        store=True,
+    )
+    calibracion_via = fields.Char(
+        string='Calibración',
+        compute='_compute_calibracion_via',
+    )
 
     def _compute_child_equipment_count(self):
         for eq in self:
@@ -185,6 +203,30 @@ class AmunetEquipment(models.Model):
         Expediente = self.env['amunet.equipment.expediente']
         for eq in self:
             eq.expediente_count = Expediente.search_count([('equipment_id', '=', eq.id)])
+
+    def _compute_expediente_state(self):
+        for eq in self:
+            exp = (eq.expediente_ids.filtered(lambda e: e.state == 'vigente')[:1]
+                   or eq.expediente_ids.filtered(lambda e: e.state == 'en_proceso')[:1]
+                   or eq.expediente_ids[:1])
+            eq.expediente_state = exp.state if exp else False
+
+    @api.depends('child_equipment_ids.calibration_required')
+    def _compute_has_calibratable_children(self):
+        for eq in self:
+            eq.has_calibratable_children = any(
+                c.calibration_required for c in eq.child_equipment_ids
+            )
+
+    def _compute_calibracion_via(self):
+        for eq in self:
+            cal_children = eq.child_equipment_ids.filtered(lambda c: c.calibration_required)
+            if cal_children:
+                eq.calibracion_via = f'Vía accesorios ({len(cal_children)})'
+            elif eq.calibration_required:
+                eq.calibracion_via = 'Directa'
+            else:
+                eq.calibracion_via = '—'
 
     def action_view_expediente(self):
         self.ensure_one()
