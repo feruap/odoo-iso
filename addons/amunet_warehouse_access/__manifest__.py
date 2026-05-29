@@ -43,6 +43,8 @@ Casos de uso:
         'views/res_users_views.xml',
         'views/stock_warehouse_views.xml',
     ],
+    'pre_init_hook': 'pre_init_hook',
+    'post_init_hook': 'post_init_hook',
     'installable': True,
     'application': False,
     'auto_install': False,
