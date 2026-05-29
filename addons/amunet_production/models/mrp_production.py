@@ -123,12 +123,129 @@ class MrpProduction(models.Model):
     # fase donde tiene sentido cerrar y TODAS las workorders estan
     # concluidas (done o cancel). Si la MO no tiene workorders se
     # habilita en cuanto entra a confirmed/progress/to_close.
+    # ─── Conciliación de materiales ──────────────────────────────────────
+    reconciliation_state = fields.Selection([
+        ('pending',    'Pendiente'),
+        ('initiated',  'En proceso'),
+        ('validated',  'Supervisada'),
+        ('completed',  'Completada'),
+    ], string='Conciliación', default='pending', copy=False, tracking=True)
+
+    reconciliation_initiated_by = fields.Many2one(
+        'res.users', string='Iniciada por', readonly=True, copy=False)
+    reconciliation_initiated_date = fields.Datetime(
+        string='Fecha inicio', readonly=True, copy=False)
+    reconciliation_validated_by = fields.Many2one(
+        'res.users', string='Validada por', readonly=True, copy=False)
+    reconciliation_validated_date = fields.Datetime(
+        string='Fecha validación', readonly=True, copy=False)
+    reconciliation_completed_by = fields.Many2one(
+        'res.users', string='Confirmada por', readonly=True, copy=False)
+    reconciliation_completed_date = fields.Datetime(
+        string='Fecha confirmación', readonly=True, copy=False)
+    reconciliation_notes = fields.Text(
+        string='Notas', copy=False)
+
+    reconciliation_has_surplus = fields.Boolean(
+        compute='_compute_reconciliation_has_surplus', store=False)
+    amunet_has_supplied_moves = fields.Boolean(
+        compute='_compute_amunet_has_supplied_moves', store=False)
+
+    @api.depends('move_raw_ids.amunet_qty_supplied', 'move_raw_ids.amunet_qty_used')
+    def _compute_reconciliation_has_surplus(self):
+        for rec in self:
+            rec.reconciliation_has_surplus = any(
+                (m.amunet_qty_supplied or 0) - (m.amunet_qty_used or 0) > 0.001
+                for m in rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            )
+
+    @api.depends('move_raw_ids.amunet_qty_supplied', 'move_raw_ids.state')
+    def _compute_amunet_has_supplied_moves(self):
+        for rec in self:
+            rec.amunet_has_supplied_moves = any(
+                (m.amunet_qty_supplied or 0) > 0
+                for m in rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            )
+
+    def action_initiate_reconciliation(self):
+        self.ensure_one()
+        if self.state not in ('confirmed', 'progress', 'to_close', 'done'):
+            raise UserError(_('Solo se puede iniciar conciliación cuando la orden está en progreso.'))
+        if self.reconciliation_state != 'pending':
+            raise UserError(_('La conciliación ya fue iniciada.'))
+        # Precargar qty_used = qty_supplied como punto de partida
+        for move in self.move_raw_ids.filtered(
+            lambda m: m.state != 'cancel' and (m.amunet_qty_supplied or 0) > 0
+        ):
+            if not move.amunet_qty_used:
+                move.amunet_qty_used = move.amunet_qty_supplied
+        self.write({
+            'reconciliation_state': 'initiated',
+            'reconciliation_initiated_by': self.env.user.id,
+            'reconciliation_initiated_date': fields.Datetime.now(),
+        })
+        self.message_post(body=_('Conciliación de materiales iniciada por <b>%s</b>.') % self.env.user.name)
+
+    def action_validate_reconciliation(self):
+        self.ensure_one()
+        if self.reconciliation_state != 'initiated':
+            raise UserError(_('La conciliación debe estar en proceso para validarla.'))
+        moves = self.move_raw_ids.filtered(
+            lambda m: m.state != 'cancel' and (m.amunet_qty_supplied or 0) > 0
+        )
+        sin_uso = moves.filtered(lambda m: not m.amunet_qty_used or m.amunet_qty_used <= 0)
+        if sin_uso:
+            nombres = ', '.join(sin_uso.mapped('product_id.display_name'))
+            raise UserError(_('Falta cantidad utilizada para: %s') % nombres)
+        # Actualizar quantity = qty_used (lo que Odoo consumirá al validar la MO)
+        for move in moves:
+            move.sudo().write({'quantity': move.amunet_qty_used})
+        # Si no hay sobrante, completar automáticamente sin esperar confirmación de almacén
+        has_surplus = any(
+            (m.amunet_qty_supplied or 0) - (m.amunet_qty_used or 0) > 0.001
+            for m in moves
+        )
+        new_state = 'validated' if has_surplus else 'completed'
+        self.write({
+            'reconciliation_state': new_state,
+            'reconciliation_validated_by': self.env.user.id,
+            'reconciliation_validated_date': fields.Datetime.now(),
+        })
+        lines = []
+        for m in moves:
+            surplus = (m.amunet_qty_supplied or 0) - (m.amunet_qty_used or 0)
+            if surplus > 0.001:
+                uom = m.product_uom.name if m.product_uom else ''
+                lines.append('- %s: <b>%.4g %s</b> a devolver' % (
+                    m.product_id.display_name, surplus, uom))
+        msg = _('Conciliación validada por <b>%s</b>.') % self.env.user.name
+        if lines:
+            msg += _('<br/>Sobrante a devolver a almacén:<br/>') + '<br/>'.join(lines)
+        else:
+            msg += _('<br/>Sin sobrante — conciliación completada automáticamente.')
+        self.message_post(body=msg)
+
+    def action_complete_reconciliation(self):
+        self.ensure_one()
+        if self.reconciliation_state != 'validated':
+            raise UserError(_('Solo se puede confirmar la devolución cuando la conciliación está supervisada.'))
+        self.write({
+            'reconciliation_state': 'completed',
+            'reconciliation_completed_by': self.env.user.id,
+            'reconciliation_completed_date': fields.Datetime.now(),
+        })
+        self.message_post(body=_('Devolución de material sobrante confirmada por almacén (<b>%s</b>). Conciliación completada.') % self.env.user.name)
+    # ─────────────────────────────────────────────────────────────────────
+
     amunet_can_produce = fields.Boolean(
         compute='_compute_amunet_can_produce', store=False,
         string='Listo para producir',
     )
 
-    @api.depends('state', 'workorder_ids.state', 'amunet_sys_req_qc', 'quality_analysis_status')
+    @api.depends(
+        'state', 'workorder_ids.state', 'amunet_sys_req_qc', 'quality_analysis_status',
+        'reconciliation_state', 'move_raw_ids.amunet_qty_supplied', 'move_raw_ids.state',
+    )
     def _compute_amunet_can_produce(self):
         for rec in self:
             if rec.state not in ('confirmed', 'progress', 'to_close'):
@@ -138,14 +255,16 @@ class MrpProduction(models.Model):
                 wos_done = all(wo.state in ('done', 'cancel') for wo in rec.workorder_ids)
             else:
                 wos_done = True
-            # Gate de QC: si el producto requiere control de calidad, el
-            # analisis debe estar APROBADO antes de permitir 'Producir'.
-            # Asi el producto no entra al inventario de PT hasta que QC
-            # confirma. ISO 13485 / Cofepris.
             qc_ok = True
             if rec.amunet_sys_req_qc:
                 qc_ok = rec.quality_analysis_status == 'approved'
-            rec.amunet_can_produce = wos_done and qc_ok
+            # Gate de conciliación: si hay material surtido, debe estar conciliado.
+            has_supply = any(
+                (m.amunet_qty_supplied or 0) > 0
+                for m in rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            )
+            reconciliation_ok = not has_supply or rec.reconciliation_state == 'completed'
+            rec.amunet_can_produce = wos_done and qc_ok and reconciliation_ok
 
     @api.depends('product_id')
     def _compute_product_categ(self):
@@ -696,6 +815,18 @@ class MrpProduction(models.Model):
     def button_mark_done(self):
         """Bloqueo del flujo nativo de la orden de producción"""
         for record in self:
+            # 0. Conciliación de materiales obligatoria si hay surtido registrado
+            moves_with_supply = record.move_raw_ids.filtered(
+                lambda m: m.state != 'cancel' and (m.amunet_qty_supplied or 0) > 0
+            )
+            if moves_with_supply and record.reconciliation_state != 'completed':
+                estado = dict(record._fields['reconciliation_state'].selection).get(
+                    record.reconciliation_state, record.reconciliation_state)
+                raise UserError(_(
+                    'Debe completar la conciliación de materiales antes de producir.\n'
+                    'Estado actual: %s'
+                ) % estado)
+
             # 1. Validar cantidades utilizadas en reactivos
             sin_cantidad = record.move_raw_ids.filtered(lambda m: not m.quantity or m.quantity <= 0)
             if sin_cantidad:

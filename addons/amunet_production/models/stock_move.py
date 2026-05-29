@@ -23,6 +23,26 @@ class StockMove(models.Model):
         copy=False,
     )
 
+    amunet_qty_used = fields.Float(
+        string='Cantidad utilizada',
+        digits='Product Unit of Measure',
+        copy=False,
+        help='Cantidad real consumida en producción. Se captura durante la conciliación.',
+    )
+
+    amunet_qty_surplus = fields.Float(
+        string='Sobrante',
+        compute='_compute_amunet_qty_surplus',
+        digits='Product Unit of Measure',
+        store=False,
+    )
+
+    @api.depends('amunet_qty_supplied', 'amunet_qty_used')
+    def _compute_amunet_qty_surplus(self):
+        for move in self:
+            surplus = (move.amunet_qty_supplied or 0.0) - (move.amunet_qty_used or 0.0)
+            move.amunet_qty_surplus = max(surplus, 0.0)
+
     # Flag de UI: True si el usuario actual puede editar la cantidad
     # teorica (product_uom_qty) y la utilizada (quantity). Almacen puro
     # NO debe modificarlas; solo produccion. Mery tiene ambos grupos en
