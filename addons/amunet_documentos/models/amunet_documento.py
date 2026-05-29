@@ -29,6 +29,11 @@ CAMPOS_BLOQUEADOS_VIGENTE = (
     'elabora_id', 'fecha_elabora',
 )
 
+CAMPOS_FLUJO_FIRMA = (
+    'state', 'firma_revisa_id', 'fecha_revisa', 'firma_aprueba_id',
+    'fecha_aprueba', 'fecha_publicacion', 'fecha_emision', 'fecha_vigencia',
+)
+
 
 class AmunetDocumento(models.Model):
     _name = 'amunet.documento'
@@ -311,6 +316,15 @@ class AmunetDocumento(models.Model):
     def write(self, vals):
         if vals.get('seccion_anexos'):
             vals['seccion_anexos'] = self._formatear_headers_anexos(vals['seccion_anexos'])
+        if (
+            set(CAMPOS_FLUJO_FIRMA).intersection(vals.keys())
+            and not self.env.context.get('amunet_documento_workflow_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'Los campos de estado y firma de documentos controlados solo '
+                'pueden cambiarse desde las acciones de flujo con firma electronica.'
+            ))
         if vals.get('state') in (None, 'vigente'):
             tocados = set(CAMPOS_BLOQUEADOS_VIGENTE).intersection(vals.keys())
             if tocados:
@@ -321,6 +335,20 @@ class AmunetDocumento(models.Model):
                             'Genera una nueva version o pasalo a obsoleto primero.'
                         ) % (', '.join(sorted(tocados)), r.codigo))
         return super().write(vals)
+
+    def _workflow_write(self, vals):
+        return self.with_context(amunet_documento_workflow_write=True).write(vals)
+
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_aprobar_revision': _('Aprobar revision de documento'),
+            '_signature_aprobar': _('Aprobar y publicar documento'),
+        }
+
+    def _open_signature_wizard(self, method_name, signature_type, reason):
+        self.ensure_one()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, method_name, signature_type, reason)
 
     def action_print_documento(self):
         self.ensure_one()
@@ -411,7 +439,7 @@ class AmunetDocumento(models.Model):
                     'El autorizador %s no esta autorizado segun la politica de firmas "%s".'
                 ) % (r.autorizador_id.name, r.firma_config_id.name))
             r._validar_estructura_pnoge_001()
-            r.write({'state': 'en_revision'})
+            r._workflow_write({'state': 'en_revision'})
             r.message_subscribe(partner_ids=[r.revisor_id.partner_id.id,
                                               r.autorizador_id.partner_id.id])
             r.activity_schedule(
@@ -426,15 +454,36 @@ class AmunetDocumento(models.Model):
             )
 
     def action_aprobar_revision(self):
+        self.ensure_one()
+        self._check_aprobar_revision()
+        return self._open_signature_wizard(
+            '_signature_aprobar_revision',
+            _('Aprobar revision de documento'),
+            _('Firma de revision del documento %s version %s.') % (
+                self.codigo, self.version_actual),
+        )
+
+    def _check_aprobar_revision(self):
         for r in self:
             if r.state != 'en_revision':
                 raise UserError(_('Solo se aprueba la revision desde el estado "En revision".'))
             if r.firma_revisa_id:
                 raise UserError(_('Este documento ya fue revisado por %s.') % r.firma_revisa_id.name)
+            if not r.revisor_id:
+                raise UserError(_('Este documento no tiene revisor asignado.'))
+            if r.revisor_id != self.env.user:
+                raise UserError(_(
+                    'Solo el revisor asignado (%s) puede firmar la revision.'
+                ) % r.revisor_id.name)
             if r.elabora_id and r.elabora_id.id == self.env.user.id:
                 raise UserError(_('La misma persona no puede elaborar y revisar (PNOGE-001).'))
+
+    def _signature_aprobar_revision(self):
+        self.ensure_one()
+        self._check_aprobar_revision()
+        for r in self:
             today = fields.Date.today()
-            r.write({'firma_revisa_id': self.env.user.id, 'fecha_revisa': today})
+            r._workflow_write({'firma_revisa_id': self.env.user.id, 'fecha_revisa': today})
             r.activity_feedback(
                 ['mail.mail_activity_data_todo'],
                 feedback=_('Revisado por %s') % self.env.user.name)
@@ -449,6 +498,16 @@ class AmunetDocumento(models.Model):
             )
 
     def action_aprobar(self):
+        self.ensure_one()
+        self._check_aprobar()
+        return self._open_signature_wizard(
+            '_signature_aprobar',
+            _('Aprobar y publicar documento'),
+            _('Firma de autorizacion del documento %s version %s.') % (
+                self.codigo, self.version_actual),
+        )
+
+    def _check_aprobar(self):
         for r in self:
             tiene_contenido = r.archivo or (r.contenido_html or '').strip() or \
                               (r.seccion_objetivo or '').strip() or r.actividad_ids
@@ -460,13 +519,26 @@ class AmunetDocumento(models.Model):
                 raise UserError(_(
                     'Falta la revision previa. Pidele a %s que pulse "Aprobar revision" antes.'
                 ) % (r.revisor_id.name or 'el revisor asignado'))
+            if not r.autorizador_id:
+                raise UserError(_('Este documento no tiene autorizador asignado.'))
+            if r.autorizador_id != self.env.user:
+                raise UserError(_(
+                    'Solo el autorizador asignado (%s) puede firmar la autorizacion.'
+                ) % r.autorizador_id.name)
             if r.elabora_id and r.elabora_id.id == self.env.user.id:
                 raise UserError(_(
                     'El usuario que elaboro el documento (%s) no puede autorizarlo (PNOGE-001).'
                 ) % r.elabora_id.name)
+            if r.firma_revisa_id and r.firma_revisa_id == self.env.user:
+                raise UserError(_('La misma persona no puede revisar y autorizar.'))
+
+    def _signature_aprobar(self):
+        self.ensure_one()
+        self._check_aprobar()
+        for r in self:
             today = fields.Date.today()
             fecha_emision = r.fecha_emision or today
-            r.write({
+            r._workflow_write({
                 'state': 'vigente',
                 'firma_aprueba_id': self.env.user.id,
                 'fecha_aprueba': today,
@@ -479,7 +551,7 @@ class AmunetDocumento(models.Model):
                 feedback=_('Autorizado por %s') % self.env.user.name)
 
     def action_obsoleto(self):
-        self.write({'state': 'obsoleto'})
+        self._workflow_write({'state': 'obsoleto'})
 
     def action_volver_borrador(self):
         for r in self:
@@ -515,7 +587,7 @@ class AmunetDocumento(models.Model):
                          self.env.user.name, motivo),
                     user_id=r.elabora_id.id,
                 )
-            r.write({
+            r._workflow_write({
                 'state': 'borrador',
                 'motivo_devolucion': False,
                 'firma_revisa_id': False,
@@ -584,7 +656,7 @@ class AmunetDocumento(models.Model):
                 nv = '%02d' % (int(r.version_actual) + 1)
             except (ValueError, TypeError):
                 nv = (r.version_actual or '01') + '.1'
-            r.write({
+            r._workflow_write({
                 'sustituye_version': r.version_actual,
                 'version_actual': nv,
                 'state': 'borrador',

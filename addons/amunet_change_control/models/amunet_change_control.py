@@ -199,6 +199,14 @@ class AmunetChangeControl(models.Model):
         if not self._has_any_group(group_xmlids):
             raise UserError(message)
 
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_quality_approve': _('Aprobar por Calidad'),
+            '_signature_sanitary_approve': _('Autorizar por Responsable'),
+            '_signature_implement': _('Implementar cambio/desviacion'),
+            '_signature_close': _('Cerrar cambio/desviacion'),
+        }
+
     def action_submit(self):
         for record in self:
             record._require_any_group([
@@ -226,6 +234,16 @@ class AmunetChangeControl(models.Model):
             record.message_post(body=_('Solicitud enviada a evaluacion.'))
 
     def action_quality_approve(self):
+        self.ensure_one()
+        self._check_quality_approve()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_quality_approve',
+            _('Aprobar por Calidad'),
+            _('Firma de aprobacion de Calidad para %s.') % self.name,
+        )
+
+    def _check_quality_approve(self):
         for record in self:
             record._require_any_group([
                 'amunet_quality.group_quality_supervisor',
@@ -233,7 +251,12 @@ class AmunetChangeControl(models.Model):
             ], _('Solo Supervisor QC o Manager QC puede aprobar por Calidad.'))
             record._require(record.state == 'evaluation',
                             _('Solo se puede aprobar Calidad desde En evaluacion.'))
-            record.write({
+
+    def _signature_quality_approve(self):
+        self.ensure_one()
+        self._check_quality_approve()
+        for record in self:
+            record.with_context(amunet_change_signature_write=True).write({
                 'state': 'quality_approved',
                 'quality_approved_by_id': self.env.user.id,
                 'quality_approved_date': fields.Datetime.now(),
@@ -241,6 +264,16 @@ class AmunetChangeControl(models.Model):
             record.message_post(body=_('Calidad aprobo la desviacion/cambio.'))
 
     def action_sanitary_approve(self):
+        self.ensure_one()
+        self._check_sanitary_approve()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_sanitary_approve',
+            _('Autorizar por Responsable'),
+            _('Firma de autorizacion responsable para %s.') % self.name,
+        )
+
+    def _check_sanitary_approve(self):
         for record in self:
             record._require_any_group([
                 'amunet_quality.group_quality_sanitary',
@@ -248,7 +281,12 @@ class AmunetChangeControl(models.Model):
             ], _('Solo Responsable Sanitario o Manager QC puede autorizar.'))
             record._require(record.state == 'quality_approved',
                             _('Primero debe aprobar Calidad.'))
-            record.write({
+
+    def _signature_sanitary_approve(self):
+        self.ensure_one()
+        self._check_sanitary_approve()
+        for record in self:
+            record.with_context(amunet_change_signature_write=True).write({
                 'state': 'sanitary_approved',
                 'sanitary_approved_by_id': self.env.user.id,
                 'sanitary_approved_date': fields.Datetime.now(),
@@ -303,6 +341,16 @@ class AmunetChangeControl(models.Model):
             record.message_post(body=_('Impresion marcada como completada/entregada.'))
 
     def action_implement(self):
+        self.ensure_one()
+        self._check_implement()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_implement',
+            _('Implementar cambio/desviacion'),
+            _('Firma de implementacion para %s.') % self.name,
+        )
+
+    def _check_implement(self):
         for record in self:
             record._require_any_group([
                 'amunet_production.group_production_supervisor',
@@ -314,7 +362,12 @@ class AmunetChangeControl(models.Model):
             if record.print_required:
                 record._require(record.print_status == 'done',
                                 _('No se puede implementar hasta cerrar la impresion.'))
-            record.write({
+
+    def _signature_implement(self):
+        self.ensure_one()
+        self._check_implement()
+        for record in self:
+            record.with_context(amunet_change_signature_write=True).write({
                 'state': 'implemented',
                 'implemented_by_id': self.env.user.id,
                 'implemented_date': fields.Datetime.now(),
@@ -322,6 +375,16 @@ class AmunetChangeControl(models.Model):
             record.message_post(body=_('Cambio/desviacion implementado.'))
 
     def action_close(self):
+        self.ensure_one()
+        self._check_close()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_close',
+            _('Cerrar cambio/desviacion'),
+            _('Firma de cierre para %s.') % self.name,
+        )
+
+    def _check_close(self):
         for record in self:
             record._require_any_group([
                 'amunet_quality.group_quality_supervisor',
@@ -329,7 +392,12 @@ class AmunetChangeControl(models.Model):
             ], _('Solo Supervisor QC o Manager QC puede cerrar la solicitud.'))
             record._require(record.state == 'implemented',
                             _('Solo se puede cerrar despues de implementar.'))
-            record.write({'state': 'closed'})
+
+    def _signature_close(self):
+        self.ensure_one()
+        self._check_close()
+        for record in self:
+            record.with_context(amunet_change_signature_write=True).write({'state': 'closed'})
             record.message_post(body=_('Solicitud cerrada.'))
 
     def action_reject(self):
@@ -342,6 +410,25 @@ class AmunetChangeControl(models.Model):
 
     def action_cancel(self):
         self.write({'state': 'cancel'})
+
+    def write(self, vals):
+        signature_fields = {
+            'quality_approved_by_id', 'quality_approved_date',
+            'sanitary_approved_by_id', 'sanitary_approved_date',
+            'implemented_by_id', 'implemented_date',
+        }
+        signature_state = vals.get('state') in (
+            'quality_approved', 'sanitary_approved', 'implemented', 'closed')
+        if (
+            (signature_state or set(vals).intersection(signature_fields))
+            and not self.env.context.get('amunet_change_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'Las aprobaciones, implementacion y cierre de cambios solo '
+                'pueden registrarse desde el wizard de firma electronica.'
+            ))
+        return super().write(vals)
 
     def action_view_quality_check(self):
         self.ensure_one()

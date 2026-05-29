@@ -9,7 +9,7 @@ de firmas configurables.""",
     'author': 'Amunet',
     'category': 'Quality',
     'version': '19.0.5.0.0',
-    'depends': ['mail'],
+    'depends': ['mail', 'amunet_quality'],
     'data': [
         'security/amunet_documentos_security.xml',
         'security/ir.model.access.csv',

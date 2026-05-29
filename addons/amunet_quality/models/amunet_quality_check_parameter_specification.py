@@ -369,7 +369,7 @@ Formato:
         result = super().write(vals)
 
         if result and tracked_in_vals:
-            AuditLog = self.env['amunet.quality.audit.log']
+            AuditLog = self.env['amunet.quality.audit.log'].sudo()
             for record in self:
                 for field in tracked_in_vals:
                     old_val_str = old_values.get((record.id, field))
@@ -1151,4 +1151,3 @@ Formato:
                     raise ValidationError(
                         'El mapeo de frases debe ser un JSON válido'
                     )
-

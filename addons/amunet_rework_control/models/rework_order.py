@@ -234,6 +234,13 @@ class AmunetReworkOrder(models.Model):
         ):
             raise UserError(_('No tiene permisos para crear/enviar no conformidades.'))
 
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_quality_approve_rework': _('Aprobar reproceso'),
+            '_signature_ready_for_qc': _('Marcar reproceso listo para re-QC'),
+            '_signature_close': _('Cerrar no conformidad/reproceso'),
+        }
+
     def action_submit_review(self):
         for rec in self:
             rec._require_quality_or_production()
@@ -247,6 +254,16 @@ class AmunetReworkOrder(models.Model):
             rec.message_post(body=_('No conformidad enviada a revision de Calidad.'))
 
     def action_quality_approve_rework(self):
+        self.ensure_one()
+        self._check_quality_approve_rework()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_quality_approve_rework',
+            _('Aprobar reproceso'),
+            _('Firma de aprobacion de reproceso %s.') % self.name,
+        )
+
+    def _check_quality_approve_rework(self):
         for rec in self:
             rec._require_quality()
             if rec.state != 'qc_review':
@@ -257,7 +274,12 @@ class AmunetReworkOrder(models.Model):
                 raise UserError(_('Capture la instruccion aprobada de reproceso.'))
             if not rec.risk_assessment:
                 raise UserError(_('Capture la evaluacion de riesgo antes de aprobar.'))
-            rec.write({
+
+    def _signature_quality_approve_rework(self):
+        self.ensure_one()
+        self._check_quality_approve_rework()
+        for rec in self:
+            rec.with_context(amunet_rework_signature_write=True).write({
                 'state': 'approved',
                 'quality_approved_by_id': self.env.user.id,
                 'quality_approved_date': fields.Datetime.now(),
@@ -319,6 +341,16 @@ class AmunetReworkOrder(models.Model):
             rec.message_post(body=_('Produccion inicio el reproceso.'))
 
     def action_ready_for_qc(self):
+        self.ensure_one()
+        self._check_ready_for_qc()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_ready_for_qc',
+            _('Marcar reproceso listo para re-QC'),
+            _('Firma de ejecucion de reproceso %s.') % self.name,
+        )
+
+    def _check_ready_for_qc(self):
         for rec in self:
             rec._require_production()
             if rec.state != 'in_rework':
@@ -327,7 +359,12 @@ class AmunetReworkOrder(models.Model):
                 raise UserError(_('Capture la cantidad reprocesada.'))
             if not rec.production_notes:
                 raise UserError(_('Capture el registro de ejecucion de Produccion.'))
-            rec.write({
+
+    def _signature_ready_for_qc(self):
+        self.ensure_one()
+        self._check_ready_for_qc()
+        for rec in self:
+            rec.with_context(amunet_rework_signature_write=True).write({
                 'state': 'ready_qc',
                 'reworked_by_id': self.env.user.id,
                 'reworked_date': fields.Datetime.now(),
@@ -383,6 +420,16 @@ class AmunetReworkOrder(models.Model):
             return rec.action_view_reanalysis_check()
 
     def action_close(self):
+        self.ensure_one()
+        self._check_close()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_close',
+            _('Cerrar no conformidad/reproceso'),
+            _('Firma de cierre de reproceso %s.') % self.name,
+        )
+
+    def _check_close(self):
         for rec in self:
             rec._require_quality()
             if rec.state != 'retest':
@@ -391,7 +438,12 @@ class AmunetReworkOrder(models.Model):
                 raise UserError(_('Falta el re-QC.'))
             if rec.reanalysis_check_id.state != 'done' or rec.reanalysis_check_id.global_result != 'pass':
                 raise UserError(_('El re-QC debe estar finalizado y aprobado para cerrar. Si falla, marque scrap o abra CAPA.'))
-            rec.write({
+
+    def _signature_close(self):
+        self.ensure_one()
+        self._check_close()
+        for rec in self:
+            rec.with_context(amunet_rework_signature_write=True).write({
                 'state': 'closed',
                 'closed_by_id': self.env.user.id,
                 'closed_date': fields.Datetime.now(),
@@ -436,6 +488,24 @@ class AmunetReworkOrder(models.Model):
             rec.write({'change_control_id': cc.id, 'permanent_change_required': True})
             rec.message_post(body=_('Control de cambio creado: %s.') % cc.name)
             return rec.action_view_change_control()
+
+    def write(self, vals):
+        signature_fields = {
+            'quality_approved_by_id', 'quality_approved_date',
+            'reworked_by_id', 'reworked_date',
+            'closed_by_id', 'closed_date',
+        }
+        signature_state = vals.get('state') in ('approved', 'ready_qc', 'closed')
+        if (
+            (signature_state or set(vals).intersection(signature_fields))
+            and not self.env.context.get('amunet_rework_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'Las firmas de reproceso solo pueden registrarse desde el '
+                'wizard de firma electronica.'
+            ))
+        return super().write(vals)
 
     def action_view_material_request(self):
         self.ensure_one()

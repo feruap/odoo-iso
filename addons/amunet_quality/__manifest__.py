@@ -38,6 +38,7 @@
         # Wizards
         'wizard/amunet_quality_reanalysis_wizard_views.xml',
         'wizard/amunet_quality_signature_wizard_views.xml',
+        'wizard/amunet_generic_signature_wizard_views.xml',
         'wizard/amunet_lot_release_wizard_views.xml',
 
         # Vistas de Modelos

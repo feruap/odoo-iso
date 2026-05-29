@@ -168,7 +168,7 @@ class AmunetQualitySignatureWizard(models.TransientModel):
 
     def _log_signature_event(self, check=None, success=True):
         """Registra el evento de firma en el Audit Log."""
-        AuditLog = self.env['amunet.quality.audit.log']
+        AuditLog = self.env['amunet.quality.audit.log'].sudo()
         status = "EXITOSA" if success else "FALLIDA"
         msg = f"Firma Electrónica {status} ({self.signature_type})"
         
