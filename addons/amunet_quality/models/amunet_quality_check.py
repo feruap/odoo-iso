@@ -116,6 +116,8 @@ class AmunetQualityCheck(models.Model):
 
     product_description = fields.Html(
         string='Descripción',
+        translate=True,
+        sanitize=True,
         help='Descripción del producto para este análisis. Se pre-carga del catálogo pero puede editarse por inspección.'
     )
 
