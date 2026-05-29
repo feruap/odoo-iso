@@ -1,6 +1,6 @@
 {
     'name': 'Gestión de Calibración de Equipos (Amunet)',
-    'version': '19.0.3.3.0',
+    'version': '19.0.3.4.0',
     'category': 'Quality',
     'summary': 'Control de equipos, calibraciones y trazabilidad ISO 13485',
     'description': """
@@ -26,6 +26,7 @@ Módulo de Gestión de Calibración de Equipos (ISO 13485 Cláusula 7.6).
         'views/product_template_views.xml',
         'views/stock_lot_views.xml',
         'views/amunet_expediente_views.xml',
+        'views/amunet_listas_maestras_views.xml',
         'views/menus.xml',
         'views/amunet_workqueue_views.xml',
     ],
