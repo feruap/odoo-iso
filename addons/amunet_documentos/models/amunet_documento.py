@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -72,6 +73,10 @@ class AmunetDocumento(models.Model):
     fecha_vigencia = fields.Date(
         string='Proxima revision', tracking=True,
         help='Fecha en la que el documento debe revisarse o renovarse.')
+    fecha_emision_display = fields.Char(
+        string='Fecha de emision', compute='_compute_fechas_display', store=False)
+    fecha_vigencia_display = fields.Char(
+        string='Proxima revision', compute='_compute_fechas_display', store=False)
     fecha_publicacion = fields.Date(string='Fecha de publicacion', readonly=True)
     archivo = fields.Binary(
         string='Archivo Word adjunto (opcional / legado)', attachment=True,
@@ -186,6 +191,22 @@ class AmunetDocumento(models.Model):
     _sql_constraints = [
         ('codigo_uniq', 'unique(codigo)', 'El codigo del documento debe ser unico.'),
     ]
+
+    @api.depends('fecha_emision', 'fecha_vigencia')
+    def _compute_fechas_display(self):
+        MESES = {
+            1:'Ene',2:'Feb',3:'Mar',4:'Abr',5:'May',6:'Jun',
+            7:'Jul',8:'Ago',9:'Sep',10:'Oct',11:'Nov',12:'Dic',
+        }
+        for rec in self:
+            rec.fecha_emision_display = (
+                f"{MESES[rec.fecha_emision.month]} {rec.fecha_emision.year}"
+                if rec.fecha_emision else ''
+            )
+            rec.fecha_vigencia_display = (
+                f"{MESES[rec.fecha_vigencia.month]} {rec.fecha_vigencia.year}"
+                if rec.fecha_vigencia else ''
+            )
 
     @api.depends('fecha_vigencia')
     def _compute_dias_a_vigencia(self):
@@ -444,12 +465,14 @@ class AmunetDocumento(models.Model):
                     'El usuario que elaboro el documento (%s) no puede autorizarlo (PNOGE-001).'
                 ) % r.elabora_id.name)
             today = fields.Date.today()
+            fecha_emision = r.fecha_emision or today
             r.write({
                 'state': 'vigente',
                 'firma_aprueba_id': self.env.user.id,
                 'fecha_aprueba': today,
                 'fecha_publicacion': today,
-                'fecha_emision': r.fecha_emision or today,
+                'fecha_emision': fecha_emision,
+                'fecha_vigencia': fecha_emision + relativedelta(years=2),
             })
             r.activity_feedback(
                 ['mail.mail_activity_data_todo'],

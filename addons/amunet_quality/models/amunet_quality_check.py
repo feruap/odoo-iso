@@ -116,8 +116,7 @@ class AmunetQualityCheck(models.Model):
 
     product_description = fields.Html(
         string='Descripción',
-        related='product_id.description',
-        readonly=True
+        help='Descripción del producto para este análisis. Se pre-carga del catálogo pero puede editarse por inspección.'
     )
 
     # ========================================================================
@@ -1478,7 +1477,11 @@ class AmunetQualityCheck(models.Model):
                 self.product_id.product_tmpl_id.qc_test_destructiveness
                 or 'non_destructive'
             )
-            
+
+            # Pre-cargar descripción del catálogo si el campo está vacío
+            if not self.product_description and self.product_id.description:
+                self.product_description = self.product_id.description
+
             # Auto-asignar unidad de medida de muestreo por defecto
             if not self.sampling_uom_id and self.product_id.uom_id:
                 self.sampling_uom_id = self.product_id.uom_id.id

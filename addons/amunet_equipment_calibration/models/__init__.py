@@ -10,3 +10,4 @@ from . import amunet_quality_procedure_ext
 from . import amunet_equipment_serial
 from . import product_template
 from . import stock_lot
+from . import amunet_equipment_expediente

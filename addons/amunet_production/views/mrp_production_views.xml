@@ -44,8 +44,28 @@
                         estan concluidas (done o cancel). Llama al
                         metodo nativo button_mark_done.
                     -->
+                    <!-- Botones del flujo de conciliación de materiales -->
+                    <button name="action_initiate_reconciliation"
+                            string="Iniciar conciliación"
+                            type="object" class="oe_highlight"
+                            invisible="reconciliation_state != 'pending' or not amunet_has_supplied_moves or state not in ('confirmed','progress','to_close','done')"
+                            groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor"/>
+                    <button name="action_validate_reconciliation"
+                            string="Validar conciliación"
+                            type="object" class="oe_highlight"
+                            invisible="reconciliation_state != 'initiated'"
+                            groups="amunet_production.group_production_supervisor"/>
+                    <button name="action_complete_reconciliation"
+                            string="Confirmar devolución recibida"
+                            type="object" class="btn-success"
+                            invisible="reconciliation_state != 'validated'"
+                            groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+
                     <button name="button_mark_done" string="Producir" type="object" class="oe_highlight" invisible="not amunet_can_produce"/>
                     <field name="amunet_can_produce" invisible="1"/>
+                    <field name="amunet_has_supplied_moves" invisible="1"/>
+                    <field name="reconciliation_state" invisible="1"/>
+                    <field name="reconciliation_has_surplus" invisible="1"/>
                     <field name="amunet_supply_workorder_id" invisible="1"/>
                     <field name="amunet_supply_state" widget="badge"
                            invisible="not amunet_supply_workorder_id"
@@ -232,6 +252,47 @@
                 <!-- Ocultar badge de disponibilidad nativo -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='forecast_availability']" position="attributes">
                     <attribute name="column_invisible">True</attribute>
+                </xpath>
+
+                <!-- Pestaña de Conciliación de materiales -->
+                <xpath expr="//page[@name='miscellaneous']" position="after">
+                    <page string="Conciliación de materiales" name="reconciliation"
+                          invisible="not amunet_has_supplied_moves">
+                        <group>
+                            <group string="Estado">
+                                <field name="reconciliation_state" widget="badge"
+                                       decoration-secondary="reconciliation_state == 'pending'"
+                                       decoration-info="reconciliation_state == 'initiated'"
+                                       decoration-warning="reconciliation_state == 'validated'"
+                                       decoration-success="reconciliation_state == 'completed'"/>
+                                <field name="reconciliation_initiated_by" readonly="1" invisible="not reconciliation_initiated_by"/>
+                                <field name="reconciliation_initiated_date" readonly="1" invisible="not reconciliation_initiated_date"/>
+                                <field name="reconciliation_validated_by" readonly="1" invisible="not reconciliation_validated_by"/>
+                                <field name="reconciliation_validated_date" readonly="1" invisible="not reconciliation_validated_date"/>
+                                <field name="reconciliation_completed_by" readonly="1" invisible="not reconciliation_completed_by"/>
+                                <field name="reconciliation_completed_date" readonly="1" invisible="not reconciliation_completed_date"/>
+                            </group>
+                            <group string="Notas">
+                                <field name="reconciliation_notes" nolabel="1"
+                                       readonly="reconciliation_state in ('validated','completed')"
+                                       placeholder="Observaciones de la conciliación..."/>
+                            </group>
+                        </group>
+                        <field name="move_raw_ids" nolabel="1" readonly="0"
+                               invisible="reconciliation_state == 'pending'">
+                            <list string="Materiales" create="0" delete="0" no_open="1">
+                                <field name="product_id" readonly="1"/>
+                                <field name="amunet_lot_id" readonly="1" optional="show"/>
+                                <field name="product_uom" readonly="1" string="U.M." optional="show"/>
+                                <field name="amunet_qty_supplied" readonly="1" string="Surtido"/>
+                                <field name="amunet_qty_used" string="Utilizado"
+                                       readonly="parent.reconciliation_state in ('validated','completed')"/>
+                                <field name="amunet_qty_surplus" readonly="1" string="Sobrante"
+                                       decoration-warning="amunet_qty_surplus &gt; 0"
+                                       decoration-success="amunet_qty_surplus == 0"/>
+                            </list>
+                        </field>
+                    </page>
                 </xpath>
 
             </field>

@@ -172,9 +172,42 @@ class AmunetEquipment(models.Model):
         string='Mantenimientos abiertos',
         compute='_compute_workqueue_status')
 
+    expediente_count = fields.Integer(
+        string='Expedientes de Calificación',
+        compute='_compute_expediente_count',
+    )
+
     def _compute_child_equipment_count(self):
         for eq in self:
             eq.child_equipment_count = len(eq.child_equipment_ids)
+
+    def _compute_expediente_count(self):
+        Expediente = self.env['amunet.equipment.expediente']
+        for eq in self:
+            eq.expediente_count = Expediente.search_count([('equipment_id', '=', eq.id)])
+
+    def action_view_expediente(self):
+        self.ensure_one()
+        expedientes = self.env['amunet.equipment.expediente'].search(
+            [('equipment_id', '=', self.id)])
+        if len(expedientes) == 1:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Expediente de Calificación',
+                'res_model': 'amunet.equipment.expediente',
+                'res_id': expedientes.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Expedientes de {self.name}',
+            'res_model': 'amunet.equipment.expediente',
+            'view_mode': 'list,form',
+            'domain': [('equipment_id', '=', self.id)],
+            'context': {'default_equipment_id': self.id},
+            'target': 'current',
+        }
 
     @api.depends('parent_equipment_id', 'parent_equipment_id.name', 'parent_equipment_id.serial_number')
     def _compute_parent_equipment_group(self):
@@ -341,15 +374,21 @@ class AmunetEquipment(models.Model):
     @api.constrains('state', 'next_calibration_date', 'calibration_required')
     def _check_calibration_validity(self):
         """Validación en tiempo real (si alguien intenta activar un equipo vencido)."""
+        Expediente = self.env['amunet.equipment.expediente']
         for equipment in self:
-            if (equipment.state == 'active'
-                    and equipment.calibration_required
-                    and equipment.next_calibration_date
-                    and equipment.next_calibration_date < date.today()):
-                raise ValidationError(
-                    f"El equipo '{equipment.name}' no puede estar 'Activo' "
-                    f"porque su calibración venció el {equipment.next_calibration_date}."
-                )
+            if equipment.state == 'active':
+                if not Expediente.search_count([('equipment_id', '=', equipment.id)]):
+                    raise ValidationError(
+                        f"El equipo '{equipment.name}' no puede activarse porque "
+                        f"no tiene un expediente de calificación registrado."
+                    )
+                if (equipment.calibration_required
+                        and equipment.next_calibration_date
+                        and equipment.next_calibration_date < date.today()):
+                    raise ValidationError(
+                        f"El equipo '{equipment.name}' no puede estar 'Activo' "
+                        f"porque su calibración venció el {equipment.next_calibration_date}."
+                    )
 
     @api.model
     def _cron_check_calibration_status(self):

@@ -274,6 +274,7 @@ class AmunetWarehouseAccessRule(models.Model):
             'module': 'amunet_warehouse_access',
             'model': 'res.groups',
             'res_id': group.id,
+            'noupdate': True,
         })
 
         _logger.info(f"Grupo creado: {group_name} (ID: {group.id})")
