@@ -244,7 +244,7 @@
                             <field name="lot_qty_available" readonly="1" force_save="1"/>
                             <field name="manufacturing_date"
                                    readonly="info_reviewed"/>
-                            <field name="expiration_date" readonly="1"/>
+                            <field name="expiration_date" readonly="state not in ('draft','in_progress')"/>
                             <field name="reviewed_by_id" readonly="1"
                                    invisible="not info_reviewed"/>
                         </group>
