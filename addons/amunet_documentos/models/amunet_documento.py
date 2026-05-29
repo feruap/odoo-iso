@@ -7,6 +7,7 @@ from odoo.exceptions import UserError
 
 AREA_SELECTION = [
     ('GE', 'Generales (PNOGE)'),
+    ('DC', 'Documentacion'),
     ('PR', 'Produccion (PNOPR)'),
     ('CC', 'Control de Calidad (PNOCC)'),
     ('AS', 'Aseguramiento de Calidad (PNOAS)'),
@@ -246,7 +247,7 @@ class AmunetDocumento(models.Model):
 
     @staticmethod
     def _formatear_headers_anexos(html):
-        """Convierte <p>Anexo N. titulo</p> en un bloque visual destacado."""
+        """Convierte párrafos que inician con 'Anexo N' en un bloque visual destacado."""
         if not html or 'Anexo' not in str(html):
             return html
         html_str = str(html)
@@ -256,13 +257,20 @@ class AmunetDocumento(models.Model):
             '<strong style="font-size:1.05em;color:#0d47a1;">{}</strong>'
             '</div>'
         )
+        def _strip_tags(s):
+            return re.sub(r'<[^>]+>', '', s)
+
         def _repl(m):
-            return STYLE.format(m.group(1).strip())
+            text = _strip_tags(m.group(0)).strip()
+            if re.match(r'^Anexo\s+\d+', text, re.IGNORECASE):
+                return STYLE.format(text)
+            return m.group(0)
+
         return re.sub(
-            r'<p[^>]*>(Anexo\s+\d+\.[^<]*)</p>',
+            r'<p\b[^>]*>.*?</p>',
             _repl,
             html_str,
-            flags=re.IGNORECASE
+            flags=re.IGNORECASE | re.DOTALL
         )
 
     @api.model_create_multi

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_employee_training_tabs" model="ir.ui.view">
+        <field name="name">hr.employee.form.training</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+
+                <page string="Historial de cursos" name="training_history"
+                      groups="hr.group_hr_user">
+                    <field name="training_attendance_ids" readonly="1">
+                        <list string="Historial de cursos"
+                              decoration-success="attendance == 'attended'"
+                              decoration-danger="attendance == 'absent'">
+                            <field name="course_id" string="Curso"/>
+                            <field name="course_date" string="Fecha" optional="show"/>
+                            <field name="attendance" widget="badge"
+                                   decoration-success="attendance == 'attended'"
+                                   decoration-danger="attendance == 'absent'"/>
+                            <field name="on_time" string="Puntual" optional="show"/>
+                            <field name="grade" string="Calificación"/>
+                            <field name="notes" string="Observaciones" optional="show"/>
+                        </list>
+                    </field>
+                </page>
+
+                <page string="Evidencias y certificados" name="training_evidence"
+                      groups="hr.group_hr_user">
+                    <field name="training_evidence_ids">
+                        <list string="Evidencias" editable="bottom">
+                            <field name="name" string="Descripción"/>
+                            <field name="document_type" string="Tipo" widget="badge"/>
+                            <field name="date" string="Fecha"/>
+                            <field name="course_id" string="Curso relacionado" optional="show"/>
+                            <field name="file" string="Archivo" widget="binary" filename="filename"/>
+                            <field name="filename" column_invisible="1"/>
+                            <field name="notes" string="Observaciones" optional="show"/>
+                        </list>
+                    </field>
+                </page>
+
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

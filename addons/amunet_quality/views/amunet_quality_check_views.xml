@@ -191,6 +191,13 @@
                         <field name="analysis_type" readonly="1"/>
                     </group>
 
+                    <!-- Vista previa del folio (visible mientras no esté finalizado) -->
+                    <group invisible="analysis_number or state in ('done','pending','awaiting_reception')">
+                        <field name="analysis_number_preview" readonly="1"
+                               string="Vista previa del No. de análisis"
+                               help="Formato estimado. 'NN' se sustituye por el consecutivo real al finalizar."/>
+                    </group>
+
 
                     <!-- NUMERAL 1: DATOS GENERALES -->
                     <group string="Numeral 1: Datos generales">

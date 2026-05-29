@@ -50,6 +50,12 @@ class AmunetQualityCheck(models.Model):
         help='Folio legal generado al finalizar. Formato: AN-CCCDDMMAA-NN'
     )
 
+    analysis_number_preview = fields.Char(
+        string='Vista previa del No. de análisis',
+        compute='_compute_analysis_number_preview',
+        help='Formato estimado del folio que se generará al finalizar'
+    )
+
     state = fields.Selection([
         ('draft', 'Por realizar'),
         ('in_progress', 'En proceso'),
@@ -3096,6 +3102,24 @@ class AmunetQualityCheck(models.Model):
                 'report_version': (product_tmpl.report_version or 0) + 1,
                 'report_replaces_version': product_tmpl.report_version or 0,
             })
+
+    @api.depends('user_realized_id', 'state')
+    def _compute_analysis_number_preview(self):
+        today = fields.Date.today()
+        date_str = today.strftime('%d%m%y')
+        for record in self:
+            if record.analysis_number:
+                record.analysis_number_preview = record.analysis_number
+            elif record.state in ('done', 'pending', 'awaiting_reception'):
+                record.analysis_number_preview = ''
+            else:
+                analyst = record.user_realized_id
+                code = (
+                    analyst.employee_code
+                    if analyst and hasattr(analyst, 'employee_code') and analyst.employee_code
+                    else '000'
+                )
+                record.analysis_number_preview = f'{code}{date_str}-NN'
 
     def _generate_analysis_number(self):
         """

@@ -40,6 +40,7 @@ capacitacion bajo el Sistema de Gestion de Calidad:
         'data/cron_data.xml',
         'views/hr_training_course_views.xml',
         'views/training_attend_templates.xml',
+        'views/hr_employee_ext_views.xml',
         'views/menu_views.xml',
     ],
     'external_dependencies': {
