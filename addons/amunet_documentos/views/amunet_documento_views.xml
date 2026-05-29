@@ -13,8 +13,8 @@
                 <field name="tipo"/>
                 <field name="version_actual"/>
                 <field name="responsable_id"/>
-                <field name="fecha_emision"/>
-                <field name="fecha_vigencia"/>
+                <field name="fecha_emision_display"/>
+                <field name="fecha_vigencia_display"/>
                 <field name="dias_a_vigencia" optional="show"/>
                 <field name="state" widget="badge"/>
             </list>
@@ -140,8 +140,8 @@
                             <field name="responsable_id"/>
                         </group>
                         <group>
-                            <field name="fecha_emision"/>
-                            <field name="fecha_vigencia"/>
+                            <field name="fecha_emision_display" string="Fecha de emision"/>
+                            <field name="fecha_vigencia_display" string="Proxima revision"/>
                             <field name="fecha_publicacion"/>
                             <field name="dias_a_vigencia"/>
                             <field name="company_id" groups="base.group_multi_company"/>
