@@ -39,9 +39,10 @@ class TrainingAttendController(http.Controller):
             )
 
         employee = env.user.employee_id
+        token = kwargs.get('token')
         try:
             success, message, on_time = course.sudo().register_qr_attendance(
-                employee)
+                employee, token=token)
         except Exception:
             _logger.exception(
                 'Fallo registrando auto-asistencia QR (curso=%s, user=%s)',

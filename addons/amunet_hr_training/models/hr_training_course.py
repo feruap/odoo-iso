@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import base64
 import logging
+import secrets
 from datetime import timedelta
 from io import BytesIO
 
@@ -21,6 +22,8 @@ except ImportError:  # pragma: no cover
 # Tolerancia de retraso para marcar on_time=True al escanear el QR.
 # 10 minutos despues de date_start se considera "a tiempo".
 QR_LATE_TOLERANCE_MINUTES = 10
+QR_EARLY_ACCESS_MINUTES = 30
+QR_AFTER_END_ACCESS_MINUTES = 30
 
 
 class HrTrainingCourse(models.Model):
@@ -128,6 +131,17 @@ class HrTrainingCourse(models.Model):
         help='URL que codifica el QR. El participante (logueado) la abre '
              'desde su celular y queda registrada su asistencia.',
     )
+    qr_access_token = fields.Char(
+        string='Token QR',
+        copy=False,
+        readonly=True,
+        help='Token aleatorio incluido en el QR para evitar registros por URL predecible.',
+    )
+    qr_token_generated_date = fields.Datetime(
+        string='Token QR generado',
+        copy=False,
+        readonly=True,
+    )
     qr_code = fields.Binary(
         string='Codigo QR',
         compute='_compute_qr_code', store=False, readonly=True,
@@ -184,6 +198,15 @@ class HrTrainingCourse(models.Model):
     # ============================
     # QR de auto-asistencia
     # ============================
+    def _ensure_qr_access_token(self):
+        self.ensure_one()
+        if not self.sudo().qr_access_token:
+            self.sudo().write({
+                'qr_access_token': secrets.token_urlsafe(32),
+                'qr_token_generated_date': fields.Datetime.now(),
+            })
+        return self.sudo().qr_access_token
+
     def _compute_qr_code(self):
         base = self.env['ir.config_parameter'].sudo().get_param(
             'web.base.url', '') or ''
@@ -193,7 +216,8 @@ class HrTrainingCourse(models.Model):
                 rec.qr_code = False
                 rec.qr_attendance_url = False
                 continue
-            url = '%s/training/attend/%s' % (base, rec.id)
+            token = rec._ensure_qr_access_token()
+            url = '%s/training/attend/%s?token=%s' % (base, rec.id, token)
             rec.qr_attendance_url = url
             if not qrcode:
                 rec.qr_code = False
@@ -224,13 +248,17 @@ class HrTrainingCourse(models.Model):
             'context': {'dialog_size': 'extra-large'},
         }
 
-    def register_qr_attendance(self, employee):
+    def register_qr_attendance(self, employee, token=None):
         """Registra (o crea) la linea de asistencia del empleado al
         escanear el QR.
 
         Devuelve (success: bool, message: str, on_time: bool|None).
         """
         self.ensure_one()
+        if not token or token != self.sudo().qr_access_token:
+            return False, _(
+                'El codigo QR no es valido o fue regenerado. Solicita al '
+                'ponente el QR actual.'), None
         if not employee:
             return False, _(
                 'Tu usuario de Odoo no esta vinculado a un empleado. '
@@ -248,6 +276,18 @@ class HrTrainingCourse(models.Model):
             return False, _(
                 'No estas registrado en esta capacitacion. Acude con '
                 'Recursos Humanos para que te agreguen.'), None
+        now = fields.Datetime.now()
+        if self.date_start:
+            earliest = self.date_start - timedelta(minutes=QR_EARLY_ACCESS_MINUTES)
+            if now < earliest:
+                return False, _(
+                    'El QR aun no esta activo para esta capacitacion.'), None
+        if self.date_end:
+            latest = self.date_end + timedelta(minutes=QR_AFTER_END_ACCESS_MINUTES)
+            if now > latest:
+                return False, _(
+                    'El QR ya vencio. Si necesitas registrar asistencia, '
+                    'solicitalo a Recursos Humanos.'), None
         # Asegurar que existe linea de asistencia para este empleado.
         Attend = self.env['hr.training.attendance'].sudo()
         line = Attend.search([
@@ -260,7 +300,6 @@ class HrTrainingCourse(models.Model):
                 'employee_id': employee.id,
             })
         # Calcular puntualidad: tolerancia de N minutos despues de date_start
-        now = fields.Datetime.now()
         on_time = True
         if self.date_start:
             limit = self.date_start + timedelta(

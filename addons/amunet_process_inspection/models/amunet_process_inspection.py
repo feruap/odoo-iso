@@ -192,8 +192,21 @@ class AmunetProcessInspection(models.Model):
     # ============================
     # Acciones
     # ============================
+    def _amunet_signature_allowed_methods(self):
+        return {'_signature_action_sign': _('Firmar inspeccion de proceso')}
+
     def action_sign(self):
         """Firma la inspeccion. A partir de aqui es inmutable."""
+        self.ensure_one()
+        self._check_can_sign()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_sign',
+            _('Firmar inspeccion de proceso'),
+            _('Firma de inspeccion %s.') % self.name,
+        )
+
+    def _check_can_sign(self):
         for rec in self:
             if rec.state == 'signed':
                 continue
@@ -221,7 +234,14 @@ class AmunetProcessInspection(models.Model):
                     raise UserError(_(
                         'Solo el supervisor de produccion (o un '
                         'supervisor de QC) puede firmar la supervision.'))
-            rec.write({
+
+    def _signature_action_sign(self):
+        self.ensure_one()
+        self._check_can_sign()
+        for rec in self:
+            if rec.state == 'signed':
+                continue
+            rec.with_context(amunet_process_signature_write=True).write({
                 'state': 'signed',
                 'signed_by_id': self.env.user.id,
                 'signed_date': fields.Datetime.now(),
@@ -236,6 +256,16 @@ class AmunetProcessInspection(models.Model):
         return True
 
     def write(self, vals):
+        signature_fields = {'state', 'signed_by_id', 'signed_date'}
+        if (
+            set(vals).intersection(signature_fields)
+            and not self.env.context.get('amunet_process_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'La firma de inspeccion solo puede registrarse desde el '
+                'wizard de firma electronica.'
+            ))
         # Una vez firmada, no se permite editar campos relevantes.
         protected = {
             'inspection_type', 'production_id', 'workcenter_id',

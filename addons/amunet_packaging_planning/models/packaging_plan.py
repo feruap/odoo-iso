@@ -156,6 +156,12 @@ class AmunetPackagingPlan(models.Model):
         ):
             raise UserError(_('No tiene permisos para aprobar o cerrar planes de empaque.'))
 
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_action_approve': _('Aprobar plan de empaque'),
+            '_signature_action_close': _('Cerrar plan de empaque'),
+        }
+
     def _authorized_presentations(self):
         self.ensure_one()
         presentations = self.env['amunet.packaging.presentation'].search([
@@ -260,6 +266,16 @@ class AmunetPackagingPlan(models.Model):
             rec.message_post(body=_('Mezcla sugerida a partir de tendencia WooCommerce.'))
 
     def action_approve(self):
+        self.ensure_one()
+        self._check_can_approve()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_approve',
+            _('Aprobar plan de empaque'),
+            _('Firma de aprobacion del plan %s.') % self.name,
+        )
+
+    def _check_can_approve(self):
         for rec in self:
             rec._require_manager()
             if not rec.line_ids:
@@ -284,8 +300,13 @@ class AmunetPackagingPlan(models.Model):
                         'antes de aprobar el plan.\n\nIr a Configuracion > Presentaciones '
                         'y editar la presentacion para agregarle componentes.'
                     ) % {'pres': line.presentation_id.name})
+
+    def _signature_action_approve(self):
+        self.ensure_one()
+        self._check_can_approve()
+        for rec in self:
             rec._sync_secondary_components_to_production()
-            rec.write({
+            rec.with_context(amunet_packaging_signature_write=True).write({
                 'state': 'approved',
                 'approved_by_id': self.env.user.id,
                 'approved_date': fields.Datetime.now(),
@@ -325,11 +346,26 @@ class AmunetPackagingPlan(models.Model):
                 })]
 
     def action_close(self):
+        self.ensure_one()
+        self._check_can_close()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_close',
+            _('Cerrar plan de empaque'),
+            _('Firma de cierre del plan %s.') % self.name,
+        )
+
+    def _check_can_close(self):
         for rec in self:
             rec._require_manager()
             if rec.state != 'approved':
                 raise UserError(_('Solo puede cerrar un plan aprobado.'))
-            rec.write({
+
+    def _signature_action_close(self):
+        self.ensure_one()
+        self._check_can_close()
+        for rec in self:
+            rec.with_context(amunet_packaging_signature_write=True).write({
                 'state': 'done',
                 'closed_by_id': self.env.user.id,
                 'closed_date': fields.Datetime.now(),
@@ -338,6 +374,20 @@ class AmunetPackagingPlan(models.Model):
 
     def action_cancel(self):
         self.write({'state': 'cancel'})
+
+    def write(self, vals):
+        signature_fields = {'approved_by_id', 'approved_date', 'closed_by_id', 'closed_date'}
+        signature_state = vals.get('state') in ('approved', 'done')
+        if (
+            (signature_state or set(vals).intersection(signature_fields))
+            and not self.env.context.get('amunet_packaging_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'Las aprobaciones y cierres de empaque solo pueden registrarse '
+                'desde el wizard de firma electronica.'
+            ))
+        return super().write(vals)
 
     def action_open_label_wizard(self):
         self.ensure_one()
