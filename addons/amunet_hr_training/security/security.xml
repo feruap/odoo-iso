@@ -53,5 +53,27 @@
             <field name="domain_force">[(1, '=', 1)]</field>
         </record>
 
+        <record id="rule_training_evidence_employee_read" model="ir.rule">
+            <field name="name">hr.training.evidence: empleados leen su evidencia</field>
+            <field name="model_id" ref="model_hr_training_evidence"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        </record>
+
+        <record id="rule_training_evidence_hr_full" model="ir.rule">
+            <field name="name">hr.training.evidence: RH acceso total sin borrar</field>
+            <field name="model_id" ref="model_hr_training_evidence"/>
+            <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
     </data>
 </odoo>
