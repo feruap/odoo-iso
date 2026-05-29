@@ -5,7 +5,7 @@
     'description': """
 Módulo de gestión de lotes simplificado que utiliza stock.lot nativo de Odoo con denominación secuencial automática por producto.
 
-Diferencia clave con amunet_lot_sequence: 
+Diferencia clave con amunet_lot_sequence:
 - Utiliza stock.lot directamente (sin modelo intermedio).
 - Generación automática de secuencias en la creación de lotes.
 - Prefijos configurables por producto.
@@ -17,6 +17,7 @@ Diferencia clave con amunet_lot_sequence:
         'stock',
         'mail',
         'product_expiry',
+        'amunet_material_request',
     ],
     'data': [
         'security/ir.model.access.csv',
@@ -44,4 +45,3 @@ Diferencia clave con amunet_lot_sequence:
     'auto_install': False,
     'license': 'LGPL-3',
 }
-
