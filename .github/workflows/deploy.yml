@@ -65,23 +65,7 @@ jobs:
             exit 1
           fi
 
-          echo "Ejecutando corrections en Amunet_testing..."
-          for script in /opt/odoo/staging/corrections/*.py; do
-            [ -f "$script" ] || continue
-            docker exec -i odoo-staging odoo shell \
-              -c /etc/odoo/odoo.conf -d Amunet_testing \
-              --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
-              < "$script" || echo "WARNING: $script fallo en Amunet_testing"
-          done
-
-          echo "Ejecutando corrections en amunet_prod (staging-db)..."
-          for script in /opt/odoo/staging/corrections/*.py; do
-            [ -f "$script" ] || continue
-            docker exec -i odoo-staging odoo shell \
-              -c /etc/odoo/odoo.conf -d amunet_prod \
-              --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
-              < "$script" || echo "WARNING: $script fallo en amunet_prod"
-          done
+          echo "Corrections automaticas deshabilitadas. Ejecutarlas manualmente solo con guarda de DB revisada."
 
           docker compose -f docker-compose.staging.yml restart web-staging
           SCRIPT
@@ -142,23 +126,7 @@ jobs:
             exit 1
           fi
 
-          echo "Ejecutando corrections en amunet_prod..."
-          for script in /opt/odoo/production/corrections/*.py; do
-            [ -f "$script" ] || continue
-            docker exec -i odoo-production odoo shell \
-              -c /etc/odoo/odoo.conf -d amunet_prod \
-              --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
-              < "$script" || echo "WARNING: $script fallo en amunet_prod"
-          done
-
-          echo "Ejecutando corrections en Amunet_testing (production-db)..."
-          for script in /opt/odoo/production/corrections/*.py; do
-            [ -f "$script" ] || continue
-            docker exec -i odoo-production odoo shell \
-              -c /etc/odoo/odoo.conf -d Amunet_testing \
-              --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD \
-              < "$script" || echo "WARNING: $script fallo en Amunet_testing"
-          done
+          echo "Corrections automaticas deshabilitadas en produccion. No se ejecutan scripts one-shot durante deploy."
 
           docker compose -f docker-compose.production.yml restart web-production
           echo "Esperando que Odoo se estabilice antes del upgrade de Amunet_testing..."

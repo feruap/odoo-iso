@@ -160,14 +160,15 @@ class AmunetMaterialRequest(models.Model):
     def _check_can_write_manual(self, vals):
         if self.env.context.get('material_request_internal_write'):
             return
-        if self._is_material_manager():
-            return
 
         protected = self._PROTECTED_FIELDS.intersection(vals)
         if protected:
             raise UserError(_(
                 'No puedes modificar campos de estado, transferencia o firmas '
                 'directamente. Usa las acciones del flujo.'))
+
+        if self._is_material_manager():
+            return
 
         # En 'pending_reception' el solicitante (o jefe de area que
         # puede validar) puede capturar cantidades recibidas y notas
@@ -473,41 +474,64 @@ class AmunetMaterialRequest(models.Model):
         )
         actividades.unlink()
 
-    def action_submit(self):
-        for rec in self:
-            if rec.state != 'draft':
-                raise UserError(_('Solo se puede enviar una solicitud en Borrador.'))
-            if rec.requester_id != self.env.user and not self._is_material_manager():
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_action_submit': _('Enviar solicitud de material'),
+            '_signature_action_confirm_delivery': _('Confirmar entrega de material'),
+            '_signature_action_validate_reception': _('Validar recepcion de material'),
+        }
+
+    def _open_signature_wizard(self, method_name, signature_type, reason):
+        self.ensure_one()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, method_name, signature_type, reason)
+
+    def _check_can_submit(self):
+        self.ensure_one()
+        if self.state != 'draft':
+            raise UserError(_('Solo se puede enviar una solicitud en Borrador.'))
+        if self.requester_id != self.env.user and not self._is_material_manager():
+            raise UserError(_(
+                'Solo el solicitante puede firmar y enviar su propia solicitud.'))
+        if not self.line_ids:
+            raise UserError(_('No puedes enviar una solicitud sin lineas.'))
+        for line in self.line_ids:
+            if line.qty_requested <= 0:
                 raise UserError(_(
-                    'Solo el solicitante puede firmar y enviar su propia solicitud.'))
-            if not rec.line_ids:
-                raise UserError(_('No puedes enviar una solicitud sin lineas.'))
-            for line in rec.line_ids:
-                if line.qty_requested <= 0:
-                    raise UserError(_(
-                        'La cantidad solicitada de %s debe ser mayor a 0.'
-                    ) % line.product_id.display_name)
-                if line.qty_requested > line.stock_available:
-                    raise UserError(_(
-                        'No hay stock suficiente de %(prod)s en %(wh)s. '
-                        'Solicitado: %(req)s, disponible: %(avail)s.'
-                    ) % {
-                        'prod': line.product_id.display_name,
-                        'wh': rec.warehouse_id.name,
-                        'req': line.qty_requested,
-                        'avail': line.stock_available,
-                    })
-            rec.with_context(material_request_internal_write=True).write({
-                'state': 'submitted',
-                'user_requested_id': self.env.user.id,
-                'requested_signature_date': fields.Datetime.now(),
-            })
-            rec.message_post(body=_(
-                'Solicitud enviada y firmada por %s.'
-            ) % self.env.user.display_name)
-            # Notificar a los almacenistas: aparece como actividad
-            # pendiente en su bandeja superior de Odoo.
-            rec._notify_warehouse_pending()
+                    'La cantidad solicitada de %s debe ser mayor a 0.'
+                ) % line.product_id.display_name)
+            if line.qty_requested > line.stock_available:
+                raise UserError(_(
+                    'No hay stock suficiente de %(prod)s en %(wh)s. '
+                    'Solicitado: %(req)s, disponible: %(avail)s.'
+                ) % {
+                    'prod': line.product_id.display_name,
+                    'wh': self.warehouse_id.name,
+                    'req': line.qty_requested,
+                    'avail': line.stock_available,
+                })
+
+    def action_submit(self):
+        self.ensure_one()
+        self._check_can_submit()
+        return self._open_signature_wizard(
+            '_signature_action_submit',
+            _('Enviar solicitud de material'),
+            _('Firma de solicitud de material %s.') % self.name,
+        )
+
+    def _signature_action_submit(self):
+        self.ensure_one()
+        self._check_can_submit()
+        self.with_context(material_request_internal_write=True).write({
+            'state': 'submitted',
+            'user_requested_id': self.env.user.id,
+            'requested_signature_date': fields.Datetime.now(),
+        })
+        self.message_post(body=_(
+            'Solicitud enviada y firmada por %s.'
+        ) % self.env.user.display_name)
+        self._notify_warehouse_pending()
         return True
 
     def action_start_picking(self):
@@ -553,137 +577,147 @@ class AmunetMaterialRequest(models.Model):
             rec._close_warehouse_activities()
         return True
 
-    def action_confirm_delivery(self):
+    def _check_can_confirm_delivery(self):
+        self.ensure_one()
         self._check_warehouse_role()
-        for rec in self:
-            if rec.state != 'in_picking':
-                raise UserError(_('Solo se puede confirmar entrega desde En surtido.'))
-            if not rec.picking_id:
-                raise UserError(_('La solicitud no tiene transferencia asociada.'))
-            # Validar lotes y cantidades surtidas
-            for line in rec.line_ids:
-                if line.qty_supplied <= 0:
-                    raise UserError(_(
-                        'La cantidad surtida de %s debe ser mayor a 0.'
-                    ) % line.product_id.display_name)
-                if line.tracking in ('lot', 'serial') and not line.lot_id:
-                    raise UserError(_(
-                        'Falta asignar lote para %s.'
-                    ) % line.product_id.display_name)
-                if line.lot_id and line.qty_supplied > line.lot_available_qty:
-                    raise UserError(_(
-                        'Stock insuficiente en el lote %(lot)s de %(prod)s. '
-                        'Solicitado: %(req)s, disponible en lote: %(avail)s.'
-                    ) % {
-                        'lot': line.lot_id.name,
-                        'prod': line.product_id.display_name,
-                        'req': line.qty_supplied,
-                        'avail': line.lot_available_qty,
-                    })
-            # Sincronizar stock.move.lines con los lotes y cantidades elegidas
-            # Si la linea fue agregada por el almacenista despues de
-            # 'Iniciar Surtido' (no tiene move correspondiente), creamos
-            # el stock.move sobre el mismo picking y lo confirmamos/reservamos.
-            consumption_loc = rec._get_consumption_location()
-            ptype = rec._get_internal_picking_type()
-            src_loc = ptype.default_location_src_id or rec.warehouse_id.lot_stock_id
-            for line in rec.line_ids:
-                moves = rec.picking_id.move_ids.filtered(
-                    lambda m, prod=line.product_id: m.product_id.id == prod.id
-                )
-                if not moves:
-                    # Linea agregada por el almacenista durante surtido:
-                    # creamos su stock.move asociado al picking actual.
-                    # Nota: en Odoo 19 stock.move ya no tiene el campo
-                    # 'name' (se autoreplica del picking via reference).
-                    new_move = self.env['stock.move'].sudo().create({
-                        'picking_id': rec.picking_id.id,
-                        'product_id': line.product_id.id,
-                        'product_uom_qty': line.qty_requested,
-                        'product_uom': line.uom_id.id,
-                        'location_id': src_loc.id,
-                        'location_dest_id': consumption_loc.id,
-                        'company_id': rec.warehouse_id.company_id.id,
-                    })
-                    new_move._action_confirm()
-                    new_move._action_assign()
-                    moves = new_move
-                move = moves[0]
-                # Limpiar move_lines actuales y crear una sola con lote
-                move.move_line_ids.unlink()
-                self.env['stock.move.line'].create({
-                    'move_id': move.id,
-                    'product_id': line.product_id.id,
-                    'product_uom_id': line.uom_id.id,
-                    'location_id': move.location_id.id,
-                    'location_dest_id': move.location_dest_id.id,
-                    'lot_id': line.lot_id.id or False,
-                    'quantity': line.qty_supplied,
-                    'picking_id': rec.picking_id.id,
+        if self.state != 'in_picking':
+            raise UserError(_('Solo se puede confirmar entrega desde En surtido.'))
+        if not self.picking_id:
+            raise UserError(_('La solicitud no tiene transferencia asociada.'))
+        for line in self.line_ids:
+            if line.qty_supplied <= 0:
+                raise UserError(_(
+                    'La cantidad surtida de %s debe ser mayor a 0.'
+                ) % line.product_id.display_name)
+            if line.tracking in ('lot', 'serial') and not line.lot_id:
+                raise UserError(_(
+                    'Falta asignar lote para %s.'
+                ) % line.product_id.display_name)
+            if line.lot_id and line.qty_supplied > line.lot_available_qty:
+                raise UserError(_(
+                    'Stock insuficiente en el lote %(lot)s de %(prod)s. '
+                    'Solicitado: %(req)s, disponible en lote: %(avail)s.'
+                ) % {
+                    'lot': line.lot_id.name,
+                    'prod': line.product_id.display_name,
+                    'req': line.qty_supplied,
+                    'avail': line.lot_available_qty,
                 })
-            # Validar el picking (descuenta stock real)
-            res = rec.picking_id.with_context(
-                skip_backorder=True,
-                picking_ids_not_to_backorder=rec.picking_id.ids,
-            ).button_validate()
-            # Si Odoo devuelve un wizard de backorder, lo procesamos cancelando
-            if isinstance(res, dict) and res.get('res_model') == 'stock.backorder.confirmation':
-                ctx = res.get('context') or {}
-                wiz = self.env[res['res_model']].with_context(**ctx).create({})
-                if hasattr(wiz, 'process_cancel_backorder'):
-                    wiz.process_cancel_backorder()
-            rec.with_context(material_request_internal_write=True).write({
-                'state': 'pending_reception',
-                'user_dispatched_id': self.env.user.id,
-                'dispatched_signature_date': fields.Datetime.now(),
+
+    def action_confirm_delivery(self):
+        self.ensure_one()
+        self._check_can_confirm_delivery()
+        return self._open_signature_wizard(
+            '_signature_action_confirm_delivery',
+            _('Confirmar entrega de material'),
+            _('Firma de entrega de material %s.') % self.name,
+        )
+
+    def _signature_action_confirm_delivery(self):
+        self.ensure_one()
+        self._check_can_confirm_delivery()
+        consumption_loc = self._get_consumption_location()
+        ptype = self._get_internal_picking_type()
+        src_loc = ptype.default_location_src_id or self.warehouse_id.lot_stock_id
+        for line in self.line_ids:
+            moves = self.picking_id.move_ids.filtered(
+                lambda m, prod=line.product_id: m.product_id.id == prod.id
+            )
+            if not moves:
+                new_move = self.env['stock.move'].sudo().create({
+                    'picking_id': self.picking_id.id,
+                    'product_id': line.product_id.id,
+                    'product_uom_qty': line.qty_requested,
+                    'product_uom': line.uom_id.id,
+                    'location_id': src_loc.id,
+                    'location_dest_id': consumption_loc.id,
+                    'company_id': self.warehouse_id.company_id.id,
+                })
+                new_move._action_confirm()
+                new_move._action_assign()
+                moves = new_move
+            move = moves[0]
+            move.move_line_ids.unlink()
+            self.env['stock.move.line'].create({
+                'move_id': move.id,
+                'product_id': line.product_id.id,
+                'product_uom_id': line.uom_id.id,
+                'location_id': move.location_id.id,
+                'location_dest_id': move.location_dest_id.id,
+                'lot_id': line.lot_id.id or False,
+                'quantity': line.qty_supplied,
+                'picking_id': self.picking_id.id,
             })
-            rec.message_post(body=_(
-                'Entrega confirmada y firmada por %s. '
-                'Queda pendiente la validacion de recepcion por el solicitante.'
-            ) % self.env.user.display_name)
-            # Notificar al solicitante: aparece como actividad pendiente
-            # en su bandeja superior de Odoo ("Recoger material - SMP/...").
-            rec._notify_requester_ready()
+        res = self.picking_id.with_context(
+            skip_backorder=True,
+            picking_ids_not_to_backorder=self.picking_id.ids,
+        ).button_validate()
+        if isinstance(res, dict) and res.get('res_model') == 'stock.backorder.confirmation':
+            ctx = res.get('context') or {}
+            wiz = self.env[res['res_model']].with_context(**ctx).create({})
+            if hasattr(wiz, 'process_cancel_backorder'):
+                wiz.process_cancel_backorder()
+        self.with_context(material_request_internal_write=True).write({
+            'state': 'pending_reception',
+            'user_dispatched_id': self.env.user.id,
+            'dispatched_signature_date': fields.Datetime.now(),
+        })
+        self.message_post(body=_(
+            'Entrega confirmada y firmada por %s. '
+            'Queda pendiente la validacion de recepcion por el solicitante.'
+        ) % self.env.user.display_name)
+        self._notify_requester_ready()
         return True
 
+    def _check_can_validate_reception_action(self):
+        self.ensure_one()
+        if self.state != 'pending_reception':
+            raise UserError(_(
+                'Solo se puede validar recepcion desde "Pte. recepcion".'))
+        if not self.can_validate_reception:
+            raise UserError(_(
+                'No tienes permiso para validar la recepcion de %s. '
+                'Solo el solicitante, el jefe del area o el administrador '
+                'del modulo pueden validar.') % self.name)
+        for line in self.line_ids:
+            if line.qty_received < 0:
+                raise UserError(_(
+                    'La cantidad recibida de %s no puede ser negativa.'
+                ) % line.product_id.display_name)
+            if line.qty_received > line.qty_supplied:
+                raise UserError(_(
+                    'La cantidad recibida de %(prod)s (%(recv)s) no puede '
+                    'ser mayor a la surtida (%(supp)s).'
+                ) % {
+                    'prod': line.product_id.display_name,
+                    'recv': line.qty_received,
+                    'supp': line.qty_supplied,
+                })
+
     def action_validate_reception(self):
-        for rec in self:
-            if rec.state != 'pending_reception':
-                raise UserError(_(
-                    'Solo se puede validar recepcion desde "Pte. recepcion".'))
-            if not rec.can_validate_reception:
-                raise UserError(_(
-                    'No tienes permiso para validar la recepcion de %s. '
-                    'Solo el solicitante, el jefe del area o el administrador '
-                    'del modulo pueden validar.') % rec.name)
-            # Validacion de cantidades recibidas
-            for line in rec.line_ids:
-                if line.qty_received < 0:
-                    raise UserError(_(
-                        'La cantidad recibida de %s no puede ser negativa.'
-                    ) % line.product_id.display_name)
-                if line.qty_received > line.qty_supplied:
-                    raise UserError(_(
-                        'La cantidad recibida de %(prod)s (%(recv)s) no puede '
-                        'ser mayor a la surtida (%(supp)s).'
-                    ) % {
-                        'prod': line.product_id.display_name,
-                        'recv': line.qty_received,
-                        'supp': line.qty_supplied,
-                    })
-            rec.with_context(material_request_internal_write=True).write({
-                'state': 'closed',
-                'user_validator_id': self.env.user.id,
-                'validation_signature_date': fields.Datetime.now(),
-            })
-            body = _('Recepcion validada y firmada por %s.') % self.env.user.display_name
-            if not rec.reception_complete:
-                body += _(
-                    ' <b>Recepcion PARCIAL</b>: hay diferencias entre lo '
-                    'surtido y lo recibido. Revisar observaciones por linea.')
-            rec.message_post(body=body)
-            # Cerrar la actividad "Recoger material" del solicitante
-            rec._close_requester_activities()
+        self.ensure_one()
+        self._check_can_validate_reception_action()
+        return self._open_signature_wizard(
+            '_signature_action_validate_reception',
+            _('Validar recepcion de material'),
+            _('Firma de recepcion de material %s.') % self.name,
+        )
+
+    def _signature_action_validate_reception(self):
+        self.ensure_one()
+        self._check_can_validate_reception_action()
+        self.with_context(material_request_internal_write=True).write({
+            'state': 'closed',
+            'user_validator_id': self.env.user.id,
+            'validation_signature_date': fields.Datetime.now(),
+        })
+        body = _('Recepcion validada y firmada por %s.') % self.env.user.display_name
+        if not self.reception_complete:
+            body += _(
+                ' <b>Recepcion PARCIAL</b>: hay diferencias entre lo '
+                'surtido y lo recibido. Revisar observaciones por linea.')
+        self.message_post(body=body)
+        self._close_requester_activities()
         return True
 
     def action_cancel(self):

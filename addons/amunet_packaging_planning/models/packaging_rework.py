@@ -131,6 +131,17 @@ class AmunetPackagingRework(models.Model):
         ):
             raise UserError(_('Solo Empaque/Produccion autorizada puede ejecutar reacondicionamientos.'))
 
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_action_quality_approve': _('Aprobar reacondicionamiento'),
+            '_signature_action_done': _('Cerrar reacondicionamiento'),
+        }
+
+    def _open_signature_wizard(self, method_name, signature_type, reason):
+        self.ensure_one()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, method_name, signature_type, reason)
+
     def action_submit_qc(self):
         for rec in self:
             rec._require_packaging()
@@ -142,16 +153,30 @@ class AmunetPackagingRework(models.Model):
             rec.message_post(body=_('Reacondicionamiento enviado a revision de Calidad.'))
 
     def action_quality_approve(self):
-        for rec in self:
-            rec._require_quality()
-            if rec.state != 'qc_review':
-                raise UserError(_('Solo se aprueba desde En revision Calidad.'))
-            rec.write({
-                'state': 'approved',
-                'quality_approved_by_id': self.env.user.id,
-                'quality_approved_date': fields.Datetime.now(),
-            })
-            rec.message_post(body=_('Calidad aprobo el reacondicionamiento.'))
+        self.ensure_one()
+        self._check_can_quality_approve()
+        return self._open_signature_wizard(
+            '_signature_action_quality_approve',
+            _('Aprobar reacondicionamiento'),
+            _('Firma de aprobacion de reacondicionamiento %s.') % self.name,
+        )
+
+    def _check_can_quality_approve(self):
+        self.ensure_one()
+        self._require_quality()
+        if self.state != 'qc_review':
+            raise UserError(_('Solo se aprueba desde En revision Calidad.'))
+
+    def _signature_action_quality_approve(self):
+        self.ensure_one()
+        self._check_can_quality_approve()
+        self.with_context(amunet_packaging_rework_signature_write=True).write({
+            'state': 'approved',
+            'quality_approved_by_id': self.env.user.id,
+            'quality_approved_date': fields.Datetime.now(),
+        })
+        self.message_post(body=_('Calidad aprobo el reacondicionamiento.'))
+        return True
 
     def action_mark_print_ready(self):
         for rec in self:
@@ -165,23 +190,56 @@ class AmunetPackagingRework(models.Model):
             rec.message_post(body=_('Etiquetas/manuales marcados como listos.'))
 
     def action_done(self):
-        for rec in self:
-            rec._require_packaging()
-            if rec.state != 'approved':
-                raise UserError(_('Calidad debe aprobar antes de cerrar.'))
-            if rec.label_required and not rec.label_printed:
-                raise UserError(_('Falta marcar etiquetas impresas.'))
-            if rec.manual_required and not rec.manual_ready:
-                raise UserError(_('Falta marcar manuales listos.'))
-            rec.write({
-                'state': 'done',
-                'done_by_id': self.env.user.id,
-                'done_date': fields.Datetime.now(),
-            })
-            rec.message_post(body=_('Reacondicionamiento cerrado.'))
+        self.ensure_one()
+        self._check_can_done()
+        return self._open_signature_wizard(
+            '_signature_action_done',
+            _('Cerrar reacondicionamiento'),
+            _('Firma de cierre de reacondicionamiento %s.') % self.name,
+        )
+
+    def _check_can_done(self):
+        self.ensure_one()
+        self._require_packaging()
+        if self.state != 'approved':
+            raise UserError(_('Calidad debe aprobar antes de cerrar.'))
+        if self.label_required and not self.label_printed:
+            raise UserError(_('Falta marcar etiquetas impresas.'))
+        if self.manual_required and not self.manual_ready:
+            raise UserError(_('Falta marcar manuales listos.'))
+
+    def _signature_action_done(self):
+        self.ensure_one()
+        self._check_can_done()
+        self.with_context(amunet_packaging_rework_signature_write=True).write({
+            'state': 'done',
+            'done_by_id': self.env.user.id,
+            'done_date': fields.Datetime.now(),
+        })
+        self.message_post(body=_('Reacondicionamiento cerrado.'))
+        return True
 
     def action_cancel(self):
         self.write({'state': 'cancel'})
+
+    def write(self, vals):
+        signature_fields = {
+            'quality_approved_by_id',
+            'quality_approved_date',
+            'done_by_id',
+            'done_date',
+        }
+        signature_state = vals.get('state') in ('approved', 'done')
+        if (
+            (signature_state or set(vals).intersection(signature_fields))
+            and not self.env.context.get('amunet_packaging_rework_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'Las aprobaciones y cierres de reacondicionamiento solo '
+                'pueden registrarse desde el wizard de firma electronica.'
+            ))
+        return super().write(vals)
 
     def action_open_label_wizard(self):
         self.ensure_one()
