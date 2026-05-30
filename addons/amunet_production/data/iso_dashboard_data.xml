@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="amunet_iso_dashboard_main" model="amunet.iso.dashboard">
+        <field name="name">Centro ISO Paperless</field>
+    </record>
+</odoo>

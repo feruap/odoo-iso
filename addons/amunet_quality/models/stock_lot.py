@@ -166,6 +166,104 @@ class StockLot(models.Model):
         ).sorted('id', reverse=True)
         return release_checks[:1]
 
+    def _release_env_model(self, model_name):
+        try:
+            return self.env[model_name].sudo()
+        except KeyError:
+            return False
+
+    def _get_lot_release_production(self):
+        self.ensure_one()
+        Production = self._release_env_model('mrp.production')
+        if Production is False:
+            return False
+        production = Production.search([('lot_producing_ids', 'in', self.id)], limit=1)
+        if production:
+            return production
+        checks = self.quality_check_ids.filtered(lambda c: c.active)
+        if checks and 'amunet_production_id' in checks._fields:
+            return checks.mapped('amunet_production_id')[:1]
+        return Production.browse()
+
+    def _get_lot_release_material_requests(self, production):
+        self.ensure_one()
+        Request = self._release_env_model('amunet.material.request')
+        if Request is False:
+            return False
+        terms = []
+        if self.name:
+            terms.append(self.name)
+        if production:
+            terms.extend(filter(None, [production.name, production.origin]))
+        requests = Request.browse()
+        for term in list(dict.fromkeys(terms)):
+            requests |= Request.search([
+                '|',
+                ('name', 'ilike', term),
+                ('note', 'ilike', term),
+            ])
+        return requests
+
+    def _get_lot_release_equipment(self, production, release_check):
+        Equipment = self._release_env_model('amunet.equipment')
+        if Equipment is False:
+            return False
+        equipment = Equipment.browse()
+        if production:
+            workcenters = production.workorder_ids.mapped('workcenter_id')
+            for workcenter in workcenters:
+                if 'amunet_equipment_ids' in workcenter._fields:
+                    equipment |= workcenter.amunet_equipment_ids
+        if release_check:
+            for line in release_check.test_line_ids:
+                if 'equipment_id' in line._fields and line.equipment_id:
+                    equipment |= line.equipment_id
+        return equipment
+
+    def _get_lot_release_training_blockers(self, release_check, equipment):
+        enabled = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet_competencias.signature_training_check_enabled',
+            'False',
+        ) == 'True'
+        if not enabled or not release_check:
+            return []
+        Training = self._release_env_model('amunet.registro.capacitacion')
+        if Training is False:
+            return []
+
+        procedures = self.env['amunet.quality.procedure'].sudo().browse()
+        if 'procedure_ids' in release_check._fields:
+            procedures |= release_check.procedure_ids.filtered('active')
+        for eq in equipment or []:
+            if 'procedure_ids' in eq._fields:
+                procedures |= eq.procedure_ids.filtered('active')
+        if not procedures:
+            return []
+
+        signers = (
+            release_check.user_realized_id
+            | release_check.user_verified_id
+            | release_check.user_authorized_id
+        ).filtered(lambda user: user and user.active)
+
+        blockers = []
+        for user in signers:
+            missing = []
+            for procedure in procedures:
+                training = Training.search([
+                    ('user_id', '=', user.id),
+                    ('procedure_id', '=', procedure.id),
+                    ('state', 'in', ('vigente', 'proxima')),
+                ], limit=1)
+                if not training:
+                    missing.append(procedure.code or procedure.display_name)
+            if missing:
+                blockers.append(
+                    'El firmante %s no tiene capacitacion vigente/proxima en: %s.'
+                    % (user.display_name, ', '.join(missing))
+                )
+        return blockers
+
     def _get_lot_release_blockers(self):
         self.ensure_one()
         blockers = []
@@ -220,6 +318,60 @@ class StockLot(models.Model):
                 % reception.display_name
             )
 
+        production = self._get_lot_release_production()
+        if production:
+            if production.state != 'done':
+                blockers.append(
+                    'La orden de fabricacion (%s) debe estar cerrada antes de liberar el DHR.'
+                    % production.display_name
+                )
+            open_workorders = production.workorder_ids.filtered(
+                lambda wo: wo.state not in ('done', 'cancel')
+            )
+            if open_workorders:
+                blockers.append(
+                    'Hay operaciones de manufactura abiertas: %s.'
+                    % ', '.join(open_workorders.mapped('display_name')[:5])
+                )
+            if (
+                'amunet_has_supplied_moves' in production._fields
+                and production.amunet_has_supplied_moves
+                and production.reconciliation_state != 'completed'
+            ):
+                blockers.append(
+                    'La conciliacion de materiales de la MO %s no esta completada.'
+                    % production.display_name
+                )
+
+        material_requests = self._get_lot_release_material_requests(production)
+        if material_requests:
+            open_requests = material_requests.filtered(
+                lambda req: req.state not in ('closed', 'done', 'cancelled', 'cancel')
+            )
+            if open_requests:
+                blockers.append(
+                    'Hay solicitudes de material sin cerrar: %s.'
+                    % ', '.join(open_requests.mapped('display_name')[:5])
+                )
+
+        equipment = self._get_lot_release_equipment(production, release_check)
+        today = fields.Date.today()
+        for eq in equipment or []:
+            label = eq.serial_number or eq.display_name
+            if eq.state != 'active':
+                blockers.append('El equipo %s no esta activo.' % label)
+            if eq.calibration_required and not eq.next_calibration_date:
+                blockers.append('El equipo %s requiere calibracion y no tiene fecha vigente.' % label)
+            elif eq.calibration_required and eq.next_calibration_date < today:
+                blockers.append(
+                    'El equipo %s tiene calibracion vencida (%s).'
+                    % (label, eq.next_calibration_date)
+                )
+            if 'procedure_ids' in eq._fields and not eq.procedure_ids.filtered('active'):
+                blockers.append('El equipo %s no tiene PNO aplicable vinculado.' % label)
+
+        blockers.extend(self._get_lot_release_training_blockers(release_check, equipment))
+
         return blockers
 
     def _quality_check_snapshot(self, check):
@@ -261,6 +413,9 @@ class StockLot(models.Model):
 
     def _build_lot_release_snapshot(self, release_check, notes=None):
         self.ensure_one()
+        production = self._get_lot_release_production()
+        material_requests = self._get_lot_release_material_requests(production)
+        equipment = self._get_lot_release_equipment(production, release_check)
         quants = self.env['stock.quant'].search([
             ('lot_id', '=', self.id),
             ('product_id', '=', self.product_id.id),
@@ -271,7 +426,7 @@ class StockLot(models.Model):
         ], order='id desc', limit=100)
 
         return {
-            'snapshot_version': '1.0',
+            'snapshot_version': '1.1',
             'released_at': self._release_date(fields.Datetime.now()),
             'released_by': self._release_user_ref(self.env.user),
             'release_notes': notes or False,
@@ -286,6 +441,30 @@ class StockLot(models.Model):
                 'expiration_date': self._release_date(self.expiration_date),
                 'removal_date': self._release_date(self.removal_date),
             },
+            'manufacturing_order': self._release_record_ref(production),
+            'material_requests': [
+                {
+                    'id': request.id,
+                    'name': request.display_name,
+                    'state': request.state,
+                }
+                for request in (material_requests or [])
+            ],
+            'equipment_readiness': [
+                {
+                    'id': eq.id,
+                    'name': eq.display_name,
+                    'serial_number': eq.serial_number,
+                    'state': eq.state,
+                    'calibration_required': eq.calibration_required,
+                    'next_calibration_date': self._release_date(eq.next_calibration_date),
+                    'procedures': [
+                        self._release_record_ref(proc)
+                        for proc in eq.procedure_ids.filtered('active')
+                    ] if 'procedure_ids' in eq._fields else [],
+                }
+                for eq in (equipment or [])
+            ],
             'release_quality_check': self._quality_check_snapshot(release_check),
             'all_quality_checks': [
                 self._quality_check_snapshot(check)

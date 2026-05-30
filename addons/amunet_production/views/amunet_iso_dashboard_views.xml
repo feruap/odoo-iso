@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_iso_dashboard_form" model="ir.ui.view">
+        <field name="name">amunet.iso.dashboard.form</field>
+        <field name="model">amunet.iso.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Centro ISO Paperless" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_refresh" type="object" string="Actualizar" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_quality_work" type="object" class="oe_stat_button" icon="fa-flask">
+                            <field name="quality_pending_count" widget="statinfo" string="Calidad"/>
+                        </button>
+                        <button name="action_open_lot_release_pending" type="object" class="oe_stat_button" icon="fa-lock">
+                            <field name="lot_release_pending_count" widget="statinfo" string="DHR"/>
+                        </button>
+                        <button name="action_open_productions" type="object" class="oe_stat_button" icon="fa-industry">
+                            <field name="production_pending_count" widget="statinfo" string="MO"/>
+                        </button>
+                        <button name="action_open_metrology_work" type="object" class="oe_stat_button" icon="fa-balance-scale">
+                            <field name="metrology_pending_count" widget="statinfo" string="Metrologia"/>
+                        </button>
+                        <button name="action_open_maintenance_work" type="object" class="oe_stat_button" icon="fa-wrench">
+                            <field name="maintenance_pending_count" widget="statinfo" string="Mantenimiento"/>
+                        </button>
+                        <button name="action_open_training_gaps" type="object" class="oe_stat_button" icon="fa-graduation-cap">
+                            <field name="training_gap_count" widget="statinfo" string="Brechas"/>
+                        </button>
+                        <button name="action_open_training_renewals" type="object" class="oe_stat_button" icon="fa-calendar-check-o">
+                            <field name="training_renewal_count" widget="statinfo" string="Renovar"/>
+                        </button>
+                        <button name="action_open_preflights" type="object" class="oe_stat_button" icon="fa-exclamation-triangle"
+                                invisible="preflight_blocked_count == 0">
+                            <field name="preflight_blocked_count" widget="statinfo" string="Preflight"/>
+                        </button>
+                        <button name="action_open_missing_pins" type="object" class="oe_stat_button" icon="fa-key"
+                                groups="amunet_quality.group_quality_manager,base.group_system">
+                            <field name="missing_pin_count" widget="statinfo" string="Sin PIN"/>
+                        </button>
+                        <button name="action_open_lot_dossiers" type="object" class="oe_stat_button" icon="fa-folder-open">
+                            <span>Expedientes</span>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <field name="summary_html" nolabel="1" readonly="1"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Trabajo por rol" name="roles">
+                            <field name="role_html" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Pendientes paperless" name="paperless">
+                            <field name="paperless_html" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Equipo-PNO-capacitacion" name="traceability">
+                            <field name="traceability_html" nolabel="1" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_iso_dashboard" model="ir.actions.act_window">
+        <field name="name">Centro ISO Paperless</field>
+        <field name="res_model">amunet.iso.dashboard</field>
+        <field name="view_mode">form</field>
+        <field name="res_id" ref="amunet_iso_dashboard_main"/>
+        <field name="target">current</field>
+    </record>
+
+    <menuitem id="menu_amunet_iso_center_root"
+              name="Centro ISO"
+              sequence="44"
+              groups="base.group_user"/>
+    <menuitem id="menu_amunet_iso_dashboard"
+              name="Tablero ISO"
+              parent="menu_amunet_iso_center_root"
+              action="action_amunet_iso_dashboard"
+              sequence="1"
+              groups="base.group_user"/>
+</odoo>

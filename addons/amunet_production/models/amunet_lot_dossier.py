@@ -114,6 +114,7 @@ class AmunetLotDossier(models.Model):
     material_html = fields.Html(compute="_compute_dossier", sanitize=False, compute_sudo=True)
     people_html = fields.Html(compute="_compute_dossier", sanitize=False, compute_sudo=True)
     training_html = fields.Html(compute="_compute_dossier", sanitize=False, compute_sudo=True)
+    traceability_matrix_html = fields.Html(compute="_compute_dossier", sanitize=False, compute_sudo=True)
     findings_html = fields.Html(compute="_compute_dossier", sanitize=False, compute_sudo=True)
 
     _lot_dossier_unique = models.Constraint(
@@ -309,6 +310,93 @@ class AmunetLotDossier(models.Model):
             findings.append(("success", "Sin hallazgos bloqueantes registrados en el expediente."))
         return findings
 
+    def _training_state_for(self, user, procedures):
+        if not user or not procedures:
+            return "Sin PNO requerido"
+        Training = self.env["amunet.registro.capacitacion"].sudo()
+        missing = []
+        due = []
+        for procedure in procedures:
+            training = Training.search([
+                ("user_id", "=", user.id),
+                ("procedure_id", "=", procedure.id),
+                ("state", "in", ("vigente", "proxima", "vencida")),
+            ], order="expiry_date desc", limit=1)
+            if not training:
+                missing.append(procedure.code or procedure.display_name)
+            elif training.state == "vencida":
+                missing.append(procedure.code or procedure.display_name)
+            elif training.state == "proxima":
+                due.append(procedure.code or procedure.display_name)
+        if missing:
+            return "Falta/vencida: %s" % ", ".join(missing)
+        if due:
+            return "Por renovar: %s" % ", ".join(due)
+        return "Vigente"
+
+    def _build_traceability_matrix(self, production, checks, equipment):
+        if not equipment:
+            return (
+                '<p class="text-muted mb-0">'
+                'Sin equipos vinculados al lote. Revise los equipos del centro de trabajo '
+                'o los equipos capturados en las lineas de QC para completar esta matriz.'
+                '</p>'
+            )
+
+        signers = (
+            checks.mapped("user_realized_id")
+            | checks.mapped("user_verified_id")
+            | checks.mapped("user_authorized_id")
+        ).filtered(lambda user: user and user.active)
+        pin_users = self.env["amunet.quality.signature.pin"].sudo().search([
+            ("user_id", "in", signers.ids),
+        ]).mapped("user_id")
+
+        rows = []
+        for eq in equipment:
+            procedures = self.env["amunet.quality.procedure"].sudo().browse()
+            if "procedure_ids" in eq._fields:
+                procedures = eq.procedure_ids.filtered("active")
+            pno = ", ".join(procedures.mapped("code")) or ", ".join(procedures.mapped("name"))
+            if not pno:
+                pno = "Sin PNO ligado"
+
+            eq_users = signers
+            if not eq_users and production:
+                eq_users = production.create_uid | production.write_uid
+            if not eq_users:
+                rows.append([
+                    escape(eq.serial_number or eq.display_name),
+                    escape(eq.department or ""),
+                    escape(pno),
+                    escape("Sin firmante relacionado"),
+                    escape("Sin usuario para validar"),
+                    escape("Sin firma"),
+                ])
+                continue
+
+            for user in eq_users:
+                signature_roles = []
+                if user in checks.mapped("user_realized_id"):
+                    signature_roles.append("Realizo")
+                if user in checks.mapped("user_verified_id"):
+                    signature_roles.append("Verifico")
+                if user in checks.mapped("user_authorized_id"):
+                    signature_roles.append("Autorizo")
+                pin_status = "PIN configurado" if user in pin_users else "Sin PIN"
+                rows.append([
+                    escape(eq.serial_number or eq.display_name),
+                    escape(eq.department or ""),
+                    escape(pno),
+                    escape(user.display_name),
+                    escape(self._training_state_for(user, procedures)),
+                    escape("%s / %s" % (", ".join(signature_roles) or "Participante", pin_status)),
+                ])
+        return self._html_table(
+            ["Equipo", "Area", "PNO aplicable", "Persona", "Capacitacion", "Firma"],
+            rows,
+        )
+
     @api.depends(
         "lot_id",
         "production_id",
@@ -453,6 +541,11 @@ class AmunetLotDossier(models.Model):
             rec.training_html = rec._html_table(
                 ["Registro", "Usuario", "Area", "SOP / PNO", "Estado", "Vence"],
                 training_rows,
+            )
+            rec.traceability_matrix_html = rec._build_traceability_matrix(
+                production,
+                checks,
+                equipment,
             )
 
             finding_rows = []
