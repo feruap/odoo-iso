@@ -35,6 +35,20 @@ CAMPOS_FLUJO_FIRMA = (
 )
 
 
+def _check_documento_child_editable(records, vals=None):
+    if records.env.context.get('amunet_documento_workflow_write') or records.env.su:
+        return
+    docs = records.mapped('documento_id') if records else records.env['amunet.documento']
+    if vals and vals.get('documento_id'):
+        docs |= records.env['amunet.documento'].browse(vals['documento_id'])
+    locked = docs.filtered(lambda d: d.state == 'vigente')
+    if locked:
+        raise UserError(_(
+            'No puedes modificar secciones estructuradas del documento vigente "%s". '
+            'Genera una nueva version o pasalo a obsoleto primero.'
+        ) % (locked[0].codigo or locked[0].name))
+
+
 class AmunetDocumento(models.Model):
     _name = 'amunet.documento'
     _description = 'Documento Controlado (ISO 13485 4.2 / NOM-241-SSA1-2025)'
@@ -636,7 +650,8 @@ class AmunetDocumento(models.Model):
                 _h('Anexos', r.seccion_anexos),
             ])
             snapshot_final = secciones_snapshot or r.contenido_html or ''
-            self.env['amunet.documento.version'].create({
+            self.env['amunet.documento.version'].with_context(
+                amunet_documento_workflow_write=True).create({
                 'documento_id': r.id,
                 'version': r.version_actual,
                 'fecha': r.fecha_publicacion or today,
@@ -721,6 +736,29 @@ class AmunetDocumentoVersion(models.Model):
     ], string='Estado historico', default='obsoleto')
     cambios = fields.Text(string='Resumen de cambios')
 
+    def _check_version_workflow_write(self):
+        if (
+            not self.env.context.get('amunet_documento_workflow_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'Las versiones historicas de documentos controlados solo '
+                'pueden generarse desde el flujo de nueva version.'
+            ))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._check_version_workflow_write()
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._check_version_workflow_write()
+        return super().write(vals)
+
+    def unlink(self):
+        self._check_version_workflow_write()
+        return super().unlink()
+
 
 class AmunetDocumentoDistribucion(models.Model):
     _name = 'amunet.documento.distribucion'
@@ -752,6 +790,20 @@ class AmunetDocumentoActividad(models.Model):
     def name_get(self):
         return [(r.id, '%s. %s' % (r.sequence, r.actividad or '')) for r in self]
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            _check_documento_child_editable(self, vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        _check_documento_child_editable(self, vals)
+        return super().write(vals)
+
+    def unlink(self):
+        _check_documento_child_editable(self)
+        return super().unlink()
+
 
 class AmunetDocumentoResponsabilidad(models.Model):
     _name = 'amunet.documento.responsabilidad'
@@ -773,6 +825,20 @@ class AmunetDocumentoResponsabilidad(models.Model):
     def name_get(self):
         return [(r.id, r.rol or '') for r in self]
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            _check_documento_child_editable(self, vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        _check_documento_child_editable(self, vals)
+        return super().write(vals)
+
+    def unlink(self):
+        _check_documento_child_editable(self)
+        return super().unlink()
+
 
 class AmunetDocumentoTermino(models.Model):
     _name = 'amunet.documento.termino'
@@ -791,3 +857,17 @@ class AmunetDocumentoTermino(models.Model):
 
     def name_get(self):
         return [(r.id, r.concepto or '') for r in self]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            _check_documento_child_editable(self, vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        _check_documento_child_editable(self, vals)
+        return super().write(vals)
+
+    def unlink(self):
+        _check_documento_child_editable(self)
+        return super().unlink()
