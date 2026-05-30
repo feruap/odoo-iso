@@ -253,8 +253,21 @@ class AmunetMaterialRequest(models.Model):
             else:
                 rec.department_id = False
 
+    def _has_signed_flow_values(self, vals):
+        protected = (self._PROTECTED_FIELDS - {'name'}).intersection(vals)
+        if 'state' in protected and vals.get('state') in (False, 'draft'):
+            protected.remove('state')
+        return bool(protected)
+
     @api.model_create_multi
     def create(self, vals_list):
+        if not self.env.context.get('material_request_internal_write') and not self.env.su:
+            for vals in vals_list:
+                if self._has_signed_flow_values(vals):
+                    raise UserError(_(
+                        'Las solicitudes de material siempre nacen en '
+                        'Borrador. Estados, transferencias y firmas solo '
+                        'pueden registrarse con las acciones firmadas del flujo.'))
         is_mgr = self._is_material_manager()
         if not is_mgr:
             # Solicitante puro: siempre su propio user_id, sin tocar

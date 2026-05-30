@@ -92,3 +92,72 @@ class AmunetCompetenciasSignatureHook(models.TransientModel):
             user.name, len(self.check_ids)
         )
         return super().action_confirm_signature()
+
+
+class AmunetCompetenciasGenericSignatureHook(models.TransientModel):
+    """
+    Extiende el wizard generico de firma para que los flujos paperless
+    fuera de QC tambien respeten la matriz de capacitacion vigente.
+    """
+    _inherit = 'amunet.generic.signature.wizard'
+
+    def _training_check_enabled(self):
+        return self.env['ir.config_parameter'].sudo().get_param(
+            'amunet_competencias.signature_training_check_enabled', 'False'
+        ).lower() == 'true'
+
+    def _target_required_procedures(self, record):
+        if hasattr(record, '_amunet_signature_required_procedures'):
+            procedures = record._amunet_signature_required_procedures()
+            return procedures.filtered('active') if procedures else procedures
+        if 'procedure_ids' in record._fields:
+            return record.procedure_ids.filtered('active')
+        if 'equipment_id' in record._fields and record.equipment_id:
+            return record.equipment_id.procedure_ids.filtered('active')
+        if 'source_check_id' in record._fields and record.source_check_id:
+            return record.source_check_id.procedure_ids.filtered('active')
+        if 'quality_check_id' in record._fields and record.quality_check_id:
+            return record.quality_check_id.procedure_ids.filtered('active')
+        if 'product_id' in record._fields and record.product_id:
+            return self.env['amunet.quality.procedure'].search([
+                ('active', '=', True),
+                ('product_ids', 'in', record.product_id.id),
+            ])
+        return self.env['amunet.quality.procedure']
+
+    def _validate_generic_training(self, record):
+        if not self._training_check_enabled():
+            return
+        procedures = self._target_required_procedures(record)
+        if not procedures:
+            _logger.debug(
+                "Firma generica sin PNOs vinculados: %s/%s",
+                record._name, record.display_name,
+            )
+            return
+
+        user = self.env.user
+        MatrizSvc = self.env['amunet.matriz.competencias']
+        bloqueos = []
+        for procedure in procedures:
+            if not MatrizSvc.verificar_competencia(
+                user_id=user.id,
+                procedure_id=procedure.id,
+            ):
+                bloqueos.append(
+                    "  - SOP {} - '{}' (Registro: {})".format(
+                        procedure.code, procedure.name, record.display_name)
+                )
+        if bloqueos:
+            raise ValidationError(
+                "FIRMA BLOQUEADA - Capacitacion insuficiente\n\n"
+                "El usuario '{}' no tiene capacitacion VIGENTE para:\n\n"
+                "{}\n\nRegulariza la capacitacion antes de firmar.".format(
+                    user.name, "\n".join(bloqueos))
+            )
+
+    def action_confirm_signature(self):
+        self.ensure_one()
+        record = self._target_record()
+        self._validate_generic_training(record)
+        return super().action_confirm_signature()

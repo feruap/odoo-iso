@@ -31,6 +31,10 @@
                         <group name="notes" string="Observaciones">
                             <field name="notes" nolabel="1" readonly="state != 'draft'"/>
                         </group>
+                        <group name="approval" string="Aprobacion paperless" invisible="state != 'done'">
+                            <field name="approved_by_id" readonly="1"/>
+                            <field name="approved_date" readonly="1"/>
+                        </group>
                     </sheet>
                     <chatter/>
                 </form>

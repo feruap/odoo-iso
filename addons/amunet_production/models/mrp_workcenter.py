@@ -42,6 +42,14 @@ class MrpWorkcenter(models.Model):
             'equipo y registra una nota en el chatter de la WO.'
         ),
     )
+    amunet_equipment_exception_reason = fields.Text(
+        string='Justificacion ISO 13485',
+        help='Motivo documentado para permitir este centro de trabajo sin '
+             'equipos calibrados vinculados.')
+    amunet_equipment_exception_signed_by_id = fields.Many2one(
+        'res.users', string='Excepcion firmada por', readonly=True, copy=False)
+    amunet_equipment_exception_signed_date = fields.Datetime(
+        string='Fecha firma excepcion', readonly=True, copy=False)
 
     @api.depends('amunet_equipment_ids')
     def _compute_amunet_equipment_count(self):
@@ -72,6 +80,17 @@ class MrpWorkcenter(models.Model):
 
             if not wc.amunet_equipment_ids:
                 if wc.amunet_no_equipment_required:
+                    if not (
+                        wc.amunet_equipment_exception_reason
+                        and wc.amunet_equipment_exception_signed_by_id
+                        and wc.amunet_equipment_exception_signed_date
+                    ):
+                        problemas.append(
+                            ' - Workcenter %s: excepcion "No requiere equipo '
+                            'calibrado" sin justificacion y firma electronica.'
+                            % wc_label
+                        )
+                        continue
                     any_skipped = True
                     continue
                 problemas.append(
@@ -129,3 +148,88 @@ class MrpWorkcenter(models.Model):
                 'amunet_no_equipment_required con justificacion ISO 13485).'
             ) % '\n'.join(problemas))
         return {'no_equipment_required': any_skipped}
+
+    def _check_can_approve_equipment_exception(self):
+        for wc in self:
+            if not (
+                self.env.user.has_group('amunet_equipment_calibration.group_equipment_manager')
+                or self.env.user.has_group('amunet_quality.group_quality_manager')
+                or self.env.user.has_group('mrp.group_mrp_manager')
+            ):
+                raise UserError(_(
+                    'Solo Metrologia, Manager QC o Responsable MRP puede '
+                    'aprobar esta excepcion ISO 13485.'))
+            if wc.amunet_equipment_ids:
+                raise UserError(_(
+                    'Este centro ya tiene equipos vinculados; no requiere excepcion.'))
+            if not wc.amunet_equipment_exception_reason:
+                raise UserError(_(
+                    'Captura la justificacion ISO 13485 antes de firmar la excepcion.'))
+
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_action_approve_equipment_exception': _(
+                'Aprobar excepcion de equipo calibrado'),
+        }
+
+    def action_approve_equipment_exception(self):
+        self.ensure_one()
+        self._check_can_approve_equipment_exception()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_approve_equipment_exception',
+            _('Aprobar excepcion de equipo calibrado'),
+            _('Firma de excepcion ISO 13485 para %s.') % (self.code or self.name),
+        )
+
+    def _signature_action_approve_equipment_exception(self):
+        self.ensure_one()
+        self._check_can_approve_equipment_exception()
+        self.with_context(amunet_workcenter_exception_signature_write=True).write({
+            'amunet_no_equipment_required': True,
+            'amunet_equipment_exception_signed_by_id': self.env.user.id,
+            'amunet_equipment_exception_signed_date': fields.Datetime.now(),
+        })
+        return True
+
+    def _has_equipment_exception_signature_values(self, vals):
+        signature_fields = {
+            'amunet_equipment_exception_signed_by_id',
+            'amunet_equipment_exception_signed_date',
+        }
+        return (
+            vals.get('amunet_no_equipment_required') is True
+            or signature_fields.intersection(vals)
+        )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if (
+            not self.env.context.get('amunet_workcenter_exception_signature_write')
+            and not self.env.su
+        ):
+            for vals in vals_list:
+                if self._has_equipment_exception_signature_values(vals):
+                    raise UserError(_(
+                        'La excepcion "No requiere equipo calibrado" y sus '
+                        'campos de firma deben aprobarse con firma electronica '
+                        'desde el boton correspondiente.'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if (
+            self._has_equipment_exception_signature_values(vals)
+            and not self.env.context.get('amunet_workcenter_exception_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'La excepcion "No requiere equipo calibrado" y sus campos '
+                'de firma deben aprobarse con firma electronica desde el '
+                'boton correspondiente.'))
+        if vals.get('amunet_no_equipment_required') is False:
+            vals = dict(vals)
+            vals.update({
+                'amunet_equipment_exception_signed_by_id': False,
+                'amunet_equipment_exception_signed_date': False,
+            })
+        return super().write(vals)

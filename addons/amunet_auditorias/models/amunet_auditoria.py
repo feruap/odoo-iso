@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -42,6 +42,10 @@ class AmunetAuditoria(models.Model):
         ('cerrada', 'Cerrada'),
         ('cancelada', 'Cancelada'),
     ], string='Estado', default='planificada', required=True, tracking=True)
+    closed_by_id = fields.Many2one(
+        'res.users', string='Cerrada por', readonly=True, copy=False)
+    closed_date = fields.Datetime(
+        string='Fecha cierre', readonly=True, copy=False)
 
     # =========================================================================
     # FECHAS Y EQUIPO AUDITOR
@@ -189,8 +193,25 @@ class AmunetAuditoria(models.Model):
     def action_con_hallazgos(self):
         self.write({'state': 'con_hallazgos'})
 
-    def action_cerrar(self):
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_action_cerrar': _('Cerrar auditoria'),
+        }
+
+    def _check_can_cerrar(self):
         for rec in self:
+            if rec.state not in ('en_ejecucion', 'con_hallazgos'):
+                raise ValidationError(
+                    'Solo se puede cerrar una auditoria en ejecucion o con hallazgos pendientes.')
+            if rec.resultado_global == 'pendiente':
+                raise ValidationError(
+                    'Selecciona el Resultado Global antes de cerrar la auditoria.')
+            if not rec.conclusion:
+                raise ValidationError(
+                    'Captura la conclusion/informe narrativo antes de cerrar la auditoria.')
+            if not rec.report_file:
+                raise ValidationError(
+                    'Adjunta el informe PDF antes de cerrar la auditoria.')
             # Verificar que todos los hallazgos tengan CAPA si son NC mayor o crítica
             hallazgos_sin_capa = rec.hallazgo_ids.filtered(
                 lambda h: h.severidad in ('nc_mayor', 'critica') and not h.capa_id
@@ -202,11 +223,46 @@ class AmunetAuditoria(models.Model):
                     f"Mayor/Crítica aún no tienen una CAPA generada:\n\n{nombres}\n\n"
                     "Genere los CAPAs correspondientes antes de cerrar."
                 )
-            rec._actualizar_estatus_proveedor()
-            rec.state = 'cerrada'
+
+    def action_cerrar(self):
+        self.ensure_one()
+        self._check_can_cerrar()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_cerrar',
+            _('Cerrar auditoria'),
+            _('Firma de cierre de auditoria %s.') % self.name,
+        )
+
+    def _signature_action_cerrar(self):
+        self.ensure_one()
+        self._check_can_cerrar()
+        self._actualizar_estatus_proveedor()
+        self.with_context(amunet_auditoria_signature_write=True).write({
+            'state': 'cerrada',
+            'closed_by_id': self.env.user.id,
+            'closed_date': fields.Datetime.now(),
+        })
+        return True
 
     def action_cancelar(self):
         self.write({'state': 'cancelada'})
+
+    def _has_close_signature_values(self, vals):
+        return (
+            vals.get('state') == 'cerrada'
+            or {'closed_by_id', 'closed_date'}.intersection(vals)
+        )
+
+    def write(self, vals):
+        if (
+            self._has_close_signature_values(vals)
+            and not self.env.context.get('amunet_auditoria_signature_write')
+            and not self.env.su
+        ):
+            raise ValidationError(
+                'El cierre de auditoria solo puede registrarse desde el wizard de firma electronica.')
+        return super().write(vals)
 
     def _actualizar_estatus_proveedor(self):
         """Actualiza el campo quality_status en res.partner según el resultado de la auditoría."""
@@ -257,6 +313,15 @@ class AmunetAuditoria(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        if (
+            not self.env.context.get('amunet_auditoria_signature_write')
+            and not self.env.su
+        ):
+            for vals in vals_list:
+                if self._has_close_signature_values(vals):
+                    raise UserError(
+                        'El cierre de auditoria solo puede registrarse desde '
+                        'el wizard de firma electronica.')
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
                 vals['name'] = (

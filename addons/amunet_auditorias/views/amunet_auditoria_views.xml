@@ -67,6 +67,8 @@
                                 <group string="Fechas">
                                     <field name="fecha_planeada"/>
                                     <field name="fecha_ejecucion"/>
+                                    <field name="closed_by_id" readonly="1" invisible="state != 'cerrada'"/>
+                                    <field name="closed_date" readonly="1" invisible="state != 'cerrada'"/>
                                 </group>
                             </group>
                             <group>
