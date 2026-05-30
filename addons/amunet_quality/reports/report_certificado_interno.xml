@@ -127,8 +127,15 @@
                             <t t-if="line.has_details">
                                 <t t-foreach="line.detail_line_ids" t-as="detail">
                                     <tr>
-                                        <td style="text-align: left;"><span t-field="line.name"/></td>
-                                        <td><span t-field="detail.name"/></td>
+                                        <!-- Primera sub-determinación: celda del método con rowspan -->
+                                        <t t-if="detail_index == 0">
+                                            <td t-att-rowspan="len(line.detail_line_ids)"
+                                                style="text-align: left; vertical-align: middle; font-style: italic;">
+                                                '<span t-field="line.name"/>'<br/>
+                                                [<span t-field="line.parameter_id.code"/>]
+                                            </td>
+                                        </t>
+                                        <td style="text-align: left;"><span t-field="detail.name"/></td>
                                         <td><span t-field="detail.acceptance_criteria"/></td>
                                         <td><span t-field="detail.result_display"/></td>
                                         <td>
@@ -141,7 +148,10 @@
                             </t>
                             <t t-else="">
                                 <tr>
-                                    <td style="text-align: left;"><span t-field="line.name"/></td>
+                                    <td style="text-align: left; font-style: italic;">
+                                        '<span t-field="line.name"/>'<br/>
+                                        [<span t-field="line.parameter_id.code"/>]
+                                    </td>
                                     <td></td>
                                     <td><span t-field="line.acceptance_criteria"/></td>
                                     <td><span t-field="line.result_display"/></td>
