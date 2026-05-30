@@ -92,6 +92,9 @@
                         <page string="Manufactura y equipos" name="production">
                             <field name="production_html" nolabel="1" readonly="1"/>
                         </page>
+                        <page string="Equipo-PNO-capacitacion-firma" name="traceability_matrix">
+                            <field name="traceability_matrix_html" nolabel="1" readonly="1"/>
+                        </page>
                         <page string="Materiales" name="materials">
                             <field name="material_html" nolabel="1" readonly="1"/>
                             <field name="material_request_ids" readonly="1" nolabel="1">

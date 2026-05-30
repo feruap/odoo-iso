@@ -40,20 +40,9 @@ jobs:
           git checkout staging 2>/dev/null || git checkout -b staging origin/staging
           git pull --ff-only origin staging
           docker compose -f docker-compose.staging.yml build --no-cache web-staging
-          docker compose -f docker-compose.staging.yml up -d --force-recreate
-          echo "Esperando que Odoo staging este listo..."
-          for i in $(seq 1 24); do
-            if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
-              echo "Odoo listo despues de $((i * 5))s"
-              sleep 15
-              break
-            fi
-            echo " Intento $i/24..."
-            sleep 5
-          done
           upgrade_ok=0
           for j in 1 2 3; do
-            if docker exec odoo-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
+            if docker compose -f docker-compose.staging.yml run --rm --name odoo-staging-upgrade-$j-$$ --no-deps web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
               upgrade_ok=1
               break
             fi
@@ -67,7 +56,17 @@ jobs:
 
           echo "Corrections automaticas deshabilitadas. Ejecutarlas manualmente solo con guarda de DB revisada."
 
-          docker compose -f docker-compose.staging.yml restart web-staging
+          docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging
+          echo "Esperando que Odoo staging este listo..."
+          for i in $(seq 1 24); do
+            if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
+              echo "Odoo listo despues de $((i * 5))s"
+              sleep 15
+              break
+            fi
+            echo " Intento $i/24..."
+            sleep 5
+          done
           SCRIPT
           ssh -i /tmp/deploy_key \
             -o StrictHostKeyChecking=no \
@@ -101,20 +100,9 @@ jobs:
           git checkout main 2>/dev/null || git checkout -b main origin/main
           git pull --ff-only origin main
           docker compose -f docker-compose.production.yml build --no-cache web-production
-          docker compose -f docker-compose.production.yml up -d --force-recreate web-production
-          echo "Esperando que Odoo produccion este listo..."
-          for i in $(seq 1 24); do
-            if docker exec odoo-production curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
-              echo "Odoo listo despues de $((i * 5))s"
-              sleep 15
-              break
-            fi
-            echo " Intento $i/24..."
-            sleep 5
-          done
           upgrade_ok=0
           for j in 1 2 3; do
-            if docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
+            if docker compose -f docker-compose.production.yml run --rm --name odoo-production-upgrade-$j-$$ --no-deps web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
               upgrade_ok=1
               break
             fi
@@ -128,7 +116,7 @@ jobs:
 
           echo "Corrections automaticas deshabilitadas en produccion. No se ejecutan scripts one-shot durante deploy."
 
-          docker compose -f docker-compose.production.yml restart web-production
+          docker compose -f docker-compose.production.yml up -d --force-recreate web-production
           echo "Esperando que Odoo se estabilice antes del upgrade de Amunet_testing..."
           for i in $(seq 1 24); do
             if docker exec odoo-production curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then

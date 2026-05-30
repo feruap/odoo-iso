@@ -10,7 +10,7 @@
     """,
     'author': "Amunet",
     'category': 'Manufacturing',
-    'version': '19.0.1.28.0',
+    'version': '19.0.1.29.0',
     'depends': [
         'mrp',
         'stock',
@@ -21,6 +21,7 @@
     ],
     'data': [
         'data/production_data.xml',
+        'data/iso_dashboard_data.xml',
         'data/system_parameters.xml',
         'security/amunet_production_security.xml',
         'security/ir.model.access.csv',
@@ -29,6 +30,7 @@
         'reports/mrp_production_report.xml',
         'views/operator_workorder_views.xml',
         'views/amunet_lot_dossier_views.xml',
+        'views/amunet_iso_dashboard_views.xml',
         'views/mrp_production_views.xml',
         'views/mrp_workcenter_views.xml',
         'views/product_template_views.xml',
