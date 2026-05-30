@@ -51,12 +51,12 @@
                         string="Planear presentación"
                         type="object"
                         class="oe_highlight"
-                        invisible="state in ('cancel',) or not product_id or amunet_packaging_plan_approved"
+                        invisible="state != 'draft' or not product_id or amunet_packaging_plan_approved"
                         groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_manager"/>
                 <button name="action_create_packaging_plan"
                         string="Planear presentación"
                         type="object"
-                        invisible="state in ('cancel',) or not product_id or not amunet_packaging_plan_approved"
+                        invisible="state != 'draft' or not product_id or not amunet_packaging_plan_approved"
                         groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_manager"/>
 
                 <!-- PASO 2: Validar piloto -->
@@ -64,12 +64,12 @@
                         string="Validar piloto"
                         type="object"
                         class="oe_highlight"
-                        invisible="state in ('done', 'cancel') or not amunet_packaging_plan_approved or amunet_preflight_accepted"
+                        invisible="state != 'draft' or not amunet_packaging_plan_approved or amunet_preflight_accepted"
                         groups="amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
                 <button name="action_run_pilot_preflight"
                         string="Validar piloto"
                         type="object"
-                        invisible="state in ('done', 'cancel') or (amunet_packaging_plan_approved and not amunet_preflight_accepted)"
+                        invisible="state != 'draft' or (amunet_packaging_plan_approved and not amunet_preflight_accepted)"
                         groups="amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
 
                 <!-- Boton auxiliar 'Ver planes de presentacion' -->

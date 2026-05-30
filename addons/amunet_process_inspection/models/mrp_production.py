@@ -81,8 +81,6 @@ class MrpProduction(models.Model):
     # Override action_confirm: gate preflight + generar inspecciones
     # ============================
     def action_confirm(self):
-        # 1. Gate DURO del preflight (solo si la MO es linea corta o larga;
-        #    no aplica a 'resale' ni 'solution' por ahora).
         for rec in self:
             if rec.route_type in ('short', 'long'):
                 if not rec.preflight_approved:
@@ -92,7 +90,6 @@ class MrpProduction(models.Model):
                         'Crea o ejecuta un preflight ANTES de confirmar '
                         'esta orden (Manufactura > Preflight piloto).'
                     ) % rec.name)
-        # 2. Llamar al super (que tambien ejecuta amunet_production)
         res = super().action_confirm()
         # 3. Generar inspecciones de proceso basadas en el routing
         for rec in self:

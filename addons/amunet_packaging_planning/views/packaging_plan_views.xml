@@ -50,8 +50,6 @@
                     <button name="action_close" string="Cerrar" type="object"
                             invisible="state != 'approved'"
                             groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor"/>
-                    <button name="action_cancel" string="Cancelar" type="object"
-                            invisible="state in ('done', 'cancel')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,suggested,approved,done"/>
                 </header>
                 <sheet>
