@@ -80,6 +80,28 @@
                                 <field name="verification_notes" placeholder="Evidencia de efectividad..."/>
                             </group>
                         </page>
+                        <page string="Firmas" name="signatures">
+                            <group>
+                                <group string="Investigacion">
+                                    <field name="investigation_signed_by_id" readonly="1"/>
+                                    <field name="investigation_signed_date" readonly="1"/>
+                                </group>
+                                <group string="Plan de accion">
+                                    <field name="action_plan_signed_by_id" readonly="1"/>
+                                    <field name="action_plan_signed_date" readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Verificacion">
+                                    <field name="verification_signed_by_id" readonly="1"/>
+                                    <field name="verification_signed_date" readonly="1"/>
+                                </group>
+                                <group string="Cierre">
+                                    <field name="closed_by_id" readonly="1"/>
+                                    <field name="closed_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>

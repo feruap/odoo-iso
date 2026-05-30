@@ -104,21 +104,20 @@ class AmunetMaterialRequestLine(models.Model):
             request = line.request_id
             if request.state == 'draft' and request.requester_id == user:
                 continue
-            # Almacenista: permisos especiales sobre las lineas.
-            # Mientras la solicitud este en estado ACTIVO
-            # (draft / submitted / in_picking), el almacenista
-            # (group_material_warehouse) puede CREAR, MODIFICAR y
-            # BORRAR lineas libremente. Esto cubre los casos de:
-            #  - anexar piezas faltantes,
-            #  - ajustar la cantidad pedida o surtida,
-            #  - cambiar el lote asignado,
-            #  - retirar una linea que ya no aplica.
-            # En estados de cierre (pending_reception, closed,
-            # cancelled) el almacenista pierde el permiso porque la
-            # solicitud ya no admite cambios operativos.
+            # Almacenista: en borrador puede corregir libremente. Una vez
+            # firmada por el solicitante, solo captura surtido operativo
+            # (lote/cantidad surtida); no cambia producto ni cantidad pedida.
             if (
                 is_warehouse
-                and request.state in ('draft', 'submitted', 'in_picking')
+                and request.state == 'draft'
+            ):
+                continue
+            if (
+                is_warehouse
+                and request.state in ('submitted', 'in_picking')
+                and not unlink
+                and not is_create_call
+                and set(vals).issubset(warehouse_write_fields)
             ):
                 continue
             # Validador (solicitante o jefe de area) en pending_reception

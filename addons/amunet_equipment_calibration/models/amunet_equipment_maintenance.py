@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 
@@ -246,13 +246,36 @@ class AmunetEquipmentMaintenance(models.Model):
             if record.result == 'no_conforme' and not record.nonconformity_notes:
                 raise UserError('Para resultado No conforme, captura el hallazgo/no conformidad.')
 
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_action_done': _('Cerrar mantenimiento de equipo'),
+        }
+
+    def _amunet_signature_required_procedures(self):
+        self.ensure_one()
+        return self.procedure_ids.filtered('active')
+
     def action_done(self):
+        self.ensure_one()
+        self._check_write_access()
+        if self.state not in ('draft', 'scheduled', 'in_progress'):
+            raise UserError('Solo se puede cerrar un mantenimiento abierto.')
+        self._check_close_requirements()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_done',
+            _('Cerrar mantenimiento de equipo'),
+            _('Firma de cierre de mantenimiento para %s.') % self.display_name,
+        )
+
+    def _signature_action_done(self):
+        self.ensure_one()
         self._check_write_access()
         for record in self:
             if record.state not in ('draft', 'scheduled', 'in_progress'):
                 raise UserError('Solo se puede cerrar un mantenimiento abierto.')
             record._check_close_requirements()
-            record.write({
+            record.with_context(amunet_maintenance_signature_write=True).write({
                 'state': 'done',
                 'completed_date': fields.Date.today(),
                 'performed_by_id': self.env.user.id,
@@ -268,6 +291,36 @@ class AmunetEquipmentMaintenance(models.Model):
                 record.equipment_id.sudo().message_post(
                     body='Mantenimiento cerrado conforme por %s.' % self.env.user.display_name)
         return True
+
+    def _has_close_signature_values(self, vals):
+        return (
+            vals.get('state') == 'done'
+            or {'completed_date', 'performed_by_id', 'performed_at'}.intersection(vals)
+        )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if (
+            not self.env.context.get('amunet_maintenance_signature_write')
+            and not self.env.su
+        ):
+            for vals in vals_list:
+                if self._has_close_signature_values(vals):
+                    raise UserError(_(
+                        'El cierre de mantenimiento solo puede registrarse '
+                        'desde el wizard de firma electronica.'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if (
+            self._has_close_signature_values(vals)
+            and not self.env.context.get('amunet_maintenance_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'El cierre de mantenimiento solo puede registrarse desde '
+                'el wizard de firma electronica.'))
+        return super().write(vals)
 
     def action_cancel(self):
         self._check_write_access()

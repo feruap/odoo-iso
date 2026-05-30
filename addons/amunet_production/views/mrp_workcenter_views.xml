@@ -13,7 +13,16 @@
                     <group>
                         <group string="Excepcion ISO 13485">
                             <field name="amunet_no_equipment_required"
-                                   widget="boolean_toggle"/>
+                                   widget="boolean_toggle" readonly="1"/>
+                            <field name="amunet_equipment_exception_reason"
+                                   placeholder="Justificacion documentada de la excepcion"/>
+                            <field name="amunet_equipment_exception_signed_by_id" readonly="1"/>
+                            <field name="amunet_equipment_exception_signed_date" readonly="1"/>
+                            <button name="action_approve_equipment_exception"
+                                    string="Firmar excepcion"
+                                    type="object"
+                                    class="oe_highlight"
+                                    invisible="amunet_no_equipment_required or amunet_equipment_count != 0"/>
                             <p class="text-muted" colspan="2"
                                invisible="not amunet_no_equipment_required">
                                 Este workcenter esta marcado como excepcion:

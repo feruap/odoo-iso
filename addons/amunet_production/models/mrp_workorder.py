@@ -187,6 +187,22 @@ class MrpWorkorder(models.Model):
             raise AccessError(_(
                 'Solo el supervisor de produccion puede recibir/aceptar el material entregado.'))
 
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_action_amunet_confirm_supply': _('Confirmar surtido AMP'),
+            '_signature_action_amunet_receive_supply': _('Recibir surtido AMP'),
+        }
+
+    def _amunet_signature_required_procedures(self):
+        self.ensure_one()
+        procedures = self.workcenter_id.amunet_equipment_ids.mapped('procedure_ids')
+        if not procedures and self.production_id.product_id:
+            procedures = self.env['amunet.quality.procedure'].search([
+                ('active', '=', True),
+                ('product_ids', 'in', self.production_id.product_id.id),
+            ])
+        return procedures.filtered('active')
+
     def action_amunet_start_supply(self):
         self.ensure_one()
         if not self.amunet_is_supply_workorder:
@@ -214,6 +230,21 @@ class MrpWorkorder(models.Model):
         return True
 
     def action_amunet_confirm_supply(self):
+        self.ensure_one()
+        if not self.amunet_is_supply_workorder:
+            raise UserError(_('Esta accion solo aplica al workorder de Surtido (AMP).'))
+        self._amunet_check_warehouse_role()
+        if self.amunet_supply_state != 'in_progress':
+            raise UserError(_(
+                'Solo se puede confirmar surtido cuando esta en progreso.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_amunet_confirm_supply',
+            _('Confirmar surtido AMP'),
+            _('Firma de confirmacion de surtido para %s.') % self.display_name,
+        )
+
+    def _signature_action_amunet_confirm_supply(self):
         """Almacen confirma surtido: valida lote + cantidad surtida en
         cada componente raw, corta el intervalo del timer (sin cerrar
         la WO), deja la WO esperando recepcion de produccion y notifica.
@@ -255,7 +286,7 @@ class MrpWorkorder(models.Model):
         elif hasattr(self, 'end_previous'):
             self.sudo().end_previous(doall=True)
         now = fields.Datetime.now()
-        self.write({
+        self.with_context(amunet_supply_signature_write=True).write({
             'amunet_supply_state': 'awaiting_reception',
             'amunet_supplied_by_id': self.env.user.id,
             'amunet_supplied_date': now,
@@ -269,6 +300,21 @@ class MrpWorkorder(models.Model):
         return True
 
     def action_amunet_receive_supply(self):
+        self.ensure_one()
+        if not self.amunet_is_supply_workorder:
+            raise UserError(_('Esta accion solo aplica al workorder de Surtido (AMP).'))
+        self._amunet_check_production_supervisor()
+        if self.amunet_supply_state != 'awaiting_reception':
+            raise UserError(_(
+                'No hay surtido pendiente de recepcion en esta operacion.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_amunet_receive_supply',
+            _('Recibir surtido AMP'),
+            _('Firma de recepcion de surtido para %s.') % self.display_name,
+        )
+
+    def _signature_action_amunet_receive_supply(self):
         """Produccion recibe/acepta el material entregado: copia
         qty_supplied -> quantity (conciliacion del surtido), cierra la
         WO (libera siguiente operacion) y notifica.
@@ -292,7 +338,7 @@ class MrpWorkorder(models.Model):
         # Cerrar la WO -> libera la siguiente en la ruta.
         self.sudo().button_finish()
         now = fields.Datetime.now()
-        self.write({
+        self.with_context(amunet_supply_signature_write=True).write({
             'amunet_supply_state': 'received',
             'amunet_received_by_id': self.env.user.id,
             'amunet_received_date': now,
@@ -304,6 +350,39 @@ class MrpWorkorder(models.Model):
                 'Liberando siguiente operacion.'
             )) % self.env.user.name)
         return True
+
+    def _has_supply_signature_values(self, vals):
+        signature_fields = {
+            'amunet_supplied_by_id', 'amunet_supplied_date',
+            'amunet_received_by_id', 'amunet_received_date',
+        }
+        signature_state = vals.get('amunet_supply_state') in (
+            'awaiting_reception', 'received')
+        return signature_state or set(vals).intersection(signature_fields)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if (
+            not self.env.context.get('amunet_supply_signature_write')
+            and not self.env.su
+        ):
+            for vals in vals_list:
+                if self._has_supply_signature_values(vals):
+                    raise UserError(_(
+                        'La confirmacion y recepcion del surtido AMP solo '
+                        'pueden registrarse desde el wizard de firma electronica.'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if (
+            self._has_supply_signature_values(vals)
+            and not self.env.context.get('amunet_supply_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'La confirmacion y recepcion del surtido AMP solo pueden '
+                'registrarse desde el wizard de firma electronica.'))
+        return super().write(vals)
 
     def button_start(self):
         """Valida calibraciones / estado de equipos antes de arrancar.
