@@ -48,11 +48,10 @@ class HrTrainingAttendance(models.Model):
     course_state = fields.Selection(
         related='course_id.state', store=True, string='Estado del curso')
 
-    _sql_constraints = [
-        ('uniq_course_employee',
-         'unique(course_id, employee_id)',
-         'No se puede agregar dos veces el mismo empleado a un curso.'),
-    ]
+    _uniq_course_employee = models.Constraint(
+        'unique(course_id, employee_id)',
+        'No se puede agregar dos veces el mismo empleado a un curso.',
+    )
 
     @api.constrains('grade')
     def _check_grade(self):

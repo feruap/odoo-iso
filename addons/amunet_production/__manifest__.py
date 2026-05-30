@@ -1,16 +1,14 @@
 {
     'name': "Amunet Módulo de Producción de Soluciones",
     'summary': """Módulo personalizado de producción y extensión del MRP.""",
-    'description': """
-        - (19.0.1.1.0) M2M equipos en mrp.workcenter + constraint calibracion vigente.
-        - (19.0.1.2.0) Fail-closed + state==active + excepcion documentada.
-        - (19.0.1.3.0) Reporte MO con links clickeables y seccion Trazabilidad
-          ISO 13485 / Cofepris (QC, equipos, certs, firmantes). System parameter
-          amunet_production.report_base_url para construir URLs absolutas.
-    """,
+    'description': """Extension MRP para Amunet.
+
+- 19.0.1.1.0: M2M equipos en mrp.workcenter y control de calibracion vigente.
+- 19.0.1.2.0: Validaciones fail-closed, estado activo y excepcion documentada.
+- 19.0.1.3.0: Reporte MO con trazabilidad ISO 13485 / Cofepris.""",
     'author': "Amunet",
     'category': 'Manufacturing',
-    'version': '19.0.1.29.0',
+    'version': '19.0.1.29.1',
     'depends': [
         'mrp',
         'stock',

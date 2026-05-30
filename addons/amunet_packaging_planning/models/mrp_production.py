@@ -10,7 +10,7 @@ class MrpProduction(models.Model):
     packaging_plan_ids = fields.One2many(
         'amunet.packaging.plan',
         'production_id',
-        string='Planes de empaque',
+        string='Cantidad de planes de empaque',
     )
     packaging_plan_count = fields.Integer(
         string='Planes de empaque',

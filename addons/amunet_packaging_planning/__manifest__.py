@@ -3,14 +3,12 @@
 {
     'name': 'Amunet - Planeacion de Empaque',
     'summary': 'Presentaciones autorizadas, tendencia WooCommerce y reacondicionamiento',
-    'description': """
-        Planea la mezcla de empaque de una orden de fabricacion usando
-        tendencia historica de WooCommerce. Controla presentaciones
-        autorizadas y reacondicionamientos entre cajas autorizadas.
-    """,
+    'description': """Planea la mezcla de empaque de una orden de fabricacion usando
+tendencia historica de WooCommerce. Controla presentaciones autorizadas y
+reacondicionamientos entre cajas autorizadas.""",
     'author': 'Amunet',
     'category': 'Manufacturing',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'depends': [
         'mail',
         'mrp',

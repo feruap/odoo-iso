@@ -37,7 +37,7 @@ class AmunetEquipment(models.Model):
 
     parent_equipment_id = fields.Many2one(
         'amunet.equipment',
-        string='Equipo padre',
+        string='Equipo padre (grupo)',
         ondelete='restrict',
         tracking=True,
         help='Equipo al que pertenece este accesorio o instrumento '
@@ -172,7 +172,7 @@ class AmunetEquipment(models.Model):
         compute='_compute_workqueue_status')
 
     expediente_count = fields.Integer(
-        string='Expedientes de Calificación',
+        string='Cantidad de expedientes',
         compute='_compute_expediente_count',
     )
     expediente_ids = fields.One2many(

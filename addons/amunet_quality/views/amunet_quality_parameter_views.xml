@@ -468,7 +468,7 @@
                         <!-- Panel Informativo VAMA-044 -->
                         <page string="Funcionalidad Tubo (VAMA-044)" name="vama_044"
                               invisible="evaluation_type != 'vama_044'">
-                            <div class="alert alert-info">
+                            <div class="alert alert-info" role="status">
                                 <h4><i class="fa fa-flask"/> VAMA-044: Prueba de Funcionalidad de Tubo</h4>
                                 <p>Este tipo de evaluación verifica 4 condiciones simultáneas:</p>
                                 <ul>
@@ -484,7 +484,7 @@
                         <!-- Panel Informativo VAMA-112 -->
                         <page string="Centrífuga (VAMA-112)" name="vama_112"
                               invisible="evaluation_type != 'vama_112'">
-                            <div class="alert alert-info">
+                            <div class="alert alert-info" role="status">
                                 <h4><i class="fa fa-cogs"/> VAMA-112: Verificación de Centrífuga</h4>
                                 <p>Evalúa 5 puntos de control mediante lista de verificación:</p>
                                 <ul>
@@ -500,7 +500,7 @@
                         <!-- Panel Informativo VAMA-078 -->
                         <page string="Liofilizado (VAMA-078)" name="vama_078"
                               invisible="evaluation_type != 'vama_078'">
-                            <div class="alert alert-info">
+                            <div class="alert alert-info" role="status">
                                 <h4><i class="fa fa-eye"/> VAMA-078: Inspección de Liofilizado</h4>
                                 <p>Evaluación visual de 4 características cualitativas. El estándar aceptado es:</p>
                                 <ul>

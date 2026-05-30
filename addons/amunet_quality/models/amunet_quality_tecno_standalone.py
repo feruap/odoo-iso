@@ -18,7 +18,11 @@ class AmunetQualityTecnoIncident(models.Model):
     description = fields.Text(string='Descripción del Evento')
     resolved = fields.Boolean(string='Cerrado / Resuelto', default=False)
     
-    notification_date = fields.Datetime(related='tecno_notification_date', readonly=False)
+    notification_date = fields.Datetime(
+        string='Fecha de reporte del incidente',
+        related='tecno_notification_date',
+        readonly=False,
+    )
 
     @api.model_create_multi
     def create(self, vals_list):

@@ -83,7 +83,7 @@
                                 <field name="password_expired" widget="boolean_toggle"/>
                             </group>
                             <div class="alert alert-warning" role="alert" invisible="not password_expired">
-                                <i class="fa fa-warning"/> <strong>¡ATENCIÓN!</strong> La contraseña de este usuario ha expirado y debe ser actualizada para cumplir con la NOM-241.
+                                <i class="fa fa-warning" title="Advertencia"/> <strong>¡ATENCIÓN!</strong> La contraseña de este usuario ha expirado y debe ser actualizada para cumplir con la NOM-241.
                             </div>
                         </page>
                     </notebook>

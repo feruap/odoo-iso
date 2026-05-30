@@ -20,9 +20,10 @@ class AmunetQualitySignaturePin(models.Model):
     user_id = fields.Many2one('res.users', string='Usuario', required=True, index=True)
     pin = fields.Char(string='PIN (Hashed)', required=True, help='PIN de firma almacenado de forma segura')
 
-    _sql_constraints = [
-        ('user_id_uniq', 'unique(user_id)', 'El usuario ya tiene un PIN asignado.')
-    ]
+    _user_id_uniq = models.Constraint(
+        'unique(user_id)',
+        'El usuario ya tiene un PIN asignado.',
+    )
 
     def _is_pin_admin(self):
         return (

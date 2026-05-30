@@ -23,7 +23,7 @@
             <xpath expr="//sheet" position="inside">
                 <field name="rework_order_count" invisible="1"/>
             </xpath>
-            <xpath expr="//div[contains(@class, 'alert-danger')]" position="inside">
+            <xpath expr="//div[hasclass('alert-danger')]" position="inside">
                 <button name="action_create_rework_order"
                         string="Registrar reproceso"
                         type="object"
