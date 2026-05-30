@@ -3,7 +3,7 @@
 import re
 import calendar
 from datetime import date
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError
 
 
@@ -79,6 +79,14 @@ class AmunetCalibrationProgram(models.Model):
     approved_line_count = fields.Integer(compute='_compute_counts')
     applied_line_count = fields.Integer(compute='_compute_counts')
     na_line_count = fields.Integer(compute='_compute_counts')
+    approved_by_id = fields.Many2one(
+        'res.users', string='Programa aprobado por', readonly=True, copy=False, tracking=True)
+    approved_date = fields.Datetime(
+        string='Fecha aprobacion programa', readonly=True, copy=False, tracking=True)
+    applied_by_id = fields.Many2one(
+        'res.users', string='Programa aplicado por', readonly=True, copy=False, tracking=True)
+    applied_date = fields.Datetime(
+        string='Fecha aplicacion programa', readonly=True, copy=False, tracking=True)
 
     @api.depends('line_ids.match_state', 'line_ids.review_state', 'line_ids.program_status')
     def _compute_counts(self):
@@ -101,25 +109,103 @@ class AmunetCalibrationProgram(models.Model):
             program.message_post(body='Programa reconciliado contra el inventario de equipos.')
         return True
 
-    def action_approve_ready_lines(self):
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_action_approve_ready_lines': _('Aprobar lineas FVA listas'),
+            '_signature_action_apply_approved_lines': _('Aplicar programa FVA a equipos'),
+        }
+
+    def _has_signature_values(self, vals):
+        signature_fields = {'approved_by_id', 'approved_date', 'applied_by_id', 'applied_date'}
+        return vals.get('state') in ('approved', 'applied') or bool(signature_fields.intersection(vals))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not self.env.context.get('amunet_calibration_program_signature_write') and not self.env.su:
+            for vals in vals_list:
+                if self._has_signature_values(vals):
+                    raise UserError(_(
+                        'La aprobacion/aplicacion del programa FVA solo puede '
+                        'registrarse desde el wizard de firma electronica.'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if (
+            self._has_signature_values(vals)
+            and not self.env.context.get('amunet_calibration_program_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'La aprobacion/aplicacion del programa FVA solo puede '
+                'registrarse desde el wizard de firma electronica.'))
+        return super().write(vals)
+
+    def _check_approve_ready_lines(self):
+        self.ensure_one()
         _check_equipment_manager(self.env)
-        for program in self:
-            ready = program.line_ids.filtered(
-                lambda l: l.review_state in ('pending', 'reviewed')
-                and l.match_state == 'matched'
-                and l.department_final
-                and l.program_status != 'na')
-            ready.action_approve_line()
-            program.state = 'approved'
+        ready = self.line_ids.filtered(
+            lambda l: l.review_state in ('pending', 'reviewed')
+            and l.match_state == 'matched'
+            and l.department_final
+            and l.pno_approved_ids
+            and l.program_status != 'na')
+        if not ready:
+            raise UserError(
+                'No hay lineas FVA listas para aprobar. Revisa coincidencia, area, PNOs y estado.')
+        return ready
+
+    def action_approve_ready_lines(self):
+        self.ensure_one()
+        ready = self._check_approve_ready_lines()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_approve_ready_lines',
+            _('Aprobar lineas FVA listas'),
+            _('Firma de aprobacion de %d linea(s) FVA en %s.') % (
+                len(ready), self.display_name),
+        )
+
+    def _signature_action_approve_ready_lines(self):
+        self.ensure_one()
+        ready = self._check_approve_ready_lines()
+        ready._approve_line_records()
+        self.with_context(amunet_calibration_program_signature_write=True).write({
+            'state': 'approved',
+            'approved_by_id': self.env.user.id,
+            'approved_date': fields.Datetime.now(),
+        })
         return True
 
-    def action_apply_approved_lines(self):
+    def _check_apply_approved_lines(self):
+        self.ensure_one()
         _check_equipment_manager(self.env)
-        for program in self:
-            approved = program.line_ids.filtered(lambda l: l.review_state == 'approved')
-            approved.action_apply_to_equipment()
-            if not program.line_ids.filtered(lambda l: l.review_state in ('pending', 'reviewed', 'approved')):
-                program.state = 'applied'
+        approved = self.line_ids.filtered(lambda l: l.review_state == 'approved')
+        if not approved:
+            raise UserError('No hay lineas FVA aprobadas pendientes de aplicar.')
+        return approved
+
+    def action_apply_approved_lines(self):
+        self.ensure_one()
+        approved = self._check_apply_approved_lines()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_apply_approved_lines',
+            _('Aplicar programa FVA a equipos'),
+            _('Firma de aplicacion de %d linea(s) FVA en %s.') % (
+                len(approved), self.display_name),
+        )
+
+    def _signature_action_apply_approved_lines(self):
+        self.ensure_one()
+        approved = self._check_apply_approved_lines()
+        approved._apply_to_equipment_records()
+        vals = {
+            'applied_by_id': self.env.user.id,
+            'applied_date': fields.Datetime.now(),
+        }
+        if not self.line_ids.filtered(lambda l: l.review_state in ('pending', 'reviewed', 'approved')):
+            vals['state'] = 'applied'
+        self.with_context(amunet_calibration_program_signature_write=True).write(vals)
         return True
 
 
@@ -212,6 +298,14 @@ class AmunetCalibrationProgramLine(models.Model):
     workqueue_blocker = fields.Char(
         string='Bloqueo / hallazgo',
         compute='_compute_workqueue_guidance')
+    approved_by_id = fields.Many2one(
+        'res.users', string='Linea aprobada por', readonly=True, copy=False, tracking=True)
+    approved_date = fields.Datetime(
+        string='Fecha aprobacion linea', readonly=True, copy=False, tracking=True)
+    applied_by_id = fields.Many2one(
+        'res.users', string='Linea aplicada por', readonly=True, copy=False, tracking=True)
+    applied_date = fields.Datetime(
+        string='Fecha aplicacion linea', readonly=True, copy=False, tracking=True)
 
     @api.depends('identification_code', 'fva_equipment_name')
     def _compute_name(self):
@@ -284,12 +378,26 @@ class AmunetCalibrationProgramLine(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        if not self.env.context.get('amunet_calibration_program_signature_write') and not self.env.su:
+            for vals in vals_list:
+                if self._has_signature_values(vals):
+                    raise UserError(_(
+                        'La aprobacion/aplicacion de lineas FVA solo puede '
+                        'registrarse desde el wizard de firma electronica.'))
         records = super().create(vals_list)
         records._normalize_from_fva()
         records.mapped('equipment_id')._sync_calibration_required_from_lines()
         return records
 
     def write(self, vals):
+        if (
+            self._has_signature_values(vals)
+            and not self.env.context.get('amunet_calibration_program_signature_write')
+            and not self.env.su
+        ):
+            raise UserError(_(
+                'La aprobacion/aplicacion de lineas FVA solo puede '
+                'registrarse desde el wizard de firma electronica.'))
         before = self.mapped('equipment_id') if {'equipment_id', 'program_status'} & set(vals) else self.env['amunet.equipment']
         res = super().write(vals)
         if {'brand_model_raw', 'identification_code', 'fva_equipment_name', 'program_status'} & set(vals):
@@ -444,22 +552,79 @@ class AmunetCalibrationProgramLine(models.Model):
             line.pno_approved_ids = [(6, 0, line.pno_candidate_ids.ids)]
         return True
 
-    def action_approve_line(self):
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_action_approve_line': _('Aprobar linea FVA'),
+            '_signature_action_apply_to_equipment': _('Aplicar linea FVA a equipo'),
+        }
+
+    def _has_signature_values(self, vals):
+        signature_fields = {'approved_by_id', 'approved_date', 'applied_by_id', 'applied_date'}
+        return vals.get('review_state') in ('approved', 'applied') or bool(signature_fields.intersection(vals))
+
+    def _check_can_approve_line(self):
         _check_equipment_manager(self.env)
         for line in self:
             if line.program_status == 'na':
-                line.review_state = 'no_apply'
                 continue
             if not line.department_final:
                 raise UserError(
                     "Define el area aprobada antes de aprobar %s."
                     % line.identification_code)
-            line.review_state = 'approved'
+            if not line.pno_approved_ids:
+                raise UserError(
+                    "Define al menos un PNO aprobado antes de aprobar %s."
+                    % line.identification_code)
+
+    def _approve_line_records(self):
+        self._check_can_approve_line()
+        now = fields.Datetime.now()
+        for line in self:
+            vals = {'review_state': 'no_apply'} if line.program_status == 'na' else {
+                'review_state': 'approved',
+                'approved_by_id': self.env.user.id,
+                'approved_date': now,
+            }
+            line.with_context(amunet_calibration_program_signature_write=True).write(vals)
         return True
 
+    def action_approve_line(self):
+        if len(self) != 1:
+            raise UserError(
+                'Selecciona una sola linea FVA o usa el boton del programa para aprobar varias con una firma.')
+        self._check_can_approve_line()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_approve_line',
+            _('Aprobar linea FVA'),
+            _('Firma de aprobacion de linea FVA %s.') % self.display_name,
+        )
+
+    def _signature_action_approve_line(self):
+        self.ensure_one()
+        return self._approve_line_records()
+
     def action_apply_to_equipment(self):
+        if len(self) != 1:
+            raise UserError(
+                'Selecciona una sola linea FVA o usa el boton del programa para aplicar varias con una firma.')
+        if self.review_state != 'approved':
+            raise UserError('Solo se puede aplicar una linea FVA aprobada.')
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_action_apply_to_equipment',
+            _('Aplicar linea FVA a equipo'),
+            _('Firma de aplicacion de linea FVA %s.') % self.display_name,
+        )
+
+    def _signature_action_apply_to_equipment(self):
+        self.ensure_one()
+        return self._apply_to_equipment_records()
+
+    def _apply_to_equipment_records(self):
         _check_equipment_manager(self.env)
         Equipment = self.env['amunet.equipment'].sudo()
+        now = fields.Datetime.now()
         for line in self:
             if line.review_state != 'approved':
                 continue
@@ -483,7 +648,11 @@ class AmunetCalibrationProgramLine(models.Model):
                 line.equipment_id = equipment
             if line.pno_approved_ids:
                 equipment.procedure_ids = [(4, p.id) for p in line.pno_approved_ids]
-            line.review_state = 'applied'
-            line.match_state = 'matched'
+            line.with_context(amunet_calibration_program_signature_write=True).write({
+                'review_state': 'applied',
+                'match_state': 'matched',
+                'applied_by_id': self.env.user.id,
+                'applied_date': now,
+            })
             line.message_post(body='Configuracion aplicada al equipo %s.' % equipment.display_name)
         return True

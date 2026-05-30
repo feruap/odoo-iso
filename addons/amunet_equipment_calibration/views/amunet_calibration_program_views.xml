@@ -38,6 +38,16 @@
                         <group string="Notas">
                             <field name="notes" nolabel="1"/>
                         </group>
+                        <group string="Trazabilidad de firma">
+                            <group>
+                                <field name="approved_by_id" readonly="1"/>
+                                <field name="approved_date" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="applied_by_id" readonly="1"/>
+                                <field name="applied_date" readonly="1"/>
+                            </group>
+                        </group>
                         <notebook>
                             <page string="Matriz FVA" name="lines">
                                 <field name="line_ids" context="{'default_program_id': id}">
@@ -66,6 +76,8 @@
                                                decoration-info="review_state == 'reviewed'"
                                                decoration-success="review_state in ('approved', 'applied')"
                                                decoration-muted="review_state == 'no_apply'"/>
+                                        <field name="approved_by_id" optional="hide"/>
+                                        <field name="applied_by_id" optional="hide"/>
                                     </list>
                                     <form string="Línea del programa">
                                         <header>
@@ -125,6 +137,16 @@
                                             <group string="Notas de revisión">
                                                 <field name="notes" nolabel="1"/>
                                             </group>
+                                            <group string="Trazabilidad de firma">
+                                                <group>
+                                                    <field name="approved_by_id" readonly="1"/>
+                                                    <field name="approved_date" readonly="1"/>
+                                                </group>
+                                                <group>
+                                                    <field name="applied_by_id" readonly="1"/>
+                                                    <field name="applied_date" readonly="1"/>
+                                                </group>
+                                            </group>
                                         </sheet>
                                         <chatter/>
                                     </form>
@@ -149,6 +171,8 @@
                     <field name="missing_line_count"/>
                     <field name="pending_review_count"/>
                     <field name="applied_line_count"/>
+                    <field name="approved_by_id" optional="hide"/>
+                    <field name="applied_by_id" optional="hide"/>
                     <field name="state" widget="badge"
                            decoration-info="state == 'review'"
                            decoration-success="state in ('approved', 'applied')"
@@ -193,6 +217,8 @@
                     <field name="review_state" widget="badge"
                            decoration-success="review_state in ('approved', 'applied')"
                            decoration-muted="review_state == 'no_apply'"/>
+                    <field name="approved_by_id" optional="hide"/>
+                    <field name="applied_by_id" optional="hide"/>
                     <field name="pno_approved_ids" widget="many2many_tags" optional="hide"/>
                 </list>
             </field>
@@ -255,6 +281,16 @@
                         </group>
                         <group string="Notas de revisión">
                             <field name="notes" nolabel="1"/>
+                        </group>
+                        <group string="Trazabilidad de firma">
+                            <group>
+                                <field name="approved_by_id" readonly="1"/>
+                                <field name="approved_date" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="applied_by_id" readonly="1"/>
+                                <field name="applied_date" readonly="1"/>
+                            </group>
                         </group>
                     </sheet>
                     <chatter/>
