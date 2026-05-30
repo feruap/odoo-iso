@@ -3344,8 +3344,8 @@ class AmunetQualityCheck(models.Model):
         Usa descarga directa para filename controlado y evitar UUID.
         """
         self.ensure_one()
-        if self.state != 'done':
-             raise ValidationError("El control de calidad debe estar finalizado para imprimir el certificado.")
+        if self.state not in ('done', 'awaiting_reception'):
+            raise ValidationError("El control de calidad debe estar finalizado para imprimir el certificado.")
 
         download_url = f"/amunet_quality/download_certificado_interno/{self.id}"
         
