@@ -8,3 +8,7 @@ access_material_request_line_manager,material.request.line.manager,model_amunet_
 access_stock_picking_material_requester,stock.picking material requester read,stock.model_stock_picking,group_material_requester,1,0,0,0
 access_stock_move_material_requester,stock.move material requester read,stock.model_stock_move,group_material_requester,1,0,0,0
 access_stock_move_line_material_requester,stock.move.line material requester read,stock.model_stock_move_line,group_material_requester,1,0,0,0
+access_mrp_production_warehouse,mrp.production warehouse read,mrp.model_mrp_production,group_material_warehouse,1,0,0,0
+access_mrp_production_manager_mat,mrp.production manager material read,mrp.model_mrp_production,group_material_manager,1,0,0,0
+access_mrp_workorder_warehouse,mrp.workorder warehouse read,mrp.model_mrp_workorder,group_material_warehouse,1,0,0,0
+access_mrp_workorder_manager_mat,mrp.workorder manager material read,mrp.model_mrp_workorder,group_material_manager,1,0,0,0

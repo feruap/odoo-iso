@@ -88,22 +88,23 @@
                     </style>
 
                     <div style="font-weight: bold; margin-top: 15px; margin-bottom: 10px; font-size: 14pt;">
-                        1- Datos Generales
+                        DATOS GENERALES
                     </div>
-                    
+
                     <table class="no-border" style="width: 100%; border: 0px none transparent !important; font-size: 11pt; margin-bottom: 20px; line-height: 1.5;">
                         <tr style="border: 0 !important;">
-                            <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>Nombre:</strong> <span t-field="o.product_id.name"/></td>
+                            <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>NOMBRE:</strong> <span t-field="o.product_id.name"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
-                            <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>Clave:</strong> <span t-field="o.product_code"/></td>
+                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CLAVE:</strong> <span t-field="o.product_code"/></td>
+                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-field="o.product_id.certificate_document_code"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
-                            <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>Descripción:</strong> <span t-field="o.product_description"/></td>
+                            <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>Uso previsto:</strong> <span t-field="o.product_description"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>No. de lote:</strong> <span t-field="o.lot_name_amunet"/></td>
-                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Fecha de reanálisis:</strong> </td>
+                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Fecha de caducidad:</strong> <span t-field="o.expiration_date"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>No. de análisis:</strong> <span t-esc="o.analysis_number"/></td>
@@ -112,22 +113,29 @@
                     </table>
 
                     <div style="font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 14pt;">
-                        2- Resultados
+                        RESULTADOS
                     </div>
                     <table class="tabla-full tabla-datos" style="margin-bottom: 20px; text-align: center; font-size: 10pt;">
                         <tr style="background-color: #f2f2f2; font-weight: bold;">
-                            <td style="width: 20%; vertical-align: middle;">DETERMINACIÓN</td>
-                            <td style="width: 20%; vertical-align: middle;">ESPECIFICACIÓN</td>
-                            <td style="width: 30%; vertical-align: middle;">CRITERIOS FARMACOPEICOS Y/O INTERNOS</td>
-                            <td style="width: 15%; vertical-align: middle;">RESULTADO</td>
-                            <td style="width: 15%; vertical-align: middle;">DICTAMEN</td>
+                            <td style="width: 20%; vertical-align: middle;">Información del método aplicable</td>
+                            <td style="width: 20%; vertical-align: middle;">Determinaciones o características requeridas</td>
+                            <td style="width: 30%; vertical-align: middle;">Criterio de aceptación</td>
+                            <td style="width: 15%; vertical-align: middle;">Resultado</td>
+                            <td style="width: 15%; vertical-align: middle;">Dictamen</td>
                         </tr>
                         <t t-foreach="o.test_line_ids" t-as="line">
                             <t t-if="line.has_details">
                                 <t t-foreach="line.detail_line_ids" t-as="detail">
                                     <tr>
-                                        <td style="text-align: left;"><span t-field="line.name"/></td>
-                                        <td><span t-field="detail.name"/></td>
+                                        <!-- Primera sub-determinación: celda del método con rowspan -->
+                                        <t t-if="detail_index == 0">
+                                            <td t-att-rowspan="len(line.detail_line_ids)"
+                                                style="text-align: left; vertical-align: middle; font-style: italic;">
+                                                '<span t-field="line.name"/>'<br/>
+                                                [<span t-field="line.parameter_id.code"/>]
+                                            </td>
+                                        </t>
+                                        <td style="text-align: left;"><span t-field="detail.name"/></td>
                                         <td><span t-field="detail.acceptance_criteria"/></td>
                                         <td><span t-field="detail.result_display"/></td>
                                         <td>
@@ -140,7 +148,10 @@
                             </t>
                             <t t-else="">
                                 <tr>
-                                    <td style="text-align: left;"><span t-field="line.name"/></td>
+                                    <td style="text-align: left; font-style: italic;">
+                                        '<span t-field="line.name"/>'<br/>
+                                        [<span t-field="line.parameter_id.code"/>]
+                                    </td>
                                     <td></td>
                                     <td><span t-field="line.acceptance_criteria"/></td>
                                     <td><span t-field="line.result_display"/></td>
@@ -156,7 +167,7 @@
 
                     <div style="width: 100%; margin-top: 20px; margin-bottom: 20px; border: 0 !important;">
                         <div style="display: inline-block; font-weight: bold; font-size: 14pt; vertical-align: bottom; border: 0 !important; white-space: nowrap;">
-                            3- Dictamen final:
+                            DICTAMEN FINAL:
                         </div>
                         <div style="display: inline-block; width: 68%; border-bottom: 1.5px solid black !important; text-align: left; vertical-align: bottom; padding-bottom: 2px; border-left: 0 !important; border-top: 0 !important; border-right: 0 !important;">
                             <span t-if="o.state == 'done' and len(o.test_line_ids.filtered(lambda l: l.verdict == 'fail')) == 0" style="font-size: 12pt;">Aprobado</span>
@@ -192,8 +203,8 @@
                                 <td class="no-border" style="width: 5%; border: 0 !important;"></td>
                                 <td class="no-border" style="width: 30%; vertical-align: bottom; border: 0 !important;">
                                     <div style="margin-bottom: 5px; min-height: 40px; font-weight: bold;">
-                                        <span t-field="o.write_date"/><br/>
-                                        <span t-field="o.create_uid.name"/>
+                                        <span t-field="o.authorized_date"/><br/>
+                                        <span t-field="o.user_authorized_id.name"/>
                                     </div>
                                     <div style="border-top: 1px solid black; padding-top: 5px; width: 90%; margin: 0 auto; font-weight: bold; font-size: 10pt;">
                                         Responsable Sanitario<br/>

@@ -59,7 +59,7 @@
                 <attribute name="invisible">state not in ('confirmed','progress','to_close') or not workorder_ids or is_planned or (not preflight_approved and route_type in ('short','long'))</attribute>
             </xpath>
             <xpath expr="//button[@name='button_unplan']" position="attributes">
-                <attribute name="invisible">not is_planned or state in ('cancel','done') or (not preflight_approved and route_type in ('short','long'))</attribute>
+                <attribute name="invisible">1</attribute>
             </xpath>
 
             <!-- Pestana al final del notebook -->

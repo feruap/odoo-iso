@@ -153,6 +153,8 @@ class MrpProduction(models.Model):
         compute='_compute_amunet_has_supplied_moves', store=False)
     amunet_all_workorders_done = fields.Boolean(
         compute='_compute_amunet_all_workorders_done', store=False)
+    amunet_user_is_warehouse = fields.Boolean(
+        compute='_compute_amunet_user_is_warehouse', store=False)
 
     @api.depends('move_raw_ids.amunet_qty_supplied', 'move_raw_ids.amunet_qty_used')
     def _compute_reconciliation_has_surplus(self):
@@ -179,6 +181,21 @@ class MrpProduction(models.Model):
                 rec.amunet_all_workorders_done = all(
                     wo.state in ('done', 'cancel') for wo in rec.workorder_ids
                 )
+
+    @api.depends_context('uid')
+    def _compute_amunet_user_is_warehouse(self):
+        user = self.env.user
+        is_wh = (
+            user.has_group('amunet_material_request.group_material_warehouse')
+            or user.has_group('amunet_material_request.group_material_manager')
+        ) and not (
+            user.has_group('amunet_production.group_production_supervisor')
+            or user.has_group('amunet_production.group_production_operator')
+            or user.has_group('mrp.group_mrp_manager')
+            or user.has_group('mrp.group_mrp_user')
+        )
+        for rec in self:
+            rec.amunet_user_is_warehouse = is_wh
 
     def action_initiate_reconciliation(self):
         self.ensure_one()

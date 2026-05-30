@@ -587,18 +587,6 @@ class AmunetPilotPreflight(models.Model):
                 'Ajustar cantidad o crear presentacion autorizada.' if not possible else '',
                 sequence=410,
             )
-            trend_count = Trend.search_count([
-                ('presentation_id', 'in', presentations.ids),
-                ('sale_date', '>=', fields.Date.subtract(fields.Date.context_today(self), days=180)),
-            ])
-            rec._add_line(
-                'packaging',
-                'Tendencia WooCommerce',
-                'pass' if trend_count else 'warn',
-                '%s lineas de venta en 180 dias para sugerir mezcla.' % trend_count,
-                'Actualizar/importar tendencia WooCommerce si se quiere recomendacion automatica.' if not trend_count else '',
-                sequence=420,
-            )
             missing_packaging = []
             for p in presentations:
                 if p.label_required and not p.label_component_id:
