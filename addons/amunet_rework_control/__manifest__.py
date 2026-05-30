@@ -3,14 +3,12 @@
 {
     'name': 'Amunet - No Conformidad y Reproceso',
     'summary': 'Control ISO 13485 de producto no conforme, reproceso y re-QC',
-    'description': """
-        Registra no conformidades detectadas por Calidad, bloquea el lote
-        operacionalmente, controla disposicion/reproceso, material adicional,
-        ejecucion de Produccion, reanalisis y cierre.
-    """,
+    'description': """Registra no conformidades detectadas por Calidad, bloquea el lote
+operacionalmente, controla disposicion/reproceso, material adicional,
+ejecucion de Produccion, reanalisis y cierre.""",
     'author': 'Amunet',
     'category': 'Quality',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'depends': [
         'mail',
         'mrp',

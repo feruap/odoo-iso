@@ -43,7 +43,7 @@ class MrpWorkorder(models.Model):
         ('in_progress', 'Surtiendo'),
         ('awaiting_reception', 'Esperando recepcion de produccion'),
         ('received', 'Recibido'),
-    ], string='Estado del surtido', default='pending', copy=False, tracking=True)
+    ], string='Estado del surtido', default='pending', copy=False)
     amunet_supplied_by_id = fields.Many2one(
         'res.users', string='Surtido por', readonly=True, copy=False,
     )

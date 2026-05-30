@@ -21,10 +21,10 @@
             <!-- Botones del header: flujo de traslados internos -->
 
             <!-- Ocultar "Mark as Todo" para internos; reemplazar con "Registrar traslado" -->
-            <xpath expr="//button[@name='action_confirm'][@class='oe_highlight']" position="attributes">
+            <xpath expr="//button[@name='action_confirm'][hasclass('oe_highlight')]" position="attributes">
                 <attribute name="invisible">picking_type_code == 'internal' or state != 'draft'</attribute>
             </xpath>
-            <xpath expr="//button[@name='action_confirm'][@class='oe_highlight']" position="after">
+            <xpath expr="//button[@name='action_confirm'][hasclass('oe_highlight')]" position="after">
                 <button name="action_confirm"
                         string="Registrar traslado"
                         type="object"
@@ -33,20 +33,20 @@
             </xpath>
 
             <!-- Ocultar "Check Availability" para internos (auto-asignado al confirmar) -->
-            <xpath expr="//button[@name='action_assign'][@class='oe_highlight']" position="attributes">
+            <xpath expr="//button[@name='action_assign'][hasclass('oe_highlight')]" position="attributes">
                 <attribute name="invisible">picking_type_code == 'internal' or not show_check_availability</attribute>
             </xpath>
 
             <!-- Ocultar ambos botones "Validate" para internos -->
-            <xpath expr="//button[@name='button_validate'][@class='oe_highlight']" position="attributes">
+            <xpath expr="//button[@name='button_validate'][hasclass('oe_highlight')]" position="attributes">
                 <attribute name="invisible">picking_type_code == 'internal' or state in ('draft', 'confirmed', 'done', 'cancel')</attribute>
             </xpath>
-            <xpath expr="//button[@name='button_validate'][@class='o_btn_validate']" position="attributes">
+            <xpath expr="//button[@name='button_validate'][hasclass('o_btn_validate')]" position="attributes">
                 <attribute name="invisible">picking_type_code == 'internal' or state in ('waiting', 'assigned', 'done', 'cancel')</attribute>
             </xpath>
 
             <!-- Botones del flujo propio (antes del primer Validate) -->
-            <xpath expr="//button[@name='button_validate'][@class='oe_highlight']" position="before">
+            <xpath expr="//button[@name='button_validate'][hasclass('oe_highlight')]" position="before">
                 <button name="action_transfer_approve"
                         string="Aprobar traslado"
                         type="object"

@@ -1,12 +1,10 @@
 {
     'name': 'Amunet - Control de Calidad',
-    'version': '19.0.3.9.0',
+    'version': '19.0.3.9.2',
     'category': 'Quality',
     'summary': 'Sistema de Control de Calidad con Parámetros Jerárquicos',
-    'description': """
-        Sistema completo de Control de Calidad para la manufactura de dispositivos médicos
-        y productos farmacéuticos.
-    """,
+    'description': """Sistema completo de Control de Calidad para la manufactura de
+dispositivos médicos y productos farmacéuticos.""",
     'author': 'DIC Consultores - Rafael López Flores',
     'website': 'https://www.amunet.com.mx',
     'license': 'LGPL-3',

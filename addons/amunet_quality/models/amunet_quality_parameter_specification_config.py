@@ -60,31 +60,8 @@ class AmunetQualityParameterSpecificationConfig(models.Model):
         store=True
     )
 
-    evaluation_type = fields.Selection([
-        ('binary_selection', 'Selección binaria (Sin/Con)'),
-        ('numeric_range', 'Rango numérico'),
-        ('checkbox_combined', 'Checkboxes combinados'),
-        ('conditional_numeric_range', 'Rango numérico condicional'),
-        ('text_pattern', 'Texto con patrón'),
-        ('expected_vs_obtained', 'Comparación esperado vs obtenido'),
-        ('binary_with_notes', 'Binario con notas'),
-        ('ternary_with_na', 'Ternario con N/A'),
-        ('decision_matrix', 'Matriz de decisión (Multi-paso)'),
-        ('mavi_07', 'MAVI-07: Visualización de Líneas Resultado'),
-        ('multi_condition_numeric', 'Multi-Condición Numérica (VAMA-096)'),
-        ('vama_044', 'VAMA-044: Funcionalidad de Tubo (4 condiciones)'),
-        ('vama_112', 'VAMA-112: Multi-Checkbox Centrífuga'),
-        ('vama_078', 'VAMA-078: Multi-Visual Liofilizado'),
-        ('vama_multi_check', 'VAMA: Multi-Check Genérico (1-6 puntos)'),
-        ('mga_0981', 'MGA-0981: Variación de Volumen (± 0.5 ml)'),
-        ('vama_105', 'VAMA-105: Volumen Nominal vs Medido'),
-        ('vama_034', 'VAMA-034: Tipo Muestra vs Resultado'),
-        ('vama_006', 'VAMA-006: Escala de Color 0-14'),
-        ('vama_067', 'VAMA-067: Selección 2 Pasos (Partículas/Color)'),
-        ('mavi_15_ternary', 'MAVI-15: Selección Ternaria'),
-        ('mavi_11_height', 'MAVI-11: Altura (6/8 cm ± 0.5)'),
-        ('mavi_07_ternary', 'MAVI-07: Ternario (Hojas Maestras)'),
-    ], string='Tipo Evaluación',
+    evaluation_type = fields.Selection(
+        string='Tipo Evaluación',
         related='specification_id.evaluation_type',
         store=True
     )
@@ -578,4 +555,3 @@ class AmunetQualityParameterSpecificationConfig(models.Model):
                 raise ValidationError(
                     f'La especificación "{record.specification_id.name}" ya está configurada para este parámetro'
                 )
-

@@ -7,7 +7,7 @@ class AmunetQualityTestLine(models.Model):
     _inherit = 'amunet.quality.test.line'
 
     # Campo nuevo para la trazabilidad individual por línea
-    equipment_id = fields.Many2one('amunet.equipment', string='Equipo Utilizado', tracking=True)
+    equipment_id = fields.Many2one('amunet.equipment', string='Equipo Utilizado')
 
     @api.constrains('equipment_id', 'value')
     def _check_equipment_validity(self):

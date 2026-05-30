@@ -93,9 +93,9 @@ class AmunetDocumento(models.Model):
         string='Proxima revision', tracking=True,
         help='Fecha en la que el documento debe revisarse o renovarse.')
     fecha_emision_display = fields.Char(
-        string='Fecha de emision', compute='_compute_fechas_display', store=False)
+        string='Fecha de emision (texto)', compute='_compute_fechas_display', store=False)
     fecha_vigencia_display = fields.Char(
-        string='Proxima revision', compute='_compute_fechas_display', store=False)
+        string='Proxima revision (texto)', compute='_compute_fechas_display', store=False)
     fecha_publicacion = fields.Date(string='Fecha de publicacion', readonly=True)
     archivo = fields.Binary(
         string='Archivo Word adjunto (opcional / legado)', attachment=True,
@@ -143,7 +143,7 @@ class AmunetDocumento(models.Model):
 
     termino_ids = fields.One2many(
         'amunet.documento.termino', 'documento_id',
-        string='Terminos y definiciones')
+        string='Glosario de terminos')
 
     # Tres firmas (Elabora / Revisa / Autoriza) + asignaciones previas
     elabora_id = fields.Many2one(
@@ -187,7 +187,7 @@ class AmunetDocumento(models.Model):
     firma_config_id = fields.Many2one(
         'amunet.documento.firma.config',
         compute='_compute_firma_config',
-        string='Politica de firmas aplicable', store=False)
+        string='Politica de firmas aplicable', store=True)
     allowed_revisor_ids = fields.Many2many(
         'res.users', 'amunet_doc_allowed_revisor_rel', 'doc_id', 'user_id',
         compute='_compute_allowed_signers', store=False,
@@ -207,9 +207,10 @@ class AmunetDocumento(models.Model):
     justificacion_pendiente = fields.Text(string='Justificacion del cambio')
     motivo_devolucion = fields.Text(string='Motivo para devolver')
 
-    _sql_constraints = [
-        ('codigo_uniq', 'unique(codigo)', 'El codigo del documento debe ser unico.'),
-    ]
+    _codigo_uniq = models.Constraint(
+        'unique(codigo)',
+        'El codigo del documento debe ser unico.',
+    )
 
     @api.depends('fecha_emision', 'fecha_vigencia')
     def _compute_fechas_display(self):

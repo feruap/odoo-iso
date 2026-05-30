@@ -86,9 +86,10 @@ class AmunetQualitySamplingPlan(models.Model):
     )
     procedure_id = fields.Many2one('amunet.quality.procedure', string='Procedimiento')
 
-    _sql_constraints = [
-        ('code_unique', 'unique(code)', 'El codigo del plan de muestreo debe ser unico.'),
-    ]
+    _code_unique = models.Constraint(
+        'unique(code)',
+        'El codigo del plan de muestreo debe ser unico.',
+    )
 
     @api.constrains('lot_min', 'lot_max', 'percent', 'fixed_qty', 'min_qty', 'max_qty')
     def _check_numeric_values(self):

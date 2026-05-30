@@ -237,7 +237,7 @@ class AmunetQualityTestLineDetail(models.Model):
     mavi07_sample_type = fields.Selection([
         ('negative', 'Muestra Negativa'),
         ('positive', 'Muestra Positiva')
-    ], string='Tipo de Muestra')
+    ], string='MAVI-07 Tipo de Muestra')
 
     mavi07_observed_result = fields.Selection([
         ('result_1', '#1'),
@@ -245,7 +245,7 @@ class AmunetQualityTestLineDetail(models.Model):
         ('result_3', '#3'),
         ('result_4', '#4'),
         ('result_5', '#5')
-    ], string='Resultado Observado')
+    ], string='MAVI-07 Resultado Observado')
 
     mavi07_expected_result = fields.Char(
         string='Resultado Esperado',
@@ -257,12 +257,12 @@ class AmunetQualityTestLineDetail(models.Model):
     vama034_sample_type = fields.Selection([
         ('negative', 'Opción A: Negativa'),
         ('positive', 'Opción B: Positiva'),
-    ], string="Tipo de Muestra")
+    ], string="VAMA-034 Tipo de Muestra")
 
     vama034_observed_result = fields.Selection([
         ('control_only', 'Opción A: Visualización sólo de la línea control.'),
         ('control_test', 'Opción B: Visualización de línea control y línea de prueba.'),
-    ], string="Resultado Observado")
+    ], string="VAMA-034 Resultado Observado")
 
     # -- VAMA-006: Escala de Color NPS --
     vama006_color_value = fields.Integer(
@@ -327,11 +327,11 @@ class AmunetQualityTestLineDetail(models.Model):
         ('incorrect', 'Funcionamiento Incorrecto')
     ], string='Funcionamiento del Vial')
 
-    multi_cond_num1 = fields.Integer(string='Número de Gotas')
+    multi_cond_num1 = fields.Integer(string='Multi-condición Número de Gotas')
     multi_cond_num1_filled = fields.Boolean(string='Num1 llenado', compute='_compute_multi_cond_filled', store=True)
-    multi_cond_num1_min = fields.Integer(string='Mínimo Gotas', default=5)
+    multi_cond_num1_min = fields.Integer(string='Multi-condición Mínimo Gotas', default=5)
 
-    multi_cond_num2 = fields.Float(string='Volumen de Gota (µl)', digits=(10, 2))
+    multi_cond_num2 = fields.Float(string='Multi-condición Volumen de Gota (µl)', digits=(10, 2))
     multi_cond_num2_filled = fields.Boolean(string='Num2 llenado', compute='_compute_multi_cond_filled', store=True)
     multi_cond_num2_min = fields.Float(string='Volumen Mínimo', default=40.0)
     multi_cond_num2_max = fields.Float(string='Volumen Máximo', default=50.0)
@@ -343,11 +343,11 @@ class AmunetQualityTestLineDetail(models.Model):
     )
 
     # -- VAMA-044: Funcionalidad de Tubo (4 condiciones) --
-    vama044_num_gotas = fields.Integer(string='Número de Gotas')
+    vama044_num_gotas = fields.Integer(string='VAMA-044 Número de Gotas')
     vama044_num_gotas_filled = fields.Boolean(string='NumGotas llenado', default=False)
-    vama044_num_gotas_min = fields.Integer(string='Mínimo Gotas', default=5)
+    vama044_num_gotas_min = fields.Integer(string='VAMA-044 Mínimo Gotas', default=5)
     
-    vama044_vol_gota = fields.Float(string='Volumen de Gota (µl)', digits=(10, 2))
+    vama044_vol_gota = fields.Float(string='VAMA-044 Volumen de Gota (µl)', digits=(10, 2))
     vama044_vol_gota_filled = fields.Boolean(string='VolGota llenado', default=False)
     vama044_vol_gota_min = fields.Float(string='Vol Gota Mín', default=40.0)
     vama044_vol_gota_max = fields.Float(string='Vol Gota Máx', default=50.0)

@@ -8,7 +8,7 @@ historial de versiones, firmas, secciones segun PNOGE-001, sugerencias de cambio
 de firmas configurables.""",
     'author': 'Amunet',
     'category': 'Quality',
-    'version': '19.0.5.0.0',
+    'version': '19.0.5.0.2',
     'depends': ['mail', 'amunet_quality'],
     'data': [
         'security/amunet_documentos_security.xml',

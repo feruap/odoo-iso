@@ -74,7 +74,7 @@ class AmunetEquipmentCalificacion(models.Model):
         ('ci', 'CI - Calificación de Instalación'),
         ('co', 'CO - Calificación de Operación'),
         ('ce', 'CE - Calificación de Desempeño'),
-    ], string='Tipo', required=True, tracking=True)
+    ], string='Tipo', required=True)
     protocol_code = fields.Char(
         string='Código Protocolo',
         compute='_compute_codes',
@@ -92,7 +92,7 @@ class AmunetEquipmentCalificacion(models.Model):
         ('pendiente', 'Pendiente'),
         ('aprobado', 'Aprobado'),
         ('rechazado', 'Rechazado'),
-    ], string='Resultado', default='pendiente', required=True, tracking=True)
+    ], string='Resultado', default='pendiente', required=True)
     physical_location = fields.Char(string='Ubicación del documento')
     notes = fields.Text(string='Notas')
     attachment_ids = fields.Many2many('ir.attachment', string='Adjuntos')

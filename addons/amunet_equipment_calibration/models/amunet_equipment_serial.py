@@ -38,13 +38,10 @@ class AmunetEquipmentSerial(models.Model):
     notes = fields.Text(string='Notas')
     active = fields.Boolean(default=True)
 
-    _sql_constraints = [
-        (
-            'unique_serial_per_product',
-            'unique(product_id, serial_number)',
-            'El numero de serie debe ser unico por producto.',
-        ),
-    ]
+    _unique_serial_per_product = models.Constraint(
+        'unique(product_id, serial_number)',
+        'El numero de serie debe ser unico por producto.',
+    )
 
     @api.constrains('lot_id')
     def _check_product_allows_multi_serial(self):

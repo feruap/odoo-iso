@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Solicitudes de Material',
-    'version': '19.0.1.4.1',
+    'version': '19.0.1.4.2',
     'category': 'Inventory/Inventory',
     'summary': 'Solicitudes internas de material con trazabilidad de lotes',
     'description': """
@@ -10,11 +10,11 @@ Solicitudes de Material
 Permite que cualquier usuario autorizado solicite material al almacen.
 
 Flujo:
+
 - Solicitante crea solicitud, indica productos y cantidades.
 - El sistema valida stock disponible al enviar.
 - Almacen recibe, asigna lote a cada linea y confirma la entrega.
-- El stock se descuenta del almacen origen y se considera consumido
-  (destino virtual tipo "production").
+- El stock se descuenta del almacen origen y se considera consumido.
 - Quedan registradas las firmas digitales del solicitante y del almacenista.
 """,
     'author': 'Amunet S.A. de C.V.',

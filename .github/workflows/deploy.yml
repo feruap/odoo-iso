@@ -90,6 +90,8 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             -o BatchMode=yes \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=20 \
             "$SSH_USER@$SSH_HOST" 'bash -s' < /tmp/deploy_staging.sh
   deploy-production:
     name: Deploy to Production
@@ -164,4 +166,6 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             -o BatchMode=yes \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=20 \
             "$SSH_USER@$SSH_HOST" 'bash -s' < /tmp/deploy_production.sh

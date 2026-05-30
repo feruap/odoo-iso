@@ -47,7 +47,7 @@
                     <notebook>
                         <page string="Parámetros a Aplicar" name="parameters">
                             <group colspan="4" col="1">
-                                <div class="alert alert-info">
+                                <div class="alert alert-info" role="status">
                                     Seleccione los parámetros que se cargarán automáticamente cuando se cree un QC para este punto de control.
                                 </div>
                                 <field name="parameter_ids" nolabel="1">
@@ -61,7 +61,7 @@
                         </page>
                         <page string="Configuración por Producto" name="product_configs">
                             <group colspan="4" col="1">
-                                <div class="alert alert-info">
+                                <div class="alert alert-info" role="status">
                                     A continuación puede ver y configurar las personalizaciones de parámetros para cada producto asociado a este punto de control.
                                 </div>
                                 <field name="parameter_product_rel_ids" nolabel="1">

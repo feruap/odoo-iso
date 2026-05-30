@@ -19,7 +19,6 @@ class StockMove(models.Model):
     amunet_qty_supplied = fields.Float(
         string='Cantidad surtida',
         digits='Product Unit of Measure',
-        tracking=True,
         copy=False,
     )
 

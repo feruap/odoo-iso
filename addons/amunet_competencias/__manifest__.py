@@ -1,28 +1,20 @@
 {
     'name': 'Amunet - Competencias y Capacitación (ISO 13485 §6.2)',
-    'version': '19.0.5.1.0',
+    'version': '19.0.5.1.1',
     'category': 'Quality',
     'summary': 'Cursos, exámenes, planes de estudio, matriz de competencias y bloqueo de firma por competencia vencida',
-    'description': """
-        Gestión de Capacitación bajo ISO 13485 Cláusula 6.2.
+    'description': """Gestion de Capacitacion bajo ISO 13485 Clausula 6.2.
 
-        Funcionalidades:
-        - Cursos de capacitación: varios videos (reproductor embebido),
-          material escrito, PDFs y examen.
-        - Examen de opción múltiple con calificación almacenada, vigencia
-          configurable, tiempo mínimo de estudio y tiempo límite de examen.
-        - Autoservicio "Mis Cursos": cada empleado toma sus cursos y presenta
-          el examen desde su propio usuario de Odoo.
-        - Al aprobar un examen se genera automáticamente el registro de
-          capacitación vigente para los PNOs del curso.
-        - Planes de estudio por puesto/departamento y tablero de avance
-          de capacitación del personal.
-        - Cada equipo muestra los cursos que requiere (derivados de sus PNOs).
-        - Alerta automática de revisión cuando cambia la versión de un PNO.
-        - Matriz de competencias por usuario / SOP / Parámetro.
-        - Bloqueo pre-PIN: impide firmar un control de calidad si la
-          capacitación está vencida (configurable via parámetro de sistema).
-    """,
+Funcionalidades:
+
+- Cursos de capacitacion con videos, material escrito, PDFs y examen.
+- Examen de opcion multiple con calificacion, vigencia y tiempos configurables.
+- Autoservicio Mis Cursos para empleados.
+- Registro automatico de capacitacion vigente al aprobar.
+- Planes de estudio por puesto/departamento y tablero de avance.
+- Trazabilidad de cursos requeridos por equipo/PNO.
+- Matriz de competencias por usuario, SOP y parametro.
+- Bloqueo pre-PIN para firmas con capacitacion vencida.""",
     'author': 'DIC Consultores - Rafael López Flores',
     'website': 'https://www.amunet.com.mx',
     'license': 'LGPL-3',

@@ -30,7 +30,6 @@ class StockMoveLine(models.Model):
         string='Fecha de fabricación',
         help='Fecha de fabricación del producto. Se sincroniza al control de calidad.',
         copy=True,
-        tracking=True,
     )
     
     @api.onchange('expiration_date')
