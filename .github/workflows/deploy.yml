@@ -47,7 +47,7 @@ jobs:
           docker compose -f docker-compose.staging.yml build --no-cache web-staging
           upgrade_ok=0
           for j in 1 2 3; do
-            if docker compose -f docker-compose.staging.yml run --rm --name odoo-staging-upgrade-$j-$$ --no-deps web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
+            if docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-$j-$$ --no-deps web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
               upgrade_ok=1
               break
             fi
@@ -61,17 +61,30 @@ jobs:
 
           echo "Corrections automaticas deshabilitadas. Ejecutarlas manualmente solo con guarda de DB revisada."
 
+          old_container=$(docker compose -f docker-compose.staging.yml ps -q web-staging || true)
+          echo "Recreando contenedor web-staging..."
           docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging
+          new_container=$(docker compose -f docker-compose.staging.yml ps -q web-staging || true)
+          if [ -z "$new_container" ] || [ "$new_container" = "$old_container" ]; then
+            echo "ERROR: web-staging no fue recreado."
+            exit 1
+          fi
           echo "Esperando que Odoo staging este listo..."
+          health_ok=0
           for i in $(seq 1 24); do
             if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
               echo "Odoo listo despues de $((i * 5))s"
               sleep 15
+              health_ok=1
               break
             fi
             echo " Intento $i/24..."
             sleep 5
           done
+          if [ "$health_ok" != 1 ]; then
+            echo "ERROR: Odoo staging no quedo healthy tras recrear el contenedor."
+            exit 1
+          fi
           SCRIPT
           ssh -i /tmp/deploy_key \
             -o StrictHostKeyChecking=no \
@@ -107,7 +120,7 @@ jobs:
           docker compose -f docker-compose.production.yml build --no-cache web-production
           upgrade_ok=0
           for j in 1 2 3; do
-            if docker compose -f docker-compose.production.yml run --rm --name odoo-production-upgrade-$j-$$ --no-deps web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'; then
+            if docker compose -f docker-compose.production.yml run -T --rm --name odoo-production-upgrade-$j-$$ --no-deps web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
               upgrade_ok=1
               break
             fi
@@ -121,17 +134,30 @@ jobs:
 
           echo "Corrections automaticas deshabilitadas en produccion. No se ejecutan scripts one-shot durante deploy."
 
+          old_container=$(docker compose -f docker-compose.production.yml ps -q web-production || true)
+          echo "Recreando contenedor web-production..."
           docker compose -f docker-compose.production.yml up -d --force-recreate web-production
+          new_container=$(docker compose -f docker-compose.production.yml ps -q web-production || true)
+          if [ -z "$new_container" ] || [ "$new_container" = "$old_container" ]; then
+            echo "ERROR: web-production no fue recreado."
+            exit 1
+          fi
           echo "Esperando que Odoo se estabilice antes del upgrade de Amunet_testing..."
+          health_ok=0
           for i in $(seq 1 24); do
             if docker exec odoo-production curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
               echo "Odoo listo despues de $((i * 5))s"
               sleep 15
+              health_ok=1
               break
             fi
             echo " Intento $i/24..."
             sleep 5
           done
+          if [ "$health_ok" != 1 ]; then
+            echo "ERROR: Odoo produccion no quedo healthy tras recrear el contenedor."
+            exit 1
+          fi
           docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
           SCRIPT
           ssh -i /tmp/deploy_key \
