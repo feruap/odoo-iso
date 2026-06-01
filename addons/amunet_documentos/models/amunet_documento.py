@@ -7,14 +7,14 @@ from odoo.exceptions import UserError
 
 
 AREA_SELECTION = [
-    ('GE', 'Generales (PNOGE)'),
+    ('GE', 'Generales'),
     ('DC', 'Documentacion'),
-    ('PR', 'Produccion (PNOPR)'),
-    ('CC', 'Control de Calidad (PNOCC)'),
-    ('AS', 'Aseguramiento de Calidad (PNOAS)'),
-    ('AL', 'Almacen (PNOAL)'),
-    ('IN', 'Ingenieria (PNOIN)'),
-    ('RH', 'Recursos Humanos (PNORH)'),
+    ('PR', 'Produccion'),
+    ('CC', 'Control de Calidad'),
+    ('AS', 'Aseguramiento de Calidad'),
+    ('AL', 'Almacen'),
+    ('IN', 'Ingenieria'),
+    ('RH', 'Recursos Humanos'),
     ('OTRO', 'Otra'),
 ]
 
