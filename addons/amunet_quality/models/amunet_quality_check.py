@@ -3306,7 +3306,7 @@ class AmunetQualityCheck(models.Model):
         Retorna URL directa para garantizar filename correcto y evitar timeouts.
         """
         self.ensure_one()
-        if self.state != 'done':
+        if self.state not in ('done', 'awaiting_reception'):
             raise ValidationError("Debe estar finalizado.")
             
         import json
@@ -3327,8 +3327,8 @@ class AmunetQualityCheck(models.Model):
         Usa descarga directa para filename controlado.
         """
         self.ensure_one()
-        if self.state != 'done':
-             raise ValidationError("El control de calidad debe estar finalizado para imprimir el reporte.")
+        if self.state not in ('done', 'awaiting_reception'):
+            raise ValidationError("El control de calidad debe estar finalizado para imprimir el reporte.")
 
         download_url = f"/amunet_quality/download_solicitud_report/{self.id}"
         
@@ -3360,9 +3360,9 @@ class AmunetQualityCheck(models.Model):
         import logging
         _logger = logging.getLogger(__name__)
         _logger.info("EXECUTING CORTEX FIX: ACTION_PRINT_CERTIFICATE for ID %s", self.id)
-        
+
         self.ensure_one()
-        if self.state != 'done':
+        if self.state not in ('done', 'awaiting_reception'):
             raise ValidationError("El control de calidad debe estar finalizado para imprimir el certificado.")
         
         # FIX: Usar action_act_url apuntando al endpoint de descarga directa
