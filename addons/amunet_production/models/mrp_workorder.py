@@ -24,6 +24,29 @@ class MrpWorkorder(models.Model):
         string='Tiempo',
         compute='_compute_amunet_operator_guidance',
     )
+    amunet_workqueue_priority = fields.Selection([
+        ('ready', 'Listo'),
+        ('progress', 'En curso'),
+        ('waiting', 'En espera'),
+        ('blocked', 'Bloqueado'),
+        ('done', 'Terminado'),
+    ], string='Prioridad cola', compute='_compute_amunet_workqueue')
+    amunet_workqueue_owner = fields.Selection([
+        ('production', 'Produccion'),
+        ('supervisor', 'Supervisor'),
+        ('warehouse', 'Almacen'),
+        ('metrology', 'Metrologia'),
+        ('quality', 'Calidad'),
+        ('none', 'Sin accion'),
+    ], string='Responsable', compute='_compute_amunet_workqueue')
+    amunet_workqueue_next_step = fields.Char(
+        string='Siguiente paso cola',
+        compute='_compute_amunet_workqueue',
+    )
+    amunet_workqueue_blocker = fields.Char(
+        string='Bloqueo / pendiente',
+        compute='_compute_amunet_workqueue',
+    )
 
     # ============================
     # Flujo de Surtido (workcenter AMP)
@@ -116,6 +139,116 @@ class MrpWorkorder(models.Model):
                 wo.amunet_operator_time_status = '%s min estimados' % round(wo.duration_expected, 1)
             else:
                 wo.amunet_operator_time_status = 'Sin tiempo registrado'
+
+    def _amunet_equipment_blockers(self):
+        self.ensure_one()
+        wc = self.workcenter_id
+        if not wc:
+            return [_('Sin centro de trabajo asignado.')]
+        if not hasattr(wc, 'amunet_equipment_ids'):
+            return []
+        if not wc.amunet_equipment_ids:
+            if wc.amunet_no_equipment_required:
+                if not (
+                    wc.amunet_equipment_exception_reason
+                    and wc.amunet_equipment_exception_signed_by_id
+                    and wc.amunet_equipment_exception_signed_date
+                ):
+                    return [_('Excepcion de equipo sin firma completa en %s.') % (wc.code or wc.name)]
+                return []
+            return [_('Area %s sin equipos vinculados ni excepcion firmada.') % (wc.code or wc.name)]
+
+        today = fields.Date.context_today(self)
+        blockers = []
+        for eq in wc.amunet_equipment_ids:
+            if eq.state != 'active':
+                label = dict(eq._fields['state'].selection).get(eq.state, eq.state)
+                blockers.append(_('%s no operativo (%s).') % (eq.display_name, label))
+                continue
+            calibration = self.env['amunet.equipment.calibration'].search([
+                ('equipment_id', '=', eq.id),
+                ('state', '=', 'done'),
+                ('expiration_date', '>=', today),
+            ], limit=1)
+            if not calibration:
+                blockers.append(_('%s sin calibracion vigente.') % eq.display_name)
+        return blockers
+
+    def _compute_amunet_workqueue(self):
+        state_labels = dict(self._fields['state'].selection)
+        material_labels = {
+            'assigned': _('Material disponible'),
+            'available': _('Material disponible'),
+            'confirmed': _('Material pendiente de surtir'),
+            'waiting': _('Esperando material u operacion previa'),
+            'late': _('Material con alerta'),
+            'unavailable': _('Material no disponible'),
+        }
+        for wo in self:
+            owner = 'production'
+            priority = 'waiting'
+            next_step = _('Revisar operacion')
+            blocker = False
+
+            if wo.state in ('done', 'cancel'):
+                wo.amunet_workqueue_priority = 'done'
+                wo.amunet_workqueue_owner = 'none'
+                wo.amunet_workqueue_next_step = _('Sin accion')
+                wo.amunet_workqueue_blocker = False
+                continue
+
+            if wo.amunet_is_supply_workorder:
+                if wo.amunet_supply_state == 'pending':
+                    owner = 'warehouse'
+                    next_step = _('Almacen inicia surtido')
+                    if wo.state != 'ready':
+                        blocker = _('Surtido pendiente; la operacion aun esta %s.') % state_labels.get(wo.state, wo.state)
+                elif wo.amunet_supply_state == 'in_progress':
+                    owner = 'warehouse'
+                    priority = 'progress'
+                    next_step = _('Almacen confirma surtido con firma')
+                elif wo.amunet_supply_state == 'awaiting_reception':
+                    owner = 'supervisor'
+                    priority = 'ready'
+                    next_step = _('Supervisor recibe el surtido con firma')
+                    blocker = _('Firma de recepcion de surtido pendiente.')
+                elif wo.amunet_supply_state == 'received':
+                    owner = 'production'
+                    next_step = _('Surtido recibido; continuar ruta')
+
+            if wo.state == 'ready':
+                priority = 'ready'
+                next_step = next_step if wo.amunet_is_supply_workorder else _('Iniciar operacion')
+            elif wo.state == 'progress':
+                priority = 'progress'
+                next_step = next_step if wo.amunet_is_supply_workorder else _('Terminar operacion')
+            elif wo.state in ('pending', 'waiting', 'blocked'):
+                priority = 'blocked' if wo.state == 'blocked' else 'waiting'
+                previous = wo.production_id.workorder_ids.filtered(
+                    lambda w: w.id != wo.id
+                    and w.state not in ('done', 'cancel')
+                    and (w.sequence or 0) < (wo.sequence or 0)
+                )
+                availability = wo.production_availability or wo.production_id.reservation_state or ''
+                if previous:
+                    blocker = _('Operacion previa pendiente: %s') % ', '.join(previous[:3].mapped('name'))
+                elif availability and availability not in ('assigned', 'available'):
+                    blocker = material_labels.get(availability, availability)
+                elif not blocker:
+                    blocker = _('Operacion en estado %s; revisar ruta, materiales o disponibilidad.') % state_labels.get(wo.state, wo.state)
+                next_step = _('Resolver bloqueo antes de iniciar')
+
+            equipment_blockers = wo._amunet_equipment_blockers()
+            if equipment_blockers and wo.state in ('ready', 'progress', 'blocked', 'waiting', 'pending'):
+                priority = 'blocked'
+                owner = 'metrology'
+                blocker = '; '.join(equipment_blockers[:3])
+                next_step = _('Corregir equipo/calibracion del area')
+
+            wo.amunet_workqueue_priority = priority
+            wo.amunet_workqueue_owner = owner
+            wo.amunet_workqueue_next_step = next_step
+            wo.amunet_workqueue_blocker = blocker
 
     def _check_amunet_operator_access(self):
         if not (
