@@ -276,14 +276,6 @@
                               invisible="tipo in ('pno','manual','instructivo')">
                             <field name="contenido_html" readonly="state == 'vigente'"/>
                         </page>
-                        <page string="Archivo Word adjunto" name="archivo_word">
-                            <p style="font-size:12px; color:#666;">
-                                <i>Solo es necesario para documentos migrados desde Word.</i>
-                            </p>
-                            <field name="archivo" filename="archivo_filename"
-                                   readonly="state == 'vigente'"/>
-                            <field name="archivo_filename" invisible="1"/>
-                        </page>
                         <page string="Sugerencias" name="sugerencias">
                             <field name="sugerencias_pendientes_count" invisible="1"/>
                             <field name="sugerencia_ids">
@@ -358,8 +350,6 @@
                                     <field name="elaboro_id"/>
                                     <field name="aprobado_por_id"/>
                                     <field name="descripcion_cambio"/>
-                                    <field name="archivo" filename="archivo_filename"/>
-                                    <field name="archivo_filename" column_invisible="1"/>
                                     <field name="state_historico" widget="badge"/>
                                 </list>
                                 <form>
@@ -386,10 +376,6 @@
                                             <page string="Contenido (snapshot)"
                                                   invisible="not contenido_html">
                                                 <field name="contenido_html" readonly="1"/>
-                                            </page>
-                                            <page string="Archivo Word">
-                                                <field name="archivo" filename="archivo_filename"/>
-                                                <field name="archivo_filename" invisible="1"/>
                                             </page>
                                         </notebook>
                                     </sheet>

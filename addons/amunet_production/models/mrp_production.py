@@ -81,6 +81,29 @@ class MrpProduction(models.Model):
         string='Estado del surtido',
         store=True,
     )
+    amunet_workqueue_priority = fields.Selection([
+        ('ready', 'Listo'),
+        ('progress', 'En curso'),
+        ('waiting', 'En espera'),
+        ('blocked', 'Bloqueado'),
+        ('done', 'Terminado'),
+    ], string='Prioridad cola', compute='_compute_amunet_workqueue')
+    amunet_workqueue_owner = fields.Selection([
+        ('production', 'Produccion'),
+        ('supervisor', 'Supervisor'),
+        ('warehouse', 'Almacen'),
+        ('metrology', 'Metrologia'),
+        ('quality', 'Calidad'),
+        ('none', 'Sin accion'),
+    ], string='Responsable', compute='_compute_amunet_workqueue')
+    amunet_workqueue_next_step = fields.Char(
+        string='Siguiente paso cola',
+        compute='_compute_amunet_workqueue',
+    )
+    amunet_workqueue_blocker = fields.Char(
+        string='Bloqueo / pendiente',
+        compute='_compute_amunet_workqueue',
+    )
 
     @api.depends('workorder_ids.workcenter_id.code')
     def _compute_amunet_supply_workorder(self):
@@ -89,6 +112,145 @@ class MrpProduction(models.Model):
                 lambda w: (w.workcenter_id.code or '') == 'AMP'
             )[:1]
             mo.amunet_supply_workorder_id = wo or False
+
+    @api.depends(
+        'state',
+        'workorder_ids.state',
+        'workorder_ids.amunet_supply_state',
+        'workorder_ids.workcenter_id',
+        'amunet_supply_state',
+        'quality_analysis_status',
+        'reconciliation_state',
+        'move_raw_ids.amunet_qty_supplied',
+        'move_raw_ids.state',
+    )
+    def _compute_amunet_workqueue(self):
+        state_labels = dict(self._fields['state'].selection)
+        quality_labels = dict(self._fields['quality_analysis_status'].selection)
+        reconciliation_labels = dict(self._fields['reconciliation_state'].selection)
+        for mo in self:
+            priority = 'waiting'
+            owner = 'supervisor'
+            next_step = _('Revisar orden')
+            blocker = False
+
+            if mo.state in ('done', 'cancel'):
+                mo.amunet_workqueue_priority = 'done'
+                mo.amunet_workqueue_owner = 'none'
+                mo.amunet_workqueue_next_step = _('Sin accion')
+                mo.amunet_workqueue_blocker = False
+                continue
+
+            if mo.state == 'draft':
+                priority = 'waiting'
+                owner = 'supervisor'
+                next_step = _('Confirmar orden de fabricacion')
+                blocker = _('Orden en borrador.')
+            elif (
+                mo.amunet_supply_workorder_id
+                and mo.amunet_supply_workorder_id.amunet_workqueue_priority == 'blocked'
+            ):
+                wo = mo.amunet_supply_workorder_id
+                priority = 'blocked'
+                owner = wo.amunet_workqueue_owner or 'supervisor'
+                next_step = _('Resolver bloqueo en %s') % (wo.name or wo.display_name)
+                blocker = wo.amunet_workqueue_blocker
+            elif mo.amunet_supply_workorder_id and mo.amunet_supply_state in (
+                'pending', 'in_progress', 'awaiting_reception'
+            ):
+                if mo.amunet_supply_state == 'pending':
+                    priority = 'ready'
+                    owner = 'warehouse'
+                    next_step = _('Almacen inicia surtido')
+                    blocker = _('Surtido de materiales pendiente.')
+                elif mo.amunet_supply_state == 'in_progress':
+                    priority = 'progress'
+                    owner = 'warehouse'
+                    next_step = _('Almacen confirma surtido con firma')
+                    blocker = _('Surtido iniciado; falta confirmarlo.')
+                else:
+                    priority = 'ready'
+                    owner = 'supervisor'
+                    next_step = _('Supervisor recibe surtido con firma')
+                    blocker = _('Surtido pendiente de recepcion por Produccion.')
+            else:
+                open_workorders = mo.workorder_ids.filtered(
+                    lambda w: w.state not in ('done', 'cancel')
+                )
+                blocked_workorders = open_workorders.filtered(
+                    lambda w: w.amunet_workqueue_priority == 'blocked'
+                )
+                in_progress = open_workorders.filtered(lambda w: w.state == 'progress')
+                ready = open_workorders.filtered(lambda w: w.state == 'ready')
+
+                if blocked_workorders:
+                    wo = blocked_workorders[0]
+                    priority = 'blocked'
+                    owner = wo.amunet_workqueue_owner or 'supervisor'
+                    next_step = _('Resolver bloqueo en %s') % (wo.name or wo.display_name)
+                    blocker = wo.amunet_workqueue_blocker
+                elif in_progress:
+                    priority = 'progress'
+                    owner = 'production'
+                    next_step = _('Terminar operaciones en curso')
+                    blocker = _('%s operacion(es) en progreso.') % len(in_progress)
+                elif ready:
+                    priority = 'ready'
+                    owner = 'production'
+                    next_step = _('Iniciar operaciones listas')
+                    blocker = _('%s operacion(es) listas para ejecutar.') % len(ready)
+                elif open_workorders:
+                    wo = open_workorders[0]
+                    priority = 'waiting'
+                    owner = wo.amunet_workqueue_owner or 'supervisor'
+                    next_step = wo.amunet_workqueue_next_step or _('Revisar operaciones pendientes')
+                    blocker = wo.amunet_workqueue_blocker or _('%s operacion(es) pendientes.') % len(open_workorders)
+                else:
+                    has_supply = any(
+                        (m.amunet_qty_supplied or 0) > 0
+                        for m in mo.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+                    )
+                    if has_supply and mo.reconciliation_state != 'completed':
+                        if mo.reconciliation_state == 'pending':
+                            priority = 'ready'
+                            owner = 'production'
+                            next_step = _('Iniciar conciliacion de materiales')
+                        elif mo.reconciliation_state == 'initiated':
+                            priority = 'ready'
+                            owner = 'supervisor'
+                            next_step = _('Validar conciliacion')
+                        else:
+                            priority = 'ready'
+                            owner = 'warehouse'
+                            next_step = _('Confirmar devolucion recibida')
+                        blocker = _('Conciliacion: %s') % reconciliation_labels.get(
+                            mo.reconciliation_state, mo.reconciliation_state)
+                    elif mo.amunet_sys_req_qc and mo.quality_analysis_status != 'approved':
+                        if mo.quality_analysis_status in ('to_request', 'rejected'):
+                            priority = 'ready'
+                            owner = 'supervisor'
+                            next_step = _('Solicitar analisis a Calidad')
+                        else:
+                            priority = 'waiting'
+                            owner = 'quality'
+                            next_step = _('Esperar aprobacion de Calidad')
+                        blocker = _('Calidad: %s') % quality_labels.get(
+                            mo.quality_analysis_status, mo.quality_analysis_status)
+                    elif mo.amunet_can_produce:
+                        priority = 'ready'
+                        owner = 'supervisor'
+                        next_step = _('Producir / cerrar orden')
+                        blocker = False
+                    else:
+                        priority = 'waiting'
+                        owner = 'supervisor'
+                        next_step = _('Revisar cierre de orden')
+                        blocker = _('Estado MO: %s') % state_labels.get(mo.state, mo.state)
+
+            mo.amunet_workqueue_priority = priority
+            mo.amunet_workqueue_owner = owner
+            mo.amunet_workqueue_next_step = next_step
+            mo.amunet_workqueue_blocker = blocker
 
     def action_amunet_mo_start_supply(self):
         self.ensure_one()
