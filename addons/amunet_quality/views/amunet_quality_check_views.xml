@@ -74,23 +74,23 @@
                             type="object"
                             invisible="state not in ('done', 'pending')"/>
 
-                    <button name="action_force_download_certificate" 
+                    <button name="action_force_download_certificate"
                             string="Imprimir Certificado"
-                            type="object" 
+                            type="object"
                             class="oe_highlight"
-                            invisible="state not in ('done', 'awaiting_reception')"/>
-                            
-                    <button name="action_print_solicitud_report" 
-                            string="Imprimir Reporte"
-                            type="object" 
-                            class="btn-secondary"
-                            invisible="state not in ('done', 'awaiting_reception')"/>
+                            invisible="not analysis_number"/>
 
-                    <button name="action_print_certificado_interno" 
-                            string="Imprimir Certificado Interno"
-                            type="object" 
+                    <button name="action_print_solicitud_report"
+                            string="Imprimir Reporte"
+                            type="object"
                             class="btn-secondary"
-                            invisible="state not in ('done', 'awaiting_reception')"/>
+                            invisible="not analysis_number"/>
+
+                    <button name="action_print_certificado_interno"
+                            string="Imprimir Certificado Interno"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="not analysis_number"/>
 
 
                     <button name="action_create_capa" string="🚨 Crear CAPA"
