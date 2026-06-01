@@ -7,6 +7,8 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='resource_calendar_id']" position="after">
                 <field name="amunet_equipment_count" readonly="1"/>
+                <field name="amunet_parent_workcenter_id"/>
+                <field name="amunet_child_workcenter_ids" readonly="1" widget="many2many_tags"/>
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Equipos Amunet" name="amunet_equipment">
