@@ -6,6 +6,21 @@ from odoo.exceptions import UserError
 class MrpWorkcenter(models.Model):
     _inherit = 'mrp.workcenter'
 
+    amunet_parent_workcenter_id = fields.Many2one(
+        'mrp.workcenter',
+        string='Área padre',
+        ondelete='set null',
+        help='Si este centro de trabajo es un sub-área de otro (ej. LAM es '
+             'sub-área de PROD), indica aquí el padre. La validación de '
+             'calibración de equipos se hereda del padre cuando este WC no '
+             'tiene equipos propios vinculados.',
+    )
+    amunet_child_workcenter_ids = fields.One2many(
+        'mrp.workcenter',
+        'amunet_parent_workcenter_id',
+        string='Sub-áreas',
+    )
+
     amunet_equipment_ids = fields.Many2many(
         comodel_name='amunet.equipment',
         relation='amunet_workcenter_equipment_rel',
@@ -92,6 +107,17 @@ class MrpWorkcenter(models.Model):
                         )
                         continue
                     any_skipped = True
+                    continue
+                # Sin equipos propios: si tiene padre, delegar al padre
+                if wc.amunet_parent_workcenter_id:
+                    parent = wc.amunet_parent_workcenter_id
+                    try:
+                        parent._amunet_check_equipment_calibration()
+                    except UserError as e:
+                        problemas.append(
+                            ' - Workcenter %s (sub-area de %s): %s'
+                            % (wc_label, parent.code or parent.name, str(e.args[0]))
+                        )
                     continue
                 problemas.append(
                     ' - Workcenter %s: no tiene equipos vinculados ni esta '
