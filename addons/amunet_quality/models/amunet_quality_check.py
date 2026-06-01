@@ -2222,6 +2222,12 @@ class AmunetQualityCheck(models.Model):
     def _action_sign_realized_logic(self):
         """Lógica de firma Realizó (ejecutada tras validar PIN/Password)"""
         for record in self:
+            empty_fields = record._get_empty_required_additional_info_fields()
+            if empty_fields:
+                raise ValidationError(
+                    'Debe completar la Información Adicional antes de firmar como "Realizó":\n\n'
+                    + '\n'.join([f'• {f}' for f in empty_fields])
+                )
             record.write({'user_realized_id': self.env.user.id})
             
             status_dict = dict(record._fields['global_result'].selection)
@@ -2264,6 +2270,12 @@ class AmunetQualityCheck(models.Model):
         for record in self:
             if not record.user_realized_id:
                 raise ValidationError(_("Debe firmar 'Realizó' antes de verificar."))
+            empty_fields = record._get_empty_required_additional_info_fields()
+            if empty_fields:
+                raise ValidationError(
+                    'Debe completar la Información Adicional antes de firmar como "Verificó":\n\n'
+                    + '\n'.join([f'• {f}' for f in empty_fields])
+                )
             if self.env.cr.dbname != 'Amunet_testing' and record.user_realized_id.id == self.env.user.id:
                 raise ValidationError(
                     'Segregación de funciones: '
@@ -2320,6 +2332,12 @@ class AmunetQualityCheck(models.Model):
                         'Segregación de funciones: '
                         'No puede firmar como "Autorizó" porque ya firmó como "Verificó".'
                     )
+            empty_fields = record._get_empty_required_additional_info_fields()
+            if empty_fields:
+                raise ValidationError(
+                    'Debe completar la Información Adicional antes de firmar como "Autorizó":\n\n'
+                    + '\n'.join([f'• {f}' for f in empty_fields])
+                )
             record.write({'user_authorized_id': self.env.user.id})
 
             # Generar número de análisis en cuanto las 3 firmas están completas
