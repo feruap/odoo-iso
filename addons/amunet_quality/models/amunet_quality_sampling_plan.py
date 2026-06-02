@@ -187,7 +187,7 @@ class AmunetQualitySamplingPlan(models.Model):
             return 'biological_raw'
         if 'solucion' in categ or 'soluciones' in categ or 'buffer' in name or 'reactivo liquido' in name:
             return 'buffer_solution'
-        if 'producto terminado' in categ and ('prueba' in name or 'rdt' in tag_names or 'inmunologica' in tag_names):
+        if 'producto terminado' in categ and ('prueba' in name or 'pcr' in name or 'rdt' in tag_names or 'inmunologica' in tag_names):
             return 'finished_rdt'
         if 'material impreso' in categ or 'empaque' in categ or 'caja' in name or 'bolsa' in name or 'etiqueta' in name:
             return 'packaging'
