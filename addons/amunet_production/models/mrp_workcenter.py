@@ -21,6 +21,51 @@ class MrpWorkcenter(models.Model):
         string='Sub-áreas',
     )
 
+    amunet_workcenter_type = fields.Selection(
+        selection=[
+            ('area', 'Área principal'),
+            ('subarea', 'Sub-área'),
+        ],
+        string='Tipo',
+        compute='_compute_amunet_workcenter_type',
+        store=True,
+    )
+
+    amunet_complete_name = fields.Char(
+        string='Área / Sub-área',
+        compute='_compute_amunet_complete_name',
+        store=True,
+    )
+
+    amunet_area_name = fields.Char(
+        string='Área',
+        compute='_compute_amunet_area_name',
+        store=True,
+        help='Nombre del área principal a la que pertenece este workcenter. '
+             'Usado para agrupar la lista.',
+    )
+
+    @api.depends('amunet_parent_workcenter_id')
+    def _compute_amunet_workcenter_type(self):
+        for wc in self:
+            wc.amunet_workcenter_type = 'subarea' if wc.amunet_parent_workcenter_id else 'area'
+
+    @api.depends('name', 'amunet_parent_workcenter_id', 'amunet_parent_workcenter_id.name')
+    def _compute_amunet_complete_name(self):
+        for wc in self:
+            if wc.amunet_parent_workcenter_id:
+                wc.amunet_complete_name = f"{wc.amunet_parent_workcenter_id.name} / {wc.name}"
+            else:
+                wc.amunet_complete_name = wc.name
+
+    @api.depends('name', 'amunet_parent_workcenter_id', 'amunet_parent_workcenter_id.name')
+    def _compute_amunet_area_name(self):
+        for wc in self:
+            if wc.amunet_parent_workcenter_id:
+                wc.amunet_area_name = wc.amunet_parent_workcenter_id.name
+            else:
+                wc.amunet_area_name = wc.name
+
     amunet_equipment_ids = fields.Many2many(
         comodel_name='amunet.equipment',
         relation='amunet_workcenter_equipment_rel',
