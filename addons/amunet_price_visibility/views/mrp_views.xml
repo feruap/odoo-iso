@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- mrp.production form: oculta cualquier referencia a costo en componentes -->
+    <record id="mrp_production_hide" model="ir.ui.view">
+        <field name="name">mrp.production.form.hide.cost</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <!-- price_unit puede aparecer en move_raw_ids o move_finished_ids -->
+            <xpath expr="//field[@name='move_raw_ids']//field[@name='price_unit']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- product.template list (sellable/purchasable variants) -->
+    <record id="pt_list_sellable_hide" model="ir.ui.view">
+        <field name="name">product.template.list.sellable.hide</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='list_price']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- product.product list -->
+    <record id="pp_list_hide" model="ir.ui.view">
+        <field name="name">product.product.list.hide.cost</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='lst_price']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- product easy form -->
+    <record id="pp_easy_form_hide" model="ir.ui.view">
+        <field name="name">product.product.view.form.easy.hide</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='list_price']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+            <xpath expr="//field[@name='standard_price']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- product.pricelist.item: oculta menus de pricelists (cualquier item revela precio) -->
+    <record id="pricelist_item_form_hide" model="ir.ui.view">
+        <field name="name">product.pricelist.item.form.hide</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="inherit_id" ref="product.product_pricelist_item_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='fixed_price']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>
