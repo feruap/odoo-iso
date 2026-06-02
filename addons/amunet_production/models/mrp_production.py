@@ -991,22 +991,6 @@ class MrpProduction(models.Model):
         if not self.amunet_all_ingredients_valid:
             raise UserError('Todos los reactivos deben estar marcados como Válidos para proceder.')
 
-        # Validar checklist operativa: bitacoras, calculos, dilucion y
-        # aforar son requisitos del flujo de SOLUCIONES (preparacion
-        # quimica). Para kits y otros productos no aplican porque no
-        # hay preparacion de mezclas.
-        if self.amunet_is_solution_product:
-            missing = []
-            if self.amunet_sys_req_history and not self.amunet_check_history_log:
-                missing.append("Registro en Bitácoras")
-            if self.amunet_sys_req_calc and not self.amunet_check_calculations:
-                missing.append("Cálculos Realizados")
-            if self.amunet_sys_req_dilution and not self.amunet_check_dilution:
-                missing.append("Dilución de Reactivos")
-            if self.amunet_sys_req_aforar and not self.amunet_check_aforar:
-                missing.append("Aforar")
-            if missing:
-                raise UserError('Completa las siguientes actividades operativas antes de solicitar el análisis:\n- ' + '\n- '.join(missing))
 
         return {
             'name': 'Confirmar Solicitud de Análisis',
@@ -1040,15 +1024,6 @@ class MrpProduction(models.Model):
                 nombres = ', '.join(sin_cantidad.mapped('product_id.name'))
                 raise UserError(f'ATENCIÓN: Los siguientes reactivos no tienen Cantidad Utilizada:\n{nombres}\n\nCompleta los valores antes de marcar como hecho.')
 
-            # 2. Validar Checklist Operativa
-            missing = []
-            if record.amunet_sys_req_history and not record.amunet_check_history_log: missing.append("Registro en Bitácoras")
-            if record.amunet_sys_req_calc and not record.amunet_check_calculations: missing.append("Cálculos Realizados")
-            if record.amunet_sys_req_dilution and not record.amunet_check_dilution: missing.append("Dilución de Reactivos")
-            if record.amunet_sys_req_aforar and not record.amunet_check_aforar: missing.append("Aforar")
-            if missing:
-                raise UserError('ATENCIÓN: Faltan las siguientes actividades operativas por marcar en la Pestaña de Actividades:\n- ' + '\n- '.join(missing))
-            
             # 2. Validar Calidad (solo si el producto lo requiere)
             if record.amunet_sys_req_qc and record.quality_analysis_status != 'approved':
                 raise UserError('ATENCIÓN: Este producto requiere Análisis C.C. No puedes "Marcar como Hecho" hasta que el área de Calidad apruebe el análisis.')

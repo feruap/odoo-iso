@@ -100,7 +100,10 @@
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-field="o.product_id.certificate_document_code"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
-                            <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>Uso previsto:</strong> <span t-field="o.product_description"/></td>
+                            <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>Uso previsto:</strong>
+                                <span t-if="o.product_description" t-field="o.product_description"/>
+                                <span t-elif="o.product_id.description" t-field="o.product_id.description"/>
+                            </td>
                         </tr>
                         <tr style="border: 0 !important;">
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>No. de lote:</strong> <span t-field="o.lot_name_amunet"/></td>
