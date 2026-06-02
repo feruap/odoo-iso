@@ -1,5 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Vista de lista jerárquica por área / sub-área -->
+    <record id="amunet_view_mrp_workcenter_list_inherit" model="ir.ui.view">
+        <field name="name">amunet.mrp.workcenter.list.inherit</field>
+        <field name="model">mrp.workcenter</field>
+        <field name="inherit_id" ref="mrp.mrp_workcenter_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="default_group_by">amunet_area_name</attribute>
+                <attribute name="default_order">amunet_complete_name</attribute>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="replace">
+                <field name="amunet_complete_name" string="Centro de trabajo"/>
+                <field name="amunet_area_name" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='code']" position="after">
+                <field name="amunet_workcenter_type" string="Tipo" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='alternative_workcenter_ids']" position="attributes">
+                <attribute name="column_invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <record id="amunet_view_mrp_workcenter_form_inherit" model="ir.ui.view">
         <field name="name">amunet.mrp.workcenter.form.inherit</field>
         <field name="model">mrp.workcenter</field>

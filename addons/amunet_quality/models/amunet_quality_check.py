@@ -2222,6 +2222,12 @@ class AmunetQualityCheck(models.Model):
     def _action_sign_realized_logic(self):
         """Lógica de firma Realizó (ejecutada tras validar PIN/Password)"""
         for record in self:
+            empty_fields = record._get_empty_required_additional_info_fields()
+            if empty_fields:
+                raise ValidationError(
+                    'Debe completar la Información Adicional antes de firmar como "Realizó":\n\n'
+                    + '\n'.join([f'• {f}' for f in empty_fields])
+                )
             record.write({'user_realized_id': self.env.user.id})
             
             status_dict = dict(record._fields['global_result'].selection)
@@ -2264,6 +2270,12 @@ class AmunetQualityCheck(models.Model):
         for record in self:
             if not record.user_realized_id:
                 raise ValidationError(_("Debe firmar 'Realizó' antes de verificar."))
+            empty_fields = record._get_empty_required_additional_info_fields()
+            if empty_fields:
+                raise ValidationError(
+                    'Debe completar la Información Adicional antes de firmar como "Verificó":\n\n'
+                    + '\n'.join([f'• {f}' for f in empty_fields])
+                )
             if self.env.cr.dbname != 'Amunet_testing' and record.user_realized_id.id == self.env.user.id:
                 raise ValidationError(
                     'Segregación de funciones: '
@@ -2320,8 +2332,19 @@ class AmunetQualityCheck(models.Model):
                         'Segregación de funciones: '
                         'No puede firmar como "Autorizó" porque ya firmó como "Verificó".'
                     )
+            empty_fields = record._get_empty_required_additional_info_fields()
+            if empty_fields:
+                raise ValidationError(
+                    'Debe completar la Información Adicional antes de firmar como "Autorizó":\n\n'
+                    + '\n'.join([f'• {f}' for f in empty_fields])
+                )
             record.write({'user_authorized_id': self.env.user.id})
-            
+
+            # Generar número de análisis en cuanto las 3 firmas están completas
+            if record.user_realized_id and record.user_verified_id and not record.analysis_number:
+                analysis_number = record._generate_analysis_number()
+                record.write({'analysis_number': analysis_number})
+
             status_dict = dict(record._fields['global_result'].selection)
             status = status_dict.get(record.global_result, 'Desconocido')
             
@@ -2398,8 +2421,8 @@ class AmunetQualityCheck(models.Model):
                     f'antes de finalizar:\n\n{fields_list}'
                 )
 
-            # Generar folio
-            analysis_number = self._generate_analysis_number()
+            # Usar folio ya asignado al firmar Autorizó, o generar uno nuevo como respaldo
+            analysis_number = self.analysis_number or self._generate_analysis_number()
 
             # Determinar estado final
             new_state = 'awaiting_reception' if self.global_result == 'pass' else 'pending'
@@ -3306,8 +3329,8 @@ class AmunetQualityCheck(models.Model):
         Retorna URL directa para garantizar filename correcto y evitar timeouts.
         """
         self.ensure_one()
-        if self.state != 'done':
-            raise ValidationError("Debe estar finalizado.")
+        if not self.analysis_number:
+            raise ValidationError("El número de análisis aún no ha sido generado. Complete las tres firmas.")
             
         import json
         report_name = 'amunet_quality.report_quality_certificate_template'
@@ -3327,8 +3350,8 @@ class AmunetQualityCheck(models.Model):
         Usa descarga directa para filename controlado.
         """
         self.ensure_one()
-        if self.state != 'done':
-             raise ValidationError("El control de calidad debe estar finalizado para imprimir el reporte.")
+        if not self.analysis_number:
+            raise ValidationError("El número de análisis aún no ha sido generado. Complete las tres firmas.")
 
         download_url = f"/amunet_quality/download_solicitud_report/{self.id}"
         
@@ -3344,8 +3367,8 @@ class AmunetQualityCheck(models.Model):
         Usa descarga directa para filename controlado y evitar UUID.
         """
         self.ensure_one()
-        if self.state not in ('done', 'awaiting_reception'):
-            raise ValidationError("El control de calidad debe estar finalizado para imprimir el certificado.")
+        if not self.analysis_number:
+            raise ValidationError("El número de análisis aún no ha sido generado. Complete las tres firmas.")
 
         download_url = f"/amunet_quality/download_certificado_interno/{self.id}"
         
@@ -3360,11 +3383,11 @@ class AmunetQualityCheck(models.Model):
         import logging
         _logger = logging.getLogger(__name__)
         _logger.info("EXECUTING CORTEX FIX: ACTION_PRINT_CERTIFICATE for ID %s", self.id)
-        
+
         self.ensure_one()
-        if self.state != 'done':
-            raise ValidationError("El control de calidad debe estar finalizado para imprimir el certificado.")
-        
+        if not self.analysis_number:
+            raise ValidationError("El número de análisis aún no ha sido generado. Complete las tres firmas.")
+
         # FIX: Usar action_act_url apuntando al endpoint de descarga directa
         # Esto evita el problema de 'ERR_FILE_NOT_FOUND' en el blob del navegador
         # y asegura que se use el filename correcto definido en el reporte.
