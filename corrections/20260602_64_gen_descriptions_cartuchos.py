@@ -7,34 +7,19 @@ from docx import Document
 
 # ── 1. Parsear F-CC-007-001_full.docx ─────────────────────────────────────────
 
-def count_c(c_str):
-    if not c_str or 'sin' in c_str.lower() or 'no' in c_str.lower():
-        return 0
-    nums = re.findall(r'(\d+)\s*[CRcr]', c_str)
-    if nums:
-        return sum(int(n) for n in nums)
-    if re.search(r'[CRcr]', c_str):
+def count_ventanas(c_str):
+    """Ventanas = número de líneas de control (C). Cada ventana física tiene 1 C.
+    'Sin control' (ej. pH vaginal) cuenta como 1 ventana.
+    '1C/1R' cuenta solo la C, la R es referencia dentro de la misma ventana."""
+    if not c_str or 'sin' in c_str.lower():
+        return 1  # pH vaginal: 1 ventana sin línea de control
+    # Contar solo los números seguidos de 'C' (no R/reference)
+    c_nums = re.findall(r'(\d+)\s*C', c_str)
+    if c_nums:
+        return sum(int(n) for n in c_nums)
+    if 'C' in c_str.upper():
         return 1
-    return 0
-
-def count_t(t_str):
-    # Quitar explicaciones en paréntesis: "3T (1 MYO/1 CKMB)" → "3T"
-    t_clean = re.sub(r'\([^)]+\)', '', t_str).strip()
-    # ¿Empieza con XTb? e.g. "5T" "3T" "2T"
-    leading = re.match(r'(\d+)\s*T\b', t_clean)
-    if leading:
-        return int(leading.group(1))
-    # Contar grupos separados por ";" y "," e.g. "1 IgG; 1 IgM" → 2
-    groups = re.split(r'[;,]', t_clean)
-    total = 0
-    for g in groups:
-        nums = re.findall(r'(\d+)', g)
-        if nums:
-            total += int(nums[0])
-    return total if total > 0 else 1
-
-def total_windows(c_str, t_str):
-    return count_c(c_str) + count_t(t_str)
+    return 1
 
 def clean_text(s):
     return s.strip().rstrip(',').rstrip('.').strip()
@@ -59,7 +44,7 @@ for row in t1.rows[2:]:
     muestra     = clean_text(cells[3])
     c_str       = cells[9]
     t_str       = cells[10]
-    ventanas    = total_windows(c_str, t_str)
+    ventanas    = count_ventanas(c_str)
     cartucho_data[key] = {
         'ventanas': ventanas,
         'muestra':  muestra,
@@ -67,7 +52,7 @@ for row in t1.rows[2:]:
     }
 
 # TABLA 2: combos (MPCAC)
-# Columnas: 0=Clave, 1=Nombre, 2=Descripción, 3=TipoMuestra, 10=C, 11=T(aprox)
+# Columnas: 0=Clave, 1=Nombre, 2=Descripción, 3=TipoMuestra, 9=C, 10=T
 t2 = doc.tables[1]
 seen2 = set()
 for row in t2.rows:
@@ -81,8 +66,7 @@ for row in t2.rows:
     descripcion = clean_text(cells[2])
     muestra     = clean_text(cells[3])
     c_str       = cells[9] if len(cells) > 9 else ''
-    t_str       = cells[10] if len(cells) > 10 else ''
-    ventanas    = total_windows(c_str, t_str)
+    ventanas    = count_ventanas(c_str)
     cartucho_data[key] = {
         'ventanas': ventanas,
         'muestra':  muestra,
@@ -101,8 +85,7 @@ for row in t3.rows:
         continue
     seen3.add(key)
     c_str    = cells[9] if len(cells) > 9 else ''
-    t_str    = cells[10] if len(cells) > 10 else ''
-    ventanas = total_windows(c_str, t_str)
+    ventanas = count_ventanas(c_str)
     cartucho_data[key] = {
         'ventanas': ventanas,
         'muestra':  'No aplica',
