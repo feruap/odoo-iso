@@ -318,11 +318,18 @@ class AmunetPackagingPlan(models.Model):
         la presentacion (qty = approved_box_qty * qty_per_box) y aplicarlos
         a los move_raw_ids de la MO: si el producto ya existe como move, se
         actualiza product_uom_qty; si no, se crea un move nuevo.
+        Incluye box_component_id, label_component_id y manual_component_id
+        (1 unidad por caja) ademas de los component_ids secundarios.
         """
         self.ensure_one()
         needed = {}  # product_id -> qty total
         for line in self.line_ids.filtered(lambda l: l.approved_box_qty > 0):
-            for comp in line.presentation_id.component_ids:
+            pres = line.presentation_id
+            # Componentes principales: caja, funda, instructivo (1 por caja)
+            for prod in filter(None, [pres.box_component_id, pres.label_component_id, pres.manual_component_id]):
+                needed[prod.id] = needed.get(prod.id, 0.0) + line.approved_box_qty
+            # Componentes secundarios con su qty_per_box
+            for comp in pres.component_ids:
                 qty = line.approved_box_qty * (comp.qty_per_box or 1.0)
                 needed[comp.product_id.id] = needed.get(comp.product_id.id, 0.0) + qty
 
