@@ -138,23 +138,21 @@ class MrpWorkcenter(models.Model):
         for wc in self:
             wc_label = wc.code or wc.name
 
-            # Excepcion documentada: aplica con o sin equipos vinculados
-            if wc.amunet_no_equipment_required:
-                if not (
-                    wc.amunet_equipment_exception_reason
-                    and wc.amunet_equipment_exception_signed_by_id
-                    and wc.amunet_equipment_exception_signed_date
-                ):
-                    problemas.append(
-                        ' - Workcenter %s: excepcion "No requiere equipo '
-                        'calibrado" sin justificacion y firma electronica.'
-                        % wc_label
-                    )
-                else:
-                    any_skipped = True
-                continue
-
             if not wc.amunet_equipment_ids:
+                if wc.amunet_no_equipment_required:
+                    if not (
+                        wc.amunet_equipment_exception_reason
+                        and wc.amunet_equipment_exception_signed_by_id
+                        and wc.amunet_equipment_exception_signed_date
+                    ):
+                        problemas.append(
+                            ' - Workcenter %s: excepcion "No requiere equipo '
+                            'calibrado" sin justificacion y firma electronica.'
+                            % wc_label
+                        )
+                        continue
+                    any_skipped = True
+                    continue
                 # Sin equipos propios: si tiene padre, delegar al padre
                 if wc.amunet_parent_workcenter_id:
                     parent = wc.amunet_parent_workcenter_id
@@ -232,6 +230,9 @@ class MrpWorkcenter(models.Model):
                 raise UserError(_(
                     'Solo Metrologia, Manager QC o Responsable MRP puede '
                     'aprobar esta excepcion ISO 13485.'))
+            if wc.amunet_equipment_ids:
+                raise UserError(_(
+                    'Este centro ya tiene equipos vinculados; no requiere excepcion.'))
             if not wc.amunet_equipment_exception_reason:
                 raise UserError(_(
                     'Captura la justificacion ISO 13485 antes de firmar la excepcion.'))

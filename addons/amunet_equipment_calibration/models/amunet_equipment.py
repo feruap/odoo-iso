@@ -136,6 +136,22 @@ class AmunetEquipment(models.Model):
         string='Siguiente paso metrologia',
         compute='_compute_workqueue_status')
 
+    calibration_queue_status = fields.Selection([
+        ('vencido', 'Vencido'),
+        ('por_vencer', 'Por vencer'),
+        ('sin_certificado', 'Sin certificado'),
+        ('cert_cargado', 'Certificado cargado'),
+        ('aprobado', 'Vigente'),
+    ], string='Estado cola',
+       compute='_compute_calibration_queue_status',
+       search='_search_calibration_queue_status')
+
+    calibration_responsible_id = fields.Many2one(
+        'res.users',
+        string='Responsable calibración',
+        tracking=True,
+    )
+
     maintenance_required = fields.Boolean(
         string='Requiere mantenimiento',
         default=True,
@@ -228,6 +244,120 @@ class AmunetEquipment(models.Model):
             else:
                 eq.calibracion_via = '—'
 
+    @api.depends(
+        'calibration_required',
+        'next_calibration_date',
+        'calibration_line_ids.state',
+        'calibration_line_ids.certificate_file',
+        'calibration_line_ids.expiration_date',
+    )
+    def _compute_calibration_queue_status(self):
+        today = fields.Date.today()
+        warning_limit = today + timedelta(days=30)
+        grace_deadline = self._calibration_grace_deadline()
+        in_grace = bool(grace_deadline and today <= grace_deadline)
+        for eq in self:
+            if not eq.calibration_required:
+                eq.calibration_queue_status = False
+                continue
+            has_draft_cert = any(
+                c.state == 'draft' and c.certificate_file
+                for c in eq.calibration_line_ids
+            )
+            done = eq.calibration_line_ids.filtered(
+                lambda c: c.state == 'done' and c.expiration_date
+            ).sorted(lambda c: c.expiration_date, reverse=True)
+            if done and done[0].expiration_date >= today:
+                if done[0].expiration_date <= warning_limit:
+                    eq.calibration_queue_status = 'por_vencer'
+                else:
+                    eq.calibration_queue_status = 'aprobado'
+            elif has_draft_cert:
+                eq.calibration_queue_status = 'cert_cargado'
+            elif in_grace:
+                eq.calibration_queue_status = 'por_vencer'
+            elif not eq.next_calibration_date:
+                eq.calibration_queue_status = 'sin_certificado'
+            else:
+                eq.calibration_queue_status = 'vencido'
+
+    def _search_calibration_queue_status(self, operator, value):
+        today = fields.Date.today()
+        warning_limit = today + timedelta(days=30)
+        grace_deadline = self._calibration_grace_deadline()
+        in_grace = bool(grace_deadline and today <= grace_deadline)
+
+        if operator not in ('=', 'in', '!=', 'not in'):
+            return [('id', '=', False)]
+
+        values = [value] if isinstance(value, str) else list(value)
+        if operator in ('!=', 'not in'):
+            all_states = ['vencido', 'por_vencer', 'sin_certificado', 'cert_cargado', 'aprobado']
+            values = [s for s in all_states if s not in values]
+
+        def _draft_cert_ids():
+            return self.env['amunet.equipment.calibration'].search([
+                ('state', '=', 'draft'),
+                ('certificate_file', '!=', False),
+            ]).mapped('equipment_id').ids
+
+        domains = []
+        for v in values:
+            if v == 'aprobado':
+                domains.append([
+                    ('calibration_required', '=', True),
+                    ('next_calibration_date', '>', warning_limit),
+                ])
+            elif v == 'por_vencer':
+                if in_grace:
+                    draft_ids = _draft_cert_ids()
+                    # calibration_required AND NOT draft_cert AND (no_date OR date <= warning_limit)
+                    domains.append([
+                        ('calibration_required', '=', True),
+                        ('id', 'not in', draft_ids),
+                        '|',
+                        ('next_calibration_date', '=', False),
+                        ('next_calibration_date', '<=', warning_limit),
+                    ])
+                else:
+                    domains.append([
+                        ('calibration_required', '=', True),
+                        ('next_calibration_date', '>=', today),
+                        ('next_calibration_date', '<=', warning_limit),
+                    ])
+            elif v == 'vencido':
+                if in_grace:
+                    domains.append([('id', '=', False)])
+                else:
+                    domains.append([
+                        ('calibration_required', '=', True),
+                        ('next_calibration_date', '<', today),
+                        ('next_calibration_date', '!=', False),
+                    ])
+            elif v == 'sin_certificado':
+                if in_grace:
+                    domains.append([('id', '=', False)])
+                else:
+                    draft_ids = _draft_cert_ids()
+                    domains.append([
+                        ('calibration_required', '=', True),
+                        ('next_calibration_date', '=', False),
+                        ('id', 'not in', draft_ids),
+                    ])
+            elif v == 'cert_cargado':
+                draft_ids = _draft_cert_ids()
+                domains.append([('id', 'in', draft_ids)])
+
+        if not domains:
+            return [('id', '=', False)]
+        if len(domains) == 1:
+            return domains[0]
+        # OR de todos los dominios: ['|', d1..., '|', d2..., d3...]
+        result = domains[0]
+        for d in domains[1:]:
+            result = ['|'] + result + d
+        return result
+
     def action_view_expediente(self):
         self.ensure_one()
         expedientes = self.env['amunet.equipment.expediente'].search(
@@ -304,6 +434,17 @@ class AmunetEquipment(models.Model):
                     f"colgar de otro equipo padre."
                 )
 
+    def action_view_calibration_history(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Calibraciones — {self.name}',
+            'res_model': 'amunet.equipment',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
     def action_view_child_equipments(self):
         self.ensure_one()
         return {
@@ -353,19 +494,34 @@ class AmunetEquipment(models.Model):
         'maintenance_line_ids.scheduled_date',
         'maintenance_line_ids.completed_date',
     )
+    def _calibration_grace_deadline(self):
+        param = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet.calibration.grace.deadline')
+        return fields.Date.from_string(param) if param else False
+
     def _compute_workqueue_status(self):
         today = fields.Date.today()
         warning_limit = today + timedelta(days=30)
+        grace_deadline = self._calibration_grace_deadline()
+        in_grace = bool(grace_deadline and today <= grace_deadline)
         for eq in self:
             if not eq.calibration_required:
                 eq.calibration_work_status = 'no_required'
                 eq.calibration_next_step = 'Sin accion metrologica'
             elif not eq.next_calibration_date:
-                eq.calibration_work_status = 'missing'
-                eq.calibration_next_step = 'Registrar certificado o reconciliar FVA'
+                if in_grace:
+                    eq.calibration_work_status = 'due_soon'
+                    eq.calibration_next_step = f'Sin certificado — cargar antes del {grace_deadline} para no bloquear'
+                else:
+                    eq.calibration_work_status = 'missing'
+                    eq.calibration_next_step = 'Registrar certificado o reconciliar FVA'
             elif eq.next_calibration_date < today:
-                eq.calibration_work_status = 'expired'
-                eq.calibration_next_step = 'Bloquear equipo y cargar calibracion vigente'
+                if in_grace:
+                    eq.calibration_work_status = 'due_soon'
+                    eq.calibration_next_step = f'Calibracion vencida — cargar antes del {grace_deadline} para no bloquear'
+                else:
+                    eq.calibration_work_status = 'expired'
+                    eq.calibration_next_step = 'Bloquear equipo y cargar calibracion vigente'
             elif eq.next_calibration_date <= warning_limit:
                 eq.calibration_work_status = 'due_soon'
                 eq.calibration_next_step = 'Programar calibracion antes del vencimiento'
@@ -417,6 +573,9 @@ class AmunetEquipment(models.Model):
     def _check_calibration_validity(self):
         """Validación en tiempo real (si alguien intenta activar un equipo vencido)."""
         Expediente = self.env['amunet.equipment.expediente']
+        today = date.today()
+        grace_deadline = self._calibration_grace_deadline()
+        in_grace = bool(grace_deadline and today <= grace_deadline)
         for equipment in self:
             if equipment.state == 'active':
                 if not Expediente.search_count([('equipment_id', '=', equipment.id)]):
@@ -424,9 +583,10 @@ class AmunetEquipment(models.Model):
                         f"El equipo '{equipment.name}' no puede activarse porque "
                         f"no tiene un expediente de calificación registrado."
                     )
-                if (equipment.calibration_required
+                if (not in_grace
+                        and equipment.calibration_required
                         and equipment.next_calibration_date
-                        and equipment.next_calibration_date < date.today()):
+                        and equipment.next_calibration_date < today):
                     raise ValidationError(
                         f"El equipo '{equipment.name}' no puede estar 'Activo' "
                         f"porque su calibración venció el {equipment.next_calibration_date}."
@@ -436,6 +596,10 @@ class AmunetEquipment(models.Model):
     def _cron_check_calibration_status(self):
         """CRON Job diario para buscar equipos Vencidos y forzarlos a Fuera de Servicio."""
         today = date.today()
+        grace_deadline = self._calibration_grace_deadline()
+        if grace_deadline and today <= grace_deadline:
+            return
+
         expired_equipments = self.search([
             ('state', '=', 'active'),
             ('calibration_required', '=', True),
@@ -446,7 +610,7 @@ class AmunetEquipment(models.Model):
         for eq in expired_equipments:
             eq.write({'state': 'out_of_service'})
             eq.message_post(body=(
-                f"🔴 El sistema ha cambiado automáticamente el estado a 'Fuera de Servicio'. "
+                f"El sistema ha cambiado automáticamente el estado a 'Fuera de Servicio'. "
                 f"Motivo: La calibración caducó el {eq.next_calibration_date}."
             ))
 
