@@ -11,22 +11,37 @@ def _can_view_prices(recordset):
     return recordset.env.su or recordset.env.user.has_group(PRICE_GROUP)
 
 
-def _check_price_read(recordset, fields, sensitive_fields):
-    if fields is None and sensitive_fields and not _can_view_prices(recordset):
-        raise AccessError(
-            'No tiene permisos para leer todos los campos porque el modelo contiene precios.'
-        )
-    if not fields:
+def _blocked_fields(recordset, fields, sensitive_fields):
+    """Devuelve los campos de precio que deben ocultarse para este usuario."""
+    if _can_view_prices(recordset) or not sensitive_fields:
+        return set()
+    if fields is None:
+        return set(sensitive_fields)
+    return set(fields) & set(sensitive_fields)
+
+
+def _check_price_export(recordset, fields, sensitive_fields):
+    """Para exportaciones: sí lanza error si el usuario no tiene permiso."""
+    if _can_view_prices(recordset):
         return
-    blocked = sorted(set(fields) & set(sensitive_fields))
-    if blocked and not _can_view_prices(recordset):
+    blocked = sorted(set(fields or []) & set(sensitive_fields))
+    if blocked:
         raise AccessError(
-            'No tiene permisos para leer/exportar campos de precio: %s' % ', '.join(blocked)
+            'No tiene permisos para exportar campos de precio: %s' % ', '.join(blocked)
         )
 
 
-def _export_field_names(fields_to_export):
-    return [field.split('/')[0] for field in fields_to_export or []]
+def _mask_read(self, fields, sensitive_fields, load):
+    """Lee el registro ocultando (como False) los campos de precio bloqueados."""
+    blocked = _blocked_fields(self, fields, sensitive_fields)
+    if not blocked:
+        return super(type(self), self).read(fields=fields, load=load)
+    safe_fields = None if fields is None else [f for f in fields if f not in blocked]
+    results = super(type(self), self).read(fields=safe_fields, load=load)
+    for record in results:
+        for field in blocked:
+            record[field] = False
+    return results
 
 
 class ProductTemplate(models.Model):
@@ -34,11 +49,10 @@ class ProductTemplate(models.Model):
     _amunet_price_fields = ('list_price', 'standard_price')
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -47,11 +61,10 @@ class ProductProduct(models.Model):
     _amunet_price_fields = ('list_price', 'lst_price', 'standard_price')
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -60,11 +73,10 @@ class ProductSupplierinfo(models.Model):
     _amunet_price_fields = ('price', 'discount')
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -73,11 +85,10 @@ class PurchaseOrder(models.Model):
     _amunet_price_fields = ('amount_untaxed', 'amount_tax', 'amount_total', 'tax_totals')
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -92,11 +103,10 @@ class PurchaseOrderLine(models.Model):
     )
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -105,11 +115,10 @@ class PurchaseReport(models.Model):
     _amunet_price_fields = ('price_total', 'price_average')
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -118,11 +127,10 @@ class StockLot(models.Model):
     _amunet_price_fields = ('standard_price',)
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -131,11 +139,10 @@ class StockMove(models.Model):
     _amunet_price_fields = ('price_unit', 'value', 'standard_price', 'remaining_value')
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -151,11 +158,10 @@ class AccountMove(models.Model):
     )
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -172,9 +178,8 @@ class AccountMoveLine(models.Model):
     )
 
     def read(self, fields=None, load='_classic_read'):
-        _check_price_read(self, fields, self._amunet_price_fields)
-        return super().read(fields=fields, load=load)
+        return _mask_read(self, fields, self._amunet_price_fields, load)
 
     def export_data(self, fields_to_export):
-        _check_price_read(self, _export_field_names(fields_to_export), self._amunet_price_fields)
+        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
         return super().export_data(fields_to_export)
