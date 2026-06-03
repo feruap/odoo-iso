@@ -2031,7 +2031,7 @@ class AmunetQualityCheck(models.Model):
             })],
         }
 
-        picking = self.env['stock.picking'].create(picking_vals)
+        picking = self.sudo().env['stock.picking'].create(picking_vals)
 
         # Confirmar
         picking.action_confirm()
@@ -2042,7 +2042,7 @@ class AmunetQualityCheck(models.Model):
             move_line = picking.move_line_ids.filtered(
                 lambda ml: ml.move_id == move and ml.product_id == self.product_id
             )
-            
+
             if not move_line:
                 # Crear move_line si no existe
                 move_line = self.env['stock.move.line'].create({
@@ -2582,7 +2582,7 @@ class AmunetQualityCheck(models.Model):
             })],
         }
 
-        reception = self.env['stock.picking'].with_context(
+        reception = self.sudo().env['stock.picking'].with_context(
             default_check_ids=False,
             default_quality_check_id=False,
             default_picking_type_id=False,
@@ -3061,7 +3061,7 @@ class AmunetQualityCheck(models.Model):
         # This prevents the 'Record does not exist' error where 'default_check_ids' from the wizard
         # is mistakenly applied to the native 'check_ids' field on the stock.picking.
         
-        picking = self.env['stock.picking'].with_context(
+        picking = self.sudo().env['stock.picking'].with_context(
             default_check_ids=False,            # Clear native check_ids
             default_quality_check_id=False,     # Clear native quality_check_id
             default_picking_type_id=False,      # Ensure clean picking type selection
