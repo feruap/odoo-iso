@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -32,3 +33,25 @@ class TestPriceViewerGroup(TransactionCase):
             PRICE_VIEWER_LOGIN,
             'El unico usuario activo del grupo Amunet / Ver precios debe ser Fernando.',
         )
+
+    def test_non_price_viewer_cannot_read_or_export_price_fields(self):
+        user = self.env['res.users'].create({
+            'name': 'Usuario sin precios',
+            'login': 'sin.precios.test@amunet.invalid',
+            'email': 'sin.precios.test@amunet.invalid',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])],
+        })
+        product = self.env['product.product'].create({
+            'name': 'Producto protegido para prueba',
+            'list_price': 123.0,
+            'standard_price': 45.0,
+        })
+        product_as_user = product.with_user(user)
+
+        with self.assertRaises(AccessError):
+            product_as_user.read(['name', 'list_price'])
+
+        with self.assertRaises(AccessError):
+            product_as_user.export_data(['name', 'standard_price'])
+
+        self.assertEqual(product_as_user.read(['name'])[0]['name'], product.name)

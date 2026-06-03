@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_permission_audit_log_search" model="ir.ui.view">
+        <field name="name">amunet.permission.audit.log.search</field>
+        <field name="model">amunet.permission.audit.log</field>
+        <field name="arch" type="xml">
+            <search string="Auditoria de permisos">
+                <field name="changed_by_id"/>
+                <field name="target_user_id"/>
+                <filter name="group_target" string="Usuario afectado" context="{'group_by': 'target_user_id'}"/>
+                <filter name="group_changed_by" string="Modificado por" context="{'group_by': 'changed_by_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_amunet_permission_audit_log_list" model="ir.ui.view">
+        <field name="name">amunet.permission.audit.log.list</field>
+        <field name="model">amunet.permission.audit.log</field>
+        <field name="arch" type="xml">
+            <list string="Auditoria de permisos" create="0" edit="0" delete="0">
+                <field name="create_date"/>
+                <field name="changed_by_id"/>
+                <field name="target_user_id"/>
+                <field name="added_groups"/>
+                <field name="removed_groups"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_permission_audit_log_form" model="ir.ui.view">
+        <field name="name">amunet.permission.audit.log.form</field>
+        <field name="model">amunet.permission.audit.log</field>
+        <field name="arch" type="xml">
+            <form string="Auditoria de permisos" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="create_date"/>
+                        <field name="changed_by_id"/>
+                        <field name="target_user_id"/>
+                        <field name="change_type"/>
+                    </group>
+                    <group>
+                        <field name="added_groups"/>
+                        <field name="removed_groups"/>
+                    </group>
+                    <group>
+                        <field name="old_groups"/>
+                        <field name="new_groups"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_permission_audit_log" model="ir.actions.act_window">
+        <field name="name">Auditoria de permisos</field>
+        <field name="res_model">amunet.permission.audit.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_permission_audit_log_search"/>
+    </record>
+</odoo>

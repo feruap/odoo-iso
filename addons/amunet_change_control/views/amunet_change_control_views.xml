@@ -15,8 +15,11 @@
                 <filter name="lot_scope" string="Solo lote" domain="[('scope', '=', 'lot')]"/>
                 <filter name="permanent" string="Permanentes" domain="[('scope', '=', 'permanent')]"/>
                 <filter name="print_pending" string="Impresion pendiente" domain="[('print_status', 'in', ('pending', 'requested'))]"/>
+                <filter name="system_change" string="Cambios de sistema" domain="[('request_type', '=', 'system_change')]"/>
+                <filter name="high_risk" string="Riesgo alto/critico" domain="[('risk_level', 'in', ('high', 'critical'))]"/>
                 <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
                 <filter name="group_type" string="Tipo" context="{'group_by': 'request_type'}"/>
+                <filter name="group_risk" string="Riesgo" context="{'group_by': 'risk_level'}"/>
                 <filter name="group_product" string="Producto" context="{'group_by': 'product_id'}"/>
             </search>
         </field>
@@ -33,6 +36,8 @@
                 <field name="name"/>
                 <field name="title"/>
                 <field name="request_type"/>
+                <field name="risk_level" widget="badge"/>
+                <field name="regulatory_impact"/>
                 <field name="scope"/>
                 <field name="product_id"/>
                 <field name="lot_id"/>
@@ -94,6 +99,8 @@
                         <group string="Clasificacion">
                             <field name="request_type"/>
                             <field name="scope"/>
+                            <field name="risk_level"/>
+                            <field name="regulatory_impact"/>
                             <field name="requested_by_id" readonly="1"/>
                             <field name="effective_date"/>
                         </group>
@@ -116,10 +123,21 @@
                                 <field name="current_instruction" placeholder="Instruccion vigente, por ejemplo: usar 3 gotas."/>
                                 <field name="proposed_instruction" placeholder="Instruccion propuesta, por ejemplo: usar 4 gotas para este lote."/>
                             </group>
+                            <group string="Cambio de sistema" invisible="request_type != 'system_change'">
+                                <field name="deployment_environment"/>
+                                <field name="staging_validation_date"/>
+                                <field name="production_deploy_date"/>
+                            </group>
                             <group>
                                 <field name="rationale" placeholder="Evidencia, pruebas realizadas y justificacion tecnica."/>
                                 <field name="risk_assessment" placeholder="Riesgo para paciente, resultado, lote, etiquetado/documentacion."/>
                                 <field name="disposition" placeholder="Decision propuesta: usar, reprocesar, rechazar, cambiar documento, imprimir addendum."/>
+                            </group>
+                        </page>
+
+                        <page string="Validacion" invisible="request_type != 'system_change'">
+                            <group>
+                                <field name="validation_evidence" placeholder="URL de staging, usuarios que validaron, pruebas ejecutadas y evidencia antes de produccion."/>
                             </group>
                         </page>
 

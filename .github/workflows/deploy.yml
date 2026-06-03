@@ -42,26 +42,50 @@ jobs:
             docker ps -a --filter "name=odoo-staging-upgrade-" --filter "status=created" -q | xargs -r docker rm -f || true
           }
           cleanup_upgrade_containers
+          old_head=$(git rev-parse HEAD 2>/dev/null || true)
           git fetch origin
           git checkout staging 2>/dev/null || git checkout -b staging origin/staging
           git pull --ff-only origin staging
+          new_head=$(git rev-parse HEAD)
+          update_modules=""
+          if [ -n "$old_head" ] && [ "$old_head" != "$new_head" ]; then
+            update_modules=$(git diff --name-only "$old_head" "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
+          elif [ -n "$new_head" ]; then
+            update_modules=$(git diff-tree --no-commit-id --name-only -r "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
+          fi
+          echo "Modulos Odoo modificados: ${update_modules:-ninguno}"
           docker compose -f docker-compose.staging.yml build --no-cache web-staging
           docker compose -f docker-compose.staging.yml stop web-staging || true
-          upgrade_ok=0
-          for j in 1 2 3; do
-            upgrade_container=odoo-staging-upgrade-$j-$$
-            if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.staging.yml run -T --rm --name "$upgrade_container" --no-deps web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
-              upgrade_ok=1
-              break
+          if [ -n "$update_modules" ]; then
+            upgrade_ok=0
+            for j in 1 2 3; do
+              upgrade_container=odoo-staging-upgrade-$j-$$
+              if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.staging.yml run -T --rm --name "$upgrade_container" --no-deps -e UPDATE_MODULES="$update_modules" web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+                upgrade_ok=1
+                break
+              fi
+              docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
+              echo "Reintentando actualizacion en 10s..."
+              sleep 10
+            done
+            if [ "$upgrade_ok" != 1 ]; then
+              echo "ERROR: odoo -u $update_modules -d Amunet_testing fallo tras 3 intentos. Abortando deploy a staging."
+              docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging || true
+              exit 1
             fi
-            docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
-            echo "Reintentando actualizacion en 10s..."
-            sleep 10
-          done
-          if [ "$upgrade_ok" != 1 ]; then
-            echo "ERROR: odoo -u all -d Amunet_testing fallo tras 3 intentos. Abortando deploy a staging."
-            docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging || true
-            exit 1
+
+            test_tags=$(printf '%s' "$update_modules" | tr ',' '\n' | while read module; do if [ -d "addons/$module/tests" ]; then printf '/%s,' "$module"; fi; done | sed 's/,$//')
+            if [ -n "$test_tags" ]; then
+              echo "Ejecutando tests de modulos modificados: $test_tags"
+              test_container=odoo-staging-tests-$$
+              if ! timeout 30m docker compose -f docker-compose.staging.yml run -T --rm --name "$test_container" --no-deps -e UPDATE_MODULES="$update_modules" -e TEST_TAGS="$test_tags" web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --test-enable --test-tags "$TEST_TAGS" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+                docker rm -f "$test_container" >/dev/null 2>&1 || true
+                docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging || true
+                exit 1
+              fi
+            fi
+          else
+            echo "Sin cambios en addons; se omite actualizacion de modulos Odoo."
           fi
 
           echo "Corrections automaticas deshabilitadas. Ejecutarlas manualmente solo con guarda de DB revisada."
@@ -127,26 +151,39 @@ jobs:
             docker ps -a --filter "name=odoo-production-upgrade-" --filter "status=created" -q | xargs -r docker rm -f || true
           }
           cleanup_upgrade_containers
+          old_head=$(git rev-parse HEAD 2>/dev/null || true)
           git fetch origin
           git checkout main 2>/dev/null || git checkout -b main origin/main
           git pull --ff-only origin main
+          new_head=$(git rev-parse HEAD)
+          update_modules=""
+          if [ -n "$old_head" ] && [ "$old_head" != "$new_head" ]; then
+            update_modules=$(git diff --name-only "$old_head" "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
+          elif [ -n "$new_head" ]; then
+            update_modules=$(git diff-tree --no-commit-id --name-only -r "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
+          fi
+          echo "Modulos Odoo modificados: ${update_modules:-ninguno}"
           docker compose -f docker-compose.production.yml build --no-cache web-production
           docker compose -f docker-compose.production.yml stop web-production || true
-          upgrade_ok=0
-          for j in 1 2 3; do
-            upgrade_container=odoo-production-upgrade-$j-$$
-            if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.production.yml run -T --rm --name "$upgrade_container" --no-deps web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
-              upgrade_ok=1
-              break
+          if [ -n "$update_modules" ]; then
+            upgrade_ok=0
+            for j in 1 2 3; do
+              upgrade_container=odoo-production-upgrade-$j-$$
+              if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.production.yml run -T --rm --name "$upgrade_container" --no-deps -e UPDATE_MODULES="$update_modules" web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d amunet_prod -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+                upgrade_ok=1
+                break
+              fi
+              docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
+              echo "Reintentando actualizacion en 10s..."
+              sleep 10
+            done
+            if [ "$upgrade_ok" != 1 ]; then
+              echo "ERROR: odoo -u $update_modules -d amunet_prod fallo tras 3 intentos. Abortando deploy a produccion."
+              docker compose -f docker-compose.production.yml up -d --force-recreate web-production || true
+              exit 1
             fi
-            docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
-            echo "Reintentando actualizacion en 10s..."
-            sleep 10
-          done
-          if [ "$upgrade_ok" != 1 ]; then
-            echo "ERROR: odoo -u all -d amunet_prod fallo tras 3 intentos. Abortando deploy a produccion."
-            docker compose -f docker-compose.production.yml up -d --force-recreate web-production || true
-            exit 1
+          else
+            echo "Sin cambios en addons; se omite actualizacion de modulos Odoo."
           fi
 
           echo "Corrections automaticas deshabilitadas en produccion. No se ejecutan scripts one-shot durante deploy."
@@ -175,7 +212,12 @@ jobs:
             echo "ERROR: Odoo produccion no quedo healthy tras recrear el contenedor."
             exit 1
           fi
-          docker exec odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
+          if [ -n "$update_modules" ]; then
+            timeout "$UPGRADE_TIMEOUT" docker exec -e UPDATE_MODULES="$update_modules" odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
+          fi
+          chmod +x scripts/monitor_odoo_health.sh
+          scripts/monitor_odoo_health.sh || echo "WARNING: health monitor reported issues after deploy."
+          (crontab -l 2>/dev/null | grep -v 'amunet-odoo-health-monitor' || true; echo '*/5 * * * * /opt/odoo/production/scripts/monitor_odoo_health.sh >> /opt/odoo/production/logs/monitor_odoo_health.log 2>&1 # amunet-odoo-health-monitor') | crontab -
           SCRIPT
           ssh -i /tmp/deploy_key \
             -o StrictHostKeyChecking=no \

@@ -6,3 +6,4 @@ access_amunet_change_control_supervisor,amunet.change.control supervisor,model_a
 access_amunet_change_control_sanitary,amunet.change.control sanitary,model_amunet_change_control,amunet_quality.group_quality_sanitary,1,1,1,0
 access_amunet_change_control_manager,amunet.change.control manager,model_amunet_change_control,amunet_quality.group_quality_manager,1,1,1,1
 access_amunet_change_control_documentation,amunet.change.control documentation,model_amunet_change_control,amunet_change_control.group_change_control_documentation,1,1,1,0
+access_amunet_permission_audit_log_user,amunet.permission.audit.log user,model_amunet_permission_audit_log,base.group_system,1,0,0,0
