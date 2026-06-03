@@ -30,28 +30,25 @@
         </field>
     </record>
 
-    <!-- PO form: completar amount_total + amount_tax que la vista existente no cubría -->
+    <!-- PO form: Odoo 19 muestra totales via tax_totals, no con campos amount_* -->
     <record id="po_form_hide_amount" model="ir.ui.view">
         <field name="name">purchase.order.form.hide.amount</field>
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='amount_total']" position="attributes">
-                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
-            </xpath>
-            <xpath expr="//field[@name='amount_untaxed']" position="attributes">
-                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
-            </xpath>
-            <xpath expr="//field[@name='amount_tax']" position="attributes">
+            <xpath expr="//field[@name='tax_totals']" position="attributes">
                 <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
             <xpath expr="//field[@name='order_line']//field[@name='price_total']" position="attributes">
                 <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
+            <xpath expr="//field[@name='order_line']//field[@name='price_subtotal']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
             <xpath expr="//field[@name='order_line']//field[@name='discount']" position="attributes">
                 <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
-            <xpath expr="//field[@name='order_line']//field[@name='taxes_id']" position="attributes">
+            <xpath expr="//field[@name='order_line']//field[@name='tax_ids']" position="attributes">
                 <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>
@@ -81,10 +78,7 @@
             <xpath expr="//field[@name='price_unit']" position="attributes">
                 <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
-            <xpath expr="//field[@name='price_subtotal']" position="attributes">
-                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
-            </xpath>
-            <xpath expr="//field[@name='taxes_id']" position="attributes">
+            <xpath expr="//field[@name='tax_ids']" position="attributes">
                 <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>
@@ -94,9 +88,12 @@
     <record id="purchase_history_hide" model="ir.ui.view">
         <field name="name">purchase.history.list.hide</field>
         <field name="model">purchase.order.line</field>
-        <field name="inherit_id" ref="purchase.purchase_history_view_tree"/>
+        <field name="inherit_id" ref="purchase.purchase_history_tree"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='price_unit']" position="attributes">
+            <xpath expr="//field[@name='price_unit_product_uom']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+            <xpath expr="//field[@name='price_subtotal']" position="attributes">
                 <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>

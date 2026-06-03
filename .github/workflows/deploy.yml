@@ -40,9 +40,10 @@ jobs:
           git checkout staging 2>/dev/null || git checkout -b staging origin/staging
           git pull --ff-only origin staging
           docker compose -f docker-compose.staging.yml build --no-cache web-staging
+          docker compose -f docker-compose.staging.yml stop web-staging || true
           upgrade_ok=0
           for j in 1 2 3; do
-            if docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-$j-$$ --no-deps web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+            if docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-$j-$$ --no-deps web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
               upgrade_ok=1
               break
             fi
@@ -51,6 +52,7 @@ jobs:
           done
           if [ "$upgrade_ok" != 1 ]; then
             echo "ERROR: odoo -u all -d Amunet_testing fallo tras 3 intentos. Abortando deploy a staging."
+            docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging || true
             exit 1
           fi
 
@@ -115,9 +117,10 @@ jobs:
           git checkout main 2>/dev/null || git checkout -b main origin/main
           git pull --ff-only origin main
           docker compose -f docker-compose.production.yml build --no-cache web-production
+          docker compose -f docker-compose.production.yml stop web-production || true
           upgrade_ok=0
           for j in 1 2 3; do
-            if docker compose -f docker-compose.production.yml run -T --rm --name odoo-production-upgrade-$j-$$ --no-deps web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+            if docker compose -f docker-compose.production.yml run -T --rm --name odoo-production-upgrade-$j-$$ --no-deps web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
               upgrade_ok=1
               break
             fi
@@ -126,6 +129,7 @@ jobs:
           done
           if [ "$upgrade_ok" != 1 ]; then
             echo "ERROR: odoo -u all -d amunet_prod fallo tras 3 intentos. Abortando deploy a produccion."
+            docker compose -f docker-compose.production.yml up -d --force-recreate web-production || true
             exit 1
           fi
 
