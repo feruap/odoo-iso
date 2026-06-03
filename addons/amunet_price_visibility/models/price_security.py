@@ -12,7 +12,6 @@ def _can_view_prices(recordset):
 
 
 def _blocked_fields(recordset, fields, sensitive_fields):
-    """Devuelve los campos de precio que deben ocultarse para este usuario."""
     if _can_view_prices(recordset) or not sensitive_fields:
         return set()
     if fields is None:
@@ -21,7 +20,6 @@ def _blocked_fields(recordset, fields, sensitive_fields):
 
 
 def _check_price_export(recordset, fields, sensitive_fields):
-    """Para exportaciones: sí lanza error si el usuario no tiene permiso."""
     if _can_view_prices(recordset):
         return
     blocked = sorted(set(fields or []) & set(sensitive_fields))
@@ -31,17 +29,15 @@ def _check_price_export(recordset, fields, sensitive_fields):
         )
 
 
-def _mask_read(self, fields, sensitive_fields, load):
-    """Lee el registro ocultando (como False) los campos de precio bloqueados."""
-    blocked = _blocked_fields(self, fields, sensitive_fields)
-    if not blocked:
-        return super(type(self), self).read(fields=fields, load=load)
-    safe_fields = None if fields is None else [f for f in fields if f not in blocked]
-    results = super(type(self), self).read(fields=safe_fields, load=load)
+def _apply_mask(results, blocked):
     for record in results:
         for field in blocked:
             record[field] = False
     return results
+
+
+def _export_field_names(fields_to_export):
+    return [f.split('/')[0] for f in fields_to_export or []]
 
 
 class ProductTemplate(models.Model):
@@ -49,10 +45,14 @@ class ProductTemplate(models.Model):
     _amunet_price_fields = ('list_price', 'standard_price')
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -61,10 +61,14 @@ class ProductProduct(models.Model):
     _amunet_price_fields = ('list_price', 'lst_price', 'standard_price')
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -73,10 +77,14 @@ class ProductSupplierinfo(models.Model):
     _amunet_price_fields = ('price', 'discount')
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -85,28 +93,32 @@ class PurchaseOrder(models.Model):
     _amunet_price_fields = ('amount_untaxed', 'amount_tax', 'amount_total', 'tax_totals')
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
     _amunet_price_fields = (
-        'price_unit',
-        'price_subtotal',
-        'price_total',
-        'price_unit_product_uom',
-        'discount',
+        'price_unit', 'price_subtotal', 'price_total', 'price_unit_product_uom', 'discount',
     )
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -115,10 +127,14 @@ class PurchaseReport(models.Model):
     _amunet_price_fields = ('price_total', 'price_average')
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -127,10 +143,14 @@ class StockLot(models.Model):
     _amunet_price_fields = ('standard_price',)
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
@@ -139,47 +159,50 @@ class StockMove(models.Model):
     _amunet_price_fields = ('price_unit', 'value', 'standard_price', 'remaining_value')
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
     _amunet_price_fields = (
-        'amount_untaxed',
-        'amount_tax',
-        'amount_total',
-        'amount_total_in_currency_signed',
-        'amount_untaxed_in_currency_signed',
-        'tax_totals',
+        'amount_untaxed', 'amount_tax', 'amount_total',
+        'amount_total_in_currency_signed', 'amount_untaxed_in_currency_signed', 'tax_totals',
     )
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
 
 
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
     _amunet_price_fields = (
-        'price_unit',
-        'price_subtotal',
-        'price_total',
-        'debit',
-        'credit',
-        'balance',
-        'discount',
+        'price_unit', 'price_subtotal', 'price_total',
+        'debit', 'credit', 'balance', 'discount',
     )
 
     def read(self, fields=None, load='_classic_read'):
-        return _mask_read(self, fields, self._amunet_price_fields, load)
+        blocked = _blocked_fields(self, fields, self._amunet_price_fields)
+        if not blocked:
+            return super().read(fields=fields, load=load)
+        safe = None if fields is None else [f for f in fields if f not in blocked]
+        return _apply_mask(super().read(fields=safe, load=load), blocked)
 
     def export_data(self, fields_to_export):
-        _check_price_export(self, [f.split('/')[0] for f in fields_to_export or []], self._amunet_price_fields)
+        _check_price_export(self, _export_field_names(fields_to_export), self._amunet_price_fields)
         return super().export_data(fields_to_export)
