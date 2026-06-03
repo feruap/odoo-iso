@@ -9,7 +9,7 @@
     """,
     'author': 'Amunet',
     'category': 'Quality',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'depends': [
         'mail',
         'stock',
@@ -22,6 +22,7 @@
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
         'views/amunet_change_control_views.xml',
+        'views/permission_audit_views.xml',
         'views/amunet_quality_check_views.xml',
         'views/mrp_production_views.xml',
         'views/menu_views.xml',

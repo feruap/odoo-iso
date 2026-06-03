@@ -25,6 +25,7 @@ class AmunetChangeControl(models.Model):
         ('lot_instruction_change', 'Condicion especial de uso por lote'),
         ('document_change', 'Cambio documental permanente'),
         ('print_request', 'Solicitud de impresion controlada'),
+        ('system_change', 'Cambio de sistema / Odoo'),
         ('other', 'Otro'),
     ], string='Tipo', required=True, default='material_substitution', tracking=True)
 
@@ -93,6 +94,30 @@ class AmunetChangeControl(models.Model):
     rationale = fields.Html(string='Justificacion / evidencia', required=True)
     risk_assessment = fields.Html(string='Evaluacion de riesgo')
     disposition = fields.Html(string='Disposicion / decision')
+    risk_level = fields.Selection([
+        ('low', 'Bajo'),
+        ('medium', 'Medio'),
+        ('high', 'Alto'),
+        ('critical', 'Critico'),
+    ], string='Nivel de riesgo', required=True, default='medium', tracking=True)
+    regulatory_impact = fields.Selection([
+        ('none', 'Sin impacto regulatorio'),
+        ('iso_13485', 'ISO 13485'),
+        ('cofepris', 'Cofepris'),
+        ('both', 'ISO 13485 y Cofepris'),
+    ], string='Impacto regulatorio', required=True, default='iso_13485', tracking=True)
+    validation_evidence = fields.Html(
+        string='Evidencia de validacion',
+        help='Pruebas en staging, usuarios que validaron y evidencia antes de produccion.',
+        tracking=True,
+    )
+    deployment_environment = fields.Selection([
+        ('none', 'No aplica'),
+        ('staging', 'Staging'),
+        ('production', 'Produccion'),
+    ], string='Entorno de despliegue', default='none', tracking=True)
+    staging_validation_date = fields.Datetime(string='Validado en staging', tracking=True)
+    production_deploy_date = fields.Datetime(string='Desplegado a produccion', tracking=True)
 
     source_document_id = fields.Many2one(
         'amunet.quality.procedure',
@@ -230,6 +255,11 @@ class AmunetChangeControl(models.Model):
             if record.request_type == 'document_change':
                 record._require(record.source_document_id,
                                 _('Indique el documento vigente que se va a cambiar.'))
+            if record.request_type == 'system_change':
+                record._require(record.risk_assessment,
+                                _('Capture la evaluacion de riesgo para cambios de sistema.'))
+                record._require(record.validation_evidence,
+                                _('Capture la evidencia de validacion en staging.'))
             record.write({'state': 'evaluation'})
             record.message_post(body=_('Solicitud enviada a evaluacion.'))
 
