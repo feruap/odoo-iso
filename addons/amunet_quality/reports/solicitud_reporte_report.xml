@@ -108,8 +108,15 @@
                     </div>
                     <table class="no-border" style="width: 100%; border: 0px none transparent !important; font-size: 11pt; margin-bottom: 10px; line-height: 1.5;">
                         <tr style="border: 0 !important;">
-                            <td class="no-border" style="width: 70%; border: 0px none transparent !important; padding: 2px 0;"><strong>Nombre:</strong> <span t-field="o.product_id.name"/></td>
-                            <td class="no-border" style="width: 30%; border: 0px none transparent !important; padding: 2px 0;"><strong>Clave:</strong> <span t-field="o.product_code"/></td>
+                            <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Nombre:</strong> <span t-field="o.product_id.name"/></td>
+                        </tr>
+                        <tr style="border: 0 !important;">
+                            <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Clave:</strong>
+                                <t t-if="o.product_id.report_document_code == 'RAMP-005'">MPCAP01</t>
+                                <t t-elif="o.product_id.report_document_code == 'RAMP-004'">MPCAI01</t>
+                                <t t-else=""><span t-field="o.product_code"/></t>
+                            </td>
+                            <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Catálogo:</strong> <span t-field="o.product_code"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
                             <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Descripción:</strong>
