@@ -56,6 +56,13 @@
                   sequence="30"
                   groups="amunet_equipment_calibration.group_equipment_manager"/>
 
+        <menuitem id="menu_amunet_calibration_queue"
+                  name="Cola de Calibraciones"
+                  parent="menu_amunet_unidades"
+                  action="amunet_equipment_calibration.action_calibration_queue"
+                  sequence="40"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
         <!-- =================================================================
              SECCIÓN 2: PROGRAMAS
              ================================================================= -->

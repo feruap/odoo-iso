@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Cola de Calibraciones — Vista lista con semáforo de 5 estados
+       ══════════════════════════════════════════════════════════════ -->
+
+  <record id="view_calibration_queue_list" model="ir.ui.view">
+    <field name="name">amunet.equipment.calibration.queue.list</field>
+    <field name="model">amunet.equipment</field>
+    <field name="arch" type="xml">
+      <list string="Cola de Calibraciones"
+            decoration-danger="calibration_queue_status == 'vencido'"
+            decoration-warning="calibration_queue_status in ('por_vencer', 'sin_certificado')"
+            decoration-info="calibration_queue_status == 'cert_cargado'"
+            decoration-success="calibration_queue_status == 'aprobado'"
+            default_order="next_calibration_date asc">
+        <field name="serial_number" string="Código/ID" optional="show"/>
+        <field name="name" string="Equipo"/>
+        <field name="department" string="Área"/>
+        <field name="calibration_responsible_id" string="Responsable" optional="show"/>
+        <field name="next_calibration_date" string="Próxima calibración"/>
+        <field name="calibration_queue_status" string="Estado"
+               widget="badge"
+               decoration-danger="calibration_queue_status == 'vencido'"
+               decoration-warning="calibration_queue_status in ('por_vencer', 'sin_certificado')"
+               decoration-info="calibration_queue_status == 'cert_cargado'"
+               decoration-success="calibration_queue_status == 'aprobado'"/>
+        <field name="calibration_next_step" string="Acción sugerida" optional="show"/>
+        <button name="action_view_calibration_history"
+                string="Gestionar certificado"
+                type="object"
+                icon="fa-upload"
+                class="btn-sm"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Acción -->
+  <record id="action_calibration_queue" model="ir.actions.act_window">
+    <field name="name">Cola de Calibraciones</field>
+    <field name="res_model">amunet.equipment</field>
+    <field name="view_mode">list,form</field>
+    <field name="domain">[('calibration_required', '=', True), ('is_deseable', '=', False)]</field>
+    <field name="view_ids" eval="[(5, 0, 0),
+        (0, 0, {'view_mode': 'list', 'view_id': ref('view_calibration_queue_list')}),
+    ]"/>
+    <field name="context">{'search_default_calibrable': 1}</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        ¡Sin equipos pendientes de calibración!
+      </p>
+      <p>
+        Todos los equipos calibrables tienen su certificado vigente.
+      </p>
+    </field>
+  </record>
+
+</odoo>
