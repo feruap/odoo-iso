@@ -543,7 +543,7 @@ class AmunetPilotPreflight(models.Model):
                 rec._add_line(
                     'quality',
                     'Plan de muestreo liberacion final',
-                    'block',
+                    'warn',
                     'No se encontro plan de muestreo aplicable.',
                     'Crear o ajustar plan de muestreo para familia/producto y cantidad.',
                     sequence=320,

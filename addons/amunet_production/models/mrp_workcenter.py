@@ -132,6 +132,15 @@ class MrpWorkcenter(models.Model):
         Levanta UserError consolidando todos los problemas detectados.
         """
         today = fields.Date.context_today(self)
+        grace_param = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet.calibration.grace.deadline', default=''
+        )
+        try:
+            from datetime import date as _date
+            grace_date = _date.fromisoformat(grace_param) if grace_param else None
+        except ValueError:
+            grace_date = None
+        in_grace = grace_date is not None and today <= grace_date
         problemas = []
         any_skipped = False
 
@@ -192,6 +201,8 @@ class MrpWorkcenter(models.Model):
                     ('expiration_date', '>=', today),
                 ], limit=1)
                 if not cal:
+                    if in_grace:
+                        continue
                     last = self.env['amunet.equipment.calibration'].search([
                         ('equipment_id', '=', eq.id),
                     ], order='expiration_date desc', limit=1)
