@@ -36,6 +36,12 @@ jobs:
           flock -w 1800 9 || { echo "ERROR: no se pudo obtener el candado de deploy en 30 minutos"; exit 1; }
           echo "Candado global de deploy adquirido."
           cd /opt/odoo/staging
+          UPGRADE_TIMEOUT=45m
+          cleanup_upgrade_containers() {
+            docker ps -a --filter "name=odoo-staging-upgrade-" --filter "status=exited" -q | xargs -r docker rm -f || true
+            docker ps -a --filter "name=odoo-staging-upgrade-" --filter "status=created" -q | xargs -r docker rm -f || true
+          }
+          cleanup_upgrade_containers
           git fetch origin
           git checkout staging 2>/dev/null || git checkout -b staging origin/staging
           git pull --ff-only origin staging
@@ -43,10 +49,12 @@ jobs:
           docker compose -f docker-compose.staging.yml stop web-staging || true
           upgrade_ok=0
           for j in 1 2 3; do
-            if docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-$j-$$ --no-deps web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+            upgrade_container=odoo-staging-upgrade-$j-$$
+            if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.staging.yml run -T --rm --name "$upgrade_container" --no-deps web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
               upgrade_ok=1
               break
             fi
+            docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
             echo "Reintentando actualizacion en 10s..."
             sleep 10
           done
@@ -113,6 +121,12 @@ jobs:
           flock -w 1800 9 || { echo "ERROR: no se pudo obtener el candado de deploy en 30 minutos"; exit 1; }
           echo "Candado global de deploy adquirido."
           cd /opt/odoo/production
+          UPGRADE_TIMEOUT=45m
+          cleanup_upgrade_containers() {
+            docker ps -a --filter "name=odoo-production-upgrade-" --filter "status=exited" -q | xargs -r docker rm -f || true
+            docker ps -a --filter "name=odoo-production-upgrade-" --filter "status=created" -q | xargs -r docker rm -f || true
+          }
+          cleanup_upgrade_containers
           git fetch origin
           git checkout main 2>/dev/null || git checkout -b main origin/main
           git pull --ff-only origin main
@@ -120,10 +134,12 @@ jobs:
           docker compose -f docker-compose.production.yml stop web-production || true
           upgrade_ok=0
           for j in 1 2 3; do
-            if docker compose -f docker-compose.production.yml run -T --rm --name odoo-production-upgrade-$j-$$ --no-deps web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+            upgrade_container=odoo-production-upgrade-$j-$$
+            if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.production.yml run -T --rm --name "$upgrade_container" --no-deps web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
               upgrade_ok=1
               break
             fi
+            docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
             echo "Reintentando actualizacion en 10s..."
             sleep 10
           done
