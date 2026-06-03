@@ -5,19 +5,25 @@
         <xpath expr="//th[@name='th_price_unit']" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
+        <xpath expr="//th[@name='th_discount']" position="attributes">
+            <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+        </xpath>
         <xpath expr="//th[@name='th_taxes']" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
-        <xpath expr="//th[@name='th_amount']" position="attributes">
+        <xpath expr="//th[@name='th_subtotal']" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
-        <xpath expr="//td[@name='td_price_unit']" position="attributes">
+        <xpath expr="//span[@t-field='line.price_unit']/ancestor::td[1]" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
-        <xpath expr="//td[@name='td_taxes']" position="attributes">
+        <xpath expr="//span[@t-field='line.discount']/ancestor::td[1]" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
-        <xpath expr="//td[@name='td_amount']" position="attributes">
+        <xpath expr="//span[contains(@t-out, 'line.tax_ids')]/ancestor::td[1]" position="attributes">
+            <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+        </xpath>
+        <xpath expr="//span[@t-field='line.price_subtotal']/ancestor::td[1]" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
         <xpath expr="//div[@id='total']" position="attributes">

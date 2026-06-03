@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Reporte de análisis de compras solo para Fernando (revela price_total) -->
-    <record id="purchase.menu_purchase_report" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('amunet_price_visibility.group_price_viewer')])]"/>
+    <!-- Reporte de análisis de compras: revela importes de compra -->
+    <record id="purchase.purchase_report_main" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('amunet_price_visibility.group_price_viewer')])]"/>
+    </record>
+    <record id="purchase.purchase_report" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('amunet_price_visibility.group_price_viewer')])]"/>
     </record>
 </odoo>

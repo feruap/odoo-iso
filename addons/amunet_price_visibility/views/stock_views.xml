@@ -16,9 +16,15 @@
     <record id="stock_move_valuation_hide" model="ir.ui.view">
         <field name="name">stock.move.view.list.valuation.hide</field>
         <field name="model">stock.move</field>
-        <field name="inherit_id" ref="stock_account.view_move_tree"/>
+        <field name="inherit_id" ref="stock_account.stock_move_view_list_valuation"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='price_unit']" position="attributes">
+            <xpath expr="//field[@name='value']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+            <xpath expr="//field[@name='standard_price']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+            <xpath expr="//field[@name='remaining_value']" position="attributes">
                 <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>
