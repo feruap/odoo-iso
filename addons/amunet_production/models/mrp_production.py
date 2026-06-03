@@ -225,7 +225,7 @@ class MrpProduction(models.Model):
                             next_step = _('Confirmar devolucion recibida')
                         blocker = _('Conciliacion: %s') % reconciliation_labels.get(
                             mo.reconciliation_state, mo.reconciliation_state)
-                    elif mo.amunet_sys_req_qc and mo.route_type != 'short' and mo.quality_analysis_status != 'approved':
+                    elif mo.amunet_sys_req_qc and mo.quality_analysis_status != 'approved':
                         if mo.quality_analysis_status in ('to_request', 'rejected'):
                             priority = 'ready'
                             owner = 'supervisor'
@@ -436,7 +436,7 @@ class MrpProduction(models.Model):
 
     @api.depends(
         'state', 'workorder_ids.state', 'amunet_sys_req_qc', 'quality_analysis_status',
-        'route_type', 'reconciliation_state', 'move_raw_ids.amunet_qty_supplied', 'move_raw_ids.state',
+        'reconciliation_state', 'move_raw_ids.amunet_qty_supplied', 'move_raw_ids.state',
     )
     def _compute_amunet_can_produce(self):
         for rec in self:
@@ -448,7 +448,7 @@ class MrpProduction(models.Model):
             else:
                 wos_done = True
             qc_ok = True
-            if rec.amunet_sys_req_qc and rec.route_type != 'short':
+            if rec.amunet_sys_req_qc:
                 qc_ok = rec.quality_analysis_status == 'approved'
             # Gate de conciliación: si hay material surtido, debe estar conciliado.
             has_supply = any(
@@ -466,7 +466,7 @@ class MrpProduction(models.Model):
             rec.amunet_product_categ_id = category
             rec.amunet_is_solution_product = 'solucion' in category_name.lower()
 
-    @api.depends('product_id', 'date_start', 'route_type')
+    @api.depends('product_id', 'date_start')
     def _compute_quality_params(self):
         for rec in self:
             if not rec.product_id:
@@ -481,7 +481,7 @@ class MrpProduction(models.Model):
             rec.quality_ph_initial = product.amunet_initial_ph
             rec.amunet_sys_weighing_range = product.amunet_weighing_range_text
 
-            if product.amunet_req_quality_control and rec.route_type != 'short':
+            if product.amunet_req_quality_control:
                 rec.quality_analysis_status = 'to_request'
             else:
                 rec.quality_analysis_status = 'none'
@@ -1024,11 +1024,8 @@ class MrpProduction(models.Model):
                 nombres = ', '.join(sin_cantidad.mapped('product_id.name'))
                 raise UserError(f'ATENCIÓN: Los siguientes reactivos no tienen Cantidad Utilizada:\n{nombres}\n\nCompleta los valores antes de marcar como hecho.')
 
-            # 2. Validar Calidad (solo si el producto lo requiere y no es línea corta)
-            if record.amunet_sys_req_qc and record.route_type != 'short' and record.quality_analysis_status != 'approved':
+            # 2. Validar Calidad (solo si el producto lo requiere)
+            if record.amunet_sys_req_qc and record.quality_analysis_status != 'approved':
                 raise UserError('ATENCIÓN: Este producto requiere Análisis C.C. No puedes "Marcar como Hecho" hasta que el área de Calidad apruebe el análisis.')
-            # Limpiar estatus de calidad en línea corta al cerrar
-            if record.route_type == 'short' and record.quality_analysis_status not in ('none', 'approved'):
-                record.quality_analysis_status = 'none'
                 
         return super(MrpProduction, self).button_mark_done()
