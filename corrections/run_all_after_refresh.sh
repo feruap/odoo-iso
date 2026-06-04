@@ -38,8 +38,21 @@ run_python() {
 # 1. Descripciones (necesitan el docx)
 run_python "$CORR/20260605_72_gen_descriptions_direct.py"
 
-# 2. RAMP masivo (basado en descripciones)
-run_shell "$CORR/20260603_66_fix_ramp_codes_masivo.py"
+# 2. RAMP masivo (basado en número de ventanas de la descripción, via SQL directo)
+docker exec odoo-staging-db psql -U odoo -d Amunet_testing -c "
+UPDATE product_template pt
+SET
+  report_document_code = CASE
+    WHEN (regexp_match(description->>'en_US', 'de (\d+) ventana'))[1]::int % 2 = 0 THEN 'RAMP-005'
+    ELSE 'RAMP-004'
+  END,
+  certificate_document_code = CASE
+    WHEN (regexp_match(description->>'en_US', 'de (\d+) ventana'))[1]::int % 2 = 0 THEN 'CERMP-005'
+    ELSE 'CERMP-004'
+  END
+WHERE categ_id IN (SELECT id FROM product_category WHERE name='Cartucho')
+  AND description IS NOT NULL AND description::text NOT IN ('{}','null')
+  AND description->>'en_US' ~ 'de \d+ ventana';" | grep -E "UPDATE"
 
 # 3. Info adicional (largo, ancho, CV)
 run_shell "$CORR/20260604_67_add_additional_info_cartuchos.py"
