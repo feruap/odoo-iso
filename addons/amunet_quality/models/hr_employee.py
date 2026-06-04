@@ -7,15 +7,15 @@ class HrEmployee(models.Model):
 
     employee_code = fields.Char(
         string="Código de Empleado (Firma QC)",
-        help="Código único para firmas en reportes de calidad (exactamente 2 dígitos numéricos)."
+        help="Código único para firmas en reportes de calidad (exactamente 3 dígitos numéricos, ej. '019')."
     )
 
     @api.constrains('employee_code')
     def _check_employee_code(self):
         for record in self:
             if record.employee_code:
-                if len(record.employee_code) != 2 or not record.employee_code.isdigit():
-                    raise ValidationError("El Código de Empleado debe ser exactamente de 2 dígitos numéricos (ej. '01', '15').")
+                if len(record.employee_code) != 3 or not record.employee_code.isdigit():
+                    raise ValidationError("El Código de Empleado debe ser exactamente de 3 dígitos numéricos (ej. '019', '015').")
 
     @api.model_create_multi
     def create(self, vals_list):
