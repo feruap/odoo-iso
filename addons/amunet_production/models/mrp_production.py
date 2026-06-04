@@ -803,6 +803,29 @@ class MrpProduction(models.Model):
         """Permite que la UI muestre la previsualizacion en vivo al cambiar producto antes de guardar"""
         self._auto_generate_lot_draft()
 
+    def button_plan(self):
+        for mo in self.filtered(lambda m: not m.is_planned):
+            sin_material = mo.move_raw_ids.filtered(
+                lambda m: m.state not in ('assigned', 'done', 'cancel')
+            )
+            if sin_material:
+                nombres = '\n'.join(
+                    '- %s (disponible: %.2f / requerido: %.2f %s)' % (
+                        m.product_id.display_name,
+                        m.reserved_availability,
+                        m.product_uom_qty,
+                        m.product_uom.name,
+                    )
+                    for m in sin_material
+                )
+                raise UserError(
+                    'No se puede planificar la orden %s.\n\n'
+                    'Los siguientes materiales no están completamente disponibles:\n%s\n\n'
+                    'Surtir el material faltante antes de planificar.'
+                    % (mo.name, nombres)
+                )
+        return super().button_plan()
+
     def action_confirm(self):
         # Crear fisicamente el lote ahora que se esta confirmando.
         # Politica Amunet: el lote del producto terminado tiene EL MISMO

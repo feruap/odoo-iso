@@ -30,7 +30,7 @@ puede mostrar, exportar ni filtrar.
     """,
     'author': 'Amunet',
     'category': 'Hidden',
-    'version': '19.0.3.1.0',
+    'version': '19.0.4.0.0',
     'depends': [
         'product',
         'purchase',

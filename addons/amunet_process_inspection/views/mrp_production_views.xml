@@ -57,6 +57,7 @@
             </xpath>
             <xpath expr="//button[@name='button_plan']" position="attributes">
                 <attribute name="invisible">state not in ('confirmed','progress','to_close') or not workorder_ids or is_planned or (not preflight_approved and route_type in ('short','long'))</attribute>
+                <attribute name="groups">amunet_production.group_production_supervisor</attribute>
             </xpath>
             <xpath expr="//button[@name='button_unplan']" position="attributes">
                 <attribute name="invisible">1</attribute>

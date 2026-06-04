@@ -4,6 +4,7 @@
         <field name="name">Produccion / Operador</field>
         <field name="implied_ids" eval="[
             (4, ref('base.group_user')),
+            (4, ref('mrp.group_mrp_user')),
             (4, ref('amunet_material_request.group_material_requester'))
         ]"/>
         <field name="comment">
