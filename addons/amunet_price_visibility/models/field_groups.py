@@ -2,39 +2,19 @@
 """
 Redefine fields de precio con groups= a nivel field (no solo en vistas).
 
-El override de read()/export_data() en price_security.py solo bloquea cuando
-se invoca explicitamente el API publico (read([fields]) o export). Cuando
-alguien accede record.amount_total via attribute Python (lo que pasa en
-computados, reportes generados, getters, etc), Odoo usa _read() privado y
-salta el guardrail.
+NOTA: list_price y standard_price en product.template/product.product NO se
+bloquean aquí a nivel ORM porque ese campo aparece en demasiadas vistas de
+otros módulos (inventario, manufactura, calidad) y causa AccessError en cascada.
+El ocultamiento de esos campos se maneja exclusivamente via groups= en las
+vistas XML (product_views.xml). El bloqueo ORM aplica solo a campos de compra,
+donde el riesgo de exposición accidental es real y acotado.
 
-La via cuanonica de Odoo: redefinir el campo con groups=. Odoo entonces NO
-incluye el campo en los resultados para usuarios fuera del grupo, en CUALQUIER
-ruta de acceso (incluyendo property access y search/group_by).
-
-Mantenemos los overrides de read() como segunda capa.
+Si un reporte necesita incluir costos (standard_price o list_price), se
+requiere autorización expresa de Dirección antes de agregarlo.
 """
 from odoo import models, fields
 
 PRICE_GROUP = 'amunet_price_visibility.group_price_viewer'
-
-
-class ProductTemplateFG(models.Model):
-    _inherit = 'product.template'
-    list_price = fields.Float(groups=PRICE_GROUP)
-    standard_price = fields.Float(groups=PRICE_GROUP)
-
-
-class ProductProductFG(models.Model):
-    _inherit = 'product.product'
-    lst_price = fields.Float(groups=PRICE_GROUP)
-    standard_price = fields.Float(groups=PRICE_GROUP)
-
-
-class ProductSupplierinfoFG(models.Model):
-    _inherit = 'product.supplierinfo'
-    price = fields.Float(groups=PRICE_GROUP)
-    discount = fields.Float(groups=PRICE_GROUP)
 
 
 class PurchaseOrderFG(models.Model):
