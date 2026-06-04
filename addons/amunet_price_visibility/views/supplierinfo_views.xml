@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
         <field name="arch" type="xml">
             <field name="price" position="attributes">
-                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+                <attribute name="column_invisible">not amunet_price_visible</attribute>
             </field>
         </field>
     </record>
@@ -17,7 +17,7 @@
         <field name="inherit_id" ref="product.product_supplierinfo_form_view"/>
         <field name="arch" type="xml">
             <field name="price" position="attributes">
-                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+                <attribute name="invisible">not amunet_price_visible</attribute>
             </field>
         </field>
     </record>

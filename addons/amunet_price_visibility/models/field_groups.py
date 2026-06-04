@@ -12,9 +12,57 @@ donde el riesgo de exposición accidental es real y acotado.
 Si un reporte necesita incluir costos (standard_price o list_price), se
 requiere autorización expresa de Dirección antes de agregarlo.
 """
-from odoo import models, fields
+from odoo import api, models, fields
 
 PRICE_GROUP = 'amunet_price_visibility.group_price_viewer'
+
+
+class ProductTemplatePV(models.Model):
+    _inherit = 'product.template'
+
+    amunet_price_visible = fields.Boolean(compute='_compute_amunet_price_visible')
+
+    @api.depends_context('uid')
+    def _compute_amunet_price_visible(self):
+        can_see = self.env.user.has_group(PRICE_GROUP)
+        for rec in self:
+            rec.amunet_price_visible = can_see
+
+
+class ProductProductPV(models.Model):
+    _inherit = 'product.product'
+
+    amunet_price_visible = fields.Boolean(compute='_compute_amunet_price_visible')
+
+    @api.depends_context('uid')
+    def _compute_amunet_price_visible(self):
+        can_see = self.env.user.has_group(PRICE_GROUP)
+        for rec in self:
+            rec.amunet_price_visible = can_see
+
+
+class ProductSupplierinfoPV(models.Model):
+    _inherit = 'product.supplierinfo'
+
+    amunet_price_visible = fields.Boolean(compute='_compute_amunet_price_visible')
+
+    @api.depends_context('uid')
+    def _compute_amunet_price_visible(self):
+        can_see = self.env.user.has_group(PRICE_GROUP)
+        for rec in self:
+            rec.amunet_price_visible = can_see
+
+
+class ProductPricelistItemPV(models.Model):
+    _inherit = 'product.pricelist.item'
+
+    amunet_price_visible = fields.Boolean(compute='_compute_amunet_price_visible')
+
+    @api.depends_context('uid')
+    def _compute_amunet_price_visible(self):
+        can_see = self.env.user.has_group(PRICE_GROUP)
+        for rec in self:
+            rec.amunet_price_visible = can_see
 
 
 class PurchaseOrderFG(models.Model):
