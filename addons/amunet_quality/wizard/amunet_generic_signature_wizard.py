@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import time
 
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessDenied, ValidationError
@@ -105,15 +106,47 @@ class AmunetGenericSignatureWizard(models.TransientModel):
         })
 
     def action_confirm_signature(self):
+        started_at = time.perf_counter()
+        timings = {}
+
+        def mark(step, step_started_at):
+            timings[step] = time.perf_counter() - step_started_at
+            return time.perf_counter()
+
         self.ensure_one()
+        step_started_at = time.perf_counter()
         record = self._target_record()
+        step_started_at = mark('target_record', step_started_at)
         label = self._check_method_allowed(record)
+        step_started_at = mark('method_allowed', step_started_at)
         if not self._validate_credentials(self.password):
+            step_started_at = mark('credentials_failed', step_started_at)
             self._log_signature_event(record, success=False)
+            mark('audit_failed', step_started_at)
+            _logger.info(
+                'AMUNET_SIGNATURE_TIMING status=failed model=%s res_id=%s method=%s total=%.3fs details=%s',
+                record._name,
+                record.id,
+                self.method_name,
+                time.perf_counter() - started_at,
+                ','.join('%s=%.3fs' % (key, value) for key, value in timings.items()),
+            )
             raise ValidationError(_('La contrasena o PIN es incorrecto.'))
+        step_started_at = mark('credentials_ok', step_started_at)
 
         method = getattr(record, self.method_name)
         result = method()
+        step_started_at = mark('target_method', step_started_at)
         self.signature_type = self.signature_type or label
+        step_started_at = mark('signature_type_write', step_started_at)
         self._log_signature_event(record, success=True)
+        mark('audit_success', step_started_at)
+        _logger.info(
+            'AMUNET_SIGNATURE_TIMING status=success model=%s res_id=%s method=%s total=%.3fs details=%s',
+            record._name,
+            record.id,
+            self.method_name,
+            time.perf_counter() - started_at,
+            ','.join('%s=%.3fs' % (key, value) for key, value in timings.items()),
+        )
         return result or {'type': 'ir.actions.act_window_close'}
