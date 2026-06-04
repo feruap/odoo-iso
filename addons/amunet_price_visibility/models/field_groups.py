@@ -88,14 +88,28 @@ class PurchaseReportFG(models.Model):
     price_average = fields.Float(groups=PRICE_GROUP)
 
 
-class StockLotFG(models.Model):
+class StockLotPV(models.Model):
     _inherit = 'stock.lot'
-    standard_price = fields.Float(groups=PRICE_GROUP)
+
+    amunet_price_visible = fields.Boolean(compute='_compute_amunet_price_visible')
+
+    @api.depends_context('uid')
+    def _compute_amunet_price_visible(self):
+        can_see = self.env.user.has_group(PRICE_GROUP)
+        for rec in self:
+            rec.amunet_price_visible = can_see
 
 
-class StockMoveFG(models.Model):
+class StockMovePV(models.Model):
     _inherit = 'stock.move'
-    price_unit = fields.Float(groups=PRICE_GROUP)
+
+    amunet_price_visible = fields.Boolean(compute='_compute_amunet_price_visible')
+
+    @api.depends_context('uid')
+    def _compute_amunet_price_visible(self):
+        can_see = self.env.user.has_group(PRICE_GROUP)
+        for rec in self:
+            rec.amunet_price_visible = can_see
 
 
 class AccountMoveFG(models.Model):

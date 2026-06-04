@@ -104,7 +104,7 @@
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-field="o.product_code"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
-                            <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>Uso previsto:</strong>
+                            <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>Descripción:</strong>
                                 <span t-if="o.product_description" t-field="o.product_description"/>
                                 <span t-elif="o.product_id.description" t-field="o.product_id.description"/>
                             </td>
