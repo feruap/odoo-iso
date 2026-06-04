@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import time
 from odoo import models, api
 from odoo.exceptions import ValidationError
 
@@ -157,7 +158,21 @@ class AmunetCompetenciasGenericSignatureHook(models.TransientModel):
             )
 
     def action_confirm_signature(self):
+        started_at = time.perf_counter()
         self.ensure_one()
         record = self._target_record()
+        after_target = time.perf_counter()
         self._validate_generic_training(record)
-        return super().action_confirm_signature()
+        after_training = time.perf_counter()
+        result = super().action_confirm_signature()
+        _logger.info(
+            'AMUNET_SIGNATURE_TRAINING_TIMING model=%s res_id=%s method=%s total=%.3fs target_record=%.3fs training=%.3fs downstream=%.3fs',
+            record._name,
+            record.id,
+            self.method_name,
+            time.perf_counter() - started_at,
+            after_target - started_at,
+            after_training - after_target,
+            time.perf_counter() - after_training,
+        )
+        return result
