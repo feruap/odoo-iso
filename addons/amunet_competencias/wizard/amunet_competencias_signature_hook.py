@@ -165,7 +165,7 @@ class AmunetCompetenciasGenericSignatureHook(models.TransientModel):
         self._validate_generic_training(record)
         after_training = time.perf_counter()
         result = super().action_confirm_signature()
-        _logger.info(
+        _logger.warning(
             'AMUNET_SIGNATURE_TRAINING_TIMING model=%s res_id=%s method=%s total=%.3fs target_record=%.3fs training=%.3fs downstream=%.3fs',
             record._name,
             record.id,

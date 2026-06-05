@@ -123,7 +123,7 @@ class AmunetGenericSignatureWizard(models.TransientModel):
             step_started_at = mark('credentials_failed', step_started_at)
             self._log_signature_event(record, success=False)
             mark('audit_failed', step_started_at)
-            _logger.info(
+            _logger.warning(
                 'AMUNET_SIGNATURE_TIMING status=failed model=%s res_id=%s method=%s total=%.3fs details=%s',
                 record._name,
                 record.id,
@@ -141,7 +141,7 @@ class AmunetGenericSignatureWizard(models.TransientModel):
         step_started_at = mark('signature_type_write', step_started_at)
         self._log_signature_event(record, success=True)
         mark('audit_success', step_started_at)
-        _logger.info(
+        _logger.warning(
             'AMUNET_SIGNATURE_TIMING status=success model=%s res_id=%s method=%s total=%.3fs details=%s',
             record._name,
             record.id,
