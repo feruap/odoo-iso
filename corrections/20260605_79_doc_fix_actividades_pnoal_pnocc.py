@@ -5,19 +5,14 @@ env = env  # noqa
 
 NS = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
 
+# Todas las series que tienen ACTIVIDAD vacía (no PNOGE/PNODC/PNOMA/PNOTV/PNOAD)
 SERIES = {
-    'PNOCC': '/tmp/pnocc',
-    'PNOAL': '/tmp/pnoal',
+    'PNOAL':  ('/tmp/pnoal',  ['PNOAL-001','PNOAL-002','PNOAL-003','PNOAL-004','PNOAL-005',
+                                'PNOAL-006','PNOAL-007','PNOAL-008','PNOAL-010','PNOAL-011']),
+    'PNOCC':  ('/tmp/pnocc',  ['PNOCC-001','PNOCC-002','PNOCC-003','PNOCC-004','PNOCC-005',
+                                'PNOCC-006','PNOCC-007','PNOCC-008','PNOCC-009']),
+    'PNOEST': ('/tmp/pnoest', ['PNOEST-001','PNOEST-002','PNOEST-003','PNOEST-004','PNOEST-005']),
 }
-
-# Documentos de cada serie
-CODIGOS = {
-    'PNOCC': ['PNOCC-001','PNOCC-002','PNOCC-003','PNOCC-004','PNOCC-005',
-              'PNOCC-006','PNOCC-007','PNOCC-008','PNOCC-009'],
-    'PNOAL': ['PNOAL-001','PNOAL-002','PNOAL-003','PNOAL-004','PNOAL-005',
-              'PNOAL-006','PNOAL-007','PNOAL-008','PNOAL-010','PNOAL-011'],
-}
-
 
 # ── Helpers HTML ─────────────────────────────────────────────────────────────
 def run_to_html(r):
@@ -37,32 +32,48 @@ def para_to_html(p):
         return f'<li>{runs}</li>'
     return f'<p>{runs}</p>'
 
-def paras_to_html(paras):
-    """Convierte lista de párrafos Word a HTML, agrupando listas."""
+def table_to_html(tbl):
+    rows = tbl.findall('w:tr', NS)
+    if not rows: return ''
+    html_rows = []
+    for i, row in enumerate(rows):
+        cells = row.findall('w:tc', NS)
+        tag = 'th' if i == 0 else 'td'
+        cell_html = ''.join(
+            f'<{tag} style="padding:4px;">' +
+            ' '.join(''.join(run_to_html(r) for r in p.findall('.//w:r', NS))
+                     for p in cell.findall('.//w:p', NS)).strip() +
+            f'</{tag}>'
+            for cell in cells
+        )
+        html_rows.append(f'<tr>{cell_html}</tr>')
+    return ('<table border="1" style="width:100%;border-collapse:collapse;font-size:inherit;">'
+            + ''.join(html_rows) + '</table>')
+
+def cell_to_html(cell):
+    """Convierte la celda en HTML respetando el orden de párrafos Y tablas anidadas."""
     result = []
     in_list = False
-    for p in paras:
-        h = para_to_html(p)
-        if not h: continue
-        if h.startswith('<li>'):
-            if not in_list:
-                result.append('<ul>')
-                in_list = True
-            result.append(h)
-        else:
-            if in_list:
-                result.append('</ul>')
-                in_list = False
-            result.append(h)
-    if in_list:
-        result.append('</ul>')
+    for child in cell:
+        tag = child.tag.split('}')[-1]
+        if tag == 'p':
+            h = para_to_html(child)
+            if not h: continue
+            if h.startswith('<li>'):
+                if not in_list: result.append('<ul>'); in_list = True
+                result.append(h)
+            else:
+                if in_list: result.append('</ul>'); in_list = False
+                result.append(h)
+        elif tag == 'tbl':
+            if in_list: result.append('</ul>'); in_list = False
+            th = table_to_html(child)
+            if th: result.append(th)
+    if in_list: result.append('</ul>')
     return ''.join(result)
 
-def para_raw_text(p):
-    return ''.join(t.text or '' for t in p.findall('.//w:t', NS)).strip()
 
-
-def extract_actividades(path, serie):
+def extract_actividades(path):
     with zipfile.ZipFile(path) as zf:
         root = ET.fromstring(zf.read('word/document.xml'))
 
@@ -71,8 +82,6 @@ def extract_actividades(path, serie):
         rows = tbl.findall('w:tr', NS)
         if len(rows) < 2: continue
         hdr = ''.join(t.text or '' for t in rows[0].findall('.//w:t', NS)).upper()
-
-        # Excluir tablas de Control de Cambios
         if 'VERSIÓN' in hdr or 'VERSION' in hdr: continue
         if not any(k in hdr for k in ('ACTIVIDAD', 'DESCRIPCI', 'PASO')): continue
 
@@ -87,67 +96,38 @@ def extract_actividades(path, serie):
             cells = row.findall('w:tc', NS)
             if not cells: continue
 
-            def cell_html(idx):
+            def ch(idx):
                 if idx < 0 or idx >= len(cells): return ''
-                return paras_to_html(cells[idx].findall('w:p', NS))
+                return cell_to_html(cells[idx])
 
-            def cell_text(idx):
-                if idx < 0 or idx >= len(cells): return ''
-                return ''.join(t.text or '' for t in cells[idx].findall('.//w:t', NS)).strip()
+            desc_html = ch(idx_desc)
+            if not desc_html: continue
+            seq += 1
+            actividades.append({
+                'actividad': str(seq),
+                'descripcion': desc_html,
+                'responsable': ch(idx_resp),
+                'registro': ch(idx_reg),
+            })
 
-            desc_paras = cells[idx_desc].findall('w:p', NS) if idx_desc < len(cells) else []
-
-            if serie == 'PNOAL':
-                # En PNOAL: primer párrafo no vacío = nombre de la actividad,
-                # el resto = descripción real
-                non_empty = [p for p in desc_paras if para_raw_text(p)]
-                if not non_empty: continue
-                act_title = para_raw_text(non_empty[0])
-                desc_paras_rest = [p for p in desc_paras[desc_paras.index(non_empty[0])+1:]]
-                desc_html = paras_to_html(desc_paras_rest)
-                if not act_title and not desc_html: continue
-                seq += 1
-                actividades.append({
-                    'actividad': act_title,
-                    'descripcion': desc_html,
-                    'responsable': cell_html(idx_resp),
-                    'registro': cell_html(idx_reg),
-                })
-
-            else:  # PNOCC y otras series
-                # En PNOCC: columna ACTIVIDAD usa numeración automática (vacía en XML)
-                # Usamos el número de secuencia; descripción = único párrafo de col DESCRIPCIÓN
-                desc_html = paras_to_html(desc_paras)
-                if not desc_html: continue
-                seq += 1
-                actividades.append({
-                    'actividad': str(seq),
-                    'descripcion': desc_html,
-                    'responsable': cell_html(idx_resp),
-                    'registro': cell_html(idx_reg),
-                })
-
-        if actividades:
-            break  # Solo la primera tabla válida
-
+        if actividades: break
     return actividades
 
 
 DocModel = env['amunet.documento']
 ActModel = env['amunet.documento.actividad']
 
-for serie, base in SERIES.items():
-    for codigo in CODIGOS[serie]:
+for serie, (base, codigos) in SERIES.items():
+    for codigo in codigos:
         doc = DocModel.search([('codigo', '=', codigo)], limit=1)
         if not doc:
             print(f'NO ENCONTRADO: {codigo}'); continue
 
         path = os.path.join(base, f'{codigo}.docx')
         if not os.path.exists(path):
-            print(f'FALTA DOCX: {path}'); continue
+            print(f'FALTA: {path}'); continue
 
-        acts = extract_actividades(path, serie)
-
+        acts = extract_actividades(path)
         doc.actividad_ids.unlink()
         for seq, a in enumerate(acts, 1):
             ActModel.create({'documento_id': doc.id, 'sequence': seq, **a})
