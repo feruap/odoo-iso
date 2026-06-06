@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Agrega el campo "Jefe de Solicitudes de Material" al formulario de
+        usuario (pestana Permisos de acceso). Permite definir quien es el
+        jefe que vera (solo lectura) las Solicitudes de Material de este
+        usuario.
+    -->
+    <record id="view_users_form_material_head" model="ir.ui.view">
+        <field name="name">res.users.form.amunet.material.head</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="inside">
+                <group string="Solicitudes de Material" name="amunet_material_visibility">
+                    <field name="amunet_material_head_id"
+                           options="{'no_create': True}"
+                           help="Jefe de area que vera (solo lectura) las Solicitudes de Material creadas por este usuario. El jefe debe tener el grupo 'Solicitudes de Material / Jefe de area'."/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
