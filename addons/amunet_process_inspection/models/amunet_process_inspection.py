@@ -24,12 +24,14 @@ class AmunetProcessInspection(models.Model):
     )
     inspection_type = fields.Selection(
         selection=[
-            ('qc_formal', 'Inspeccion QC formal'),
-            ('production_supervision', 'Supervision de produccion'),
+            ('qc_formal', 'Inspeccion en proceso'),
+            ('production_supervision', 'Supervision'),
         ],
-        string='Tipo', required=True, tracking=True,
-        help='QC formal: la firma un Analista o Supervisor de Calidad. '
-             'Supervision de produccion: la firma el supervisor del area.',
+        string='Tipo de control', required=True, tracking=True,
+        help='Inspeccion en proceso: control de calidad en proceso, la '
+             'firma un Analista o Supervisor de Calidad. '
+             'Supervision: la firma el supervisor de produccion; NO es '
+             'una inspeccion. Ninguna de las dos libera el lote.',
     )
     production_id = fields.Many2one(
         'mrp.production', string='Orden de produccion',

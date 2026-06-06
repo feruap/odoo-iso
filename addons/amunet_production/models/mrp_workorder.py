@@ -352,6 +352,13 @@ class MrpWorkorder(models.Model):
                 'o complete operaciones previas.'))
         self.sudo().button_start()
         self.write({'amunet_supply_state': 'in_progress'})
+        # Autollenar 'Cantidad surtida' con la 'Cantidad por consumir'.
+        # El almacenista solo la ajusta si surtio algo distinto. No se
+        # pisa un valor ya capturado.
+        if self.production_id:
+            for move in self.production_id.sudo().move_raw_ids.filtered(
+                    lambda m: m.state != 'cancel' and not m.amunet_qty_supplied):
+                move.amunet_qty_supplied = move.product_uom_qty
         # Una vez que un almacenista toma el surtido, cerramos las
         # actividades pendientes del resto del grupo (mismo patron que
         # amunet_material_request).

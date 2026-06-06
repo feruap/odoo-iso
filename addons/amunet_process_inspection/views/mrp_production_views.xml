@@ -18,7 +18,7 @@
                         icon="fa-check-square-o"
                         invisible="process_inspection_count == 0">
                     <field name="process_inspection_count"
-                           string="Inspecciones" widget="statinfo"/>
+                           string="Controles" widget="statinfo"/>
                 </button>
             </xpath>
 
@@ -63,18 +63,37 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
 
-            <!-- Pestana al final del notebook -->
+            <!-- Pestana al final del notebook: dos bloques SEPARADOS.
+                 Una Supervision NO es una inspeccion. -->
             <xpath expr="//notebook" position="inside">
-                <page string="Inspecciones de proceso"
+                <page string="Controles en proceso"
                       name="process_inspections">
-                    <field name="process_inspection_ids" readonly="1">
+                    <separator string="Inspecciones en proceso (las firma Calidad)"/>
+                    <field name="inspection_qc_ids" nolabel="1" readonly="1">
                         <list decoration-info="state == 'draft'"
                               decoration-success="state == 'signed' and result == 'conforme'"
                               decoration-warning="state == 'signed' and result == 'conforme_con_retiros'"
                               decoration-danger="state == 'signed' and result == 'detener'">
                             <field name="name"/>
+                            <field name="workorder_id" string="Actividad"/>
                             <field name="workcenter_id"/>
-                            <field name="inspection_type"/>
+                            <field name="inspection_date"/>
+                            <field name="inspector_id"/>
+                            <field name="qty_inspected"/>
+                            <field name="qty_removed"/>
+                            <field name="result"/>
+                            <field name="state" widget="badge"/>
+                        </list>
+                    </field>
+                    <separator string="Supervisiones (las firma el Supervisor de Produccion)"/>
+                    <field name="inspection_sup_ids" nolabel="1" readonly="1">
+                        <list decoration-info="state == 'draft'"
+                              decoration-success="state == 'signed' and result == 'conforme'"
+                              decoration-warning="state == 'signed' and result == 'conforme_con_retiros'"
+                              decoration-danger="state == 'signed' and result == 'detener'">
+                            <field name="name"/>
+                            <field name="workorder_id" string="Actividad"/>
+                            <field name="workcenter_id"/>
                             <field name="inspection_date"/>
                             <field name="inspector_id"/>
                             <field name="qty_inspected"/>

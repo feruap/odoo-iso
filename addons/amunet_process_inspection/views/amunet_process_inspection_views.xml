@@ -136,9 +136,9 @@
                 <filter name="f_signed" string="Firmadas"
                         domain="[('state','=','signed')]"/>
                 <separator/>
-                <filter name="f_qc" string="QC formal"
+                <filter name="f_qc" string="Inspecciones en proceso"
                         domain="[('inspection_type','=','qc_formal')]"/>
-                <filter name="f_sup" string="Supervision produccion"
+                <filter name="f_sup" string="Supervisiones"
                         domain="[('inspection_type','=','production_supervision')]"/>
                 <separator/>
                 <filter name="f_retiros" string="Con piezas retiradas"

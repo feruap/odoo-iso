@@ -11,10 +11,22 @@ class MrpProduction(models.Model):
     # ============================
     process_inspection_ids = fields.One2many(
         'amunet.process.inspection', 'production_id',
-        string='Inspecciones de proceso',
+        string='Controles en proceso',
+    )
+    # Listas separadas (separacion ligera): una Supervision NO es una
+    # inspeccion, se muestran en bloques distintos.
+    inspection_qc_ids = fields.One2many(
+        'amunet.process.inspection', 'production_id',
+        string='Inspecciones en proceso',
+        domain=[('inspection_type', '=', 'qc_formal')],
+    )
+    inspection_sup_ids = fields.One2many(
+        'amunet.process.inspection', 'production_id',
+        string='Supervisiones',
+        domain=[('inspection_type', '=', 'production_supervision')],
     )
     process_inspection_count = fields.Integer(
-        string='Inspecciones',
+        string='Controles en proceso',
         compute='_compute_process_inspection_count',
     )
 
@@ -97,51 +109,41 @@ class MrpProduction(models.Model):
         return res
 
     def _generate_process_inspections(self):
-        """Crea las inspecciones de proceso necesarias para esta MO
-        segun los workcenters definidos en su routing.
+        """Crea los controles en proceso para esta MO segun lo configurado
+        en cada ACTIVIDAD (operacion del routing):
 
-        Solo crea para workcenters con inspection_type definido y solo
-        si la inspeccion no existe ya (idempotente).
+        - amunet_requires_supervision -> genera una Supervision
+          (inspection_type = production_supervision)
+        - amunet_requires_inspection  -> genera una Inspeccion en proceso
+          (inspection_type = qc_formal)
+
+        Idempotente por (orden, workorder, tipo): no duplica.
         """
         self.ensure_one()
         if self.route_type not in ('short', 'long'):
             return
         Inspection = self.env['amunet.process.inspection'].sudo()
         for wo in self.workorder_ids:
-            wc = wo.workcenter_id
-            if not wc or not wc.inspection_type:
+            op = wo.operation_id
+            if not op:
                 continue
-            # Idempotente: no duplicar
-            existing = Inspection.search([
-                ('production_id', '=', self.id),
-                ('workorder_id', '=', wo.id),
-            ], limit=1)
-            if existing:
-                continue
-            Inspection.create({
-                'production_id': self.id,
-                'workcenter_id': wc.id,
-                'workorder_id': wo.id,
-                'inspection_type': wc.inspection_type,
-                'inspector_id': self.env.user.id,
-            })
-        # Si el BOM no tiene routing (sin workorders), generar al menos
-        # las inspecciones para los workcenters operativos con
-        # inspection_type definido. (Caso edge: BOM sin operations.)
-        if not self.workorder_ids:
-            for wc in self.env['mrp.workcenter'].search([
-                ('active', '=', True),
-                ('inspection_type', '!=', False),
-            ]):
+            wanted = []
+            if op.amunet_requires_supervision:
+                wanted.append('production_supervision')
+            if op.amunet_requires_inspection:
+                wanted.append('qc_formal')
+            for itype in wanted:
                 existing = Inspection.search([
                     ('production_id', '=', self.id),
-                    ('workcenter_id', '=', wc.id),
+                    ('workorder_id', '=', wo.id),
+                    ('inspection_type', '=', itype),
                 ], limit=1)
                 if existing:
                     continue
                 Inspection.create({
                     'production_id': self.id,
-                    'workcenter_id': wc.id,
-                    'inspection_type': wc.inspection_type,
+                    'workcenter_id': wo.workcenter_id.id,
+                    'workorder_id': wo.id,
+                    'inspection_type': itype,
                     'inspector_id': self.env.user.id,
                 })

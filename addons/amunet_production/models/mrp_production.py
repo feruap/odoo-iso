@@ -317,6 +317,8 @@ class MrpProduction(models.Model):
         compute='_compute_amunet_all_workorders_done', store=False)
     amunet_user_is_warehouse = fields.Boolean(
         compute='_compute_amunet_user_is_warehouse', store=False)
+    amunet_user_can_see_supply_details = fields.Boolean(
+        compute='_compute_amunet_user_can_see_supply_details', store=False)
 
     @api.depends('move_raw_ids.amunet_qty_supplied', 'move_raw_ids.amunet_qty_used')
     def _compute_reconciliation_has_surplus(self):
@@ -358,6 +360,20 @@ class MrpProduction(models.Model):
         )
         for rec in self:
             rec.amunet_user_is_warehouse = is_wh
+
+    @api.depends_context('uid')
+    def _compute_amunet_user_can_see_supply_details(self):
+        # La columna "Detalles" de componentes es informacion de almacen.
+        # La ven los grupos de almacen y los administradores del sistema
+        # (Mery, Fernando). Produccion pura NO la ve.
+        user = self.env.user
+        can_see = (
+            user.has_group('amunet_material_request.group_material_warehouse')
+            or user.has_group('amunet_material_request.group_material_manager')
+            or user.has_group('base.group_system')
+        )
+        for rec in self:
+            rec.amunet_user_can_see_supply_details = can_see
 
     def action_initiate_reconciliation(self):
         self.ensure_one()
@@ -812,7 +828,7 @@ class MrpProduction(models.Model):
                 nombres = '\n'.join(
                     '- %s (disponible: %.2f / requerido: %.2f %s)' % (
                         m.product_id.display_name,
-                        m.reserved_availability,
+                        m.quantity,
                         m.product_uom_qty,
                         m.product_uom.name,
                     )
