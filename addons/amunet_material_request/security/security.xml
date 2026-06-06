@@ -22,6 +22,17 @@
             </field>
         </record>
 
+        <!-- Grupo: Jefe de area (ve las solicitudes de su equipo) -->
+        <record id="group_material_dept_head" model="res.groups">
+            <field name="name">Solicitudes de Material / Jefe de area</field>
+            <field name="implied_ids" eval="[(6, 0, [ref('group_material_requester')])]"/>
+            <field name="comment">
+                Ve (solo lectura) las Solicitudes de Material de los
+                usuarios que lo tienen asignado como "Jefe de Solicitudes
+                de Material", ademas de las propias.
+            </field>
+        </record>
+
         <!-- Grupo: Administrador del modulo -->
         <record id="group_material_manager" model="res.groups">
             <field name="name">Solicitudes de Material / Administrador</field>

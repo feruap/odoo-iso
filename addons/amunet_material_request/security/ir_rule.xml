@@ -30,6 +30,29 @@
             <field name="groups" eval="[(4, ref('group_material_manager'))]"/>
         </record>
 
+        <!-- Jefe de area: ve sus propias + las de su equipo (solo lectura) -->
+        <record id="material_request_rule_dept_head" model="ir.rule">
+            <field name="name">Solicitudes: jefe ve las de su equipo</field>
+            <field name="model_id" ref="model_amunet_material_request"/>
+            <field name="domain_force">['|', ('requester_id','=', user.id), ('requester_id.amunet_material_head_id','=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_material_dept_head'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="material_request_line_rule_dept_head" model="ir.rule">
+            <field name="name">Lineas: jefe ve las de su equipo</field>
+            <field name="model_id" ref="model_amunet_material_request_line"/>
+            <field name="domain_force">['|', ('request_id.requester_id','=', user.id), ('request_id.requester_id.amunet_material_head_id','=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_material_dept_head'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
         <!-- Lineas: replicar acceso del padre -->
         <record id="material_request_line_rule_requester_own" model="ir.rule">
             <field name="name">Lineas: solicitante ve solo de sus solicitudes</field>

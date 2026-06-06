@@ -34,6 +34,7 @@ Flujo:
         'data/ir_sequence_data.xml',
         'data/stock_location_data.xml',
         'views/amunet_material_request_views.xml',
+        'views/res_users_views.xml',
         'views/hr_department_views.xml',
         'views/menu_views.xml',
         'reports/material_request_report.xml',
