@@ -14,6 +14,7 @@ AREA_SELECTION = [
     ('DC', 'Documentacion'),
     ('PR', 'Produccion'),
     ('CC', 'Control de Calidad'),
+    ('EST', 'Estabilidad'),
     ('AS', 'Aseguramiento de Calidad'),
     ('AL', 'Almacen'),
     ('IN', 'Ingenieria'),
