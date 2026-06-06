@@ -36,12 +36,31 @@ jobs:
           flock -w 1800 9 || { echo "ERROR: no se pudo obtener el candado de deploy en 30 minutos"; exit 1; }
           echo "Candado global de deploy adquirido."
           cd /opt/odoo/staging
-          UPGRADE_TIMEOUT=45m
+          UPGRADE_TIMEOUT=30m
           cleanup_upgrade_containers() {
-            docker ps -a --filter "name=odoo-staging-upgrade-" --filter "status=exited" -q | xargs -r docker rm -f || true
-            docker ps -a --filter "name=odoo-staging-upgrade-" --filter "status=created" -q | xargs -r docker rm -f || true
+            echo "Limpiando contenedores de upgrade staging previos/zombies..."
+            docker ps -a --filter "name=odoo-staging-upgrade-" -q | xargs -r docker rm -f || true
+          }
+          log_db_state() {
+            echo "Estado DB staging:"
+            docker inspect -f '  container={{.Name}} id={{.Id}} status={{.State.Status}} started={{.State.StartedAt}} restart_count={{.RestartCount}}' odoo-staging-db 2>/dev/null || true
+          }
+          wait_for_db() {
+            echo "Esperando PostgreSQL staging..."
+            for i in $(seq 1 60); do
+              if docker exec odoo-staging-db pg_isready -U odoo >/dev/null 2>&1 && docker exec odoo-staging-db psql -U odoo -d Amunet_testing -tAc 'SELECT 1' >/dev/null 2>&1; then
+                echo "PostgreSQL staging listo despues de $((i * 2))s"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "ERROR: PostgreSQL staging no quedo listo en 120s"
+            log_db_state
+            return 1
           }
           cleanup_upgrade_containers
+          log_db_state
+          initial_db_id=$(docker inspect -f '{{.Id}}' odoo-staging-db 2>/dev/null || true)
           old_head=$(git rev-parse HEAD 2>/dev/null || true)
           git fetch origin
           git checkout staging 2>/dev/null || git checkout -b staging origin/staging
@@ -59,14 +78,24 @@ jobs:
           if [ -n "$update_modules" ]; then
             upgrade_ok=0
             for j in 1 2 3; do
+              cleanup_upgrade_containers
+              wait_for_db
+              current_db_id=$(docker inspect -f '{{.Id}}' odoo-staging-db 2>/dev/null || true)
+              if [ -n "$initial_db_id" ] && [ -n "$current_db_id" ] && [ "$initial_db_id" != "$current_db_id" ]; then
+                echo "WARNING: odoo-staging-db cambio de container id durante el deploy."
+                initial_db_id="$current_db_id"
+                log_db_state
+              fi
               upgrade_container=odoo-staging-upgrade-$j-$$
               if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.staging.yml run -T --rm --name "$upgrade_container" --no-deps -e UPDATE_MODULES="$update_modules" web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
                 upgrade_ok=1
                 break
               fi
               docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
-              echo "Reintentando actualizacion en 10s..."
-              sleep 10
+              log_db_state
+              wait_for_db || true
+              echo "Reintentando actualizacion en 15s..."
+              sleep 15
             done
             if [ "$upgrade_ok" != 1 ]; then
               echo "ERROR: odoo -u $update_modules -d Amunet_testing fallo tras 3 intentos. Abortando deploy a staging."
@@ -145,12 +174,31 @@ jobs:
           flock -w 1800 9 || { echo "ERROR: no se pudo obtener el candado de deploy en 30 minutos"; exit 1; }
           echo "Candado global de deploy adquirido."
           cd /opt/odoo/production
-          UPGRADE_TIMEOUT=45m
+          UPGRADE_TIMEOUT=30m
           cleanup_upgrade_containers() {
-            docker ps -a --filter "name=odoo-production-upgrade-" --filter "status=exited" -q | xargs -r docker rm -f || true
-            docker ps -a --filter "name=odoo-production-upgrade-" --filter "status=created" -q | xargs -r docker rm -f || true
+            echo "Limpiando contenedores de upgrade production previos/zombies..."
+            docker ps -a --filter "name=odoo-production-upgrade-" -q | xargs -r docker rm -f || true
+          }
+          log_db_state() {
+            echo "Estado DB production:"
+            docker inspect -f '  container={{.Name}} id={{.Id}} status={{.State.Status}} started={{.State.StartedAt}} restart_count={{.RestartCount}}' odoo-production-db 2>/dev/null || true
+          }
+          wait_for_db() {
+            echo "Esperando PostgreSQL production..."
+            for i in $(seq 1 60); do
+              if docker exec odoo-production-db pg_isready -U odoo >/dev/null 2>&1 && docker exec odoo-production-db psql -U odoo -d amunet_prod -tAc 'SELECT 1' >/dev/null 2>&1; then
+                echo "PostgreSQL production listo despues de $((i * 2))s"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "ERROR: PostgreSQL production no quedo listo en 120s"
+            log_db_state
+            return 1
           }
           cleanup_upgrade_containers
+          log_db_state
+          initial_db_id=$(docker inspect -f '{{.Id}}' odoo-production-db 2>/dev/null || true)
           old_head=$(git rev-parse HEAD 2>/dev/null || true)
           git fetch origin
           git checkout main 2>/dev/null || git checkout -b main origin/main
@@ -168,14 +216,24 @@ jobs:
           if [ -n "$update_modules" ]; then
             upgrade_ok=0
             for j in 1 2 3; do
+              cleanup_upgrade_containers
+              wait_for_db
+              current_db_id=$(docker inspect -f '{{.Id}}' odoo-production-db 2>/dev/null || true)
+              if [ -n "$initial_db_id" ] && [ -n "$current_db_id" ] && [ "$initial_db_id" != "$current_db_id" ]; then
+                echo "WARNING: odoo-production-db cambio de container id durante el deploy."
+                initial_db_id="$current_db_id"
+                log_db_state
+              fi
               upgrade_container=odoo-production-upgrade-$j-$$
               if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.production.yml run -T --rm --name "$upgrade_container" --no-deps -e UPDATE_MODULES="$update_modules" web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d amunet_prod -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
                 upgrade_ok=1
                 break
               fi
               docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
-              echo "Reintentando actualizacion en 10s..."
-              sleep 10
+              log_db_state
+              wait_for_db || true
+              echo "Reintentando actualizacion en 15s..."
+              sleep 15
             done
             if [ "$upgrade_ok" != 1 ]; then
               echo "ERROR: odoo -u $update_modules -d amunet_prod fallo tras 3 intentos. Abortando deploy a produccion."
