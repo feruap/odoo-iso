@@ -277,8 +277,7 @@ jobs:
           if [ -n "$update_modules" ]; then
             timeout "$UPGRADE_TIMEOUT" docker exec -e UPDATE_MODULES="$update_modules" odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
           fi
-          chmod +x scripts/monitor_odoo_health.sh
-          scripts/monitor_odoo_health.sh || echo "WARNING: health monitor reported issues after deploy."
+          bash scripts/monitor_odoo_health.sh || echo "WARNING: health monitor reported issues after deploy."
           (crontab -l 2>/dev/null | grep -v 'amunet-odoo-health-monitor' || true; echo '*/5 * * * * /opt/odoo/production/scripts/monitor_odoo_health.sh >> /opt/odoo/production/logs/monitor_odoo_health.log 2>&1 # amunet-odoo-health-monitor') | crontab -
           SCRIPT
           ssh -i /tmp/deploy_key \
