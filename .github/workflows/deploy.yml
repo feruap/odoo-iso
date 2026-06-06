@@ -2,6 +2,10 @@ name: Deploy Odoo
 # WARNING TO AI AGENTS: Do NOT remove the sleep delays or retry loops (for j in 1 2 3)
 # around the "odoo -u all" commands. They are critical to prevent PostgreSQL serialization
 # lock errors (SerializationFailure) during concurrent container startups.
+#
+# WARNING TO AI AGENTS: Do NOT replace `git pull --ff-only` with
+# `git reset --hard`. Fast-forward-only protects in-flight uncommitted
+# work on the server; conflicting deploys must fail loudly.
 on:
   push:
     branches:
