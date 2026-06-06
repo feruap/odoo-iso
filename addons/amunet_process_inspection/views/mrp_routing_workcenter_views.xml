@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Configuracion POR ACTIVIDAD (operacion del routing): que controles
+        en proceso se generan al confirmar la orden. Se ven al abrir una
+        operacion desde la pestana Operaciones de la lista de materiales.
+    -->
+    <record id="view_mrp_routing_workcenter_form_inspection" model="ir.ui.view">
+        <field name="name">mrp.routing.workcenter.form.amunet.inspection</field>
+        <field name="model">mrp.routing.workcenter</field>
+        <field name="inherit_id" ref="mrp.mrp_routing_workcenter_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='workcenter_id']" position="after">
+                <field name="amunet_requires_supervision"/>
+                <field name="amunet_requires_inspection"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
