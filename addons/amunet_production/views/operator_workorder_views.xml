@@ -362,6 +362,51 @@
         </field>
     </record>
 
+    <!--
+        Vista de lista para el menu ESTANDAR "Ordenes de fabricacion"
+        (mrp.mrp_production_action). Mismas columnas que la cola de
+        supervisor, pero con creacion HABILITADA para que aparezca el
+        boton "Nuevo". Las filas siguen sin edicion ni borrado en linea
+        (edit/delete=0) por seguridad regulatoria; crear abre el
+        formulario normal. La cola de supervisor (view_mrp_production_workqueue_list)
+        no se toca: sigue siendo de solo lectura.
+    -->
+    <record id="view_mrp_production_amunet_main_list" model="ir.ui.view">
+        <field name="name">mrp.production.amunet.main.list</field>
+        <field name="model">mrp.production</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <list delete="0" edit="0"
+                  decoration-danger="amunet_workqueue_priority == 'blocked'"
+                  decoration-warning="amunet_workqueue_priority == 'waiting'"
+                  decoration-success="amunet_workqueue_priority == 'ready'"
+                  decoration-info="amunet_workqueue_priority == 'progress'">
+                <field name="name" string="Orden"/>
+                <field name="product_id" string="Producto"/>
+                <field name="product_qty" string="Cantidad"/>
+                <field name="state" string="Estado MO" widget="badge"/>
+                <field name="amunet_workqueue_priority" string="Prioridad" widget="badge"/>
+                <field name="amunet_workqueue_owner" string="Responsable" widget="badge"/>
+                <field name="amunet_workqueue_next_step" string="Siguiente paso"/>
+                <field name="amunet_workqueue_blocker" string="Bloqueo / pendiente"/>
+                <field name="amunet_supply_state" string="Surtido" widget="badge" optional="show"/>
+                <field name="quality_analysis_status" string="Calidad" widget="badge" optional="show"/>
+                <field name="reconciliation_state" string="Conciliacion" widget="badge" optional="show"/>
+                <field name="date_start" string="Inicio programado" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!--
+        Apunta la accion estandar de Manufactura a la vista de arriba,
+        para que "Ordenes de fabricacion" muestre estas columnas Y el
+        boton "Nuevo". Sin esto, Odoo resolvia por defecto la vista de
+        la cola de supervisor (solo lectura) y no se veia "Nuevo".
+    -->
+    <record id="mrp.mrp_production_action" model="ir.actions.act_window">
+        <field name="view_id" ref="view_mrp_production_amunet_main_list"/>
+    </record>
+
     <record id="action_amunet_production_supervisor_workqueue" model="ir.actions.act_window">
         <field name="name">Cola supervisor produccion</field>
         <field name="res_model">mrp.production</field>
