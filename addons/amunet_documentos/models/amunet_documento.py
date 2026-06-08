@@ -153,9 +153,9 @@ class AmunetDocumento(models.Model):
     elabora_id = fields.Many2one(
         'res.users', string='Elaboro',
         default=lambda self: self.env.user, tracking=True)
-    fecha_elabora = fields.Date(
+    fecha_elabora = fields.Char(
         string='Fecha elaboracion', tracking=True,
-        default=fields.Date.context_today)
+        default=lambda self: fields.Date.context_today(self).strftime('%m/%Y'))
     revisor_id = fields.Many2one(
         'res.users', string='Asignado para revisar', tracking=True)
     autorizador_id = fields.Many2one(

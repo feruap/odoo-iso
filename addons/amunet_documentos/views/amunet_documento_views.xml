@@ -306,6 +306,7 @@
                                     <field name="elabora_id"
                                            readonly="state in ('en_revision','vigente','obsoleto')"/>
                                     <field name="fecha_elabora"
+                                           placeholder="MM/AAAA"
                                            readonly="state in ('en_revision','vigente','obsoleto')"/>
                                     <field name="revisor_id"
                                            readonly="state in ('vigente','obsoleto') or firma_revisa_id"
