@@ -13,3 +13,4 @@ access_stock_move_amunet_operator,stock.move amunet operator,stock.model_stock_m
 access_stock_move_line_amunet_operator,stock.move.line amunet operator,stock.model_stock_move_line,amunet_production.group_production_operator,1,0,0,0
 access_stock_lot_amunet_operator,stock.lot amunet operator,stock.model_stock_lot,amunet_production.group_production_operator,1,0,0,0
 access_stock_scrap_amunet_operator,stock.scrap amunet operator,stock.model_stock_scrap,amunet_production.group_production_operator,1,0,0,0
+access_mrp_production_supervisor_create,mrp.production supervisor create,mrp.model_mrp_production,amunet_production.group_production_supervisor,1,1,1,0

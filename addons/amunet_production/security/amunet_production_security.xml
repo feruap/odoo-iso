@@ -123,4 +123,15 @@
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
     </record>
+
+    <!--
+        Solo SUPERVISORES crean ordenes de fabricacion. Se quita el create
+        del acceso estandar Manufacturing/User (mrp.access_mrp_production),
+        que heredan operadores y almacen, y se otorga create explicito a
+        Produccion/Supervisor via ir.model.access.csv (linea
+        access_mrp_production_supervisor_create).
+    -->
+    <record id="mrp.access_mrp_production" model="ir.model.access">
+        <field name="perm_create" eval="False"/>
+    </record>
 </odoo>
