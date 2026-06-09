@@ -2229,14 +2229,10 @@ class AmunetQualityCheck(models.Model):
                     + '\n'.join([f'• {f}' for f in empty_fields])
                 )
             record.write({'user_realized_id': self.env.user.id})
-
-            if not record.analysis_number:
-                analysis_number = record._generate_analysis_number()
-                record.write({'analysis_number': analysis_number})
-
+            
             status_dict = dict(record._fields['global_result'].selection)
             status = status_dict.get(record.global_result, 'Desconocido')
-
+            
             from markupsafe import Markup
             msg = f"Firmado como Realizó.<br/>Dictamen actual: <b>{status}</b>"
             if record.global_result == 'fail' and record.fail_reason:
@@ -2344,8 +2340,8 @@ class AmunetQualityCheck(models.Model):
                 )
             record.write({'user_authorized_id': self.env.user.id})
 
-            # Número ya generado al firmar Realizó; este es respaldo por si no se generó
-            if not record.analysis_number:
+            # Generar número de análisis en cuanto las 3 firmas están completas
+            if record.user_realized_id and record.user_verified_id and not record.analysis_number:
                 analysis_number = record._generate_analysis_number()
                 record.write({'analysis_number': analysis_number})
 

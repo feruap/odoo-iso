@@ -262,27 +262,7 @@
                         </page>
                         <page string="Formatos derivados" name="formatos"
                               invisible="tipo not in ('pno','instructivo')">
-                            <p class="text-muted fst-italic"
-                               invisible="formato_ids or state not in ('vigente','obsoleto')">
-                                No aplica
-                            </p>
-                            <field name="formato_ids"
-                                   readonly="state in ('vigente','obsoleto')"
-                                   string="Archivos descargables"
-                                   invisible="not formato_ids and state in ('vigente','obsoleto')">
-                                <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="codigo" string="Código"/>
-                                    <field name="nombre" string="Nombre"/>
-                                    <field name="archivo" widget="binary"
-                                           filename="archivo_filename"
-                                           string="Descargar"/>
-                                    <field name="archivo_filename" optional="hide"/>
-                                </list>
-                            </field>
-                            <separator string="Descripción de formatos"/>
-                            <field name="seccion_formatos_derivados"
-                                   readonly="state in ('vigente','obsoleto')"/>
+                            <field name="seccion_formatos_derivados" readonly="state == 'vigente'"/>
                         </page>
                         <page string="Referencias bibliograficas" name="referencias"
                               invisible="tipo not in ('pno','manual','instructivo')">
@@ -326,7 +306,6 @@
                                     <field name="elabora_id"
                                            readonly="state in ('en_revision','vigente','obsoleto')"/>
                                     <field name="fecha_elabora"
-                                           placeholder="MM/AAAA"
                                            readonly="state in ('en_revision','vigente','obsoleto')"/>
                                     <field name="revisor_id"
                                            readonly="state in ('vigente','obsoleto') or firma_revisa_id"

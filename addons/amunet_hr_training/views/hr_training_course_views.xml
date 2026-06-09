@@ -100,12 +100,6 @@
                             <field name="hr_confirmed_by" readonly="1"
                                    invisible="not hr_confirmed"/>
                         </group>
-                        <group string="Registro de capacitación">
-                            <field name="nota_minima_aprobatoria"
-                                   readonly="state == 'done'"/>
-                            <field name="validez_meses"
-                                   readonly="state == 'done'"/>
-                        </group>
                     </group>
 
                     <notebook>
@@ -236,26 +230,5 @@
             (ponente + RH) se envian las invitaciones automaticamente.</p>
         </field>
     </record>
-
-    <!-- Accion para ponentes: solo sus cursos como ponente -->
-    <record id="action_mis_cursos_como_ponente" model="ir.actions.act_window">
-        <field name="name">Mis cursos como ponente</field>
-        <field name="res_model">hr.training.course</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('speaker_id.user_id', '=', uid)]</field>
-        <field name="context">{'search_default_f_draft': 1}</field>
-        <field name="search_view_id" ref="view_hr_training_course_search"/>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">No tienes cursos asignados como ponente.</p>
-        </field>
-    </record>
-
-    <!-- Menu bajo "Mi Capacitacion" visible para todos los empleados -->
-    <menuitem id="menu_mis_cursos_como_ponente"
-              name="Mis cursos como ponente"
-              parent="amunet_competencias.menu_mi_capacitacion_root"
-              action="action_mis_cursos_como_ponente"
-              groups="base.group_user"
-              sequence="15"/>
 
 </odoo>

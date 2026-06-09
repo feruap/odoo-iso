@@ -1,11 +1,5 @@
-import logging
-import time
-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-
-
-_logger = logging.getLogger(__name__)
 
 
 class AmunetMaterialRequest(models.Model):
@@ -22,7 +16,6 @@ class AmunetMaterialRequest(models.Model):
     state = fields.Selection(
         selection=[
             ('draft', 'Borrador'),
-            ('pending_approval', 'Pte. autorizacion jefe'),
             ('submitted', 'Enviada'),
             ('in_picking', 'En surtido'),
             ('pending_reception', 'Pte. recepcion'),
@@ -30,20 +23,11 @@ class AmunetMaterialRequest(models.Model):
             ('cancelled', 'Cancelada'),
         ],
         string='Estado', default='draft', required=True, tracking=True, copy=False,
-        index=True,
     )
-    amunet_head_approved_by = fields.Many2one(
-        'res.users', string='Autorizada por jefe', readonly=True, copy=False)
-    amunet_head_approved_date = fields.Datetime(
-        string='Fecha autorizacion jefe', readonly=True, copy=False)
-    amunet_user_is_approver = fields.Boolean(
-        compute='_compute_amunet_user_is_approver',
-        help='True si el usuario actual es el jefe del solicitante o un administrador.')
 
     requester_id = fields.Many2one(
         'res.users', string='Solicitante',
         default=lambda self: self.env.user, required=True, tracking=True,
-        index=True,
     )
     department_id = fields.Many2one(
         'hr.department', string='Area',
@@ -59,7 +43,6 @@ class AmunetMaterialRequest(models.Model):
     warehouse_id = fields.Many2one(
         'stock.warehouse', string='Almacen origen',
         required=True, tracking=True,
-        index=True,
         # Las solicitudes de material siempre salen del Almacen de
         # Materia Prima (AMP). Forzamos el default con sudo() para que
         # sea independiente del usuario que crea la solicitud (incluso
@@ -553,115 +536,26 @@ class AmunetMaterialRequest(models.Model):
     def _signature_action_submit(self):
         self.ensure_one()
         self._check_can_submit()
-        requester = self.requester_id
-        head = requester.amunet_material_head_id
-        needs_approval = bool(
-            requester.amunet_material_requires_head_approval and head)
-        if needs_approval:
-            # Practicante: NO va directo a almacen; queda pendiente de que
-            # su jefe autorice.
-            self.with_context(material_request_internal_write=True).write({
-                'state': 'pending_approval',
-                'user_requested_id': self.env.user.id,
-                'requested_signature_date': fields.Datetime.now(),
-            })
-            self.message_post(body=_(
-                'Solicitud enviada por %(u)s. Pendiente de autorizacion '
-                'de su jefe (%(h)s).'
-            ) % {'u': self.env.user.display_name, 'h': head.name})
-            self._notify_head_pending()
-        else:
-            self.with_context(material_request_internal_write=True).write({
-                'state': 'submitted',
-                'user_requested_id': self.env.user.id,
-                'requested_signature_date': fields.Datetime.now(),
-            })
-            self.message_post(body=_(
-                'Solicitud enviada y firmada por %s.'
-            ) % self.env.user.display_name)
-            self._notify_warehouse_pending()
-        return True
-
-    @api.depends('requester_id', 'requester_id.amunet_material_head_id')
-    def _compute_amunet_user_is_approver(self):
-        manager = self.env.user.has_group(
-            'amunet_material_request.group_material_manager')
-        for rec in self:
-            head = rec.requester_id.amunet_material_head_id
-            rec.amunet_user_is_approver = bool(
-                (head and self.env.user == head) or manager)
-
-    def action_head_approve(self):
-        """El jefe autoriza la solicitud del practicante -> pasa a Enviada
-        y recien entonces llega a almacen."""
-        self.ensure_one()
-        if self.state != 'pending_approval':
-            raise UserError(_(
-                'Solo se puede autorizar una solicitud que esta '
-                'Pendiente de autorizacion del jefe.'))
-        head = self.requester_id.amunet_material_head_id
-        is_manager = self.env.user.has_group(
-            'amunet_material_request.group_material_manager')
-        if not ((head and self.env.user == head) or is_manager):
-            raise UserError(_(
-                'Solo el jefe asignado (%s) o un administrador puede '
-                'autorizar esta solicitud.') % (head.name or '-'))
-        self.sudo().with_context(material_request_internal_write=True).write({
+        self.with_context(material_request_internal_write=True).write({
             'state': 'submitted',
-            'amunet_head_approved_by': self.env.user.id,
-            'amunet_head_approved_date': fields.Datetime.now(),
+            'user_requested_id': self.env.user.id,
+            'requested_signature_date': fields.Datetime.now(),
         })
-        self.sudo().message_post(body=_(
-            'Autorizada por el jefe %s. Enviada a almacen.'
+        self.message_post(body=_(
+            'Solicitud enviada y firmada por %s.'
         ) % self.env.user.display_name)
-        self.sudo()._notify_warehouse_pending()
+        self._notify_warehouse_pending()
         return True
-
-    def _notify_head_pending(self):
-        """Crea una actividad para el jefe del solicitante avisando que
-        tiene una solicitud por autorizar."""
-        self.ensure_one()
-        head = self.requester_id.amunet_material_head_id
-        todo_act = self.env.ref(
-            'mail.mail_activity_data_todo', raise_if_not_found=False)
-        if not head or not todo_act:
-            return
-        body = _(
-            'Solicitante: %(s)s\nArea: %(d)s\nLineas: %(n)s\nAlmacen: %(w)s'
-        ) % {
-            's': self.requester_id.name,
-            'd': self.department_id.name or '-',
-            'n': len(self.line_ids),
-            'w': self.warehouse_id.name,
-        }
-        self.sudo().activity_schedule(
-            'mail.mail_activity_data_todo',
-            summary=_('Autorizar solicitud %s') % self.name,
-            note=body.replace('\n', '<br/>'),
-            user_id=head.id,
-        )
 
     def action_start_picking(self):
-        started_at = time.perf_counter()
-        timings = {}
-
-        def mark(step, step_started_at):
-            timings[step] = time.perf_counter() - step_started_at
-            return time.perf_counter()
-
         self._check_warehouse_role()
         for rec in self:
-            rec_started_at = time.perf_counter()
-            step_started_at = rec_started_at
             if rec.state != 'submitted':
                 raise UserError(_('Solo se puede iniciar surtido desde Enviada.'))
             consumption_loc = rec._get_consumption_location()
-            step_started_at = mark('consumption_location', step_started_at)
             ptype = rec._get_internal_picking_type()
-            step_started_at = mark('picking_type', step_started_at)
             src_loc = ptype.default_location_src_id or rec.warehouse_id.lot_stock_id
             transfer_name = rec._build_transfer_name()
-            step_started_at = mark('transfer_name', step_started_at)
             picking_vals = {
                 'name': transfer_name,
                 'picking_type_id': ptype.id,
@@ -677,48 +571,23 @@ class AmunetMaterialRequest(models.Model):
                     'location_dest_id': consumption_loc.id,
                 }) for line in rec.line_ids],
             }
-            step_started_at = mark('build_values', step_started_at)
             picking = self.env['stock.picking'].create(picking_vals)
-            step_started_at = mark('picking_create', step_started_at)
             picking.action_confirm()
-            step_started_at = mark('picking_confirm', step_started_at)
             picking.action_assign()
-            step_started_at = mark('picking_assign', step_started_at)
             rec.with_context(material_request_internal_write=True).write({
                 'picking_id': picking.id,
                 'state': 'in_picking',
             })
-            step_started_at = mark('request_write', step_started_at)
             # Pre-cargar qty_supplied = qty_requested para acelerar al almacenista
-            lines_to_prefill = rec.line_ids.filtered(lambda line: not line.qty_supplied)
-            for qty in set(lines_to_prefill.mapped('qty_requested')):
-                lines_to_prefill.filtered(
-                    lambda line, qty=qty: line.qty_requested == qty
-                ).with_context(material_request_internal_write=True).write({
-                    'qty_supplied': qty,
-                })
-            step_started_at = mark('prefill_qty_supplied', step_started_at)
+            for line in rec.line_ids:
+                if not line.qty_supplied:
+                    line.qty_supplied = line.qty_requested
             rec.message_post(body=_(
                 'Surtido iniciado. Transferencia %s creada.'
             ) % picking.name)
-            step_started_at = mark('message_post', step_started_at)
             # Alguien tomo la solicitud: cerrar las actividades
             # pendientes de los demas almacenistas.
             rec._close_warehouse_activities()
-            mark('close_activities', step_started_at)
-            _logger.warning(
-                'AMUNET_MATERIAL_PICKING_TIMING request=%s lines=%s picking=%s total=%.3fs details=%s',
-                rec.name,
-                len(rec.line_ids),
-                picking.name,
-                time.perf_counter() - rec_started_at,
-                ','.join('%s=%.3fs' % (key, value) for key, value in timings.items()),
-            )
-        _logger.warning(
-            'AMUNET_MATERIAL_PICKING_BATCH_TIMING count=%s total=%.3fs',
-            len(self),
-            time.perf_counter() - started_at,
-        )
         return True
 
     def _check_can_confirm_delivery(self):

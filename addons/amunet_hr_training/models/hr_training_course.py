@@ -22,8 +22,8 @@ except ImportError:  # pragma: no cover
 # Tolerancia de retraso para marcar on_time=True al escanear el QR.
 # 10 minutos despues de date_start se considera "a tiempo".
 QR_LATE_TOLERANCE_MINUTES = 10
-QR_EARLY_ACCESS_MINUTES = 10
-QR_AFTER_END_ACCESS_MINUTES = 0
+QR_EARLY_ACCESS_MINUTES = 30
+QR_AFTER_END_ACCESS_MINUTES = 30
 
 
 class HrTrainingCourse(models.Model):
@@ -86,16 +86,6 @@ class HrTrainingCourse(models.Model):
         string='Fecha aprob. RH', readonly=True, copy=False)
     hr_confirmed_by = fields.Many2one(
         'res.users', string='Aprobo por RH', readonly=True, copy=False)
-
-    # Configuración de aprobación y vigencia
-    nota_minima_aprobatoria = fields.Float(
-        string='Calificación mínima aprobatoria', default=70.0,
-        help='Calificación mínima para generar registro de capacitación vigente.',
-    )
-    validez_meses = fields.Integer(
-        string='Vigencia (meses)', default=12,
-        help='Meses de vigencia del registro de capacitación generado al cerrar el curso.',
-    )
 
     # Participantes y pase de lista
     department_ids = fields.Many2many(
@@ -350,14 +340,14 @@ class HrTrainingCourse(models.Model):
                     'en Odoo o esta indisponible, edita primero el campo '
                     '"Ponente" antes de confirmar.'
                 ) % {'p': rec.speaker_id.name})
-            rec.sudo().write({
+            rec.write({
                 'speaker_confirmed': True,
                 'speaker_confirmed_date': fields.Datetime.now(),
             })
-            rec.sudo().message_post(body=_(
+            rec.message_post(body=_(
                 'Confirmacion del ponente registrada por %s.'
             ) % self.env.user.display_name)
-            rec.sudo()._maybe_pass_to_confirmed()
+            rec._maybe_pass_to_confirmed()
         return True
 
     def action_hr_approve(self):
@@ -398,66 +388,7 @@ class HrTrainingCourse(models.Model):
                     'Solo un curso Confirmado puede pasar a Realizado.'))
             rec.state = 'done'
             rec.message_post(body=_('Curso marcado como Realizado.'))
-            rec._crear_registros_capacitacion()
         return True
-
-    def _crear_registros_capacitacion(self):
-        """Genera amunet.registro.capacitacion para asistentes que aprobaron."""
-        self.ensure_one()
-        if 'amunet.registro.capacitacion' not in self.env.registry:
-            return
-
-        from dateutil.relativedelta import relativedelta
-
-        Registro = self.env['amunet.registro.capacitacion'].sudo()
-        Seq = self.env['ir.sequence'].sudo()
-
-        training_date = (self.date_start.date()
-                         if self.date_start else fields.Date.today())
-        expiry_date = training_date + relativedelta(months=self.validez_meses or 12)
-        trainer_user = (self.speaker_id.user_id
-                        if self.speaker_id and self.speaker_id.user_id else None)
-        nota_minima = self.nota_minima_aprobatoria or 70.0
-
-        creados = 0
-        sin_registro = 0
-
-        for att in self.attendance_ids:
-            if att.attendance != 'attended':
-                continue
-            if att.grade and att.grade < nota_minima:
-                sin_registro += 1
-                continue
-            if not att.employee_id.user_id:
-                sin_registro += 1
-                continue
-
-            ya_existe = Registro.search([
-                ('user_id', '=', att.employee_id.user_id.id),
-                ('hr_course_id', '=', self.id),
-            ], limit=1)
-            if ya_existe:
-                continue
-
-            seq = Seq.next_by_code('amunet.registro.capacitacion') or 'CAP-XXXX'
-            vals = {
-                'name': seq,
-                'user_id': att.employee_id.user_id.id,
-                'hr_course_id': self.id,
-                'training_date': training_date,
-                'expiry_date': expiry_date,
-                'training_type': 'presencial',
-                'notes': self.name,
-            }
-            if trainer_user:
-                vals['trainer_id'] = trainer_user.id
-            Registro.create(vals)
-            creados += 1
-
-        msg = _('Registros de capacitación generados: %d aprobados.') % creados
-        if sin_registro:
-            msg += _(' %d sin registro (ausentes, reprobados o sin usuario).') % sin_registro
-        self.message_post(body=msg)
 
     def action_cancel(self):
         for rec in self:
@@ -573,16 +504,16 @@ class HrTrainingCourse(models.Model):
         )
 
     # ============================
-    # Cron diario: alerta 10 dias antes
+    # Cron diario: alerta 7 dias antes
     # ============================
     @api.model
     def _cron_alerta_7_dias(self):
         """Recorre cursos en estado Borrador cuya fecha de inicio es
-        exactamente 10 dias adelante. Crea actividad al grupo de RH y
+        exactamente 7 dias adelante. Crea actividad al grupo de RH y
         envia recordatorio al ponente."""
         from datetime import datetime, timedelta
         today = fields.Date.context_today(self)
-        target = today + timedelta(days=10)
+        target = today + timedelta(days=7)
         # Rango del dia objetivo (00:00 a 23:59)
         start_dt = datetime.combine(target, datetime.min.time())
         end_dt = datetime.combine(target, datetime.max.time())
@@ -611,7 +542,7 @@ class HrTrainingCourse(models.Model):
                 curso.activity_schedule(
                     'mail.mail_activity_data_todo',
                     summary=_(
-                        'Capacitacion en 10 dias: %s'
+                        'Capacitacion en 7 dias: %s'
                     ) % curso.name,
                     note=_(
                         'El curso %(name)s arranca el %(d)s y sigue en '
@@ -629,5 +560,5 @@ class HrTrainingCourse(models.Model):
                 recordatorio_tmpl.sudo().send_mail(
                     curso.id, force_send=False)
             curso.message_post(body=_(
-                'Alerta automatica: este curso arranca en 10 dias y sigue '
+                'Alerta automatica: este curso arranca en 7 dias y sigue '
                 'en Borrador.'))

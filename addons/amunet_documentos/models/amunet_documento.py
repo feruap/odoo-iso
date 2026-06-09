@@ -28,7 +28,7 @@ CAMPOS_BLOQUEADOS_VIGENTE = (
     'seccion_objetivo', 'seccion_alcance', 'seccion_introduccion',
     'seccion_mision_vision', 'seccion_responsabilidades',
     'seccion_organigrama', 'seccion_terminos_definiciones',
-    'seccion_condiciones_generales', 'seccion_formatos_derivados', 'formato_ids',
+    'seccion_condiciones_generales', 'seccion_formatos_derivados',
     'seccion_referencias', 'seccion_anexos',
     'elabora_id', 'fecha_elabora',
 )
@@ -153,9 +153,9 @@ class AmunetDocumento(models.Model):
     elabora_id = fields.Many2one(
         'res.users', string='Elaboro',
         default=lambda self: self.env.user, tracking=True)
-    fecha_elabora = fields.Char(
+    fecha_elabora = fields.Date(
         string='Fecha elaboracion', tracking=True,
-        default=lambda self: fields.Date.context_today(self).strftime('%m/%Y'))
+        default=fields.Date.context_today)
     revisor_id = fields.Many2one(
         'res.users', string='Asignado para revisar', tracking=True)
     autorizador_id = fields.Many2one(
@@ -173,9 +173,6 @@ class AmunetDocumento(models.Model):
     distribucion_ids = fields.One2many(
         'amunet.documento.distribucion', 'documento_id',
         string='Distribucion')
-    formato_ids = fields.One2many(
-        'amunet.documento.formato', 'documento_id',
-        string='Formatos descargables')
     sugerencia_ids = fields.One2many(
         'amunet.documento.sugerencia', 'documento_id',
         string='Sugerencias de cambio')

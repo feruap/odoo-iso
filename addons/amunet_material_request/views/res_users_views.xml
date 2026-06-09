@@ -17,7 +17,6 @@
                     <field name="amunet_material_head_id"
                            options="{'no_create': True}"
                            help="Jefe de area que vera (solo lectura) las Solicitudes de Material creadas por este usuario. El jefe debe tener el grupo 'Solicitudes de Material / Jefe de area'."/>
-                    <field name="amunet_material_requires_head_approval"/>
                 </group>
             </xpath>
         </field>
