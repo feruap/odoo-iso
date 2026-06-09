@@ -6,6 +6,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-odoo_staging_2024_secure}
       - POSTGRES_USER=${POSTGRES_USER:-odoo}
+      - TZ=America/Mexico_City
     volumes:
       - odoo-staging-db:/var/lib/postgresql/data
     networks:
@@ -15,6 +16,9 @@ services:
     build: .
     image: odoo:19.0-amunet-staging
     container_name: odoo-staging
+    # Dar 60s a Odoo para terminar requests/crones en vuelo antes de SIGKILL.
+    # Evita los "Container failed to exit within 10s of signal 15" vistos el 08-jun.
+    stop_grace_period: 60s
     restart: always
     depends_on:
       - db-staging
@@ -29,6 +33,7 @@ services:
       - PORT=5432
       - USER=${POSTGRES_USER:-odoo}
       - PASSWORD=${POSTGRES_PASSWORD:-odoo_staging_2024_secure}
+      - TZ=America/Mexico_City
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8069/web/health || exit 1"]
       interval: 10s
