@@ -28,13 +28,14 @@ class HrTrainingAttendance(models.Model):
 
     attendance = fields.Selection(
         [
+            ('pending', 'Pendiente'),
             ('attended', 'Asistio'),
             ('absent', 'Falto'),
         ],
-        string='Asistencia', default='attended', required=True,
+        string='Asistencia', default='pending', required=True,
     )
     on_time = fields.Boolean(
-        string='Llego a tiempo', default=True,
+        string='Llego a tiempo', default=False,
         help='Marcado si el participante se presento puntual.',
     )
     grade = fields.Float(

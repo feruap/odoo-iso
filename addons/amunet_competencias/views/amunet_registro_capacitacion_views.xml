@@ -57,6 +57,8 @@
                         <group string="📋 Alcance de la Capacitación">
                             <field name="procedure_id" options="{'no_create': True}"/>
                             <field name="parameter_id" options="{'no_create': True}"/>
+                            <field name="hr_course_id" options="{'no_create': True}"
+                                   readonly="1" invisible="not hr_course_id"/>
                         </group>
                     </group>
 
