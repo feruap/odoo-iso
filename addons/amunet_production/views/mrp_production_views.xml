@@ -309,7 +309,8 @@
                                 <field name="amunet_qty_used" string="Utilizado"
                                        force_save="1"
                                        readonly="parent.reconciliation_state in ('validated','completed')"/>
-                                <field name="amunet_qty_surplus" readonly="1" string="Sobrante"
+                                <field name="amunet_qty_surplus" readonly="1" string="Material que regresa"
+                                       decoration-bf="1"
                                        decoration-warning="amunet_qty_surplus &gt; 0"
                                        decoration-success="amunet_qty_surplus == 0"/>
                             </list>
