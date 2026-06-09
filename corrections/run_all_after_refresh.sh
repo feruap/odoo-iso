@@ -76,4 +76,40 @@ UPDATE res_users SET employee_code='005' WHERE login='analista2cc@amunet.com.mx'
 SELECT login, employee_code FROM res_users WHERE login IN ('s.controldecalidad@amunet.com.mx','analista1cc@amunet.com.mx','analista2cc@amunet.com.mx');" \
 2>&1 | grep -v "^--\|^ login"
 
+# 7. MAVI-14: Control (C) = N/A fijo y Prueba (T) = alineación tira reactiva (MPCAR67/68)
+docker exec odoo-staging-db psql -U odoo -d Amunet_testing -c "
+UPDATE amunet_quality_parameter_specification_config
+SET specification_name='Línea Control (C) — N/A: tira reactiva sin línea control',
+    acceptance_criteria='N/A',
+    binary_option_pass='Línea Control (C) — N/A: tira reactiva sin línea control N/A',
+    binary_option_fail='Línea Control (C) — N/A: tira reactiva sin línea control No',
+    write_date=NOW()
+WHERE id IN (72247, 72258);
+UPDATE amunet_quality_parameter_specification_config
+SET specification_name='Alineación de la tira reactiva en el recuadro',
+    acceptance_criteria='Sí',
+    binary_option_pass='Alineación de la tira reactiva en el recuadro Sí',
+    binary_option_fail='Alineación de la tira reactiva en el recuadro No',
+    write_date=NOW()
+WHERE id IN (72248, 72259);" | grep -E "UPDATE"
+
+# 8. MAVI-09: Tiempo de migración = N/A fijo (MPCAR67/68, tira reactiva sin flujo capilar)
+docker exec odoo-staging-db psql -U odoo -d Amunet_testing -c "
+UPDATE amunet_quality_parameter_specification_config
+SET specification_name='Tiempo de migración — N/A: tira reactiva sin flujo capilar',
+    evaluation_type='ternary_with_na',
+    acceptance_criteria='N/A',
+    ternary_option_yes='Sí', ternary_option_no='No', ternary_option_na='N/A',
+    nominal_value=NULL, min_value=NULL, max_value=NULL,
+    write_date=NOW()
+WHERE id IN (72246, 72257);" | grep -E "UPDATE"
+
+# 9. MAVI-11: agregar UOM mm a Cierre, Largo y Ancho (MPCAR67/68)
+docker exec odoo-staging-db psql -U odoo -d Amunet_testing -c "
+UPDATE amunet_quality_parameter_specification_config SET uom_id=6, write_date=NOW()
+WHERE id IN (72249,72250,72251,72260,72261,72262);
+UPDATE amunet_quality_test_line_detail SET uom_id=6, write_date=NOW()
+WHERE specification_config_id IN (72249,72250,72251,72260,72261,72262) AND uom_id IS NULL;" \
+| grep -E "UPDATE"
+
 echo "=== TODOS LOS SCRIPTS COMPLETADOS ==="

@@ -108,7 +108,7 @@
                                 <tr>
                                     <td><strong>Elaboro</strong></td>
                                     <td t-esc="d.elabora_id.name or ''"/>
-                                    <td t-esc="d.fecha_elabora and d.fecha_elabora.strftime('%d/%m/%Y') or ''"/>
+                                    <td t-esc="d.fecha_elabora or ''"/>
                                 </tr>
                                 <tr>
                                     <td><strong>Reviso</strong></td>
@@ -464,7 +464,7 @@
                                         <td style="padding:8px;background:#f1f3f5;font-weight:bold;">Elaboro</td>
                                         <td style="padding:8px;" t-esc="doc.elabora_id.name or ''"/>
                                         <td style="padding:25px;"/>
-                                        <td style="padding:8px;" t-esc="doc.fecha_elabora and doc.fecha_elabora.strftime('%d/%m/%Y') or ''"/>
+                                        <td style="padding:8px;" t-esc="doc.fecha_elabora or ''"/>
                                     </tr>
                                     <tr>
                                         <td style="padding:8px;background:#f1f3f5;font-weight:bold;">Reviso</td>
