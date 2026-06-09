@@ -43,6 +43,13 @@ class StockLot(models.Model):
         compute='_compute_can_request_reanalysis',
     )
 
+    reanalysis_date = fields.Date(
+        string='Fecha de reanálisis',
+        compute='_compute_reanalysis_date',
+        store=True,
+        help='Fecha programada para reanálisis: 30 días antes de caducidad',
+    )
+
     # ========== Liberación final DHR ==========
 
     amunet_lot_release_state = fields.Selection([
@@ -112,6 +119,17 @@ class StockLot(models.Model):
     def _compute_can_request_reanalysis(self):
         for lot in self:
             lot.can_request_reanalysis = bool(lot.last_quality_check_id)
+
+    @api.depends('expiration_date')
+    def _compute_reanalysis_date(self):
+        from datetime import timedelta
+        for lot in self:
+            if lot.expiration_date:
+                lot.reanalysis_date = lot.expiration_date - timedelta(days=30)
+                if not lot.removal_date:
+                    lot.removal_date = lot.reanalysis_date
+            else:
+                lot.reanalysis_date = False
 
     # ========== Liberación final DHR ==========
 

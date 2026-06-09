@@ -157,6 +157,10 @@
                             <td>FECHA DE CADUCIDAD: <span t-field="o.expiration_date"/></td>
                         </tr>
                         <tr>
+                            <td>FECHA DE REANÁLISIS: <span t-field="o.reanalysis_date"/></td>
+                            <td></td>
+                        </tr>
+                        <tr>
                             <td colspan="2">REVISADO POR: <span t-field="o.reviewed_by_id.name"/></td>
                         </tr>
                     </table>
