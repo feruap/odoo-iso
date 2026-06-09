@@ -311,9 +311,6 @@ class MrpProduction(models.Model):
 
     reconciliation_has_surplus = fields.Boolean(
         compute='_compute_reconciliation_has_surplus', store=False)
-    amunet_return_move_ids = fields.Many2many(
-        'stock.move', compute='_compute_amunet_return_move_ids', store=False,
-        string='Material a devolver a almacen')
     amunet_has_supplied_moves = fields.Boolean(
         compute='_compute_amunet_has_supplied_moves', store=False)
     amunet_all_workorders_done = fields.Boolean(
@@ -329,14 +326,6 @@ class MrpProduction(models.Model):
             rec.reconciliation_has_surplus = any(
                 (m.amunet_qty_supplied or 0) - (m.amunet_qty_used or 0) > 0.001
                 for m in rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
-            )
-
-    @api.depends('move_raw_ids.amunet_qty_surplus', 'move_raw_ids.state')
-    def _compute_amunet_return_move_ids(self):
-        # Movimientos con sobrante (>0): lo que Produccion devolvera a Almacen.
-        for rec in self:
-            rec.amunet_return_move_ids = rec.move_raw_ids.filtered(
-                lambda m: m.state != 'cancel' and (m.amunet_qty_surplus or 0) > 0.001
             )
 
     @api.depends('move_raw_ids.amunet_qty_supplied', 'move_raw_ids.state')
