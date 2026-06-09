@@ -12,15 +12,18 @@ on:
       - main
       - staging
 
-concurrency:
-  group: odoo-deploy-server
-  cancel-in-progress: false
 
 jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/staging'
+    # Si llega un nuevo push de staging mientras este corre, cancelar el viejo.
+    # Razon: staging es para iterar rapido, no tiene sentido procesar 7 deploys en cola
+    # cuando solo importa el ultimo. Evita los SIGKILL en cadena vistos el 08-jun.
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -159,6 +162,11 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    # Produccion procesa cada commit sin cancelar (ISO 13485 / trazabilidad).
+    # Si llegan multiples pushes a main, se encolan y corren en orden.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
