@@ -94,4 +94,33 @@
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
     </record>
+
+    <!--
+        Operadores de produccion NO ven ordenes en Borrador (no
+        confirmadas): solo confirmadas en adelante. Como los Supervisores
+        heredan group_production_operator, abajo va una regla permisiva
+        para que ellos SI vean todo (OR de Odoo), igual que el patron
+        warehouse/manager de arriba.
+    -->
+    <record id="mrp_production_rule_operator_no_draft" model="ir.rule">
+        <field name="name">MOs: operador no ve borradores</field>
+        <field name="model_id" ref="mrp.model_mrp_production"/>
+        <field name="domain_force">[('state', '!=', 'draft')]</field>
+        <field name="groups" eval="[(4, ref('amunet_production.group_production_operator'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="mrp_production_rule_supervisor_all" model="ir.rule">
+        <field name="name">MOs: supervisor de produccion ve todas</field>
+        <field name="model_id" ref="mrp.model_mrp_production"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="groups" eval="[(4, ref('amunet_production.group_production_supervisor'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
 </odoo>
