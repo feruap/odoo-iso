@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
 # 10 minutos despues de date_start se considera "a tiempo".
 QR_LATE_TOLERANCE_MINUTES = 10
 QR_EARLY_ACCESS_MINUTES = 10
-QR_AFTER_END_ACCESS_MINUTES = 30
+QR_AFTER_END_ACCESS_MINUTES = 0
 
 
 class HrTrainingCourse(models.Model):
@@ -354,7 +354,7 @@ class HrTrainingCourse(models.Model):
                 'speaker_confirmed': True,
                 'speaker_confirmed_date': fields.Datetime.now(),
             })
-            rec.message_post(body=_(
+            rec.sudo().message_post(body=_(
                 'Confirmacion del ponente registrada por %s.'
             ) % self.env.user.display_name)
             rec.sudo()._maybe_pass_to_confirmed()
@@ -573,16 +573,16 @@ class HrTrainingCourse(models.Model):
         )
 
     # ============================
-    # Cron diario: alerta 7 dias antes
+    # Cron diario: alerta 10 dias antes
     # ============================
     @api.model
     def _cron_alerta_7_dias(self):
         """Recorre cursos en estado Borrador cuya fecha de inicio es
-        exactamente 7 dias adelante. Crea actividad al grupo de RH y
+        exactamente 10 dias adelante. Crea actividad al grupo de RH y
         envia recordatorio al ponente."""
         from datetime import datetime, timedelta
         today = fields.Date.context_today(self)
-        target = today + timedelta(days=7)
+        target = today + timedelta(days=10)
         # Rango del dia objetivo (00:00 a 23:59)
         start_dt = datetime.combine(target, datetime.min.time())
         end_dt = datetime.combine(target, datetime.max.time())
@@ -611,7 +611,7 @@ class HrTrainingCourse(models.Model):
                 curso.activity_schedule(
                     'mail.mail_activity_data_todo',
                     summary=_(
-                        'Capacitacion en 7 dias: %s'
+                        'Capacitacion en 10 dias: %s'
                     ) % curso.name,
                     note=_(
                         'El curso %(name)s arranca el %(d)s y sigue en '
@@ -629,5 +629,5 @@ class HrTrainingCourse(models.Model):
                 recordatorio_tmpl.sudo().send_mail(
                     curso.id, force_send=False)
             curso.message_post(body=_(
-                'Alerta automatica: este curso arranca en 7 dias y sigue '
+                'Alerta automatica: este curso arranca en 10 dias y sigue '
                 'en Borrador.'))
