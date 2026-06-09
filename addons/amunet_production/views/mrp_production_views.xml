@@ -89,9 +89,11 @@
                 <xpath expr="//button[@name='button_unplan']" position="attributes">
                     <attribute name="invisible">1</attribute>
                 </xpath>
-                <!-- Ocultar Cancelar para almacenistas -->
+                <!-- Cancelar MOs: SOLO Calidad/Responsable Sanitario (Mery y Fernando).
+                     Nadie de produccion (operador/supervisor) ni almacen puede cancelar. -->
                 <xpath expr="//button[@name='action_cancel']" position="attributes">
-                    <attribute name="invisible">amunet_user_is_warehouse or not id or state in ('done', 'cancel')</attribute>
+                    <attribute name="invisible">not id or state in ('done', 'cancel')</attribute>
+                    <attribute name="groups">amunet_quality.group_quality_sanitary</attribute>
                 </xpath>
 
 
