@@ -40,7 +40,10 @@ class AmunetMatrizCompetencias(models.AbstractModel):
             )
             return True
 
-        RegistroCapacitacion = self.env['amunet.registro.capacitacion']
+        # sudo(): el gate es una verificacion interna del sistema. El firmante
+        # (p.ej. almacenista) no necesita acceso al modelo de capacitaciones;
+        # solo se evalua si EL tiene capacitacion vigente y se devuelve bool.
+        RegistroCapacitacion = self.env['amunet.registro.capacitacion'].sudo()
 
         # Construir dominio base
         base_domain = [
