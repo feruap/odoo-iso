@@ -13,3 +13,9 @@ class ResUsers(models.Model):
              'El jefe debe tener el grupo '
              '"Solicitudes de Material / Jefe de area".',
     )
+    amunet_material_requires_head_approval = fields.Boolean(
+        string='Requiere autorizacion del jefe para solicitar material',
+        help='Si esta activo, las Solicitudes de Material de este usuario '
+             'NO van directo a almacen: requieren que su Jefe (campo de '
+             'arriba) las AUTORICE primero. Pensado para practicantes.',
+    )

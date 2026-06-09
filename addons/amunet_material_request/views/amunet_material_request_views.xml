@@ -41,6 +41,10 @@
                             type="object" class="oe_highlight"
                             invisible="state != 'draft'"
                             confirm="Al enviar quedara registrada tu firma digital. Continuar?"/>
+                    <button name="action_head_approve" string="Autorizar"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'pending_approval' or not amunet_user_is_approver"
+                            confirm="Al autorizar, la solicitud se envia a almacen para surtido. Continuar?"/>
                     <button name="action_start_picking" string="Iniciar Surtido"
                             type="object" class="oe_highlight"
                             invisible="state != 'submitted'"
@@ -62,8 +66,9 @@
                             invisible="state != 'cancelled'"
                             groups="amunet_material_request.group_material_manager"/>
                     <field name="can_validate_reception" invisible="1"/>
+                    <field name="amunet_user_is_approver" invisible="1"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="draft,submitted,in_picking,pending_reception,closed"/>
+                           statusbar_visible="draft,pending_approval,submitted,in_picking,pending_reception,closed"/>
                 </header>
 
                 <sheet>
