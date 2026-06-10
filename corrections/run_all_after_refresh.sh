@@ -104,32 +104,34 @@ SET specification_name='Tiempo de migración — N/A: tira reactiva sin flujo ca
     write_date=NOW()
 WHERE id IN (72246, 72257);" | grep -E "UPDATE"
 
-# 9. MAVI-11: agregar UOM mm a Cierre, Largo y Ancho (MPCAR67/68)
-docker exec odoo-staging-db psql -U odoo -d Amunet_testing -c "
-UPDATE amunet_quality_parameter_specification_config SET uom_id=6, write_date=NOW()
-WHERE id IN (72249,72250,72251,72260,72261,72262);
-UPDATE amunet_quality_test_line_detail SET uom_id=6, write_date=NOW()
-WHERE specification_config_id IN (72249,72250,72251,72260,72261,72262) AND uom_id IS NULL;" \
-| grep -E "UPDATE"
+# 9. (eliminado — cubierto por sección 10 que aplica a TODOS los cartuchos)
 
 # 10. MAVI-11: UOM mm para Cierre completo e Interna (Ventana) en TODOS los cartuchos
+#     Incluye actualización de líneas de detalle de análisis
 docker exec odoo-staging-db psql -U odoo -d Amunet_testing -c "
 UPDATE amunet_quality_parameter_specification_config
 SET uom_id=6, write_date=NOW()
-WHERE specification_name = 'Cierre completo'
+WHERE specification_name IN ('Cierre completo', 'Interna (Ventana) Largo', 'Interna (Ventana) Ancho')
   AND evaluation_type = 'numeric_range' AND uom_id IS NULL;
-UPDATE amunet_quality_parameter_specification_config
-SET uom_id=6, write_date=NOW()
-WHERE specification_name IN ('Interna (Ventana) Largo', 'Interna (Ventana) Ancho')
-  AND evaluation_type = 'numeric_range' AND uom_id IS NULL;" \
+UPDATE amunet_quality_test_line_detail d SET uom_id=6, write_date=NOW()
+FROM amunet_quality_parameter_specification_config c
+WHERE d.specification_config_id = c.id
+  AND c.specification_name IN ('Cierre completo', 'Interna (Ventana) Largo', 'Interna (Ventana) Ancho')
+  AND d.uom_id IS NULL;" \
 | grep -E "UPDATE"
 
 # 11. MAVI-09: UOM Segundos (id=43) para Tiempo de liberación y Tiempo de migración en todos los productos
+#     Incluye actualización de líneas de detalle de análisis
 docker exec odoo-staging-db psql -U odoo -d Amunet_testing -c "
 UPDATE amunet_quality_parameter_specification_config
 SET uom_id=43, write_date=NOW()
 WHERE specification_name IN ('Tiempo de liberación', 'Tiempo de migración')
-  AND evaluation_type = 'numeric_range' AND uom_id IS NULL;" \
+  AND evaluation_type = 'numeric_range' AND uom_id IS NULL;
+UPDATE amunet_quality_test_line_detail d SET uom_id=43, write_date=NOW()
+FROM amunet_quality_parameter_specification_config c
+WHERE d.specification_config_id = c.id
+  AND c.specification_name IN ('Tiempo de liberación', 'Tiempo de migración')
+  AND d.uom_id IS NULL;" \
 | grep -E "UPDATE"
 
 echo "=== TODOS LOS SCRIPTS COMPLETADOS ==="
