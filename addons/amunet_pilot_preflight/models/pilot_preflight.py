@@ -428,20 +428,36 @@ class AmunetPilotPreflight(models.Model):
                 factor = rec.product_qty / bom.product_qty
             missing = []
             lot_warnings = []
-            for line in bom.bom_line_ids:
-                product = line.product_id
-                required = line.product_qty * factor
+            # Validar lo que la ORDEN realmente va a consumir (componentes
+            # de la MO), no la BOM teorica: si en la orden se quito o ajusto
+            # un componente, el preflight valida lo que de verdad se usara.
+            # Si la orden aun no tiene componentes explotados, cae a la BOM.
+            raw_moves = self.env['stock.move']
+            if rec.production_id:
+                raw_moves = rec.production_id.move_raw_ids.filtered(
+                    lambda m: m.state != 'cancel')
+            if raw_moves:
+                components = [
+                    (m.product_id, m.product_uom_qty, m.product_uom)
+                    for m in raw_moves
+                ]
+            else:
+                components = [
+                    (line.product_id, line.product_qty * factor, line.product_uom_id)
+                    for line in bom.bom_line_ids
+                ]
+            for product, required, comp_uom in components:
                 available = product.qty_available
-                if product.uom_id and line.product_uom_id and product.uom_id != line.product_uom_id:
+                if product.uom_id and comp_uom and product.uom_id != comp_uom:
                     try:
-                        available = product.uom_id._compute_quantity(available, line.product_uom_id)
+                        available = product.uom_id._compute_quantity(available, comp_uom)
                     except Exception:
                         available = product.qty_available
                 if available + 0.000001 < required:
                     missing.append('%s: requiere %.3f %s, disponible %.3f' % (
                         product.display_name,
                         required,
-                        line.product_uom_id.name,
+                        comp_uom.name,
                         available,
                     ))
                 if product.tracking != 'none':
@@ -483,6 +499,12 @@ class AmunetPilotPreflight(models.Model):
 
     def _check_quality(self):
         SamplingPlan = self.env['amunet.quality.sampling.plan']
+        # Modo desarrollo: si el parametro de sistema esta activo, los
+        # hallazgos de calidad NO bloquean el piloto (se degradan a
+        # advertencia). Reversible: poner el parametro en 0 o borrarlo.
+        skip_quality_block = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet_preflight.skip_quality_block') in ('1', 'true', 'True')
+        qblock = 'warn' if skip_quality_block else 'block'
         for rec in self:
             tmpl = rec.product_tmpl_id
             qc_required = bool(tmpl.qc_required or getattr(tmpl, 'amunet_req_quality_control', False))
@@ -499,7 +521,7 @@ class AmunetPilotPreflight(models.Model):
                 rec._add_line(
                     'quality',
                     'Control de calidad requerido',
-                    'block',
+                    qblock,
                     'El producto no esta marcado como requiere QC.',
                     'Activar QC en el producto o documentar por que no aplica.',
                     related=tmpl,
@@ -518,7 +540,7 @@ class AmunetPilotPreflight(models.Model):
                 rec._add_line(
                     'quality',
                     'Parametros MAVI/VIMA',
-                    'block' if qc_required else 'warn',
+                    (qblock if qc_required else 'warn'),
                     'No hay parametros de calidad configurados para este producto.',
                     'Asociar parametros MAVI/VIMA antes del piloto.',
                     related=tmpl,
