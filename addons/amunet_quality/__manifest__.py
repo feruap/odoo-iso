@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Control de Calidad',
-    'version': '19.0.3.9.2',
+    'version': '19.0.3.10.0',
     'category': 'Quality',
     'summary': 'Sistema de Control de Calidad con Parámetros Jerárquicos',
     'description': """Sistema completo de Control de Calidad para la manufactura de
@@ -39,6 +39,7 @@ dispositivos médicos y productos farmacéuticos.""",
         'wizard/amunet_quality_signature_wizard_views.xml',
         'wizard/amunet_generic_signature_wizard_views.xml',
         'wizard/amunet_lot_release_wizard_views.xml',
+        'wizard/amunet_lot_extension_sign_wizard_views.xml',
 
         # Vistas de Modelos
         'views/amunet_quality_procedure_views.xml',
@@ -56,6 +57,7 @@ dispositivos médicos y productos farmacéuticos.""",
         'views/product_template_views.xml',
         'views/stock_picking_views.xml',
         'views/stock_lot_views.xml',
+        'views/amunet_lot_extension_views.xml',
         'views/purchase_order_views.xml',
         'views/amunet_quality_tecno_standalone_views.xml',
 

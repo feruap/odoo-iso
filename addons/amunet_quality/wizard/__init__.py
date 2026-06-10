@@ -3,6 +3,7 @@
 from . import amunet_quality_reanalysis_wizard
 from . import amunet_quality_signature_wizard
 from . import amunet_generic_signature_wizard
+from . import amunet_lot_extension_sign_wizard
 from . import amunet_lot_release_wizard
 
 # Epic-034: Wizards movidos a otros módulos

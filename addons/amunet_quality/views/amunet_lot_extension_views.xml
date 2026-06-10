@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         Formulario de extensión de caducidad
+    ============================================================ -->
+    <record id="view_lot_extension_form" model="ir.ui.view">
+        <field name="name">amunet.lot.extension.form</field>
+        <field name="model">amunet.lot.extension</field>
+        <field name="arch" type="xml">
+            <form string="Extensión de caducidad">
+                <header>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,signed_quality,signed_sanitary,done"/>
+
+                    <!-- Firma Calidad -->
+                    <button name="action_open_sign_quality_wizard"
+                            string="Firmar (Calidad)"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-pencil"
+                            invisible="state != 'draft'"/>
+
+                    <!-- Firma Responsable Sanitario -->
+                    <button name="action_open_sign_sanitary_wizard"
+                            string="Firmar (Resp. Sanitario)"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-pencil"
+                            invisible="state != 'signed_quality'"
+                            groups="amunet_quality.group_quality_sanitary,amunet_quality.group_quality_manager,base.group_system"/>
+
+                    <!-- Firma Almacén -->
+                    <button name="action_open_sign_warehouse_wizard"
+                            string="Firmar (Almacén)"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-pencil"
+                            invisible="state != 'signed_sanitary'"/>
+
+                    <button name="action_cancel"
+                            string="Cancelar"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state in ('done', 'cancelled')"
+                            confirm="¿Cancelar esta solicitud de extensión?"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Lote y producto">
+                            <field name="lot_id" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="reanalysis_check_id" readonly="1"
+                                   invisible="not reanalysis_check_id"/>
+                        </group>
+                        <group string="Caducidad">
+                            <field name="expiration_date_before" readonly="1"/>
+                            <field name="months_extended"
+                                   readonly="state != 'draft'"/>
+                            <field name="expiration_date_after" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Observaciones">
+                        <field name="notes" nolabel="1"
+                               readonly="state in ('done', 'cancelled')"
+                               placeholder="Justificación del reanálisis, condiciones, evidencia..."/>
+                    </group>
+
+                    <!-- Panel de firmas -->
+                    <group string="Firmas electrónicas" col="3">
+                        <group string="1. Calidad">
+                            <field name="quality_user_id" readonly="1"/>
+                            <field name="quality_date" readonly="1"/>
+                        </group>
+                        <group string="2. Responsable Sanitario">
+                            <field name="sanitary_user_id" readonly="1"/>
+                            <field name="sanitary_date" readonly="1"/>
+                        </group>
+                        <group string="3. Almacén">
+                            <field name="warehouse_user_id" readonly="1"/>
+                            <field name="warehouse_date" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         Lista de extensiones
+    ============================================================ -->
+    <record id="view_lot_extension_list" model="ir.ui.view">
+        <field name="name">amunet.lot.extension.list</field>
+        <field name="model">amunet.lot.extension</field>
+        <field name="arch" type="xml">
+            <list string="Extensiones de caducidad"
+                  decoration-success="state == 'done'"
+                  decoration-warning="state in ('signed_quality', 'signed_sanitary')"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="lot_id"/>
+                <field name="product_id"/>
+                <field name="expiration_date_before"/>
+                <field name="months_extended"/>
+                <field name="expiration_date_after"/>
+                <field name="state" widget="badge"/>
+                <field name="quality_user_id" optional="hide"/>
+                <field name="sanitary_user_id" optional="hide"/>
+                <field name="warehouse_user_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         Acción de ventana
+    ============================================================ -->
+    <record id="action_lot_extension" model="ir.actions.act_window">
+        <field name="name">Extensiones de caducidad</field>
+        <field name="res_model">amunet.lot.extension</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+    </record>
+
+</odoo>

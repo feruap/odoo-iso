@@ -50,3 +50,6 @@ from . import amunet_quality_check_destination
 from . import amunet_tecno_mixin
 from . import amunet_quality_tecno_standalone
 # from . import amunet_quality_helpdesk
+
+# Extensión de caducidad por reanálisis
+from . import amunet_lot_extension

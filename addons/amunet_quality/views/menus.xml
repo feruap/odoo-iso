@@ -65,6 +65,13 @@
               groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"
               sequence="20"/>
 
+    <menuitem id="menu_quality_lot_extensions"
+              name="Extensiones de caducidad"
+              parent="menu_quality_regulatory"
+              action="amunet_quality.action_lot_extension"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"
+              sequence="30"/>
+
     <!-- Configurar icono del menú principal en el menú de aplicaciones -->
     <record id="menu_quality_root" model="ir.ui.menu">
         <field name="web_icon">amunet_quality,static/description/icon.png</field>
