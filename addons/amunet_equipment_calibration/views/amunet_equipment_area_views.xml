@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ============================================================
+             ACTION
+             ============================================================ -->
+        <record id="action_amunet_equipment_area" model="ir.actions.act_window">
+            <field name="name">Áreas</field>
+            <field name="res_model">amunet.equipment.area</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{}</field>
+        </record>
+
+        <!-- ============================================================
+             LIST VIEW
+             ============================================================ -->
+        <record id="view_amunet_equipment_area_list" model="ir.ui.view">
+            <field name="name">amunet.equipment.area.list</field>
+            <field name="model">amunet.equipment.area</field>
+            <field name="arch" type="xml">
+                <list string="Áreas" default_order="sequence">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name" string="Área"/>
+                    <field name="doc_type" string="Doc." widget="badge"
+                           decoration-info="doc_type == 'fisica'"
+                           decoration-success="doc_type == 'digital'"
+                           optional="show"/>
+                    <field name="parent_id" string="Área Padre" optional="show"/>
+                    <field name="protocol_code" string="Código Protocolo"/>
+                    <field name="report_code" string="Código Reporte"/>
+                    <field name="protocol_date" string="Fecha Protocolo"/>
+                    <field name="report_date" string="Fecha Reporte"/>
+                    <field name="state" string="Estatus" widget="badge"
+                           decoration-success="state == 'vigente'"
+                           decoration-muted="state == 'obsoleto'"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- ============================================================
+             FORM VIEW
+             ============================================================ -->
+        <record id="view_amunet_equipment_area_form" model="ir.ui.view">
+            <field name="name">amunet.equipment.area.form</field>
+            <field name="model">amunet.equipment.area</field>
+            <field name="arch" type="xml">
+                <form string="Área">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Nombre del área"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group string="Identificación">
+                                <field name="protocol_code" string="Código Protocolo"/>
+                                <field name="report_code" string="Código Reporte"/>
+                                <field name="state" string="Estatus"/>
+                                <field name="doc_type" string="Documentación"/>
+                                <field name="parent_id" string="Área Padre"/>
+                                <field name="sequence" string="Secuencia"/>
+                            </group>
+                            <group string="Fechas">
+                                <field name="protocol_date" string="Fecha Protocolo"/>
+                                <field name="report_date" string="Fecha Reporte"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Subáreas" invisible="not child_ids">
+                                <field name="child_ids">
+                                    <list>
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="protocol_code"/>
+                                        <field name="report_code"/>
+                                        <field name="protocol_date"/>
+                                        <field name="report_date"/>
+                                        <field name="state" widget="badge"
+                                               decoration-success="state == 'vigente'"
+                                               decoration-muted="state == 'obsoleto'"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Notas">
+                                <field name="notes" placeholder="Notas adicionales..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

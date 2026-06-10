@@ -27,6 +27,7 @@ Módulo de Gestión de Calibración de Equipos (ISO 13485 Cláusula 7.6).
         'views/stock_lot_views.xml',
         'views/amunet_expediente_views.xml',
         'views/amunet_listas_maestras_views.xml',
+        'views/amunet_equipment_area_views.xml',
         'views/amunet_calibration_queue_views.xml',
         'views/menus.xml',
         'views/amunet_workqueue_views.xml',

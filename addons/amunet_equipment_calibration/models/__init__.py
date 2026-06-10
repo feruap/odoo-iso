@@ -11,3 +11,4 @@ from . import amunet_equipment_serial
 from . import product_template
 from . import stock_lot
 from . import amunet_equipment_expediente
+from . import amunet_equipment_area
