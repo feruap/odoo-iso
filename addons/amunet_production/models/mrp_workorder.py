@@ -316,9 +316,11 @@ class MrpWorkorder(models.Model):
                 'Solo personal del grupo de Almacen puede surtir materiales.'))
 
     def _amunet_check_production_supervisor(self):
-        if not self.env.user.has_group('amunet_production.group_production_supervisor'):
+        # Operadores Y supervisores de produccion pueden recibir/aceptar el
+        # material surtido (el supervisor hereda el grupo operador).
+        if not self.env.user.has_group('amunet_production.group_production_operator'):
             raise AccessError(_(
-                'Solo el supervisor de produccion puede recibir/aceptar el material entregado.'))
+                'Solo produccion (operador o supervisor) puede recibir/aceptar el material entregado.'))
 
     def _amunet_signature_allowed_methods(self):
         return {
