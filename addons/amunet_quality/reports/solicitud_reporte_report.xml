@@ -157,17 +157,6 @@
                             <td>FECHA DE CADUCIDAD: <span t-field="o.expiration_date"/></td>
                         </tr>
                         <tr>
-                            <td>FECHA DE REANÁLISIS:
-                                <t t-if="o.lot_id and o.lot_id.reanalysis_date">
-                                    <span t-field="o.lot_id.reanalysis_date"/>
-                                </t>
-                                <t t-elif="o.reanalysis_date">
-                                    <span t-field="o.reanalysis_date"/>
-                                </t>
-                            </td>
-                            <td></td>
-                        </tr>
-                        <tr>
                             <td colspan="2">REVISADO POR: <span t-field="o.reviewed_by_id.name"/></td>
                         </tr>
                     </table>
@@ -192,11 +181,15 @@
                     <table class="tabla-full tabla-datos" style="text-transform: uppercase; margin-bottom: 10px;">
                         <tr>
                             <td style="width: 50%;">FECHA DE ANÁLISIS: <span t-field="o.analysis_date"/></td>
-                            <td style="width: 50%;">TIPO DE ANÁLISIS: <span t-field="o.analysis_type"/></td>
+                            <td style="width: 50%;">FECHA DE REANÁLISIS:
+                                <t t-if="o.lot_id and o.lot_id.reanalysis_date">
+                                    <span t-field="o.lot_id.reanalysis_date"/>
+                                </t>
+                            </td>
                         </tr>
                         <tr>
                             <td style="width: 50%;">NO. DE ANÁLISIS: <span t-esc="o.analysis_number"/></td>
-                            <td style="width: 50%;"></td>
+                            <td style="width: 50%;">TIPO DE ANÁLISIS: <span t-field="o.analysis_type"/></td>
                         </tr>
                     </table>
 

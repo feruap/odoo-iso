@@ -112,14 +112,7 @@
                         <tr style="border: 0 !important;">
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>No. de lote:</strong> <span t-field="o.lot_name_amunet"/></td>
                             <td class="no-border" style="width: 50%; padding: 2px 0;">
-                                <strong>Fecha de caducidad:</strong> <span t-field="o.expiration_date"/><br/>
-                                <strong>Fecha de reanálisis:</strong>
-                                <t t-if="o.lot_id and o.lot_id.reanalysis_date">
-                                    <span t-field="o.lot_id.reanalysis_date"/>
-                                </t>
-                                <t t-elif="o.reanalysis_date">
-                                    <span t-field="o.reanalysis_date"/>
-                                </t>
+                                <strong>Fecha de caducidad:</strong> <span t-field="o.expiration_date"/>
                             </td>
                         </tr>
                         <tr style="border: 0 !important;">
