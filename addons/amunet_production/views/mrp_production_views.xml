@@ -193,9 +193,8 @@
                         domain="[('product_id', '=', product_id)]"
                         context="{'default_product_id': product_id}"
                         options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
-                        string="Lote"
-                        readonly="(parent.amunet_supply_workorder_id and parent.amunet_supply_state != 'in_progress') or parent.state in ('done','cancel')"
-                        optional="show"/>
+                        string="Lote surtido"
+                        readonly="(parent.amunet_supply_workorder_id and parent.amunet_supply_state != 'in_progress') or parent.state in ('done','cancel')"/>
                     <!--
                         Cantidad surtida: editable solo durante el surtido
                         activo (in_progress). Bloqueada antes y despues.
