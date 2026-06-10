@@ -153,6 +153,24 @@ JOIN amunet_equipment eq ON eq.id = exp.equipment_id
 WHERE cal.expediente_id = exp.id AND eq.serial_number = 'EST/CLI/01'
   AND cal.protocol_code LIKE '%CLI%';
 
+-- Bomba al vacío (CALIDAD): COM → BOM
+UPDATE amunet_equipment_expediente exp
+SET name = REPLACE(exp.name, 'COM', 'BOM'), write_date = NOW()
+FROM amunet_equipment eq
+WHERE exp.equipment_id = eq.id
+  AND eq.department = 'CONTROL DE CALIDAD'
+  AND exp.name LIKE 'EXP-CAL/COM/%';
+
+UPDATE amunet_equipment_calificacion cal
+SET protocol_code = REPLACE(cal.protocol_code, 'COM', 'BOM'),
+    report_code   = REPLACE(cal.report_code,   'COM', 'BOM'),
+    write_date    = NOW()
+FROM amunet_equipment_expediente exp
+JOIN amunet_equipment eq ON eq.id = exp.equipment_id
+WHERE cal.expediente_id = exp.id
+  AND eq.department = 'CONTROL DE CALIDAD'
+  AND cal.protocol_code LIKE '%COM%';
+
 -- ============================================================
 -- 7. CREAR EXPEDIENTE BOMBA AL VACÍO (CAL/BOM/02)
 -- ============================================================
