@@ -42,6 +42,16 @@ class AmunetRegistroCapacitacion(models.Model):
              'registro, si aplica. Vacío = registro capturado manualmente.'
     )
 
+    hr_course_id = fields.Many2one(
+        'hr.training.course',
+        string='Curso del programa anual (origen)',
+        readonly=True,
+        copy=False,
+        ondelete='set null',
+        help='Curso del programa anual de capacitación que generó este '
+             'registro automáticamente al marcarse como Realizado.',
+    )
+
     # =========================================================================
     # QUIÉN
     # =========================================================================
@@ -223,13 +233,13 @@ class AmunetRegistroCapacitacion(models.Model):
     # VALIDACIONES
     # =========================================================================
 
-    @api.constrains('procedure_id', 'parameter_id')
+    @api.constrains('procedure_id', 'parameter_id', 'hr_course_id')
     def _check_scope(self):
         for rec in self:
-            if not rec.procedure_id and not rec.parameter_id:
+            if not rec.procedure_id and not rec.parameter_id and not rec.hr_course_id:
                 raise ValidationError(
-                    "Debe asociar al menos un SOP/Procedimiento o un Parámetro "
-                    "para registrar la capacitación."
+                    "Debe asociar al menos un SOP/Procedimiento, un Parámetro "
+                    "o un Curso del programa anual para registrar la capacitación."
                 )
 
     @api.constrains('training_date', 'expiry_date')
