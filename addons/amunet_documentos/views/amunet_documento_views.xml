@@ -521,10 +521,8 @@
                 <field name="codigo" string="Código"/>
                 <field name="nombre" string="Nombre"/>
                 <field name="documento_id" string="PNO"/>
-                <group expand="1" string="Agrupar por">
-                    <filter name="g_area" string="Área"
-                            context="{'group_by': 'doc_area'}"/>
-                </group>
+                <separator/>
+                <filter name="g_area" string="Área" context="{'group_by': 'doc_area'}"/>
             </search>
         </field>
     </record>
