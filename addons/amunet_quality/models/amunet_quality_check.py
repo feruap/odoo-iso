@@ -208,6 +208,12 @@ class AmunetQualityCheck(models.Model):
         help='Fecha de retiro o remoción del lote'
     )
 
+    reanalysis_date = fields.Date(
+        string='Fecha de reanálisis',
+        tracking=True,
+        help='Fecha programada para reanálisis: 30 días antes de caducidad',
+    )
+
     reviewed_by_id = fields.Many2one(
         'res.users',
         string='Revisado por',
@@ -1509,6 +1515,12 @@ class AmunetQualityCheck(models.Model):
             
             if hasattr(self.lot_id, 'removal_date') and self.lot_id.removal_date:
                 self.removal_date = self.lot_id.removal_date
+
+            if hasattr(self.lot_id, 'reanalysis_date') and self.lot_id.reanalysis_date:
+                self.reanalysis_date = self.lot_id.reanalysis_date
+            elif self.expiration_date:
+                from datetime import timedelta
+                self.reanalysis_date = self.expiration_date - timedelta(days=30)
         
         # Precarga del partner desde picking
         if self.picking_id and self.picking_id.partner_id:
@@ -2229,10 +2241,14 @@ class AmunetQualityCheck(models.Model):
                     + '\n'.join([f'• {f}' for f in empty_fields])
                 )
             record.write({'user_realized_id': self.env.user.id})
-            
+
+            if not record.analysis_number:
+                analysis_number = record._generate_analysis_number()
+                record.write({'analysis_number': analysis_number})
+
             status_dict = dict(record._fields['global_result'].selection)
             status = status_dict.get(record.global_result, 'Desconocido')
-            
+
             from markupsafe import Markup
             msg = f"Firmado como Realizó.<br/>Dictamen actual: <b>{status}</b>"
             if record.global_result == 'fail' and record.fail_reason:
@@ -2340,8 +2356,8 @@ class AmunetQualityCheck(models.Model):
                 )
             record.write({'user_authorized_id': self.env.user.id})
 
-            # Generar número de análisis en cuanto las 3 firmas están completas
-            if record.user_realized_id and record.user_verified_id and not record.analysis_number:
+            # Número ya generado al firmar Realizó; este es respaldo por si no se generó
+            if not record.analysis_number:
                 analysis_number = record._generate_analysis_number()
                 record.write({'analysis_number': analysis_number})
 

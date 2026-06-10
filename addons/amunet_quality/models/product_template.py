@@ -112,6 +112,30 @@ class ProductTemplate(models.Model):
         help='Referencias del último reporte finalizado'
     )
 
+    # ========== Extensión de caducidad por reanálisis ==========
+
+    reanalysis_extension_months = fields.Integer(
+        string='Meses de extensión (reanálisis)',
+        default=0,
+        help='Deja en 0 para usar el valor de la categoría. '
+             'Si se establece aquí, sobreescribe el de la categoría.',
+    )
+
+    effective_reanalysis_months = fields.Integer(
+        string='Meses de extensión efectivos',
+        compute='_compute_effective_reanalysis_months',
+        store=False,
+        help='Valor real: usa el del producto si está definido, si no el de la categoría.',
+    )
+
+    @api.depends('reanalysis_extension_months', 'categ_id.reanalysis_extension_months')
+    def _compute_effective_reanalysis_months(self):
+        for pt in self:
+            if pt.reanalysis_extension_months > 0:
+                pt.effective_reanalysis_months = pt.reanalysis_extension_months
+            else:
+                pt.effective_reanalysis_months = pt.categ_id.reanalysis_extension_months if pt.categ_id else 0
+
     # ---------- CERTIFICADO DE CALIDAD ----------
 
     certificate_document_header = fields.Selection([

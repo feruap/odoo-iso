@@ -7,6 +7,7 @@ from . import amunet_quality_point
 from . import amunet_quality_sampling_plan
 from . import amunet_quality_test_line
 from . import product_template
+from . import product_category_ext
 from . import product_product
 from . import stock_picking
 from . import stock_lot
