@@ -494,4 +494,40 @@
         <field name="domain">[('state','=','borrador'),('elabora_id','=',uid)]</field>
         <field name="search_view_id" ref="view_amunet_documento_search"/>
     </record>
+
+    <!-- Lista maestra de formatos -->
+    <record id="view_amunet_documento_formato_list" model="ir.ui.view">
+        <field name="name">amunet.documento.formato.list</field>
+        <field name="model">amunet.documento.formato</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="codigo" string="Código"/>
+                <field name="nombre" string="Nombre del formato"/>
+                <field name="documento_id" string="PNO / Documento"/>
+                <field name="archivo" widget="binary"
+                       filename="archivo_filename"
+                       string="Descargar"/>
+                <field name="archivo_filename" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_documento_formato_search" model="ir.ui.view">
+        <field name="name">amunet.documento.formato.search</field>
+        <field name="model">amunet.documento.formato</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="codigo" string="Código"/>
+                <field name="nombre" string="Nombre"/>
+                <field name="documento_id" string="PNO"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_amunet_documento_formato" model="ir.actions.act_window">
+        <field name="name">Formatos descargables</field>
+        <field name="res_model">amunet.documento.formato</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_amunet_documento_formato_search"/>
+    </record>
 </odoo>

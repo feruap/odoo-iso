@@ -20,6 +20,9 @@
     <menuitem id="menu_amunet_documentos_lista_maestra" name="Lista maestra (vigentes)"
               parent="menu_amunet_documentos_root"
               action="action_amunet_documento_lista_maestra" sequence="20"/>
+    <menuitem id="menu_amunet_documentos_formatos" name="Formatos"
+              parent="menu_amunet_documentos_root"
+              action="action_amunet_documento_formato" sequence="21"/>
     <menuitem id="menu_amunet_documentos_config" name="Configuracion"
               parent="menu_amunet_documentos_root"
               sequence="90" groups="group_documentos_manager"/>
