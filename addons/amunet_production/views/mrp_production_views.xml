@@ -26,7 +26,7 @@
                             groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
                     <button name="action_amunet_mo_receive_supply" string="Recibir / Aceptar entrega" type="object" class="oe_highlight"
                             invisible="not amunet_supply_workorder_id or amunet_supply_state != 'awaiting_reception'"
-                            groups="amunet_production.group_production_supervisor"/>
+                            groups="amunet_production.group_production_supervisor,amunet_production.group_production_operator"/>
 
                     <!--
                         'Confirmar analisis' aparece solo cuando la
