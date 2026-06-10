@@ -15,6 +15,8 @@ class AmunetDocumentoFormato(models.Model):
     nombre = fields.Char(string='Nombre del formato', required=True)
     archivo = fields.Binary(string='Archivo', attachment=True)
     archivo_filename = fields.Char(string='Nombre de archivo')
+    doc_area = fields.Selection(
+        related='documento_id.area', string='Área', store=True)
 
     def _check_editable(self, vals=None):
         _doc_module._check_documento_child_editable(self, vals)
