@@ -141,16 +141,22 @@ class StockLot(models.Model):
         for lot in self:
             lot.lot_extension_count = len(lot.lot_extension_ids)
 
-    @api.depends('reanalysis_date', 'lot_extension_ids.state',
-                 'product_id.categ_id.reanalysis_extension_months',
-                 'product_id.product_tmpl_id.reanalysis_extension_months')
+    @api.depends('lot_extension_ids.state',
+                 'quality_check_ids.state',
+                 'quality_check_ids.global_result',
+                 'quality_check_ids.analysis_type')
     def _compute_can_extend_expiration(self):
-        today = fields.Date.today()
         for lot in self:
-            if not lot.reanalysis_date or lot.reanalysis_date > today:
+            if not lot.expiration_date:
                 lot.can_extend_expiration = False
                 continue
-            if not lot.expiration_date:
+            # Solo si existe un reanálisis aprobado (análisis tipo reanálisis, finalizado y con resultado APROBADO)
+            approved_reanalysis = lot.quality_check_ids.filtered(
+                lambda qc: qc.analysis_type == 'reanalysis'
+                and qc.state == 'done'
+                and qc.global_result == 'pass'
+            )
+            if not approved_reanalysis:
                 lot.can_extend_expiration = False
                 continue
             active_ext = lot.lot_extension_ids.filtered(
