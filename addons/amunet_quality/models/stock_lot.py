@@ -43,6 +43,22 @@ class StockLot(models.Model):
         compute='_compute_can_request_reanalysis',
     )
 
+    lot_extension_ids = fields.One2many(
+        'amunet.lot.extension',
+        'lot_id',
+        string='Extensiones de caducidad',
+    )
+
+    lot_extension_count = fields.Integer(
+        string='Extensiones',
+        compute='_compute_lot_extension_count',
+    )
+
+    can_extend_expiration = fields.Boolean(
+        string='Puede extender caducidad',
+        compute='_compute_can_extend_expiration',
+    )
+
     reanalysis_date = fields.Date(
         string='Fecha de reanálisis',
         compute='_compute_reanalysis_date',
@@ -119,6 +135,28 @@ class StockLot(models.Model):
     def _compute_can_request_reanalysis(self):
         for lot in self:
             lot.can_request_reanalysis = bool(lot.last_quality_check_id)
+
+    @api.depends('lot_extension_ids')
+    def _compute_lot_extension_count(self):
+        for lot in self:
+            lot.lot_extension_count = len(lot.lot_extension_ids)
+
+    @api.depends('reanalysis_date', 'lot_extension_ids.state',
+                 'product_id.categ_id.reanalysis_extension_months',
+                 'product_id.product_tmpl_id.reanalysis_extension_months')
+    def _compute_can_extend_expiration(self):
+        today = fields.Date.today()
+        for lot in self:
+            if not lot.reanalysis_date or lot.reanalysis_date > today:
+                lot.can_extend_expiration = False
+                continue
+            if not lot.expiration_date:
+                lot.can_extend_expiration = False
+                continue
+            active_ext = lot.lot_extension_ids.filtered(
+                lambda e: e.state not in ('done', 'cancelled')
+            )
+            lot.can_extend_expiration = not bool(active_ext)
 
     @api.depends('expiration_date')
     def _compute_reanalysis_date(self):
@@ -522,6 +560,39 @@ class StockLot(models.Model):
             'justification': message or 'Firma electrónica de liberación final de lote',
             'user_id': self.env.user.id,
         })
+
+    def action_open_lot_extensions(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Extensiones de caducidad — %s' % self.name,
+            'res_model': 'amunet.lot.extension',
+            'view_mode': 'list,form',
+            'domain': [('lot_id', '=', self.id)],
+            'context': {'default_lot_id': self.id},
+        }
+
+    def action_open_new_extension(self):
+        self.ensure_one()
+        # Buscar reanálisis aprobado más reciente
+        last_check = self.quality_check_ids.filtered(
+            lambda c: c.analysis_type == 'reanalysis' and c.state == 'done'
+        ).sorted('id', reverse=True)[:1]
+
+        extension = self.env['amunet.lot.extension'].create({
+            'lot_id': self.id,
+            'months_extended': 0,
+            'expiration_date_before': self.expiration_date,
+            'reanalysis_check_id': last_check.id if last_check else False,
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Extensión de caducidad',
+            'res_model': 'amunet.lot.extension',
+            'res_id': extension.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_open_lot_release_wizard(self):
         self.ensure_one()

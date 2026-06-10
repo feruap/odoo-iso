@@ -33,10 +33,17 @@
                             icon="fa-lock"
                             groups="amunet_quality.group_quality_sanitary,amunet_quality.group_quality_manager,base.group_system"
                             invisible="amunet_lot_release_state == 'released'"/>
+                    <field name="can_extend_expiration" invisible="1"/>
+                    <button name="action_open_new_extension"
+                            string="Extender caducidad"
+                            type="object"
+                            class="btn-warning"
+                            icon="fa-calendar-plus-o"
+                            invisible="not can_extend_expiration"/>
                 </header>
             </xpath>
 
-            <!-- Smart button: número de controles QC del lote -->
+            <!-- Smart buttons -->
             <div name="button_box" position="inside">
                 <field name="quality_check_count" invisible="1"/>
                 <button name="action_view_quality_checks"
@@ -51,7 +58,25 @@
                         <span class="o_stat_text">Controles QC</span>
                     </div>
                 </button>
+                <field name="lot_extension_count" invisible="1"/>
+                <button name="action_open_lot_extensions"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-calendar-plus-o"
+                        invisible="lot_extension_count == 0">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="lot_extension_count"/>
+                        </span>
+                        <span class="o_stat_text">Extensiones</span>
+                    </div>
+                </button>
             </div>
+
+            <!-- Fecha de reanálisis en la ficha del lote -->
+            <xpath expr="//field[@name='expiration_date']" position="after">
+                <field name="reanalysis_date" readonly="1" optional="show"/>
+            </xpath>
 
             <xpath expr="//sheet" position="inside">
                 <group string="Liberación DHR" name="amunet_lot_release_group">
