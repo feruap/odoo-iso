@@ -631,3 +631,88 @@ class StockLot(models.Model):
                     'Cree un reanálisis o registre una desviación/CAPA si necesita cambiar el expediente.'
                 )
         return super().write(vals)
+
+    # ========== Alerta automática de reanálisis ==========
+
+    @api.model
+    def _cron_alerta_reanalisis_caducidad(self):
+        """
+        Cron diario: detecta lotes que llegan hoy a su fecha de reanálisis
+        (caducidad − 30 días) y envía alerta al equipo de Calidad.
+        Solo aplica a materiales donde la categoría tiene meses de extensión > 0.
+        No genera alerta si ya existe un reanálisis activo para ese lote.
+        """
+        from datetime import date
+        hoy = date.today()
+
+        lotes = self.search([
+            ('reanalysis_date', '=', hoy),
+            ('product_id.categ_id.reanalysis_extension_months', '>', 0),
+        ])
+
+        if not lotes:
+            return
+
+        # Filtrar los que NO tienen ya un reanálisis en curso
+        lotes_pendientes = lotes.filtered(lambda lot: not lot.quality_check_ids.filtered(
+            lambda qc: qc.analysis_type == 'reanalysis' and qc.state not in ('done', 'cancel')
+        ))
+
+        if not lotes_pendientes:
+            return
+
+        # Grupo de calidad para notificar
+        grupo_calidad = self.env.ref('amunet_quality.group_quality_analyst', raise_if_not_found=False)
+        usuarios_calidad = grupo_calidad.users if grupo_calidad else self.env['res.users'].search([
+            ('login', 'in', ['s.controldecalidad@amunet.com.mx',
+                             'analista1cc@amunet.com.mx',
+                             'analista2cc@amunet.com.mx'])
+        ])
+
+        # Crear actividad en cada lote y preparar cuerpo del correo
+        lineas_correo = []
+        tipo_actividad = self.env.ref('mail.mail_activity_data_todo', raise_if_not_found=False)
+
+        for lot in lotes_pendientes:
+            meses = lot.product_id.product_tmpl_id.effective_reanalysis_months
+            lineas_correo.append(
+                f'• {lot.product_id.display_name} — Lote: {lot.name} '
+                f'| Caduca: {lot.expiration_date} '
+                f'| Extensión posible: {meses} mes(es)'
+            )
+            # Actividad en el lote para los analistas
+            for usuario in usuarios_calidad:
+                lot.activity_schedule(
+                    activity_type_id=tipo_actividad.id if tipo_actividad else False,
+                    summary='Reanálisis por caducidad próxima',
+                    note=(
+                        f'El lote <b>{lot.name}</b> de <b>{lot.product_id.display_name}</b> '
+                        f'llega hoy a su fecha de reanálisis.<br/>'
+                        f'Caducidad: <b>{lot.expiration_date}</b><br/>'
+                        f'Si el reanálisis aprueba, se puede extender <b>{meses} mes(es)</b>.'
+                    ),
+                    user_id=usuario.id,
+                    date_deadline=hoy,
+                )
+
+        # Enviar correo al equipo de Calidad
+        if lineas_correo and usuarios_calidad:
+            cuerpo = (
+                '<p>Buenos días,</p>'
+                '<p>Los siguientes lotes llegaron hoy a su <b>fecha de reanálisis</b> '
+                '(30 días antes de caducar). Por favor programa el reanálisis correspondiente:</p>'
+                '<ul>' +
+                ''.join(f'<li>{l}</li>' for l in lineas_correo) +
+                '</ul>'
+                '<p>Puedes iniciar el reanálisis desde el lote en '
+                '<a href="/odoo/inventory/products/lots">Inventario → Lotes</a>.</p>'
+                '<p>— Sistema de Calidad Amunet</p>'
+            )
+            for usuario in usuarios_calidad:
+                if usuario.email:
+                    self.env['mail.mail'].sudo().create({
+                        'subject': f'[Calidad] {len(lotes_pendientes)} lote(s) requieren reanálisis hoy ({hoy})',
+                        'email_to': usuario.email,
+                        'body_html': cuerpo,
+                        'auto_delete': True,
+                    }).send()
