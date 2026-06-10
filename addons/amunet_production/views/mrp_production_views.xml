@@ -54,7 +54,7 @@
                             string="Validar conciliación"
                             type="object" class="oe_highlight"
                             invisible="reconciliation_state != 'initiated'"
-                            groups="amunet_production.group_production_supervisor"/>
+                            groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor"/>
                     <button name="action_complete_reconciliation"
                             string="Confirmar devolución recibida"
                             type="object" class="btn-success"
