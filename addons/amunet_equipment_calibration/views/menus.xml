@@ -134,5 +134,21 @@
                   action="amunet_quality.action_amunet_quality_procedure_general"
                   sequence="30"
                   groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <!-- =================================================================
+             SECCIÓN 5: ÁREAS
+             ================================================================= -->
+        <menuitem id="menu_amunet_areas_root"
+                  name="Áreas"
+                  parent="menu_validation_root"
+                  sequence="35"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
+
+        <menuitem id="menu_amunet_areas_catalog"
+                  name="Catálogo de Áreas"
+                  parent="menu_amunet_areas_root"
+                  action="amunet_equipment_calibration.action_amunet_equipment_area"
+                  sequence="10"
+                  groups="amunet_equipment_calibration.group_equipment_manager"/>
     </data>
 </odoo>
