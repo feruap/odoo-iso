@@ -504,7 +504,8 @@
                 <field name="doc_area" string="Área" optional="hide"/>
                 <field name="codigo" string="Código"/>
                 <field name="nombre" string="Nombre del formato"/>
-                <field name="documento_id" string="PNO / Documento"/>
+                <field name="doc_codigo" string="Código PNO"/>
+                <field name="documento_id" string="Nombre del PNO"/>
                 <field name="archivo" widget="binary"
                        filename="archivo_filename"
                        string="Descargar"/>
