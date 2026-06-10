@@ -330,6 +330,12 @@ class MrpWorkorder(models.Model):
 
     def _amunet_signature_required_procedures(self):
         self.ensure_one()
+        # La firma de RECEPCION/aceptacion de surtido no opera el equipo del
+        # almacen (refri/termohigrometro): solo acepta el material entregado.
+        # Por eso no debe exigir los SOPs de equipo del centro de trabajo de
+        # almacen. La firma de SURTIDO (almacen) si los exige (sin este flag).
+        if self.env.context.get('amunet_skip_equipment_training'):
+            return self.env['amunet.quality.procedure']
         procedures = self.workcenter_id.amunet_equipment_ids.mapped('procedure_ids')
         if not procedures and self.production_id.product_id:
             procedures = self.env['amunet.quality.procedure'].search([
@@ -449,12 +455,16 @@ class MrpWorkorder(models.Model):
         if self.amunet_supply_state != 'awaiting_reception':
             raise UserError(_(
                 'No hay surtido pendiente de recepcion en esta operacion.'))
-        return self.env['amunet.generic.signature.wizard'].open_for(
+        action = self.env['amunet.generic.signature.wizard'].open_for(
             self,
             '_signature_action_amunet_receive_supply',
             _('Recibir surtido AMP'),
             _('Firma de recepcion de surtido para %s.') % self.display_name,
         )
+        # La recepcion no exige capacitacion de equipo del almacen (ver
+        # _amunet_signature_required_procedures): solo se acepta el material.
+        action.setdefault('context', {})['amunet_skip_equipment_training'] = True
+        return action
 
     def _signature_action_amunet_receive_supply(self):
         """Produccion recibe/acepta el material entregado: copia
