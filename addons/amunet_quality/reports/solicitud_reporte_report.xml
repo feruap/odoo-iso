@@ -157,7 +157,14 @@
                             <td>FECHA DE CADUCIDAD: <span t-field="o.expiration_date"/></td>
                         </tr>
                         <tr>
-                            <td>FECHA DE REANÁLISIS: <span t-field="o.reanalysis_date"/></td>
+                            <td>FECHA DE REANÁLISIS:
+                                <t t-if="o.lot_id and o.lot_id.reanalysis_date">
+                                    <span t-field="o.lot_id.reanalysis_date"/>
+                                </t>
+                                <t t-elif="o.reanalysis_date">
+                                    <span t-field="o.reanalysis_date"/>
+                                </t>
+                            </td>
                             <td></td>
                         </tr>
                         <tr>

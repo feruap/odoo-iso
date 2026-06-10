@@ -112,4 +112,16 @@ UPDATE amunet_quality_test_line_detail SET uom_id=6, write_date=NOW()
 WHERE specification_config_id IN (72249,72250,72251,72260,72261,72262) AND uom_id IS NULL;" \
 | grep -E "UPDATE"
 
+# 10. MAVI-11: UOM mm para Cierre completo e Interna (Ventana) en TODOS los cartuchos
+docker exec odoo-staging-db psql -U odoo -d Amunet_testing -c "
+UPDATE amunet_quality_parameter_specification_config
+SET uom_id=6, write_date=NOW()
+WHERE specification_name = 'Cierre completo'
+  AND evaluation_type = 'numeric_range' AND uom_id IS NULL;
+UPDATE amunet_quality_parameter_specification_config
+SET uom_id=6, write_date=NOW()
+WHERE specification_name IN ('Interna (Ventana) Largo', 'Interna (Ventana) Ancho')
+  AND evaluation_type = 'numeric_range' AND uom_id IS NULL;" \
+| grep -E "UPDATE"
+
 echo "=== TODOS LOS SCRIPTS COMPLETADOS ==="
