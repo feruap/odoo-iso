@@ -150,11 +150,7 @@ class StockLot(models.Model):
             if not lot.reanalysis_date or lot.reanalysis_date > today:
                 lot.can_extend_expiration = False
                 continue
-            tmpl = lot.product_id.product_tmpl_id
-            months = 0
-            if tmpl and 'effective_reanalysis_months' in tmpl._fields:
-                months = tmpl.effective_reanalysis_months
-            if months <= 0:
+            if not lot.expiration_date:
                 lot.can_extend_expiration = False
                 continue
             active_ext = lot.lot_extension_ids.filtered(
@@ -578,16 +574,6 @@ class StockLot(models.Model):
 
     def action_open_new_extension(self):
         self.ensure_one()
-        tmpl = self.product_id.product_tmpl_id
-        months = tmpl.effective_reanalysis_months if (
-            tmpl and 'effective_reanalysis_months' in tmpl._fields
-        ) else 0
-        if months <= 0:
-            from odoo.exceptions import UserError
-            raise UserError(
-                'Este material no tiene meses de extensión configurados. '
-                'Configura los meses en la categoría del producto.'
-            )
         # Buscar reanálisis aprobado más reciente
         last_check = self.quality_check_ids.filtered(
             lambda c: c.analysis_type == 'reanalysis' and c.state == 'done'
@@ -595,7 +581,7 @@ class StockLot(models.Model):
 
         extension = self.env['amunet.lot.extension'].create({
             'lot_id': self.id,
-            'months_extended': months,
+            'months_extended': 0,
             'expiration_date_before': self.expiration_date,
             'reanalysis_check_id': last_check.id if last_check else False,
         })

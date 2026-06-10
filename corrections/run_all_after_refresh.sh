@@ -124,4 +124,12 @@ WHERE specification_name IN ('Interna (Ventana) Largo', 'Interna (Ventana) Ancho
   AND evaluation_type = 'numeric_range' AND uom_id IS NULL;" \
 | grep -E "UPDATE"
 
+# 11. MAVI-09: UOM Segundos (id=43) para Tiempo de liberación y Tiempo de migración en todos los productos
+docker exec odoo-staging-db psql -U odoo -d Amunet_testing -c "
+UPDATE amunet_quality_parameter_specification_config
+SET uom_id=43, write_date=NOW()
+WHERE specification_name IN ('Tiempo de liberación', 'Tiempo de migración')
+  AND evaluation_type = 'numeric_range' AND uom_id IS NULL;" \
+| grep -E "UPDATE"
+
 echo "=== TODOS LOS SCRIPTS COMPLETADOS ==="

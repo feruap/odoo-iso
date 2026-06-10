@@ -111,6 +111,8 @@ class AmunetLotExtension(models.Model):
         self.ensure_one()
         if self.state != 'draft':
             raise UserError('Esta solicitud ya fue firmada por Calidad.')
+        if not self.months_extended or self.months_extended <= 0:
+            raise UserError('Ingresa los meses de extensión antes de firmar.')
         if not self._validate_pin(password):
             raise UserError('PIN o contraseña incorrectos.')
         old_state = self.state
