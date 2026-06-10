@@ -192,11 +192,11 @@
                     <table class="tabla-full tabla-datos" style="text-transform: uppercase; margin-bottom: 10px;">
                         <tr>
                             <td style="width: 50%;">FECHA DE ANÁLISIS: <span t-field="o.analysis_date"/></td>
-                            <td style="width: 50%;">FECHA DE REANÁLISIS:</td>
+                            <td style="width: 50%;">TIPO DE ANÁLISIS: <span t-field="o.analysis_type"/></td>
                         </tr>
                         <tr>
                             <td style="width: 50%;">NO. DE ANÁLISIS: <span t-esc="o.analysis_number"/></td>
-                            <td style="width: 50%;">TIPO DE ANÁLISIS: <span t-field="o.analysis_type"/></td>
+                            <td style="width: 50%;"></td>
                         </tr>
                     </table>
 
