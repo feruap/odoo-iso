@@ -80,11 +80,12 @@ class AmunetLotExtension(models.Model):
             else:
                 ext.expiration_date_after = ext.expiration_date_before
 
-    @api.model
-    def create(self, vals):
-        if not vals.get('name') or vals['name'] == 'Nueva':
-            vals['name'] = self.env['ir.sequence'].next_by_code('amunet.lot.extension') or 'Nueva'
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals['name'] == 'Nueva':
+                vals['name'] = self.env['ir.sequence'].next_by_code('amunet.lot.extension') or 'Nueva'
+        return super().create(vals_list)
 
     def _validate_pin(self, password):
         sig_wizard = self.env['amunet.quality.signature.wizard'].new({
