@@ -234,7 +234,7 @@ class StockPicking(models.Model):
             for move in picking.move_ids:
                 if move.state != 'done':
                     continue
-                qc_for_product = picking.amunet_qc_ids.filtered(
+                qc_for_product = picking.amunet_qc_ids.sudo().filtered(
                     lambda q: q.product_id == move.product_id
                 )
                 if not qc_for_product:
