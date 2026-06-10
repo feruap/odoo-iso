@@ -31,6 +31,7 @@ CAMPOS_BLOQUEADOS_VIGENTE = (
     'seccion_condiciones_generales', 'seccion_formatos_derivados',
     'seccion_referencias', 'seccion_anexos',
     'elabora_id', 'fecha_elabora',
+    'formato_ids',
 )
 
 CAMPOS_FLUJO_FIRMA = (
@@ -173,6 +174,9 @@ class AmunetDocumento(models.Model):
     distribucion_ids = fields.One2many(
         'amunet.documento.distribucion', 'documento_id',
         string='Distribucion')
+    formato_ids = fields.One2many(
+        'amunet.documento.formato', 'documento_id',
+        string='Formatos descargables')
     sugerencia_ids = fields.One2many(
         'amunet.documento.sugerencia', 'documento_id',
         string='Sugerencias de cambio')
