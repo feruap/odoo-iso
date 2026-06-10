@@ -119,6 +119,18 @@ class AmunetEquipment(models.Model):
              'fuera de servicio.'
     )
 
+    calibration_program_line_ids = fields.One2many(
+        'amunet.calibration.program.line',
+        'equipment_id',
+        string='Líneas de programa FVA',
+    )
+    in_calibration_program = fields.Boolean(
+        string='En programa FVA',
+        compute='_compute_in_calibration_program',
+        store=True,
+        help='Verdadero si el equipo tiene al menos una línea activa en el programa FVA.',
+    )
+
     authorized_user_count = fields.Integer(
         string='Usuarios Autorizados',
         compute='_compute_authorized_user_count',
@@ -210,6 +222,14 @@ class AmunetEquipment(models.Model):
         string='Calibración',
         compute='_compute_calibracion_via',
     )
+
+    @api.depends('calibration_program_line_ids.program_status')
+    def _compute_in_calibration_program(self):
+        for eq in self:
+            eq.in_calibration_program = any(
+                l.program_status != 'na'
+                for l in eq.calibration_program_line_ids
+            )
 
     def _compute_child_equipment_count(self):
         for eq in self:
