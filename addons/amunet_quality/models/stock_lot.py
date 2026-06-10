@@ -166,10 +166,10 @@ class StockLot(models.Model):
 
     @api.depends('expiration_date')
     def _compute_reanalysis_date(self):
-        from datetime import timedelta
+        from dateutil.relativedelta import relativedelta
         for lot in self:
             if lot.expiration_date:
-                lot.reanalysis_date = lot.expiration_date - timedelta(days=30)
+                lot.reanalysis_date = lot.expiration_date - relativedelta(months=1)
                 if not lot.removal_date:
                     lot.removal_date = lot.reanalysis_date
             else:
