@@ -112,12 +112,12 @@
                         <tr style="border: 0 !important;">
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>No. de lote:</strong> <span t-field="o.lot_name_amunet"/></td>
                             <td class="no-border" style="width: 50%; padding: 2px 0;">
-                                <strong>Fecha de caducidad:</strong> <span t-field="o.expiration_date"/>
+                                <strong>Fecha de caducidad:</strong> <span t-field="o.expiration_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
                             </td>
                         </tr>
                         <tr style="border: 0 !important;">
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>No. de análisis:</strong> <span t-esc="o.analysis_number"/></td>
-                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Fecha de análisis:</strong> <span t-field="o.analysis_date"/></td>
+                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Fecha de análisis:</strong> <span t-field="o.analysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/></td>
                         </tr>
                     </table>
 
@@ -190,7 +190,7 @@
                             <tr>
                                 <td class="no-border" style="width: 30%; vertical-align: bottom; border: 0 !important;">
                                     <div style="margin-bottom: 5px; min-height: 40px; font-weight: bold;">
-                                        <span t-field="o.realized_date"/><br/>
+                                        <span t-field="o.realized_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
                                         <span t-field="o.user_realized_id.name"/>
                                     </div>
                                     <div style="border-top: 1px solid black; padding-top: 5px; width: 90%; margin: 0 auto; font-weight: bold; font-size: 10pt;">
@@ -201,7 +201,7 @@
                                 <td class="no-border" style="width: 5%; border: 0 !important;"></td>
                                 <td class="no-border" style="width: 30%; vertical-align: bottom; border: 0 !important;">
                                     <div style="margin-bottom: 5px; min-height: 40px; font-weight: bold;">
-                                        <span t-field="o.verified_date"/><br/>
+                                        <span t-field="o.verified_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
                                         <span t-field="o.user_verified_id.name"/>
                                     </div>
                                     <div style="border-top: 1px solid black; padding-top: 5px; width: 90%; margin: 0 auto; font-weight: bold; font-size: 10pt;">
@@ -212,7 +212,7 @@
                                 <td class="no-border" style="width: 5%; border: 0 !important;"></td>
                                 <td class="no-border" style="width: 30%; vertical-align: bottom; border: 0 !important;">
                                     <div style="margin-bottom: 5px; min-height: 40px; font-weight: bold;">
-                                        <span t-field="o.authorized_date"/><br/>
+                                        <span t-field="o.authorized_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
                                         <span t-field="o.user_authorized_id.name"/>
                                     </div>
                                     <div style="border-top: 1px solid black; padding-top: 5px; width: 90%; margin: 0 auto; font-weight: bold; font-size: 10pt;">
