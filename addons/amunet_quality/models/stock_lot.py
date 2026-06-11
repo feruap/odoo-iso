@@ -164,16 +164,23 @@ class StockLot(models.Model):
             )
             lot.can_extend_expiration = not bool(active_ext)
 
-    @api.depends('expiration_date')
+    @api.depends('expiration_date', 'product_id.categ_id')
     def _compute_reanalysis_date(self):
         from dateutil.relativedelta import relativedelta
         for lot in self:
-            if lot.expiration_date:
-                lot.reanalysis_date = lot.expiration_date - relativedelta(months=1)
-                if not lot.removal_date:
-                    lot.removal_date = lot.reanalysis_date
-            else:
+            if not lot.expiration_date:
                 lot.reanalysis_date = False
+                continue
+            lot.reanalysis_date = lot.expiration_date - relativedelta(months=1)
+            categ = (lot.product_id.categ_id.complete_name or '').lower()
+            if 'soluciones de trabajo' in categ:
+                lot.removal_date = lot.expiration_date - relativedelta(weeks=1)
+            elif categ.startswith('producto terminado'):
+                lot.removal_date = lot.expiration_date - relativedelta(months=4)
+            elif categ.startswith('material impreso'):
+                lot.removal_date = False
+            else:
+                lot.removal_date = lot.expiration_date - relativedelta(months=1)
 
     # ========== Liberación final DHR ==========
 
