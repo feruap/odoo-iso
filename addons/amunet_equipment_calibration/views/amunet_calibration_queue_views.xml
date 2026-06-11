@@ -41,7 +41,7 @@
     <field name="name">Cola de Calibraciones</field>
     <field name="res_model">amunet.equipment</field>
     <field name="view_mode">list,form</field>
-    <field name="domain">[('calibration_required', '=', True), ('is_deseable', '=', False)]</field>
+    <field name="domain">[('in_calibration_program', '=', True), ('is_deseable', '=', False)]</field>
     <field name="view_ids" eval="[(5, 0, 0),
         (0, 0, {'view_mode': 'list', 'view_id': ref('view_calibration_queue_list')}),
     ]"/>
