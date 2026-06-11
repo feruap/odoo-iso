@@ -6,6 +6,7 @@
     'author': 'Amunet',
     'depends': ['amunet_lot', 'stock'],
     'data': [
+        'reports/report_recepcion_materiales.xml',
         'views/stock_picking_views.xml',
     ],
     'installable': True,
