@@ -16,6 +16,19 @@ class ProductTemplate(models.Model):
     """
     _inherit = 'product.template'
 
+    # ========== Clasificación de Hoja Maestra ==========
+
+    hm_type = fields.Selection([
+        ('qualitative', 'Cualitativa'),
+        ('qualitative_competitive', 'Cualitativa / Competitiva'),
+        ('colorimetric', 'Colorimétrica'),
+        ('with_reference', 'Con referencia (Semicuantitativa)'),
+    ], string='Tipo de hoja maestra',
+        help='Cualitativa: positivo = línea C + línea T; negativo = solo línea C.\n'
+             'Competitiva: positivo = solo línea C; negativo = línea C + línea T.\n'
+             'Colorimétrica: lectura por comparación con tarjeta de color.\n'
+             'Con referencia: lectura semicuantitativa con región de referencia.')
+
     # ========== Configuración de Control de Calidad ==========
 
     qc_required = fields.Boolean(
