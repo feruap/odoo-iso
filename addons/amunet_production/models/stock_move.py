@@ -62,6 +62,53 @@ class StockMove(models.Model):
         for rec in self:
             rec.amunet_user_can_edit_consume = can_edit
 
+    # Flag de UI: True si el usuario actual es de Almacen. Solo almacen
+    # (Veronica, Patricia, Karla...) puede capturar Cantidad surtida y Lote.
+    amunet_user_is_warehouse = fields.Boolean(
+        string='Es de almacen',
+        compute='_compute_amunet_user_is_warehouse',
+    )
+
+    @api.depends_context('uid')
+    def _compute_amunet_user_is_warehouse(self):
+        is_wh = (
+            self.env.user.has_group('amunet_material_request.group_material_warehouse')
+            or self.env.user.has_group('amunet_material_request.group_material_manager')
+        )
+        for rec in self:
+            rec.amunet_user_is_warehouse = is_wh
+
+    def write(self, vals):
+        # Candado: solo Almacen puede capturar 'Cantidad surtida' y 'Lote'
+        # del material de una orden de produccion. Produccion nunca.
+        # Se omite en escrituras internas del flujo (contexto/sudo).
+        supply_fields = {'amunet_qty_supplied', 'amunet_lot_id'}
+        if (supply_fields & set(vals)
+                and not self.env.su
+                and not self.env.context.get('amunet_supply_internal')):
+            is_wh = (
+                self.env.user.has_group('amunet_material_request.group_material_warehouse')
+                or self.env.user.has_group('amunet_material_request.group_material_manager')
+            )
+            if not is_wh and any(m.raw_material_production_id for m in self):
+                raise UserError(_(
+                    'Solo personal de Almacen (Veronica, Patricia, Karla) puede '
+                    'capturar la Cantidad surtida y el Lote del material.'))
+        # Candado: la 'Cantidad por consumir' (product_uom_qty) de un
+        # componente NO se puede ajustar una vez que la orden esta
+        # planificada (confirmada en adelante). Por nadie. Se omite en
+        # escrituras internas del flujo (sudo/contexto).
+        if ('product_uom_qty' in vals
+                and not self.env.su
+                and not self.env.context.get('amunet_supply_internal')):
+            for m in self:
+                mo = m.raw_material_production_id
+                if mo and mo.state != 'draft':
+                    raise UserError(_(
+                        'No se puede ajustar la cantidad por consumir: la orden '
+                        '%s ya esta planificada.') % mo.name)
+        return super().write(vals)
+
     amunet_is_valid = fields.Boolean(
         string='Valido',
         compute='_compute_amunet_is_valid',
