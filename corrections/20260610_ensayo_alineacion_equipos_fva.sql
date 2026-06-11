@@ -125,37 +125,33 @@ END $$;
 -- ============================================================
 -- 6. CORREGIR CÓDIGOS DE EXPEDIENTES
 -- ============================================================
--- Congelador: CGR → CON
+-- Congelador: CGR → CON (filtra por serial_number; funciona aunque el nombre esté vacío)
 UPDATE amunet_equipment_expediente exp
 SET name = 'EXP-CAL/CON/01', write_date = NOW()
 FROM amunet_equipment eq
-WHERE exp.equipment_id = eq.id AND eq.serial_number = 'CAL/CGR/01'
-  AND exp.name = 'EXP-CAL/CGR/01';
+WHERE exp.equipment_id = eq.id AND eq.serial_number = 'CAL/CGR/01';
 
 UPDATE amunet_equipment_calificacion cal
-SET protocol_code = REPLACE(cal.protocol_code, 'CGR', 'CON'),
-    report_code   = REPLACE(cal.report_code,   'CGR', 'CON'),
+SET protocol_code = REPLACE(COALESCE(cal.protocol_code,''), 'CGR', 'CON'),
+    report_code   = REPLACE(COALESCE(cal.report_code,''),   'CGR', 'CON'),
     write_date    = NOW()
 FROM amunet_equipment_expediente exp
 JOIN amunet_equipment eq ON eq.id = exp.equipment_id
-WHERE cal.expediente_id = exp.id AND eq.serial_number = 'CAL/CGR/01'
-  AND cal.protocol_code LIKE '%CGR%';
+WHERE cal.expediente_id = exp.id AND eq.serial_number = 'CAL/CGR/01';
 
--- Cámara climática: CLI → CAM
+-- Cámara climática: CLI → CAM (filtra por serial_number)
 UPDATE amunet_equipment_expediente exp
 SET name = 'EXP-CAL/CAM/01', write_date = NOW()
 FROM amunet_equipment eq
-WHERE exp.equipment_id = eq.id AND eq.serial_number = 'EST/CLI/01'
-  AND exp.name = 'EXP-CAL/CLI/01';
+WHERE exp.equipment_id = eq.id AND eq.serial_number = 'EST/CLI/01';
 
 UPDATE amunet_equipment_calificacion cal
-SET protocol_code = REPLACE(cal.protocol_code, 'CLI', 'CAM'),
-    report_code   = REPLACE(cal.report_code,   'CLI', 'CAM'),
+SET protocol_code = REPLACE(COALESCE(cal.protocol_code,''), 'CLI', 'CAM'),
+    report_code   = REPLACE(COALESCE(cal.report_code,''),   'CLI', 'CAM'),
     write_date    = NOW()
 FROM amunet_equipment_expediente exp
 JOIN amunet_equipment eq ON eq.id = exp.equipment_id
-WHERE cal.expediente_id = exp.id AND eq.serial_number = 'EST/CLI/01'
-  AND cal.protocol_code LIKE '%CLI%';
+WHERE cal.expediente_id = exp.id AND eq.serial_number = 'EST/CLI/01';
 
 -- Bomba al vacío (CALIDAD): COM → BOM
 UPDATE amunet_equipment_expediente exp
