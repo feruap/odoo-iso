@@ -784,7 +784,55 @@ class MrpProduction(models.Model):
         productions._auto_generate_lot_draft()
         return productions
 
+    # Campos de "informacion general" de la orden que NO se pueden
+    # modificar una vez planificada (confirmada en adelante), salvo Mery.
+    _AMUNET_GENERAL_INFO_FIELDS = (
+        'product_id', 'product_qty', 'bom_id', 'user_id',
+        'date_start', 'amunet_scheduled_date_display', 'amunet_expiration_text',
+    )
+
+    # Flag de UI: True si el usuario actual es Mery (unica excepcion para
+    # modificar la informacion general de una orden ya planificada).
+    amunet_user_is_mery = fields.Boolean(
+        string='Es Mery', compute='_compute_amunet_user_is_mery')
+
+    @api.depends_context('uid')
+    def _compute_amunet_user_is_mery(self):
+        is_mery = self.env.user.login == 'desarrollo@amunet.com.mx'
+        for rec in self:
+            rec.amunet_user_is_mery = is_mery
+
+    def _amunet_field_value_changed(self, field_name, new_value):
+        field = self._fields[field_name]
+        old = self[field_name]
+        if field.type == 'many2one':
+            return (old.id or False) != (new_value or False)
+        if field.type in ('date', 'datetime'):
+            return str(old or '') != str(new_value or '')
+        return old != new_value
+
+    def _amunet_check_general_info_lock(self, vals):
+        # Solo aplica a escrituras manuales; se omite en flujos internos.
+        if self.env.su or self.env.context.get('amunet_supply_internal'):
+            return
+        # Excepcion: Mery puede modificar la informacion general siempre.
+        if self.env.user.login == 'desarrollo@amunet.com.mx':
+            return
+        touched = [f for f in self._AMUNET_GENERAL_INFO_FIELDS if f in vals]
+        if not touched:
+            return
+        for mo in self:
+            if mo.state == 'draft':
+                continue
+            for f in touched:
+                if mo._amunet_field_value_changed(f, vals[f]):
+                    raise UserError(_(
+                        'La orden %(mo)s ya esta planificada. Solo Mery puede '
+                        'modificar la informacion general (campo: %(f)s).'
+                    ) % {'mo': mo.name, 'f': mo._fields[f].string})
+
     def write(self, vals):
+        self._amunet_check_general_info_lock(vals)
         res = super().write(vals)
         if 'product_id' in vals:
             # Si cambia el producto en borrador, forzamos regenerar la previsualizacion
@@ -799,7 +847,19 @@ class MrpProduction(models.Model):
                     
         return res
 
+    def _amunet_check_lote_lock(self):
+        # El 'Lote producido' es info general: no se cambia (Limpiar /
+        # Generar serial) una vez planificada la orden, salvo Mery.
+        if self.env.su or self.env.user.login == 'desarrollo@amunet.com.mx':
+            return
+        for mo in self:
+            if mo.state != 'draft':
+                raise UserError(_(
+                    'La orden %s ya esta planificada. Solo Mery puede '
+                    'modificar el Lote producido.') % mo.name)
+
     def action_generate_serial(self):
+        self._amunet_check_lote_lock()
         # Asegurar sincronizacion al darle al botón nativo de Odoo "Generar Lote"
         res = super().action_generate_serial()
         for prod in self:
@@ -808,6 +868,7 @@ class MrpProduction(models.Model):
         return res
         
     def action_clear_lot_producing_ids(self):
+        self._amunet_check_lote_lock()
         res = super().action_clear_lot_producing_ids()
         for prod in self:
             if not prod.lot_producing_ids:
@@ -965,6 +1026,28 @@ class MrpProduction(models.Model):
                 summary=_('Validar surtido %s') % self.name,
                 note=body.replace('\n', '<br/>'),
                 user_id=u.id,
+            )
+        # Aviso EXPLICITO al responsable de la orden (user_id) de que
+        # almacen ya termino el surtido: actividad si no la tiene ya, y
+        # mensaje en el chatter que le llega a su bandeja de Discuss.
+        responsable = self.user_id
+        if responsable and responsable.active and responsable.id != 1:
+            if responsable not in users:
+                self.sudo().activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    summary=_('Validar surtido %s') % self.name,
+                    note=body.replace('\n', '<br/>'),
+                    user_id=responsable.id,
+                )
+            self.sudo().message_post(
+                body=_(
+                    'Almacen termino el surtido de los materiales de esta '
+                    'orden (surtido por %(u)s). Responsable: %(r)s, queda '
+                    'pendiente de recepcion/validacion.'
+                ) % {'u': self.env.user.display_name, 'r': responsable.name},
+                partner_ids=responsable.partner_id.ids,
+                message_type='comment',
+                subtype_xmlid='mail.mt_comment',
             )
 
     def _amunet_close_production_supply_activities(self):
