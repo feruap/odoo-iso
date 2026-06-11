@@ -24,28 +24,32 @@ INSERT INTO amunet_equipment
    calibration_required, maintenance_required, is_deseable,
    has_calibratable_children,
    create_uid, write_uid, create_date, write_date)
-VALUES
-  ('Data logger',    'VAL/DTL/01',  'VALIDACIÓN',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Flexómetro',     'VAL/FLX/01',  'VALIDACIÓN',         'active', false, true,  false, false, 70,70,NOW(),NOW()),
-  ('Nivel de gota',  'VAL/NLG/01',  'VALIDACIÓN',         'active', false, true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'PRO/MIC/09',  'SOLUCIONES',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'PRO/MIC/10',  'SOLUCIONES',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'CAL/MIC/04',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'CAL/MIC/05',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'CAL/MIC/07',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'CAL/MIC/08',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'CAL/MIC/09',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'CAL/MIC/10',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'DES/MIC/05',  'DESARROLLO',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'DES/MIC/06',  'DESARROLLO',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'DES/MIC/07',  'DESARROLLO',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'DES/MIC/08',  'DESARROLLO',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'DES/MIC/09',  'DESARROLLO',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Micropipeta',    'DES/MIC/10',  'DESARROLLO',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Fuente de poder','DES/FUE/01',  'DESARROLLO',         'active', true,  true,  false, false, 70,70,NOW(),NOW()),
-  ('Bomba al vacío', 'CAL/BOM/02',  'CONTROL DE CALIDAD', 'active', false, true,  false, true,  70,70,NOW(),NOW()),
-  ('Vacuómetro',     'CAL/BOM/02-1','CONTROL DE CALIDAD', 'active', true,  true,  false, false, 70,70,NOW(),NOW())
-ON CONFLICT (serial_number) DO NOTHING;
+SELECT t.name, t.serial_number, t.department, t.state,
+       t.cal_req, t.mnt_req, t.deseable, t.cal_children,
+       70, 70, NOW(), NOW()
+FROM (VALUES
+  ('Data logger',    'VAL/DTL/01',  'VALIDACIÓN',         'active', true,  true,  false, false),
+  ('Flexómetro',     'VAL/FLX/01',  'VALIDACIÓN',         'active', false, true,  false, false),
+  ('Nivel de gota',  'VAL/NLG/01',  'VALIDACIÓN',         'active', false, true,  false, false),
+  ('Micropipeta',    'PRO/MIC/09',  'SOLUCIONES',         'active', true,  true,  false, false),
+  ('Micropipeta',    'PRO/MIC/10',  'SOLUCIONES',         'active', true,  true,  false, false),
+  ('Micropipeta',    'CAL/MIC/04',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false),
+  ('Micropipeta',    'CAL/MIC/05',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false),
+  ('Micropipeta',    'CAL/MIC/07',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false),
+  ('Micropipeta',    'CAL/MIC/08',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false),
+  ('Micropipeta',    'CAL/MIC/09',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false),
+  ('Micropipeta',    'CAL/MIC/10',  'CONTROL DE CALIDAD', 'active', true,  true,  false, false),
+  ('Micropipeta',    'DES/MIC/05',  'DESARROLLO',         'active', true,  true,  false, false),
+  ('Micropipeta',    'DES/MIC/06',  'DESARROLLO',         'active', true,  true,  false, false),
+  ('Micropipeta',    'DES/MIC/07',  'DESARROLLO',         'active', true,  true,  false, false),
+  ('Micropipeta',    'DES/MIC/08',  'DESARROLLO',         'active', true,  true,  false, false),
+  ('Micropipeta',    'DES/MIC/09',  'DESARROLLO',         'active', true,  true,  false, false),
+  ('Micropipeta',    'DES/MIC/10',  'DESARROLLO',         'active', true,  true,  false, false),
+  ('Fuente de poder','DES/FUE/01',  'DESARROLLO',         'active', true,  true,  false, false),
+  ('Bomba al vacío', 'CAL/BOM/02',  'CONTROL DE CALIDAD', 'active', false, true,  false, true),
+  ('Vacuómetro',     'CAL/BOM/02-1','CONTROL DE CALIDAD', 'active', true,  true,  false, false)
+) AS t(name, serial_number, department, state, cal_req, mnt_req, deseable, cal_children)
+WHERE NOT EXISTS (SELECT 1 FROM amunet_equipment x WHERE x.serial_number = t.serial_number);
 
 -- ============================================================
 -- 2. ELIMINAR 22 EQUIPOS FUERA DE FVA Y SIN EXPEDIENTE
