@@ -349,6 +349,30 @@
                                         </t>
 
                                         <!-- MAVI-11: Height (6/8 cm) -->
+                                        <t t-elif="detail.evaluation_type === 'mavi_11_height'">
+                                            <div t-if="!props.readonly" class="d-flex flex-column gap-1">
+                                                <select class="form-select form-select-sm"
+                                                        t-att-data-detail-id="detail.id"
+                                                        t-on-change="onMavi11HeightChange">
+                                                    <option value="">Altura objetivo...</option>
+                                                    <option value="6" t-att-selected="detail.mavi11_target_height === '6'">6 cm</option>
+                                                    <option value="8" t-att-selected="detail.mavi11_target_height === '8'">8 cm</option>
+                                                </select>
+                                                <div t-if="detail.mavi11_target_height" class="input-group input-group-sm mt-1">
+                                                    <input type="number"
+                                                           class="form-control"
+                                                           step="0.1"
+                                                           placeholder="Altura medida"
+                                                           t-att-value="detail.mavi11_measured_height || ''"
+                                                           t-att-data-detail-id="detail.id"
+                                                           t-on-change="onMavi11MeasuredChange"/>
+                                                    <span class="input-group-text">cm</span>
+                                                </div>
+                                            </div>
+                                            <span t-else="" class="form-control-plaintext">
+                                                <t t-esc="detail.result_display || '-'"/>
+                                            </span>
+                                        </t>
 
                                         <!-- VAMA-006: Color Scale 0-14 (Inline) -->
                                         <t t-elif="detail.evaluation_type === 'vama_006'">
