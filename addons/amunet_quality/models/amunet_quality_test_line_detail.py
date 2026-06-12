@@ -1717,29 +1717,28 @@ class AmunetQualityTestLineDetail(models.Model):
 
         # 4. Evaluación especial: MAVI-07 con reglas sample_type/result
         if evaluation_rules and 'rules' in evaluation_rules and isinstance(evaluation_rules.get('rules'), list):
-            # Nuevo formato: rules es una lista de reglas con sample_type, result, verdict, message
             rules_list = evaluation_rules.get('rules', [])
-            
-            # Obtener valores de sample_type (índice 0) y result (índice 1)
-            sample_type = results.get('0', '')
-            result_value = results.get('1', '')
-            
-            if not sample_type:
-                return {'verdict': 'pending', 'message': 'Seleccione el tipo de muestra'}
-            if not result_value:
-                return {'verdict': 'pending', 'message': 'Seleccione el resultado observado'}
-            
-            # Buscar la regla que coincide
+
+            # Si el mapping define fixed_sample_type, el tipo de muestra es fijo (no lo elige el analista).
+            # El patrón observado está en posición 0; no hay posición para tipo de muestra.
+            fixed_sample = mapping.get('fixed_sample_type', None)
+            if fixed_sample:
+                sample_type = fixed_sample
+                result_value = results.get('0', '')
+                if not result_value:
+                    return {'verdict': 'pending', 'message': 'Seleccione el patrón observado'}
+            else:
+                sample_type = results.get('0', '')
+                result_value = results.get('1', '')
+                if not sample_type:
+                    return {'verdict': 'pending', 'message': 'Seleccione el tipo de muestra'}
+                if not result_value:
+                    return {'verdict': 'pending', 'message': 'Seleccione el resultado observado'}
+
             for rule in rules_list:
-                rule_sample = rule.get('sample_type', '')
-                rule_result = rule.get('result', '')
-                
-                if rule_sample == sample_type and rule_result == result_value:
-                    verdict = rule.get('verdict', 'pending')
-                    message = rule.get('message', '')
-                    return {'verdict': verdict, 'message': message}
-            
-            # Si no se encontró regla específica, retornar pendiente
+                if rule.get('sample_type', '') == sample_type and rule.get('result', '') == result_value:
+                    return {'verdict': rule.get('verdict', 'pending'), 'message': rule.get('message', '')}
+
             return {'verdict': 'pending', 'message': 'Combinación no configurada'}
 
         # 5. Evaluación especial: expected_vs_obtained (formato anterior)
