@@ -4,7 +4,7 @@ from odoo import api, fields, models, _
 
 class AmunetDocumentoFormatoSolicitud(models.Model):
     _name = 'amunet.documento.formato.solicitud'
-    _description = 'Solicitud de descarga de formato controlado'
+    _description = 'Solicitud de impresión de formato controlado'
     _order = 'fecha_solicitud desc'
     _inherit = ['mail.thread']
 
@@ -62,16 +62,16 @@ class AmunetDocumentoFormatoSolicitud(models.Model):
         icono = '✅' if estado == 'aprobada' else '❌'
         cuerpo = f'''
             <p>Hola {self.solicitante_id.name},</p>
-            <p>Tu solicitud de descarga del formato
+            <p>Tu solicitud de impresión del formato
             <b>{self.formato_codigo} — {self.formato_nombre}</b>
             ({self.documento_id.codigo}) ha sido <b>{estado}</b>. {icono}</p>
         '''
         if self.notas_respuesta:
             cuerpo += f'<p><b>Comentario:</b> {self.notas_respuesta}</p>'
         if estado == 'aprobada':
-            cuerpo += '<p>Ya puedes descargar el archivo desde Odoo en <b>Documentación → Mis solicitudes</b>.</p>'
+            cuerpo += '<p>Ya puedes imprimir el archivo desde Odoo en <b>Documentación → Mis solicitudes de impresión</b>.</p>'
         self.env['mail.mail'].sudo().create({
-            'subject': f'{icono} Solicitud de descarga {estado}: {self.formato_codigo}',
+            'subject': f'{icono} Solicitud de impresión {estado}: {self.formato_codigo}',
             'body_html': cuerpo,
             'email_to': email,
         }).send()

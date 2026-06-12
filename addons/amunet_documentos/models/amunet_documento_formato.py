@@ -20,7 +20,7 @@ class AmunetDocumentoFormato(models.Model):
     doc_codigo = fields.Char(
         related='documento_id.codigo', string='Código PNO', store=False)
     requiere_aprobacion = fields.Boolean(
-        string='Requiere aprobación para descargar', default=False)
+        string='Requiere aprobación para imprimir', default=False)
 
     def action_solicitar_descarga(self):
         Solicitud = self.env['amunet.documento.formato.solicitud']
@@ -34,7 +34,7 @@ class AmunetDocumentoFormato(models.Model):
             self._avisar_documentacion(existente)
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Mi solicitud de descarga',
+            'name': 'Mi solicitud de impresión',
             'res_model': 'amunet.documento.formato.solicitud',
             'res_id': existente.id,
             'view_mode': 'form',
@@ -43,9 +43,9 @@ class AmunetDocumentoFormato(models.Model):
 
     def _avisar_documentacion(self, solicitud):
         self.env['mail.mail'].sudo().create({
-            'subject': f'📥 Solicitud de descarga: {self.codigo} — {solicitud.solicitante_id.name}',
+            'subject': f'📥 Solicitud de impresión: {self.codigo} — {solicitud.solicitante_id.name}',
             'body_html': f'''
-                <p>Nueva solicitud de descarga pendiente de aprobación:</p>
+                <p>Nueva solicitud de impresión pendiente de aprobación:</p>
                 <ul>
                     <li><b>Formato:</b> {self.codigo} — {self.nombre}</li>
                     <li><b>Documento:</b> {self.documento_id.codigo}</li>

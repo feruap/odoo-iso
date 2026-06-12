@@ -23,10 +23,10 @@
     <menuitem id="menu_amunet_documentos_formatos" name="Formatos"
               parent="menu_amunet_documentos_root"
               action="action_amunet_documento_formato" sequence="21"/>
-    <menuitem id="menu_amunet_formato_mis_solicitudes" name="Mis solicitudes de descarga"
+    <menuitem id="menu_amunet_formato_mis_solicitudes" name="Mis solicitudes de impresión"
               parent="menu_amunet_documentos_root"
               action="action_amunet_formato_mis_solicitudes" sequence="25"/>
-    <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de descarga"
+    <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de impresión"
               parent="menu_amunet_documentos_root"
               action="action_amunet_formato_solicitudes_pendientes" sequence="26"
               groups="group_documentos_manager"/>
