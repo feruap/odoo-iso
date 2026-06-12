@@ -299,7 +299,10 @@ class AmunetQualityTestLineDetail(models.Model):
     ], string='MAVI-07 HM: Resultado')
 
     # -- MAVI-11 --
-    mavi11_target_height = fields.Char(string='MAVI-11: Altura Objetivo')
+    mavi11_target_height = fields.Selection([
+        ('6', '6 cm'),
+        ('8', '8 cm'),
+    ], string='MAVI-11: Altura Objetivo')
     mavi11_measured_height = fields.Float(string='MAVI-11: Altura Medida')
 
     # -- MGA-0981 --
