@@ -22,12 +22,17 @@ services:
     restart: always
     depends_on:
       - db-staging
-    command: odoo -c /etc/odoo/odoo.conf --db-filter=^Amunet_testing$
+    # --dev=xml habilita auto-reload de archivos Python y lectura de QWeb desde archivo.
+    # SOLO en staging — la doc de Odoo lo prohibe en produccion.
+    command: odoo -c /etc/odoo/odoo.conf --db-filter=^Amunet_testing$ --dev=xml
     ports:
       - "127.0.0.1:8070:8069"
       - "127.0.0.1:8073:8072"
     volumes:
       - odoo-staging-data:/var/lib/odoo
+      # Bind mount addons desde el repo en disco para iterar sin rebuild.
+      # :ro porque Odoo solo debe leer addons; escribir va a /var/lib/odoo (filestore).
+      - /opt/odoo/staging/addons:/opt/amunet-addons:ro
     environment:
       - HOST=db-staging
       - PORT=5432
