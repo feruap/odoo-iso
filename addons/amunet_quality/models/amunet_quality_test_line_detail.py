@@ -1506,24 +1506,20 @@ class AmunetQualityTestLineDetail(models.Model):
             }
 
     def _evaluate_mavi_11_height(self):
-        """Evalúa MAVI-11: Altura del colector (6 u 8 cm)"""
-        # Si se usa como conditional_numeric_range, este método no se llama.
-        # Si se deja como mavi_11_height, necesita campos específicos.
-        # Por ahora, usamos la lógica de rango condicional si está disponible.
-        if self.result_conditional_option_id:
-            return self._evaluate_conditional_numeric_range()
-            
-        # Fallback a mavi11_measured_height si existe (Legacy)
-        if hasattr(self, 'mavi11_measured_height') and self.mavi11_measured_height:
-            val = self.mavi11_measured_height
-            # Criterio general ± 0.5 cm
-            if 5.5 <= val <= 6.5:
-                return {'verdict': 'pass', 'message': f'Cumple 6 cm (Medido: {val})'}
-            if 7.5 <= val <= 8.5:
-                return {'verdict': 'pass', 'message': f'Cumple 8 cm (Medido: {val})'}
-            return {'verdict': 'fail', 'message': f'Fuera de rango 6/8 cm (Medido: {val})'}
-            
-        return {'verdict': 'pending', 'message': 'Seleccione opción e ingrese medida'}
+        """Evalúa MAVI-11: Altura del colector (6 u 8 cm ± 0.5)"""
+        target = self.mavi11_target_height
+        val = self.mavi11_measured_height
+
+        if not target:
+            return {'verdict': 'pending', 'message': 'Seleccione la altura objetivo (6 u 8 cm)'}
+        if not val:
+            return {'verdict': 'pending', 'message': f'Ingrese la altura medida (objetivo: {target} cm)'}
+
+        ranges = {'6': (5.5, 6.5), '8': (7.5, 8.5)}
+        lo, hi = ranges[target]
+        if lo <= val <= hi:
+            return {'verdict': 'pass', 'message': f'Altura {target} cm — Medido: {val:.1f} cm — CUMPLE (rango {lo}–{hi} cm)'}
+        return {'verdict': 'fail', 'message': f'Altura {target} cm — Medido: {val:.1f} cm — NO CUMPLE (rango {lo}–{hi} cm)'}
 
     def _evaluate_vama_078(self):
         """Evalúa VAMA-078: Multi-Visual Liofilizado"""
@@ -1951,7 +1947,7 @@ class AmunetQualityTestLineDetail(models.Model):
 
             elif record.evaluation_type == 'mavi_11_height':
                 if record.mavi11_target_height and record.mavi11_measured_height:
-                    record.result_display = f"{record.mavi11_target_height}: {record.mavi11_measured_height} cm"
+                    record.result_display = f"Obj: {record.mavi11_target_height} cm | Medido: {record.mavi11_measured_height:.1f} cm"
                 else:
                     record.result_display = ''
 
