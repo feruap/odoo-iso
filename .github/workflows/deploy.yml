@@ -80,7 +80,7 @@ jobs:
             update_modules=$(git diff-tree --no-commit-id --name-only -r "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
           fi
           echo "Modulos Odoo modificados: ${update_modules:-ninguno}"
-          docker compose -f docker-compose.staging.yml build --no-cache web-staging
+          docker compose -f docker-compose.staging.yml build web-staging
           docker compose -f docker-compose.staging.yml stop web-staging || true
           if [ -n "$update_modules" ]; then
             upgrade_ok=0
@@ -223,7 +223,7 @@ jobs:
             update_modules=$(git diff-tree --no-commit-id --name-only -r "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
           fi
           echo "Modulos Odoo modificados: ${update_modules:-ninguno}"
-          docker compose -f docker-compose.production.yml build --no-cache web-production
+          docker compose -f docker-compose.production.yml build web-production
           docker compose -f docker-compose.production.yml stop web-production || true
           if [ -n "$update_modules" ]; then
             upgrade_ok=0
