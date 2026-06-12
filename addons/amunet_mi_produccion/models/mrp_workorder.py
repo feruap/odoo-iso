@@ -42,6 +42,39 @@ class MrpWorkorder(models.Model):
             else:
                 wo.amunet_mi_supervision_state = 'pendiente'
 
+    # ¿El usuario actual es responsable de supervisar esta actividad?
+    # True si es supervisor de la estacion (o gerente de manufactura).
+    # Sirve para que "Mis supervisiones" muestre solo lo de cada jefe.
+    amunet_mi_i_supervise = fields.Boolean(
+        string='Yo superviso',
+        compute='_compute_amunet_mi_i_supervise',
+        search='_search_amunet_mi_i_supervise')
+
+    @api.depends_context('uid')
+    def _compute_amunet_mi_i_supervise(self):
+        is_mgr = self.env.user.has_group('mrp.group_mrp_manager')
+        for wo in self:
+            wo.amunet_mi_i_supervise = is_mgr or (
+                self.env.user in wo.workcenter_id.amunet_supervisor_ids)
+
+    def _search_amunet_mi_i_supervise(self, operator, value):
+        positive = (operator == '=' and value) or (operator == '!=' and not value)
+        # El gerente de manufactura ve todas las estaciones.
+        if self.env.user.has_group('mrp.group_mrp_manager'):
+            return [(1, '=', 1)] if positive else [(0, '=', 1)]
+        # Estaciones donde el usuario actual es supervisor responsable.
+        my_wcs = self.env['mrp.workcenter'].search(
+            [('amunet_supervisor_ids', 'in', self.env.uid)])
+        if positive:
+            return [('workcenter_id', 'in', my_wcs.ids)]
+        return [('workcenter_id', 'not in', my_wcs.ids)]
+
+    def _amunet_mi_worked_by_current_user(self):
+        """True si el usuario actual ejecuto (registro tiempo en) esta
+        actividad. Se usa para impedir la auto-supervision."""
+        self.ensure_one()
+        return self.env.user in self.time_ids.mapped('user_id')
+
     # ------------------------------------------------------------------
     # Acceso
     # ------------------------------------------------------------------
@@ -113,6 +146,12 @@ class MrpWorkorder(models.Model):
             raise UserError(_(
                 'Solo se puede supervisar una actividad culminada. '
                 '"%s" todavia no esta terminada.') % self.display_name)
+        # Segregacion de funciones: no puedes supervisar lo que tu
+        # mismo ejecutaste. Debe firmarla otro supervisor.
+        if self._amunet_mi_worked_by_current_user():
+            raise UserError(_(
+                'No puedes supervisar una actividad que tu mismo ejecutaste '
+                '(segregacion de funciones). Debe firmarla otro supervisor.'))
         sup = self.amunet_mi_supervision_id
         if not sup:
             sup = self.env['amunet.process.inspection'].sudo().create({

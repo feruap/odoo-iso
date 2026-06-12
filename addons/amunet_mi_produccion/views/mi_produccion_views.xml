@@ -182,17 +182,30 @@
         </field>
     </record>
 
-    <record id="action_amunet_mi_supervisor" model="ir.actions.act_window">
+    <!-- Accion de servidor: calcula el dominio segun el usuario al hacer
+         clic (cada jefe ve solo las actividades de sus estaciones; el
+         gerente de manufactura ve todas). -->
+    <record id="action_amunet_mi_supervisor_srv" model="ir.actions.server">
         <field name="name">Mis supervisiones</field>
-        <field name="res_model">mrp.workorder</field>
-        <field name="view_mode">kanban</field>
-        <field name="view_id" ref="view_amunet_mi_superv_kanban"/>
-        <field name="search_view_id" ref="view_amunet_mi_wo_search"/>
-        <field name="domain">[('state','=','done'),('production_id.route_type','=','short'),('production_id.state','not in',('done','cancel'))]</field>
-        <field name="context">{'search_default_g_lote': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiley_face">No tienes actividades pendientes de supervisar</p>
-            <p>Aqui apareceran las actividades terminadas que requieren tu firma de supervisión.</p>
+        <field name="model_id" ref="mrp.model_mrp_workorder"/>
+        <field name="state">code</field>
+        <field name="code">
+domain = [('state', '=', 'done'),
+          ('production_id.route_type', '=', 'short'),
+          ('production_id.state', 'not in', ('done', 'cancel'))]
+if not env.user.has_group('mrp.group_mrp_manager'):
+    my_wcs = env['mrp.workcenter'].sudo().search([('amunet_supervisor_ids', 'in', env.uid)])
+    domain.append(('workcenter_id', 'in', my_wcs.ids))
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Mis supervisiones',
+    'res_model': 'mrp.workorder',
+    'view_mode': 'kanban',
+    'views': [(env.ref('amunet_mi_produccion.view_amunet_mi_superv_kanban').id, 'kanban')],
+    'search_view_id': [env.ref('amunet_mi_produccion.view_amunet_mi_wo_search').id, False],
+    'domain': domain,
+    'context': {'search_default_g_lote': 1},
+}
         </field>
     </record>
 
@@ -213,15 +226,31 @@
     <menuitem id="menu_amunet_mi_supervisor"
               name="Mis supervisiones"
               parent="menu_amunet_mi_root"
-              action="action_amunet_mi_supervisor"
+              action="action_amunet_mi_supervisor_srv"
               sequence="15"
-              groups="amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,mrp.group_mrp_manager"/>
+              groups="amunet_production.group_production_supervisor,mrp.group_mrp_manager"/>
 
     <menuitem id="menu_amunet_mi_monitor"
               name="Monitor"
               parent="menu_amunet_mi_root"
               action="action_amunet_mi_monitor"
               sequence="20"
-              groups="amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,mrp.group_mrp_manager"/>
+              groups="amunet_production.group_production_supervisor,mrp.group_mrp_manager"/>
+
+    <!-- ============================================================ -->
+    <!-- ESTACION: asignar supervisores responsables                  -->
+    <!-- ============================================================ -->
+    <record id="view_amunet_mi_workcenter_form" model="ir.ui.view">
+        <field name="name">mrp.workcenter.form.mi.supervisores</field>
+        <field name="model">mrp.workcenter</field>
+        <field name="inherit_id" ref="mrp.mrp_workcenter_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="amunet_supervisor_ids" widget="many2many_tags"
+                       string="Supervisores responsables"
+                       options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
 
 </odoo>

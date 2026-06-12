@@ -46,6 +46,12 @@ class AmunetMiSupervisionWizard(models.TransientModel):
                 'Solo se puede supervisar una actividad culminada '
                 '(terminada). "%s" aun no esta terminada.') % wo.display_name)
 
+        # 1b. Segregacion de funciones: no se firma lo propio.
+        if self.env.user in wo.time_ids.mapped('user_id'):
+            raise UserError(_(
+                'No puedes supervisar una actividad que tu mismo ejecutaste '
+                '(segregacion de funciones). Debe firmarla otro supervisor.'))
+
         # 2. Solo supervisor de produccion (o de calidad).
         if not (
             self.env.user.has_group('amunet_production.group_production_supervisor')
