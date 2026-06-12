@@ -860,7 +860,8 @@ class AmunetQualityTestLineDetail(models.Model):
         'vama078_color', 'vama078_forma', 'vama078_textura', 'vama078_humedad',
         'vama105_nominal_volume', 'vama105_measured_volume',
         'mga0981_vol_declarado', 'mga0981_vol_obtenido',
-        'mavi15_result'
+        'mavi15_result',
+        'mavi11_target_height', 'mavi11_measured_height',
     )
     def _compute_verdict(self):
         """Evalúa el resultado y determina el dictamen"""
