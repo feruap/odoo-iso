@@ -39,6 +39,13 @@ class AmunetDocumentoFormatoSolicitud(models.Model):
         'res.users', string='Respondido por', readonly=True)
     fecha_respuesta = fields.Datetime(string='Fecha de respuesta', readonly=True)
 
+    def action_imprimir(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/amunet/formato/imprimir/{self.id}',
+            'target': 'new',
+        }
+
     def action_aprobar(self):
         self.write({
             'state': 'aprobada',

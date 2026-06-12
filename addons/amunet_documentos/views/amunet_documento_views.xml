@@ -600,11 +600,15 @@
                         <field name="fecha_respuesta" readonly="1"/>
                         <field name="notas_respuesta"/>
                     </group>
-                    <group string="Descarga" invisible="state != 'aprobada'">
-                        <field name="archivo" widget="binary"
-                               filename="archivo_filename"
-                               string="Descargar archivo"/>
-                        <field name="archivo_filename" invisible="1"/>
+                    <group string="Impresión" invisible="state != 'aprobada'">
+                        <div>
+                            <button name="action_imprimir" type="object"
+                                    string="🖨️ Abrir para imprimir"
+                                    class="btn btn-primary"/>
+                            <p class="text-muted mt8" style="font-size:12px;">
+                                Se abrirá una ventana con el documento listo para imprimir.
+                            </p>
+                        </div>
                     </group>
                 </sheet>
             </form>
