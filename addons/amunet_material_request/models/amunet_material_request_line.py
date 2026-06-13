@@ -12,11 +12,12 @@ class AmunetMaterialRequestLine(models.Model):
     )
     state = fields.Selection(related='request_id.state', store=True, string='Estado')
     warehouse_id = fields.Many2one(related='request_id.warehouse_id',
-                                   string='Almacen', store=True)
+                                   string='Almacen', store=True, index=True)
 
     product_id = fields.Many2one(
         'product.product', string='Producto', required=True,
         domain="[('is_storable', '=', True)]",
+        index=True,
     )
     uom_id = fields.Many2one(
         'uom.uom', string='UdM',
@@ -39,6 +40,7 @@ class AmunetMaterialRequestLine(models.Model):
     lot_id = fields.Many2one(
         'stock.lot', string='Lote',
         domain="[('product_id', '=', product_id)]",
+        index=True,
     )
 
     stock_available = fields.Float(
@@ -112,6 +114,17 @@ class AmunetMaterialRequestLine(models.Model):
                 and request.state == 'draft'
             ):
                 continue
+            # Almacenista: durante el surtido (in_picking) puede AGREGAR
+            # lineas nuevas para material extra que realmente surtio. La
+            # pantalla ya lo permite; aqui se habilita el backend. NO puede
+            # cambiar producto/cantidad de lineas YA existentes: eso lo
+            # cubre la rama de write de abajo (warehouse_write_fields).
+            if (
+                is_warehouse
+                and request.state == 'in_picking'
+                and is_create_call
+            ):
+                continue
             if (
                 is_warehouse
                 and request.state in ('submitted', 'in_picking')
@@ -145,16 +158,46 @@ class AmunetMaterialRequestLine(models.Model):
 
     @api.depends('product_id', 'request_id.warehouse_id')
     def _compute_stock_available(self):
+        lines = self.filtered(lambda line: line.product_id and line.request_id.warehouse_id)
+        for line in self - lines:
+            line.stock_available = 0.0
+
+        product_ids = lines.mapped('product_id').ids
+        warehouse_ids = lines.mapped('request_id.warehouse_id').ids
+        locations = self.env['stock.location'].search([
+            ('warehouse_id', 'in', warehouse_ids),
+            ('usage', '=', 'internal'),
+        ])
+        warehouse_by_location = {
+            location.id: location.warehouse_id.id for location in locations
+        }
+        totals = {}
+        if locations:
+            grouped = self.env['stock.quant'].read_group(
+                [
+                    ('product_id', 'in', product_ids),
+                    ('location_id', 'in', locations.ids),
+                ],
+                ['product_id', 'location_id', 'quantity:sum', 'reserved_quantity:sum'],
+                ['product_id', 'location_id'],
+                lazy=False,
+            )
+            for row in grouped:
+                product = row.get('product_id')
+                location = row.get('location_id')
+                if not product or not location:
+                    continue
+                warehouse_id = warehouse_by_location.get(location[0])
+                if not warehouse_id:
+                    continue
+                key = (product[0], warehouse_id)
+                totals[key] = totals.get(key, 0.0) + (
+                    row.get('quantity', 0.0) - row.get('reserved_quantity', 0.0)
+                )
+
         for line in self:
-            if not line.product_id or not line.request_id.warehouse_id:
-                line.stock_available = 0.0
-                continue
-            quants = self.env['stock.quant'].search([
-                ('product_id', '=', line.product_id.id),
-                ('location_id.warehouse_id', '=', line.request_id.warehouse_id.id),
-                ('location_id.usage', '=', 'internal'),
-            ])
-            line.stock_available = sum(quants.mapped('quantity')) - sum(quants.mapped('reserved_quantity'))
+            key = (line.product_id.id, line.request_id.warehouse_id.id)
+            line.stock_available = totals.get(key, 0.0)
 
     @api.depends('lot_id', 'request_id.warehouse_id', 'request_id.picking_id')
     def _compute_lot_available_qty(self):
