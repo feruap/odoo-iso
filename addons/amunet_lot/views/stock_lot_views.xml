@@ -16,6 +16,11 @@
             <xpath expr="//field[@name='name']" position="attributes">
                 <attribute name="string">Número de lote/serie Amunet</attribute>
             </xpath>
+            <!-- Columna de ubicación legible: muestra "Varias ubicaciones"
+                 cuando el lote está repartido en más de un lugar -->
+            <xpath expr="//field[@name='product_id']" position="after">
+                <field name="amunet_ubicacion_display" string="Ubicación" optional="show"/>
+            </xpath>
         </field>
     </record>
     
