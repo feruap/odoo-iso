@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_amunet_documentos_root" name="Documentacion"
+    <menuitem id="menu_amunet_documentos_root" name="Control de Documentos"
               sequence="90" groups="group_documentos_user"/>
     <menuitem id="menu_amunet_documentos_docs" name="Documentos controlados"
               parent="menu_amunet_documentos_root"
@@ -29,6 +29,10 @@
     <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de impresión"
               parent="menu_amunet_documentos_root"
               action="action_amunet_formato_solicitudes_pendientes" sequence="26"
+              groups="group_documentos_manager"/>
+    <menuitem id="menu_amunet_catalogo_firma" name="Catálogo de firmas"
+              parent="menu_amunet_documentos_root"
+              action="action_amunet_catalogo_firma" sequence="30"
               groups="group_documentos_manager"/>
     <menuitem id="menu_amunet_documentos_config" name="Configuracion"
               parent="menu_amunet_documentos_root"
