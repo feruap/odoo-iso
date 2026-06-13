@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Lista -->
+    <record id="view_amunet_catalogo_firma_list" model="ir.ui.view">
+        <field name="name">amunet.catalogo.firma.list</field>
+        <field name="model">amunet.catalogo.firma</field>
+        <field name="arch" type="xml">
+            <list string="Catálogo de firmas electrónicas"
+                  create="false" edit="false" delete="false"
+                  decoration-success="tiene_pin == True"
+                  decoration-warning="tiene_pin == False">
+                <field name="user_name" string="Nombre"/>
+                <field name="login" string="Correo electrónico"/>
+                <field name="tiene_pin" string="Firma electrónica"
+                       widget="badge"
+                       decoration-success="tiene_pin == True"
+                       decoration-warning="tiene_pin == False"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Búsqueda -->
+    <record id="view_amunet_catalogo_firma_search" model="ir.ui.view">
+        <field name="name">amunet.catalogo.firma.search</field>
+        <field name="model">amunet.catalogo.firma</field>
+        <field name="arch" type="xml">
+            <search string="Catálogo de firmas">
+                <field name="user_name" string="Nombre"/>
+                <field name="login" string="Correo"/>
+                <filter name="con_pin" string="Con PIN configurado"
+                        domain="[('tiene_pin','=',True)]"/>
+                <filter name="sin_pin" string="Sin PIN"
+                        domain="[('tiene_pin','=',False)]"/>
+                <separator/>
+                <filter name="group_pin" string="Agrupar por estado PIN"
+                        context="{'group_by': 'tiene_pin'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción -->
+    <record id="action_amunet_catalogo_firma" model="ir.actions.act_window">
+        <field name="name">Catálogo de firmas electrónicas</field>
+        <field name="res_model">amunet.catalogo.firma</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_amunet_catalogo_firma_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Sin usuarios internos registrados.
+            </p>
+        </field>
+    </record>
+
+</odoo>
