@@ -172,6 +172,16 @@ class AmunetMaterialRequestLine(models.Model):
                 and is_create_call
             ):
                 continue
+            # Almacenista: durante el surtido (in_picking) puede BORRAR
+            # lineas que NO se van a surtir (qty_supplied == 0). El move
+            # correspondiente en el picking se cancela en unlink().
+            if (
+                is_warehouse
+                and request.state == 'in_picking'
+                and unlink
+                and not line.qty_supplied
+            ):
+                continue
             if (
                 is_warehouse
                 and request.state in ('submitted', 'in_picking')
@@ -306,4 +316,22 @@ class AmunetMaterialRequestLine(models.Model):
 
     def unlink(self):
         self._check_can_modify_line(unlink=True)
+        # Al borrar una linea NO surtida durante el surtido, cancelar su
+        # movimiento en el picking (si no, ese producto se entregaria
+        # igual al confirmar) y dejar nota de auditoria.
+        if not self.env.context.get('material_request_internal_write'):
+            for line in self:
+                req = line.request_id
+                if (req.picking_id
+                        and req.picking_id.state not in ('done', 'cancel')):
+                    move = req.picking_id.sudo().move_ids.filtered(
+                        lambda m, p=line.product_id: m.product_id.id == p.id
+                        and m.state not in ('done', 'cancel'))[:1]
+                    if move:
+                        move.sudo()._action_cancel()
+                    req.sudo().message_post(body=_(
+                        'Almacen (%(u)s) elimino la linea del producto '
+                        '<b>%(p)s</b> (no surtida) durante el surtido.'
+                    ) % {'u': self.env.user.name,
+                         'p': line.product_id.display_name})
         return super().unlink()
