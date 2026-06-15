@@ -199,6 +199,14 @@ class AmunetMaterialRequestLine(models.Model):
                 and request.can_validate_reception
             ):
                 continue
+            # Mensaje claro: almacen intentando borrar una linea YA surtida.
+            if (is_warehouse and request.state == 'in_picking' and unlink
+                    and line.qty_supplied):
+                raise UserError(_(
+                    'No puedes borrar la linea de "%(p)s": ya tiene Cantidad '
+                    'surtida (%(q)s). Si no la vas a surtir, pon la Cantidad '
+                    'surtida en 0 y luego borra la linea.'
+                ) % {'p': line.product_id.display_name, 'q': line.qty_supplied})
             raise UserError(_(
                 'No puedes modificar lineas de la solicitud %s en este '
                 'estado o con tu rol.') % request.name)
