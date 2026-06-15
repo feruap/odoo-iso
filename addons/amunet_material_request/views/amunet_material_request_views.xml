@@ -159,8 +159,9 @@
                                     <field name="qty_supplied"
                                            readonly="parent.state != 'in_picking'"
                                            column_invisible="parent.state == 'draft'"/>
+                                    <field name="amunet_available_lot_ids" column_invisible="1"/>
                                     <field name="lot_id"
-                                           domain="[('product_id','=', product_id)]"
+                                           domain="[('product_id','=', product_id), ('id','in', amunet_available_lot_ids)]"
                                            readonly="parent.state != 'in_picking'"
                                            column_invisible="parent.state == 'draft'"/>
                                     <field name="lot_available_qty" readonly="1"

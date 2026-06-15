@@ -43,6 +43,53 @@ class AmunetMaterialRequestLine(models.Model):
         index=True,
     )
 
+    # Lotes con stock en el almacen de la solicitud (Fabrica o Burgos,
+    # segun request.warehouse_id). Filtra el campo 'Lote' para que no se
+    # capture un lote que esta en otro almacen. Ver validacion en write().
+    amunet_available_lot_ids = fields.Many2many(
+        'stock.lot',
+        string='Lotes disponibles en almacen',
+        compute='_compute_amunet_available_lot_ids',
+    )
+
+    @api.depends('product_id', 'request_id.warehouse_id')
+    def _compute_amunet_available_lot_ids(self):
+        Quant = self.env['stock.quant']
+        for line in self:
+            lots = self.env['stock.lot']
+            wh = line.request_id.warehouse_id
+            if line.product_id and wh:
+                quants = Quant.sudo().search([
+                    ('product_id', '=', line.product_id.id),
+                    ('location_id.warehouse_id', '=', wh.id),
+                    ('location_id.usage', '=', 'internal'),
+                    ('quantity', '>', 0),
+                ])
+                lots = quants.lot_id
+            line.amunet_available_lot_ids = lots
+
+    def _amunet_check_lot_in_warehouse(self, lot):
+        """Valida que el lote exista (con stock) en el almacen de la
+        solicitud. Evita capturar un lote de otro almacen (ej. Burgos
+        cuando la solicitud es de Fabrica)."""
+        self.ensure_one()
+        wh = self.request_id.warehouse_id
+        if not lot or not wh:
+            return
+        disponible = self.env['stock.quant'].sudo().search_count([
+            ('product_id', '=', self.product_id.id),
+            ('lot_id', '=', lot.id),
+            ('location_id.warehouse_id', '=', wh.id),
+            ('location_id.usage', '=', 'internal'),
+            ('quantity', '>', 0),
+        ])
+        if not disponible:
+            raise UserError(_(
+                'El lote %(lot)s no esta disponible en el almacen '
+                '%(wh)s de esta solicitud. Selecciona un lote que exista '
+                'en ese almacen.'
+            ) % {'lot': lot.name, 'wh': wh.name})
+
     stock_available = fields.Float(
         string='Stock disponible',
         compute='_compute_stock_available',
@@ -241,10 +288,20 @@ class AmunetMaterialRequestLine(models.Model):
     def create(self, vals_list):
         lines = super().create(vals_list)
         lines._check_can_modify_line()
+        if (not self.env.su
+                and not self.env.context.get('material_request_internal_write')):
+            for line in lines.filtered('lot_id'):
+                line._amunet_check_lot_in_warehouse(line.lot_id)
         return lines
 
     def write(self, vals):
         self._check_can_modify_line(vals=vals)
+        if ('lot_id' in vals and vals.get('lot_id')
+                and not self.env.su
+                and not self.env.context.get('material_request_internal_write')):
+            lot = self.env['stock.lot'].browse(vals['lot_id'])
+            for line in self:
+                line._amunet_check_lot_in_warehouse(lot)
         return super().write(vals)
 
     def unlink(self):
