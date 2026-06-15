@@ -42,12 +42,23 @@ class AmunetSugerenciaComite(models.Model):
     sugerencia_id    = fields.Many2one(
         'amunet.documento.sugerencia', required=True, ondelete='cascade')
     sequence         = fields.Integer(default=10)
-    area             = fields.Char(string='Área', required=True)
+    area             = fields.Char(string='Área')
     fecha            = fields.Date(string='Fecha')
-    nombre_id        = fields.Many2one('res.users', string='Nombre')
+    nombre_id        = fields.Many2one(
+        'res.users', string='Nombre',
+        domain=lambda self: [('groups_id', 'in',
+            [self.env.ref('amunet_documentos.group_comite_tecnico').id])])
     usuario_firma_id = fields.Many2one(
         'res.users', string='Firmado por', readonly=True, tracking=True)
     fecha_firma      = fields.Date(string='Fecha de firma', readonly=True, tracking=True)
+
+    @api.onchange('nombre_id')
+    def _onchange_nombre_id(self):
+        if self.nombre_id:
+            employee = self.env['hr.employee'].search(
+                [('user_id', '=', self.nombre_id.id)], limit=1)
+            if employee and employee.department_id:
+                self.area = employee.department_id.name
 
     def _amunet_signature_allowed_methods(self):
         return {
@@ -56,8 +67,8 @@ class AmunetSugerenciaComite(models.Model):
 
     def action_firmar_comite(self):
         self.ensure_one()
-        if not self.env.user.has_group('amunet_quality.group_quality_supervisor'):
-            raise UserError(_('Solo los supervisores pueden firmar en el comité técnico.'))
+        if not self.env.user.has_group('amunet_documentos.group_comite_tecnico'):
+            raise UserError(_('Solo los integrantes del comité técnico pueden firmar aquí.'))
         if self.usuario_firma_id:
             raise UserError(_('Este integrante ya firmó el control de cambios.'))
         return self.env['amunet.generic.signature.wizard'].open_for(
@@ -69,8 +80,8 @@ class AmunetSugerenciaComite(models.Model):
 
     def _signature_firmar_comite(self):
         self.ensure_one()
-        if not self.env.user.has_group('amunet_quality.group_quality_supervisor'):
-            raise UserError(_('Solo los supervisores pueden firmar en el comité técnico.'))
+        if not self.env.user.has_group('amunet_documentos.group_comite_tecnico'):
+            raise UserError(_('Solo los integrantes del comité técnico pueden firmar aquí.'))
         self.write({
             'usuario_firma_id': self.env.user.id,
             'fecha_firma': fields.Date.today(),

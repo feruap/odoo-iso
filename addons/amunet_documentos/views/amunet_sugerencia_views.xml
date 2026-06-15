@@ -100,7 +100,7 @@
                             <button name="action_firmar_comite" type="object"
                                     string="Firmar" icon="fa-pencil-square-o"
                                     invisible="usuario_firma_id"
-                                    groups="amunet_quality.group_quality_supervisor"/>
+                                    groups="amunet_documentos.group_comite_tecnico"/>
                         </list>
                     </field>
                 </sheet>
