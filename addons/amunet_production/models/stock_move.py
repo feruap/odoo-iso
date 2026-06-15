@@ -11,6 +11,31 @@ class StockMove(models.Model):
     amunet_ph_adjustment = fields.Char(string='Ajuste de pH')
     amunet_lot_id = fields.Many2one('stock.lot', string='Lote')
 
+    # Lotes disponibles (con stock > 0) en el almacen de Fabrica para
+    # este componente — es decir, en la ubicacion origen del consumo.
+    # Sirve para FILTRAR el 'Lote surtido' (amunet_lot_id) y que el
+    # almacen no pueda capturar un lote que esta en otro almacen (ej.
+    # Burgos). Ver tambien la validacion en write().
+    amunet_available_lot_ids = fields.Many2many(
+        'stock.lot',
+        string='Lotes disponibles en Fabrica',
+        compute='_compute_amunet_available_lot_ids',
+    )
+
+    @api.depends('product_id', 'location_id')
+    def _compute_amunet_available_lot_ids(self):
+        Quant = self.env['stock.quant']
+        for move in self:
+            lots = self.env['stock.lot']
+            if move.product_id and move.location_id:
+                quants = Quant.sudo().search([
+                    ('product_id', '=', move.product_id.id),
+                    ('location_id', 'child_of', move.location_id.id),
+                    ('quantity', '>', 0),
+                ])
+                lots = quants.lot_id
+            move.amunet_available_lot_ids = lots
+
     # Cantidad que el almacen registra al surtir. Es distinta a
     # 'quantity' (cantidad utilizada/consumida nativa Odoo): esta la
     # captura almacen al entregar, 'quantity' la concilia produccion al
@@ -94,6 +119,33 @@ class StockMove(models.Model):
                 raise UserError(_(
                     'Solo personal de Almacen (Veronica, Patricia, Karla) puede '
                     'capturar la Cantidad surtida y el Lote del material.'))
+        # Validacion: el 'Lote surtido' debe existir (con stock) en el
+        # almacen de Fabrica (ubicacion origen del consumo). Evita que se
+        # capture un lote que esta en otro almacen (ej. Burgos) y que no
+        # coincide con lo que realmente se reserva/consume.
+        if ('amunet_lot_id' in vals and vals.get('amunet_lot_id')
+                and not self.env.su
+                and not self.env.context.get('amunet_supply_internal')):
+            lot = self.env['stock.lot'].browse(vals['amunet_lot_id'])
+            for m in self:
+                if not m.raw_material_production_id or not m.location_id:
+                    continue
+                disponible = self.env['stock.quant'].sudo().search_count([
+                    ('product_id', '=', m.product_id.id),
+                    ('lot_id', '=', lot.id),
+                    ('location_id', 'child_of', m.location_id.id),
+                    ('quantity', '>', 0),
+                ])
+                if not disponible:
+                    raise UserError(_(
+                        'El lote %(lot)s no esta disponible en el almacen de '
+                        'Fabrica (%(loc)s). Selecciona un lote que exista en '
+                        'Fabrica para surtir %(prod)s.'
+                    ) % {
+                        'lot': lot.name,
+                        'loc': m.location_id.complete_name,
+                        'prod': m.product_id.display_name,
+                    })
         # Candado: la 'Cantidad por consumir' (product_uom_qty) de un
         # componente NO se puede ajustar una vez que la orden esta
         # planificada (confirmada en adelante). Por nadie. Se omite en

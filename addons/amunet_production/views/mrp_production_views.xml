@@ -197,8 +197,9 @@
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_uom_qty'][@widget='mrp_should_consume']" position="after">
                     <field name="amunet_user_can_edit_consume" column_invisible="True"/>
                     <field name="amunet_user_is_warehouse" column_invisible="True"/>
+                    <field name="amunet_available_lot_ids" column_invisible="True"/>
                     <field name="amunet_lot_id"
-                        domain="[('product_id', '=', product_id)]"
+                        domain="[('product_id', '=', product_id), ('id', 'in', amunet_available_lot_ids)]"
                         context="{'default_product_id': product_id}"
                         options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
                         string="Lote surtido"

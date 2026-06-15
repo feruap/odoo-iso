@@ -12,11 +12,12 @@ class AmunetMaterialRequestLine(models.Model):
     )
     state = fields.Selection(related='request_id.state', store=True, string='Estado')
     warehouse_id = fields.Many2one(related='request_id.warehouse_id',
-                                   string='Almacen', store=True)
+                                   string='Almacen', store=True, index=True)
 
     product_id = fields.Many2one(
         'product.product', string='Producto', required=True,
         domain="[('is_storable', '=', True)]",
+        index=True,
     )
     uom_id = fields.Many2one(
         'uom.uom', string='UdM',
@@ -39,7 +40,55 @@ class AmunetMaterialRequestLine(models.Model):
     lot_id = fields.Many2one(
         'stock.lot', string='Lote',
         domain="[('product_id', '=', product_id)]",
+        index=True,
     )
+
+    # Lotes con stock en el almacen de la solicitud (Fabrica o Burgos,
+    # segun request.warehouse_id). Filtra el campo 'Lote' para que no se
+    # capture un lote que esta en otro almacen. Ver validacion en write().
+    amunet_available_lot_ids = fields.Many2many(
+        'stock.lot',
+        string='Lotes disponibles en almacen',
+        compute='_compute_amunet_available_lot_ids',
+    )
+
+    @api.depends('product_id', 'request_id.warehouse_id')
+    def _compute_amunet_available_lot_ids(self):
+        Quant = self.env['stock.quant']
+        for line in self:
+            lots = self.env['stock.lot']
+            wh = line.request_id.warehouse_id
+            if line.product_id and wh:
+                quants = Quant.sudo().search([
+                    ('product_id', '=', line.product_id.id),
+                    ('location_id.warehouse_id', '=', wh.id),
+                    ('location_id.usage', '=', 'internal'),
+                    ('quantity', '>', 0),
+                ])
+                lots = quants.lot_id
+            line.amunet_available_lot_ids = lots
+
+    def _amunet_check_lot_in_warehouse(self, lot):
+        """Valida que el lote exista (con stock) en el almacen de la
+        solicitud. Evita capturar un lote de otro almacen (ej. Burgos
+        cuando la solicitud es de Fabrica)."""
+        self.ensure_one()
+        wh = self.request_id.warehouse_id
+        if not lot or not wh:
+            return
+        disponible = self.env['stock.quant'].sudo().search_count([
+            ('product_id', '=', self.product_id.id),
+            ('lot_id', '=', lot.id),
+            ('location_id.warehouse_id', '=', wh.id),
+            ('location_id.usage', '=', 'internal'),
+            ('quantity', '>', 0),
+        ])
+        if not disponible:
+            raise UserError(_(
+                'El lote %(lot)s no esta disponible en el almacen '
+                '%(wh)s de esta solicitud. Selecciona un lote que exista '
+                'en ese almacen.'
+            ) % {'lot': lot.name, 'wh': wh.name})
 
     stock_available = fields.Float(
         string='Stock disponible',
@@ -112,6 +161,17 @@ class AmunetMaterialRequestLine(models.Model):
                 and request.state == 'draft'
             ):
                 continue
+            # Almacenista: durante el surtido (in_picking) puede AGREGAR
+            # lineas nuevas para material extra que realmente surtio. La
+            # pantalla ya lo permite; aqui se habilita el backend. NO puede
+            # cambiar producto/cantidad de lineas YA existentes: eso lo
+            # cubre la rama de write de abajo (warehouse_write_fields).
+            if (
+                is_warehouse
+                and request.state == 'in_picking'
+                and is_create_call
+            ):
+                continue
             if (
                 is_warehouse
                 and request.state in ('submitted', 'in_picking')
@@ -145,16 +205,46 @@ class AmunetMaterialRequestLine(models.Model):
 
     @api.depends('product_id', 'request_id.warehouse_id')
     def _compute_stock_available(self):
+        lines = self.filtered(lambda line: line.product_id and line.request_id.warehouse_id)
+        for line in self - lines:
+            line.stock_available = 0.0
+
+        product_ids = lines.mapped('product_id').ids
+        warehouse_ids = lines.mapped('request_id.warehouse_id').ids
+        locations = self.env['stock.location'].search([
+            ('warehouse_id', 'in', warehouse_ids),
+            ('usage', '=', 'internal'),
+        ])
+        warehouse_by_location = {
+            location.id: location.warehouse_id.id for location in locations
+        }
+        totals = {}
+        if locations:
+            grouped = self.env['stock.quant'].read_group(
+                [
+                    ('product_id', 'in', product_ids),
+                    ('location_id', 'in', locations.ids),
+                ],
+                ['product_id', 'location_id', 'quantity:sum', 'reserved_quantity:sum'],
+                ['product_id', 'location_id'],
+                lazy=False,
+            )
+            for row in grouped:
+                product = row.get('product_id')
+                location = row.get('location_id')
+                if not product or not location:
+                    continue
+                warehouse_id = warehouse_by_location.get(location[0])
+                if not warehouse_id:
+                    continue
+                key = (product[0], warehouse_id)
+                totals[key] = totals.get(key, 0.0) + (
+                    row.get('quantity', 0.0) - row.get('reserved_quantity', 0.0)
+                )
+
         for line in self:
-            if not line.product_id or not line.request_id.warehouse_id:
-                line.stock_available = 0.0
-                continue
-            quants = self.env['stock.quant'].search([
-                ('product_id', '=', line.product_id.id),
-                ('location_id.warehouse_id', '=', line.request_id.warehouse_id.id),
-                ('location_id.usage', '=', 'internal'),
-            ])
-            line.stock_available = sum(quants.mapped('quantity')) - sum(quants.mapped('reserved_quantity'))
+            key = (line.product_id.id, line.request_id.warehouse_id.id)
+            line.stock_available = totals.get(key, 0.0)
 
     @api.depends('lot_id', 'request_id.warehouse_id', 'request_id.picking_id')
     def _compute_lot_available_qty(self):
@@ -198,10 +288,20 @@ class AmunetMaterialRequestLine(models.Model):
     def create(self, vals_list):
         lines = super().create(vals_list)
         lines._check_can_modify_line()
+        if (not self.env.su
+                and not self.env.context.get('material_request_internal_write')):
+            for line in lines.filtered('lot_id'):
+                line._amunet_check_lot_in_warehouse(line.lot_id)
         return lines
 
     def write(self, vals):
         self._check_can_modify_line(vals=vals)
+        if ('lot_id' in vals and vals.get('lot_id')
+                and not self.env.su
+                and not self.env.context.get('material_request_internal_write')):
+            lot = self.env['stock.lot'].browse(vals['lot_id'])
+            for line in self:
+                line._amunet_check_lot_in_warehouse(lot)
         return super().write(vals)
 
     def unlink(self):
