@@ -15,7 +15,7 @@
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_mfg_date"
                        string="Fecha fabricación"
-                       widget="date"
+                       placeholder="DD/MM/AAAA o NA"
                        column_invisible="parent.picking_type_code != 'incoming'"
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_exp_date"

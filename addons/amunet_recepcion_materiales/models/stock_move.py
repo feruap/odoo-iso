@@ -29,7 +29,7 @@ class StockMove(models.Model):
     _inherit = 'stock.move'
 
     amunet_supplier_lot = fields.Char('Lote del proveedor')
-    amunet_mfg_date = fields.Date('Fecha de fabricación')
+    amunet_mfg_date = fields.Char('Fecha de fabricación')
     amunet_exp_date = fields.Date('Fecha de caducidad')
 
     def write(self, vals):
@@ -49,8 +49,17 @@ class StockMove(models.Model):
                         {'name': move.amunet_supplier_lot}
                     )
                 line_vals['factory_lot_id'] = factory_lot.id
-            if 'amunet_mfg_date' in vals:
-                line_vals['manufacturing_date'] = move.amunet_mfg_date
+            if 'amunet_mfg_date' in vals and move.amunet_mfg_date:
+                val = move.amunet_mfg_date.strip().upper()
+                if val != 'NA':
+                    try:
+                        from datetime import datetime
+                        line_vals['manufacturing_date'] = datetime.strptime(val, '%d/%m/%Y').date()
+                    except ValueError:
+                        try:
+                            line_vals['manufacturing_date'] = datetime.strptime(val, '%Y-%m-%d').date()
+                        except ValueError:
+                            pass
             if 'amunet_exp_date' in vals and move.amunet_exp_date:
                 line_vals['expiration_date'] = _date_to_local_9am(move.amunet_exp_date, move.env)
                 line_vals['removal_date'] = _calc_removal_date(move.amunet_exp_date, move.env)
@@ -74,7 +83,16 @@ class StockMove(models.Model):
                     )
                 vals['factory_lot_id'] = factory_lot.id
             if move.amunet_mfg_date:
-                vals['manufacturing_date'] = move.amunet_mfg_date
+                val = move.amunet_mfg_date.strip().upper()
+                if val != 'NA':
+                    try:
+                        from datetime import datetime
+                        vals['manufacturing_date'] = datetime.strptime(val, '%d/%m/%Y').date()
+                    except ValueError:
+                        try:
+                            vals['manufacturing_date'] = datetime.strptime(val, '%Y-%m-%d').date()
+                        except ValueError:
+                            pass
             if move.amunet_exp_date:
                 vals['expiration_date'] = _date_to_local_9am(move.amunet_exp_date, move.env)
                 vals['removal_date'] = _calc_removal_date(move.amunet_exp_date, move.env)
