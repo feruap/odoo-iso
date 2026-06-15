@@ -45,9 +45,9 @@
                     </div>
                     <group>
                         <group>
-                            <field name="seccion" readonly="state != 'pendiente'"/>
-                            <field name="creado_por_id" readonly="1"/>
+                            <field name="creado_por_id" string="Nombre del solicitante" readonly="1"/>
                             <field name="fecha_creacion" readonly="1"/>
+                            <field name="seccion" readonly="state != 'pendiente'"/>
                         </group>
                         <group>
                             <field name="decidido_por_id" readonly="1"
@@ -56,9 +56,21 @@
                                    invisible="state == 'pendiente'"/>
                         </group>
                     </group>
-                    <group string="Motivo del cambio">
+                    <group string="Alcance del cambio (marque con X la casilla correspondiente)">
+                        <group>
+                            <field name="alcance_material" readonly="state != 'pendiente'"/>
+                            <field name="alcance_documentos" readonly="state != 'pendiente'"/>
+                            <field name="alcance_equipo" readonly="state != 'pendiente'"/>
+                        </group>
+                        <group>
+                            <field name="alcance_procesos" readonly="state != 'pendiente'"/>
+                            <field name="alcance_estructura" readonly="state != 'pendiente'"/>
+                            <field name="alcance_sgc" readonly="state != 'pendiente'"/>
+                        </group>
+                    </group>
+                    <group string="Justificación del cambio">
                         <field name="motivo" nolabel="1" readonly="state != 'pendiente'"
-                               placeholder="Por que propones este cambio."/>
+                               placeholder="Describe por qué se propone este cambio."/>
                     </group>
                     <notebook>
                         <page string="Texto actual (como esta hoy)">

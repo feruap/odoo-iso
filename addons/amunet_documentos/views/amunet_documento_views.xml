@@ -47,7 +47,7 @@
                             type="object"
                             invisible="state not in ('en_revision','obsoleto')"/>
                     <button name="action_open_sugerencia_wizard"
-                            string="Sugerir cambio" type="object"
+                            string="Control de cambios" type="object"
                             invisible="state != 'en_revision'"
                             icon="fa-lightbulb-o"/>
                     <button name="action_print_documento"
@@ -303,21 +303,6 @@
                               invisible="tipo in ('pno','manual','instructivo')">
                             <field name="contenido_html" readonly="state == 'vigente'"/>
                         </page>
-                        <page string="Sugerencias" name="sugerencias">
-                            <field name="sugerencias_pendientes_count" invisible="1"/>
-                            <field name="sugerencia_ids">
-                                <list decoration-warning="state == 'pendiente'"
-                                      decoration-success="state == 'aceptada'"
-                                      decoration-muted="state == 'rechazada'">
-                                    <field name="fecha_creacion"/>
-                                    <field name="seccion"/>
-                                    <field name="creado_por_id"/>
-                                    <field name="motivo"/>
-                                    <field name="state" widget="badge"/>
-                                    <field name="decidido_por_id" optional="show"/>
-                                </list>
-                            </field>
-                        </page>
                         <page string="Firmas controladas">
                             <div class="alert alert-info" role="alert">
                                 Asigna quien va a <b>revisar</b> y quien va a <b>autorizar</b>.
@@ -416,6 +401,25 @@
                                     <field name="usuario_id"/>
                                     <field name="acuse"/>
                                     <field name="fecha_acuse"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Control de cambios" name="sugerencias">
+                            <field name="sugerencias_pendientes_count" invisible="1"/>
+                            <field name="sugerencia_ids">
+                                <list decoration-warning="state == 'pendiente'"
+                                      decoration-success="state == 'aceptada'"
+                                      decoration-muted="state == 'rechazada'">
+                                    <field name="fecha_creacion" string="Fecha"/>
+                                    <field name="creado_por_id" string="Solicitante"/>
+                                    <field name="alcance_material" string="Material" optional="show"/>
+                                    <field name="alcance_documentos" string="Documentos" optional="show"/>
+                                    <field name="alcance_equipo" string="Equipos" optional="show"/>
+                                    <field name="alcance_procesos" string="Procesos" optional="show"/>
+                                    <field name="alcance_estructura" string="Infraestructura" optional="show"/>
+                                    <field name="alcance_sgc" string="SGC" optional="show"/>
+                                    <field name="motivo" string="Justificación"/>
+                                    <field name="state" widget="badge"/>
                                 </list>
                             </field>
                         </page>

@@ -1,42 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- ── Raíz ── -->
     <menuitem id="menu_amunet_documentos_root" name="Control de Documentos"
               sequence="90" groups="group_documentos_user"/>
+
+    <!-- ── Nivel 1: ítems directos ── -->
     <menuitem id="menu_amunet_documentos_docs" name="Documentos controlados"
               parent="menu_amunet_documentos_root"
               action="action_amunet_documento" sequence="10"/>
-    <menuitem id="menu_amunet_documentos_a_corregir" name="Mis documentos a corregir"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_documento_a_corregir" sequence="14"/>
-    <menuitem id="menu_amunet_documentos_por_revisar" name="Mis documentos por revisar"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_documento_por_revisar" sequence="15"/>
-    <menuitem id="menu_amunet_documentos_por_autorizar" name="Mis documentos por autorizar"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_documento_por_autorizar" sequence="16"/>
-    <menuitem id="menu_amunet_documentos_sugerencias_mias" name="Sugerencias por decidir"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_sugerencia_mis_pendientes" sequence="17"/>
+
     <menuitem id="menu_amunet_documentos_lista_maestra" name="Lista maestra (vigentes)"
               parent="menu_amunet_documentos_root"
               action="action_amunet_documento_lista_maestra" sequence="20"/>
+
     <menuitem id="menu_amunet_documentos_formatos" name="Formatos"
               parent="menu_amunet_documentos_root"
               action="action_amunet_documento_formato" sequence="21"/>
+
+    <!-- ── Submenú: Mis pendientes ── -->
+    <menuitem id="menu_amunet_mis_pendientes" name="Mis pendientes"
+              parent="menu_amunet_documentos_root"
+              sequence="30" groups="group_documentos_user"/>
+
+    <menuitem id="menu_amunet_documentos_a_corregir" name="Documentos a corregir"
+              parent="menu_amunet_mis_pendientes"
+              action="action_amunet_documento_a_corregir" sequence="10"/>
+
+    <menuitem id="menu_amunet_documentos_por_revisar" name="Documentos por revisar"
+              parent="menu_amunet_mis_pendientes"
+              action="action_amunet_documento_por_revisar" sequence="20"/>
+
+    <menuitem id="menu_amunet_documentos_por_autorizar" name="Documentos por autorizar"
+              parent="menu_amunet_mis_pendientes"
+              action="action_amunet_documento_por_autorizar" sequence="30"/>
+
+    <menuitem id="menu_amunet_documentos_sugerencias_mias" name="Control de cambios por decidir"
+              parent="menu_amunet_mis_pendientes"
+              action="action_amunet_sugerencia_mis_pendientes" sequence="40"/>
+
     <menuitem id="menu_amunet_formato_mis_solicitudes" name="Mis solicitudes de impresión"
+              parent="menu_amunet_mis_pendientes"
+              action="action_amunet_formato_mis_solicitudes" sequence="50"/>
+
+    <!-- ── Submenú: Gestión (solo managers) ── -->
+    <menuitem id="menu_amunet_gestion" name="Gestión"
               parent="menu_amunet_documentos_root"
-              action="action_amunet_formato_mis_solicitudes" sequence="25"/>
+              sequence="40" groups="group_documentos_manager"/>
+
     <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de impresión"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_formato_solicitudes_pendientes" sequence="26"
+              parent="menu_amunet_gestion"
+              action="action_amunet_formato_solicitudes_pendientes" sequence="10"
               groups="group_documentos_manager"/>
+
     <menuitem id="menu_amunet_catalogo_firma" name="Catálogo de firmas"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_catalogo_firma" sequence="30"
+              parent="menu_amunet_gestion"
+              action="action_amunet_catalogo_firma" sequence="20"
               groups="group_documentos_manager"/>
+
+    <!-- ── Configuración (managers) ── -->
     <menuitem id="menu_amunet_documentos_config" name="Configuracion"
               parent="menu_amunet_documentos_root"
               sequence="90" groups="group_documentos_manager"/>
+
     <menuitem id="menu_amunet_firma_config" name="Politicas de firmas"
               parent="menu_amunet_documentos_config"
               action="action_amunet_firma_config" sequence="10"/>

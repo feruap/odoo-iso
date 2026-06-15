@@ -51,7 +51,16 @@ class AmunetDocumentoSugerencia(models.Model):
         string='Texto actual', sanitize=True, sanitize_tags=False, readonly=True)
     texto_propuesto = fields.Html(
         string='Texto propuesto', sanitize=True, sanitize_tags=False, required=True)
-    motivo = fields.Text(string='Motivo del cambio', required=True, tracking=True)
+    motivo = fields.Text(string='Justificación del cambio', required=True, tracking=True)
+
+    # Alcance del cambio
+    alcance_material       = fields.Boolean(string='Material')
+    alcance_documentos     = fields.Boolean(string='Documentos')
+    alcance_equipo         = fields.Boolean(string='Equipos')
+    alcance_procesos       = fields.Boolean(string='Procesos')
+    alcance_estructura     = fields.Boolean(string='Infraestructura')
+    alcance_sgc            = fields.Boolean(string='SGC')
+
     state = fields.Selection([
         ('pendiente', 'Pendiente de decision'),
         ('aceptada', 'Aceptada'),

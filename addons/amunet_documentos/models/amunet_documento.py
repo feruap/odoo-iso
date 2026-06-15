@@ -285,7 +285,7 @@ class AmunetDocumento(models.Model):
     def action_open_sugerencia_wizard(self):
         self.ensure_one()
         return {
-            'name': _('Sugerir cambio en %s') % self.codigo,
+            'name': _('Control de cambios: %s') % self.codigo,
             'type': 'ir.actions.act_window',
             'res_model': 'amunet.documento.sugerencia',
             'view_mode': 'form',
