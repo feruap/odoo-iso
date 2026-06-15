@@ -90,6 +90,7 @@
         <field name="name">Mi trabajo</field>
         <field name="res_model">mrp.workorder</field>
         <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_amunet_mi_wo_kanban"/>
         <field name="search_view_id" ref="view_amunet_mi_wo_search"/>
         <field name="domain">[('state','in',('ready','progress','waiting','pending')),('production_id.route_type','=','short'),('production_id.state','not in',('done','cancel'))]</field>
         <field name="context">{'search_default_g_lote': 1}</field>
