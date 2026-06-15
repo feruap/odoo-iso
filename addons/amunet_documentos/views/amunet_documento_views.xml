@@ -404,25 +404,6 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Control de cambios" name="sugerencias">
-                            <field name="sugerencias_pendientes_count" invisible="1"/>
-                            <field name="sugerencia_ids">
-                                <list decoration-warning="state == 'pendiente'"
-                                      decoration-success="state == 'aceptada'"
-                                      decoration-muted="state == 'rechazada'">
-                                    <field name="fecha_creacion" string="Fecha"/>
-                                    <field name="creado_por_id" string="Solicitante"/>
-                                    <field name="alcance_material" string="Material" optional="show"/>
-                                    <field name="alcance_documentos" string="Documentos" optional="show"/>
-                                    <field name="alcance_equipo" string="Equipos" optional="show"/>
-                                    <field name="alcance_procesos" string="Procesos" optional="show"/>
-                                    <field name="alcance_estructura" string="Infraestructura" optional="show"/>
-                                    <field name="alcance_sgc" string="SGC" optional="show"/>
-                                    <field name="motivo" string="Justificación"/>
-                                    <field name="state" widget="badge"/>
-                                </list>
-                            </field>
-                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>

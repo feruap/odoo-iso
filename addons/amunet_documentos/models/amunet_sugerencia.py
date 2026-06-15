@@ -34,6 +34,69 @@ SECCION_FIELD_MAP = {
 }
 
 
+class AmunetSugerenciaComite(models.Model):
+    _name = 'amunet.sugerencia.comite'
+    _description = 'Integrante del comité técnico en control de cambios'
+    _order = 'sequence, id'
+
+    sugerencia_id    = fields.Many2one(
+        'amunet.documento.sugerencia', required=True, ondelete='cascade')
+    sequence         = fields.Integer(default=10)
+    area             = fields.Char(string='Área', required=True)
+    fecha            = fields.Date(string='Fecha')
+    nombre_id        = fields.Many2one('res.users', string='Nombre')
+    usuario_firma_id = fields.Many2one(
+        'res.users', string='Firmado por', readonly=True, tracking=True)
+    fecha_firma      = fields.Date(string='Fecha de firma', readonly=True, tracking=True)
+
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_firmar_comite': _('Firma de comité técnico'),
+        }
+
+    def action_firmar_comite(self):
+        self.ensure_one()
+        if not self.env.user.has_group('amunet_quality.group_quality_supervisor'):
+            raise UserError(_('Solo los supervisores pueden firmar en el comité técnico.'))
+        if self.usuario_firma_id:
+            raise UserError(_('Este integrante ya firmó el control de cambios.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_firmar_comite',
+            _('Firma de comité técnico'),
+            _('Aprobación del control de cambios: %s') % self.sugerencia_id.name,
+        )
+
+    def _signature_firmar_comite(self):
+        self.ensure_one()
+        if not self.env.user.has_group('amunet_quality.group_quality_supervisor'):
+            raise UserError(_('Solo los supervisores pueden firmar en el comité técnico.'))
+        self.write({
+            'usuario_firma_id': self.env.user.id,
+            'fecha_firma': fields.Date.today(),
+        })
+        self.sugerencia_id.message_post(
+            body=_('<p><b>%s</b> firmó como integrante del comité técnico (área: %s).</p>')
+                 % (self.env.user.name, self.area or ''),
+        )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for r in records:
+            if r.nombre_id and r.sugerencia_id:
+                r.sugerencia_id.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    summary=_('Firma requerida — comité técnico'),
+                    note=_('<p>Fuiste agregado al comité técnico del control de cambios '
+                           '<b>%s</b>. Abre el registro y usa el botón <b>Firmar</b> '
+                           'para registrar tu aprobación con PIN.</p>')
+                          % r.sugerencia_id.name,
+                    user_id=r.nombre_id.id,
+                )
+        return records
+
+
 class AmunetDocumentoSugerencia(models.Model):
     _name = 'amunet.documento.sugerencia'
     _description = 'Sugerencia de cambio en documento controlado'
@@ -53,6 +116,11 @@ class AmunetDocumentoSugerencia(models.Model):
         string='Texto propuesto', sanitize=True, sanitize_tags=False, required=True)
     motivo = fields.Text(string='Justificación del cambio', required=True, tracking=True)
 
+    tipo_cambio = fields.Selection([
+        ('planeado',    'Planeado'),
+        ('no_planeado', 'No planeado'),
+    ], string='Tipo de cambio', tracking=True)
+
     # Alcance del cambio
     alcance_material       = fields.Boolean(string='Material')
     alcance_documentos     = fields.Boolean(string='Documentos')
@@ -60,6 +128,10 @@ class AmunetDocumentoSugerencia(models.Model):
     alcance_procesos       = fields.Boolean(string='Procesos')
     alcance_estructura     = fields.Boolean(string='Infraestructura')
     alcance_sgc            = fields.Boolean(string='SGC')
+
+    comite_ids = fields.One2many(
+        'amunet.sugerencia.comite', 'sugerencia_id',
+        string='Comité técnico')
 
     state = fields.Selection([
         ('pendiente', 'Pendiente de decision'),
