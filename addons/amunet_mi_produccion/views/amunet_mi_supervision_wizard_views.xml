@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_amunet_mi_supervision_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.mi.supervision.wizard.form</field>
+        <field name="model">amunet.mi.supervision.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Firmar supervisión">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Avala la supervisión de esta actividad ya terminada.
+                        Captura el resultado y confirma con tu PIN.
+                    </div>
+                    <group>
+                        <field name="lote" readonly="1"/>
+                        <field name="actividad" readonly="1"/>
+                        <field name="workorder_id" invisible="1"/>
+                        <field name="inspection_id" invisible="1"/>
+                    </group>
+                    <group>
+                        <field name="result"/>
+                        <field name="qty_inspected"/>
+                        <field name="qty_removed"
+                               invisible="result == 'conforme'"/>
+                        <field name="notes" placeholder="Opcional…"/>
+                    </group>
+                    <group>
+                        <field name="pin" password="True"
+                               placeholder="PIN del supervisor"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_firmar" type="object"
+                            string="Firmar supervisión" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

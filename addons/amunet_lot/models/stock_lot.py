@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 
 class StockLot(models.Model):
@@ -34,6 +34,31 @@ class StockLot(models.Model):
         help='Fecha de fabricación del lote, sincronizada desde el movimiento de inventario.',
         tracking=True,
     )
+
+    # Ubicacion legible para la lista de lotes: muestra el nombre del
+    # lugar si el lote esta en una sola ubicacion, o "Varias ubicaciones"
+    # si esta repartido en mas de una. El campo nativo location_id queda
+    # vacio cuando hay multiples ubicaciones, lo que confunde al usuario.
+    amunet_ubicacion_display = fields.Char(
+        string='Ubicación',
+        compute='_compute_amunet_ubicacion_display',
+        help='Ubicación del lote: el nombre del lugar si está en uno solo, '
+             'o "Varias ubicaciones" si su existencia está repartida.',
+    )
+
+    @api.depends('quant_ids.quantity', 'quant_ids.location_id')
+    def _compute_amunet_ubicacion_display(self):
+        for lot in self:
+            locs = lot.quant_ids.filtered(
+                lambda q: q.quantity > 0
+                and q.location_id.usage in ('internal', 'transit')
+            ).location_id
+            if len(locs) == 1:
+                lot.amunet_ubicacion_display = locs.complete_name
+            elif len(locs) > 1:
+                lot.amunet_ubicacion_display = _('Varias ubicaciones')
+            else:
+                lot.amunet_ubicacion_display = ''
 
     @api.onchange('expiration_date')
     def _onchange_expiration_date_amunet(self):

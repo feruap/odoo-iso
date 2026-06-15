@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mi_superv_wizard_operator,mi.superv.wizard.operator,model_amunet_mi_supervision_wizard,amunet_production.group_production_operator,1,1,1,1
+access_mi_superv_wizard_supervisor,mi.superv.wizard.supervisor,model_amunet_mi_supervision_wizard,amunet_production.group_production_supervisor,1,1,1,1
+access_mi_superv_wizard_qcsup,mi.superv.wizard.qcsup,model_amunet_mi_supervision_wizard,amunet_quality.group_quality_supervisor,1,1,1,1
+access_mi_superv_wizard_mrp,mi.superv.wizard.mrp,model_amunet_mi_supervision_wizard,mrp.group_mrp_user,1,1,1,1

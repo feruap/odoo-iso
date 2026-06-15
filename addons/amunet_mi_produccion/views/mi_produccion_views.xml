@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- BUSQUEDA                                                      -->
+    <!-- ============================================================ -->
+    <record id="view_amunet_mi_wo_search" model="ir.ui.view">
+        <field name="name">amunet.mi.workorder.search</field>
+        <field name="model">mrp.workorder</field>
+        <field name="arch" type="xml">
+            <search string="Mi produccion">
+                <field name="production_id" string="Lote"/>
+                <field name="name" string="Actividad"/>
+                <field name="workcenter_id" string="Estacion"/>
+                <filter name="f_ready" string="Por iniciar" domain="[('state','=','ready')]"/>
+                <filter name="f_progress" string="En progreso" domain="[('state','=','progress')]"/>
+                <separator/>
+                <filter name="g_lote" string="Lote" context="{'group_by': 'production_id'}"/>
+                <filter name="g_estacion" string="Estacion" context="{'group_by': 'workcenter_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- PANTALLA OPERADOR (kanban por lote)                           -->
+    <!-- ============================================================ -->
+    <record id="view_amunet_mi_wo_kanban" model="ir.ui.view">
+        <field name="name">amunet.mi.workorder.kanban</field>
+        <field name="model">mrp.workorder</field>
+        <field name="arch" type="xml">
+            <kanban create="0" delete="0" default_group_by="production_id"
+                    class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="production_id"/>
+                <field name="product_id"/>
+                <field name="workcenter_id"/>
+                <field name="is_user_working"/>
+                <field name="duration"/>
+                <field name="amunet_mi_supervision_state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click p-2">
+                            <div class="d-flex justify-content-between">
+                                <strong><field name="name"/></strong>
+                                <span class="badge text-bg-secondary"><field name="state"/></span>
+                            </div>
+                            <div class="text-muted small">
+                                Estacion: <field name="workcenter_id"/>
+                            </div>
+                            <div class="small mt-1">
+                                Tiempo: <field name="duration"/> min
+                            </div>
+                            <div class="small">
+                                Supervision:
+                                <span t-if="record.amunet_mi_supervision_state.raw_value == 'firmada'" class="badge text-bg-success">Supervisada</span>
+                                <span t-elif="record.amunet_mi_supervision_state.raw_value == 'pendiente'" class="badge text-bg-warning">Pendiente</span>
+                                <span t-else="" class="badge text-bg-light">Sin supervision</span>
+                            </div>
+                            <div class="mt-2 d-flex gap-1">
+                                <button name="action_amunet_mi_start" type="object"
+                                        class="btn btn-primary btn-sm"
+                                        t-if="record.state.raw_value == 'ready'">
+                                    Iniciar
+                                </button>
+                                <button name="action_amunet_mi_start" type="object"
+                                        class="btn btn-primary btn-sm"
+                                        t-if="record.state.raw_value == 'progress' &amp;&amp; !record.is_user_working.raw_value">
+                                    Reanudar
+                                </button>
+                                <button name="action_amunet_mi_pause" type="object"
+                                        class="btn btn-warning btn-sm"
+                                        t-if="record.state.raw_value == 'progress' &amp;&amp; record.is_user_working.raw_value">
+                                    Pausar
+                                </button>
+                                <button name="action_amunet_mi_finish" type="object"
+                                        class="btn btn-success btn-sm"
+                                        t-if="record.state.raw_value == 'progress'">
+                                    Terminar
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_amunet_mi_operador" model="ir.actions.act_window">
+        <field name="name">Mi trabajo</field>
+        <field name="res_model">mrp.workorder</field>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_amunet_mi_wo_kanban"/>
+        <field name="search_view_id" ref="view_amunet_mi_wo_search"/>
+        <field name="domain">[('state','in',('ready','progress','waiting','pending')),('production_id.route_type','=','short'),('production_id.state','not in',('done','cancel'))]</field>
+        <field name="context">{'search_default_g_lote': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiley_face">No tienes actividades en proceso</p>
+            <p>Aqui apareceran las actividades de los lotes en produccion.</p>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- MONITOR SUPERVISOR (lista en tiempo real)                     -->
+    <!-- ============================================================ -->
+    <record id="view_amunet_mi_wo_monitor_list" model="ir.ui.view">
+        <field name="name">amunet.mi.workorder.monitor.list</field>
+        <field name="model">mrp.workorder</field>
+        <field name="arch" type="xml">
+            <list string="Monitor de produccion" create="0" delete="0"
+                  default_order="production_id desc">
+                <field name="production_id" string="Lote"/>
+                <field name="name" string="Actividad"/>
+                <field name="workcenter_id" string="Estacion"/>
+                <field name="is_user_working" string="Activa" optional="show"/>
+                <field name="duration" string="Min" optional="show"/>
+                <field name="state" string="Estado" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state == 'progress'"
+                       decoration-muted="state in ('ready','waiting','pending')"/>
+                <field name="amunet_mi_supervision_state" string="Supervision" widget="badge"
+                       decoration-success="amunet_mi_supervision_state == 'firmada'"
+                       decoration-warning="amunet_mi_supervision_state == 'pendiente'"
+                       decoration-muted="amunet_mi_supervision_state == 'sin'"/>
+                <button name="action_amunet_mi_sign_supervision" type="object"
+                        string="Firmar supervision" icon="fa-pencil-square-o"
+                        class="btn-link"
+                        invisible="amunet_mi_supervision_state == 'firmada' or state != 'done'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_amunet_mi_monitor" model="ir.actions.act_window">
+        <field name="name">Monitor</field>
+        <field name="res_model">mrp.workorder</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_mi_wo_monitor_list"/>
+        <field name="search_view_id" ref="view_amunet_mi_wo_search"/>
+        <field name="domain">[('production_id.route_type','=','short'),('production_id.state','not in',('done','cancel'))]</field>
+        <field name="context">{'search_default_g_lote': 1}</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- MIS SUPERVISIONES (tablero del supervisor, tipo "Mi trabajo") -->
+    <!-- Tarjetas de actividades TERMINADAS pendientes de firmar.      -->
+    <!-- ============================================================ -->
+    <record id="view_amunet_mi_superv_kanban" model="ir.ui.view">
+        <field name="name">amunet.mi.supervisor.kanban</field>
+        <field name="model">mrp.workorder</field>
+        <field name="arch" type="xml">
+            <kanban create="0" delete="0" default_group_by="production_id"
+                    class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="production_id"/>
+                <field name="workcenter_id"/>
+                <field name="amunet_mi_supervision_state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click p-2">
+                            <div class="d-flex justify-content-between">
+                                <strong><field name="name"/></strong>
+                                <span t-if="record.amunet_mi_supervision_state.raw_value == 'firmada'"
+                                      class="badge text-bg-success">Supervisada</span>
+                                <span t-else="" class="badge text-bg-warning">Pendiente</span>
+                            </div>
+                            <div class="text-muted small">
+                                Estacion: <field name="workcenter_id"/>
+                            </div>
+                            <div class="mt-2" t-if="record.amunet_mi_supervision_state.raw_value != 'firmada'">
+                                <button name="action_amunet_mi_sign_supervision" type="object"
+                                        class="btn btn-primary w-100">
+                                    <i class="fa fa-pencil-square-o me-1"/> Firmar supervisión
+                                </button>
+                            </div>
+                            <div class="mt-2 text-success" t-else="">
+                                <i class="fa fa-check"/> Supervisión firmada
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Accion de servidor: calcula el dominio segun el usuario al hacer
+         clic (cada jefe ve solo las actividades de sus estaciones; el
+         gerente de manufactura ve todas). -->
+    <record id="action_amunet_mi_supervisor_srv" model="ir.actions.server">
+        <field name="name">Mis supervisiones</field>
+        <field name="model_id" ref="mrp.model_mrp_workorder"/>
+        <field name="state">code</field>
+        <field name="code">
+domain = [('state', '=', 'done'),
+          ('production_id.route_type', '=', 'short'),
+          ('production_id.state', 'not in', ('done', 'cancel'))]
+if not env.user.has_group('mrp.group_mrp_manager'):
+    my_wcs = env['mrp.workcenter'].sudo().search([('amunet_supervisor_ids', 'in', env.uid)])
+    domain.append(('workcenter_id', 'in', my_wcs.ids))
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Mis supervisiones',
+    'res_model': 'mrp.workorder',
+    'view_mode': 'kanban',
+    'views': [(env.ref('amunet_mi_produccion.view_amunet_mi_superv_kanban').id, 'kanban')],
+    'search_view_id': [env.ref('amunet_mi_produccion.view_amunet_mi_wo_search').id, False],
+    'domain': domain,
+    'context': {'search_default_g_lote': 1},
+}
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- APP + MENUS                                                   -->
+    <!-- ============================================================ -->
+    <menuitem id="menu_amunet_mi_root"
+              name="Mi produccion"
+              sequence="20"
+              groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,mrp.group_mrp_user"/>
+
+    <menuitem id="menu_amunet_mi_operador"
+              name="Mi trabajo"
+              parent="menu_amunet_mi_root"
+              action="action_amunet_mi_operador"
+              sequence="10"/>
+
+    <menuitem id="menu_amunet_mi_supervisor"
+              name="Mis supervisiones"
+              parent="menu_amunet_mi_root"
+              action="action_amunet_mi_supervisor_srv"
+              sequence="15"
+              groups="amunet_production.group_production_supervisor,mrp.group_mrp_manager"/>
+
+    <menuitem id="menu_amunet_mi_monitor"
+              name="Monitor"
+              parent="menu_amunet_mi_root"
+              action="action_amunet_mi_monitor"
+              sequence="20"
+              groups="amunet_production.group_production_supervisor,mrp.group_mrp_manager"/>
+
+    <!-- ============================================================ -->
+    <!-- ESTACION: asignar supervisores responsables                  -->
+    <!-- ============================================================ -->
+    <record id="view_amunet_mi_workcenter_form" model="ir.ui.view">
+        <field name="name">mrp.workcenter.form.mi.supervisores</field>
+        <field name="model">mrp.workcenter</field>
+        <field name="inherit_id" ref="mrp.mrp_workcenter_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="amunet_supervisor_ids" widget="many2many_tags"
+                       string="Supervisores responsables"
+                       options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
