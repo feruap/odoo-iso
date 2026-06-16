@@ -52,6 +52,21 @@ class MrpProduction(models.Model):
     )
 
     # ============================
+    # Gating Linea Corta (solo ordenes nuevas)
+    # ============================
+    amunet_lc_gating = fields.Boolean(
+        string='Aplica reglas de secuencia Linea Corta',
+        default=False, copy=False,
+        help='Si esta activo, la orden aplica el gating de Linea Corta: '
+             '(A) el Surtido debe estar entregado antes de iniciar la '
+             'produccion; (B) cada paso solo inicia si el anterior ya '
+             'inicio; (C) la orden solo cierra con todas las actividades '
+             'terminadas y todas las supervisiones e inspecciones firmadas. '
+             'Se activa automaticamente solo en ordenes NUEVAS de ruta '
+             'corta; las ordenes existentes quedan exentas.',
+    )
+
+    # ============================
     # Vinculacion con preflight
     # ============================
     preflight_ids = fields.One2many(
@@ -88,6 +103,54 @@ class MrpProduction(models.Model):
                 'search_default_production_id': self.id,
             },
         }
+
+    # ============================
+    # Marcar ordenes NUEVAS de ruta corta para el gating
+    # ============================
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for rec in records:
+            if rec.route_type == 'short' and not rec.amunet_lc_gating:
+                rec.amunet_lc_gating = True
+        return records
+
+    # ============================
+    # Gate de CIERRE (C): no cerrar sin actividades terminadas y
+    # sin todas las supervisiones e inspecciones firmadas.
+    # ============================
+    def _amunet_lc_check_close_gate(self):
+        for mo in self:
+            if not mo.amunet_lc_gating:
+                continue
+            pendientes = mo.workorder_ids.filtered(
+                lambda w: w.state not in ('done', 'cancel'))
+            sin_firmar = mo.process_inspection_ids.filtered(
+                lambda i: i.state != 'signed')
+            if not pendientes and not sin_firmar:
+                continue
+            msg = _('No se puede cerrar la orden %s todavia:') % mo.name
+            if pendientes:
+                msg += _('\n\nFaltan actividades por TERMINAR:\n- %s') % (
+                    '\n- '.join(pendientes.mapped('display_name')))
+            if sin_firmar:
+                tipos = {
+                    'production_supervision': 'Supervision',
+                    'qc_formal': 'Inspeccion en proceso',
+                }
+                faltan = []
+                for i in sin_firmar:
+                    etq = i.workorder_id.display_name or (
+                        i.workcenter_id.name or '')
+                    faltan.append('%s - %s' % (
+                        tipos.get(i.inspection_type, i.inspection_type), etq))
+                msg += _('\n\nFaltan FIRMAS (supervisiones / inspecciones):'
+                         '\n- %s') % '\n- '.join(faltan)
+            raise UserError(msg)
+
+    def button_mark_done(self):
+        self._amunet_lc_check_close_gate()
+        return super().button_mark_done()
 
     # ============================
     # Override action_confirm: gate preflight + generar inspecciones
