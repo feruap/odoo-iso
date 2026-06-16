@@ -38,6 +38,8 @@
                 <field name="is_user_working"/>
                 <field name="duration"/>
                 <field name="amunet_mi_supervision_state"/>
+                <field name="amunet_is_supply_workorder"/>
+                <field name="amunet_supply_state"/>
                 <templates>
                     <t t-name="card">
                         <div class="oe_kanban_global_click p-2">
@@ -51,13 +53,23 @@
                             <div class="small mt-1">
                                 Tiempo: <field name="duration"/> min
                             </div>
-                            <div class="small">
+                            <!-- Supervision: solo para actividades normales (el Surtido no lleva supervision) -->
+                            <div class="small" t-if="!record.amunet_is_supply_workorder.raw_value">
                                 Supervision:
                                 <span t-if="record.amunet_mi_supervision_state.raw_value == 'firmada'" class="badge text-bg-success">Supervisada</span>
                                 <span t-elif="record.amunet_mi_supervision_state.raw_value == 'pendiente'" class="badge text-bg-warning">Pendiente</span>
                                 <span t-else="" class="badge text-bg-light">Sin supervision</span>
                             </div>
-                            <div class="mt-2 d-flex gap-1">
+                            <!-- Estado del Surtido (lo gestiona Almacen; Produccion solo recibe) -->
+                            <div class="small" t-if="record.amunet_is_supply_workorder.raw_value">
+                                Surtido:
+                                <span t-if="record.amunet_supply_state.raw_value == 'received'" class="badge text-bg-success">Recibido</span>
+                                <span t-elif="record.amunet_supply_state.raw_value == 'awaiting_reception'" class="badge text-bg-warning">Listo para recibir</span>
+                                <span t-elif="record.amunet_supply_state.raw_value == 'in_progress'" class="badge text-bg-info">Almacen surtiendo</span>
+                                <span t-else="" class="badge text-bg-light">Pendiente (Almacen)</span>
+                            </div>
+                            <!-- Botones de actividad normal (Iniciar/Pausar/Terminar) -->
+                            <div class="mt-2 d-flex gap-1" t-if="!record.amunet_is_supply_workorder.raw_value">
                                 <button name="action_amunet_mi_start" type="object"
                                         class="btn btn-primary btn-sm"
                                         t-if="record.state.raw_value == 'ready'">
@@ -78,6 +90,22 @@
                                         t-if="record.state.raw_value == 'progress'">
                                     Terminar
                                 </button>
+                            </div>
+                            <!-- Surtido: Produccion recibe con firma (no inicia/termina) -->
+                            <div class="mt-2 d-flex gap-1" t-if="record.amunet_is_supply_workorder.raw_value">
+                                <button name="action_amunet_receive_supply" type="object"
+                                        class="btn btn-success btn-sm"
+                                        t-if="record.amunet_supply_state.raw_value == 'awaiting_reception'">
+                                    Recibir surtido
+                                </button>
+                                <span class="text-muted small align-self-center"
+                                      t-if="record.amunet_supply_state.raw_value == 'in_progress'">
+                                    Almacen esta surtiendo...
+                                </span>
+                                <span class="text-muted small align-self-center"
+                                      t-if="record.amunet_supply_state.raw_value == 'pending'">
+                                    Esperando que Almacen surta.
+                                </span>
                             </div>
                         </div>
                     </t>

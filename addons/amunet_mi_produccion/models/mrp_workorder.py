@@ -100,8 +100,22 @@ class MrpWorkorder(models.Model):
     # ------------------------------------------------------------------
     # Inicia / Pausa / Termina  (alimentan la orden en tiempo real)
     # ------------------------------------------------------------------
+    def _amunet_mi_block_supply(self):
+        """El Surtido NO se inicia/pausa/termina con los botones genericos:
+        tiene su propio flujo (Almacen surte y confirma con firma;
+        Produccion recibe con firma via 'Recibir surtido'). Esto evita
+        brincar el flujo y dejar el surtido en falso."""
+        for wo in self:
+            if wo.amunet_is_supply_workorder:
+                raise UserError(_(
+                    'El Surtido no se inicia ni se termina aqui.\n\n'
+                    'Almacen surte el material y, cuando lo deja listo, '
+                    'usa el boton "Recibir surtido" para aceptarlo con tu '
+                    'firma. Asi se libera el siguiente paso.'))
+
     def action_amunet_mi_start(self):
         self._amunet_mi_check_access()
+        self._amunet_mi_block_supply()
         for wo in self:
             if wo.state in ('done', 'cancel'):
                 raise UserError(_(
@@ -113,12 +127,14 @@ class MrpWorkorder(models.Model):
 
     def action_amunet_mi_pause(self):
         self._amunet_mi_check_access()
+        self._amunet_mi_block_supply()
         self.sudo().button_pending()
         self._amunet_mi_trace(_('pausada'))
         return True
 
     def action_amunet_mi_finish(self):
         self._amunet_mi_check_access()
+        self._amunet_mi_block_supply()
         for wo in self:
             if wo.state != 'progress':
                 raise UserError(_(
