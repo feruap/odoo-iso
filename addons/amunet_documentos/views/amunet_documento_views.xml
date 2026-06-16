@@ -105,10 +105,10 @@
                     </div>
                     <div class="alert alert-warning mb16" role="alert" style="padding:16px;"
                          invisible="sugerencias_pendientes_count == 0 or elabora_id != uid">
-                        <h3 class="mt0" style="margin-top:0;">Tienes sugerencias por decidir</h3>
+                        <h3 class="mt0" style="margin-top:0;">Tienes controles de cambio por decidir</h3>
                         <p>Hay <field name="sugerencias_pendientes_count" readonly="1" nolabel="1" class="oe_inline"/>
-                           sugerencia(s) de cambio pendiente(s). Ve a la pestana
-                           <b>"Sugerencias"</b> para decidir.</p>
+                           control(es) de cambio pendiente(s). Ve a la pestaña
+                           <b>"Control de cambios"</b> para decidir.</p>
                     </div>
                     <div class="alert alert-info mb16" role="alert" style="padding:16px;"
                          invisible="state != 'borrador' or elabora_id != uid">

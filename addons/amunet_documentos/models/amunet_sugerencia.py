@@ -34,7 +34,7 @@ class AmunetSugerenciaComite(models.Model):
         'amunet.documento.sugerencia', required=True, ondelete='cascade')
     sequence         = fields.Integer(default=10)
     area             = fields.Char(string='Área')
-    fecha            = fields.Date(string='Fecha')
+    fecha            = fields.Date(string='Fecha', default=fields.Date.today)
     nombre_id        = fields.Many2one('res.users', string='Nombre')
     usuario_firma_id = fields.Many2one('res.users', string='Firmado por', readonly=True)
     fecha_firma      = fields.Date(string='Fecha de firma', readonly=True)
@@ -328,12 +328,26 @@ class AmunetDocumentoSugerencia(models.Model):
         for r in self:
             if r.state != 'pendiente':
                 raise UserError(_('Este control de cambios ya tiene decisión (%s).') % r.state)
-            if r.documento_id.elabora_id \
-                    and r.documento_id.elabora_id.id != self.env.user.id \
-                    and not self.env.user.has_group('amunet_documentos.group_documentos_manager'):
+            if not self.env.user.has_group('amunet_documentos.group_responsable_sanitario'):
                 raise UserError(_(
-                    'Solo el elaborador del documento (%s) puede aceptar o rechazar.'
-                ) % r.documento_id.elabora_id.name)
+                    'Solo el Responsable Sanitario puede aceptar un control de cambios.'))
+            # Validar firmas del comité
+            sin_firma = r.comite_ids.filtered(lambda c: not c.usuario_firma_id)
+            if r.comite_ids and sin_firma:
+                faltantes = ', '.join(sin_firma.mapped('nombre_id.name'))
+                raise UserError(_(
+                    'Faltan firmas del comité técnico: %s') % faltantes)
+            # Validar firmas de aplicación
+            falta = []
+            if r.realizo_id and not r.firma_realizo_id:
+                falta.append(_('Realizó (%s)') % r.realizo_id.name)
+            if r.reviso_id and not r.firma_reviso_id:
+                falta.append(_('Revisó (%s)') % r.reviso_id.name)
+            if r.aprobo_id and not r.firma_aprobo_id:
+                falta.append(_('Aprobó (%s)') % r.aprobo_id.name)
+            if falta:
+                raise UserError(_(
+                    'Faltan las siguientes firmas de aplicación:\n%s') % '\n'.join(falta))
             r.write({
                 'state': 'aceptada',
                 'decidido_por_id': self.env.user.id,
@@ -357,14 +371,11 @@ class AmunetDocumentoSugerencia(models.Model):
         for r in self:
             if r.state != 'pendiente':
                 raise UserError(_('Este control de cambios ya tiene decisión (%s).') % r.state)
+            if not self.env.user.has_group('amunet_documentos.group_responsable_sanitario'):
+                raise UserError(_(
+                    'Solo el Responsable Sanitario puede rechazar un control de cambios.'))
             if not (r.motivo_rechazo or '').strip():
                 raise UserError(_('Indica el motivo del rechazo.'))
-            if r.documento_id.elabora_id \
-                    and r.documento_id.elabora_id.id != self.env.user.id \
-                    and not self.env.user.has_group('amunet_documentos.group_documentos_manager'):
-                raise UserError(_(
-                    'Solo el elaborador del documento (%s) puede aceptar o rechazar.'
-                ) % r.documento_id.elabora_id.name)
             r.write({
                 'state': 'rechazada',
                 'decidido_por_id': self.env.user.id,

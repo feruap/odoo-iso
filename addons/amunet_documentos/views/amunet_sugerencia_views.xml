@@ -28,11 +28,13 @@
                             type="object" class="btn-success"
                             icon="fa-check"
                             invisible="state != 'pendiente'"
-                            confirm="¿Confirmas que este control de cambios fue revisado y aprobado?"/>
+                            groups="amunet_documentos.group_responsable_sanitario"
+                            confirm="¿Confirmas que todas las firmas están completas y autorizas este control de cambios?"/>
                     <button name="action_rechazar" string="Rechazar"
                             type="object" class="btn-danger"
                             icon="fa-times"
-                            invisible="state != 'pendiente'"/>
+                            invisible="state != 'pendiente'"
+                            groups="amunet_documentos.group_responsable_sanitario"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="pendiente,aceptada,rechazada"/>
                 </header>
@@ -79,7 +81,7 @@
                         <field name="motivo" nolabel="1" readonly="state != 'pendiente'"
                                placeholder="Describe por qué se propone este cambio."/>
                     </group>
-                    <group invisible="not referencia_html"
+                    <group invisible="not referencia_html or state != 'pendiente' or creado_por_id != uid"
                            string="Contenido actual del documento (solo lectura — para referencia)">
                         <field name="referencia_html" nolabel="1" readonly="1"/>
                     </group>
@@ -95,7 +97,8 @@
                                    optional="show"/>
                         </list>
                     </field>
-                    <group string="Motivo del rechazo (obligatorio para rechazar)">
+                    <group string="Motivo del rechazo (obligatorio para rechazar)"
+                           invisible="creado_por_id == uid and state == 'pendiente'">
                         <field name="motivo_rechazo" nolabel="1"
                                readonly="state != 'pendiente'"
                                placeholder="Si vas a rechazar, escribe aquí el motivo antes de hacer clic en Rechazar."/>
@@ -105,8 +108,7 @@
                     <field name="comite_ids">
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
-                            <field name="area" string="Área"/>
-                            <field name="fecha" string="Fecha"/>
+                            <field name="fecha" string="Fecha" readonly="1"/>
                             <field name="nombre_id" string="Nombre"
                                    domain="[('id', 'in', parent.comite_users_ids)]"
                                    options="{'no_create': True}"/>
