@@ -89,12 +89,15 @@
                                placeholder="(Obligatorio si rechazas) Por que rechazas el cambio."/>
                     </group>
                     <separator string="Comité técnico"/>
+                    <field name="comite_users_ids" invisible="1"/>
                     <field name="comite_ids">
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="area" string="Área"/>
                             <field name="fecha" string="Fecha"/>
-                            <field name="nombre_id" string="Nombre"/>
+                            <field name="nombre_id" string="Nombre"
+                                   domain="[('id', 'in', parent.comite_users_ids)]"
+                                   options="{'no_create': True}"/>
                             <field name="usuario_firma_id" string="Firmado por" readonly="1"/>
                             <field name="fecha_firma" string="Fecha de firma" readonly="1"/>
                             <button name="action_firmar_comite" type="object"
@@ -103,6 +106,51 @@
                                     groups="amunet_documentos.group_comite_tecnico"/>
                         </list>
                     </field>
+                    <separator string="Firmas de aplicación del cambio"/>
+                    <group>
+                        <group string="Realizó">
+                            <field name="realizo_id"
+                                   readonly="firma_realizo_id"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_realizo_id" readonly="1"
+                                   invisible="not firma_realizo_id"/>
+                            <field name="fecha_realizo" readonly="1"
+                                   invisible="not fecha_realizo"/>
+                            <button name="action_firmar_realizo" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    class="btn-primary"
+                                    invisible="not realizo_id or firma_realizo_id"/>
+                        </group>
+                        <group string="Revisó">
+                            <field name="reviso_id"
+                                   readonly="firma_reviso_id"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_reviso_id" readonly="1"
+                                   invisible="not firma_reviso_id"/>
+                            <field name="fecha_reviso" readonly="1"
+                                   invisible="not fecha_reviso"/>
+                            <button name="action_firmar_reviso" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    class="btn-primary"
+                                    invisible="not reviso_id or firma_reviso_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Aprobó la aplicación">
+                            <field name="aprobo_id"
+                                   readonly="firma_aprobo_id"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_aprobo_id" readonly="1"
+                                   invisible="not firma_aprobo_id"/>
+                            <field name="fecha_aprobo" readonly="1"
+                                   invisible="not fecha_aprobo"/>
+                            <button name="action_firmar_aprobo" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    class="btn-primary"
+                                    invisible="not aprobo_id or firma_aprobo_id"/>
+                        </group>
+                        <group/>
+                    </group>
                 </sheet>
                 <chatter/>
             </form>

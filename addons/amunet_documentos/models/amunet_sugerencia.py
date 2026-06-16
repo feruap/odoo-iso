@@ -44,10 +44,7 @@ class AmunetSugerenciaComite(models.Model):
     sequence         = fields.Integer(default=10)
     area             = fields.Char(string='Área')
     fecha            = fields.Date(string='Fecha')
-    nombre_id        = fields.Many2one(
-        'res.users', string='Nombre',
-        domain=lambda self: [('groups_id', 'in',
-            [self.env.ref('amunet_documentos.group_comite_tecnico').id])])
+    nombre_id        = fields.Many2one('res.users', string='Nombre')
     usuario_firma_id = fields.Many2one(
         'res.users', string='Firmado por', readonly=True, tracking=True)
     fecha_firma      = fields.Date(string='Fecha de firma', readonly=True, tracking=True)
@@ -55,10 +52,13 @@ class AmunetSugerenciaComite(models.Model):
     @api.onchange('nombre_id')
     def _onchange_nombre_id(self):
         if self.nombre_id:
-            employee = self.env['hr.employee'].search(
-                [('user_id', '=', self.nombre_id.id)], limit=1)
-            if employee and employee.department_id:
-                self.area = employee.department_id.name
+            try:
+                employee = self.env['hr.employee'].search(
+                    [('user_id', '=', self.nombre_id.id)], limit=1)
+                if employee and employee.department_id:
+                    self.area = employee.department_id.name
+            except Exception:
+                pass
 
     def _amunet_signature_allowed_methods(self):
         return {
@@ -143,6 +143,78 @@ class AmunetDocumentoSugerencia(models.Model):
     comite_ids = fields.One2many(
         'amunet.sugerencia.comite', 'sugerencia_id',
         string='Comité técnico')
+    comite_users_ids = fields.Many2many(
+        'res.users', compute='_compute_comite_users_ids')
+
+    def _compute_comite_users_ids(self):
+        group = self.env.ref(
+            'amunet_documentos.group_comite_tecnico', raise_if_not_found=False)
+        users = group.users if group else self.env['res.users']
+        for r in self:
+            r.comite_users_ids = users
+
+    # Firmas de aplicación del cambio
+    realizo_id       = fields.Many2one('res.users', string='Realizó')
+    firma_realizo_id = fields.Many2one('res.users', string='Firmó (realizó)', readonly=True)
+    fecha_realizo    = fields.Date(string='Fecha', readonly=True)
+    reviso_id        = fields.Many2one('res.users', string='Revisó')
+    firma_reviso_id  = fields.Many2one('res.users', string='Firmó (revisó)', readonly=True)
+    fecha_reviso     = fields.Date(string='Fecha', readonly=True)
+    aprobo_id        = fields.Many2one('res.users', string='Aprobó')
+    firma_aprobo_id  = fields.Many2one('res.users', string='Firmó (aprobó)', readonly=True)
+    fecha_aprobo     = fields.Date(string='Fecha', readonly=True)
+
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_realizo':  _('Firma quien realizó el cambio'),
+            '_signature_reviso':   _('Firma quien revisó el cambio'),
+            '_signature_aprobo':   _('Firma quien aprobó la aplicación del cambio'),
+        }
+
+    def _abrir_firma(self, method_name, label):
+        self.ensure_one()
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, method_name, label,
+            _('Control de cambios: %s') % (self.name or ''))
+
+    def action_firmar_realizo(self):
+        self.ensure_one()
+        if self.firma_realizo_id:
+            raise UserError(_('Ya se registró la firma de quien realizó el cambio.'))
+        if self.realizo_id and self.realizo_id != self.env.user:
+            raise UserError(_('Solo %s puede firmar en este espacio.') % self.realizo_id.name)
+        return self._abrir_firma('_signature_realizo', _('Firma quien realizó el cambio'))
+
+    def _signature_realizo(self):
+        self.ensure_one()
+        self.write({'firma_realizo_id': self.env.user.id, 'fecha_realizo': fields.Date.today()})
+        self.message_post(body=_('<p><b>%s</b> registró su firma como quien realizó el cambio.</p>') % self.env.user.name)
+
+    def action_firmar_reviso(self):
+        self.ensure_one()
+        if self.firma_reviso_id:
+            raise UserError(_('Ya se registró la firma de quien revisó el cambio.'))
+        if self.reviso_id and self.reviso_id != self.env.user:
+            raise UserError(_('Solo %s puede firmar en este espacio.') % self.reviso_id.name)
+        return self._abrir_firma('_signature_reviso', _('Firma quien revisó el cambio'))
+
+    def _signature_reviso(self):
+        self.ensure_one()
+        self.write({'firma_reviso_id': self.env.user.id, 'fecha_reviso': fields.Date.today()})
+        self.message_post(body=_('<p><b>%s</b> registró su firma como quien revisó el cambio.</p>') % self.env.user.name)
+
+    def action_firmar_aprobo(self):
+        self.ensure_one()
+        if self.firma_aprobo_id:
+            raise UserError(_('Ya se registró la firma de quien aprobó el cambio.'))
+        if self.aprobo_id and self.aprobo_id != self.env.user:
+            raise UserError(_('Solo %s puede firmar en este espacio.') % self.aprobo_id.name)
+        return self._abrir_firma('_signature_aprobo', _('Firma quien aprobó la aplicación del cambio'))
+
+    def _signature_aprobo(self):
+        self.ensure_one()
+        self.write({'firma_aprobo_id': self.env.user.id, 'fecha_aprobo': fields.Date.today()})
+        self.message_post(body=_('<p><b>%s</b> registró su firma como quien aprobó la aplicación del cambio.</p>') % self.env.user.name)
 
     state = fields.Selection([
         ('pendiente', 'Pendiente de decision'),
