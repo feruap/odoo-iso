@@ -83,8 +83,50 @@ def migrate(cr, version):
     mig_upd = cr.rowcount
     _logger.info("MAVI-09 3.12.0: %d 'Migración de conjugado' → rango 30-180", mig_upd)
 
+    # ── MAVI-09: Tiempo de liberación 0-0 → 1-30 ─────────────────────────────
+    cr.execute("""
+        UPDATE amunet_quality_parameter_specification_config sc
+        SET min_value = 1, max_value = 30, write_date = NOW()
+        FROM amunet_quality_parameter_product_rel r
+        WHERE sc.product_parameter_rel_id = r.id
+          AND r.parameter_code = 'MAVI-09'
+          AND sc.specification_name = 'Tiempo de liberación'
+          AND sc.active = true
+          AND sc.min_value = 0 AND sc.max_value = 0
+    """)
+    tlib_upd = cr.rowcount
+    _logger.info("MAVI-09 3.12.0: %d 'Tiempo de liberación' → rango 1-30", tlib_upd)
+
+    # ── MAVI-09: Tiempo de migración 0-0 → 30-180 ────────────────────────────
+    cr.execute("""
+        UPDATE amunet_quality_parameter_specification_config sc
+        SET min_value = 30, max_value = 180, write_date = NOW()
+        FROM amunet_quality_parameter_product_rel r
+        WHERE sc.product_parameter_rel_id = r.id
+          AND r.parameter_code = 'MAVI-09'
+          AND sc.specification_name = 'Tiempo de migración'
+          AND sc.active = true
+          AND sc.min_value = 0 AND sc.max_value = 0
+    """)
+    tmig_upd = cr.rowcount
+    _logger.info("MAVI-09 3.12.0: %d 'Tiempo de migración' → rango 30-180", tmig_upd)
+
+    # ── MAVI-09: Tiempo de migración en 4 cm de membrana 0-0 → 30-180 ────────
+    cr.execute("""
+        UPDATE amunet_quality_parameter_specification_config sc
+        SET min_value = 30, max_value = 180, write_date = NOW()
+        FROM amunet_quality_parameter_product_rel r
+        WHERE sc.product_parameter_rel_id = r.id
+          AND r.parameter_code = 'MAVI-09'
+          AND sc.specification_name = 'Tiempo de migración en 4 cm de membrana.'
+          AND sc.active = true
+          AND sc.min_value = 0 AND sc.max_value = 0
+    """)
+    tmem_upd = cr.rowcount
+    _logger.info("MAVI-09 3.12.0: %d 'Tiempo de migración 4 cm membrana' → rango 30-180", tmem_upd)
+
     _logger.info(
         "Migración 3.12.0 completa — MAVI-07: %d Líneas off, %d Pos on, %d Neg on | "
-        "MAVI-09: %d Liberación, %d Migración",
-        lineas_off, pos_on, neg_on, lib_upd, mig_upd,
+        "MAVI-09: %d Lib.conj, %d Mig.conj, %d T.lib, %d T.mig, %d T.mig4cm",
+        lineas_off, pos_on, neg_on, lib_upd, mig_upd, tlib_upd, tmig_upd, tmem_upd,
     )
