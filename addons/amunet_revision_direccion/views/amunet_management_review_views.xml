@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_management_review_list" model="ir.ui.view">
+        <field name="name">amunet.management.review.list</field>
+        <field name="model">amunet.management.review</field>
+        <field name="arch" type="xml">
+            <list string="Revisiones por la Dirección"
+                  decoration-success="state == 'approved'" decoration-muted="state == 'archived'">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="fecha"/>
+                <field name="periodo"/>
+                <field name="action_open_count"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_management_review_form" model="ir.ui.view">
+        <field name="name">amunet.management.review.form</field>
+        <field name="model">amunet.management.review</field>
+        <field name="arch" type="xml">
+            <form string="Revisión por la Dirección">
+                <header>
+                    <button name="action_submit_review" type="object" string="Enviar a revisión"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_open_sign" type="object" string="Firmar (revisa/aprueba)"
+                            class="btn-primary" invisible="state != 'in_review'"/>
+                    <button name="action_archive_review" type="object" string="Archivar"
+                            invisible="state == 'archived'"
+                            groups="amunet_revision_direccion.group_review_approver"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_review,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="fecha"/>
+                            <field name="periodo"/>
+                        </group>
+                        <group>
+                            <field name="document_id"/>
+                            <field name="revisa_id"/>
+                            <field name="fecha_revisa"/>
+                            <field name="aprueba_id"/>
+                            <field name="fecha_aprueba"/>
+                        </group>
+                    </group>
+                    <field name="participantes" placeholder="Participantes de la reunión..."/>
+                    <notebook>
+                        <page string="Entradas (ISO 13485 §5.6.2)">
+                            <field name="input_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="tipo"/>
+                                    <field name="descripcion"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Acuerdos y acciones (salidas §5.6.3)">
+                            <field name="action_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="descripcion"/>
+                                    <field name="responsable_id"/>
+                                    <field name="fecha_objetivo"/>
+                                    <field name="capa_id"/>
+                                    <field name="estado"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Conclusiones">
+                            <field name="conclusion"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_management_review" model="ir.actions.act_window">
+        <field name="name">Revisiones por la Dirección</field>
+        <field name="res_model">amunet.management.review</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

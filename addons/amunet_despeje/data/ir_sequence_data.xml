@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_despeje" model="ir.sequence">
+        <field name="name">Despeje de línea</field>
+        <field name="code">amunet.despeje</field>
+        <field name="prefix">DESP-</field>
+        <field name="padding">5</field>
+    </record>
+</odoo>

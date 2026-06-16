@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_bitacoras_root" name="Bitácoras" sequence="55"
+              web_icon="amunet_bitacoras,static/description/icon.png"
+              groups="amunet_bitacoras.group_bitacora_operator"/>
+
+    <menuitem id="menu_bitacoras_entries" name="Registros" parent="menu_bitacoras_root"
+              action="action_bitacora_entry" sequence="10"/>
+
+    <menuitem id="menu_bitacoras_pending" name="Pendientes" parent="menu_bitacoras_root"
+              action="action_bitacora_entry_pending" sequence="20"/>
+
+    <menuitem id="menu_bitacoras_deviation" name="Desviaciones" parent="menu_bitacoras_root"
+              action="action_bitacora_entry_deviation" sequence="30"
+              groups="amunet_bitacoras.group_bitacora_supervisor"/>
+
+    <menuitem id="menu_bitacoras_config" name="Configuración" parent="menu_bitacoras_root"
+              sequence="90" groups="amunet_bitacoras.group_bitacora_supervisor"/>
+
+    <menuitem id="menu_bitacoras_templates" name="Plantillas" parent="menu_bitacoras_config"
+              action="action_bitacora_template" sequence="10"/>
+
+    <menuitem id="menu_bitacoras_audit" name="Auditoría" parent="menu_bitacoras_config"
+              action="action_bitacora_audit_log" sequence="20"/>
+</odoo>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_despeje_root" name="Despeje de Línea" sequence="60"
+              web_icon="amunet_despeje,static/description/icon.png"
+              groups="amunet_despeje.group_despeje_operator"/>
+    <menuitem id="menu_despeje_list" name="Despejes" parent="menu_despeje_root"
+              action="action_despeje" sequence="10"/>
+</odoo>
