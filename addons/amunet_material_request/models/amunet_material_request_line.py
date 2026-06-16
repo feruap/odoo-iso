@@ -50,6 +50,7 @@ class AmunetMaterialRequestLine(models.Model):
         'stock.lot',
         string='Lotes disponibles en almacen',
         compute='_compute_amunet_available_lot_ids',
+        compute_sudo=True,
     )
 
     @api.depends('product_id', 'request_id.warehouse_id')
