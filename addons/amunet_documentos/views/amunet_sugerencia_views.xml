@@ -85,6 +85,18 @@
                         <field name="motivo" nolabel="1" readonly="state != 'pendiente'"
                                placeholder="Describe por qué se propone este cambio."/>
                     </group>
+                    <group string="Análisis de riesgos">
+                        <field name="aplica_analisis_riesgos"
+                               string="¿Aplica análisis de riesgos?"
+                               readonly="state != 'pendiente'"
+                               widget="boolean_toggle"/>
+                        <field name="numero_analisis_riesgos"
+                               readonly="state != 'pendiente'"
+                               invisible="not aplica_analisis_riesgos"
+                               placeholder="Ingresa el número de análisis de riesgos"/>
+                        <span invisible="aplica_analisis_riesgos"
+                              class="text-muted">No aplica</span>
+                    </group>
                     <group invisible="not referencia_html or state != 'pendiente' or creado_por_id != uid"
                            string="Contenido actual del documento (solo lectura — para referencia)">
                         <field name="referencia_html" nolabel="1" readonly="1"/>

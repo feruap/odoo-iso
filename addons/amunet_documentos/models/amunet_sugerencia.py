@@ -135,6 +135,10 @@ class AmunetDocumentoSugerencia(models.Model):
         compute='_compute_referencia_html',
         sanitize=False)
     motivo = fields.Text(string='Justificación del cambio', required=True, tracking=True)
+    aplica_analisis_riesgos = fields.Boolean(
+        string='Aplica análisis de riesgos', default=False, tracking=True)
+    numero_analisis_riesgos = fields.Char(
+        string='No. de análisis de riesgos', tracking=True)
 
     tipo_cambio = fields.Selection([
         ('planeado',    'Planeado'),
