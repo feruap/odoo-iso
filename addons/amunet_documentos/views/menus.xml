@@ -45,7 +45,13 @@
     <!-- ── Submenú: Gestión (solo managers) ── -->
     <menuitem id="menu_amunet_gestion" name="Gestión"
               parent="menu_amunet_documentos_root"
-              sequence="40" groups="group_documentos_manager"/>
+              sequence="40"
+              groups="amunet_documentos.group_documentos_manager,amunet_documentos.group_responsable_sanitario"/>
+
+    <menuitem id="menu_amunet_sugerencia_registro" name="Registro de controles de cambio"
+              parent="menu_amunet_gestion"
+              action="action_amunet_sugerencia_registro" sequence="5"
+              groups="amunet_documentos.group_documentos_manager,amunet_documentos.group_responsable_sanitario"/>
 
     <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de impresión"
               parent="menu_amunet_gestion"
