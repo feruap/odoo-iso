@@ -55,59 +55,80 @@ def migrate(cr, version):
     neg_on = cr.rowcount
     _logger.info("MAVI-07 3.12.0: %d 'Muestra negativa' activados", neg_on)
 
-    # ── MAVI-09: Liberación de conjugado 0-0 → 1-30 ──────────────────────────
+    # Hojas maestras en alcance (productos terminados se abordan en migración posterior)
+    SPHM_CODES = (
+        'SPHMC01','SPHMC02','SPHMC03','SPHMC04','SPHMC05','SPHMC06','SPHMC08',
+        'SPHMC15','SPHMC17','SPHMC20','SPHMC21','SPHMC22','SPHMC23','SPHMC24',
+        'SPHMC27','SPHMC28','SPHMC29','SPHMC30','SPHMC31','SPHMC32','SPHMC33',
+        'SPHMC35','SPHMC36','SPHMC37','SPHMC39','SPHMC40','SPHMC41','SPHMC42',
+        'SPHMC43','SPHMC44','SPHMC45','SPHMC46','SPHMC47','SPHMC48','SPHMC49',
+        'SPHMC50','SPHMC51','SPHMC55','SPHMC56','SPHMC57','SPHMC58','SPHMC59',
+        'SPHMC60','SPHMC61','SPHMC62','SPHMC64','SPHMC65','SPHMC66','SPHMC69',
+        'SPHMC70','SPHMC71','SPHMC72','SPHMC73','SPHMC74',
+        'SPHMT01','SPHMT03','SPHMT04','SPHMT05','SPHMT06',
+    )
+
+    # ── MAVI-09: Liberación de conjugado 0-0 → 1-30 (solo hojas maestras) ────
     cr.execute("""
         UPDATE amunet_quality_parameter_specification_config sc
         SET min_value = 1, max_value = 30, write_date = NOW()
         FROM amunet_quality_parameter_product_rel r
+        JOIN product_template pt ON pt.id = r.product_tmpl_id
         WHERE sc.product_parameter_rel_id = r.id
           AND r.parameter_code = 'MAVI-09'
+          AND pt.default_code = ANY(%s)
           AND sc.specification_name = 'Liberación de conjugado'
           AND sc.active = true
           AND sc.min_value = 0 AND sc.max_value = 0
-    """)
+    """, (list(SPHM_CODES),))
     lib_upd = cr.rowcount
     _logger.info("MAVI-09 3.12.0: %d 'Liberación de conjugado' → rango 1-30", lib_upd)
 
-    # ── MAVI-09: Migración de conjugado 0-0 → 30-180 ─────────────────────────
+    # ── MAVI-09: Migración de conjugado 0-0 → 30-180 (solo hojas maestras) ───
     cr.execute("""
         UPDATE amunet_quality_parameter_specification_config sc
         SET min_value = 30, max_value = 180, write_date = NOW()
         FROM amunet_quality_parameter_product_rel r
+        JOIN product_template pt ON pt.id = r.product_tmpl_id
         WHERE sc.product_parameter_rel_id = r.id
           AND r.parameter_code = 'MAVI-09'
+          AND pt.default_code = ANY(%s)
           AND sc.specification_name = 'Migración de conjugado'
           AND sc.active = true
           AND sc.min_value = 0 AND sc.max_value = 0
-    """)
+    """, (list(SPHM_CODES),))
     mig_upd = cr.rowcount
     _logger.info("MAVI-09 3.12.0: %d 'Migración de conjugado' → rango 30-180", mig_upd)
 
-    # ── MAVI-09: Tiempo de liberación 0-0 → 1-30 ─────────────────────────────
+    # ── MAVI-09: Tiempo de liberación 0-0 → 1-30 (solo hojas maestras) ───────
     cr.execute("""
         UPDATE amunet_quality_parameter_specification_config sc
         SET min_value = 1, max_value = 30, write_date = NOW()
         FROM amunet_quality_parameter_product_rel r
+        JOIN product_template pt ON pt.id = r.product_tmpl_id
         WHERE sc.product_parameter_rel_id = r.id
           AND r.parameter_code = 'MAVI-09'
+          AND pt.default_code = ANY(%s)
           AND sc.specification_name = 'Tiempo de liberación'
           AND sc.active = true
           AND sc.min_value = 0 AND sc.max_value = 0
-    """)
+    """, (list(SPHM_CODES),))
     tlib_upd = cr.rowcount
     _logger.info("MAVI-09 3.12.0: %d 'Tiempo de liberación' → rango 1-30", tlib_upd)
 
-    # ── MAVI-09: Tiempo de migración 0-0 → 30-180 ────────────────────────────
+    # ── MAVI-09: Tiempo de migración 0-0 → 30-180 (solo hojas maestras) ──────
     cr.execute("""
         UPDATE amunet_quality_parameter_specification_config sc
         SET min_value = 30, max_value = 180, write_date = NOW()
         FROM amunet_quality_parameter_product_rel r
+        JOIN product_template pt ON pt.id = r.product_tmpl_id
         WHERE sc.product_parameter_rel_id = r.id
           AND r.parameter_code = 'MAVI-09'
+          AND pt.default_code = ANY(%s)
           AND sc.specification_name = 'Tiempo de migración'
           AND sc.active = true
           AND sc.min_value = 0 AND sc.max_value = 0
-    """)
+    """, (list(SPHM_CODES),))
     tmig_upd = cr.rowcount
     _logger.info("MAVI-09 3.12.0: %d 'Tiempo de migración' → rango 30-180", tmig_upd)
 
@@ -116,12 +137,14 @@ def migrate(cr, version):
         UPDATE amunet_quality_parameter_specification_config sc
         SET min_value = 30, max_value = 180, write_date = NOW()
         FROM amunet_quality_parameter_product_rel r
+        JOIN product_template pt ON pt.id = r.product_tmpl_id
         WHERE sc.product_parameter_rel_id = r.id
           AND r.parameter_code = 'MAVI-09'
+          AND pt.default_code = ANY(%s)
           AND sc.specification_name = 'Tiempo de migración en 4 cm de membrana.'
           AND sc.active = true
           AND sc.min_value = 0 AND sc.max_value = 0
-    """)
+    """, (list(SPHM_CODES),))
     tmem_upd = cr.rowcount
     _logger.info("MAVI-09 3.12.0: %d 'Tiempo de migración 4 cm membrana' → rango 30-180", tmem_upd)
 
