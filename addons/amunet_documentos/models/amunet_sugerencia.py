@@ -140,6 +140,8 @@ class AmunetDocumentoSugerencia(models.Model):
         ('planeado',    'Planeado'),
         ('no_planeado', 'No planeado'),
     ], string='Tipo de cambio', tracking=True)
+    numero_desviacion = fields.Char(
+        string='No. de desviación / no conformidad', tracking=True)
 
     # Alcance del cambio
     alcance_material   = fields.Boolean(string='Material')
