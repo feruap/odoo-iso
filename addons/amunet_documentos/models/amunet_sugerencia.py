@@ -3,35 +3,26 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 
-SECCION_SELECTION = [
-    ('objetivo', 'Objetivo'),
-    ('alcance', 'Alcance'),
-    ('introduccion', 'Introduccion'),
-    ('mision_vision', 'Mision y Vision'),
-    ('responsabilidades', 'Responsabilidades'),
-    ('organigrama', 'Organigrama'),
-    ('terminos_definiciones', 'Terminos y definiciones'),
-    ('condiciones_generales', 'Condiciones generales'),
-    ('formatos_derivados', 'Formatos derivados'),
-    ('referencias', 'Referencias bibliograficas'),
-    ('anexos', 'Anexos'),
-    ('contenido_libre', 'Contenido libre (otros)'),
-]
+class AmunetSeccionDocumento(models.Model):
+    _name = 'amunet.seccion.documento'
+    _description = 'Sección de documento controlado (catálogo)'
+    _order = 'sequence, name'
 
-SECCION_FIELD_MAP = {
-    'objetivo': 'seccion_objetivo',
-    'alcance': 'seccion_alcance',
-    'introduccion': 'seccion_introduccion',
-    'mision_vision': 'seccion_mision_vision',
-    'responsabilidades': 'seccion_responsabilidades',
-    'organigrama': 'seccion_organigrama',
-    'terminos_definiciones': 'seccion_terminos_definiciones',
-    'condiciones_generales': 'seccion_condiciones_generales',
-    'formatos_derivados': 'seccion_formatos_derivados',
-    'referencias': 'seccion_referencias',
-    'anexos': 'seccion_anexos',
-    'contenido_libre': 'contenido_html',
-}
+    sequence = fields.Integer(default=10)
+    name = fields.Char(string='Sección', required=True)
+
+
+class AmunetSugerenciaLinea(models.Model):
+    _name = 'amunet.sugerencia.linea'
+    _description = 'Línea de cambio específico en control de cambios'
+    _order = 'sequence, id'
+
+    sugerencia_id  = fields.Many2one(
+        'amunet.documento.sugerencia', required=True, ondelete='cascade')
+    sequence       = fields.Integer(default=10)
+    elemento       = fields.Char(string='Elemento que cambia')
+    texto_actual   = fields.Text(string='Dice actualmente')
+    texto_propuesto = fields.Text(string='Debe decir')
 
 
 class AmunetSugerenciaComite(models.Model):
@@ -45,9 +36,8 @@ class AmunetSugerenciaComite(models.Model):
     area             = fields.Char(string='Área')
     fecha            = fields.Date(string='Fecha')
     nombre_id        = fields.Many2one('res.users', string='Nombre')
-    usuario_firma_id = fields.Many2one(
-        'res.users', string='Firmado por', readonly=True, tracking=True)
-    fecha_firma      = fields.Date(string='Fecha de firma', readonly=True, tracking=True)
+    usuario_firma_id = fields.Many2one('res.users', string='Firmado por', readonly=True)
+    fecha_firma      = fields.Date(string='Fecha de firma', readonly=True)
 
     @api.onchange('nombre_id')
     def _onchange_nombre_id(self):
@@ -108,10 +98,22 @@ class AmunetSugerenciaComite(models.Model):
         return records
 
 
+_SECCION_CAMPO_MAP = {
+    'Objetivo':                   'seccion_objetivo',
+    'Alcance':                    'seccion_alcance',
+    'Responsabilidades':          'seccion_responsabilidades',
+    'Términos y definiciones':    'seccion_terminos_definiciones',
+    'Condiciones generales':      'seccion_condiciones_generales',
+    'Desarrollo del proceso':     '_actividades',
+    'Formatos derivados':         'seccion_formatos_derivados',
+    'Referencias bibliográficas': 'seccion_referencias',
+}
+
+
 class AmunetDocumentoSugerencia(models.Model):
     _name = 'amunet.documento.sugerencia'
-    _description = 'Sugerencia de cambio en documento controlado'
-    _inherit = ['mail.thread']
+    _description = 'Control de cambios en documento controlado'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'fecha_creacion desc'
 
     name = fields.Char(string='Resumen', compute='_compute_name', store=True)
@@ -119,12 +121,19 @@ class AmunetDocumentoSugerencia(models.Model):
         'amunet.documento', required=True, ondelete='cascade', tracking=True)
     documento_codigo = fields.Char(related='documento_id.codigo',
                                    string='Codigo del documento', store=True)
-    seccion = fields.Selection(
-        SECCION_SELECTION, string='Seccion a cambiar', required=True, tracking=True)
-    texto_original = fields.Html(
-        string='Texto actual', sanitize=True, sanitize_tags=False, readonly=True)
-    texto_propuesto = fields.Html(
-        string='Texto propuesto', sanitize=True, sanitize_tags=False, required=True)
+    secciones_ids = fields.Many2many(
+        'amunet.seccion.documento',
+        'amunet_sugerencia_seccion_rel',
+        'sugerencia_id', 'seccion_id',
+        string='Secciones afectadas',
+        tracking=True)
+    cambios_ids = fields.One2many(
+        'amunet.sugerencia.linea', 'sugerencia_id',
+        string='Detalle de cambios')
+    referencia_html = fields.Html(
+        string='Contenido actual del documento',
+        compute='_compute_referencia_html',
+        sanitize=False)
     motivo = fields.Text(string='Justificación del cambio', required=True, tracking=True)
 
     tipo_cambio = fields.Selection([
@@ -133,36 +142,88 @@ class AmunetDocumentoSugerencia(models.Model):
     ], string='Tipo de cambio', tracking=True)
 
     # Alcance del cambio
-    alcance_material       = fields.Boolean(string='Material')
-    alcance_documentos     = fields.Boolean(string='Documentos')
-    alcance_equipo         = fields.Boolean(string='Equipos')
-    alcance_procesos       = fields.Boolean(string='Procesos')
-    alcance_estructura     = fields.Boolean(string='Infraestructura')
-    alcance_sgc            = fields.Boolean(string='SGC')
+    alcance_material   = fields.Boolean(string='Material')
+    alcance_documentos = fields.Boolean(string='Documentos')
+    alcance_equipo     = fields.Boolean(string='Equipos')
+    alcance_procesos   = fields.Boolean(string='Procesos')
+    alcance_estructura = fields.Boolean(string='Infraestructura')
+    alcance_sgc        = fields.Boolean(string='SGC')
 
     comite_ids = fields.One2many(
-        'amunet.sugerencia.comite', 'sugerencia_id',
-        string='Comité técnico')
+        'amunet.sugerencia.comite', 'sugerencia_id', string='Comité técnico')
     comite_users_ids = fields.Many2many(
         'res.users', compute='_compute_comite_users_ids')
+
+    @api.depends('secciones_ids', 'documento_id')
+    def _compute_referencia_html(self):
+        for r in self:
+            if not r.documento_id or not r.secciones_ids:
+                r.referencia_html = False
+                continue
+            partes = []
+            for seccion in r.secciones_ids.sorted('sequence'):
+                campo = _SECCION_CAMPO_MAP.get(seccion.name)
+                if not campo:
+                    continue
+                if campo == '_actividades':
+                    actividades = r.documento_id.actividad_ids.sorted('sequence')
+                    if actividades:
+                        filas = ''.join(
+                            '<tr>'
+                            '<td style="padding:4px 8px;border:1px solid #ddd">%s</td>'
+                            '<td style="padding:4px 8px;border:1px solid #ddd">%s</td>'
+                            '<td style="padding:4px 8px;border:1px solid #ddd">%s</td>'
+                            '<td style="padding:4px 8px;border:1px solid #ddd">%s</td>'
+                            '</tr>' % (
+                                a.sequence, a.actividad or '',
+                                a.descripcion or '', a.responsable or '')
+                            for a in actividades
+                        )
+                        partes.append(
+                            '<p style="margin:12px 0 4px;font-weight:bold;color:#555">'
+                            'Desarrollo del proceso</p>'
+                            '<table style="border-collapse:collapse;width:100%;font-size:0.9em">'
+                            '<tr style="background:#f5f5f5">'
+                            '<th style="padding:4px 8px;border:1px solid #ddd">#</th>'
+                            '<th style="padding:4px 8px;border:1px solid #ddd">Actividad</th>'
+                            '<th style="padding:4px 8px;border:1px solid #ddd">Descripción</th>'
+                            '<th style="padding:4px 8px;border:1px solid #ddd">Responsable</th>'
+                            '</tr>' + filas + '</table>'
+                        )
+                elif hasattr(r.documento_id, campo):
+                    valor = getattr(r.documento_id, campo)
+                    if valor:
+                        partes.append(
+                            '<p style="margin:12px 0 4px;font-weight:bold;color:#555">%s</p>'
+                            '<div style="border-left:3px solid #1565c0;padding:8px 12px;'
+                            'background:#f8faff;margin-bottom:8px">%s</div>'
+                            % (seccion.name, valor)
+                        )
+            r.referencia_html = ''.join(partes) if partes else False
 
     def _compute_comite_users_ids(self):
         group = self.env.ref(
             'amunet_documentos.group_comite_tecnico', raise_if_not_found=False)
-        users = group.users if group else self.env['res.users']
+        if group:
+            self.env.cr.execute(
+                "SELECT uid FROM res_groups_users_rel WHERE gid = %s", (group.id,))
+            user_ids = [row[0] for row in self.env.cr.fetchall()]
+            users = self.env['res.users'].browse(user_ids)
+        else:
+            users = self.env['res.users']
         for r in self:
             r.comite_users_ids = users
 
     # Firmas de aplicación del cambio
     realizo_id       = fields.Many2one('res.users', string='Realizó')
     firma_realizo_id = fields.Many2one('res.users', string='Firmó (realizó)', readonly=True)
-    fecha_realizo    = fields.Date(string='Fecha', readonly=True)
+    fecha_realizo    = fields.Date(string='Fecha firma (realizó)', readonly=True)
     reviso_id        = fields.Many2one('res.users', string='Revisó')
     firma_reviso_id  = fields.Many2one('res.users', string='Firmó (revisó)', readonly=True)
-    fecha_reviso     = fields.Date(string='Fecha', readonly=True)
+    fecha_reviso     = fields.Date(string='Fecha firma (revisó)', readonly=True)
     aprobo_id        = fields.Many2one('res.users', string='Aprobó')
     firma_aprobo_id  = fields.Many2one('res.users', string='Firmó (aprobó)', readonly=True)
-    fecha_aprobo     = fields.Date(string='Fecha', readonly=True)
+    fecha_aprobo     = fields.Date(string='Fecha firma (aprobó)', readonly=True)
 
     def _amunet_signature_allowed_methods(self):
         return {
@@ -218,7 +279,7 @@ class AmunetDocumentoSugerencia(models.Model):
 
     state = fields.Selection([
         ('pendiente', 'Pendiente de decision'),
-        ('aceptada', 'Aceptada'),
+        ('aceptada',  'Aceptada'),
         ('rechazada', 'Rechazada'),
     ], string='Estado', default='pendiente', tracking=True)
     creado_por_id = fields.Many2one(
@@ -231,75 +292,48 @@ class AmunetDocumentoSugerencia(models.Model):
     fecha_decision = fields.Datetime(string='Fecha de decision', readonly=True)
     motivo_rechazo = fields.Text(string='Motivo del rechazo', tracking=True)
 
-    @api.depends('documento_codigo', 'seccion', 'state')
+    @api.depends('documento_codigo', 'secciones_ids')
     def _compute_name(self):
-        seccion_dict = dict(SECCION_SELECTION)
         for r in self:
-            r.name = '%s - %s' % (r.documento_codigo or '?',
-                                  seccion_dict.get(r.seccion, '?'))
-
-    @api.onchange('seccion', 'documento_id')
-    def _onchange_seccion_prellenar(self):
-        for r in self:
-            if r.documento_id and r.seccion:
-                field = SECCION_FIELD_MAP.get(r.seccion)
-                if field:
-                    actual = getattr(r.documento_id, field) or ''
-                    r.texto_original = actual
-                    if not r.texto_propuesto:
-                        r.texto_propuesto = actual
+            secciones = ', '.join(r.secciones_ids.mapped('name')) if r.secciones_ids else '?'
+            r.name = '%s — %s' % (r.documento_codigo or '?', secciones)
 
     @api.model_create_multi
     def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('documento_id') and vals.get('seccion') and not vals.get('texto_original'):
-                doc = self.env['amunet.documento'].browse(vals['documento_id'])
-                field = SECCION_FIELD_MAP.get(vals['seccion'])
-                if field:
-                    vals['texto_original'] = getattr(doc, field) or ''
         records = super().create(vals_list)
         for r in records:
+            secciones_str = ', '.join(r.secciones_ids.mapped('name')) or '(sin sección)'
             if r.documento_id.elabora_id:
                 r.documento_id.activity_schedule(
                     'mail.mail_activity_data_todo',
-                    summary=_('Sugerencia de cambio en %s') % r.documento_id.codigo,
+                    summary=_('Control de cambios en %s') % r.documento_id.codigo,
                     note=_(
-                        '<p>%s sugiere un cambio en la seccion <b>%s</b> del documento '
-                        '<b>%s</b>.</p><p><b>Motivo:</b> %s</p>'
-                        '<p>Abre el documento y ve a la pestana "Sugerencias" para decidir.</p>'
-                    ) % (r.creado_por_id.name,
-                         dict(SECCION_SELECTION).get(r.seccion, r.seccion),
-                         r.documento_id.codigo, r.motivo),
+                        '<p>%s abrió un control de cambios en <b>%s</b>.</p>'
+                        '<p><b>Secciones:</b> %s</p>'
+                        '<p><b>Justificación:</b> %s</p>'
+                    ) % (r.creado_por_id.name, r.documento_id.codigo,
+                         secciones_str, r.motivo),
                     user_id=r.documento_id.elabora_id.id,
                 )
             r.documento_id.message_post(
                 body=_(
-                    '<p><b>Nueva sugerencia</b> de %s en la seccion <b>%s</b>.</p>'
-                    '<p><b>Motivo:</b> %s</p>'
-                ) % (r.creado_por_id.name,
-                     dict(SECCION_SELECTION).get(r.seccion, r.seccion),
-                     r.motivo),
-                subject=_('Sugerencia de cambio'),
+                    '<p><b>Control de cambios</b> iniciado por %s.</p>'
+                    '<p><b>Secciones:</b> %s — <b>Justificación:</b> %s</p>'
+                ) % (r.creado_por_id.name, secciones_str, r.motivo),
+                subject=_('Control de cambios'),
             )
         return records
 
     def action_aceptar(self):
         for r in self:
             if r.state != 'pendiente':
-                raise UserError(_('Esta sugerencia ya tiene decision (%s).') % r.state)
+                raise UserError(_('Este control de cambios ya tiene decisión (%s).') % r.state)
             if r.documento_id.elabora_id \
                     and r.documento_id.elabora_id.id != self.env.user.id \
                     and not self.env.user.has_group('amunet_documentos.group_documentos_manager'):
                 raise UserError(_(
-                    'Solo el elaborador del documento (%s) puede aceptar o rechazar sugerencias.'
+                    'Solo el elaborador del documento (%s) puede aceptar o rechazar.'
                 ) % r.documento_id.elabora_id.name)
-            if r.documento_id.state == 'vigente':
-                raise UserError(_(
-                    'No se puede aplicar una sugerencia a un documento Vigente. '
-                    'Pasalo a borrador (via nueva version) primero.'))
-            field = SECCION_FIELD_MAP.get(r.seccion)
-            if field:
-                r.documento_id.sudo().write({field: r.texto_propuesto})
             r.write({
                 'state': 'aceptada',
                 'decidido_por_id': self.env.user.id,
@@ -308,31 +342,28 @@ class AmunetDocumentoSugerencia(models.Model):
             if r.creado_por_id:
                 r.documento_id.activity_schedule(
                     'mail.mail_activity_data_todo',
-                    summary=_('Sugerencia aceptada en %s') % r.documento_id.codigo,
+                    summary=_('Control de cambios aceptado en %s') % r.documento_id.codigo,
                     note=_(
-                        '<p>%s acepto tu sugerencia en la seccion <b>%s</b>.</p>'
-                    ) % (self.env.user.name,
-                         dict(SECCION_SELECTION).get(r.seccion, r.seccion)),
+                        '<p>%s aceptó el control de cambios. Aplica los cambios propuestos '
+                        'en el documento y genera la nueva versión.</p>'
+                    ) % self.env.user.name,
                     user_id=r.creado_por_id.id,
                 )
             r.documento_id.message_post(
-                body=_(
-                    '<p><b>Sugerencia aceptada</b> por %s en la seccion <b>%s</b>.</p>'
-                ) % (self.env.user.name,
-                     dict(SECCION_SELECTION).get(r.seccion, r.seccion)),
+                body=_('<p><b>Control de cambios aceptado</b> por %s.</p>') % self.env.user.name,
             )
 
     def action_rechazar(self):
         for r in self:
             if r.state != 'pendiente':
-                raise UserError(_('Esta sugerencia ya tiene decision (%s).') % r.state)
+                raise UserError(_('Este control de cambios ya tiene decisión (%s).') % r.state)
             if not (r.motivo_rechazo or '').strip():
                 raise UserError(_('Indica el motivo del rechazo.'))
             if r.documento_id.elabora_id \
                     and r.documento_id.elabora_id.id != self.env.user.id \
                     and not self.env.user.has_group('amunet_documentos.group_documentos_manager'):
                 raise UserError(_(
-                    'Solo el elaborador del documento (%s) puede aceptar o rechazar sugerencias.'
+                    'Solo el elaborador del documento (%s) puede aceptar o rechazar.'
                 ) % r.documento_id.elabora_id.name)
             r.write({
                 'state': 'rechazada',
@@ -342,14 +373,14 @@ class AmunetDocumentoSugerencia(models.Model):
             if r.creado_por_id:
                 r.documento_id.activity_schedule(
                     'mail.mail_activity_data_todo',
-                    summary=_('Sugerencia rechazada en %s') % r.documento_id.codigo,
+                    summary=_('Control de cambios rechazado en %s') % r.documento_id.codigo,
                     note=_(
-                        '<p>%s rechazo tu sugerencia.</p><p><b>Motivo del rechazo:</b> %s</p>'
+                        '<p>%s rechazó el control de cambios.</p><p><b>Motivo:</b> %s</p>'
                     ) % (self.env.user.name, r.motivo_rechazo),
                     user_id=r.creado_por_id.id,
                 )
             r.documento_id.message_post(
                 body=_(
-                    '<p><b>Sugerencia rechazada</b> por %s. <b>Motivo:</b> %s</p>'
+                    '<p><b>Control de cambios rechazado</b> por %s. <b>Motivo:</b> %s</p>'
                 ) % (self.env.user.name, r.motivo_rechazo),
             )

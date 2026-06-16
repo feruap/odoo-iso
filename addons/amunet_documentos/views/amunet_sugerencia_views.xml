@@ -9,7 +9,7 @@
                   decoration-muted="state == 'rechazada'">
                 <field name="fecha_creacion"/>
                 <field name="documento_codigo"/>
-                <field name="seccion"/>
+                <field name="secciones_ids" widget="many2many_tags"/>
                 <field name="creado_por_id"/>
                 <field name="motivo"/>
                 <field name="state" widget="badge"/>
@@ -28,7 +28,7 @@
                             type="object" class="btn-success"
                             icon="fa-check"
                             invisible="state != 'pendiente'"
-                            confirm="El texto propuesto reemplazara el texto actual de esa seccion del documento. Continuar?"/>
+                            confirm="¿Confirmas que este control de cambios fue revisado y aprobado?"/>
                     <button name="action_rechazar" string="Rechazar"
                             type="object" class="btn-danger"
                             icon="fa-times"
@@ -47,7 +47,6 @@
                         <group>
                             <field name="creado_por_id" string="Nombre del solicitante" readonly="1"/>
                             <field name="fecha_creacion" readonly="1"/>
-                            <field name="seccion" readonly="state != 'pendiente'"/>
                             <field name="tipo_cambio" readonly="state != 'pendiente'"
                                    widget="radio" options="{'horizontal': true}"/>
                         </group>
@@ -57,6 +56,12 @@
                             <field name="fecha_decision" readonly="1"
                                    invisible="state == 'pendiente'"/>
                         </group>
+                    </group>
+                    <group string="Secciones afectadas">
+                        <field name="secciones_ids" widget="many2many_tags"
+                               readonly="state != 'pendiente'"
+                               nolabel="1"
+                               placeholder="Selecciona una o varias secciones que cambian..."/>
                     </group>
                     <group string="Alcance del cambio (marque con X la casilla correspondiente)">
                         <group>
@@ -74,19 +79,26 @@
                         <field name="motivo" nolabel="1" readonly="state != 'pendiente'"
                                placeholder="Describe por qué se propone este cambio."/>
                     </group>
-                    <notebook>
-                        <page string="Texto actual (como esta hoy)">
-                            <field name="texto_original" readonly="1"/>
-                        </page>
-                        <page string="Texto propuesto (como quedaria)">
-                            <field name="texto_propuesto" readonly="state != 'pendiente'"
-                                   placeholder="Edita aqui dejando solo el contenido final."/>
-                        </page>
-                    </notebook>
-                    <group string="Motivo del rechazo" invisible="state != 'rechazada' and not motivo_rechazo">
+                    <group invisible="not referencia_html"
+                           string="Contenido actual del documento (solo lectura — para referencia)">
+                        <field name="referencia_html" nolabel="1" readonly="1"/>
+                    </group>
+                    <separator string="Detalle de cambios (Dice actualmente → Debe decir)"/>
+                    <field name="cambios_ids" readonly="state != 'pendiente'">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="elemento" string="Elemento que cambia"
+                                   placeholder="Ej: Actividad 1, Párrafo del objetivo..."/>
+                            <field name="texto_actual" string="Dice actualmente"
+                                   optional="show"/>
+                            <field name="texto_propuesto" string="Debe decir"
+                                   optional="show"/>
+                        </list>
+                    </field>
+                    <group string="Motivo del rechazo (obligatorio para rechazar)">
                         <field name="motivo_rechazo" nolabel="1"
                                readonly="state != 'pendiente'"
-                               placeholder="(Obligatorio si rechazas) Por que rechazas el cambio."/>
+                               placeholder="Si vas a rechazar, escribe aquí el motivo antes de hacer clic en Rechazar."/>
                     </group>
                     <separator string="Comité técnico"/>
                     <field name="comite_users_ids" invisible="1"/>
@@ -158,18 +170,18 @@
     </record>
 
     <record id="action_amunet_sugerencia" model="ir.actions.act_window">
-        <field name="name">Sugerencias de cambio</field>
+        <field name="name">Control de cambios</field>
         <field name="res_model">amunet.documento.sugerencia</field>
         <field name="view_mode">list,form</field>
     </record>
 
     <record id="action_amunet_sugerencia_mis_pendientes" model="ir.actions.act_window">
-        <field name="name">Sugerencias por decidir (mias)</field>
+        <field name="name">Controles de cambio pendientes (mis documentos)</field>
         <field name="res_model">amunet.documento.sugerencia</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('state','=','pendiente'),('documento_id.elabora_id','=',uid)]</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">No tienes sugerencias por decidir</p>
+            <p class="o_view_nocontent_smiling_face">No tienes controles de cambio por decidir</p>
         </field>
     </record>
 </odoo>

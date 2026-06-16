@@ -48,7 +48,7 @@
                             invisible="state not in ('en_revision','obsoleto')"/>
                     <button name="action_open_sugerencia_wizard"
                             string="Control de cambios" type="object"
-                            invisible="state != 'en_revision'"
+                            invisible="state != 'vigente'"
                             icon="fa-lightbulb-o"/>
                     <button name="action_print_documento"
                             string="Imprimir / Descargar"
