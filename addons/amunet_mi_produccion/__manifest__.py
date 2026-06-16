@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Mi produccion',
-    'version': '19.0.1.6.0',
+    'version': '19.0.1.7.0',
     'category': 'Manufacturing',
     'summary': 'Control de piso por actividad: el operador da clic en '
                'Inicia / Pausa / Termina por lote; alimenta la orden en '
