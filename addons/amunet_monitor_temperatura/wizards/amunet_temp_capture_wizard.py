@@ -30,12 +30,24 @@ class AmunetTempCaptureWizard(models.TransientModel):
         if not reading.area_id.amunet_user_can_capture():
             raise UserError(_('No perteneces al area "%s".') % reading.area_id.name)
         reading._amunet_check_capture_window()
-        emp = self.env.user.employee_id
-        if not emp:
-            raise UserError(_('Tu usuario no tiene un empleado asociado para validar el PIN.'))
-        if not emp.pin or (self.pin or '').strip() != emp.pin.strip():
-            raise UserError(_('PIN incorrecto.'))
+        self._amunet_validate_pin()
         if self.hum_required and not self.hum_value and self.hum_value != 0.0:
             raise UserError(_('Captura la humedad (es obligatoria en esta area).'))
         reading._apply_capture(self.temp_value, self.hum_value, self.observation)
         return {'type': 'ir.actions.act_window_close'}
+
+    def _amunet_validate_pin(self):
+        """Valida el PIN contra el sistema de firmas (amunet.quality.signature.pin),
+        el mismo que usan los demas modulos; con respaldo al PIN de empleado."""
+        user = self.env.user
+        plain = (self.pin or '').strip()
+        if not plain:
+            raise UserError(_('Captura tu PIN.'))
+        pin_rec = self.env['amunet.quality.signature.pin'].sudo().search(
+            [('user_id', '=', user.id)], limit=1)
+        if pin_rec and pin_rec.check_pin(plain):
+            return
+        emp = user.employee_id
+        if emp and emp.pin and plain == emp.pin.strip():
+            return
+        raise UserError(_('PIN incorrecto.'))
