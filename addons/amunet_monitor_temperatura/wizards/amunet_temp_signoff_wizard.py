@@ -30,11 +30,20 @@ class AmunetTempSignoffWizard(models.TransientModel):
                 w.info = ''
 
     def _check_pin(self):
-        emp = self.env.user.employee_id
-        if not emp:
-            raise UserError(_('Tu usuario no tiene un empleado asociado para validar el PIN.'))
-        if not emp.pin or (self.pin or '').strip() != emp.pin.strip():
-            raise UserError(_('PIN incorrecto.'))
+        """Valida el PIN contra el sistema de firmas (amunet.quality.signature.pin),
+        el mismo que usan los demas modulos; con respaldo al PIN de empleado."""
+        user = self.env.user
+        plain = (self.pin or '').strip()
+        if not plain:
+            raise UserError(_('Captura tu PIN.'))
+        pin_rec = self.env['amunet.quality.signature.pin'].sudo().search(
+            [('user_id', '=', user.id)], limit=1)
+        if pin_rec and pin_rec.check_pin(plain):
+            return
+        emp = user.employee_id
+        if emp and emp.pin and plain == emp.pin.strip():
+            return
+        raise UserError(_('PIN incorrecto.'))
 
     def action_confirm(self):
         self.ensure_one()
