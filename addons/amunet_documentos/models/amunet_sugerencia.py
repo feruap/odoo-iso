@@ -134,6 +134,10 @@ class AmunetDocumentoSugerencia(models.Model):
         string='Contenido actual del documento',
         compute='_compute_referencia_html',
         sanitize=False)
+    diff_html = fields.Html(
+        string='Resumen de cambios',
+        compute='_compute_diff_html',
+        sanitize=False)
     motivo = fields.Text(string='Justificación del cambio', required=True, tracking=True)
     aplica_analisis_riesgos = fields.Boolean(
         string='Aplica análisis de riesgos', default=False, tracking=True)
@@ -166,7 +170,8 @@ class AmunetDocumentoSugerencia(models.Model):
             if not r.documento_id or not r.secciones_ids:
                 r.referencia_html = False
                 continue
-            partes = []
+            columnas = []
+            tabla_actividades = ''
             for seccion in r.secciones_ids.sorted('sequence'):
                 campo = _SECCION_CAMPO_MAP.get(seccion.name)
                 if not campo:
@@ -176,36 +181,99 @@ class AmunetDocumentoSugerencia(models.Model):
                     if actividades:
                         filas = ''.join(
                             '<tr>'
-                            '<td style="padding:4px 8px;border:1px solid #ddd">%s</td>'
-                            '<td style="padding:4px 8px;border:1px solid #ddd">%s</td>'
-                            '<td style="padding:4px 8px;border:1px solid #ddd">%s</td>'
-                            '<td style="padding:4px 8px;border:1px solid #ddd">%s</td>'
+                            '<td style="padding:3px 6px;border:1px solid #ddd;white-space:nowrap">%s</td>'
+                            '<td style="padding:3px 6px;border:1px solid #ddd">%s</td>'
+                            '<td style="padding:3px 6px;border:1px solid #ddd">%s</td>'
+                            '<td style="padding:3px 6px;border:1px solid #ddd;white-space:nowrap">%s</td>'
                             '</tr>' % (
                                 a.sequence, a.actividad or '',
                                 a.descripcion or '', a.responsable or '')
                             for a in actividades
                         )
-                        partes.append(
-                            '<p style="margin:12px 0 4px;font-weight:bold;color:#555">'
+                        tabla_actividades = (
+                            '<div style="margin-top:12px">'
+                            '<p style="margin:0 0 4px;font-weight:bold;font-size:0.85em;'
+                            'color:#555;text-transform:uppercase;letter-spacing:.5px">'
                             'Desarrollo del proceso</p>'
-                            '<table style="border-collapse:collapse;width:100%;font-size:0.9em">'
+                            '<table style="border-collapse:collapse;width:100%;font-size:0.85em">'
                             '<tr style="background:#f5f5f5">'
-                            '<th style="padding:4px 8px;border:1px solid #ddd">#</th>'
-                            '<th style="padding:4px 8px;border:1px solid #ddd">Actividad</th>'
-                            '<th style="padding:4px 8px;border:1px solid #ddd">Descripción</th>'
-                            '<th style="padding:4px 8px;border:1px solid #ddd">Responsable</th>'
-                            '</tr>' + filas + '</table>'
+                            '<th style="padding:3px 6px;border:1px solid #ddd">#</th>'
+                            '<th style="padding:3px 6px;border:1px solid #ddd">Actividad</th>'
+                            '<th style="padding:3px 6px;border:1px solid #ddd">Descripción</th>'
+                            '<th style="padding:3px 6px;border:1px solid #ddd">Responsable</th>'
+                            '</tr>' + filas + '</table></div>'
                         )
                 elif hasattr(r.documento_id, campo):
                     valor = getattr(r.documento_id, campo)
                     if valor:
-                        partes.append(
-                            '<p style="margin:12px 0 4px;font-weight:bold;color:#555">%s</p>'
+                        columnas.append(
                             '<div style="border-left:3px solid #1565c0;padding:8px 12px;'
-                            'background:#f8faff;margin-bottom:8px">%s</div>'
-                            % (seccion.name, valor)
+                            'background:#f8faff;border-radius:0 4px 4px 0;min-width:0">'
+                            '<p style="margin:0 0 6px;font-weight:bold;font-size:0.85em;'
+                            'color:#555;text-transform:uppercase;letter-spacing:.5px">%s</p>'
+                            '<div style="font-size:0.9em">%s</div>'
+                            '</div>' % (seccion.name, valor)
                         )
+            partes = []
+            if columnas:
+                grid = ''.join(
+                    '<div>%s</div>' % c for c in columnas)
+                partes.append(
+                    '<div style="display:grid;grid-template-columns:repeat(auto-fill,'
+                    'minmax(280px,1fr));gap:12px;margin-bottom:8px">%s</div>' % grid)
+            if tabla_actividades:
+                partes.append(tabla_actividades)
             r.referencia_html = ''.join(partes) if partes else False
+
+    @api.depends('cambios_ids', 'cambios_ids.elemento',
+                 'cambios_ids.texto_actual', 'cambios_ids.texto_propuesto',
+                 'secciones_ids', 'motivo')
+    def _compute_diff_html(self):
+        for r in self:
+            if not r.cambios_ids:
+                r.diff_html = False
+                continue
+            secciones = ', '.join(r.secciones_ids.mapped('name')) if r.secciones_ids else '—'
+            filas = ''
+            for linea in r.cambios_ids.sorted('sequence'):
+                filas += (
+                    '<tr>'
+                    '<td style="padding:8px 10px;border:1px solid #e5e7eb;'
+                    'font-weight:600;vertical-align:top;width:20%%">%s</td>'
+                    '<td style="padding:8px 10px;border:1px solid #e5e7eb;'
+                    'background:#fff5f5;vertical-align:top;width:40%%">'
+                    '<span style="display:block;font-size:0.75em;color:#b91c1c;'
+                    'font-weight:700;margin-bottom:4px">&#10007; DICE ACTUALMENTE</span>'
+                    '%s</td>'
+                    '<td style="padding:8px 10px;border:1px solid #e5e7eb;'
+                    'background:#f0fdf4;vertical-align:top;width:40%%">'
+                    '<span style="display:block;font-size:0.75em;color:#15803d;'
+                    'font-weight:700;margin-bottom:4px">&#10003; DEBE DECIR</span>'
+                    '%s</td>'
+                    '</tr>'
+                ) % (
+                    linea.elemento or '—',
+                    linea.texto_actual or '<em style="color:#aaa">Sin texto anterior</em>',
+                    linea.texto_propuesto or '<em style="color:#aaa">Se elimina</em>',
+                )
+            r.diff_html = '''
+<div style="margin-top:4px">
+  <p style="margin:0 0 8px;font-size:0.85em;color:#6b7280">
+    <b>Secciones:</b> %s &nbsp;|&nbsp; <b>Justificación:</b> %s
+  </p>
+  <table style="width:100%%;border-collapse:collapse;font-size:0.9em">
+    <thead>
+      <tr style="background:#f9fafb">
+        <th style="padding:6px 10px;border:1px solid #e5e7eb;text-align:left">Elemento</th>
+        <th style="padding:6px 10px;border:1px solid #e5e7eb;text-align:left;
+            background:#fde8e8;color:#b91c1c">Dice actualmente</th>
+        <th style="padding:6px 10px;border:1px solid #e5e7eb;text-align:left;
+            background:#dcfce7;color:#15803d">Debe decir</th>
+      </tr>
+    </thead>
+    <tbody>%s</tbody>
+  </table>
+</div>''' % (secciones, r.motivo or '—', filas)
 
     def _compute_comite_users_ids(self):
         group = self.env.ref(
@@ -284,10 +352,11 @@ class AmunetDocumentoSugerencia(models.Model):
         self.message_post(body=_('<p><b>%s</b> registró su firma como quien aprobó la aplicación del cambio.</p>') % self.env.user.name)
 
     state = fields.Selection([
+        ('borrador',  'Borrador'),
         ('pendiente', 'Pendiente de decision'),
         ('aceptada',  'Aceptada'),
         ('rechazada', 'Rechazada'),
-    ], string='Estado', default='pendiente', tracking=True)
+    ], string='Estado', default='borrador', tracking=True)
     creado_por_id = fields.Many2one(
         'res.users', string='Propuesto por',
         default=lambda self: self.env.user, readonly=True, tracking=True)
@@ -306,15 +375,26 @@ class AmunetDocumentoSugerencia(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        records = super().create(vals_list)
-        for r in records:
+        return super().create(vals_list)
+
+    def action_enviar(self):
+        for r in self:
+            if r.state != 'borrador':
+                raise UserError(_('Este control de cambios ya fue enviado.'))
+            if not r.documento_id:
+                raise UserError(_('Selecciona el documento antes de enviar.'))
+            if not r.secciones_ids:
+                raise UserError(_('Indica al menos una sección afectada.'))
+            if not (r.motivo or '').strip():
+                raise UserError(_('Escribe la justificación del cambio.'))
+            r.write({'state': 'pendiente'})
             secciones_str = ', '.join(r.secciones_ids.mapped('name')) or '(sin sección)'
             if r.documento_id.elabora_id:
                 r.documento_id.activity_schedule(
                     'mail.mail_activity_data_todo',
                     summary=_('Control de cambios en %s') % r.documento_id.codigo,
                     note=_(
-                        '<p>%s abrió un control de cambios en <b>%s</b>.</p>'
+                        '<p>%s envió un control de cambios en <b>%s</b>.</p>'
                         '<p><b>Secciones:</b> %s</p>'
                         '<p><b>Justificación:</b> %s</p>'
                     ) % (r.creado_por_id.name, r.documento_id.codigo,
@@ -323,12 +403,17 @@ class AmunetDocumentoSugerencia(models.Model):
                 )
             r.documento_id.message_post(
                 body=_(
-                    '<p><b>Control de cambios</b> iniciado por %s.</p>'
+                    '<p><b>Control de cambios enviado</b> por %s.</p>'
                     '<p><b>Secciones:</b> %s — <b>Justificación:</b> %s</p>'
                 ) % (r.creado_por_id.name, secciones_str, r.motivo),
                 subject=_('Control de cambios'),
             )
-        return records
+
+    def action_descartar(self):
+        for r in self:
+            if r.state != 'borrador':
+                raise UserError(_('Solo puedes descartar un control de cambios en borrador.'))
+        return self.unlink()
 
     def action_aceptar(self):
         for r in self:
@@ -359,19 +444,52 @@ class AmunetDocumentoSugerencia(models.Model):
                 'decidido_por_id': self.env.user.id,
                 'fecha_decision': fields.Datetime.now(),
             })
-            if r.creado_por_id:
-                r.documento_id.activity_schedule(
-                    'mail.mail_activity_data_todo',
-                    summary=_('Control de cambios aceptado en %s') % r.documento_id.codigo,
-                    note=_(
-                        '<p>%s aceptó el control de cambios. Aplica los cambios propuestos '
-                        'en el documento y genera la nueva versión.</p>'
+            # Construir descripción en texto plano para el campo Text del documento
+            lineas_desc = []
+            if r.secciones_ids:
+                secs = ', '.join(r.secciones_ids.mapped('name'))
+                lineas_desc.append('Secciones afectadas: %s' % secs)
+            if r.cambios_ids:
+                lineas_desc.append('')
+                for linea in r.cambios_ids.sorted('sequence'):
+                    lineas_desc.append('• Elemento: %s' % (linea.elemento or '—'))
+                    if linea.texto_actual:
+                        lineas_desc.append('  Dice actualmente: %s' % linea.texto_actual)
+                    if linea.texto_propuesto:
+                        lineas_desc.append('  Debe decir: %s' % linea.texto_propuesto)
+                    lineas_desc.append('')
+            desc_cambio = '\n'.join(lineas_desc).strip() or 'Ver control de cambios adjunto.'
+            justificacion = r.motivo or ''
+            # Poblar campos del documento y lanzar nueva versión automáticamente
+            if r.documento_id and r.documento_id.state == 'vigente':
+                r.documento_id.with_context(
+                    amunet_documento_workflow_write=True
+                ).write({
+                    'descripcion_cambio_pendiente': desc_cambio,
+                    'justificacion_pendiente': justificacion,
+                })
+                r.documento_id.action_nueva_version()
+                r.documento_id.message_post(
+                    body=_(
+                        '<p><b>Nueva versión iniciada</b> a partir del control de cambios '
+                        'aceptado por %s.</p>'
                     ) % self.env.user.name,
-                    user_id=r.creado_por_id.id,
                 )
-            r.documento_id.message_post(
-                body=_('<p><b>Control de cambios aceptado</b> por %s.</p>') % self.env.user.name,
-            )
+                if r.creado_por_id:
+                    r.documento_id.activity_schedule(
+                        'mail.mail_activity_data_todo',
+                        summary=_('Aplicar cambios en %s y mandar a revisión') % r.documento_id.codigo,
+                        note=_(
+                            '<p>El control de cambios fue aceptado por %s. '
+                            'El documento ya quedó en borrador (nueva versión). '
+                            'Aplica los cambios indicados en el contenido y mándalo a revisión.</p>'
+                        ) % self.env.user.name,
+                        user_id=r.creado_por_id.id,
+                    )
+            else:
+                r.documento_id.message_post(
+                    body=_('<p><b>Control de cambios aceptado</b> por %s.</p>') % self.env.user.name,
+                )
 
     def action_rechazar(self):
         for r in self:

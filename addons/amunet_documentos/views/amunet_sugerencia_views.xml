@@ -4,7 +4,8 @@
         <field name="name">amunet.documento.sugerencia.list</field>
         <field name="model">amunet.documento.sugerencia</field>
         <field name="arch" type="xml">
-            <list decoration-warning="state == 'pendiente'"
+            <list decoration-info="state == 'borrador'"
+                  decoration-warning="state == 'pendiente'"
                   decoration-success="state == 'aceptada'"
                   decoration-muted="state == 'rechazada'">
                 <field name="fecha_creacion"/>
@@ -24,6 +25,16 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button name="action_enviar" string="Enviar control de cambios"
+                            type="object" class="btn-primary"
+                            icon="fa-paper-plane"
+                            invisible="state != 'borrador'"
+                            confirm="¿Estás segura de que el control de cambios está completo y listo para enviarse?"/>
+                    <button name="action_descartar" string="Descartar"
+                            type="object" class="btn-secondary"
+                            icon="fa-trash"
+                            invisible="state != 'borrador'"
+                            confirm="¿Segura que quieres descartar este control de cambios? Se eliminará permanentemente."/>
                     <button name="action_aceptar" string="Aceptar"
                             type="object" class="btn-success"
                             icon="fa-check"
@@ -36,7 +47,7 @@
                             invisible="state != 'pendiente'"
                             groups="amunet_documentos.group_responsable_sanitario"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="pendiente,aceptada,rechazada"/>
+                           statusbar_visible="borrador,pendiente,aceptada,rechazada"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -101,8 +112,15 @@
                            string="Contenido actual del documento (solo lectura — para referencia)">
                         <field name="referencia_html" nolabel="1" readonly="1"/>
                     </group>
-                    <separator string="Detalle de cambios (Dice actualmente → Debe decir)"/>
-                    <field name="cambios_ids" readonly="state != 'pendiente'">
+                    <group string="Resumen de cambios"
+                           invisible="state not in ('aceptada', 'rechazada')">
+                        <field name="diff_html" nolabel="1" readonly="1"/>
+                    </group>
+                    <separator string="Detalle de cambios (Dice actualmente → Debe decir)"
+                               invisible="state in ('aceptada', 'rechazada')"/>
+                    <field name="cambios_ids"
+                           readonly="state not in ('borrador', 'pendiente')"
+                           invisible="state in ('aceptada', 'rechazada')">
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="elemento" string="Elemento que cambia"
@@ -197,8 +215,9 @@
         <field name="name">Controles de cambio por decidir</field>
         <field name="res_model">amunet.documento.sugerencia</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[
-            ('state','=','pendiente'),
+        <field name="domain">['|',
+            ('state','=','borrador'),
+            '&amp;',('state','=','pendiente'),
             '|','|','|','|',
                 ('creado_por_id','=',uid),
                 ('realizo_id','=',uid),
