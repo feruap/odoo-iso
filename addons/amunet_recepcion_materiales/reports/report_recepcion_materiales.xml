@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         Acción del reporte — aparece en el menú Imprimir del picking
+         ============================================================ -->
+    <record id="action_report_recepcion_materiales" model="ir.actions.report">
+        <field name="name">Formato de Recepción de Materiales</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_recepcion_materiales.report_recepcion_materiales</field>
+        <field name="report_file">amunet_recepcion_materiales.report_recepcion_materiales</field>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <!-- ============================================================
+         Plantilla QWeb
+         ============================================================ -->
+    <template id="report_recepcion_materiales">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+
+                        <!-- Título y código de documento -->
+                        <div class="row mb-3">
+                            <div class="col-8">
+                                <h5 class="text-uppercase fw-bold mb-0">
+                                    Formato de Recepción de Materiales
+                                </h5>
+                                <small class="text-muted">
+                                    ISO 13485 §7.4.3 — Verificación del producto comprado
+                                </small>
+                            </div>
+                            <div class="col-4">
+                                <table class="table table-sm table-bordered mb-0" style="font-size:10px;">
+                                    <tr>
+                                        <td class="fw-bold bg-light" style="width:50%">Código doc.</td>
+                                        <td>AMUNET-MP-REC-001</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Revisión</td>
+                                        <td>01</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Clasificación</td>
+                                        <td>Registro de calidad</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 1. Datos de la recepción -->
+                        <h6 class="fw-bold text-uppercase border-bottom pb-1 mb-2">
+                            1. Datos de la Recepción
+                        </h6>
+                        <table class="table table-sm table-bordered mb-3" style="font-size:11px;">
+                            <tr>
+                                <td class="fw-bold bg-light" style="width:22%">No. de recepción</td>
+                                <td style="width:28%"><t t-esc="o.name"/></td>
+                                <td class="fw-bold bg-light" style="width:22%">Fecha de recepción</td>
+                                <td>
+                                    <t t-if="o.date_done">
+                                        <t t-esc="o.date_done.strftime('%d/%m/%Y %H:%M')"/>
+                                    </t>
+                                    <t t-else="">—</t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold bg-light">Proveedor</td>
+                                <td><t t-esc="o.partner_id.name or '—'"/></td>
+                                <td class="fw-bold bg-light">Orden de compra origen</td>
+                                <td><t t-esc="o.origin or '—'"/></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold bg-light">Recibió</td>
+                                <td colspan="3"><t t-esc="o.user_id.name or '—'"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- 2. Materiales recibidos -->
+                        <h6 class="fw-bold text-uppercase border-bottom pb-1 mb-2">
+                            2. Materiales Recibidos
+                        </h6>
+                        <table class="table table-sm table-bordered mb-3" style="font-size:10px;">
+                            <thead>
+                                <tr class="bg-light">
+                                    <th>Producto</th>
+                                    <th>Código</th>
+                                    <th>Lote Amunet</th>
+                                    <th>Lote Proveedor</th>
+                                    <th>Fecha Fab.</th>
+                                    <th>Fecha Cad.</th>
+                                    <th class="text-end">Cant. Pedida</th>
+                                    <th class="text-end">Cant. Recibida</th>
+                                    <th>Unidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.move_ids.filtered(lambda m: m.state != 'cancel')" t-as="move">
+                                    <tr>
+                                        <td><t t-esc="move.product_id.name"/></td>
+                                        <td><t t-esc="move.product_id.default_code or '—'"/></td>
+                                        <td>
+                                            <t t-esc="', '.join(move.move_line_ids.filtered(lambda l: l.lot_id).mapped('lot_id.name')) or '—'"/>
+                                        </td>
+                                        <td><t t-esc="move.amunet_supplier_lot or '—'"/></td>
+                                        <td>
+                                            <t t-esc="move.amunet_mfg_date or '—'"/>
+                                        </td>
+                                        <td>
+                                            <t t-if="move.amunet_exp_date">
+                                                <t t-esc="move.amunet_exp_date.strftime('%d/%m/%Y')"/>
+                                            </t>
+                                            <t t-else="">—</t>
+                                        </td>
+                                        <td class="text-end">
+                                            <t t-esc="'%.2f' % move.product_uom_qty"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <t t-esc="'%.2f' % sum(ml.quantity for ml in move.move_line_ids)"/>
+                                        </td>
+                                        <td><t t-esc="move.product_uom.name"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- 3. Criterios de aceptación -->
+                        <h6 class="fw-bold text-uppercase border-bottom pb-1 mb-2">
+                            3. Criterios de Aceptación (ISO 13485 §7.4.3)
+                        </h6>
+                        <table class="table table-sm table-bordered mb-3" style="font-size:11px;">
+                            <thead>
+                                <tr class="bg-light">
+                                    <th style="width:58%">Criterio de revisión</th>
+                                    <th class="text-center" style="width:9%">Cumple</th>
+                                    <th class="text-center" style="width:9%">No cumple</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1. Empaque íntegro, sin perforaciones ni daños externos</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td>&#160;</td>
+                                </tr>
+                                <tr>
+                                    <td>2. Etiqueta legible con información correcta (producto, lote, fechas)</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td>&#160;</td>
+                                </tr>
+                                <tr>
+                                    <td>3. Sin daños visibles en el material (deformaciones, humedad, etc.)</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td>&#160;</td>
+                                </tr>
+                                <tr>
+                                    <td>4. Certificado de análisis del proveedor recibido y correcto</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td>&#160;</td>
+                                </tr>
+                                <tr>
+                                    <td>5. Cantidad recibida coincide con lo solicitado en la orden</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td class="text-center" style="font-size:14px;">&#9744;</td>
+                                    <td>&#160;</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- 4. Disposición -->
+                        <h6 class="fw-bold text-uppercase border-bottom pb-1 mb-2">
+                            4. Disposición del Material
+                        </h6>
+                        <div class="border p-2 mb-3" style="font-size:11px;">
+                            <span class="me-5">&#9744;&#160; En cuarentena / pendiente de inspección de calidad</span>
+                            <span class="me-5">&#9744;&#160; Liberado para uso en producción</span>
+                            <span>&#9744;&#160; Rechazado — devolución al proveedor</span>
+                        </div>
+
+                        <!-- 5. Firmas -->
+                        <h6 class="fw-bold text-uppercase border-bottom pb-1 mb-2">
+                            5. Firmas y Responsabilidades
+                        </h6>
+                        <table class="table table-bordered mb-3" style="font-size:11px;">
+                            <tr>
+                                <td style="width:50%; height:90px; vertical-align:top;">
+                                    <strong>Recibió (Almacén MP):</strong><br/><br/>
+                                    Nombre:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/><br/>
+                                    Firma / rúbrica:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/><br/>
+                                    Fecha:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+                                </td>
+                                <td style="width:50%; height:90px; vertical-align:top;">
+                                    <strong>Revisó / autorizó (Control de Calidad):</strong><br/><br/>
+                                    Nombre:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/><br/>
+                                    Firma / rúbrica:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/><br/>
+                                    Fecha:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Nota al pie regulatoria -->
+                        <div style="font-size:9px; color:#666; border-top:1px solid #ccc; padding-top:6px; margin-top:4px;">
+                            Este documento es un registro de calidad conforme al Sistema de Gestión de Calidad de Amunet (ISO 13485).
+                            Conservar por el período mínimo definido en el procedimiento de Control de Registros (AMUNET-MP-PNO-RCR).
+                            Documento generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>.
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

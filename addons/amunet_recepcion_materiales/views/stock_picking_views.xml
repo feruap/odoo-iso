@@ -7,21 +7,62 @@
         <field name="priority">110</field>
         <field name="arch" type="xml">
 
-            <!-- Columnas de recepción: lote proveedor, fecha fab y fecha cad en la tabla Operaciones -->
+            <!-- Lote Amunet: sobreescribir las condiciones de Odoo que lo ocultan en draft -->
+            <xpath expr="//page[@name='operations']/field[@name='move_ids']//field[@name='lot_ids']" position="attributes">
+                <attribute name="string">Lote Amunet</attribute>
+                <attribute name="optional">show</attribute>
+                <attribute name="column_invisible">parent.picking_type_code != 'incoming' and parent.state == 'draft'</attribute>
+                <attribute name="invisible">has_tracking == 'none'</attribute>
+                <attribute name="readonly">parent.state == 'draft' and parent.picking_type_code == 'incoming'</attribute>
+            </xpath>
+
+            <!-- Ocultar botón "Detalles" para incoming: toda la info ya está en la tabla principal -->
+            <xpath expr="//button[@name='action_show_details']" position="attributes">
+                <attribute name="invisible">not show_details_visible or picking_type_code == 'incoming'</attribute>
+            </xpath>
+
+            <!-- Agregar columnas extra para recepciones, después del lote Amunet -->
+            <!-- Todas grises (readonly) en draft; editables después de "Marcar por realizar" -->
             <xpath expr="//page[@name='operations']/field[@name='move_ids']//field[@name='lot_ids']" position="after">
                 <field name="amunet_supplier_lot"
-                       string="Lote del proveedor"
-                       column_invisible="parent.picking_type_code != 'incoming'"/>
+                       string="Lote proveedor"
+                       column_invisible="parent.picking_type_code != 'incoming'"
+                       readonly="parent.state == 'draft'"/>
                 <field name="amunet_mfg_date"
                        string="Fecha fabricación"
-                       widget="date"
-                       column_invisible="parent.picking_type_code != 'incoming'"/>
+                       placeholder="DD/MM/AAAA o NA"
+                       column_invisible="parent.picking_type_code != 'incoming'"
+                       readonly="parent.state == 'draft'"/>
                 <field name="amunet_exp_date"
                        string="Fecha caducidad"
                        widget="date"
+                       column_invisible="parent.picking_type_code != 'incoming'"
+                       readonly="parent.state == 'draft'"/>
+                <field name="amunet_removal_date"
+                       string="Fecha remoción"
+                       readonly="1"
                        column_invisible="parent.picking_type_code != 'incoming'"/>
+                <field name="location_dest_id"
+                       string="Destino"
+                       readonly="1"
+                       column_invisible="parent.picking_type_code != 'incoming'"
+                       options="{'no_open': True}"/>
             </xpath>
 
         </field>
     </record>
+
+    <!-- Orden por defecto en Actualizar Cantidad: siempre AMP/Existencias antes que AMPB -->
+    <record id="view_stock_quant_inventory_order_almacenmp" model="ir.ui.view">
+        <field name="name">stock.quant.inventory.list.order.almacenmp</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_tree_inventory_editable"/>
+        <field name="priority">120</field>
+        <field name="arch" type="xml">
+            <xpath expr="." position="attributes">
+                <attribute name="default_order">location_id, product_id, lot_id</attribute>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
