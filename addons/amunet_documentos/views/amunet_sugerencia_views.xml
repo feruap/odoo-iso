@@ -220,8 +220,9 @@
         <field name="name">Controles de cambio por decidir</field>
         <field name="res_model">amunet.documento.sugerencia</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">['|',
+        <field name="domain">['|','|','|',
             ('state','=','borrador'),
+            '&amp;',('state','=','rechazada'),('creado_por_id','=',uid),
             '&amp;',('state','=','pendiente'),
             '|','|','|','|',
                 ('creado_por_id','=',uid),
@@ -232,6 +233,16 @@
         ]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No tienes controles de cambio pendientes</p>
+        </field>
+    </record>
+
+    <record id="action_amunet_mis_ccs" model="ir.actions.act_window">
+        <field name="name">Mis controles de cambio</field>
+        <field name="res_model">amunet.documento.sugerencia</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('creado_por_id','=',uid)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aún no has enviado ningún control de cambios</p>
         </field>
     </record>
 
