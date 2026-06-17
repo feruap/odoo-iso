@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_temp_daysignoff" model="ir.actions.report">
+        <field name="name">Registro diario de temperatura</field>
+        <field name="model">amunet.temp.daysignoff</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_monitor_temperatura.report_temp_daysignoff</field>
+        <field name="report_file">amunet_monitor_temperatura.report_temp_daysignoff</field>
+        <field name="binding_model_id" ref="model_amunet_temp_daysignoff"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_temp_daysignoff">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Registro diario de Temperatura y Humedad</h2>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Area:</strong> <span t-field="doc.area_id.name"/><br/>
+                                <strong>Fecha:</strong> <span t-field="doc.date"/><br/>
+                                <strong>Termohigrometro:</strong> <span t-esc="doc.area_id.instrument_label or '-'"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Limites:</strong>
+                                <span t-esc="'%.1f - %.1f C' % (doc.area_id.temp_min, doc.area_id.temp_max)"/>;
+                                Humedad max <span t-esc="'%.0f' % doc.area_id.hum_max"/>%HR<br/>
+                                <strong>Estado:</strong>
+                                <span t-if="doc.state == 'signed'">Firmado</span>
+                                <span t-else="">Por firmar</span>
+                            </div>
+                        </div>
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Turno</th><th>Temp (C)</th><th>Humedad (%HR)</th>
+                                    <th>Dentro de rango</th><th>Capturo</th><th>Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="doc.reading_ids.sorted(key=lambda r: r.scheduled_time)" t-as="r">
+                                    <td><span t-field="r.scheduled_label"/></td>
+                                    <td>
+                                        <span t-if="r.state in ('captured','deviation')" t-esc="'%.1f' % r.temp_value"/>
+                                        <span t-elif="r.state == 'missed'">No realizado</span>
+                                        <span t-else="">-</span>
+                                    </td>
+                                    <td>
+                                        <span t-if="r.state in ('captured','deviation') and r.hum_required" t-esc="'%.1f' % r.hum_value"/>
+                                        <span t-else="">-</span>
+                                    </td>
+                                    <td>
+                                        <span t-if="r.state in ('captured','deviation')" t-esc="'No' if r.out_of_range else 'Si'"/>
+                                        <span t-else="">-</span>
+                                    </td>
+                                    <td><span t-esc="r.captured_by.name or '-'"/></td>
+                                    <td><span t-field="r.captured_at"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div t-if="any(r.deviation_state != 'none' for r in doc.reading_ids)" class="mt-3">
+                            <h4>Desviaciones</h4>
+                            <ul>
+                                <li t-foreach="doc.reading_ids.filtered(lambda r: r.deviation_state != 'none')" t-as="d">
+                                    <span t-field="d.scheduled_label"/>:
+                                    <span t-esc="'%.1f C / %.1f %%HR' % (d.temp_value, d.hum_value)"/> —
+                                    Accion: <span t-esc="d.deviation_action or '(pendiente)'"/>
+                                    (<span t-esc="d.deviation_closed_by.name or 'sin cerrar'"/>)
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="row mt-5">
+                            <div class="col-6">
+                                <strong>Revisado y firmado por (supervisor):</strong><br/>
+                                <span t-esc="doc.signed_by.name or '____________________'"/><br/>
+                                <span t-field="doc.signed_at"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

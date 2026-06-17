@@ -244,6 +244,7 @@ action = {
     <menuitem id="menu_amunet_mi_root"
               name="Mi produccion"
               sequence="20"
+              web_icon="amunet_mi_produccion,static/description/icon.png"
               groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,mrp.group_mrp_user"/>
 
     <menuitem id="menu_amunet_mi_operador"

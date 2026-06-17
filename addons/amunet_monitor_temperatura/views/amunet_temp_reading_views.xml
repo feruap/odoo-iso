@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ SEARCH ============ -->
+    <record id="view_amunet_temp_reading_search" model="ir.ui.view">
+        <field name="name">amunet.temp.reading.search</field>
+        <field name="model">amunet.temp.reading</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="area_id"/>
+                <field name="date"/>
+                <filter name="f_pending" string="Pendientes" domain="[('state','=','pending')]"/>
+                <filter name="f_captured" string="Capturadas" domain="[('state','=','captured')]"/>
+                <filter name="f_deviation" string="Fuera de rango" domain="[('state','=','deviation')]"/>
+                <filter name="f_missed" string="No realizado" domain="[('state','=','missed')]"/>
+                <separator/>
+                <filter name="f_today" string="Hoy" domain="[('date','=', context_today().strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="g_area" string="Area" context="{'group_by':'area_id'}"/>
+                <filter name="g_date" string="Fecha" context="{'group_by':'date'}"/>
+                <filter name="g_state" string="Estado" context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============ KANBAN (operador) ============ -->
+    <record id="view_amunet_temp_reading_kanban" model="ir.ui.view">
+        <field name="name">amunet.temp.reading.kanban</field>
+        <field name="model">amunet.temp.reading</field>
+        <field name="arch" type="xml">
+            <kanban create="0" delete="0" default_group_by="area_id" class="o_kanban_mobile">
+                <field name="state"/>
+                <field name="area_id"/>
+                <field name="scheduled_label"/>
+                <field name="temp_value"/>
+                <field name="hum_value"/>
+                <field name="hum_required"/>
+                <field name="out_of_range"/>
+                <field name="deviation_state"/>
+                <field name="capture_available"/>
+                <field name="window_open_label"/>
+                <field name="temp_min"/>
+                <field name="temp_max"/>
+                <field name="hum_max"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click p-2">
+                            <div class="d-flex justify-content-between">
+                                <strong>Turno <field name="scheduled_label"/></strong>
+                                <span t-if="record.state.raw_value == 'captured'" class="badge text-bg-success">Capturada</span>
+                                <span t-elif="record.state.raw_value == 'deviation'" class="badge text-bg-danger">Fuera de rango</span>
+                                <span t-elif="record.state.raw_value == 'missed'" class="badge text-bg-dark">No realizado</span>
+                                <span t-else="" class="badge text-bg-secondary">Pendiente</span>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                Rango: <field name="temp_min"/>-<field name="temp_max"/> C
+                            </div>
+                            <div class="small" t-if="record.state.raw_value == 'captured' || record.state.raw_value == 'deviation'">
+                                Lectura: <strong><field name="temp_value"/> C</strong>
+                                <t t-if="record.hum_required.raw_value"> / <field name="hum_value"/> %HR</t>
+                            </div>
+                            <div class="text-muted small mt-1"
+                                 t-if="(record.state.raw_value == 'pending' || record.state.raw_value == 'missed') &amp;&amp; !record.capture_available.raw_value">
+                                Se habilita a las <field name="window_open_label"/>
+                            </div>
+                            <div class="mt-2 d-flex gap-1">
+                                <button name="action_open_capture" type="object"
+                                        class="btn btn-primary btn-sm"
+                                        t-if="record.capture_available.raw_value">
+                                    Capturar
+                                </button>
+                                <button name="action_open_close_deviation" type="object"
+                                        class="btn btn-danger btn-sm"
+                                        t-if="record.deviation_state.raw_value == 'open'">
+                                    Cerrar fuera de rango
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============ LIST (export Excel nativo) ============ -->
+    <record id="view_amunet_temp_reading_list" model="ir.ui.view">
+        <field name="name">amunet.temp.reading.list</field>
+        <field name="model">amunet.temp.reading</field>
+        <field name="arch" type="xml">
+            <list create="0">
+                <field name="date"/>
+                <field name="area_id"/>
+                <field name="scheduled_label"/>
+                <field name="temp_value"/>
+                <field name="hum_value"/>
+                <field name="out_of_range" widget="boolean_toggle"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'captured'"
+                       decoration-danger="state == 'deviation'"
+                       decoration-muted="state in ('pending','missed')"/>
+                <field name="captured_by"/>
+                <field name="instrument_name" optional="hide"/>
+                <field name="day_locked" optional="hide" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============ GRAPH (tendencia) ============ -->
+    <record id="view_amunet_temp_reading_graph" model="ir.ui.view">
+        <field name="name">amunet.temp.reading.graph</field>
+        <field name="model">amunet.temp.reading</field>
+        <field name="arch" type="xml">
+            <graph string="Tendencia" type="line" sample="1">
+                <field name="date" interval="day"/>
+                <field name="area_id"/>
+                <field name="temp_value" type="measure"/>
+                <field name="hum_value" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ============ FORM ============ -->
+    <record id="view_amunet_temp_reading_form" model="ir.ui.view">
+        <field name="name">amunet.temp.reading.form</field>
+        <field name="model">amunet.temp.reading</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_open_capture" type="object" string="Capturar"
+                            class="btn-primary" invisible="state not in ('pending','missed')"/>
+                    <button name="action_open_close_deviation" type="object" string="Cerrar fuera de rango"
+                            class="btn-danger" invisible="deviation_state != 'open'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="area_id" readonly="1"/>
+                            <field name="date" readonly="1"/>
+                            <field name="scheduled_label" readonly="1"/>
+                            <field name="instrument_name" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="temp_value" readonly="1"/>
+                            <field name="hum_required" invisible="1"/>
+                            <field name="hum_value" readonly="1" invisible="not hum_required"/>
+                            <field name="out_of_range" readonly="1"/>
+                            <field name="captured_by" readonly="1"/>
+                            <field name="captured_at" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Limites (al generar)">
+                        <field name="temp_min" readonly="1"/>
+                        <field name="temp_max" readonly="1"/>
+                        <field name="hum_min" readonly="1"/>
+                        <field name="hum_max" readonly="1"/>
+                    </group>
+                    <group string="Desviacion" invisible="deviation_state == 'none'">
+                        <field name="deviation_state" readonly="1"/>
+                        <field name="deviation_action" readonly="1"/>
+                        <field name="deviation_closed_by" readonly="1"/>
+                        <field name="deviation_closed_at" readonly="1"/>
+                    </group>
+                    <group string="Cierre diario" invisible="not day_locked">
+                        <field name="day_locked" readonly="1"/>
+                        <field name="signed_by" readonly="1"/>
+                        <field name="signed_at" readonly="1"/>
+                    </group>
+                    <field name="observation" readonly="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ SERVER ACTION: tablero del operador ============ -->
+    <record id="action_amunet_temp_operador_srv" model="ir.actions.server">
+        <field name="name">Captura de hoy</field>
+        <field name="model_id" ref="model_amunet_temp_reading"/>
+        <field name="state">code</field>
+        <field name="code">action = env.user.amunet_temp_action_capture_today()</field>
+    </record>
+
+    <!-- ============ SERVER ACTION: historico / reportes ============ -->
+    <record id="action_amunet_temp_historico_srv" model="ir.actions.server">
+        <field name="name">Historico y tendencia</field>
+        <field name="model_id" ref="model_amunet_temp_reading"/>
+        <field name="state">code</field>
+        <field name="code">action = env.user.amunet_temp_action_historico()</field>
+    </record>
+
+</odoo>
