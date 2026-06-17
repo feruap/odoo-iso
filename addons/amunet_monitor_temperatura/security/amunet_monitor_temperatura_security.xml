@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_temp_user" model="res.groups">
+        <field name="name">Monitor Temperatura / Usuario</field>
+        <field name="comment">Captura y consulta segun su area (derivado de Empleados).</field>
+    </record>
+
+    <record id="group_temp_manager" model="res.groups">
+        <field name="name">Monitor Temperatura / Configuracion</field>
+        <field name="implied_ids" eval="[(4, ref('group_temp_user'))]"/>
+        <field name="comment">Configura areas, limites, horarios e instrumentos.</field>
+    </record>
+
+    <!-- Todos los usuarios internos pueden usar el monitor; el filtro real
+         es por area segun su departamento/rol (no por grupo Odoo). -->
+    <record id="base.group_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_temp_user'))]"/>
+    </record>
+
+    <!-- La configuracion la tienen los administradores del sistema -->
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_temp_manager'))]"/>
+    </record>
+</odoo>

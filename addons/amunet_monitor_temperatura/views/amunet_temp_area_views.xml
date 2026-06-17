@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ AREA: config ============ -->
+    <record id="view_amunet_temp_area_list" model="ir.ui.view">
+        <field name="name">amunet.temp.area.list</field>
+        <field name="model">amunet.temp.area</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="responsible_department_id"/>
+                <field name="capture_pool" widget="boolean_toggle"/>
+                <field name="temp_min"/>
+                <field name="temp_max"/>
+                <field name="hum_max"/>
+                <field name="supervisor_user_id"/>
+                <field name="instrument_label"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_temp_area_form" model="ir.ui.view">
+        <field name="name">amunet.temp.area.form</field>
+        <field name="model">amunet.temp.area</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="%(action_amunet_temp_chart_wizard)d" type="action"
+                            string="Gráfica de control" class="btn-primary"
+                            context="{'default_area_id': id}"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Nombre del area"/></h1>
+                    </div>
+                    <group>
+                        <group string="Responsabilidad (derivada de Empleados)">
+                            <field name="code"/>
+                            <field name="responsible_department_id"/>
+                            <field name="capture_pool"/>
+                            <field name="supervisor_user_id" readonly="1"/>
+                            <field name="capturer_user_ids" widget="many2many_tags" readonly="1"/>
+                        </group>
+                        <group string="Limites e instrumento">
+                            <field name="temp_min"/>
+                            <field name="temp_max"/>
+                            <field name="hum_required"/>
+                            <field name="hum_min" invisible="not hum_required"/>
+                            <field name="hum_max" invisible="not hum_required"/>
+                            <field name="instrument_ids" widget="many2many_tags"/>
+                            <field name="tolerance_minutes"/>
+                        </group>
+                    </group>
+                    <group string="Horarios de captura (24h)">
+                        <field name="slot_ids" nolabel="1">
+                            <list editable="bottom">
+                                <field name="time_hour"/>
+                                <field name="name"/>
+                            </list>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_temp_area" model="ir.actions.act_window">
+        <field name="name">Areas de monitoreo</field>
+        <field name="res_model">amunet.temp.area</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ============ CIERRE DIARIO (supervisor) ============ -->
+    <record id="view_amunet_temp_daysignoff_kanban" model="ir.ui.view">
+        <field name="name">amunet.temp.daysignoff.kanban</field>
+        <field name="model">amunet.temp.daysignoff</field>
+        <field name="arch" type="xml">
+            <kanban create="0" delete="0" default_group_by="area_id" class="o_kanban_mobile">
+                <field name="state"/>
+                <field name="area_id"/>
+                <field name="date"/>
+                <field name="n_pending"/>
+                <field name="n_deviation_open"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click p-2">
+                            <div class="d-flex justify-content-between">
+                                <strong><field name="date"/></strong>
+                                <span t-if="record.state.raw_value == 'signed'" class="badge text-bg-success">Firmado</span>
+                                <span t-else="" class="badge text-bg-warning">Por firmar</span>
+                            </div>
+                            <div class="small mt-1">
+                                Pendientes de captura: <field name="n_pending"/>
+                            </div>
+                            <div class="small">
+                                Desviaciones abiertas: <field name="n_deviation_open"/>
+                            </div>
+                            <div class="mt-2">
+                                <button name="action_open_sign" type="object"
+                                        class="btn btn-primary btn-sm"
+                                        t-if="record.state.raw_value == 'pending'">
+                                    Revisar y firmar dia
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_amunet_temp_daysignoff_list" model="ir.ui.view">
+        <field name="name">amunet.temp.daysignoff.list</field>
+        <field name="model">amunet.temp.daysignoff</field>
+        <field name="arch" type="xml">
+            <list create="0">
+                <field name="date"/>
+                <field name="area_id"/>
+                <field name="n_pending"/>
+                <field name="n_deviation_open"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'signed'" decoration-warning="state == 'pending'"/>
+                <field name="signed_by"/>
+                <field name="signed_at"/>
+                <button name="action_open_sign" type="object" string="Firmar"
+                        class="btn-link" invisible="state == 'signed'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_amunet_temp_supervisor_srv" model="ir.actions.server">
+        <field name="name">Cierre diario (mis areas)</field>
+        <field name="model_id" ref="model_amunet_temp_daysignoff"/>
+        <field name="state">code</field>
+        <field name="code">action = env.user.amunet_temp_action_supervise()</field>
+    </record>
+
+</odoo>

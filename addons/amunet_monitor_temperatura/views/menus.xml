@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_temp_root" name="Monitor de Temperatura" sequence="56"
+              web_icon="amunet_monitor_temperatura,static/description/icon.png"
+              groups="group_temp_user"/>
+
+    <menuitem id="menu_temp_captura" name="Captura de hoy" parent="menu_temp_root"
+              action="action_amunet_temp_operador_srv" sequence="10"/>
+
+    <menuitem id="menu_temp_cierre" name="Cierre diario" parent="menu_temp_root"
+              action="action_amunet_temp_supervisor_srv" sequence="20"/>
+
+    <menuitem id="menu_temp_historico" name="Historico y tendencia" parent="menu_temp_root"
+              action="action_amunet_temp_historico_srv" sequence="30"/>
+
+    <menuitem id="menu_temp_grafica" name="Grafica de control (mensual)" parent="menu_temp_root"
+              action="action_amunet_temp_chart_wizard" sequence="40"/>
+
+    <menuitem id="menu_temp_config" name="Configuracion" parent="menu_temp_root"
+              sequence="90" groups="group_temp_manager"/>
+    <menuitem id="menu_temp_areas" name="Areas de monitoreo" parent="menu_temp_config"
+              action="action_amunet_temp_area" sequence="10"/>
+</odoo>

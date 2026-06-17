@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_temp_area_user,temp.area.user,model_amunet_temp_area,group_temp_user,1,0,0,0
+access_temp_area_manager,temp.area.manager,model_amunet_temp_area,group_temp_manager,1,1,1,1
+access_temp_slot_user,temp.slot.user,model_amunet_temp_slot,group_temp_user,1,0,0,0
+access_temp_slot_manager,temp.slot.manager,model_amunet_temp_slot,group_temp_manager,1,1,1,1
+access_temp_reading_user,temp.reading.user,model_amunet_temp_reading,group_temp_user,1,1,0,0
+access_temp_reading_manager,temp.reading.manager,model_amunet_temp_reading,group_temp_manager,1,1,1,1
+access_temp_daysignoff_user,temp.daysignoff.user,model_amunet_temp_daysignoff,group_temp_user,1,1,0,0
+access_temp_daysignoff_manager,temp.daysignoff.manager,model_amunet_temp_daysignoff,group_temp_manager,1,1,1,1
+access_temp_capture_wizard,temp.capture.wizard,model_amunet_temp_capture_wizard,group_temp_user,1,1,1,1
+access_temp_signoff_wizard,temp.signoff.wizard,model_amunet_temp_signoff_wizard,group_temp_user,1,1,1,1
+access_temp_chart_wizard,temp.chart.wizard,model_amunet_temp_chart_wizard,group_temp_user,1,1,1,1

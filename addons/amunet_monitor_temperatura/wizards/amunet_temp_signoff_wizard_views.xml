@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_temp_signoff_wizard" model="ir.ui.view">
+        <field name="name">amunet.temp.signoff.wizard.form</field>
+        <field name="model">amunet.temp.signoff.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Firma">
+                <field name="mode" invisible="1"/>
+                <group>
+                    <field name="info" readonly="1"/>
+                    <field name="deviation_action" invisible="mode != 'deviation'"
+                           required="mode == 'deviation'"
+                           placeholder="Que se hizo para corregir el fuera de rango"/>
+                    <field name="pin" password="True" placeholder="PIN del supervisor"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Firmar" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard -->
+    <record id="view_amunet_temp_chart_wizard" model="ir.ui.view">
+        <field name="name">amunet.temp.chart.wizard.form</field>
+        <field name="model">amunet.temp.chart.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Grafica de control mensual">
+                <group>
+                    <field name="area_id"/>
+                    <field name="month"/>
+                    <field name="year"/>
+                </group>
+                <footer>
+                    <button name="action_print" type="object" string="Generar PDF" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_temp_chart_wizard" model="ir.actions.act_window">
+        <field name="name">Grafica de control mensual</field>
+        <field name="res_model">amunet.temp.chart.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Formato de papel apaisado -->
+    <record id="paperformat_temp_chart" model="report.paperformat">
+        <field name="name">Monitor Temp Apaisado</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">14</field>
+        <field name="margin_bottom">8</field>
+        <field name="margin_left">6</field>
+        <field name="margin_right">6</field>
+        <field name="header_spacing">8</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <!-- Reporte -->
+    <record id="action_report_temp_chart" model="ir.actions.report">
+        <field name="name">Grafica de control de temperatura</field>
+        <field name="model">amunet.temp.chart.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_monitor_temperatura.report_temp_chart</field>
+        <field name="report_file">amunet_monitor_temperatura.report_temp_chart</field>
+        <field name="paperformat_id" ref="paperformat_temp_chart"/>
+    </record>
+
+    <template id="report_temp_chart">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="h" t-value="doc._header_vals()"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h4 style="text-align:center;margin:0">Formato de control de temperatura y humedad</h4>
+                        <div style="text-align:center;font-size:10px;margin-bottom:4px">
+                            Código: <strong>F-AL-008-001</strong>
+                        </div>
+                        <table class="table table-sm" style="font-size:11px;margin-bottom:4px">
+                            <tr>
+                                <td><strong>Área:</strong> <span t-esc="h['area']"/></td>
+                                <td><strong>No. Termohigrómetro:</strong> <span t-esc="h['instrumento']"/></td>
+                                <td><strong>Mes:</strong> <span t-esc="h['mes']"/></td>
+                                <td><strong>Año:</strong> <span t-esc="h['anio']"/></td>
+                                <td><strong>Condiciones:</strong> <span t-esc="h['cond']"/></td>
+                            </tr>
+                        </table>
+                        <div t-out="doc.build_svg()"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
