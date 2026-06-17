@@ -76,7 +76,7 @@ class AmunetSugerenciaComite(models.Model):
             'usuario_firma_id': self.env.user.id,
             'fecha_firma': fields.Date.today(),
         })
-        self.sugerencia_id.message_post(
+        self.sugerencia_id._message_log(
             body=_('<p><b>%s</b> firmó como integrante del comité técnico (área: %s).</p>')
                  % (self.env.user.name, self.area or ''),
         )
@@ -207,11 +207,11 @@ class AmunetDocumentoSugerencia(models.Model):
                     valor = getattr(r.documento_id, campo)
                     if valor:
                         columnas.append(
-                            '<div style="border-left:3px solid #1565c0;padding:8px 12px;'
+                            '<div style="border-left:3px solid #1565c0;padding:12px 16px;'
                             'background:#f8faff;border-radius:0 4px 4px 0;min-width:0">'
-                            '<p style="margin:0 0 6px;font-weight:bold;font-size:0.85em;'
+                            '<p style="margin:0 0 8px;font-weight:bold;font-size:0.85em;'
                             'color:#555;text-transform:uppercase;letter-spacing:.5px">%s</p>'
-                            '<div style="font-size:0.9em">%s</div>'
+                            '<div style="font-size:0.92em;line-height:1.6">%s</div>'
                             '</div>' % (seccion.name, valor)
                         )
             partes = []
@@ -220,7 +220,7 @@ class AmunetDocumentoSugerencia(models.Model):
                     '<div>%s</div>' % c for c in columnas)
                 partes.append(
                     '<div style="display:grid;grid-template-columns:repeat(auto-fill,'
-                    'minmax(280px,1fr));gap:12px;margin-bottom:8px">%s</div>' % grid)
+                    'minmax(480px,1fr));gap:16px;margin-bottom:12px">%s</div>' % grid)
             if tabla_actividades:
                 partes.append(tabla_actividades)
             r.referencia_html = ''.join(partes) if partes else False
@@ -235,40 +235,64 @@ class AmunetDocumentoSugerencia(models.Model):
                 continue
             secciones = ', '.join(r.secciones_ids.mapped('name')) if r.secciones_ids else '—'
             filas = ''
-            for linea in r.cambios_ids.sorted('sequence'):
+            for i, linea in enumerate(r.cambios_ids.sorted('sequence')):
+                bg_row = '#fafafa' if i % 2 == 0 else '#ffffff'
                 filas += (
-                    '<tr>'
-                    '<td style="padding:8px 10px;border:1px solid #e5e7eb;'
-                    'font-weight:600;vertical-align:top;width:20%%">%s</td>'
-                    '<td style="padding:8px 10px;border:1px solid #e5e7eb;'
-                    'background:#fff5f5;vertical-align:top;width:40%%">'
-                    '<span style="display:block;font-size:0.75em;color:#b91c1c;'
-                    'font-weight:700;margin-bottom:4px">&#10007; DICE ACTUALMENTE</span>'
-                    '%s</td>'
-                    '<td style="padding:8px 10px;border:1px solid #e5e7eb;'
-                    'background:#f0fdf4;vertical-align:top;width:40%%">'
-                    '<span style="display:block;font-size:0.75em;color:#15803d;'
-                    'font-weight:700;margin-bottom:4px">&#10003; DEBE DECIR</span>'
-                    '%s</td>'
+                    '<tr style="background:%(bg)s">'
+                    # Elemento
+                    '<td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;'
+                    'vertical-align:top;width:18%%;min-width:120px">'
+                    '<span style="display:inline-block;background:#e0e7ff;color:#3730a3;'
+                    'border-radius:4px;padding:4px 10px;font-size:0.9em;font-weight:700;'
+                    'white-space:nowrap">%(elemento)s</span></td>'
+                    # Dice actualmente
+                    '<td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;'
+                    'border-left:4px solid #fca5a5;background:#fff8f8;'
+                    'vertical-align:top;width:41%%">'
+                    '<span style="display:block;font-size:0.78em;font-weight:800;'
+                    'color:#dc2626;letter-spacing:.6px;margin-bottom:8px;'
+                    'text-transform:uppercase">✕ Dice actualmente</span>'
+                    '<div style="font-size:1em;line-height:1.6;color:#374151">%(actual)s</div></td>'
+                    # Debe decir
+                    '<td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;'
+                    'border-left:4px solid #86efac;background:#f6fef9;'
+                    'vertical-align:top;width:41%%">'
+                    '<span style="display:block;font-size:0.78em;font-weight:800;'
+                    'color:#16a34a;letter-spacing:.6px;margin-bottom:8px;'
+                    'text-transform:uppercase">✓ Debe decir</span>'
+                    '<div style="font-size:1em;line-height:1.6;color:#374151">%(propuesto)s</div></td>'
                     '</tr>'
-                ) % (
-                    linea.elemento or '—',
-                    linea.texto_actual or '<em style="color:#aaa">Sin texto anterior</em>',
-                    linea.texto_propuesto or '<em style="color:#aaa">Se elimina</em>',
-                )
+                ) % {
+                    'bg': bg_row,
+                    'elemento': linea.elemento or '—',
+                    'actual': linea.texto_actual or '<em style="color:#9ca3af">Sin texto anterior</em>',
+                    'propuesto': linea.texto_propuesto or '<em style="color:#9ca3af">Se elimina</em>',
+                }
             r.diff_html = '''
-<div style="margin-top:4px">
-  <p style="margin:0 0 8px;font-size:0.85em;color:#6b7280">
-    <b>Secciones:</b> %s &nbsp;|&nbsp; <b>Justificación:</b> %s
-  </p>
-  <table style="width:100%%;border-collapse:collapse;font-size:0.9em">
+<div style="margin-top:8px;border-radius:8px;overflow:hidden;
+    border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+  <div style="background:#f1f5f9;padding:12px 20px;border-bottom:1px solid #e5e7eb">
+    <span style="font-size:0.92em;color:#475569">
+      <b>Secciones afectadas:</b> %s
+    </span><br/>
+    <span style="font-size:0.92em;color:#475569">
+      <b>Justificación:</b> %s
+    </span>
+  </div>
+  <table style="width:100%%;border-collapse:collapse;font-size:1em">
     <thead>
-      <tr style="background:#f9fafb">
-        <th style="padding:6px 10px;border:1px solid #e5e7eb;text-align:left">Elemento</th>
-        <th style="padding:6px 10px;border:1px solid #e5e7eb;text-align:left;
-            background:#fde8e8;color:#b91c1c">Dice actualmente</th>
-        <th style="padding:6px 10px;border:1px solid #e5e7eb;text-align:left;
-            background:#dcfce7;color:#15803d">Debe decir</th>
+      <tr style="background:#f8fafc">
+        <th style="padding:12px 18px;text-align:left;font-size:0.85em;
+            color:#6b7280;font-weight:700;letter-spacing:.4px;
+            border-bottom:2px solid #e5e7eb;text-transform:uppercase">Elemento</th>
+        <th style="padding:12px 18px;text-align:left;font-size:0.85em;
+            color:#dc2626;font-weight:700;letter-spacing:.4px;
+            border-bottom:2px solid #fca5a5;background:#fff8f8;
+            text-transform:uppercase">✕ Dice actualmente</th>
+        <th style="padding:12px 18px;text-align:left;font-size:0.85em;
+            color:#16a34a;font-weight:700;letter-spacing:.4px;
+            border-bottom:2px solid #86efac;background:#f6fef9;
+            text-transform:uppercase">✓ Debe decir</th>
       </tr>
     </thead>
     <tbody>%s</tbody>
@@ -323,7 +347,7 @@ class AmunetDocumentoSugerencia(models.Model):
     def _signature_realizo(self):
         self.ensure_one()
         self.write({'firma_realizo_id': self.env.user.id, 'fecha_realizo': fields.Date.today()})
-        self.message_post(body=_('<p><b>%s</b> registró su firma como quien realizó el cambio.</p>') % self.env.user.name)
+        self._message_log(body=_('<p><b>%s</b> registró su firma como quien realizó el cambio.</p>') % self.env.user.name)
 
     def action_firmar_reviso(self):
         self.ensure_one()
@@ -336,7 +360,7 @@ class AmunetDocumentoSugerencia(models.Model):
     def _signature_reviso(self):
         self.ensure_one()
         self.write({'firma_reviso_id': self.env.user.id, 'fecha_reviso': fields.Date.today()})
-        self.message_post(body=_('<p><b>%s</b> registró su firma como quien revisó el cambio.</p>') % self.env.user.name)
+        self._message_log(body=_('<p><b>%s</b> registró su firma como quien revisó el cambio.</p>') % self.env.user.name)
 
     def action_firmar_aprobo(self):
         self.ensure_one()
@@ -349,7 +373,7 @@ class AmunetDocumentoSugerencia(models.Model):
     def _signature_aprobo(self):
         self.ensure_one()
         self.write({'firma_aprobo_id': self.env.user.id, 'fecha_aprobo': fields.Date.today()})
-        self.message_post(body=_('<p><b>%s</b> registró su firma como quien aprobó la aplicación del cambio.</p>') % self.env.user.name)
+        self._message_log(body=_('<p><b>%s</b> registró su firma como quien aprobó la aplicación del cambio.</p>') % self.env.user.name)
 
     state = fields.Selection([
         ('borrador',  'Borrador'),
