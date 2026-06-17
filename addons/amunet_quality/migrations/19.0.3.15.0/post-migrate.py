@@ -100,7 +100,8 @@ def migrate(cr, version):
         SET text_phrase_mapping = %s, write_date = NOW()
         FROM amunet_quality_test_line tl
         JOIN amunet_quality_check qc ON qc.id = tl.check_id
-        JOIN product_template pt ON pt.id = qc.product_id
+        JOIN product_product pp ON pp.id = qc.product_id
+        JOIN product_template pt ON pt.id = pp.product_tmpl_id
         WHERE tld.test_line_id = tl.id
           AND tld.name = 'Muestra positiva'
           AND tld.evaluation_type = 'vama_multi_check'
@@ -114,7 +115,8 @@ def migrate(cr, version):
         SET text_phrase_mapping = %s, write_date = NOW()
         FROM amunet_quality_test_line tl
         JOIN amunet_quality_check qc ON qc.id = tl.check_id
-        JOIN product_template pt ON pt.id = qc.product_id
+        JOIN product_product pp ON pp.id = qc.product_id
+        JOIN product_template pt ON pt.id = pp.product_tmpl_id
         WHERE tld.test_line_id = tl.id
           AND tld.name = 'Muestra negativa'
           AND tld.evaluation_type = 'vama_multi_check'
