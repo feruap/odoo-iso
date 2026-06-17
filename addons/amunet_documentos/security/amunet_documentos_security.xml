@@ -7,4 +7,12 @@
         <field name="name">Documentos: Responsable</field>
         <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
     </record>
+    <record id="group_comite_tecnico" model="res.groups">
+        <field name="name">Documentos: Comité técnico</field>
+        <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
+    </record>
+    <record id="group_responsable_sanitario" model="res.groups">
+        <field name="name">Documentos: Responsable Sanitario</field>
+        <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
+    </record>
 </odoo>

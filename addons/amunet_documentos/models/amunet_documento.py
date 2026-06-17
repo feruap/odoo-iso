@@ -28,10 +28,9 @@ CAMPOS_BLOQUEADOS_VIGENTE = (
     'seccion_objetivo', 'seccion_alcance', 'seccion_introduccion',
     'seccion_mision_vision', 'seccion_responsabilidades',
     'seccion_organigrama', 'seccion_terminos_definiciones',
-    'seccion_condiciones_generales', 'seccion_formatos_derivados',
+    'seccion_condiciones_generales', 'seccion_formatos_derivados', 'formato_ids',
     'seccion_referencias', 'seccion_anexos',
     'elabora_id', 'fecha_elabora',
-    'formato_ids',
 )
 
 CAMPOS_FLUJO_FIRMA = (
@@ -154,9 +153,9 @@ class AmunetDocumento(models.Model):
     elabora_id = fields.Many2one(
         'res.users', string='Elaboro',
         default=lambda self: self.env.user, tracking=True)
-    fecha_elabora = fields.Date(
+    fecha_elabora = fields.Char(
         string='Fecha elaboracion', tracking=True,
-        default=fields.Date.context_today)
+        default=lambda self: fields.Date.context_today(self).strftime('%m/%Y'))
     revisor_id = fields.Many2one(
         'res.users', string='Asignado para revisar', tracking=True)
     autorizador_id = fields.Many2one(
@@ -286,7 +285,7 @@ class AmunetDocumento(models.Model):
     def action_open_sugerencia_wizard(self):
         self.ensure_one()
         return {
-            'name': _('Sugerir cambio en %s') % self.codigo,
+            'name': _('Control de cambios: %s') % self.codigo,
             'type': 'ir.actions.act_window',
             'res_model': 'amunet.documento.sugerencia',
             'view_mode': 'form',

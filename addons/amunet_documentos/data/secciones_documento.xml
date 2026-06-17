@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="seccion_objetivo" model="amunet.seccion.documento">
+        <field name="sequence">10</field>
+        <field name="name">Objetivo</field>
+    </record>
+    <record id="seccion_alcance" model="amunet.seccion.documento">
+        <field name="sequence">20</field>
+        <field name="name">Alcance</field>
+    </record>
+    <record id="seccion_responsabilidades" model="amunet.seccion.documento">
+        <field name="sequence">50</field>
+        <field name="name">Responsabilidades</field>
+    </record>
+    <record id="seccion_terminos" model="amunet.seccion.documento">
+        <field name="sequence">70</field>
+        <field name="name">Términos y definiciones</field>
+    </record>
+    <record id="seccion_condiciones" model="amunet.seccion.documento">
+        <field name="sequence">80</field>
+        <field name="name">Condiciones generales</field>
+    </record>
+    <record id="seccion_desarrollo" model="amunet.seccion.documento">
+        <field name="sequence">90</field>
+        <field name="name">Desarrollo del proceso</field>
+    </record>
+    <record id="seccion_formatos" model="amunet.seccion.documento">
+        <field name="sequence">100</field>
+        <field name="name">Formatos derivados</field>
+    </record>
+    <record id="seccion_referencias" model="amunet.seccion.documento">
+        <field name="sequence">110</field>
+        <field name="name">Referencias bibliográficas</field>
+    </record>
+</odoo>

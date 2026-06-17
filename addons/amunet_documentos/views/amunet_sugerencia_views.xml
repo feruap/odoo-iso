@@ -9,7 +9,7 @@
                   decoration-muted="state == 'rechazada'">
                 <field name="fecha_creacion"/>
                 <field name="documento_codigo"/>
-                <field name="seccion"/>
+                <field name="secciones_ids" widget="many2many_tags"/>
                 <field name="creado_por_id"/>
                 <field name="motivo"/>
                 <field name="state" widget="badge"/>
@@ -28,11 +28,13 @@
                             type="object" class="btn-success"
                             icon="fa-check"
                             invisible="state != 'pendiente'"
-                            confirm="El texto propuesto reemplazara el texto actual de esa seccion del documento. Continuar?"/>
+                            groups="amunet_documentos.group_responsable_sanitario"
+                            confirm="¿Confirmas que todas las firmas están completas y autorizas este control de cambios?"/>
                     <button name="action_rechazar" string="Rechazar"
                             type="object" class="btn-danger"
                             icon="fa-times"
-                            invisible="state != 'pendiente'"/>
+                            invisible="state != 'pendiente'"
+                            groups="amunet_documentos.group_responsable_sanitario"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="pendiente,aceptada,rechazada"/>
                 </header>
@@ -45,9 +47,14 @@
                     </div>
                     <group>
                         <group>
-                            <field name="seccion" readonly="state != 'pendiente'"/>
-                            <field name="creado_por_id" readonly="1"/>
+                            <field name="creado_por_id" string="Nombre del solicitante" readonly="1"/>
                             <field name="fecha_creacion" readonly="1"/>
+                            <field name="tipo_cambio" readonly="state != 'pendiente'"
+                                   widget="radio" options="{'horizontal': true}"/>
+                            <field name="numero_desviacion"
+                                   readonly="state != 'pendiente'"
+                                   invisible="tipo_cambio != 'no_planeado'"
+                                   placeholder="Ej: NC-2026-001, DV-045..."/>
                         </group>
                         <group>
                             <field name="decidido_por_id" readonly="1"
@@ -56,23 +63,123 @@
                                    invisible="state == 'pendiente'"/>
                         </group>
                     </group>
-                    <group string="Motivo del cambio">
-                        <field name="motivo" nolabel="1" readonly="state != 'pendiente'"
-                               placeholder="Por que propones este cambio."/>
+                    <group string="Secciones afectadas">
+                        <field name="secciones_ids" widget="many2many_tags"
+                               readonly="state != 'pendiente'"
+                               nolabel="1"
+                               placeholder="Selecciona una o varias secciones que cambian..."/>
                     </group>
-                    <notebook>
-                        <page string="Texto actual (como esta hoy)">
-                            <field name="texto_original" readonly="1"/>
-                        </page>
-                        <page string="Texto propuesto (como quedaria)">
-                            <field name="texto_propuesto" readonly="state != 'pendiente'"
-                                   placeholder="Edita aqui dejando solo el contenido final."/>
-                        </page>
-                    </notebook>
-                    <group string="Motivo del rechazo" invisible="state != 'rechazada' and not motivo_rechazo">
+                    <group string="Alcance del cambio (marque con X la casilla correspondiente)">
+                        <group>
+                            <field name="alcance_material" readonly="state != 'pendiente'"/>
+                            <field name="alcance_documentos" readonly="state != 'pendiente'"/>
+                            <field name="alcance_equipo" readonly="state != 'pendiente'"/>
+                        </group>
+                        <group>
+                            <field name="alcance_procesos" readonly="state != 'pendiente'"/>
+                            <field name="alcance_estructura" readonly="state != 'pendiente'"/>
+                            <field name="alcance_sgc" readonly="state != 'pendiente'"/>
+                        </group>
+                    </group>
+                    <group string="Justificación del cambio">
+                        <field name="motivo" nolabel="1" readonly="state != 'pendiente'"
+                               placeholder="Describe por qué se propone este cambio."/>
+                    </group>
+                    <group string="Análisis de riesgos">
+                        <field name="aplica_analisis_riesgos"
+                               string="¿Aplica análisis de riesgos?"
+                               readonly="state != 'pendiente'"
+                               widget="boolean_toggle"/>
+                        <field name="numero_analisis_riesgos"
+                               readonly="state != 'pendiente'"
+                               invisible="not aplica_analisis_riesgos"
+                               placeholder="Ingresa el número de análisis de riesgos"/>
+                        <span invisible="aplica_analisis_riesgos"
+                              class="text-muted">No aplica</span>
+                    </group>
+                    <group invisible="not referencia_html or state != 'pendiente' or creado_por_id != uid"
+                           string="Contenido actual del documento (solo lectura — para referencia)">
+                        <field name="referencia_html" nolabel="1" readonly="1"/>
+                    </group>
+                    <separator string="Detalle de cambios (Dice actualmente → Debe decir)"/>
+                    <field name="cambios_ids" readonly="state != 'pendiente'">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="elemento" string="Elemento que cambia"
+                                   placeholder="Ej: Actividad 1, Párrafo del objetivo..."/>
+                            <field name="texto_actual" string="Dice actualmente"
+                                   optional="show"/>
+                            <field name="texto_propuesto" string="Debe decir"
+                                   optional="show"/>
+                        </list>
+                    </field>
+                    <group string="Motivo del rechazo (obligatorio para rechazar)"
+                           invisible="creado_por_id == uid and state == 'pendiente'">
                         <field name="motivo_rechazo" nolabel="1"
                                readonly="state != 'pendiente'"
-                               placeholder="(Obligatorio si rechazas) Por que rechazas el cambio."/>
+                               placeholder="Si vas a rechazar, escribe aquí el motivo antes de hacer clic en Rechazar."/>
+                    </group>
+                    <separator string="Comité técnico"/>
+                    <field name="comite_users_ids" invisible="1"/>
+                    <field name="comite_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="fecha" string="Fecha" readonly="1"/>
+                            <field name="nombre_id" string="Nombre"
+                                   domain="[('id', 'in', parent.comite_users_ids)]"
+                                   options="{'no_create': True}"/>
+                            <field name="usuario_firma_id" string="Firmado por" readonly="1"/>
+                            <field name="fecha_firma" string="Fecha de firma" readonly="1"/>
+                            <button name="action_firmar_comite" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    invisible="usuario_firma_id"
+                                    groups="amunet_documentos.group_comite_tecnico"/>
+                        </list>
+                    </field>
+                    <separator string="Firmas de aplicación del cambio"/>
+                    <group>
+                        <group string="Realizó">
+                            <field name="realizo_id"
+                                   readonly="firma_realizo_id"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_realizo_id" readonly="1"
+                                   invisible="not firma_realizo_id"/>
+                            <field name="fecha_realizo" readonly="1"
+                                   invisible="not fecha_realizo"/>
+                            <button name="action_firmar_realizo" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    class="btn-primary"
+                                    invisible="not realizo_id or firma_realizo_id"/>
+                        </group>
+                        <group string="Revisó">
+                            <field name="reviso_id"
+                                   readonly="firma_reviso_id"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_reviso_id" readonly="1"
+                                   invisible="not firma_reviso_id"/>
+                            <field name="fecha_reviso" readonly="1"
+                                   invisible="not fecha_reviso"/>
+                            <button name="action_firmar_reviso" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    class="btn-primary"
+                                    invisible="not reviso_id or firma_reviso_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Aprobó la aplicación">
+                            <field name="aprobo_id"
+                                   readonly="firma_aprobo_id"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_aprobo_id" readonly="1"
+                                   invisible="not firma_aprobo_id"/>
+                            <field name="fecha_aprobo" readonly="1"
+                                   invisible="not fecha_aprobo"/>
+                            <button name="action_firmar_aprobo" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    class="btn-primary"
+                                    invisible="not aprobo_id or firma_aprobo_id"/>
+                        </group>
+                        <group/>
                     </group>
                 </sheet>
                 <chatter/>
@@ -81,18 +188,35 @@
     </record>
 
     <record id="action_amunet_sugerencia" model="ir.actions.act_window">
-        <field name="name">Sugerencias de cambio</field>
+        <field name="name">Control de cambios</field>
         <field name="res_model">amunet.documento.sugerencia</field>
         <field name="view_mode">list,form</field>
     </record>
 
     <record id="action_amunet_sugerencia_mis_pendientes" model="ir.actions.act_window">
-        <field name="name">Sugerencias por decidir (mias)</field>
+        <field name="name">Controles de cambio por decidir</field>
         <field name="res_model">amunet.documento.sugerencia</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('state','=','pendiente'),('documento_id.elabora_id','=',uid)]</field>
+        <field name="domain">[
+            ('state','=','pendiente'),
+            '|','|','|','|',
+                ('creado_por_id','=',uid),
+                ('realizo_id','=',uid),
+                ('reviso_id','=',uid),
+                ('aprobo_id','=',uid),
+                ('comite_ids.nombre_id','=',uid)
+        ]</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">No tienes sugerencias por decidir</p>
+            <p class="o_view_nocontent_smiling_face">No tienes controles de cambio pendientes</p>
+        </field>
+    </record>
+
+    <record id="action_amunet_sugerencia_registro" model="ir.actions.act_window">
+        <field name="name">Registro de controles de cambio</field>
+        <field name="res_model">amunet.documento.sugerencia</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No hay controles de cambio registrados</p>
         </field>
     </record>
 </odoo>

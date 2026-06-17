@@ -47,8 +47,8 @@
                             type="object"
                             invisible="state not in ('en_revision','obsoleto')"/>
                     <button name="action_open_sugerencia_wizard"
-                            string="Sugerir cambio" type="object"
-                            invisible="state != 'en_revision'"
+                            string="Control de cambios" type="object"
+                            invisible="state != 'vigente'"
                             icon="fa-lightbulb-o"/>
                     <button name="action_print_documento"
                             string="Imprimir / Descargar"
@@ -105,10 +105,10 @@
                     </div>
                     <div class="alert alert-warning mb16" role="alert" style="padding:16px;"
                          invisible="sugerencias_pendientes_count == 0 or elabora_id != uid">
-                        <h3 class="mt0" style="margin-top:0;">Tienes sugerencias por decidir</h3>
+                        <h3 class="mt0" style="margin-top:0;">Tienes controles de cambio por decidir</h3>
                         <p>Hay <field name="sugerencias_pendientes_count" readonly="1" nolabel="1" class="oe_inline"/>
-                           sugerencia(s) de cambio pendiente(s). Ve a la pestana
-                           <b>"Sugerencias"</b> para decidir.</p>
+                           control(es) de cambio pendiente(s). Ve a la pestaña
+                           <b>"Control de cambios"</b> para decidir.</p>
                     </div>
                     <div class="alert alert-info mb16" role="alert" style="padding:16px;"
                          invisible="state != 'borrador' or elabora_id != uid">
@@ -274,9 +274,16 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="codigo" string="Código"/>
                                     <field name="nombre" string="Nombre"/>
+                                    <field name="requiere_aprobacion" string="Con permiso"/>
                                     <field name="archivo" widget="binary"
                                            filename="archivo_filename"
-                                           string="Descargar"/>
+                                           string="Descargar"
+                                           invisible="requiere_aprobacion"/>
+                                    <button name="action_solicitar_descarga"
+                                            type="object"
+                                            string="Solicitar impresión"
+                                            icon="fa-envelope"
+                                            invisible="not requiere_aprobacion"/>
                                     <field name="archivo_filename" optional="hide"/>
                                 </list>
                             </field>
@@ -296,21 +303,6 @@
                               invisible="tipo in ('pno','manual','instructivo')">
                             <field name="contenido_html" readonly="state == 'vigente'"/>
                         </page>
-                        <page string="Sugerencias" name="sugerencias">
-                            <field name="sugerencias_pendientes_count" invisible="1"/>
-                            <field name="sugerencia_ids">
-                                <list decoration-warning="state == 'pendiente'"
-                                      decoration-success="state == 'aceptada'"
-                                      decoration-muted="state == 'rechazada'">
-                                    <field name="fecha_creacion"/>
-                                    <field name="seccion"/>
-                                    <field name="creado_por_id"/>
-                                    <field name="motivo"/>
-                                    <field name="state" widget="badge"/>
-                                    <field name="decidido_por_id" optional="show"/>
-                                </list>
-                            </field>
-                        </page>
                         <page string="Firmas controladas">
                             <div class="alert alert-info" role="alert">
                                 Asigna quien va a <b>revisar</b> y quien va a <b>autorizar</b>.
@@ -326,6 +318,7 @@
                                     <field name="elabora_id"
                                            readonly="state in ('en_revision','vigente','obsoleto')"/>
                                     <field name="fecha_elabora"
+                                           placeholder="MM/AAAA"
                                            readonly="state in ('en_revision','vigente','obsoleto')"/>
                                     <field name="revisor_id"
                                            readonly="state in ('vigente','obsoleto') or firma_revisa_id"
@@ -492,5 +485,132 @@
         <field name="view_mode">list,form</field>
         <field name="domain">[('state','=','borrador'),('elabora_id','=',uid)]</field>
         <field name="search_view_id" ref="view_amunet_documento_search"/>
+    </record>
+
+    <!-- Lista maestra de formatos -->
+    <record id="view_amunet_documento_formato_list" model="ir.ui.view">
+        <field name="name">amunet.documento.formato.list</field>
+        <field name="model">amunet.documento.formato</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="doc_area" string="Área" optional="hide"/>
+                <field name="codigo" string="Código"/>
+                <field name="nombre" string="Nombre del formato"/>
+                <field name="doc_codigo" string="Código PNO"/>
+                <field name="documento_id" string="Nombre del PNO"/>
+                <field name="archivo" widget="binary"
+                       filename="archivo_filename"
+                       string="Descargar"/>
+                <field name="archivo_filename" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_documento_formato_search" model="ir.ui.view">
+        <field name="name">amunet.documento.formato.search</field>
+        <field name="model">amunet.documento.formato</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="codigo" string="Código"/>
+                <field name="nombre" string="Nombre"/>
+                <field name="documento_id" string="PNO"/>
+                <separator/>
+                <filter name="g_area" string="Área" context="{'group_by': 'doc_area'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_amunet_documento_formato" model="ir.actions.act_window">
+        <field name="name">Formatos descargables</field>
+        <field name="res_model">amunet.documento.formato</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_g_area': 1}</field>
+        <field name="search_view_id" ref="view_amunet_documento_formato_search"/>
+    </record>
+
+    <!-- Vistas de solicitudes de descarga -->
+    <record id="view_amunet_formato_solicitud_list" model="ir.ui.view">
+        <field name="name">amunet.documento.formato.solicitud.list</field>
+        <field name="model">amunet.documento.formato.solicitud</field>
+        <field name="arch" type="xml">
+            <list decoration-warning="state == 'pendiente'"
+                  decoration-success="state == 'aprobada'"
+                  decoration-muted="state == 'rechazada'">
+                <field name="fecha_solicitud" string="Fecha"/>
+                <field name="solicitante_id" string="Solicitante"/>
+                <field name="formato_codigo" string="Código formato"/>
+                <field name="formato_nombre" string="Formato"/>
+                <field name="documento_id" string="PNO"/>
+                <field name="state" widget="badge"
+                       decoration-warning="state == 'pendiente'"
+                       decoration-success="state == 'aprobada'"
+                       decoration-danger="state == 'rechazada'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_formato_solicitud_form" model="ir.ui.view">
+        <field name="name">amunet.documento.formato.solicitud.form</field>
+        <field name="model">amunet.documento.formato.solicitud</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_aprobar" string="Aprobar impresión"
+                            type="object" class="btn-primary"
+                            invisible="state != 'pendiente'"
+                            groups="amunet_documentos.group_documentos_manager"/>
+                    <button name="action_rechazar" string="Rechazar"
+                            type="object"
+                            invisible="state != 'pendiente'"
+                            groups="amunet_documentos.group_documentos_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pendiente,aprobada,rechazada"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Solicitud">
+                            <field name="solicitante_id" readonly="1"/>
+                            <field name="fecha_solicitud" readonly="1"/>
+                            <field name="motivo"/>
+                        </group>
+                        <group string="Formato solicitado">
+                            <field name="formato_id" readonly="1"/>
+                            <field name="documento_id" readonly="1"/>
+                            <field name="formato_codigo" readonly="1"/>
+                            <field name="formato_nombre" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Respuesta" invisible="state == 'pendiente'">
+                        <field name="aprobado_por_id" readonly="1"/>
+                        <field name="fecha_respuesta" readonly="1"/>
+                        <field name="notas_respuesta"/>
+                    </group>
+                    <group string="Impresión" invisible="state != 'aprobada'">
+                        <div>
+                            <button name="action_imprimir" type="object"
+                                    string="🖨️ Abrir para imprimir"
+                                    class="btn btn-primary"/>
+                            <p class="text-muted mt8" style="font-size:12px;">
+                                Se abrirá una ventana con el documento listo para imprimir.
+                            </p>
+                        </div>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_formato_solicitudes_pendientes" model="ir.actions.act_window">
+        <field name="name">Solicitudes de impresión</field>
+        <field name="res_model">amunet.documento.formato.solicitud</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','pendiente')]</field>
+    </record>
+
+    <record id="action_amunet_formato_mis_solicitudes" model="ir.actions.act_window">
+        <field name="name">Mis solicitudes de impresión</field>
+        <field name="res_model">amunet.documento.formato.solicitud</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('solicitante_id','=',uid)]</field>
     </record>
 </odoo>
