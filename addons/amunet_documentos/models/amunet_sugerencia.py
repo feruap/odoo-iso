@@ -403,7 +403,7 @@ class AmunetDocumentoSugerencia(models.Model):
 
     def action_enviar(self):
         for r in self:
-            if r.state != 'borrador':
+            if r.state not in ('borrador', 'rechazada'):
                 raise UserError(_('Este control de cambios ya fue enviado.'))
             if not r.documento_id:
                 raise UserError(_('Selecciona el documento antes de enviar.'))
@@ -411,7 +411,14 @@ class AmunetDocumentoSugerencia(models.Model):
                 raise UserError(_('Indica al menos una sección afectada.'))
             if not (r.motivo or '').strip():
                 raise UserError(_('Escribe la justificación del cambio.'))
-            r.write({'state': 'pendiente'})
+            vals = {'state': 'pendiente'}
+            if r.state == 'rechazada':
+                vals.update({
+                    'motivo_rechazo': False,
+                    'decidido_por_id': False,
+                    'fecha_decision': False,
+                })
+            r.write(vals)
             secciones_str = ', '.join(r.secciones_ids.mapped('name')) or '(sin sección)'
             if r.documento_id.elabora_id:
                 r.documento_id.activity_schedule(

@@ -35,6 +35,11 @@
                             icon="fa-trash"
                             invisible="state != 'borrador'"
                             confirm="¿Segura que quieres eliminar este borrador? Se eliminará permanentemente."/>
+                    <button name="action_enviar" string="Corregir y volver a enviar"
+                            type="object" class="btn-primary"
+                            icon="fa-paper-plane"
+                            invisible="state != 'rechazada' or creado_por_id != uid"
+                            confirm="¿Ya corregiste los cambios? El control se enviará de nuevo para aprobación."/>
                     <button name="action_aceptar" string="Aceptar"
                             type="object" class="btn-success"
                             icon="fa-check"
@@ -52,7 +57,7 @@
                 <sheet>
                     <div class="oe_title">
                         <h1>
-                            <field name="documento_id" readonly="state not in ('borrador', 'pendiente')"
+                            <field name="documento_id" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    options="{'no_create': True}"/>
                         </h1>
                     </div>
@@ -60,10 +65,10 @@
                         <group>
                             <field name="creado_por_id" string="Nombre del solicitante" readonly="1"/>
                             <field name="fecha_creacion" readonly="1"/>
-                            <field name="tipo_cambio" readonly="state not in ('borrador', 'pendiente')"
+                            <field name="tipo_cambio" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    widget="radio" options="{'horizontal': true}"/>
                             <field name="numero_desviacion"
-                                   readonly="state not in ('borrador', 'pendiente')"
+                                   readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    invisible="tipo_cambio != 'no_planeado'"
                                    placeholder="Ej: NC-2026-001, DV-045..."/>
                         </group>
@@ -76,39 +81,39 @@
                     </group>
                     <group string="Secciones afectadas">
                         <field name="secciones_ids" widget="many2many_tags"
-                               readonly="state not in ('borrador', 'pendiente')"
+                               readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                nolabel="1"
                                placeholder="Selecciona una o varias secciones que cambian..."/>
                     </group>
                     <group string="Alcance del cambio (marque con X la casilla correspondiente)">
                         <group>
-                            <field name="alcance_material" readonly="state not in ('borrador', 'pendiente')"/>
-                            <field name="alcance_documentos" readonly="state not in ('borrador', 'pendiente')"/>
-                            <field name="alcance_equipo" readonly="state not in ('borrador', 'pendiente')"/>
+                            <field name="alcance_material" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
+                            <field name="alcance_documentos" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
+                            <field name="alcance_equipo" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
                         </group>
                         <group>
-                            <field name="alcance_procesos" readonly="state not in ('borrador', 'pendiente')"/>
-                            <field name="alcance_estructura" readonly="state not in ('borrador', 'pendiente')"/>
-                            <field name="alcance_sgc" readonly="state not in ('borrador', 'pendiente')"/>
+                            <field name="alcance_procesos" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
+                            <field name="alcance_estructura" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
+                            <field name="alcance_sgc" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
                         </group>
                     </group>
                     <group string="Justificación del cambio">
-                        <field name="motivo" nolabel="1" readonly="state not in ('borrador', 'pendiente')"
+                        <field name="motivo" nolabel="1" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                placeholder="Describe por qué se propone este cambio."/>
                     </group>
                     <group string="Análisis de riesgos">
                         <field name="aplica_analisis_riesgos"
                                string="¿Aplica análisis de riesgos?"
-                               readonly="state not in ('borrador', 'pendiente')"
+                               readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                widget="boolean_toggle"/>
                         <field name="numero_analisis_riesgos"
-                               readonly="state not in ('borrador', 'pendiente')"
+                               readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                invisible="not aplica_analisis_riesgos"
                                placeholder="Ingresa el número de análisis de riesgos"/>
                         <span invisible="aplica_analisis_riesgos"
                               class="text-muted">No aplica</span>
                     </group>
-                    <group invisible="not referencia_html or state not in ('borrador', 'pendiente') or creado_por_id != uid"
+                    <group invisible="not referencia_html or creado_por_id != uid or state == 'aceptada'"
                            string="Contenido actual del documento (solo lectura — para referencia)">
                         <field name="referencia_html" nolabel="1" readonly="1"/>
                     </group>
@@ -119,7 +124,7 @@
                     <separator string="Detalle de cambios (Dice actualmente → Debe decir)"
                                invisible="state in ('aceptada', 'rechazada')"/>
                     <field name="cambios_ids"
-                           readonly="state not in ('borrador', 'pendiente')"
+                           readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                            invisible="state in ('aceptada', 'rechazada')">
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
@@ -134,7 +139,7 @@
                     <group string="Motivo del rechazo (obligatorio para rechazar)"
                            invisible="state == 'borrador' or (creado_por_id == uid and state == 'pendiente')">
                         <field name="motivo_rechazo" nolabel="1"
-                               readonly="state not in ('borrador', 'pendiente')"
+                               readonly="state != 'pendiente'"
                                placeholder="Si vas a rechazar, escribe aquí el motivo antes de hacer clic en Rechazar."/>
                     </group>
                     <separator string="Comité técnico"/>
@@ -158,7 +163,7 @@
                     <group>
                         <group string="Realizó">
                             <field name="realizo_id"
-                                   readonly="firma_realizo_id"
+                                   readonly="firma_realizo_id or not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    options="{'no_create': True}"/>
                             <field name="firma_realizo_id" readonly="1"
                                    invisible="not firma_realizo_id"/>
@@ -171,7 +176,7 @@
                         </group>
                         <group string="Revisó">
                             <field name="reviso_id"
-                                   readonly="firma_reviso_id"
+                                   readonly="firma_reviso_id or not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    options="{'no_create': True}"/>
                             <field name="firma_reviso_id" readonly="1"
                                    invisible="not firma_reviso_id"/>
@@ -186,7 +191,7 @@
                     <group>
                         <group string="Aprobó la aplicación">
                             <field name="aprobo_id"
-                                   readonly="firma_aprobo_id"
+                                   readonly="firma_aprobo_id or not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    options="{'no_create': True}"/>
                             <field name="firma_aprobo_id" readonly="1"
                                    invisible="not firma_aprobo_id"/>
