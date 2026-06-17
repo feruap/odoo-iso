@@ -492,6 +492,17 @@ class AmunetDocumentoSugerencia(models.Model):
             desc_cambio = '\n'.join(lineas_desc).strip() or 'Ver control de cambios adjunto.'
             justificacion = r.motivo or ''
             # Poblar campos del documento y lanzar nueva versión automáticamente
+            # Correo directo a la creadora en el propio CC
+            r.message_post(
+                body=_(
+                    '<p>✅ <b>Tu control de cambios fue aprobado</b> por %s.</p>'
+                    '<p><b>Documento:</b> %s</p>'
+                    '<p>El documento ya quedó en borrador para que apliques los cambios '
+                    'y lo mandes a revisión.</p>'
+                ) % (self.env.user.name, r.documento_id.codigo),
+                subject=_('✅ Control de cambios aprobado — %s') % r.documento_id.codigo,
+                subtype_xmlid='mail.mt_comment',
+            )
             if r.documento_id and r.documento_id.state == 'vigente':
                 r.documento_id.with_context(
                     amunet_documento_workflow_write=True
@@ -536,6 +547,18 @@ class AmunetDocumentoSugerencia(models.Model):
                 'decidido_por_id': self.env.user.id,
                 'fecha_decision': fields.Datetime.now(),
             })
+            # Correo directo a la creadora en el propio CC
+            r.message_post(
+                body=_(
+                    '<p>❌ <b>Tu control de cambios fue rechazado</b> por %s.</p>'
+                    '<p><b>Documento:</b> %s</p>'
+                    '<p><b>Motivo del rechazo:</b> %s</p>'
+                    '<p>Puedes corregirlo y volver a enviarlo desde '
+                    '"Mis controles de cambio".</p>'
+                ) % (self.env.user.name, r.documento_id.codigo, r.motivo_rechazo),
+                subject=_('❌ Control de cambios rechazado — %s') % r.documento_id.codigo,
+                subtype_xmlid='mail.mt_comment',
+            )
             if r.creado_por_id:
                 r.documento_id.activity_schedule(
                     'mail.mail_activity_data_todo',
