@@ -151,6 +151,7 @@
                                             <span t-if="detail.verdict == 'pass'">CUMPLE</span>
                                             <span t-if="detail.verdict == 'fail'">NO CUMPLE</span>
                                             <span t-if="detail.verdict == 'not_applicable'">N/A</span>
+                                            <span t-if="detail.verdict == 'invalid'">INVÁLIDA</span>
                                         </td>
                                     </tr>
                                 </t>

@@ -258,7 +258,7 @@ class AmunetQualityTestLine(models.Model):
             record.has_details = bool(details)
             record.detail_count = len(details)
             record.detail_pass_count = len(details.filtered(lambda d: d.verdict == 'pass'))
-            record.detail_fail_count = len(details.filtered(lambda d: d.verdict == 'fail'))
+            record.detail_fail_count = len(details.filtered(lambda d: d.verdict in ('fail', 'invalid')))
             record.detail_pending_count = len(details.filtered(lambda d: d.verdict == 'pending'))
             record.detail_na_count = len(details.filtered(lambda d: d.verdict == 'not_applicable'))
 

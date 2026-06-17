@@ -575,6 +575,7 @@ class AmunetQualityTestLineDetail(models.Model):
         ('pass', 'Cumple'),
         ('fail', 'No Cumple'),
         ('not_applicable', 'No Aplica'),
+        ('invalid', 'Inválida'),
     ], string='Dictamen', compute='_compute_verdict', store=True,
         help='Resultado de la evaluación')
 
@@ -1961,7 +1962,9 @@ class AmunetQualityTestLineDetail(models.Model):
             elif record.evaluation_type == 'vama_multi_check':
                 _PATTERN_LABELS = {
                     'result_1': '#1', 'result_2': '#2', 'result_3': '#3',
-                    'result_4': '#4', 'result_5': '#5', 'na': 'N/A',
+                    'result_4': '#4', 'result_5': '#5',
+                    'result_6': 'INVÁLIDA (#6)', 'result_7': 'INVÁLIDA (#7)',
+                    'na': 'N/A',
                 }
                 try:
                     import json as _json
