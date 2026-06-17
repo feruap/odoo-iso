@@ -1958,6 +1958,19 @@ class AmunetQualityTestLineDetail(models.Model):
                 else:
                     record.result_display = ''
 
+            elif record.evaluation_type == 'vama_multi_check':
+                _PATTERN_LABELS = {
+                    'result_1': '#1', 'result_2': '#2', 'result_3': '#3',
+                    'result_4': '#4', 'result_5': '#5', 'na': 'N/A',
+                }
+                try:
+                    import json as _json
+                    results = _json.loads(record.multi_check_results_json or '{}')
+                    selected = results.get('0', '')
+                    record.result_display = _PATTERN_LABELS.get(selected, selected)
+                except Exception:
+                    record.result_display = ''
+
             else:
                 record.result_display = ''
 
