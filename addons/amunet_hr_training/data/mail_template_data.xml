@@ -60,14 +60,65 @@
     capacitacion <b t-out="object.name or ''"/>, programada para
     <t t-out="object.date_start or '-'"/>.</p>
     <p>Faltan 10 dias y el curso aun esta en estado <b>Borrador</b>.
-    Por favor:</p>
-    <ul>
-        <li>Prepara el material y las dinamicas a usar.</li>
-        <li>Entra a Odoo y confirma tu participacion pulsando
-            "Confirmar Ponente" en el curso.</li>
-        <li>Coordina con Recursos Humanos cualquier dependencia.</li>
-    </ul>
+    Por favor prepara el material y coordina con Recursos Humanos
+    cualquier dependencia.</p>
+    <t t-if="object.speaker_confirm_url">
+        <p>Si aun no has confirmado tu participacion, da clic aqui —
+        sin necesidad de entrar a ningun sistema:</p>
+        <div style="text-align:center; margin:24px 0;">
+            <a t-att-href="object.speaker_confirm_url"
+               style="background:#3366cc; color:#fff; text-decoration:none;
+                      padding:14px 32px; border-radius:8px; font-size:16px;
+                      font-weight:600; display:inline-block;">
+                Confirmar mi participacion como ponente
+            </a>
+        </div>
+        <p style="color:#888; font-size:13px;">
+            Si el boton no funciona, copia y pega esta direccion en tu navegador:<br/>
+            <span t-out="object.speaker_confirm_url or ''"/>
+        </p>
+    </t>
     <p>Recursos Humanos - Amunet</p>
+</div>
+            </field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+        <!--
+            Solicitud manual de confirmacion de ponente.
+            RH la envia desde el boton "Solicitar confirmacion (ponente)".
+        -->
+        <record id="mail_template_speaker_confirm_request" model="mail.template">
+            <field name="name">Capacitacion - Solicitud de confirmacion de ponente</field>
+            <field name="model_id" ref="model_hr_training_course"/>
+            <field name="subject">Confirmacion requerida: eres ponente de "{{ object.name }}"</field>
+            <field name="email_from">{{ user.email_formatted or user.company_id.email_formatted }}</field>
+            <field name="partner_to">{{ object.speaker_id.work_contact_id.id if object.speaker_id.work_contact_id else '' }}</field>
+            <field name="body_html" type="html">
+<div style="font-family: Arial, sans-serif; color: #1f2d3d;">
+    <p>Hola <t t-out="object.speaker_id.name or ''"/>,</p>
+    <p>Recursos Humanos te pide que confirmes tu participacion como
+    <b>ponente</b> en la siguiente capacitacion:</p>
+    <table style="border-collapse: collapse; margin: 10px 0;">
+        <tr><td style="padding: 4px 12px 4px 0;"><b>Capacitacion:</b></td>
+            <td t-out="object.name or ''"/></tr>
+        <tr><td style="padding: 4px 12px 4px 0;"><b>Fecha:</b></td>
+            <td t-out="object.date_start or '-'"/></tr>
+    </table>
+    <p>Da clic en el boton para confirmar — no necesitas entrar a ningun sistema:</p>
+    <div style="text-align:center; margin:24px 0;">
+        <a t-att-href="object.speaker_confirm_url"
+           style="background:#3366cc; color:#fff; text-decoration:none;
+                  padding:14px 32px; border-radius:8px; font-size:16px;
+                  font-weight:600; display:inline-block;">
+            Confirmar mi participacion como ponente
+        </a>
+    </div>
+    <p style="color:#888; font-size:13px;">
+        Si el boton no funciona, copia y pega esta direccion en tu navegador:<br/>
+        <span t-out="object.speaker_confirm_url or ''"/>
+    </p>
+    <p>Gracias,<br/>Recursos Humanos - Amunet</p>
 </div>
             </field>
             <field name="auto_delete" eval="False"/>

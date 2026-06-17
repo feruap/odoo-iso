@@ -18,6 +18,12 @@
                             string="Confirmar Ponente"
                             type="object" class="btn-primary"
                             invisible="state != 'draft' or speaker_confirmed or not is_speaker_for_user"/>
+                    <button name="action_send_speaker_confirm_request"
+                            string="Solicitar confirmacion (ponente)"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'draft' or speaker_confirmed"
+                            groups="hr.group_hr_user"
+                            help="Envia al ponente un correo con enlace de un clic para confirmar sin entrar a Odoo."/>
                     <button name="action_hr_approve"
                             string="Aprobar RH"
                             type="object" class="btn-primary"

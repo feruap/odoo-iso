@@ -152,6 +152,17 @@ class HrTrainingCourse(models.Model):
         copy=False,
         readonly=True,
     )
+
+    # Token para confirmar ponente por correo (magic link)
+    speaker_confirm_token = fields.Char(
+        string='Token de confirmacion (ponente)',
+        copy=False, readonly=True,
+    )
+    speaker_confirm_url = fields.Char(
+        string='URL de confirmacion (ponente)',
+        compute='_compute_speaker_confirm_url', store=False,
+    )
+
     qr_code = fields.Binary(
         string='Codigo QR',
         compute='_compute_qr_code', store=False, readonly=True,
@@ -195,6 +206,16 @@ class HrTrainingCourse(models.Model):
         for rec in self:
             rec.is_hr_user_for_user = is_hr
 
+    @api.depends('speaker_confirm_token')
+    def _compute_speaker_confirm_url(self):
+        base = self.env['ir.config_parameter'].sudo().get_param(
+            'web.base.url', '').rstrip('/')
+        for rec in self:
+            rec.speaker_confirm_url = (
+                '%s/training/confirmar-ponente/%s' % (base, rec.speaker_confirm_token)
+                if rec.speaker_confirm_token else False
+            )
+
     # ============================
     # Validaciones
     # ============================
@@ -216,6 +237,35 @@ class HrTrainingCourse(models.Model):
                 'qr_token_generated_date': fields.Datetime.now(),
             })
         return self.sudo().qr_access_token
+
+    def _generate_speaker_token(self):
+        """Genera (o regenera) el token de confirmacion del ponente por correo."""
+        self.ensure_one()
+        token = secrets.token_urlsafe(32)
+        self.sudo().write({'speaker_confirm_token': token})
+        return token
+
+    def _confirm_speaker_by_token(self, token):
+        """Valida y registra la confirmacion del ponente via magic link.
+        Retorna (ok: bool, mensaje: str).
+        """
+        self.ensure_one()
+        if not self.speaker_confirm_token or self.speaker_confirm_token != token:
+            return False, _('Este enlace ya no es valido o fue usado anteriormente.')
+        if self.speaker_confirmed:
+            return True, _('Ya estabas confirmado previamente.')
+        if self.state != 'draft':
+            return False, _(
+                'Este curso ya no esta en estado Borrador y no admite confirmacion.')
+        self.sudo().write({
+            'speaker_confirmed': True,
+            'speaker_confirmed_date': fields.Datetime.now(),
+            'speaker_confirm_token': False,
+        })
+        self.sudo().message_post(body=_(
+            'Ponente confirmo su participacion por enlace de correo.'))
+        self.sudo()._maybe_pass_to_confirmed()
+        return True, _('Confirmacion registrada correctamente.')
 
     def _compute_qr_code(self):
         base = self.env['ir.config_parameter'].sudo().get_param(
@@ -353,11 +403,39 @@ class HrTrainingCourse(models.Model):
             rec.sudo().write({
                 'speaker_confirmed': True,
                 'speaker_confirmed_date': fields.Datetime.now(),
+                'speaker_confirm_token': False,
             })
             rec.sudo().message_post(body=_(
                 'Confirmacion del ponente registrada por %s.'
             ) % self.env.user.display_name)
             rec.sudo()._maybe_pass_to_confirmed()
+        return True
+
+    def action_send_speaker_confirm_request(self):
+        """RH manda al ponente un correo con enlace de un clic para confirmar
+        sin necesidad de entrar a Odoo."""
+        self.ensure_one()
+        if self.state != 'draft':
+            raise UserError(_(
+                'Solo se puede solicitar confirmacion a cursos en Borrador.'))
+        if self.speaker_confirmed:
+            raise UserError(_('El ponente ya confirmo su participacion.'))
+        if not self.speaker_id:
+            raise UserError(_(
+                'Asigna un ponente antes de enviar la solicitud.'))
+        if not (self.speaker_id.work_contact_id
+                and self.speaker_id.work_contact_id.email):
+            raise UserError(_(
+                'El ponente no tiene correo electronico registrado.'))
+        self._generate_speaker_token()
+        tmpl = self.env.ref(
+            'amunet_hr_training.mail_template_speaker_confirm_request',
+            raise_if_not_found=False)
+        if tmpl:
+            tmpl.sudo().send_mail(self.id, force_send=True)
+        self.message_post(body=_(
+            'Solicitud de confirmacion enviada a %s.'
+        ) % self.speaker_id.name)
         return True
 
     def action_hr_approve(self):
@@ -623,6 +701,9 @@ class HrTrainingCourse(models.Model):
                     },
                     user_id=u.id,
                 )
+            # Generar token de confirmacion para incluirlo en el recordatorio
+            if not curso.speaker_confirmed:
+                curso._generate_speaker_token()
             # Recordatorio al ponente
             if recordatorio_tmpl and curso.speaker_id.work_contact_id \
                     and curso.speaker_id.work_contact_id.email:
