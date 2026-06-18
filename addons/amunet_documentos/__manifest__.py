@@ -23,6 +23,11 @@ de firmas configurables.""",
         'views/report_lista_maestra.xml',
         'views/menus.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'amunet_documentos/static/src/css/sugerencia.css',
+        ],
+    },
     'installable': True,
     'application': True,
     'license': 'LGPL-3',

@@ -4,7 +4,8 @@
         <field name="name">amunet.documento.sugerencia.list</field>
         <field name="model">amunet.documento.sugerencia</field>
         <field name="arch" type="xml">
-            <list decoration-warning="state == 'pendiente'"
+            <list decoration-info="state == 'borrador'"
+                  decoration-warning="state == 'pendiente'"
                   decoration-success="state == 'aceptada'"
                   decoration-muted="state == 'rechazada'">
                 <field name="fecha_creacion"/>
@@ -24,6 +25,21 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button name="action_enviar" string="Enviar control de cambios"
+                            type="object" class="btn-primary"
+                            icon="fa-paper-plane"
+                            invisible="state != 'borrador'"
+                            confirm="¿Estás segura de que el control de cambios está completo y listo para enviarse?"/>
+                    <button name="action_descartar" string="Eliminar borrador"
+                            type="object" class="btn-secondary"
+                            icon="fa-trash"
+                            invisible="state != 'borrador'"
+                            confirm="¿Segura que quieres eliminar este borrador? Se eliminará permanentemente."/>
+                    <button name="action_enviar" string="Corregir y volver a enviar"
+                            type="object" class="btn-primary"
+                            icon="fa-paper-plane"
+                            invisible="state != 'rechazada' or creado_por_id != uid"
+                            confirm="¿Ya corregiste los cambios? El control se enviará de nuevo para aprobación."/>
                     <button name="action_aceptar" string="Aceptar"
                             type="object" class="btn-success"
                             icon="fa-check"
@@ -36,12 +52,12 @@
                             invisible="state != 'pendiente'"
                             groups="amunet_documentos.group_responsable_sanitario"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="pendiente,aceptada,rechazada"/>
+                           statusbar_visible="borrador,pendiente,aceptada,rechazada"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <h1>
-                            <field name="documento_id" readonly="state != 'pendiente'"
+                            <field name="documento_id" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    options="{'no_create': True}"/>
                         </h1>
                     </div>
@@ -49,10 +65,10 @@
                         <group>
                             <field name="creado_por_id" string="Nombre del solicitante" readonly="1"/>
                             <field name="fecha_creacion" readonly="1"/>
-                            <field name="tipo_cambio" readonly="state != 'pendiente'"
+                            <field name="tipo_cambio" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    widget="radio" options="{'horizontal': true}"/>
                             <field name="numero_desviacion"
-                                   readonly="state != 'pendiente'"
+                                   readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    invisible="tipo_cambio != 'no_planeado'"
                                    placeholder="Ej: NC-2026-001, DV-045..."/>
                         </group>
@@ -65,44 +81,51 @@
                     </group>
                     <group string="Secciones afectadas">
                         <field name="secciones_ids" widget="many2many_tags"
-                               readonly="state != 'pendiente'"
+                               readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                nolabel="1"
                                placeholder="Selecciona una o varias secciones que cambian..."/>
                     </group>
                     <group string="Alcance del cambio (marque con X la casilla correspondiente)">
                         <group>
-                            <field name="alcance_material" readonly="state != 'pendiente'"/>
-                            <field name="alcance_documentos" readonly="state != 'pendiente'"/>
-                            <field name="alcance_equipo" readonly="state != 'pendiente'"/>
+                            <field name="alcance_material" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
+                            <field name="alcance_documentos" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
+                            <field name="alcance_equipo" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
                         </group>
                         <group>
-                            <field name="alcance_procesos" readonly="state != 'pendiente'"/>
-                            <field name="alcance_estructura" readonly="state != 'pendiente'"/>
-                            <field name="alcance_sgc" readonly="state != 'pendiente'"/>
+                            <field name="alcance_procesos" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
+                            <field name="alcance_estructura" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
+                            <field name="alcance_sgc" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
                         </group>
                     </group>
                     <group string="Justificación del cambio">
-                        <field name="motivo" nolabel="1" readonly="state != 'pendiente'"
+                        <field name="motivo" nolabel="1" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                placeholder="Describe por qué se propone este cambio."/>
                     </group>
                     <group string="Análisis de riesgos">
                         <field name="aplica_analisis_riesgos"
                                string="¿Aplica análisis de riesgos?"
-                               readonly="state != 'pendiente'"
+                               readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                widget="boolean_toggle"/>
                         <field name="numero_analisis_riesgos"
-                               readonly="state != 'pendiente'"
+                               readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                invisible="not aplica_analisis_riesgos"
                                placeholder="Ingresa el número de análisis de riesgos"/>
                         <span invisible="aplica_analisis_riesgos"
                               class="text-muted">No aplica</span>
                     </group>
-                    <group invisible="not referencia_html or state != 'pendiente' or creado_por_id != uid"
+                    <group invisible="not referencia_html or creado_por_id != uid or state == 'aceptada'"
                            string="Contenido actual del documento (solo lectura — para referencia)">
                         <field name="referencia_html" nolabel="1" readonly="1"/>
                     </group>
-                    <separator string="Detalle de cambios (Dice actualmente → Debe decir)"/>
-                    <field name="cambios_ids" readonly="state != 'pendiente'">
+                    <separator string="Resumen de cambios"
+                               invisible="state not in ('aceptada', 'rechazada')"/>
+                    <field name="diff_html" nolabel="1" readonly="1"
+                           invisible="state not in ('aceptada', 'rechazada')"/>
+                    <separator string="Detalle de cambios (Dice actualmente → Debe decir)"
+                               invisible="state in ('aceptada', 'rechazada')"/>
+                    <field name="cambios_ids"
+                           readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
+                           invisible="state in ('aceptada', 'rechazada')">
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="elemento" string="Elemento que cambia"
@@ -114,7 +137,7 @@
                         </list>
                     </field>
                     <group string="Motivo del rechazo (obligatorio para rechazar)"
-                           invisible="creado_por_id == uid and state == 'pendiente'">
+                           invisible="state == 'borrador' or (creado_por_id == uid and state == 'pendiente')">
                         <field name="motivo_rechazo" nolabel="1"
                                readonly="state != 'pendiente'"
                                placeholder="Si vas a rechazar, escribe aquí el motivo antes de hacer clic en Rechazar."/>
@@ -140,7 +163,7 @@
                     <group>
                         <group string="Realizó">
                             <field name="realizo_id"
-                                   readonly="firma_realizo_id"
+                                   readonly="firma_realizo_id or not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    options="{'no_create': True}"/>
                             <field name="firma_realizo_id" readonly="1"
                                    invisible="not firma_realizo_id"/>
@@ -153,7 +176,7 @@
                         </group>
                         <group string="Revisó">
                             <field name="reviso_id"
-                                   readonly="firma_reviso_id"
+                                   readonly="firma_reviso_id or not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    options="{'no_create': True}"/>
                             <field name="firma_reviso_id" readonly="1"
                                    invisible="not firma_reviso_id"/>
@@ -168,7 +191,7 @@
                     <group>
                         <group string="Aprobó la aplicación">
                             <field name="aprobo_id"
-                                   readonly="firma_aprobo_id"
+                                   readonly="firma_aprobo_id or not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    options="{'no_create': True}"/>
                             <field name="firma_aprobo_id" readonly="1"
                                    invisible="not firma_aprobo_id"/>
@@ -197,8 +220,10 @@
         <field name="name">Controles de cambio por decidir</field>
         <field name="res_model">amunet.documento.sugerencia</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[
-            ('state','=','pendiente'),
+        <field name="domain">['|','|','|',
+            ('state','=','borrador'),
+            '&amp;',('state','=','rechazada'),('creado_por_id','=',uid),
+            '&amp;',('state','=','pendiente'),
             '|','|','|','|',
                 ('creado_por_id','=',uid),
                 ('realizo_id','=',uid),
@@ -208,6 +233,16 @@
         ]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No tienes controles de cambio pendientes</p>
+        </field>
+    </record>
+
+    <record id="action_amunet_mis_ccs" model="ir.actions.act_window">
+        <field name="name">Mis controles de cambio</field>
+        <field name="res_model">amunet.documento.sugerencia</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('creado_por_id','=',uid)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aún no has enviado ningún control de cambios</p>
         </field>
     </record>
 
