@@ -2,17 +2,18 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-SPHMC18_19 = ('SPHMC18', 'SPHMC19')
+SPHMT_CODES = ('SPHMT01', 'SPHMT03', 'SPHMT04', 'SPHMT05', 'SPHMT06')
 
 
 def migrate(cr, version):
-    """Migración 3.19.0: MAVI-09 Tiempo de migración en SPHMC18 y SPHMC19 — rango 30-240.
-    Estas pruebas demoran más que las inmunocromatográficas estándar.
+    """Migración 3.20.0: corrige MAVI-09 SPHMT — restaura rango 30-180.
+    La migración 3.19.0 se aplicó incorrectamente a SPHMT en staging;
+    esta migración restaura el valor correcto. En producción es idempotente
+    (SPHMT nunca se cambió allá).
     """
-    # Actualizar spec_configs
     cr.execute("""
         UPDATE amunet_quality_parameter_specification_config sc
-        SET max_value = 240, write_date = NOW()
+        SET max_value = 180, write_date = NOW()
         FROM amunet_quality_parameter_product_rel r
         JOIN product_template pt ON pt.id = r.product_tmpl_id
         WHERE sc.product_parameter_rel_id = r.id
@@ -20,13 +21,12 @@ def migrate(cr, version):
           AND sc.specification_name = 'Tiempo de migración'
           AND sc.active = true
           AND pt.default_code = ANY(%s)
-    """, (list(SPHMC18_19),))
+    """, (list(SPHMT_CODES),))
     sc_updated = cr.rowcount
 
-    # Propagar a detalles en checks abiertos
     cr.execute("""
         UPDATE amunet_quality_test_line_detail tld
-        SET max_value = 240, write_date = NOW()
+        SET max_value = 180, write_date = NOW()
         FROM amunet_quality_parameter_specification_config sc,
              amunet_quality_parameter_product_rel r,
              product_template pt,
@@ -44,10 +44,10 @@ def migrate(cr, version):
           AND tld.name = 'Tiempo de migración'
           AND qc.state IN ('draft', 'in_progress')
           AND pt.default_code = ANY(%s)
-    """, (list(SPHMC18_19),))
+    """, (list(SPHMT_CODES),))
     det_updated = cr.rowcount
 
     _logger.info(
-        "Migración 3.19.0 — MAVI-09 SPHMC18/19 max 30→240: spec_configs=%d, detalles=%d",
+        "Migración 3.20.0 — MAVI-09 SPHMT corregido a max=180: spec_configs=%d, detalles=%d",
         sc_updated, det_updated,
     )
