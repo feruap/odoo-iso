@@ -8,7 +8,8 @@
               action="action_amunet_temp_operador_srv" sequence="10"/>
 
     <menuitem id="menu_temp_cierre" name="Cierre diario" parent="menu_temp_root"
-              action="action_amunet_temp_supervisor_srv" sequence="20"/>
+              action="action_amunet_temp_supervisor_srv" sequence="20"
+              groups="group_temp_signoff"/>
 
     <menuitem id="menu_temp_historico" name="Historico y tendencia" parent="menu_temp_root"
               action="action_amunet_temp_historico_srv" sequence="30"/>
