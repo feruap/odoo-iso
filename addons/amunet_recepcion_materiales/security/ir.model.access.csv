@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_recepcion_pin_wizard_user,recepcion.pin.wizard.user,model_amunet_recepcion_pin_wizard,base.group_user,1,1,1,1

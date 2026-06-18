@@ -18,7 +18,7 @@
 
             <!-- Ocultar botón "Detalles" para incoming: toda la info ya está en la tabla principal -->
             <xpath expr="//button[@name='action_show_details']" position="attributes">
-                <attribute name="invisible">not show_details_visible or picking_type_code == 'incoming'</attribute>
+                <attribute name="invisible">not show_details_visible or parent.picking_type_code == 'incoming'</attribute>
             </xpath>
 
             <!-- Agregar columnas extra para recepciones, después del lote Amunet -->
@@ -49,6 +49,48 @@
                        options="{'no_open': True}"/>
             </xpath>
 
+        </field>
+    </record>
+
+    <!-- Pestaña Inspección de entrada -->
+    <record id="view_picking_form_inspeccion_entrada" model="ir.ui.view">
+        <field name="name">stock.picking.form.inspeccion.entrada</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="priority">115</field>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='operations']" position="after">
+                <page name="inspeccion_entrada" string="Inspección de entrada"
+                      invisible="picking_type_code != 'incoming'">
+
+                    <group string="Criterios de aceptación (ISO 13485 §7.4.3)">
+                        <group>
+                            <field name="amunet_crit1" widget="radio" options="{'horizontal': true}"/>
+                            <field name="amunet_crit2" widget="radio" options="{'horizontal': true}"/>
+                            <field name="amunet_crit3" widget="radio" options="{'horizontal': true}"/>
+                        </group>
+                        <group>
+                            <field name="amunet_crit4" widget="radio" options="{'horizontal': true}"
+                                   help="Aplica para anticuerpos, antígenos, reactivos y materiales biológicos. Para consumibles selecciona N/A."/>
+                            <field name="amunet_crit5" widget="radio" options="{'horizontal': true}"/>
+                        </group>
+                    </group>
+
+                    <group string="Observaciones y disposición">
+                        <field name="amunet_con_observaciones" widget="boolean_toggle"/>
+                        <field name="amunet_crit_obs"
+                               placeholder="Describe cualquier anomalía detectada..."
+                               invisible="not amunet_con_observaciones"/>
+                    </group>
+
+                    <group string="Responsable de recepción">
+                        <field name="amunet_receptor_id"
+                               domain="[('share', '=', False)]"
+                               options="{'no_create': True}"/>
+                    </group>
+
+                </page>
+            </xpath>
         </field>
     </record>
 
