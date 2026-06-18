@@ -6,16 +6,18 @@
         <field name="model">amunet.temp.chart.wizard</field>
         <field name="arch" type="xml">
             <form string="Grafica de control de temperatura y humedad">
+                <header>
+                    <button name="action_print" type="object" string="Descargar PDF" class="btn-primary"/>
+                </header>
                 <group col="6">
                     <field name="area_id"/>
-                    <field name="month"/>
-                    <field name="year"/>
+                    <field name="period_mode"/>
+                    <field name="month" invisible="period_mode != 'mes'" required="period_mode == 'mes'"/>
+                    <field name="year" invisible="period_mode != 'mes'" required="period_mode == 'mes'"/>
+                    <field name="date_from" invisible="period_mode != 'fraccion'" required="period_mode == 'fraccion'"/>
+                    <field name="date_to" invisible="period_mode != 'fraccion'" required="period_mode == 'fraccion'"/>
                 </group>
                 <field name="chart_html" nolabel="1" readonly="1"/>
-                <footer>
-                    <button name="action_print" type="object" string="Generar PDF" class="btn-primary"/>
-                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
-                </footer>
             </form>
         </field>
     </record>
@@ -64,8 +66,7 @@
                             <tr>
                                 <td><strong>Área:</strong> <span t-esc="h['area']"/></td>
                                 <td><strong>No. Termohigrómetro:</strong> <span t-esc="h['instrumento']"/></td>
-                                <td><strong>Mes:</strong> <span t-esc="h['mes']"/></td>
-                                <td><strong>Año:</strong> <span t-esc="h['anio']"/></td>
+                                <td><strong>Período:</strong> <span t-esc="h['periodo']"/></td>
                                 <td><strong>Condiciones:</strong> <span t-esc="h['cond']"/></td>
                             </tr>
                         </table>
