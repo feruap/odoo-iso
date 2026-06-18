@@ -5,14 +5,24 @@ from odoo import models, fields, _
 class ResUsers(models.Model):
     _inherit = 'res.users'
 
+    amunet_temp_only_area_ids = fields.Many2many(
+        'amunet.temp.area', 'amunet_temp_user_area_rel', 'user_id', 'area_id',
+        string='Áreas de temperatura (asignación manual)',
+        help='Si se llena, este usuario ve y captura SOLO estas áreas de '
+             'temperatura, ignorando la derivación por departamento. '
+             'Útil para personal que cubre áreas específicas. Si se deja '
+             'vacío, aplica el acceso normal por departamento.')
+
     def amunet_temp_my_capture_area_ids(self):
-        """Areas donde el usuario actual puede capturar (segun su
-        departamento y el de los hijos si el area es de pool).
-        Los usuarios de Configuracion (Mery, Fernando) ven TODAS."""
+        """Areas donde el usuario actual puede capturar. Si tiene asignación
+        manual (amunet_temp_only_area_ids), SOLO esas. Si no, segun su
+        departamento. Los de Configuracion (Mery, Fernando) ven TODAS."""
         self.ensure_one()
         areas = self.env['amunet.temp.area'].sudo().search([('active', '=', True)])
         if self.has_group('amunet_monitor_temperatura.group_temp_manager'):
             return areas
+        if self.amunet_temp_only_area_ids:
+            return areas & self.amunet_temp_only_area_ids
         return areas.filtered(lambda a: self in a._amunet_capturer_users())
 
     def amunet_temp_my_supervise_area_ids(self):

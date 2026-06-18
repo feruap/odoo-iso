@@ -136,4 +136,18 @@
         <field name="code">action = env.user.amunet_temp_action_supervise()</field>
     </record>
 
+    <!-- Asignacion manual de areas de temperatura en el formulario de usuario -->
+    <record id="view_users_form_temp_areas" model="ir.ui.view">
+        <field name="name">res.users.form.temp.areas</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='login']" position="after">
+                <field name="amunet_temp_only_area_ids" widget="many2many_tags"
+                       options="{'no_create': True}"
+                       groups="amunet_monitor_temperatura.group_temp_manager"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
