@@ -17,11 +17,10 @@
         <field name="comment">Solo supervisores de area (mas Alma y Mery): ven y firman el Cierre diario. Membresia explicita (no se hereda de manager/system).</field>
     </record>
 
-    <!-- Todos los usuarios internos pueden usar el monitor; el filtro real
-         es por area segun su departamento/rol (no por grupo Odoo). -->
-    <record id="base.group_user" model="res.groups">
-        <field name="implied_ids" eval="[(4, ref('group_temp_user'))]"/>
-    </record>
+    <!-- El acceso al monitor NO es automatico para todos los internos: es
+         EXPLICITO por usuario (group_temp_user). Asi, personal sin capacitar
+         (ej. practicantes) no lo ve hasta que se le otorgue el grupo. La
+         membresia inicial de los usuarios actuales se gestiona como dato. -->
 
     <!-- La configuracion la tienen los administradores del sistema -->
     <record id="base.group_system" model="res.groups">
