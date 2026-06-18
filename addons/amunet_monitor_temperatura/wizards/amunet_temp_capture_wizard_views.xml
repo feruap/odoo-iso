@@ -17,16 +17,19 @@
                             <field name="temp_min" class="oe_inline" nolabel="1"/> -
                             <field name="temp_max" class="oe_inline" nolabel="1"/> C
                         </div>
-                        <label for="hum_max" string="Humedad max." invisible="not hum_required"/>
-                        <div invisible="not hum_required">
+                        <label for="hum_max" string="Rango humedad"/>
+                        <div>
+                            <field name="hum_min" class="oe_inline" nolabel="1"/> -
                             <field name="hum_max" class="oe_inline" nolabel="1"/> %HR
                         </div>
                     </group>
                 </group>
                 <group string="Lectura">
                     <field name="hum_required" invisible="1"/>
-                    <field name="temp_value"/>
-                    <field name="hum_value" invisible="not hum_required" required="hum_required"/>
+                    <group col="4">
+                        <field name="temp_value"/>
+                        <field name="hum_value" required="hum_required"/>
+                    </group>
                     <field name="observation" placeholder="Opcional"/>
                     <field name="pin" password="True" placeholder="PIN de quien captura"/>
                 </group>

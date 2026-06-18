@@ -30,9 +30,11 @@ class AmunetTempCaptureWizard(models.TransientModel):
         if not reading.area_id.amunet_user_can_capture():
             raise UserError(_('No perteneces al area "%s".') % reading.area_id.name)
         reading._amunet_check_capture_window()
-        self._amunet_validate_pin()
-        if self.hum_required and not self.hum_value and self.hum_value != 0.0:
+        if not self.temp_value:
+            raise UserError(_('Captura la temperatura.'))
+        if self.hum_required and not self.hum_value:
             raise UserError(_('Captura la humedad (es obligatoria en esta area).'))
+        self._amunet_validate_pin()
         reading._apply_capture(self.temp_value, self.hum_value, self.observation)
         return {'type': 'ir.actions.act_window_close'}
 
