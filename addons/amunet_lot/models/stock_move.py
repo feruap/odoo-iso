@@ -64,15 +64,20 @@ class StockMove(models.Model):
         """
         self.ensure_one()
         
-        # Si no hay líneas de movimiento Y el producto requiere tracking, crear una línea inteligente
-        if not self.move_line_ids and self.product_uom_qty > 0:
+        # Si no hay líneas de movimiento Y el movimiento ya está asignado, crear una línea inteligente.
+        # IMPORTANTE: no generar lotes para movimientos no confirmados (draft/confirmed) porque
+        # action_confirm → _action_assign crearía una segunda línea, consumiendo la secuencia dos veces.
+        import sys
+        print(f'\n=== AMUNET action_show_details: state={self.state} move_line_ids={bool(self.move_line_ids)} ===', file=sys.stderr, flush=True)
+        if not self.move_line_ids and self.product_uom_qty > 0 and self.state in ('assigned', 'partially_available'):
             # Preparar valores base usando el método nativo
             vals = self._prepare_move_line_vals(quantity=0)
-            
+
             # Si el producto tiene tracking de lote/serie, generar el lote automáticamente
             if self.product_id.tracking in ['lot', 'serial']:
                 # Intentar generar usando la secuencia Amunet si existe
                 if self.product_id.lot_sequence_id:
+                    print(f'=== action_show_details CONSUMIRÁ secuencia para {self.product_id.default_code} ===', file=sys.stderr, flush=True)
                     lot_name = self.product_id.lot_sequence_id.next_by_id()
                     
                     # Buscar o crear el lote

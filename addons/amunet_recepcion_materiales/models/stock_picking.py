@@ -50,31 +50,35 @@ class StockPicking(models.Model):
         if any(getattr(self, f'amunet_crit{i}') == 'nok' for i in range(1, 6)):
             self.amunet_con_observaciones = True
 
-    # ── action_confirm: asignar destino por producto + generar lotes ────────
+    # ── action_confirm: asignar destino automático + corregir lote ──────────
     def action_confirm(self):
         for picking in self.filtered(lambda p: p.picking_type_code == 'incoming'):
             qc_loc = picking._get_quarantine_location()
+            if not qc_loc:
+                continue
             for move in picking.move_ids.filtered(lambda m: m.state not in ('done', 'cancel')):
-                # Destino automático según configuración del producto
-                if qc_loc and move.product_id.product_tmpl_id.amunet_requires_quarantine:
+                if move.product_id.product_tmpl_id.amunet_requires_quarantine:
                     move.location_dest_id = qc_loc.id
-                # Generar lote Amunet si aplica
-                if (move.product_id.tracking in ('lot', 'serial')
-                        and move.product_id.lot_sequence_id
-                        and not move.lot_ids):
-                    lot_name = move.product_id.lot_sequence_id.next_by_id()
-                    lot = self.env['stock.lot'].search([
-                        ('name', '=', lot_name),
-                        ('product_id', '=', move.product_id.id),
-                    ], limit=1)
-                    if not lot:
-                        lot = self.env['stock.lot'].sudo().create({
-                            'name': lot_name,
-                            'product_id': move.product_id.id,
-                            'company_id': move.company_id.id,
-                        })
-                    move.lot_ids = [(4, lot.id)]
-        return super().action_confirm()
+
+        result = super().action_confirm()
+
+        # amunet_lot genera lot_name en la línea pero no crea el registro stock.lot
+        # hasta la validación. Lo creamos aquí para que sea visible en la tabla.
+        for picking in self.filtered(lambda p: p.picking_type_code == 'incoming'):
+            for line in picking.move_line_ids.filtered(lambda l: l.lot_name and not l.lot_id):
+                lot = self.env['stock.lot'].search([
+                    ('name', '=', line.lot_name),
+                    ('product_id', '=', line.product_id.id),
+                ], limit=1)
+                if not lot:
+                    lot = self.env['stock.lot'].sudo().create({
+                        'name': line.lot_name,
+                        'product_id': line.product_id.id,
+                        'company_id': line.company_id.id,
+                    })
+                line.lot_id = lot.id
+
+        return result
 
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
     def button_validate(self):

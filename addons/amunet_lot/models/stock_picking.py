@@ -157,6 +157,17 @@ class StockPicking(models.Model):
 
         for picking in self:
             if picking.picking_type_code == 'incoming' and picking.state == 'confirmed':
+                # Evitar doble action_assign cuando reservation_method='at_confirm'
+                # ya creó líneas de movimiento. Consultamos BD directamente para
+                # evitar falsos negativos por caché del ORM.
+                self.env.cr.execute(
+                    "SELECT id FROM stock_move_line WHERE picking_id=%s LIMIT 1",
+                    (picking.id,)
+                )
+                if self.env.cr.fetchone():
+                    picking.invalidate_recordset(['move_line_ids', 'state'])
+                    picking.move_ids.write({'state': 'assigned'})
+                    continue
                 try:
                     picking.action_assign()
                     if picking.state not in ('assigned', 'done', 'cancel'):

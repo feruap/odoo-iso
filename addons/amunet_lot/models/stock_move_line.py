@@ -102,7 +102,11 @@ class StockMoveLine(models.Model):
                 # Verificar si es producto Amunet con secuencia
                 if product.lot_sequence_id:
                     # Generar siguiente
+                    import sys, traceback as _tb
+                    print(f'\n=== AMUNET create() next_by_id para {product.default_code} ===', file=sys.stderr, flush=True)
+                    _tb.print_stack(file=sys.stderr)
                     next_lot = product.lot_sequence_id.next_by_id()
+                    print(f'=== VALOR GENERADO: {next_lot} ===\n', file=sys.stderr, flush=True)
                     vals['lot_name'] = next_lot
                     # Asegurar quantity 1.0 si no está
                     if not vals.get('quantity') and not vals.get('qty_done'):
@@ -160,7 +164,11 @@ class StockMoveLine(models.Model):
         # --- CORRECCIÓN WRITE ---
         if vals.get('lot_name') == '0' and len(self) == 1:
             if self.product_id.lot_sequence_id:
+                import sys, traceback as _tb
+                print(f'\n=== AMUNET write() next_by_id para {self.product_id.default_code} ===', file=sys.stderr, flush=True)
+                _tb.print_stack(file=sys.stderr)
                 vals['lot_name'] = self.product_id.lot_sequence_id.next_by_id()
+                print(f'=== VALOR GENERADO: {vals["lot_name"]} ===\n', file=sys.stderr, flush=True)
                 
         # Interceptar campos de fecha para sincronización forzada
         sync_vals = {f: vals[f] for f in date_fields if f in vals}
