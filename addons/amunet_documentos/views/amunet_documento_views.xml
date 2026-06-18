@@ -36,9 +36,6 @@
                     <button name="action_aprobar" string="Aprobar y publicar"
                             type="object" class="btn-primary"
                             invisible="state != 'en_revision' or not firma_revisa_id"/>
-                    <button name="action_nueva_version" string="Publicar nueva version"
-                            type="object" class="btn-primary"
-                            invisible="state != 'vigente'"/>
                     <button name="action_obsoleto" string="Marcar obsoleto"
                             type="object"
                             invisible="state not in ('vigente','en_revision')"
@@ -339,18 +336,6 @@
                             <group string="Firmas snapshot (migracion inicial)"
                                    invisible="not firmas_snapshot">
                                 <field name="firmas_snapshot" nolabel="1" readonly="1"/>
-                            </group>
-                        </page>
-                        <page string="Nueva version" invisible="state != 'vigente'">
-                            <div class="alert alert-warning" role="alert">
-                                Cuando publiques nueva version, la actual pasara a "Obsoleto"
-                                y se guardara en el historial. Captura el cambio y la justificacion.
-                            </div>
-                            <group>
-                                <field name="descripcion_cambio_pendiente"
-                                       placeholder="Que cambio respecto a la version vigente."/>
-                                <field name="justificacion_pendiente"
-                                       placeholder="Por que se cambia."/>
                             </group>
                         </page>
                         <page string="Historial de versiones">
