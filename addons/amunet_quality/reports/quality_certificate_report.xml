@@ -80,6 +80,14 @@
                                 <strong>Caducidad:</strong> <span t-field="o.expiration_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
                             </div>
                         </div>
+                        <t t-if="o.product_description">
+                            <div class="row mb32">
+                                <div class="col-12">
+                                    <strong>Descripción:</strong>
+                                    <span t-field="o.product_description"/>
+                                </div>
+                            </div>
+                        </t>
 
                         <h4>RESULTADOS DEL ANÁLISIS</h4>
                         <table class="table table-sm o_main_table border">
