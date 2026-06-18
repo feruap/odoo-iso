@@ -49,16 +49,16 @@ class ResUsers(models.Model):
         self.ensure_one()
         my = (self.amunet_temp_my_capture_area_ids()
               | self.amunet_temp_my_supervise_area_ids())
+        ctx = dict(self.env.context)
+        if my:
+            ctx['default_area_id'] = my[0].id
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Historico de temperatura'),
-            'res_model': 'amunet.temp.reading',
-            'domain': [('area_id', 'in', my.ids)],
-            'views': [
-                (self.env.ref('amunet_monitor_temperatura.view_amunet_temp_reading_list').id, 'list'),
-                (self.env.ref('amunet_monitor_temperatura.view_amunet_temp_reading_graph').id, 'graph'),
-                (self.env.ref('amunet_monitor_temperatura.view_amunet_temp_reading_form').id, 'form'),
-            ],
+            'name': _('Historico y tendencia (grafica de control)'),
+            'res_model': 'amunet.temp.chart.wizard',
+            'view_mode': 'form',
+            'target': 'current',
+            'context': ctx,
         }
 
     def amunet_temp_action_supervise(self):
