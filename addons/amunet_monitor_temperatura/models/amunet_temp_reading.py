@@ -49,6 +49,10 @@ class AmunetTempReading(models.Model):
         string='Se habilita', compute='_compute_capture_available')
     captured_by = fields.Many2one('res.users', string='Capturo', readonly=True, tracking=True)
     captured_at = fields.Datetime(string='Capturado el', readonly=True)
+    can_adjust = fields.Boolean(
+        string='Ajustable hoy', compute='_compute_can_adjust',
+        help='La lectura se puede corregir el MISMO dia de su captura, '
+             'siempre que el dia no este firmado y pertenezcas al area.')
 
     # Desviacion (fuera de rango)
     deviation_state = fields.Selection([
@@ -88,6 +92,20 @@ class AmunetTempReading(models.Model):
                 if r.hum_required and r.hum_max > r.hum_min:
                     bad = bad or not (r.hum_min <= r.hum_value <= r.hum_max)
             r.out_of_range = bad
+
+    @api.depends('state', 'day_locked', 'captured_at', 'date')
+    def _compute_can_adjust(self):
+        """True si la lectura puede corregirse hoy: ya capturada, el dia no
+        firmado, capturada el mismo dia, y el usuario pertenece al area."""
+        today = fields.Date.context_today(self)
+        for r in self:
+            ok = False
+            if r.state in ('captured', 'deviation') and not r.day_locked:
+                cap_day = (fields.Datetime.context_timestamp(r, r.captured_at).date()
+                           if r.captured_at else r.date)
+                if cap_day == today and r.area_id.amunet_user_can_capture():
+                    ok = True
+            r.can_adjust = ok
 
     @api.model
     def _search(self, domain, **kwargs):
@@ -141,14 +159,68 @@ class AmunetTempReading(models.Model):
     # Inmutabilidad: una vez firmado el dia, no se edita.
     # ------------------------------------------------------------------
     def write(self, vals):
-        if not self.env.context.get('amunet_temp_internal'):
-            locked = self.filtered('day_locked')
-            if locked:
+        internal = self.env.context.get('amunet_temp_internal')
+        touch_values = any(k in vals for k in ('temp_value', 'hum_value', 'observation'))
+        old_values = {}
+        if not internal:
+            if self.filtered('day_locked'):
                 raise UserError(_(
                     'Este registro ya fue revisado y firmado por el supervisor '
                     'del dia; no se puede modificar. Si hay un error, registralo '
                     'como una correccion nueva.'))
-        return super().write(vals)
+            if touch_values:
+                # Ajuste de una lectura ya capturada: solo el mismo dia, dia
+                # no firmado y perteneciendo al area (los 3 permisos).
+                for r in self.filtered(lambda x: x.state in ('captured', 'deviation')):
+                    r._amunet_check_can_adjust()
+                    old_values[r.id] = (r.temp_value, r.hum_value)
+        res = super().write(vals)
+        for r in self:
+            if r.id in old_values:
+                r._amunet_finalize_adjust(*old_values[r.id])
+        return res
+
+    def _amunet_check_can_adjust(self):
+        """Valida los 3 permisos para corregir una lectura ya capturada."""
+        self.ensure_one()
+        if self.day_locked:
+            raise UserError(_(
+                'El dia ya fue firmado por el supervisor; esta lectura no se '
+                'puede modificar.'))
+        if not self.area_id.amunet_user_can_capture():
+            raise UserError(_(
+                'No perteneces al area "%s", por lo que no puedes ajustar '
+                'esta lectura.') % self.area_id.name)
+        today = fields.Date.context_today(self)
+        cap_day = (fields.Datetime.context_timestamp(self, self.captured_at).date()
+                   if self.captured_at else self.date)
+        if cap_day != today:
+            raise UserError(_(
+                'Solo puedes corregir una lectura el MISMO dia en que se '
+                'capturo (se capturo el %s). Para un cambio posterior, '
+                'registra una correccion nueva.') % cap_day)
+
+    def _amunet_finalize_adjust(self, old_temp, old_hum):
+        """Tras corregir el valor: re-evalua fuera de rango / desviacion y
+        deja constancia en el historial (quien, de cuanto a cuanto)."""
+        self.ensure_one()
+        self.invalidate_recordset(['out_of_range'])
+        if self.out_of_range:
+            self.with_context(amunet_temp_internal=True).write({
+                'state': 'deviation', 'deviation_state': 'open'})
+        else:
+            vals = {'state': 'captured'}
+            if self.deviation_state == 'open':
+                vals['deviation_state'] = 'none'
+            self.with_context(amunet_temp_internal=True).write(vals)
+        self.message_post(body=_(
+            'Lectura AJUSTADA por %(u)s: %(ot).1f C / %(oh).1f %%HR -> '
+            '%(nt).1f C / %(nh).1f %%HR.%(oor)s') % {
+            'u': self.env.user.name,
+            'ot': old_temp, 'oh': old_hum,
+            'nt': self.temp_value,
+            'nh': self.hum_value if self.hum_required else 0.0,
+            'oor': _(' FUERA DE RANGO.') if self.out_of_range else ''})
 
     def unlink(self):
         if self.filtered('day_locked'):
