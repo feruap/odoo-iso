@@ -110,8 +110,8 @@
         <field name="name">amunet.temp.reading.graph</field>
         <field name="model">amunet.temp.reading</field>
         <field name="arch" type="xml">
-            <graph string="Tendencia" type="line" sample="1">
-                <field name="date" interval="day"/>
+            <graph string="Tendencia de temperatura y humedad" type="line" sample="1">
+                <field name="captured_at" interval="hour"/>
                 <field name="area_id"/>
                 <field name="temp_value" type="measure"/>
                 <field name="hum_value" type="measure"/>

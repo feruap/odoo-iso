@@ -20,12 +20,35 @@ class AmunetTempChartWizard(models.TransientModel):
     _name = 'amunet.temp.chart.wizard'
     _description = 'Generar grafica de control mensual de temperatura'
 
-    area_id = fields.Many2one('amunet.temp.area', string='Area', required=True)
-    year = fields.Integer(string='Anio', required=True,
-                          default=lambda self: fields.Date.context_today(self).year)
+    area_id = fields.Many2one('amunet.temp.area', string='Área', required=True)
+    year = fields.Selection(
+        [(str(y), str(y)) for y in range(2024, 2031)], string='Año', required=True,
+        default=lambda self: str(fields.Date.context_today(self).year))
     month = fields.Selection(
         [(str(i), MESES[i]) for i in range(1, 13)], string='Mes', required=True,
         default=lambda self: str(fields.Date.context_today(self).month))
+
+    chart_html = fields.Html(
+        string='Grafica', compute='_compute_chart_html', sanitize=False)
+
+    @api.depends('area_id', 'month', 'year')
+    def _compute_chart_html(self):
+        for w in self:
+            if not w.area_id:
+                w.chart_html = False
+                continue
+            h = w._header_vals()
+            header = Markup(
+                '<div style="text-align:center;margin:0 0 6px">'
+                '<h4 style="margin:0">Formato de control de temperatura y humedad</h4>'
+                '<div style="font-size:11px">Código: <strong>F-AL-008-001</strong></div>'
+                '<div style="font-size:12px;margin-top:2px">'
+                '<strong>Área:</strong> %s &nbsp;|&nbsp; '
+                '<strong>No. Termohigrómetro:</strong> %s &nbsp;|&nbsp; '
+                '<strong>Mes:</strong> %s &nbsp;|&nbsp; <strong>Año:</strong> %s &nbsp;|&nbsp; '
+                '<strong>Condiciones:</strong> %s</div></div>'
+            ) % (h['area'], h['instrumento'], h['mes'], h['anio'], h['cond'])
+            w.chart_html = header + w.build_svg()
 
     # datos para el encabezado del reporte
     def _header_vals(self):
@@ -53,7 +76,7 @@ class AmunetTempChartWizard(models.TransientModel):
     def build_svg(self):
         self.ensure_one()
         area = self.area_id
-        year, month = self.year, int(self.month)
+        year, month = int(self.year), int(self.month)
         ndays = calendar.monthrange(year, month)[1]
         reads = self.env['amunet.temp.reading'].sudo().search([
             ('area_id', '=', area.id),
@@ -126,7 +149,7 @@ class AmunetTempChartWizard(models.TransientModel):
             col = '#d33' if oor else '#1f4e79'
             s.append('<circle cx="%.1f" cy="%.1f" r="2.1" fill="%s"/>' % (x, y, col))
 
-        # --- filas HORA / FECHA / REALIZO / SUPERVISO ---
+        # --- filas HORA / FECHA ---
         row_y = t_top + t_h
         def band(label, getter, yoff):
             yy = row_y + yoff
@@ -140,11 +163,9 @@ class AmunetTempChartWizard(models.TransientModel):
                         s.append('<text x="%.1f" y="%.1f" font-size="6" text-anchor="middle">%s</text>' % (x + colw / 2.0, yy + 8, val))
         band('HORA', lambda d, th, ti, lbl: lbl, 0)
         band('FECHA', lambda d, th, ti, lbl: str(d) if ti == 1 else '', 12)
-        band('REALIZÓ', lambda d, th, ti, lbl: _ini(bykey[(d, th)].captured_by.name) if (d, th) in bykey else '', 24)
-        band('SUPERVISÓ', lambda d, th, ti, lbl: _ini(bykey[(d, th)].signed_by.name) if (d, th) in bykey and bykey[(d, th)].signed_by else '', 36)
 
         # --- cuadricula humedad ---
-        h_top = row_y + 60
+        h_top = row_y + 32
         h_lo, h_hi = 30.0, 75.0
         h_ppd = 3.2
         h_h = (h_hi - h_lo) * h_ppd

@@ -5,15 +5,16 @@
         <field name="name">amunet.temp.chart.wizard.form</field>
         <field name="model">amunet.temp.chart.wizard</field>
         <field name="arch" type="xml">
-            <form string="Grafica de control mensual">
-                <group>
+            <form string="Grafica de control de temperatura y humedad">
+                <group col="6">
                     <field name="area_id"/>
                     <field name="month"/>
                     <field name="year"/>
                 </group>
+                <field name="chart_html" nolabel="1" readonly="1"/>
                 <footer>
                     <button name="action_print" type="object" string="Generar PDF" class="btn-primary"/>
-                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
