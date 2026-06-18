@@ -26,12 +26,20 @@ class ResUsers(models.Model):
         return areas.filtered(lambda a: self in a._amunet_capturer_users())
 
     def amunet_temp_my_supervise_area_ids(self):
-        """Areas que el usuario actual supervisa (puesto Supervisor).
-        Los usuarios de Configuracion (Mery, Fernando) ven TODAS."""
+        """Areas que el usuario actual supervisa (cierre diario).
+        Configuracion (Mery, Fernando) ven TODAS. Si el usuario tiene
+        asignacion manual de areas (amunet_temp_only_area_ids) Y esta en el
+        grupo de Cierre diario, supervisa SOLO esas areas; si tiene
+        asignacion manual pero NO esta en Cierre diario, no supervisa nada.
+        Sin asignacion manual, se deriva por puesto Supervisor."""
         self.ensure_one()
         areas = self.env['amunet.temp.area'].sudo().search([('active', '=', True)])
         if self.has_group('amunet_monitor_temperatura.group_temp_manager'):
             return areas
+        if self.amunet_temp_only_area_ids:
+            if self.has_group('amunet_monitor_temperatura.group_temp_signoff'):
+                return areas & self.amunet_temp_only_area_ids
+            return self.env['amunet.temp.area']
         return areas.filtered(lambda a: self == a._amunet_supervisor_user())
 
     # ------------------------------------------------------------------

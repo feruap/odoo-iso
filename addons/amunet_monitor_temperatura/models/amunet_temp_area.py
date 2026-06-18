@@ -133,6 +133,12 @@ class AmunetTempArea(models.Model):
         user = user or self.env.user
         if user.has_group('amunet_monitor_temperatura.group_temp_manager'):
             return True
+        # Asignacion manual de areas: solo supervisa si ademas esta en el
+        # grupo de Cierre diario; si no, no supervisa nada (solo captura).
+        if user.amunet_temp_only_area_ids:
+            if user.has_group('amunet_monitor_temperatura.group_temp_signoff'):
+                return self in user.amunet_temp_only_area_ids
+            return False
         return user == self._amunet_supervisor_user()
 
 
