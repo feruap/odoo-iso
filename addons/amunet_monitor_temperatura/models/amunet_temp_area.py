@@ -124,6 +124,8 @@ class AmunetTempArea(models.Model):
         user = user or self.env.user
         if user.has_group('amunet_monitor_temperatura.group_temp_manager'):
             return True
+        if user.amunet_temp_only_area_ids:
+            return self in user.amunet_temp_only_area_ids
         return user in self._amunet_capturer_users()
 
     def amunet_user_is_supervisor(self, user=None):
