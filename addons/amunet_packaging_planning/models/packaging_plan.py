@@ -102,6 +102,13 @@ class AmunetPackagingPlan(models.Model):
         string='Mezcla exacta',
         compute='_compute_totals',
     )
+    allow_mix_exception = fields.Boolean(
+        string='Autorizar mezcla distinta a la orden',
+        help='Excepcion: permite aprobar aunque la mezcla no sume exactamente '
+             'la cantidad de la orden (ej. empacar mas de lo que produce la '
+             'orden para un pedido especial). Requiere capturar el motivo. '
+             'Queda registrado en el historial al aprobar.')
+    mix_exception_reason = fields.Text(string='Motivo de la excepcion de mezcla')
     approved_by_id = fields.Many2one('res.users', string='Aprobado por', readonly=True)
     approved_date = fields.Datetime(string='Fecha aprobacion', readonly=True)
     closed_by_id = fields.Many2one('res.users', string='Cerrado por', readonly=True)
@@ -281,9 +288,15 @@ class AmunetPackagingPlan(models.Model):
             if not rec.line_ids:
                 raise UserError(_('Genere o capture una mezcla antes de aprobar.'))
             if not rec.has_exact_mix:
-                raise UserError(_(
-                    'La mezcla aprobada debe sumar exactamente %s piezas. Actualmente suma %s.'
-                ) % (rec.product_qty, rec.total_approved_pieces))
+                if not rec.allow_mix_exception:
+                    raise UserError(_(
+                        'La mezcla aprobada debe sumar exactamente %s piezas. Actualmente suma %s.'
+                    ) % (rec.product_qty, rec.total_approved_pieces))
+                if not (rec.mix_exception_reason or '').strip():
+                    raise UserError(_(
+                        'Para aprobar con una mezcla distinta a la orden '
+                        '(%s vs %s piezas) debes capturar el motivo de la excepcion.'
+                    ) % (rec.total_approved_pieces, rec.product_qty))
             # 3B: solo se puede aprobar/modificar el plan si la MO esta en draft o confirmed
             if rec.production_id.state not in ('draft', 'confirmed'):
                 raise UserError(_(
@@ -311,6 +324,13 @@ class AmunetPackagingPlan(models.Model):
                 'approved_by_id': self.env.user.id,
                 'approved_date': fields.Datetime.now(),
             })
+            if not rec.has_exact_mix and rec.allow_mix_exception:
+                rec.message_post(body=_(
+                    'EXCEPCION DE MEZCLA autorizada por %(u)s: la orden produce '
+                    '%(p)s piezas pero la mezcla empaca %(m)s. Motivo: %(r)s'
+                ) % {'u': self.env.user.name, 'p': rec.product_qty,
+                     'm': rec.total_approved_pieces,
+                     'r': rec.mix_exception_reason or ''})
             rec.message_post(body=_('Plan de empaque aprobado. Componentes secundarios sincronizados con la orden.'))
 
     def _sync_secondary_components_to_production(self):

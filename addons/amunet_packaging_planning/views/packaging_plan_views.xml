@@ -87,6 +87,14 @@
                             <field name="label_qty"/>
                         </list>
                     </field>
+                    <group string="Excepcion de mezcla (no coincide con la orden)"
+                           invisible="has_exact_mix">
+                        <field name="allow_mix_exception"/>
+                        <field name="mix_exception_reason"
+                               invisible="not allow_mix_exception"
+                               required="allow_mix_exception"
+                               placeholder="Motivo de la excepcion (ej. cajas extra para un pedido especial)"/>
+                    </group>
                     <group string="Notas">
                         <field name="notes" nolabel="1"/>
                     </group>
