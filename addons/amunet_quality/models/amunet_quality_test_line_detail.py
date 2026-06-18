@@ -863,6 +863,7 @@ class AmunetQualityTestLineDetail(models.Model):
         'mga0981_vol_declarado', 'mga0981_vol_obtenido',
         'mavi15_result',
         'mavi11_target_height', 'mavi11_measured_height',
+        'multi_check_results_json',
     )
     def _compute_verdict(self):
         """Evalúa el resultado y determina el dictamen"""
