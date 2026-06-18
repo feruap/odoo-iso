@@ -23,6 +23,7 @@ Funcionalidades:
         'amunet_equipment_calibration',
         'hr',
         'mail',
+        'amunet_hr_training',
     ],
     'data': [
         # Seguridad
