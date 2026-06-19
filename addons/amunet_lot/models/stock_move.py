@@ -64,40 +64,21 @@ class StockMove(models.Model):
         """
         self.ensure_one()
         
-        # Si no hay líneas de movimiento Y el movimiento ya está asignado, crear una línea inteligente.
-        # IMPORTANTE: no generar lotes para movimientos no confirmados (draft/confirmed) porque
-        # action_confirm → _action_assign crearía una segunda línea, consumiendo la secuencia dos veces.
-        import sys
-        print(f'\n=== AMUNET action_show_details: state={self.state} move_line_ids={bool(self.move_line_ids)} ===', file=sys.stderr, flush=True)
-        if not self.move_line_ids and self.product_uom_qty > 0 and self.state in ('assigned', 'partially_available'):
+        # Si no hay líneas de movimiento Y el producto requiere tracking, crear una línea inteligente
+        if not self.move_line_ids and self.product_uom_qty > 0:
             # Preparar valores base usando el método nativo
             vals = self._prepare_move_line_vals(quantity=0)
 
-            # Si el producto tiene tracking de lote/serie, generar el lote automáticamente
+            # Si el producto tiene tracking de lote/serie, proponer el lote automáticamente
             if self.product_id.tracking in ['lot', 'serial']:
-                # Intentar generar usando la secuencia Amunet si existe
+                # Usar la secuencia Amunet si existe
                 if self.product_id.lot_sequence_id:
-                    print(f'=== action_show_details CONSUMIRÁ secuencia para {self.product_id.default_code} ===', file=sys.stderr, flush=True)
-                    lot_name = self.product_id.lot_sequence_id.next_by_id()
-                    
-                    # Buscar o crear el lote
-                    lot = self.env['stock.lot'].search([
-                        ('name', '=', lot_name),
-                        ('product_id', '=', self.product_id.id),
-                        ('company_id', '=', self.company_id.id)
-                    ], limit=1)
-                    
-                    if not lot:
-                        lot = self.env['stock.lot'].create({
-                            'name': lot_name,
-                            'product_id': self.product_id.id,
-                            'company_id': self.company_id.id,
-                        })
-                    
-                    # Asignar el lote a la línea
-                    vals['lot_id'] = lot.id
+                    # Propuesta gap-free SIN consumir la secuencia ni crear lotes
+                    # huerfanos: solo se fija lot_name. El stock.lot se materializa
+                    # al validar (button_validate), que es cuando QC lee los lotes.
+                    lot_name = self.product_id._amunet_next_lot_names(1)[0]
                     vals['lot_name'] = lot_name
-                    
+
                     # Establecer quantity a 1.0 para productos con tracking individual
                     if self.product_id.tracking == 'serial':
                         vals['quantity'] = 1.0
@@ -136,9 +117,8 @@ class StockMove(models.Model):
         serial_names = []
         
         if self.product_id.lot_sequence_id:
-            # Lógica Amunet: Usar la secuencia configurada en el producto
-            for _ in range(count):
-                serial_names.append(self.product_id.lot_sequence_id.next_by_id())
+            # Lógica Amunet gap-free: nombres consecutivos SIN consumir la secuencia
+            serial_names = self.product_id._amunet_next_lot_names(count)
         else:
             # Fallback nativo
             serial_names = self.env['stock.lot'].generate_lot_names(self.product_id.id, count=count, first_lot=next_serial)

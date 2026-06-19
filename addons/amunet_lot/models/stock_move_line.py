@@ -72,7 +72,11 @@ class StockMoveLine(models.Model):
         Sincronización de factory_lot_id y fechas entre stock.move.line y stock.lot.
         """
         date_fields = ['expiration_date', 'removal_date', 'manufacturing_date']
-        
+
+        # Para evitar nombres repetidos cuando se crean varias lineas del mismo
+        # producto en un mismo lote (la propuesta gap-free es por producto).
+        amunet_pending = {}
+
         for vals in vals_list:
             lot_id = vals.get('lot_id')
             factory_lot_id = vals.get('factory_lot_id')
@@ -101,12 +105,10 @@ class StockMoveLine(models.Model):
                 product = self.env['product.product'].browse(product_id)
                 # Verificar si es producto Amunet con secuencia
                 if product.lot_sequence_id:
-                    # Generar siguiente
-                    import sys, traceback as _tb
-                    print(f'\n=== AMUNET create() next_by_id para {product.default_code} ===', file=sys.stderr, flush=True)
-                    _tb.print_stack(file=sys.stderr)
-                    next_lot = product.lot_sequence_id.next_by_id()
-                    print(f'=== VALOR GENERADO: {next_lot} ===\n', file=sys.stderr, flush=True)
+                    # Propuesta gap-free sin consumir secuencia (idempotente).
+                    offset = amunet_pending.get(product_id, 0)
+                    next_lot = product._amunet_next_lot_names(offset + 1)[offset]
+                    amunet_pending[product_id] = offset + 1
                     vals['lot_name'] = next_lot
                     # Asegurar quantity 1.0 si no está
                     if not vals.get('quantity') and not vals.get('qty_done'):
@@ -164,11 +166,8 @@ class StockMoveLine(models.Model):
         # --- CORRECCIÓN WRITE ---
         if vals.get('lot_name') == '0' and len(self) == 1:
             if self.product_id.lot_sequence_id:
-                import sys, traceback as _tb
-                print(f'\n=== AMUNET write() next_by_id para {self.product_id.default_code} ===', file=sys.stderr, flush=True)
-                _tb.print_stack(file=sys.stderr)
-                vals['lot_name'] = self.product_id.lot_sequence_id.next_by_id()
-                print(f'=== VALOR GENERADO: {vals["lot_name"]} ===\n', file=sys.stderr, flush=True)
+                # Propuesta gap-free sin consumir la secuencia
+                vals['lot_name'] = self.product_id._amunet_next_lot_names(1)[0]
                 
         # Interceptar campos de fecha para sincronización forzada
         sync_vals = {f: vals[f] for f in date_fields if f in vals}
