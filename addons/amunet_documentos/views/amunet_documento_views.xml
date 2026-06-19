@@ -271,8 +271,12 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="codigo" string="Código"/>
                                     <field name="nombre" string="Nombre"/>
-                                    <field name="requiere_aprobacion" string="Con permiso"/>
-                                    <field name="solo_visualizacion" string="Solo ver" optional="hide"/>
+                                    <field name="requiere_aprobacion" string="Con permiso"
+                                           readonly="not es_supervisor_doc"/>
+                                    <field name="solo_visualizacion" string="Solo ver"
+                                           optional="hide"
+                                           readonly="not es_supervisor_doc"/>
+                                    <field name="es_supervisor_doc" column_invisible="1"/>
                                     <field name="archivo" widget="binary"
                                            filename="archivo_filename"
                                            string="Descargar"
@@ -515,6 +519,35 @@
         <field name="name">Formatos descargables</field>
         <field name="res_model">amunet.documento.formato</field>
         <field name="view_mode">list</field>
+        <field name="context">{'search_default_g_area': 1}</field>
+        <field name="search_view_id" ref="view_amunet_documento_formato_search"/>
+    </record>
+
+    <!-- Vista de permisos de formatos — solo supervisora de documentación -->
+    <record id="view_amunet_formato_permisos_list" model="ir.ui.view">
+        <field name="name">amunet.documento.formato.permisos.list</field>
+        <field name="model">amunet.documento.formato</field>
+        <field name="arch" type="xml">
+            <list editable="top">
+                <field name="doc_area" string="Área" optional="show"/>
+                <field name="doc_codigo" string="PNO"/>
+                <field name="codigo" string="Código"/>
+                <field name="nombre" string="Nombre del formato"/>
+                <field name="es_supervisor_doc" column_invisible="1"/>
+                <field name="requiere_aprobacion" string="Solicitar impresión"
+                       readonly="not es_supervisor_doc"/>
+                <field name="solo_visualizacion" string="Solo visualización"
+                       readonly="not es_supervisor_doc"/>
+                <field name="archivo_filename" string="Archivo" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_amunet_formato_permisos" model="ir.actions.act_window">
+        <field name="name">Permisos de formatos</field>
+        <field name="res_model">amunet.documento.formato</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_amunet_formato_permisos_list"/>
         <field name="context">{'search_default_g_area': 1}</field>
         <field name="search_view_id" ref="view_amunet_documento_formato_search"/>
     </record>

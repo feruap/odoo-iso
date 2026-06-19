@@ -136,6 +136,14 @@
                                    optional="show"/>
                         </list>
                     </field>
+                    <separator string="Archivos adjuntos del cambio"
+                               invisible="state in ('aceptada', 'rechazada')"/>
+                    <field name="adjunto_ids"
+                           widget="many2many_binary"
+                           nolabel="1"
+                           readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
+                           invisible="state in ('aceptada', 'rechazada')"
+                           string="Archivos adjuntos del cambio"/>
                     <group string="Motivo del rechazo (obligatorio para rechazar)"
                            invisible="state == 'borrador' or (creado_por_id == uid and state == 'pendiente')">
                         <field name="motivo_rechazo" nolabel="1"

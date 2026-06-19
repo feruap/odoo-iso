@@ -159,6 +159,13 @@ class AmunetDocumentoSugerencia(models.Model):
     alcance_estructura = fields.Boolean(string='Infraestructura')
     alcance_sgc        = fields.Boolean(string='SGC')
 
+    adjunto_ids = fields.Many2many(
+        'ir.attachment',
+        'amunet_sugerencia_adjunto_rel',
+        'sugerencia_id', 'attachment_id',
+        string='Archivos del cambio',
+        help='Adjunta aquí los nuevos formatos u otros archivos relacionados con este cambio.')
+
     comite_ids = fields.One2many(
         'amunet.sugerencia.comite', 'sugerencia_id', string='Comité técnico')
     comite_users_ids = fields.Many2many(
