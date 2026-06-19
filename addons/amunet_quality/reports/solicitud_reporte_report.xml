@@ -182,8 +182,8 @@
                         <tr>
                             <td style="width: 50%;">FECHA DE ANÁLISIS: <span t-field="o.analysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/></td>
                             <td style="width: 50%;">FECHA DE REANÁLISIS:
-                                <t t-if="o.lot_id and o.lot_id.reanalysis_date">
-                                    <span t-field="o.lot_id.reanalysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
+                                <t t-if="o.reanalysis_date">
+                                    <span t-field="o.reanalysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
                                 </t>
                             </td>
                         </tr>

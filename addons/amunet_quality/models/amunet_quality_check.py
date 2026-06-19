@@ -210,9 +210,17 @@ class AmunetQualityCheck(models.Model):
 
     reanalysis_date = fields.Date(
         string='Fecha de reanálisis',
+        compute='_compute_reanalysis_date',
+        store=True,
         tracking=True,
-        help='Fecha programada para reanálisis: 30 días antes de caducidad',
+        help='Calculado automáticamente: 30 días antes de la caducidad capturada en el check.',
     )
+
+    @api.depends('expiration_date')
+    def _compute_reanalysis_date(self):
+        from datetime import timedelta
+        for rec in self:
+            rec.reanalysis_date = (rec.expiration_date - timedelta(days=30)) if rec.expiration_date else False
 
     reviewed_by_id = fields.Many2one(
         'res.users',
@@ -1516,11 +1524,6 @@ class AmunetQualityCheck(models.Model):
             if hasattr(self.lot_id, 'removal_date') and self.lot_id.removal_date:
                 self.removal_date = self.lot_id.removal_date
 
-            if hasattr(self.lot_id, 'reanalysis_date') and self.lot_id.reanalysis_date:
-                self.reanalysis_date = self.lot_id.reanalysis_date
-            elif self.expiration_date:
-                from datetime import timedelta
-                self.reanalysis_date = self.expiration_date - timedelta(days=30)
         
         # Precarga del partner desde picking
         if self.picking_id and self.picking_id.partner_id:

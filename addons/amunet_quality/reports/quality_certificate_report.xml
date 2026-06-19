@@ -71,13 +71,21 @@
                         <div class="row mt32 mb32">
                             <div class="col-6">
                                 <strong>Producto:</strong> <span t-field="o.product_id.name"/><br/>
-                                <strong>Código:</strong> <span t-field="o.product_id.certificate_document_code"/><br/>
+                                <t t-if="o.product_id.hm_cert_code">
+                                    <strong>Catálogo:</strong> <span t-esc="o.product_id.hm_cert_code"/>
+                                </t>
+                                <t t-else="">
+                                    <strong>Código:</strong> <span t-field="o.product_id.default_code"/>
+                                </t><br/>
                                 <strong>Proveedor:</strong> <span t-field="o.partner_id.name"/>
                             </div>
                             <div class="col-6">
                                 <strong>Lote Amunet:</strong> <span t-field="o.lot_name_amunet"/><br/>
                                 <strong>Lote Fábrica:</strong> <span t-field="o.lot_name_factory"/><br/>
-                                <strong>Caducidad:</strong> <span t-field="o.expiration_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
+                                <strong>Caducidad:</strong> <span t-field="o.expiration_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
+                                <t t-if="o.reanalysis_date">
+                                    <strong>Reanálisis:</strong> <span t-field="o.reanalysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
+                                </t>
                             </div>
                         </div>
                         <t t-if="o.product_description">
