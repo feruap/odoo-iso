@@ -71,12 +71,7 @@
                         <div class="row mt32 mb32">
                             <div class="col-6">
                                 <strong>Producto:</strong> <span t-field="o.product_id.name"/><br/>
-                                <t t-if="o.product_id.hm_cert_code">
-                                    <strong>Catálogo:</strong> <span t-esc="o.product_id.hm_cert_code"/>
-                                </t>
-                                <t t-else="">
-                                    <strong>Código:</strong> <span t-field="o.product_id.default_code"/>
-                                </t><br/>
+                                <strong>Código:</strong> <span t-field="o.product_id.default_code"/><br/>
                                 <strong>Proveedor:</strong> <span t-field="o.partner_id.name"/>
                             </div>
                             <div class="col-6">
@@ -139,9 +134,9 @@
                         <div class="row mt32">
                             <div class="col-12">
                                 <strong>DICTAMEN GLOBAL: </strong>
-                                <span t-att-class="'text-success fw-bold' if o.global_result == 'pass' else 'text-danger fw-bold'">
-                                    <span t-field="o.global_result_display"/>
-                                </span>
+                                <span t-if="o.user_authorized_id and o.global_result == 'pass'" class="text-success fw-bold" style="font-size: 12pt;">Aprobado</span>
+                                <span t-elif="o.user_authorized_id and o.global_result == 'fail'" class="text-danger fw-bold" style="font-size: 12pt;">Rechazado</span>
+                                <span t-else="" class="fw-bold" style="font-size: 12pt;">En Proceso</span>
                             </div>
                         </div>
 
