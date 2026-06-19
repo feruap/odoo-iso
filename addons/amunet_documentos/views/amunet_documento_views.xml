@@ -272,10 +272,16 @@
                                     <field name="codigo" string="Código"/>
                                     <field name="nombre" string="Nombre"/>
                                     <field name="requiere_aprobacion" string="Con permiso"/>
+                                    <field name="solo_visualizacion" string="Solo ver" optional="hide"/>
                                     <field name="archivo" widget="binary"
                                            filename="archivo_filename"
                                            string="Descargar"
-                                           invisible="requiere_aprobacion"/>
+                                           invisible="requiere_aprobacion or solo_visualizacion"/>
+                                    <button name="action_visualizar"
+                                            type="object"
+                                            string="Visualizar"
+                                            icon="fa-eye"
+                                            invisible="requiere_aprobacion or not solo_visualizacion"/>
                                     <button name="action_solicitar_descarga"
                                             type="object"
                                             string="Solicitar impresión"
@@ -286,7 +292,7 @@
                             </field>
                             <separator string="Descripción de formatos"/>
                             <field name="seccion_formatos_derivados"
-                                   readonly="state in ('vigente','obsoleto')"/>
+                                   readonly="1"/>
                         </page>
                         <page string="Referencias bibliograficas" name="referencias"
                               invisible="tipo not in ('pno','manual','instructivo')">

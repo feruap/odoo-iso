@@ -131,7 +131,9 @@ class AmunetDocumento(models.Model):
     seccion_condiciones_generales = fields.Html(
         string='Condiciones generales', sanitize=True, sanitize_tags=False)
     seccion_formatos_derivados = fields.Html(
-        string='Formatos derivados', sanitize=True, sanitize_tags=False)
+        string='Formatos derivados',
+        compute='_compute_seccion_formatos_derivados',
+        sanitize=False)
     seccion_referencias = fields.Html(
         string='Referencias bibliograficas', sanitize=True, sanitize_tags=False)
     seccion_anexos = fields.Html(
@@ -176,6 +178,35 @@ class AmunetDocumento(models.Model):
     formato_ids = fields.One2many(
         'amunet.documento.formato', 'documento_id',
         string='Formatos descargables')
+    @api.depends('formato_ids', 'formato_ids.codigo', 'formato_ids.nombre',
+                 'formato_ids.requiere_aprobacion', 'formato_ids.sequence')
+    def _compute_seccion_formatos_derivados(self):
+        for r in self:
+            if not r.formato_ids:
+                r.seccion_formatos_derivados = False
+                continue
+            filas = ''
+            for f in r.formato_ids.sorted('sequence'):
+                if f.requiere_aprobacion:
+                    badge = (
+                        ' <span style="display:inline-block;background:#fef3c7;'
+                        'color:#92400e;border-radius:4px;padding:1px 7px;'
+                        'font-size:0.78em;font-weight:700;margin-left:6px">'
+                        'Solicitar impresión</span>'
+                    )
+                else:
+                    badge = (
+                        ' <span style="display:inline-block;background:#f0fdf4;'
+                        'color:#166534;border-radius:4px;padding:1px 7px;'
+                        'font-size:0.78em;font-weight:700;margin-left:6px">'
+                        'Solo lectura</span>'
+                    )
+                filas += (
+                    '<li style="margin-bottom:4px">'
+                    '<b>%s</b> — %s%s</li>'
+                ) % (f.codigo, f.nombre, badge)
+            r.seccion_formatos_derivados = '<ul style="margin:0;padding-left:20px">%s</ul>' % filas
+
     sugerencia_ids = fields.One2many(
         'amunet.documento.sugerencia', 'documento_id',
         string='Sugerencias de cambio')
