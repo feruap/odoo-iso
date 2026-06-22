@@ -489,10 +489,10 @@
                 <field name="nombre" string="Nombre del formato"/>
                 <field name="doc_codigo" string="Código PNO"/>
                 <field name="documento_id" string="Nombre del PNO"/>
-                <field name="archivo" widget="binary"
-                       filename="archivo_filename"
-                       string="Descargar"/>
-                <field name="archivo_filename" optional="hide"/>
+                <field name="archivo_filename" string="Archivo" optional="show"/>
+                <button name="action_visualizar" type="object"
+                        string="Ver" icon="fa-eye"
+                        invisible="not archivo_filename"/>
             </list>
         </field>
     </record>
