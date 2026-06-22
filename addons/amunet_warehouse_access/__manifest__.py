@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Control de acceso dinámico por almacén',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
     'category': 'Inventory/Warehouse',
     'summary': 'Sistema de control de acceso granular a almacenes y operaciones de inventario',
     'description': """
@@ -30,6 +30,7 @@ Casos de uso:
     'depends': [
         'stock',
         'base',
+        'purchase',
     ],
     'data': [
         # Security
@@ -42,6 +43,7 @@ Casos de uso:
         'views/amunet_warehouse_access_views.xml',
         'views/res_users_views.xml',
         'views/stock_warehouse_views.xml',
+        'views/product_no_create_views.xml',
     ],
     'pre_init_hook': 'pre_init_hook',
     'post_init_hook': 'post_init_hook',
