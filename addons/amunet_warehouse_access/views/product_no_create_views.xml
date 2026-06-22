@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Compra: en la linea de la orden de compra, el campo Producto solo
+         permite ELEGIR productos existentes (sin "Crear" ni "Crear y editar"). -->
+    <record id="view_purchase_order_form_product_no_create" model="ir.ui.view">
+        <field name="name">purchase.order.form.producto.solo.existentes</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="attributes">
+                <attribute name="options">{'no_create': True, 'no_create_edit': True}</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Entrada / cualquier traslado: campo Producto en operaciones detalladas. -->
+    <record id="view_stock_move_line_detailed_op_product_no_create" model="ir.ui.view">
+        <field name="name">stock.move.line.detailed.producto.solo.existentes</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_stock_move_line_detailed_operation_tree"/>
+        <field name="arch" type="xml">
+            <field name="product_id" position="attributes">
+                <attribute name="options">{'no_create': True, 'no_create_edit': True}</attribute>
+            </field>
+        </field>
+    </record>
+
+    <!-- Entrada / traslado: campo Producto en las lineas del picking (form). -->
+    <record id="view_picking_form_product_no_create" model="ir.ui.view">
+        <field name="name">stock.picking.form.producto.solo.existentes</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='move_ids']//field[@name='product_id']" position="attributes">
+                <attribute name="options">{'no_create': True, 'no_create_edit': True}</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
