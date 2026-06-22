@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="seed_amunet_documento_73" model="amunet.documento">
+            <field name="codigo">PNOAL-009</field>
+            <field name="name">SOLICITUD DE PRETRATAMIENTO Y CORTE DE INSUMOS</field>
+            <field name="area">AL</field>
+            <field name="tipo">pno</field>
+            <field name="version_actual">02</field>
+            <field name="state">vigente</field>
+            <field name="fecha_vigencia">2026-07-01</field>
+            <field name="archivo_filename">PNOAL-009 Solicitud de pretratamiento y corte de material.docx</field>
+            <field name="seccion_objetivo">&lt;p&gt;Establecer los lineamientos para la solicitud, ejecución y control del pretratamiento y corte de insumos (almohadillas de conjugado, almohadillas de muestras y otros materiales absorbentes) utilizados en la fabricación de dispositivos médicos de diagnóstico.&lt;/p&gt;</field>
+            <field name="seccion_alcance">&lt;p&gt;Este procedimiento aplica para:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;El personal de almacén que requiere solicitar el pretratamiento y/o corte de insumos.&lt;/li&gt;
+&lt;li&gt;El personal de producción encargado de ejecutar el pretratamiento y/o corte.&lt;/li&gt;
+&lt;li&gt;El personal de control de calidad que verifica las condiciones del insumo antes de su liberación.&lt;/li&gt;
+&lt;/ul&gt;</field>
+            <field name="seccion_responsabilidades">&lt;p&gt;&lt;strong&gt;Del personal de almacén&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Identificar las necesidades de pretratamiento y corte con base en la orden de producción.&lt;/li&gt;
+&lt;li&gt;Llenar y entregar el formato F-AL-009/001 &quot;Solicitud de pretratamiento y corte de insumos&quot;.&lt;/li&gt;
+&lt;li&gt;Recepcionar los insumos pretratados y/o colocarlos en cuarentena hasta su liberación.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Del personal de producción&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Recibir la solicitud y los insumos correspondientes.&lt;/li&gt;
+&lt;li&gt;Ejecutar el pretratamiento y/o corte de acuerdo con la instrucción de trabajo aplicable.&lt;/li&gt;
+&lt;li&gt;Registrar las condiciones ambientales (temperatura y humedad) durante el proceso.&lt;/li&gt;
+&lt;li&gt;Entregar los insumos procesados al almacén junto con la solicitud debidamente requisitada.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Del personal de control de calidad&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Verificar que los insumos pretratados y/o cortados cumplan con las especificaciones establecidas.&lt;/li&gt;
+&lt;li&gt;Autorizar o rechazar el lote para su uso en producción.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Del Responsable Sanitario&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Evaluar la aplicabilidad de los procedimientos y autorizar los PNOs.&lt;/li&gt;
+&lt;li&gt;Autorizar los PNOs una vez revisados y vigilar su cumplimiento.&lt;/li&gt;
+&lt;li&gt;Vigilar que los procedimientos cumplan con la normatividad vigente.&lt;/li&gt;
+&lt;/ul&gt;</field>
+            <field name="seccion_terminos_definiciones">&lt;table class=&quot;table table-sm table-bordered&quot;&gt;
+&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Concepto&lt;/th&gt;&lt;th&gt;Definición&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Almohadilla&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Material poroso (generalmente de fibra de vidrio, celulosa o poliéster) utilizado en pruebas de flujo lateral para la aplicación de muestras, conjugados o reactivos.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Almohadilla con conjugado&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Almohadilla que contiene partículas conjugadas (ej. oro coloidal) que se disuelven al contacto con la muestra para formar el complejo de detección.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Almohadilla de muestra&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Almohadilla que recibe la muestra biológica (suero, sangre, orina, etc.) y la filtra para permitir su flujo hacia la membrana.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Corte&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Acción de transformar una almohadilla o material en tiras, rectángulos o formas con dimensiones específicas para su uso en el laminado de pruebas de flujo lateral.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Cuarentena&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Área o estatus designado para productos o insumos que han sido recibidos o procesados, pero aún no han sido liberados por Control de Calidad para su uso.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Formato&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Documento elaborado para consignar el resultado de una actividad o tarea.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Insumos&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Material o componentes utilizados en el proceso de fabricación de dispositivos médicos. En este documento, se refiere específicamente a almohadillas y material absorbente.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Lote&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Cantidad definida de insumos procesados en las mismas condiciones (mismo día, mismo operador, mismos reactivos) que puede ser rastreada mediante un número de identificación único.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Pretratamiento&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Proceso de impregnación de almohadillas con soluciones amortiguadoras, surfactantes, bloqueadores u otros reactivos que optimizan el entorno químico de la muestra, mejorando la sensibilidad y fiabilidad de la prueba.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Registro&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Documento que presenta resultados obtenidos o proporciona evidencia de actividades desempeñadas.&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Solicitud&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;Formato documental mediante el cual el almacén comunica formalmente a producción la necesidad de pretratar y/o cortar un lote específico de insumos.&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;</field>
+            <field name="seccion_condiciones_generales">&lt;p&gt;&lt;strong&gt;5.1 Sobre el pretratamiento&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;El pretratamiento solo se realiza cuando está indicado en la especificación del producto o en la orden de producción.&lt;/li&gt;
+&lt;li&gt;Las soluciones amortiguadoras utilizadas deben estar preparadas, etiquetadas y dentro de su fecha de caducidad.&lt;/li&gt;
+&lt;li&gt;Cada lote preparado debe ser claramente identificado con: nombre del insumo, lote original, fecha de pretratamiento, solución utilizada, responsable y estatus (cuarentena).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;5.2 Sobre el corte&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;El corte debe realizarse en condiciones controladas de temperatura y humedad, según lo establecido en la instrucción de trabajo aplicable.&lt;/li&gt;
+&lt;li&gt;Las dimensiones del corte deben ser verificadas con un instrumento calibrado (ej. regla, vernier, calibrador).&lt;/li&gt;
+&lt;li&gt;No se permite el reuso de sobrantes de corte, a menos que esté validado y documentado.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;5.3 Sobre los registros&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Todos los formatos deben ser llenados con tinta indeleble, sin tachaduras ni espacios en blanco.&lt;/li&gt;
+&lt;li&gt;Los registros serán resguardados por un periodo mínimo de 2 años (o según lo establecido en la normativa aplicable).&lt;/li&gt;
+&lt;/ul&gt;</field>
+            <field name="seccion_referencias">&lt;p&gt;ISO 9000:2015 “Sistemas de gestión de la calidad. Principios y vocabulario”.&lt;/p&gt;&lt;p&gt;ISO 9001:2015 “Sistemas de Gestión de la Calidad – Requisitos”.&lt;/p&gt;&lt;p&gt;NOM-241-SSA1 “Buenas prácticas de fabricación para establecimientos dedicados a la fabricación de dispositivos médicos”, versión vigente.&lt;/p&gt;&lt;p&gt;FEUM “Suplemento para establecimientos dedicados a la venta y suministro de medicamentos y demás insumos para la salud”, versión vigente.&lt;/p&gt;</field>
+            <field name="seccion_anexos">&lt;p&gt;No aplica.&lt;/p&gt;</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+    </data>
+</odoo>

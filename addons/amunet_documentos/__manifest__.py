@@ -11,6 +11,8 @@ de firmas configurables.""",
     'version': '19.0.5.0.2',
     'depends': ['mail', 'amunet_quality'],
     'data': [
+        'data/seeds_20260619_180814.xml',
+        'data/seeds_pnoal009_relacionados.xml',
         'security/amunet_documentos_security.xml',
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
