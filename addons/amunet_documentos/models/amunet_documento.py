@@ -178,6 +178,15 @@ class AmunetDocumento(models.Model):
     formato_ids = fields.One2many(
         'amunet.documento.formato', 'documento_id',
         string='Formatos descargables')
+    es_supervisor_doc = fields.Boolean(
+        compute='_compute_es_supervisor_doc', store=False)
+
+    def _compute_es_supervisor_doc(self):
+        is_sup = self.env.user.has_group(
+            'amunet_documentos.group_supervisor_documentacion')
+        for r in self:
+            r.es_supervisor_doc = is_sup
+
     @api.depends('formato_ids', 'formato_ids.codigo', 'formato_ids.nombre',
                  'formato_ids.requiere_aprobacion', 'formato_ids.sequence')
     def _compute_seccion_formatos_derivados(self):
