@@ -271,21 +271,11 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="codigo" string="Código"/>
                                     <field name="nombre" string="Nombre"/>
-                                    <field name="requiere_aprobacion" string="Con permiso"
-                                           readonly="not es_supervisor_doc"/>
-                                    <field name="solo_visualizacion" string="Solo ver"
-                                           optional="hide"
-                                           readonly="not es_supervisor_doc"/>
-                                    <field name="es_supervisor_doc" column_invisible="1"/>
+                                    <field name="requiere_aprobacion" string="Con permiso"/>
                                     <field name="archivo" widget="binary"
                                            filename="archivo_filename"
                                            string="Descargar"
-                                           invisible="requiere_aprobacion or solo_visualizacion"/>
-                                    <button name="action_visualizar"
-                                            type="object"
-                                            string="Visualizar"
-                                            icon="fa-eye"
-                                            invisible="requiere_aprobacion or not solo_visualizacion"/>
+                                           invisible="requiere_aprobacion"/>
                                     <button name="action_solicitar_descarga"
                                             type="object"
                                             string="Solicitar impresión"
@@ -296,7 +286,7 @@
                             </field>
                             <separator string="Descripción de formatos"/>
                             <field name="seccion_formatos_derivados"
-                                   readonly="1"/>
+                                   readonly="state in ('vigente','obsoleto')"/>
                         </page>
                         <page string="Referencias bibliograficas" name="referencias"
                               invisible="tipo not in ('pno','manual','instructivo')">
@@ -509,8 +499,20 @@
                 <field name="codigo" string="Código"/>
                 <field name="nombre" string="Nombre"/>
                 <field name="documento_id" string="PNO"/>
+                <field name="doc_area" string="Área"/>
                 <separator/>
-                <filter name="g_area" string="Área" context="{'group_by': 'doc_area'}"/>
+                <filter name="f_ad"  string="Administración"   domain="[('doc_area','=','AD')]"/>
+                <filter name="f_al"  string="Almacén"          domain="[('doc_area','=','AL')]"/>
+                <filter name="f_cc"  string="Control Calidad"  domain="[('doc_area','=','CC')]"/>
+                <filter name="f_dc"  string="Documentación"    domain="[('doc_area','=','DC')]"/>
+                <filter name="f_est" string="Estabilidad"      domain="[('doc_area','=','EST')]"/>
+                <filter name="f_ge"  string="Generales"        domain="[('doc_area','=','GE')]"/>
+                <filter name="f_ma"  string="Mantenimiento"    domain="[('doc_area','=','MA')]"/>
+                <filter name="f_pr"  string="Producción"       domain="[('doc_area','=','PR')]"/>
+                <filter name="f_rh"  string="Recursos Humanos" domain="[('doc_area','=','RH')]"/>
+                <filter name="f_tv"  string="Tecnovigilancia"  domain="[('doc_area','=','TV')]"/>
+                <separator/>
+                <filter name="g_area" string="Agrupar por Área" context="{'group_by': 'doc_area'}"/>
             </search>
         </field>
     </record>

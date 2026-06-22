@@ -45,6 +45,18 @@ class AmunetDocumentoFormato(models.Model):
             'target': 'new',
         }
 
+    def action_descargar(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': (
+                f'/web/content?model=amunet.documento.formato'
+                f'&id={self.id}&field=archivo'
+                f'&filename={self.archivo_filename or self.codigo}'
+                f'&download=true'
+            ),
+            'target': 'self',
+        }
+
     def action_solicitar_descarga(self):
         Solicitud = self.env['amunet.documento.formato.solicitud']
         existente = Solicitud.search([
