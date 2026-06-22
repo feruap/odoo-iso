@@ -14,6 +14,11 @@
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
                 <page string="Control de calidad" name="quality_control">
+                    <group invisible="categ_id.name != 'Hoja maestra'">
+                        <group string="Clasificación de hoja maestra">
+                            <field name="hm_type"/>
+                        </group>
+                    </group>
                     <group>
                         <group string="Configuración">
                             <field name="qc_required"/>

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from odoo import models, fields, api
 
 
@@ -15,6 +16,36 @@ class ProductTemplate(models.Model):
     - Nueva relación One2many para configuración detallada por especificación
     """
     _inherit = 'product.template'
+
+    # ========== Clasificación de Hoja Maestra ==========
+
+    hm_type = fields.Selection([
+        ('qualitative', 'Cualitativa'),
+        ('qualitative_competitive', 'Cualitativa / Competitiva'),
+        ('colorimetric', 'Colorimétrica'),
+        ('with_reference', 'Con referencia (Semicuantitativa)'),
+    ], string='Tipo de hoja maestra',
+        help='Cualitativa: positivo = línea C + línea T; negativo = solo línea C.\n'
+             'Competitiva: positivo = solo línea C; negativo = línea C + línea T.\n'
+             'Colorimétrica: lectura por comparación con tarjeta de color.\n'
+             'Con referencia: lectura semicuantitativa con región de referencia.')
+
+    hm_cert_code = fields.Char(
+        string='Código de certificado (HM)',
+        compute='_compute_hm_cert_code',
+        store=True,
+        help='Código para el certificado de calidad de la hoja maestra. '
+             'Se genera automáticamente del tipo y el código de catálogo.'
+    )
+
+    @api.depends('default_code')
+    def _compute_hm_cert_code(self):
+        for rec in self:
+            if rec.default_code and rec.default_code.startswith('SPHM'):
+                m = re.search(r'\d+', rec.default_code)
+                rec.hm_cert_code = m.group() if m else False
+            else:
+                rec.hm_cert_code = False
 
     # ========== Configuración de Control de Calidad ==========
 

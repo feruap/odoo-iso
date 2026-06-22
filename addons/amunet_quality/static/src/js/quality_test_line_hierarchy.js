@@ -189,6 +189,8 @@ export class QualityTestLineRow extends Component {
                     "multi_cond_binary", "multi_cond_num1", "multi_cond_num1_min",
                     "multi_cond_num2", "multi_cond_num2_min", "multi_cond_num2_max",
                     "mavi07_sample_type", "mavi07_expected_result", "mavi07_observed_result",
+                    // MAVI-11: Height
+                    "mavi11_target_height", "mavi11_measured_height",
                     // Expected vs Obtained (VAMA-032)
                     "expected_options", "obtained_options",
                 ],
@@ -349,6 +351,17 @@ export class QualityTestLineRow extends Component {
     onMavi15Change(ev) {
         const detailId = parseInt(ev.target.dataset.detailId);
         this.onDetailChange(detailId, 'mavi15_result', ev.target.value);
+    }
+
+    onMavi11HeightChange(ev) {
+        const detailId = parseInt(ev.target.dataset.detailId);
+        this.onDetailChange(detailId, 'mavi11_target_height', ev.target.value || false);
+    }
+
+    onMavi11MeasuredChange(ev) {
+        const detailId = parseInt(ev.target.dataset.detailId);
+        const value = parseFloat(ev.target.value) || 0;
+        this.onDetailChange(detailId, 'mavi11_measured_height', value);
     }
 
     onBinaryOptionChange(ev) {

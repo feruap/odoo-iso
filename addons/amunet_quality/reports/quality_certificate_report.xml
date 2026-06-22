@@ -71,15 +71,26 @@
                         <div class="row mt32 mb32">
                             <div class="col-6">
                                 <strong>Producto:</strong> <span t-field="o.product_id.name"/><br/>
-                                <strong>Código:</strong> <span t-field="o.product_id.certificate_document_code"/><br/>
+                                <strong>Código:</strong> <span t-field="o.product_id.default_code"/><br/>
                                 <strong>Proveedor:</strong> <span t-field="o.partner_id.name"/>
                             </div>
                             <div class="col-6">
                                 <strong>Lote Amunet:</strong> <span t-field="o.lot_name_amunet"/><br/>
                                 <strong>Lote Fábrica:</strong> <span t-field="o.lot_name_factory"/><br/>
-                                <strong>Caducidad:</strong> <span t-field="o.expiration_date"/>
+                                <strong>Caducidad:</strong> <span t-field="o.expiration_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
+                                <t t-if="o.reanalysis_date">
+                                    <strong>Reanálisis:</strong> <span t-field="o.reanalysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
+                                </t>
                             </div>
                         </div>
+                        <t t-if="o.product_description">
+                            <div class="row mb32">
+                                <div class="col-12">
+                                    <strong>Descripción:</strong>
+                                    <span t-field="o.product_description"/>
+                                </div>
+                            </div>
+                        </t>
 
                         <h4>RESULTADOS DEL ANÁLISIS</h4>
                         <table class="table table-sm o_main_table border">
@@ -87,7 +98,6 @@
                                 <tr>
                                     <th>Determinación</th>
                                     <th>Especificación</th>
-                                    <th>Método / Criterio</th>
                                     <th>Resultado</th>
                                     <th>Dictamen</th>
                                 </tr>
@@ -96,7 +106,7 @@
                                 <t t-foreach="o.test_line_ids" t-as="line">
                                     <tr t-att-class="'bg-light fw-bold' if line.has_details else ''">
                                         <td><span t-field="line.name"/></td>
-                                        <td colspan="3"></td>
+                                        <td colspan="2"></td>
                                         <td>
                                             <span t-if="line.verdict == 'pass'">CUMPLE</span>
                                             <span t-if="line.verdict == 'fail'">NO CUMPLE</span>
@@ -108,7 +118,6 @@
                                             <tr>
                                                 <td style="padding-left: 20px;">└─ <span t-field="detail.name"/></td>
                                                 <td><span t-field="detail.acceptance_criteria"/></td>
-                                                <td><span t-field="detail.evaluation_type"/></td>
                                                 <td><span t-field="detail.result_display"/></td>
                                                 <td>
                                                     <span t-if="detail.verdict == 'pass'">CUMPLE</span>
@@ -125,9 +134,9 @@
                         <div class="row mt32">
                             <div class="col-12">
                                 <strong>DICTAMEN GLOBAL: </strong>
-                                <span t-att-class="'text-success fw-bold' if o.global_result == 'pass' else 'text-danger fw-bold'">
-                                    <span t-field="o.global_result_display"/>
-                                </span>
+                                <span t-if="o.user_authorized_id and o.global_result == 'pass'" class="text-success fw-bold" style="font-size: 12pt;">Aprobado</span>
+                                <span t-elif="o.user_authorized_id and o.global_result == 'fail'" class="text-danger fw-bold" style="font-size: 12pt;">Rechazado</span>
+                                <span t-else="" class="fw-bold" style="font-size: 12pt;">En Proceso</span>
                             </div>
                         </div>
 
@@ -136,19 +145,19 @@
                                 <hr/>
                                 <strong>REALIZÓ</strong><br/>
                                 <span t-field="o.user_realized_id.name"/><br/>
-                                <span t-field="o.realized_date"/>
+                                <span t-field="o.realized_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
                             </div>
                             <div class="col-4">
                                 <hr/>
                                 <strong>VERIFICÓ</strong><br/>
                                 <span t-field="o.user_verified_id.name"/><br/>
-                                <span t-field="o.verified_date"/>
+                                <span t-field="o.verified_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
                             </div>
                             <div class="col-4">
                                 <hr/>
                                 <strong>AUTORIZÓ</strong><br/>
                                 <span t-field="o.user_authorized_id.name"/><br/>
-                                <span t-field="o.authorized_date"/>
+                                <span t-field="o.authorized_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
                             </div>
                         </div>
                     </div>

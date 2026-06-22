@@ -111,12 +111,17 @@
                             <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Nombre:</strong> <span t-field="o.product_id.name"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
-                            <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Clave:</strong>
-                                <t t-if="o.product_id.report_document_code == 'RAMP-005'">MPCAP01</t>
-                                <t t-elif="o.product_id.report_document_code == 'RAMP-004'">MPCAI01</t>
-                                <t t-else=""><span t-field="o.product_code"/></t>
-                            </td>
-                            <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Catálogo:</strong> <span t-field="o.product_code"/></td>
+                            <t t-if="o.product_id.default_code and o.product_id.default_code.startswith('SPHM')">
+                                <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Catálogo:</strong> <span t-field="o.product_code"/></td>
+                            </t>
+                            <t t-else="">
+                                <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Clave:</strong>
+                                    <t t-if="o.product_id.report_document_code == 'RAMP-005'">MPCAP01</t>
+                                    <t t-elif="o.product_id.report_document_code == 'RAMP-004'">MPCAI01</t>
+                                    <t t-else=""><span t-field="o.product_code"/></t>
+                                </td>
+                                <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Catálogo:</strong> <span t-field="o.product_code"/></td>
+                            </t>
                         </tr>
                         <tr style="border: 0 !important;">
                             <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Descripción:</strong>
@@ -131,7 +136,7 @@
                     </div>
                     <table class="no-border" style="width: 100%; border: 0px none transparent !important; font-size: 11pt; margin-bottom: 10px; line-height: 1.2;">
                         <tr style="border: 0 !important;">
-                            <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;">Fecha de solicitud: <span t-field="o.request_date"/></td>
+                            <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;">Fecha de solicitud: <span t-field="o.request_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/></td>
                             <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;">Solicitante: <span t-field="o.requester_id.name"/></td>
                         </tr>
                     </table>
@@ -153,8 +158,8 @@
                             <td>CANTIDAD DEL LOTE: <span t-field="o.lot_qty_available"/></td>
                         </tr>
                         <tr>
-                            <td>FECHA DE FABRICACIÓN: <span t-field="o.manufacturing_date"/></td>
-                            <td>FECHA DE CADUCIDAD: <span t-field="o.expiration_date"/></td>
+                            <td>FECHA DE FABRICACIÓN: <span t-field="o.manufacturing_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/></td>
+                            <td>FECHA DE CADUCIDAD: <span t-field="o.expiration_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/></td>
                         </tr>
                         <tr>
                             <td colspan="2">REVISADO POR: <span t-field="o.reviewed_by_id.name"/></td>
@@ -166,7 +171,7 @@
                     </div>
                     <table class="tabla-full tabla-datos" style="text-transform: uppercase; margin-bottom: 10px;">
                         <tr>
-                            <td style="width: 50%;">FECHA DE MUESTREO: <span t-field="o.sampling_date"/></td>
+                            <td style="width: 50%;">FECHA DE MUESTREO: <span t-field="o.sampling_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/></td>
                             <td style="width: 50%;">CANTIDAD MUESTREADA: <span t-field="o.qty_sampling"/></td>
                         </tr>
                         <tr>
@@ -180,10 +185,10 @@
                     </div>
                     <table class="tabla-full tabla-datos" style="text-transform: uppercase; margin-bottom: 10px;">
                         <tr>
-                            <td style="width: 50%;">FECHA DE ANÁLISIS: <span t-field="o.analysis_date"/></td>
+                            <td style="width: 50%;">FECHA DE ANÁLISIS: <span t-field="o.analysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/></td>
                             <td style="width: 50%;">FECHA DE REANÁLISIS:
-                                <t t-if="o.lot_id and o.lot_id.reanalysis_date">
-                                    <span t-field="o.lot_id.reanalysis_date"/>
+                                <t t-if="o.reanalysis_date">
+                                    <span t-field="o.reanalysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
                                 </t>
                             </td>
                         </tr>
@@ -268,7 +273,7 @@
                             <tr>
                                 <td class="no-border" style="width: 45%; vertical-align: bottom; border: 0 !important;">
                                     <div style="margin-bottom: 5px; min-height: 45px; font-weight: bold;">
-                                        <span t-field="o.realized_date"/><br/>
+                                        <span t-field="o.realized_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
                                         <span t-field="o.user_realized_id.name"/><br/>
                                         <span t-field="o.user_realized_id.job_title"/>
                                     </div>
@@ -280,7 +285,7 @@
                                 <td class="no-border" style="width: 10%; border: 0 !important;"></td>
                                 <td class="no-border" style="width: 45%; vertical-align: bottom; border: 0 !important;">
                                     <div style="margin-bottom: 5px; min-height: 45px; font-weight: bold;">
-                                        <span t-field="o.verified_date"/><br/>
+                                        <span t-field="o.verified_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
                                         <span t-field="o.user_verified_id.name"/><br/>
                                         <span t-field="o.user_verified_id.job_title"/>
                                     </div>

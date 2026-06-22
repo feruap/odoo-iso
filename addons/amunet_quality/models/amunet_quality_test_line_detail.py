@@ -299,7 +299,10 @@ class AmunetQualityTestLineDetail(models.Model):
     ], string='MAVI-07 HM: Resultado')
 
     # -- MAVI-11 --
-    mavi11_target_height = fields.Char(string='MAVI-11: Altura Objetivo')
+    mavi11_target_height = fields.Selection([
+        ('6', '6 cm'),
+        ('8', '8 cm'),
+    ], string='MAVI-11: Altura Objetivo')
     mavi11_measured_height = fields.Float(string='MAVI-11: Altura Medida')
 
     # -- MGA-0981 --
@@ -572,6 +575,7 @@ class AmunetQualityTestLineDetail(models.Model):
         ('pass', 'Cumple'),
         ('fail', 'No Cumple'),
         ('not_applicable', 'No Aplica'),
+        ('invalid', 'Inválida'),
     ], string='Dictamen', compute='_compute_verdict', store=True,
         help='Resultado de la evaluación')
 
@@ -857,7 +861,9 @@ class AmunetQualityTestLineDetail(models.Model):
         'vama078_color', 'vama078_forma', 'vama078_textura', 'vama078_humedad',
         'vama105_nominal_volume', 'vama105_measured_volume',
         'mga0981_vol_declarado', 'mga0981_vol_obtenido',
-        'mavi15_result'
+        'mavi15_result',
+        'mavi11_target_height', 'mavi11_measured_height',
+        'multi_check_results_json',
     )
     def _compute_verdict(self):
         """Evalúa el resultado y determina el dictamen"""
@@ -1503,24 +1509,20 @@ class AmunetQualityTestLineDetail(models.Model):
             }
 
     def _evaluate_mavi_11_height(self):
-        """Evalúa MAVI-11: Altura del colector (6 u 8 cm)"""
-        # Si se usa como conditional_numeric_range, este método no se llama.
-        # Si se deja como mavi_11_height, necesita campos específicos.
-        # Por ahora, usamos la lógica de rango condicional si está disponible.
-        if self.result_conditional_option_id:
-            return self._evaluate_conditional_numeric_range()
-            
-        # Fallback a mavi11_measured_height si existe (Legacy)
-        if hasattr(self, 'mavi11_measured_height') and self.mavi11_measured_height:
-            val = self.mavi11_measured_height
-            # Criterio general ± 0.5 cm
-            if 5.5 <= val <= 6.5:
-                return {'verdict': 'pass', 'message': f'Cumple 6 cm (Medido: {val})'}
-            if 7.5 <= val <= 8.5:
-                return {'verdict': 'pass', 'message': f'Cumple 8 cm (Medido: {val})'}
-            return {'verdict': 'fail', 'message': f'Fuera de rango 6/8 cm (Medido: {val})'}
-            
-        return {'verdict': 'pending', 'message': 'Seleccione opción e ingrese medida'}
+        """Evalúa MAVI-11: Altura del colector (6 u 8 cm ± 0.5)"""
+        target = self.mavi11_target_height
+        val = self.mavi11_measured_height
+
+        if not target:
+            return {'verdict': 'pending', 'message': 'Seleccione la altura objetivo (6 u 8 cm)'}
+        if not val:
+            return {'verdict': 'pending', 'message': f'Ingrese la altura medida (objetivo: {target} cm)'}
+
+        ranges = {'6': (5.5, 6.5), '8': (7.5, 8.5)}
+        lo, hi = ranges[target]
+        if lo <= val <= hi:
+            return {'verdict': 'pass', 'message': f'Altura {target} cm — Medido: {val:.1f} cm — CUMPLE (rango {lo}–{hi} cm)'}
+        return {'verdict': 'fail', 'message': f'Altura {target} cm — Medido: {val:.1f} cm — NO CUMPLE (rango {lo}–{hi} cm)'}
 
     def _evaluate_vama_078(self):
         """Evalúa VAMA-078: Multi-Visual Liofilizado"""
@@ -1714,29 +1716,28 @@ class AmunetQualityTestLineDetail(models.Model):
 
         # 4. Evaluación especial: MAVI-07 con reglas sample_type/result
         if evaluation_rules and 'rules' in evaluation_rules and isinstance(evaluation_rules.get('rules'), list):
-            # Nuevo formato: rules es una lista de reglas con sample_type, result, verdict, message
             rules_list = evaluation_rules.get('rules', [])
-            
-            # Obtener valores de sample_type (índice 0) y result (índice 1)
-            sample_type = results.get('0', '')
-            result_value = results.get('1', '')
-            
-            if not sample_type:
-                return {'verdict': 'pending', 'message': 'Seleccione el tipo de muestra'}
-            if not result_value:
-                return {'verdict': 'pending', 'message': 'Seleccione el resultado observado'}
-            
-            # Buscar la regla que coincide
+
+            # Si el mapping define fixed_sample_type, el tipo de muestra es fijo (no lo elige el analista).
+            # El patrón observado está en posición 0; no hay posición para tipo de muestra.
+            fixed_sample = mapping.get('fixed_sample_type', None)
+            if fixed_sample:
+                sample_type = fixed_sample
+                result_value = results.get('0', '')
+                if not result_value:
+                    return {'verdict': 'pending', 'message': 'Seleccione el patrón observado'}
+            else:
+                sample_type = results.get('0', '')
+                result_value = results.get('1', '')
+                if not sample_type:
+                    return {'verdict': 'pending', 'message': 'Seleccione el tipo de muestra'}
+                if not result_value:
+                    return {'verdict': 'pending', 'message': 'Seleccione el resultado observado'}
+
             for rule in rules_list:
-                rule_sample = rule.get('sample_type', '')
-                rule_result = rule.get('result', '')
-                
-                if rule_sample == sample_type and rule_result == result_value:
-                    verdict = rule.get('verdict', 'pending')
-                    message = rule.get('message', '')
-                    return {'verdict': verdict, 'message': message}
-            
-            # Si no se encontró regla específica, retornar pendiente
+                if rule.get('sample_type', '') == sample_type and rule.get('result', '') == result_value:
+                    return {'verdict': rule.get('verdict', 'pending'), 'message': rule.get('message', '')}
+
             return {'verdict': 'pending', 'message': 'Combinación no configurada'}
 
         # 5. Evaluación especial: expected_vs_obtained (formato anterior)
@@ -1949,7 +1950,7 @@ class AmunetQualityTestLineDetail(models.Model):
 
             elif record.evaluation_type == 'mavi_11_height':
                 if record.mavi11_target_height and record.mavi11_measured_height:
-                    record.result_display = f"{record.mavi11_target_height}: {record.mavi11_measured_height} cm"
+                    record.result_display = f"Obj: {record.mavi11_target_height} cm | Medido: {record.mavi11_measured_height:.1f} cm"
                 else:
                     record.result_display = ''
 
@@ -1957,6 +1958,21 @@ class AmunetQualityTestLineDetail(models.Model):
                 if record.mavi07_hm_sample_type and record.mavi07_hm_result:
                     record.result_display = f"{record.mavi07_hm_sample_type}: {record.mavi07_hm_result}"
                 else:
+                    record.result_display = ''
+
+            elif record.evaluation_type == 'vama_multi_check':
+                _PATTERN_LABELS = {
+                    'result_1': '#1', 'result_2': '#2', 'result_3': '#3',
+                    'result_4': '#4', 'result_5': '#5',
+                    'result_6': 'INVÁLIDA (#6)', 'result_7': 'INVÁLIDA (#7)',
+                    'na': 'N/A',
+                }
+                try:
+                    import json as _json
+                    results = _json.loads(record.multi_check_results_json or '{}')
+                    selected = results.get('0', '')
+                    record.result_display = _PATTERN_LABELS.get(selected, selected)
+                except Exception:
                     record.result_display = ''
 
             else:

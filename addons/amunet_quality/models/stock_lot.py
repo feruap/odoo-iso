@@ -175,7 +175,7 @@ class StockLot(models.Model):
             categ = (lot.product_id.categ_id.complete_name or '').lower()
             if 'soluciones de trabajo' in categ:
                 lot.removal_date = lot.expiration_date - relativedelta(weeks=1)
-            elif categ.startswith('producto terminado'):
+            elif 'pruebas rápidas inmunológicas' in categ or 'pruebas rapidas inmunologicas' in categ:
                 lot.removal_date = lot.expiration_date - relativedelta(months=4)
             elif categ.startswith('material impreso'):
                 lot.removal_date = False

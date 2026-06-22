@@ -96,12 +96,17 @@
                             <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>NOMBRE:</strong> <span t-field="o.product_id.name"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
-                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CLAVE:</strong>
-                                <t t-if="o.product_id.report_document_code == 'RAMP-005'">MPCAP01</t>
-                                <t t-elif="o.product_id.report_document_code == 'RAMP-004'">MPCAI01</t>
-                                <t t-else=""><span t-field="o.product_code"/></t>
-                            </td>
-                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-field="o.product_code"/></td>
+                            <t t-if="o.product_id.default_code and o.product_id.default_code.startswith('SPHM')">
+                                <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-field="o.product_code"/></td>
+                            </t>
+                            <t t-else="">
+                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CLAVE:</strong>
+                                    <t t-if="o.product_id.report_document_code == 'RAMP-005'">MPCAP01</t>
+                                    <t t-elif="o.product_id.report_document_code == 'RAMP-004'">MPCAI01</t>
+                                    <t t-else=""><span t-field="o.product_code"/></t>
+                                </td>
+                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-field="o.product_code"/></td>
+                            </t>
                         </tr>
                         <tr style="border: 0 !important;">
                             <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>Descripción:</strong>
@@ -112,12 +117,18 @@
                         <tr style="border: 0 !important;">
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>No. de lote:</strong> <span t-field="o.lot_name_amunet"/></td>
                             <td class="no-border" style="width: 50%; padding: 2px 0;">
-                                <strong>Fecha de caducidad:</strong> <span t-field="o.expiration_date"/>
+                                <strong>Fecha de caducidad:</strong> <span t-field="o.expiration_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
+                            </td>
+                        </tr>
+                        <tr style="border: 0 !important;" t-if="o.reanalysis_date">
+                            <td class="no-border" style="width: 50%; padding: 2px 0;"></td>
+                            <td class="no-border" style="width: 50%; padding: 2px 0;">
+                                <strong>Fecha de reanálisis:</strong> <span t-field="o.reanalysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/>
                             </td>
                         </tr>
                         <tr style="border: 0 !important;">
                             <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>No. de análisis:</strong> <span t-esc="o.analysis_number"/></td>
-                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Fecha de análisis:</strong> <span t-field="o.analysis_date"/></td>
+                            <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Fecha de análisis:</strong> <span t-field="o.analysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/></td>
                         </tr>
                     </table>
 
@@ -151,6 +162,7 @@
                                             <span t-if="detail.verdict == 'pass'">CUMPLE</span>
                                             <span t-if="detail.verdict == 'fail'">NO CUMPLE</span>
                                             <span t-if="detail.verdict == 'not_applicable'">N/A</span>
+                                            <span t-if="detail.verdict == 'invalid'">INVÁLIDA</span>
                                         </td>
                                     </tr>
                                 </t>
@@ -179,9 +191,9 @@
                             DICTAMEN FINAL:
                         </div>
                         <div style="display: inline-block; width: 68%; border-bottom: 1.5px solid black !important; text-align: left; vertical-align: bottom; padding-bottom: 2px; border-left: 0 !important; border-top: 0 !important; border-right: 0 !important;">
-                            <span t-if="o.state == 'done' and len(o.test_line_ids.filtered(lambda l: l.verdict == 'fail')) == 0" style="font-size: 12pt;">Aprobado</span>
-                            <span t-elif="o.state == 'done' and len(o.test_line_ids.filtered(lambda l: l.verdict == 'fail')) > 0" style="font-size: 12pt;">Rechazado</span>
-                            <span t-else="" t-field="o.state" style="font-size: 12pt;"/>
+                            <span t-if="o.user_authorized_id and o.global_result == 'pass'" style="font-size: 12pt;">Aprobado</span>
+                            <span t-elif="o.user_authorized_id and o.global_result == 'fail'" style="font-size: 12pt;">Rechazado</span>
+                            <span t-else="" style="font-size: 12pt;">En Proceso</span>
                         </div>
                     </div>
 
@@ -190,7 +202,7 @@
                             <tr>
                                 <td class="no-border" style="width: 30%; vertical-align: bottom; border: 0 !important;">
                                     <div style="margin-bottom: 5px; min-height: 40px; font-weight: bold;">
-                                        <span t-field="o.realized_date"/><br/>
+                                        <span t-field="o.realized_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
                                         <span t-field="o.user_realized_id.name"/>
                                     </div>
                                     <div style="border-top: 1px solid black; padding-top: 5px; width: 90%; margin: 0 auto; font-weight: bold; font-size: 10pt;">
@@ -201,7 +213,7 @@
                                 <td class="no-border" style="width: 5%; border: 0 !important;"></td>
                                 <td class="no-border" style="width: 30%; vertical-align: bottom; border: 0 !important;">
                                     <div style="margin-bottom: 5px; min-height: 40px; font-weight: bold;">
-                                        <span t-field="o.verified_date"/><br/>
+                                        <span t-field="o.verified_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
                                         <span t-field="o.user_verified_id.name"/>
                                     </div>
                                     <div style="border-top: 1px solid black; padding-top: 5px; width: 90%; margin: 0 auto; font-weight: bold; font-size: 10pt;">
@@ -212,7 +224,7 @@
                                 <td class="no-border" style="width: 5%; border: 0 !important;"></td>
                                 <td class="no-border" style="width: 30%; vertical-align: bottom; border: 0 !important;">
                                     <div style="margin-bottom: 5px; min-height: 40px; font-weight: bold;">
-                                        <span t-field="o.authorized_date"/><br/>
+                                        <span t-field="o.authorized_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
                                         <span t-field="o.user_authorized_id.name"/>
                                     </div>
                                     <div style="border-top: 1px solid black; padding-top: 5px; width: 90%; margin: 0 auto; font-weight: bold; font-size: 10pt;">
