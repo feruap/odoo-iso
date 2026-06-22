@@ -2,7 +2,7 @@
 import pytz
 from datetime import datetime, time as dt_time
 from dateutil.relativedelta import relativedelta
-from odoo import models, fields
+from odoo import models, fields, api
 
 RECEPTION_FIELDS = {'amunet_mfg_date', 'amunet_exp_date', 'amunet_supplier_lot'}
 LINE_TRIGGER = {'amunet_supplier_lot', 'amunet_mfg_date', 'expiration_date'}
@@ -50,6 +50,7 @@ class StockMove(models.Model):
         string='Fecha de remoción',
         store=False,
     )
+
 
     def _compute_amunet_removal_date(self):
         for move in self:
@@ -117,6 +118,28 @@ class StockMoveLine(models.Model):
 
     amunet_supplier_lot = fields.Char('Lote del proveedor')
     amunet_mfg_date = fields.Char('Fecha fab. (texto)')
+
+    amunet_calidad_estado = fields.Selection([
+        ('quarantine', 'En cuarentena'),
+        ('in_review', 'En revisión'),
+        ('released', 'Liberado'),
+    ], string='Estado en Calidad', compute='_compute_amunet_calidad_estado')
+
+    @api.depends('lot_id', 'lot_id.amunet_lot_release_state')
+    def _compute_amunet_calidad_estado(self):
+        for line in self:
+            lot = line.lot_id
+            if not lot:
+                line.amunet_calidad_estado = False
+                continue
+            if lot.amunet_lot_release_state == 'released':
+                line.amunet_calidad_estado = 'released'
+            else:
+                qc_activo = self.env['amunet.quality.check'].search([
+                    ('lot_id', '=', lot.id),
+                    ('state', 'in', ('in_progress', 'pending', 'awaiting_reception')),
+                ], limit=1)
+                line.amunet_calidad_estado = 'in_review' if qc_activo else 'quarantine'
 
     def write(self, vals):
         res = super().write(vals)

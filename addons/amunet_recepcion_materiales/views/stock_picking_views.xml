@@ -49,6 +49,18 @@
                        options="{'no_open': True}"/>
             </xpath>
 
+            <!-- Estado en Calidad: visible en move_line_ids (vista de recepción hecha) -->
+            <xpath expr="//field[@name='move_line_ids']//field[@name='product_uom_id']" position="after">
+                <field name="amunet_calidad_estado"
+                       string="Estado en Calidad"
+                       widget="badge"
+                       decoration-danger="amunet_calidad_estado == 'quarantine'"
+                       decoration-warning="amunet_calidad_estado == 'in_review'"
+                       decoration-success="amunet_calidad_estado == 'released'"
+                       column_invisible="parent.picking_type_code != 'incoming'"
+                       readonly="1"/>
+            </xpath>
+
         </field>
     </record>
 
