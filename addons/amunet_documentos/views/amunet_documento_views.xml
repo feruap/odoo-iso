@@ -271,8 +271,13 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="codigo" string="Código"/>
                                     <field name="nombre" string="Nombre"/>
-                                    <field name="requiere_aprobacion" string="Solicitar impresión"/>
-                                    <field name="solo_visualizacion" string="Solo visualizar"/>
+                                    <field name="es_supervisor_doc" column_invisible="1"/>
+                                    <field name="requiere_aprobacion" string="Solicitar impresión"
+                                           column_invisible="not es_supervisor_doc"
+                                           readonly="not es_supervisor_doc"/>
+                                    <field name="solo_visualizacion" string="Solo visualizar"
+                                           column_invisible="not es_supervisor_doc"
+                                           readonly="not es_supervisor_doc"/>
                                     <button name="action_visualizar"
                                             type="object"
                                             string="Visualizar"
