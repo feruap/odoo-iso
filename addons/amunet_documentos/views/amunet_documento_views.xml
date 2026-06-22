@@ -271,11 +271,13 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="codigo" string="Código"/>
                                     <field name="nombre" string="Nombre"/>
-                                    <field name="requiere_aprobacion" string="Con permiso"/>
-                                    <field name="archivo" widget="binary"
-                                           filename="archivo_filename"
-                                           string="Descargar"
-                                           invisible="requiere_aprobacion"/>
+                                    <field name="requiere_aprobacion" string="Solicitar impresión"/>
+                                    <field name="solo_visualizacion" string="Solo visualizar"/>
+                                    <button name="action_visualizar"
+                                            type="object"
+                                            string="Visualizar"
+                                            icon="fa-eye"
+                                            invisible="not solo_visualizacion or requiere_aprobacion"/>
                                     <button name="action_solicitar_descarga"
                                             type="object"
                                             string="Solicitar impresión"
