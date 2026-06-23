@@ -48,8 +48,45 @@ export class DecisionMatrixWidget extends Component {
         return this.props.record.data;
     }
 
+    // --- Concentración fija (MAVI-15 semicuantitativo) ---
+
+    get isFixedConcentration() {
+        const ac = this.record.acceptance_criteria;
+        return ac === 'low' || ac === 'medium' || ac === 'high';
+    }
+
+    get fixedConcentrationLabel() {
+        const labels = {
+            low: 'Baja (T≠R o T<R)',
+            medium: 'Intermedia (T~R)',
+            high: 'Alta (T>R)',
+        };
+        return labels[this.record.acceptance_criteria] || '';
+    }
+
+    get fixedConcentrationBadgeClass() {
+        const classes = {
+            low: 'bg-primary',
+            medium: 'bg-warning text-dark',
+            high: 'bg-success',
+        };
+        return 'badge fs-6 me-2 ' + (classes[this.record.acceptance_criteria] || 'bg-secondary');
+    }
+
+    // --- N/A ---
+
+    get isNA() {
+        return Boolean(this.record.result_dm_na);
+    }
+
+    onNAToggle() {
+        this.updateRecord({ result_dm_na: !this.record.result_dm_na });
+    }
+
+    // --- Pasos ---
+
     get step1Complete() {
-        return Boolean(this.record.result_dm_step1_concentration);
+        return Boolean(this.record.result_dm_step1_concentration) || this.isFixedConcentration;
     }
 
     get step2_1Complete() {
@@ -65,7 +102,7 @@ export class DecisionMatrixWidget extends Component {
     }
 
     get showStep2_2() {
-        return this.step1Complete && this.step2_1Complete && 
+        return this.step1Complete && this.step2_1Complete &&
                this.record.result_dm_step2_1_control_visible === 'yes';
     }
 
@@ -86,7 +123,6 @@ export class DecisionMatrixWidget extends Component {
     onControlVisibleChange(ev) {
         this.updateRecord({
             result_dm_step2_1_control_visible: ev.target.value,
-            // Reset step 2.2 if control is not visible
             result_dm_step2_2_comparison: ev.target.value === 'no' ? false : this.record.result_dm_step2_2_comparison,
         });
     }

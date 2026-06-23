@@ -172,6 +172,7 @@ export class QualityTestLineRow extends Component {
                     "result_dm_step1_concentration",
                     "result_dm_step2_1_control_visible",
                     "result_dm_step2_2_comparison",
+                    "result_dm_na",
                     "dm_step2_1_unlocked",
                     "dm_step2_2_unlocked",
                     "dm_current_step",

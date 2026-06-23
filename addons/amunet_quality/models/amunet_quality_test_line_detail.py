@@ -233,6 +233,12 @@ class AmunetQualityTestLineDetail(models.Model):
     ], string='3️⃣ Comparación T vs R',
         help='Paso 2.2: Compare visualmente la región de prueba (T) con la de referencia (R)')
 
+    result_dm_na = fields.Boolean(
+        string='N/A – Muestra no disponible',
+        default=False,
+        help='Marcar cuando esta concentración no aplica o la muestra no está disponible'
+    )
+
     # -- MAVI-07 --
     mavi07_sample_type = fields.Selection([
         ('negative', 'Muestra Negativa'),
@@ -806,11 +812,17 @@ class AmunetQualityTestLineDetail(models.Model):
         except (json.JSONDecodeError, KeyError, TypeError):
             return pattern_input
 
-    @api.depends('result_dm_step1_concentration', 'result_dm_step2_1_control_visible', 'acceptance_criteria')
+    @api.depends('result_dm_step1_concentration', 'result_dm_step2_1_control_visible', 'acceptance_criteria', 'result_dm_na')
     def _compute_dm_step_states(self):
         """Calcula el estado de desbloqueo de los pasos de la matriz de decisión"""
         for record in self:
             if record.evaluation_type != 'decision_matrix':
+                record.dm_step2_1_unlocked = False
+                record.dm_step2_2_unlocked = False
+                record.dm_current_step = 0
+                continue
+
+            if record.result_dm_na:
                 record.dm_step2_1_unlocked = False
                 record.dm_step2_2_unlocked = False
                 record.dm_current_step = 0
@@ -865,6 +877,7 @@ class AmunetQualityTestLineDetail(models.Model):
         'mavi15_result',
         'mavi11_target_height', 'mavi11_measured_height',
         'multi_check_results_json',
+        'result_dm_na',
     )
     def _compute_verdict(self):
         """Evalúa el resultado y determina el dictamen"""
@@ -1143,6 +1156,14 @@ class AmunetQualityTestLineDetail(models.Model):
         Returns:
             dict: {'verdict': str, 'message': str, 'scenario_id': int or False}
         """
+        # N/A: muestra no disponible para esta concentración
+        if self.result_dm_na:
+            return {
+                'verdict': 'not_applicable',
+                'message': 'N/A: Muestra no disponible para esta concentración.',
+                'scenario_id': False,
+            }
+
         # Concentración: puede ser fija (acceptance_criteria='low'/'medium'/'high')
         # o seleccionada por el analista en el paso 1
         _fixed_concs = ('low', 'medium', 'high')
