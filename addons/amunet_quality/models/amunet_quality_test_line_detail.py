@@ -806,7 +806,7 @@ class AmunetQualityTestLineDetail(models.Model):
         except (json.JSONDecodeError, KeyError, TypeError):
             return pattern_input
 
-    @api.depends('result_dm_step1_concentration', 'result_dm_step2_1_control_visible')
+    @api.depends('result_dm_step1_concentration', 'result_dm_step2_1_control_visible', 'acceptance_criteria')
     def _compute_dm_step_states(self):
         """Calcula el estado de desbloqueo de los pasos de la matriz de decisión"""
         for record in self:
@@ -816,18 +816,19 @@ class AmunetQualityTestLineDetail(models.Model):
                 record.dm_current_step = 0
                 continue
 
-            # Paso 1 siempre disponible
-            # Paso 2.1 se desbloquea cuando hay valor en paso 1
-            record.dm_step2_1_unlocked = bool(record.result_dm_step1_concentration)
+            # Paso 1 siempre disponible.
+            # Si acceptance_criteria contiene la concentración fija ('low'/'medium'/'high'),
+            # el paso 1 se considera completo automáticamente.
+            _fixed_concs = {'low', 'medium', 'high'}
+            has_step1 = bool(record.result_dm_step1_concentration) or \
+                        (record.acceptance_criteria in _fixed_concs)
+            record.dm_step2_1_unlocked = has_step1
 
-            # Paso 2.2 se desbloquea cuando línea C es visible
-            # Si línea C NO es visible, el paso 2.2 permanece bloqueado
             record.dm_step2_2_unlocked = (
                 record.result_dm_step2_1_control_visible == 'yes'
             )
 
-            # Determinar paso actual
-            if not record.result_dm_step1_concentration:
+            if not has_step1:
                 record.dm_current_step = 1
             elif not record.result_dm_step2_1_control_visible:
                 record.dm_current_step = 2
@@ -846,7 +847,7 @@ class AmunetQualityTestLineDetail(models.Model):
         'text_pattern_regex', 'result_expected_type', 'result_obtained_type',
         'result_binary_option', 'result_notes', 'result_ternary',
         'result_dm_step1_concentration', 'result_dm_step2_1_control_visible',
-        'result_dm_step2_2_comparison', 'specification_config_id',
+        'result_dm_step2_2_comparison', 'specification_config_id', 'acceptance_criteria',
         'min_value', 'max_value', 'expected_value_binary',
         'binary_option_pass', 'binary_option_fail',
         'checkbox_label_1', 'checkbox_label_2',
@@ -1142,8 +1143,14 @@ class AmunetQualityTestLineDetail(models.Model):
         Returns:
             dict: {'verdict': str, 'message': str, 'scenario_id': int or False}
         """
-        # Validar Paso 1: Concentración objetivo
-        if not self.result_dm_step1_concentration:
+        # Concentración: puede ser fija (acceptance_criteria='low'/'medium'/'high')
+        # o seleccionada por el analista en el paso 1
+        _fixed_concs = ('low', 'medium', 'high')
+        concentration = self.result_dm_step1_concentration or (
+            self.acceptance_criteria if self.acceptance_criteria in _fixed_concs else None
+        )
+
+        if not concentration:
             return {
                 'verdict': 'pending',
                 'message': '1️⃣ Seleccione la concentración objetivo',
@@ -1160,9 +1167,8 @@ class AmunetQualityTestLineDetail(models.Model):
 
         # Si línea C NO es visible: Fallo inmediato (Escenario 1)
         if self.result_dm_step2_1_control_visible == 'no':
-            # Buscar escenario de fallo por línea C no visible
             scenario = self._find_decision_matrix_scenario(
-                concentration=self.result_dm_step1_concentration,
+                concentration=concentration,
                 control_visible=False,
                 comparison=None
             )
@@ -1187,9 +1193,8 @@ class AmunetQualityTestLineDetail(models.Model):
                 'scenario_id': False
             }
 
-        # Buscar escenario en la matriz de decisión
         scenario = self._find_decision_matrix_scenario(
-            concentration=self.result_dm_step1_concentration,
+            concentration=concentration,
             control_visible=True,
             comparison=self.result_dm_step2_2_comparison
         )
