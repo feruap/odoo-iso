@@ -27,6 +27,7 @@ y todos los empleados internos veran la app de Empleados nuevamente.
     ],
     'data': [
         'data/menu_visibility.xml',
+        'views/hr_employee_bank_views.xml',
     ],
     'installable': True,
     'application': False,

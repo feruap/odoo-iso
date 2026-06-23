@@ -88,6 +88,13 @@ class HrTrainingCourse(models.Model):
         'res.users', string='Aprobo por RH', readonly=True, copy=False)
 
     # Configuración de aprobación y vigencia
+    tipo_evaluacion = fields.Selection([
+        ('calificacion', 'Por calificación'),
+        ('asistencia', 'Por asistencia'),
+    ], string='Tipo de evaluación', default='calificacion', required=True,
+        help='Por calificación: requiere nota mínima aprobatoria. '
+             'Por asistencia: basta con haber asistido, sin nota requerida.',
+    )
     nota_minima_aprobatoria = fields.Float(
         string='Calificación mínima aprobatoria', default=70.0,
         help='Calificación mínima para generar registro de capacitación vigente.',
@@ -496,6 +503,7 @@ class HrTrainingCourse(models.Model):
         trainer_user = (self.speaker_id.user_id
                         if self.speaker_id and self.speaker_id.user_id else None)
         nota_minima = self.nota_minima_aprobatoria or 70.0
+        solo_asistencia = self.tipo_evaluacion == 'asistencia'
 
         creados = 0
         sin_registro = 0
@@ -503,7 +511,7 @@ class HrTrainingCourse(models.Model):
         for att in self.attendance_ids:
             if att.attendance != 'attended':
                 continue
-            if att.grade and att.grade < nota_minima:
+            if not solo_asistencia and att.grade and att.grade < nota_minima:
                 sin_registro += 1
                 continue
             if not att.employee_id.user_id:
