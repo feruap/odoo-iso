@@ -49,6 +49,11 @@
                        options="{'no_open': True}"/>
             </xpath>
 
+            <!-- Cant. real editable en recepciones (no depende de transfer_approved) -->
+            <xpath expr="//field[@name='move_line_ids']//field[@name='quantity']" position="attributes">
+                <attribute name="readonly">parent.state == 'done' or (parent.picking_type_code == 'internal' and not parent.transfer_approved)</attribute>
+            </xpath>
+
             <!-- Estado en Calidad: visible en move_line_ids (vista de recepción hecha) -->
             <xpath expr="//field[@name='move_line_ids']//field[@name='product_uom_id']" position="after">
                 <field name="amunet_calidad_estado"
