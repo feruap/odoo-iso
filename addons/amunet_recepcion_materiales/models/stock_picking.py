@@ -106,3 +106,36 @@ class StockPicking(models.Model):
             'target': 'new',
             'context': {'default_picking_id': self.id},
         }
+
+    def _action_done(self):
+        res = super()._action_done()
+        for picking in self.filtered(
+            lambda p: p.picking_type_code == 'incoming' and p.amunet_con_observaciones
+        ):
+            criterios = {
+                'Empaque íntegro': picking.amunet_crit1,
+                'Etiqueta legible': picking.amunet_crit2,
+                'Sin daños visibles': picking.amunet_crit3,
+                'Certificado de análisis': picking.amunet_crit4,
+                'Cantidad correcta': picking.amunet_crit5,
+            }
+            fallidos = [nombre for nombre, val in criterios.items() if val == 'nok']
+            if not fallidos:
+                continue
+            detalle = ', '.join(fallidos)
+            obs = picking.amunet_crit_obs or '(sin observaciones adicionales)'
+            msg = (
+                f'⚠️ <b>Material recibido con observaciones — requiere revisión de Calidad</b><br/>'
+                f'Criterios que no cumplen: <b>{detalle}</b><br/>'
+                f'Observaciones: {obs}<br/>'
+                f'Recepción: {picking.name} | Recibió: {picking.amunet_receptor_id.name or "—"}'
+            )
+            lot_ids = picking.move_line_ids.mapped('lot_id').filtered(lambda l: l.id)
+            qcs = self.env['amunet.quality.check'].search([
+                ('lot_id', 'in', lot_ids.ids),
+                ('state', 'not in', ('done',)),
+            ])
+            for qc in qcs:
+                qc.message_post(body=msg, message_type='notification',
+                                subtype_xmlid='mail.mt_note')
+        return res
