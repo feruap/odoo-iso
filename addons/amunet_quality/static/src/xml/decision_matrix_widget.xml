@@ -60,14 +60,14 @@
                             <t t-foreach="concentrationOptions" t-as="option" t-key="option.value">
                                 <input type="radio"
                                        class="btn-check"
-                                       t-att-name="'dm_conc_' + props.record.id"
-                                       t-att-id="'conc_' + option.value + '_' + props.record.id"
+                                       t-att-name="'dm_conc_' + record.id"
+                                       t-att-id="'conc_' + option.value + '_' + record.id"
                                        t-att-value="option.value"
                                        t-att-checked="record.result_dm_step1_concentration === option.value"
                                        t-on-change="onConcentrationChange"
                                        t-att-disabled="props.readonly"/>
                                 <label class="btn btn-outline-primary"
-                                       t-att-for="'conc_' + option.value + '_' + props.record.id">
+                                       t-att-for="'conc_' + option.value + '_' + record.id">
                                     <t t-esc="option.label"/>
                                 </label>
                             </t>
@@ -94,14 +94,14 @@
                             <t t-foreach="controlVisibleOptions" t-as="option" t-key="option.value">
                                 <input type="radio"
                                        class="btn-check"
-                                       t-att-name="'dm_control_' + props.record.id"
-                                       t-att-id="'control_' + option.value + '_' + props.record.id"
+                                       t-att-name="'dm_control_' + record.id"
+                                       t-att-id="'control_' + option.value + '_' + record.id"
                                        t-att-value="option.value"
                                        t-att-checked="record.result_dm_step2_1_control_visible === option.value"
                                        t-on-change="onControlVisibleChange"
                                        t-att-disabled="props.readonly"/>
                                 <label t-attf-class="btn {{ option.value === 'yes' ? 'btn-outline-success' : 'btn-outline-danger' }}"
-                                       t-att-for="'control_' + option.value + '_' + props.record.id">
+                                       t-att-for="'control_' + option.value + '_' + record.id">
                                     <t t-esc="option.label"/>
                                 </label>
                             </t>
@@ -134,14 +134,14 @@
                                 <div class="col-6">
                                     <input type="radio"
                                            class="btn-check"
-                                           t-att-name="'dm_comp_' + props.record.id"
-                                           t-att-id="'comp_' + option.value + '_' + props.record.id"
+                                           t-att-name="'dm_comp_' + record.id"
+                                           t-att-id="'comp_' + option.value + '_' + record.id"
                                            t-att-value="option.value"
                                            t-att-checked="record.result_dm_step2_2_comparison === option.value"
                                            t-on-change="onComparisonChange"
                                            t-att-disabled="props.readonly"/>
                                     <label class="btn btn-outline-info w-100"
-                                           t-att-for="'comp_' + option.value + '_' + props.record.id">
+                                           t-att-for="'comp_' + option.value + '_' + record.id">
                                         <t t-esc="option.label"/>
                                     </label>
                                 </div>

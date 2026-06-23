@@ -117,7 +117,12 @@
                                         <t t-foreach="line.detail_line_ids" t-as="detail">
                                             <tr>
                                                 <td style="padding-left: 20px;">└─ <span t-field="detail.name"/></td>
-                                                <td><span t-field="detail.acceptance_criteria"/></td>
+                                                <td>
+                                                    <t t-if="detail.acceptance_criteria == 'low'">T≠R o T&lt;R</t>
+                                                    <t t-elif="detail.acceptance_criteria == 'medium'">T~R</t>
+                                                    <t t-elif="detail.acceptance_criteria == 'high'">T&gt;R</t>
+                                                    <t t-else=""><span t-field="detail.acceptance_criteria"/></t>
+                                                </td>
                                                 <td><span t-field="detail.result_display"/></td>
                                                 <td>
                                                     <span t-if="detail.verdict == 'pass'">CUMPLE</span>

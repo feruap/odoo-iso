@@ -1911,27 +1911,25 @@ class AmunetQualityTestLineDetail(models.Model):
                 record.result_display = ternary_labels.get(record.result_ternary, '')
 
             elif record.evaluation_type == 'decision_matrix':
-                # Mostrar los pasos completados
-                concentration_labels = {
-                    'low': 'Baja',
-                    'medium': 'Intermedia',
-                    'high': 'Alta',
-                }
+                if record.result_dm_na:
+                    record.result_display = 'N/A'
+                    continue
+                _fixed_concs = ('low', 'medium', 'high')
+                concentration_labels = {'low': 'Baja', 'medium': 'Intermedia', 'high': 'Alta'}
                 comparison_labels = {
-                    't_neq_r': 'T≠R',
-                    't_lt_r': 'T<R',
-                    't_eq_r': 'T~R',
-                    't_gt_r': 'T>R',
+                    't_neq_r': 'T≠R', 't_lt_r': 'T<R',
+                    't_eq_r': 'T~R', 't_gt_r': 'T>R',
                 }
                 parts = []
-                if record.result_dm_step1_concentration:
-                    parts.append(f"1️⃣ {concentration_labels.get(record.result_dm_step1_concentration, '?')}")
+                is_fixed = record.acceptance_criteria in _fixed_concs
+                if not is_fixed and record.result_dm_step1_concentration:
+                    parts.append(concentration_labels.get(record.result_dm_step1_concentration, '?'))
                 if record.result_dm_step2_1_control_visible:
-                    ctrl = 'Sí' if record.result_dm_step2_1_control_visible == 'yes' else 'No'
-                    parts.append(f"2️⃣ C:{ctrl}")
+                    ctrl = 'C: Sí' if record.result_dm_step2_1_control_visible == 'yes' else 'C: No'
+                    parts.append(ctrl)
                 if record.result_dm_step2_2_comparison:
-                    parts.append(f"3️⃣ {comparison_labels.get(record.result_dm_step2_2_comparison, '?')}")
-                record.result_display = ' → '.join(parts) if parts else ''
+                    parts.append(comparison_labels.get(record.result_dm_step2_2_comparison, '?'))
+                record.result_display = ' | '.join(parts) if parts else ''
 
             elif record.evaluation_type == 'mavi_07':
                 if record.mavi07_sample_type and record.mavi07_observed_result:
