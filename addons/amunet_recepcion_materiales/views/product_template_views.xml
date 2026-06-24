@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_product_template_form_recepcion" model="ir.ui.view">
+        <field name="name">product.template.form.recepcion.materiales</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="stock.product_template_form_view_procurement_button"/>
+        <field name="priority">105</field>
+        <field name="arch" type="xml">
+            <!-- Agregar campo en la pestaña Inventario, dentro del grupo Trazabilidad -->
+            <xpath expr="//group[@name='traceability']" position="after">
+                <group string="Recepción de materiales">
+                    <field name="amunet_requires_quarantine"
+                           widget="boolean_toggle"
+                           string="Requiere inspección de Calidad antes de usar"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
