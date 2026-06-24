@@ -10,7 +10,8 @@
             <field name="name">ASIGNACIÓN DE CLAVE Y LOTE INTERNO</field>
             <field name="area">AL</field>
             <field name="tipo">pno</field>
-            <field name="version_actual">01</field>
+            <field name="version_actual">02</field>
+            <field name="sustituye_version">01</field>
             <field name="state">vigente</field>
             <field name="elabora_id" model="res.users" search="[('login','=','documentacion@amunet.com.mx')]"/>
             <field name="revisor_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
