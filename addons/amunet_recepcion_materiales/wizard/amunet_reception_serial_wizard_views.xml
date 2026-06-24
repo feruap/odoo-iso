@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_amunet_reception_serial_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.reception.serial.wizard.form</field>
+        <field name="model">amunet.reception.serial.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Números de serie del equipo">
+                <div class="alert alert-info mb-3" role="status">
+                    Registra aquí los números de serie de cada equipo recibido.
+                    Puedes agregar, editar o eliminar líneas antes de guardar.
+                </div>
+
+                <field name="line_ids">
+                    <list editable="bottom">
+                        <field name="lot_name" string="Lote" readonly="1"
+                               column_invisible="parent.lot_count &lt;= 1"/>
+                        <field name="lot_id" invisible="1"/>
+                        <field name="serial_id" invisible="1"/>
+                        <field name="serial_number" string="Número de serie"/>
+                        <field name="notes" string="Notas" optional="show"/>
+                    </list>
+                </field>
+
+                <footer>
+                    <button name="action_save" type="object"
+                            string="Guardar seriales"
+                            class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

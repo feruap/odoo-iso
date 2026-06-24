@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Botón "Separar seriales defectuosos" en el formulario del lote.
+         Solo visible cuando el lote tiene seriales registrados (equipos). -->
+    <record id="view_stock_lot_form_serial_split_button" model="ir.ui.view">
+        <field name="name">stock.lot.form.serial.split.button</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <field name="amunet_serial_count" invisible="1"/>
+                <button name="action_open_serial_split_wizard"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-scissors"
+                        invisible="amunet_serial_count == 0">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Separar</span>
+                        <span class="o_stat_text">defectuosos</span>
+                    </div>
+                </button>
+            </div>
+        </field>
+    </record>
+
+</odoo>

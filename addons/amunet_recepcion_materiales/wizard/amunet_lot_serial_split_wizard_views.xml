@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_amunet_lot_serial_split_wizard" model="ir.actions.act_window">
+        <field name="name">Separar seriales defectuosos</field>
+        <field name="res_model">amunet.lot.serial.split.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_amunet_lot_serial_split_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.lot.serial.split.wizard.form</field>
+        <field name="model">amunet.lot.serial.split.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Separar seriales defectuosos">
+                <div class="alert alert-info mb-3" role="status">
+                    Marca los seriales que llegaron dañados o defectuosos.
+                    Al confirmar se crearán dos lotes: el actual queda con los
+                    aprobados y se genera uno nuevo para los rechazados.
+                </div>
+
+                <group>
+                    <field name="lot_id" readonly="1"/>
+                    <field name="product_id" readonly="1"/>
+                    <field name="new_lot_name" readonly="1"
+                           string="Lote que se creará (rechazados)"/>
+                    <field name="defective_count" readonly="1"
+                           string="Seriales marcados como defectuosos"/>
+                </group>
+
+                <field name="line_ids">
+                    <list editable="bottom" decoration-danger="is_defective">
+                        <field name="serial_number" readonly="1"/>
+                        <field name="notes" readonly="1" optional="show"/>
+                        <field name="is_defective"/>
+                    </list>
+                </field>
+
+                <footer>
+                    <button name="action_split" type="object"
+                            string="Confirmar separación"
+                            class="btn-primary"
+                            confirm="¿Confirmas la separación? Se creará el lote de rechazados y se moverá el stock correspondiente."/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

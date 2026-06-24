@@ -33,20 +33,32 @@
                        placeholder="DD/MM/AAAA o NA"
                        column_invisible="parent.picking_type_code != 'incoming'"
                        readonly="parent.state == 'draft'"/>
+                <field name="amunet_is_equipment" column_invisible="1"/>
                 <field name="amunet_exp_date"
                        string="Fecha caducidad"
                        widget="date"
-                       column_invisible="parent.picking_type_code != 'incoming'"
+                       column_invisible="parent.picking_type_code != 'incoming' or amunet_is_equipment"
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_removal_date"
                        string="Fecha remoción"
                        readonly="1"
-                       column_invisible="parent.picking_type_code != 'incoming'"/>
+                       column_invisible="parent.picking_type_code != 'incoming' or amunet_is_equipment"/>
                 <field name="location_dest_id"
                        string="Destino"
                        readonly="1"
                        column_invisible="parent.picking_type_code != 'incoming'"
                        options="{'no_open': True}"/>
+            </xpath>
+
+            <!-- Botón para capturar seriales de equipos desde la recepción -->
+            <xpath expr="//page[@name='operations']" position="inside">
+                <div class="mt-3" invisible="picking_type_code != 'incoming'">
+                    <button name="action_open_serial_wizard"
+                            type="object"
+                            string="Registrar números de serie (equipos)"
+                            icon="fa-barcode"
+                            class="btn-secondary btn-sm"/>
+                </div>
             </xpath>
 
             <!-- Cant. real editable en recepciones (no depende de transfer_approved) -->

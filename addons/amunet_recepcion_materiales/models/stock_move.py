@@ -50,6 +50,11 @@ class StockMove(models.Model):
         string='Fecha de remoción',
         store=False,
     )
+    amunet_is_equipment = fields.Boolean(
+        related='product_id.product_tmpl_id.amunet_allow_multi_serial',
+        string='Es equipo',
+        store=False,
+    )
 
 
     def _compute_amunet_removal_date(self):

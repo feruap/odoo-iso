@@ -24,6 +24,28 @@ class StockPicking(models.Model):
              'Quedará registrado y se notificará a Calidad.',
     )
 
+    # ── Lotes de equipos (para pestaña de seriales en recepción) ────────────
+    amunet_equipment_lot_ids = fields.Many2many(
+        'stock.lot',
+        compute='_compute_amunet_equipment_lot_ids',
+        string='Lotes de equipos',
+    )
+
+    @api.depends('move_line_ids.lot_id', 'move_line_ids.lot_id.amunet_serial_ids')
+    def _compute_amunet_equipment_lot_ids(self):
+        for picking in self:
+            if picking.picking_type_code != 'incoming':
+                picking.amunet_equipment_lot_ids = self.env['stock.lot']
+                continue
+            direct = picking.move_line_ids.lot_id.filtered('amunet_allow_multi_serial')
+            if not direct:
+                picking.amunet_equipment_lot_ids = self.env['stock.lot']
+                continue
+            derived = self.env['stock.lot'].search([
+                ('amunet_source_lot_id', 'in', direct.ids)
+            ])
+            picking.amunet_equipment_lot_ids = direct | derived
+
     # ── Firma ────────────────────────────────────────────────────────────────
     amunet_receptor_id = fields.Many2one(
         'res.users', 'Recibió',
@@ -83,25 +105,56 @@ class StockPicking(models.Model):
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
     def button_validate(self):
         if self.env.context.get('_skip_pin_wizard'):
-            return super().button_validate()
+            res = super().button_validate()
+            for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
+                                   and p.state == 'done'):
+                if not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
+                            p.amunet_crit4, p.amunet_crit5]):
+                    p._amunet_notify_quality_pending()
+            return res
         incoming = self.filtered(lambda p: p.picking_type_code == 'incoming'
                                  and p.state not in ('done', 'cancel'))
         if not incoming:
             return super().button_validate()
-        # Advertir si algún criterio no fue llenado
-        unfilled = incoming.filtered(
-            lambda p: not all([p.amunet_crit1, p.amunet_crit2,
-                               p.amunet_crit3, p.amunet_crit4, p.amunet_crit5])
-        )
-        if unfilled:
-            raise UserError(_(
-                'Faltan criterios de aceptación por revisar en la pestaña '
-                '"Inspección de entrada". Completa todos los criterios antes de validar.'
-            ))
+        # La recepcion se permite aunque falten criterios de aceptacion: el
+        # material marcado requiere cuarentena entra a Control de calidad y se
+        # notifica a Calidad para asignar criterios e inspeccionar antes de
+        # liberar. El candado regulatorio esta en la liberacion, no en recibir.
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Confirmar recepción',
+            'name': 'Confirmar recepcion',
             'res_model': 'amunet.recepcion.pin.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_picking_id': self.id},
+        }
+
+    def _amunet_notify_quality_pending(self):
+        """Agenda una actividad a Calidad cuando la recepcion se valida con
+        criterios de aceptacion pendientes (asignar criterios + inspeccionar)."""
+        self.ensure_one()
+        group = (self.env.ref('amunet_quality.group_quality_supervisor',
+                              raise_if_not_found=False)
+                 or self.env.ref('amunet_quality.group_quality_user',
+                                 raise_if_not_found=False))
+        qc_user = group.user_ids[:1] if (group and group.user_ids) else self.env.user
+        codes = [c for c in self.move_ids.product_id.mapped('default_code') if c]
+        prods = ', '.join(codes) or ', '.join(self.move_ids.product_id.mapped('display_name'))
+        summary = _('Asignar criterios de aceptacion e inspeccion - recepcion %s') % self.name
+        note = _('La recepcion %s se valido con criterios de aceptacion pendientes. '
+                 'Producto(s): %s. Calidad debe asignar criterios/especificaciones e '
+                 'inspeccionar antes de liberar de cuarentena.') % (self.name, prods)
+        try:
+            self.activity_schedule('mail.mail_activity_data_todo',
+                                   user_id=qc_user.id, summary=summary, note=note)
+        except Exception:
+            self.message_post(body=note)
+
+    def action_open_serial_wizard(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Números de serie del equipo',
+            'res_model': 'amunet.reception.serial.wizard',
             'view_mode': 'form',
             'target': 'new',
             'context': {'default_picking_id': self.id},

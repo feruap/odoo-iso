@@ -1,2 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_recepcion_pin_wizard_user,recepcion.pin.wizard.user,model_amunet_recepcion_pin_wizard,base.group_user,1,1,1,1
+access_lot_serial_split_wizard_user,lot.serial.split.wizard.user,model_amunet_lot_serial_split_wizard,base.group_user,1,1,1,1
+access_lot_serial_split_line_user,lot.serial.split.line.user,model_amunet_lot_serial_split_line,base.group_user,1,1,1,1
+access_reception_serial_wizard_user,reception.serial.wizard.user,model_amunet_reception_serial_wizard,base.group_user,1,1,1,1
+access_reception_serial_wizard_line_user,reception.serial.wizard.line.user,model_amunet_reception_serial_wizard_line,base.group_user,1,1,1,1
