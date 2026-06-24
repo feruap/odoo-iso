@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_product_template_form_codificacion" model="ir.ui.view">
+        <field name="name">product.template.form.codificacion</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <label for="amunet_clasificacion" string="Codificación Amunet"
+                       groups="product.group_product_manager"/>
+                <div groups="product.group_product_manager" class="o_row">
+                    <field name="amunet_clasificacion" placeholder="Clasificación..."/>
+                    <field name="amunet_abreviatura_id"
+                           options="{'no_quick_create': True}"
+                           placeholder="Sub-categoría / abreviatura..."/>
+                </div>
+                <field name="amunet_analito" groups="product.group_product_manager"
+                       invisible="amunet_clasificacion != 'PT'"
+                       placeholder="Analito / enfermedad (para PT)"/>
+                <div groups="product.group_product_manager" colspan="2"
+                     invisible="not amunet_clave_propuesta and not amunet_clave_aviso">
+                    <field name="amunet_clave_bloqueada" invisible="1"/>
+                    <div class="alert alert-danger" role="alert"
+                         invisible="not amunet_clave_bloqueada">
+                        <field name="amunet_clave_aviso" readonly="1" nolabel="1"/>
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="amunet_clave_bloqueada or not amunet_clave_aviso">
+                        <field name="amunet_clave_aviso" readonly="1" nolabel="1"/>
+                    </div>
+                    <div class="alert alert-info" role="alert"
+                         invisible="not amunet_clave_propuesta or default_code or amunet_clave_bloqueada">
+                        Clave propuesta: <field name="amunet_clave_propuesta" readonly="1" nolabel="1" class="oe_inline"/>
+                        <button name="action_amunet_asignar_clave" type="object"
+                                string="Crear o validar" class="btn-primary btn-sm ms-2"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ====== Busqueda ====== -->
+    <record id="view_limpieza_tarea_search" model="ir.ui.view">
+        <field name="name">amunet.limpieza.tarea.search</field>
+        <field name="model">amunet.limpieza.tarea</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="area_id"/>
+                <filter name="f_pendiente" string="Pendientes" domain="[('state','=','pendiente')]"/>
+                <filter name="f_realizada" string="Realizadas" domain="[('state','=','realizada')]"/>
+                <filter name="f_omitida" string="Omitidas" domain="[('state','=','omitida')]"/>
+                <separator/>
+                <filter name="g_area" string="Área" context="{'group_by':'area_id'}"/>
+                <filter name="g_estado" string="Estado" context="{'group_by':'state'}"/>
+                <filter name="g_fecha" string="Fecha" context="{'group_by':'date'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ====== Kanban (UI principal: tarjetas grandes) ====== -->
+    <record id="view_limpieza_tarea_kanban" model="ir.ui.view">
+        <field name="name">amunet.limpieza.tarea.kanban</field>
+        <field name="model">amunet.limpieza.tarea</field>
+        <field name="arch" type="xml">
+            <kanban create="0" default_group_by="area_id" class="o_kanban_mobile">
+                <field name="state"/>
+                <field name="surface"/>
+                <field name="sanitizer"/>
+                <field name="area_id"/>
+                <field name="supervisado_by"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong style="font-size:1.2rem;"><field name="surface"/></strong>
+                                <span t-if="record.state.raw_value == 'realizada'" class="badge text-bg-success">Realizada</span>
+                                <span t-elif="record.state.raw_value == 'omitida'" class="badge text-bg-dark">Omitida</span>
+                                <span t-else="" class="badge text-bg-warning">Pendiente</span>
+                            </div>
+                            <div class="text-muted mt-1">
+                                Sanitizante: <strong><field name="sanitizer"/></strong>
+                            </div>
+                            <div class="mt-3 d-grid gap-2">
+                                <button name="action_open_limpie" type="object"
+                                        class="btn btn-primary btn-lg"
+                                        t-if="record.state.raw_value != 'realizada'">
+                                    LIMPIÉ
+                                </button>
+                                <button name="action_open_firmar" type="object"
+                                        class="btn btn-success btn-lg"
+                                        t-if="record.state.raw_value == 'realizada' &amp;&amp; !record.supervisado_by.raw_value">
+                                    FIRMAR SUPERVISIÓN
+                                </button>
+                                <span t-if="record.state.raw_value == 'realizada' &amp;&amp; record.supervisado_by.raw_value"
+                                      class="text-success">✓ Firmada por el supervisor</span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ====== Lista ====== -->
+    <record id="view_limpieza_tarea_list" model="ir.ui.view">
+        <field name="name">amunet.limpieza.tarea.list</field>
+        <field name="model">amunet.limpieza.tarea</field>
+        <field name="arch" type="xml">
+            <list create="0">
+                <field name="date"/>
+                <field name="area_id"/>
+                <field name="surface"/>
+                <field name="sanitizer"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'realizada'"
+                       decoration-warning="state == 'pendiente'"
+                       decoration-muted="state == 'omitida'"/>
+                <field name="realizado_by"/>
+                <field name="supervisado_by"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ====== Formulario ====== -->
+    <record id="view_limpieza_tarea_form" model="ir.ui.view">
+        <field name="name">amunet.limpieza.tarea.form</field>
+        <field name="model">amunet.limpieza.tarea</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_open_limpie" type="object" string="LIMPIÉ"
+                            class="btn-primary" invisible="state == 'realizada'"/>
+                    <button name="action_open_firmar" type="object" string="FIRMAR SUPERVISIÓN"
+                            class="btn-success"
+                            invisible="state != 'realizada' or supervisado_by != False"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="display_name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="area_id" readonly="1"/>
+                            <field name="surface" readonly="1"/>
+                            <field name="date" readonly="1"/>
+                            <field name="sanitizer" readonly="1"/>
+                            <field name="frequency" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="realizado_by" readonly="1"/>
+                            <field name="realizado_at" readonly="1"/>
+                            <field name="supervisado_by" readonly="1"/>
+                            <field name="supervisado_at" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Si quedó Omitida (el supervisor marca qué pasó)"
+                           invisible="state != 'omitida'">
+                        <field name="omitida_motivo" nolabel="1"
+                               placeholder="Motivo de la omisión..."/>
+                    </group>
+                    <group string="Observación">
+                        <field name="observacion" nolabel="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_limpieza_tarea" model="ir.actions.act_window">
+        <field name="name">Limpieza de áreas</field>
+        <field name="res_model">amunet.limpieza.tarea</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_limpieza_tarea_search"/>
+        <field name="context">{'search_default_f_pendiente': 1, 'search_default_g_area': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiley_face">No hay tareas de limpieza pendientes</p>
+        </field>
+    </record>
+</odoo>

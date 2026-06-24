@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="area_page" name="Limpieza de área">
+        <t t-set="slabels" t-value="{'piso':'Piso','paredes_techo':'Paredes y techo','mobiliario':'Mobiliario'}"/>
+&lt;!DOCTYPE html&gt;
+<html lang="es">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+        <title>Limpieza - <t t-esc="area.name"/></title>
+        <style>
+            body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f4f6f8;color:#222;}
+            .wrap{max-width:520px;margin:0 auto;padding:16px;}
+            h1{font-size:1.9rem;margin:.2em 0;text-align:center;}
+            .sani{background:#0d6efd;color:#fff;border-radius:12px;padding:14px;text-align:center;font-size:1.2rem;margin:12px 0;}
+            .fecha{text-align:center;color:#666;margin-bottom:8px;}
+            .card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.12);padding:18px;margin:14px 0;}
+            .surf{font-size:1.5rem;font-weight:bold;margin-bottom:8px;}
+            .badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.95rem;color:#fff;}
+            .b-done{background:#198754;} .b-pend{background:#ffc107;color:#222;} .b-omit{background:#444;}
+            input[type=password]{width:100%;font-size:1.6rem;padding:14px;border:2px solid #ccc;border-radius:10px;text-align:center;margin:10px 0;box-sizing:border-box;}
+            button{width:100%;font-size:1.5rem;font-weight:bold;padding:18px;border:none;border-radius:12px;color:#fff;margin-top:6px;}
+            .btn-lim{background:#0d6efd;} .btn-fir{background:#198754;}
+            .ok{color:#198754;font-size:1.2rem;font-weight:bold;}
+            .msg{border-radius:10px;padding:14px;text-align:center;font-size:1.1rem;margin:12px 0;}
+            .m-success{background:#d1e7dd;color:#0f5132;} .m-danger{background:#f8d7da;color:#842029;} .m-info{background:#cff4fc;color:#055160;}
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <h1><t t-esc="area.name"/></h1>
+            <div class="fecha">Limpieza del día <t t-esc="today"/></div>
+            <div t-if="msg" t-attf-class="msg m-#{msg_type}"><t t-esc="msg"/></div>
+            <div class="sani">Sanitizante de la semana (piso/paredes/techo):<br/>
+                <strong><t t-esc="sani_semana"/></strong>
+            </div>
+
+            <t t-if="not tareas">
+                <div class="card" style="text-align:center;">Hoy no hay tareas de limpieza para esta área.</div>
+            </t>
+
+            <t t-foreach="tareas" t-as="tarea">
+                <div class="card">
+                    <div class="surf"><t t-esc="slabels.get(tarea.surface, tarea.surface)"/></div>
+                    <div style="margin-bottom:6px;color:#555;">Sanitizante: <strong><t t-esc="tarea.sanitizer"/></strong></div>
+
+                    <!-- Estado -->
+                    <t t-if="tarea.state == 'realizada'">
+                        <span class="badge b-done">Realizada</span>
+                        <div class="ok" style="margin-top:8px;">✓ Limpió: <t t-esc="tarea.realizado_by.name"/></div>
+                        <t t-if="tarea.supervisado_by">
+                            <div class="ok">✓ Firmó supervisor: <t t-esc="tarea.supervisado_by.name"/></div>
+                        </t>
+                        <t t-elif="is_sup">
+                            <form action="/limpieza/registrar" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="tarea_id" t-att-value="tarea.id"/>
+                                <input type="hidden" name="mode" value="firmar"/>
+                                <input type="password" name="pin" placeholder="PIN del supervisor" inputmode="numeric"/>
+                                <button type="submit" class="btn-fir">FIRMAR SUPERVISIÓN</button>
+                            </form>
+                        </t>
+                        <t t-else="">
+                            <div style="color:#666;margin-top:8px;">Falta la firma del supervisor.</div>
+                        </t>
+                    </t>
+
+                    <t t-else="">
+                        <span t-attf-class="badge #{'b-omit' if tarea.state=='omitida' else 'b-pend'}">
+                            <t t-esc="'Omitida' if tarea.state=='omitida' else 'Pendiente'"/>
+                        </span>
+                        <t t-if="can_clean">
+                            <form action="/limpieza/registrar" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="tarea_id" t-att-value="tarea.id"/>
+                                <input type="hidden" name="mode" value="limpie"/>
+                                <input type="password" name="pin" placeholder="Tu PIN" inputmode="numeric"/>
+                                <button type="submit" class="btn-lim">LIMPIÉ</button>
+                            </form>
+                        </t>
+                    </t>
+                </div>
+            </t>
+        </div>
+    </body>
+</html>
+    </template>
+
+    <template id="qr_sheet" name="QR de áreas de limpieza">
+&lt;!DOCTYPE html&gt;
+<html lang="es">
+    <head>
+        <meta charset="utf-8"/>
+        <title>QR de limpieza por área</title>
+        <style>
+            body{font-family:Arial,sans-serif;margin:0;padding:16px;}
+            h1{text-align:center;}
+            .grid{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;}
+            .qr{border:2px dashed #888;border-radius:12px;padding:14px;text-align:center;width:260px;page-break-inside:avoid;}
+            .qr img{width:220px;height:220px;}
+            .qr .n{font-size:1.3rem;font-weight:bold;margin-top:8px;}
+            .qr .h{font-size:.8rem;color:#666;word-break:break-all;}
+            @media print{.noprint{display:none;}}
+        </style>
+    </head>
+    <body>
+        <h1>QR de Limpieza por Área</h1>
+        <p class="noprint" style="text-align:center;color:#666;">Imprime esta hoja (Ctrl+P), recorta cada QR y pégalo en su área. Al escanearlo se abre la pantalla de limpieza de esa área.</p>
+        <div class="grid">
+            <t t-foreach="items" t-as="it">
+                <div class="qr">
+                    <img t-att-src="it['qr_src']"/>
+                    <div class="n"><t t-esc="it['name']"/></div>
+                    <div class="h"><t t-esc="it['url']"/></div>
+                </div>
+            </t>
+        </div>
+    </body>
+</html>
+    </template>
+</odoo>

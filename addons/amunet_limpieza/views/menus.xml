@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_limpieza_root" name="Limpieza"
+              groups="group_limpieza_user"/>
+
+    <menuitem id="menu_limpieza_tareas" name="Limpieza de áreas"
+              parent="menu_limpieza_root" action="action_limpieza_tarea"
+              sequence="10" groups="group_limpieza_user"/>
+
+    <menuitem id="menu_limpieza_config" name="Configuración"
+              parent="menu_limpieza_root" sequence="90"
+              groups="group_limpieza_manager"/>
+
+    <menuitem id="menu_limpieza_items" name="Configuración por área"
+              parent="menu_limpieza_config" action="action_limpieza_item"
+              sequence="10" groups="group_limpieza_manager"/>
+
+    <record id="action_limpieza_qr" model="ir.actions.act_url">
+        <field name="name">Imprimir QR de áreas</field>
+        <field name="url">/limpieza/qr</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_limpieza_qr" name="Imprimir QR de áreas"
+              parent="menu_limpieza_config" action="action_limpieza_qr"
+              sequence="20" groups="group_limpieza_manager"/>
+</odoo>

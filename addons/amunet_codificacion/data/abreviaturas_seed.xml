@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Catálogo inicial de abreviaturas, sub-categorías de insumos mapeadas a
+             las 5 clasificaciones nuevas (NUEVA CLASIFICACIÓN, 2026-06-20).
+             Editable y se sigue sumando desde la app. Los analitos de PT (TSH, ENT...)
+             se llevan en el registro, no aquí. -->
+
+        <!-- ===== MP - Materia Prima ===== -->
+        <record id="abrev_mp_car" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MP</field><field name="abreviatura">CAR</field>
+            <field name="name">Cartucho</field><field name="ejemplos">Cartuchos de prueba (MPCAR)</field>
+        </record>
+        <record id="abrev_mp_ant" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MP</field><field name="abreviatura">ANT</field>
+            <field name="name">Anticuerpo</field><field name="ejemplos">Anticuerpos captura/detección (MPANT)</field>
+        </record>
+        <record id="abrev_mp_agn" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MP</field><field name="abreviatura">AGN</field>
+            <field name="name">Antígeno</field>
+        </record>
+        <record id="abrev_mp_pro" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MP</field><field name="abreviatura">PRO</field>
+            <field name="name">Proteína</field>
+        </record>
+        <record id="abrev_mp_alm" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MP</field><field name="abreviatura">ALM</field>
+            <field name="name">Almohadilla</field>
+        </record>
+        <record id="abrev_mp_adh" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MP</field><field name="abreviatura">ADH</field>
+            <field name="name">Adhesivo</field>
+        </record>
+        <record id="abrev_mp_mem" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MP</field><field name="abreviatura">MEM</field>
+            <field name="name">Membrana</field>
+        </record>
+        <record id="abrev_mp_agu" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MP</field><field name="abreviatura">AGU</field>
+            <field name="name">Agua</field>
+        </record>
+
+        <!-- ===== MI - Material Impreso ===== -->
+        <record id="abrev_mi_caj" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MI</field><field name="abreviatura">CAJ</field>
+            <field name="name">Caja caple</field><field name="ejemplos">Cajas impresas (antes ME)</field>
+        </record>
+        <record id="abrev_mi_bol" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MI</field><field name="abreviatura">BOL</field>
+            <field name="name">Bolsa (termosellable / pouch)</field>
+        </record>
+        <record id="abrev_mi_eti" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MI</field><field name="abreviatura">ETI</field>
+            <field name="name">Etiqueta</field>
+        </record>
+        <record id="abrev_mi_man" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MI</field><field name="abreviatura">MAN</field>
+            <field name="name">Manual / Instructivo</field>
+        </record>
+        <record id="abrev_mi_ser" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MI</field><field name="abreviatura">SER</field>
+            <field name="name">Serigrafía</field>
+        </record>
+        <record id="abrev_mi_tar" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MI</field><field name="abreviatura">TAR</field>
+            <field name="name">Tarjeta de color</field>
+        </record>
+        <record id="abrev_mi_fun" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MI</field><field name="abreviatura">FUN</field>
+            <field name="name">Funda de caja</field>
+        </record>
+        <record id="abrev_mi_hie" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MI</field><field name="abreviatura">HIE</field>
+            <field name="name">Hielera</field>
+        </record>
+        <record id="abrev_mi_gra" model="amunet.clave.abreviatura">
+            <field name="clasificacion">MI</field><field name="abreviatura">GRA</field>
+            <field name="name">Gradilla complementaria</field>
+        </record>
+
+        <!-- ===== SP - Producto Semiprocesado (granel) ===== -->
+        <record id="abrev_sp_hm" model="amunet.clave.abreviatura">
+            <field name="clasificacion">SP</field><field name="abreviatura">HM</field>
+            <field name="name">Hoja maestra</field><field name="ejemplos">Antes MP (MPHM)</field>
+        </record>
+        <record id="abrev_sp_nan" model="amunet.clave.abreviatura">
+            <field name="clasificacion">SP</field><field name="abreviatura">NAN</field>
+            <field name="name">Nanopartículas</field>
+        </record>
+        <record id="abrev_sp_sco" model="amunet.clave.abreviatura">
+            <field name="clasificacion">SP</field><field name="abreviatura">SCO</field>
+            <field name="name">Solución de corrimiento</field>
+        </record>
+        <record id="abrev_sp_sbl" model="amunet.clave.abreviatura">
+            <field name="clasificacion">SP</field><field name="abreviatura">SBL</field>
+            <field name="name">Solución de bloqueo</field>
+        </record>
+        <record id="abrev_sp_sdi" model="amunet.clave.abreviatura">
+            <field name="clasificacion">SP</field><field name="abreviatura">SDI</field>
+            <field name="name">Solución diluyente</field>
+        </record>
+        <record id="abrev_sp_spr" model="amunet.clave.abreviatura">
+            <field name="clasificacion">SP</field><field name="abreviatura">SPR</field>
+            <field name="name">Solución de pretratamiento</field>
+        </record>
+        <record id="abrev_sp_pmx" model="amunet.clave.abreviatura">
+            <field name="clasificacion">SP</field><field name="abreviatura">PMX</field>
+            <field name="name">Primer mix</field>
+        </record>
+        <record id="abrev_sp_mrl" model="amunet.clave.abreviatura">
+            <field name="clasificacion">SP</field><field name="abreviatura">MRL</field>
+            <field name="name">Mix de reacción LAMP</field>
+        </record>
+
+        <!-- ===== ST - Producto Semiterminado ===== -->
+        <record id="abrev_st_gon" model="amunet.clave.abreviatura">
+            <field name="clasificacion">ST</field><field name="abreviatura">GON</field>
+            <field name="name">Gotero general</field><field name="ejemplos">Antes ME (MEGON)</field>
+        </record>
+        <record id="abrev_st_goi" model="amunet.clave.abreviatura">
+            <field name="clasificacion">ST</field><field name="abreviatura">GOI</field>
+            <field name="name">Gotero intermedio</field>
+        </record>
+        <record id="abrev_st_goc" model="amunet.clave.abreviatura">
+            <field name="clasificacion">ST</field><field name="abreviatura">GOC</field>
+            <field name="name">Gotero capilar</field>
+        </record>
+        <record id="abrev_st_his" model="amunet.clave.abreviatura">
+            <field name="clasificacion">ST</field><field name="abreviatura">HIS</field>
+            <field name="name">Hisopo</field>
+        </record>
+        <record id="abrev_st_lan" model="amunet.clave.abreviatura">
+            <field name="clasificacion">ST</field><field name="abreviatura">LAN</field>
+            <field name="name">Lanceta</field>
+        </record>
+        <record id="abrev_st_cap" model="amunet.clave.abreviatura">
+            <field name="clasificacion">ST</field><field name="abreviatura">CAP</field>
+            <field name="name">Capilar</field>
+        </record>
+        <record id="abrev_st_tub" model="amunet.clave.abreviatura">
+            <field name="clasificacion">ST</field><field name="abreviatura">TUB</field>
+            <field name="name">Tubo colector</field>
+        </record>
+        <record id="abrev_st_rec" model="amunet.clave.abreviatura">
+            <field name="clasificacion">ST</field><field name="abreviatura">REC</field>
+            <field name="name">Reactivo / solución</field><field name="ejemplos">Antes RE/MP (reactivos)</field>
+        </record>
+
+        <!-- ===== PT - Producto Terminado ===== -->
+        <record id="abrev_pt_equ" model="amunet.clave.abreviatura">
+            <field name="clasificacion">PT</field><field name="abreviatura">EQU</field>
+            <field name="name">Equipo</field><field name="ejemplos">Micropipeta, vortex, incubadora</field>
+        </record>
+    </data>
+</odoo>

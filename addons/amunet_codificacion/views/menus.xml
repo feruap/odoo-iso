@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_codificacion_root"
+              name="Documentación"
+              sequence="92"
+              groups="stock.group_stock_user"/>
+
+    <menuitem id="menu_codificacion_claves"
+              name="Claves de productos"
+              parent="menu_codificacion_root"
+              action="action_clave_registro"
+              sequence="10"
+              groups="stock.group_stock_user"/>
+
+    <menuitem id="menu_codificacion_abreviaturas"
+              name="Catálogo de abreviaturas"
+              parent="menu_codificacion_root"
+              action="action_clave_abreviatura"
+              sequence="20"
+              groups="stock.group_stock_user"/>
+
+</odoo>

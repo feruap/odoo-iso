@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ Catálogo de abreviaturas ============ -->
+    <record id="view_clave_abreviatura_list" model="ir.ui.view">
+        <field name="name">amunet.clave.abreviatura.list</field>
+        <field name="model">amunet.clave.abreviatura</field>
+        <field name="arch" type="xml">
+            <list string="Catálogo de abreviaturas" editable="bottom">
+                <field name="clasificacion"/>
+                <field name="abreviatura"/>
+                <field name="prefijo"/>
+                <field name="name"/>
+                <field name="ejemplos"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_clave_abreviatura_search" model="ir.ui.view">
+        <field name="name">amunet.clave.abreviatura.search</field>
+        <field name="model">amunet.clave.abreviatura</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="abreviatura"/>
+                <field name="name"/>
+                <field name="prefijo"/>
+                <filter name="g_clasif" string="Clasificación" context="{'group_by': 'clasificacion'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_clave_abreviatura" model="ir.actions.act_window">
+        <field name="name">Catálogo de abreviaturas</field>
+        <field name="res_model">amunet.clave.abreviatura</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_g_clasif': 1}</field>
+    </record>
+
+    <!-- ============ Registro de claves ============ -->
+    <record id="view_clave_registro_list" model="ir.ui.view">
+        <field name="name">amunet.clave.registro.list</field>
+        <field name="model">amunet.clave.registro</field>
+        <field name="arch" type="xml">
+            <list string="Claves de productos">
+                <field name="clave"/>
+                <field name="name"/>
+                <field name="area"/>
+                <field name="clasificacion"/>
+                <field name="origen"/>
+                <field name="product_tmpl_id" optional="hide"/>
+                <field name="fecha_alta" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_clave_registro_form" model="ir.ui.view">
+        <field name="name">amunet.clave.registro.form</field>
+        <field name="model">amunet.clave.registro</field>
+        <field name="arch" type="xml">
+            <form string="Clave de producto">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="clave"/>
+                            <field name="name"/>
+                            <field name="area"/>
+                        </group>
+                        <group>
+                            <field name="clasificacion"/>
+                            <field name="origen"/>
+                            <field name="fecha_alta"/>
+                            <field name="product_tmpl_id"/>
+                        </group>
+                    </group>
+                    <field name="notas" placeholder="Notas..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_clave_registro_search" model="ir.ui.view">
+        <field name="name">amunet.clave.registro.search</field>
+        <field name="model">amunet.clave.registro</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="clave"/>
+                <field name="name"/>
+                <field name="area"/>
+                <filter name="g_clasif" string="Clasificación" context="{'group_by': 'clasificacion'}"/>
+                <filter name="g_area" string="Área" context="{'group_by': 'area'}"/>
+                <filter name="g_origen" string="Origen" context="{'group_by': 'origen'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_clave_registro" model="ir.actions.act_window">
+        <field name="name">Claves de productos</field>
+        <field name="res_model">amunet.clave.registro</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

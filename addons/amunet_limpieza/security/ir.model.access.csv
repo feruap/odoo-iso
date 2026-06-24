@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_limpieza_item_user,limpieza.item.user,model_amunet_limpieza_item,group_limpieza_user,1,0,0,0
+access_limpieza_item_manager,limpieza.item.manager,model_amunet_limpieza_item,group_limpieza_manager,1,1,1,1
+access_limpieza_tarea_user,limpieza.tarea.user,model_amunet_limpieza_tarea,group_limpieza_user,1,1,1,0
+access_limpieza_tarea_manager,limpieza.tarea.manager,model_amunet_limpieza_tarea,group_limpieza_manager,1,1,1,1
+access_limpieza_pin_wizard,limpieza.pin.wizard,model_amunet_limpieza_pin_wizard,group_limpieza_user,1,1,1,1

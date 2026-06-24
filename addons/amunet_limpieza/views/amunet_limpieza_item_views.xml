@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_limpieza_item_list" model="ir.ui.view">
+        <field name="name">amunet.limpieza.item.list</field>
+        <field name="model">amunet.limpieza.item</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="area_id"/>
+                <field name="surface"/>
+                <field name="frequency"/>
+                <field name="weekday"/>
+                <field name="sanitizer_rule"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_limpieza_item_form" model="ir.ui.view">
+        <field name="name">amunet.limpieza.item.form</field>
+        <field name="model">amunet.limpieza.item</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="area_id"/>
+                        <field name="surface"/>
+                        <field name="frequency"/>
+                        <field name="weekday" invisible="frequency != 'semanal'"/>
+                        <field name="sanitizer_rule"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_limpieza_item" model="ir.actions.act_window">
+        <field name="name">Configuración de limpieza por área</field>
+        <field name="res_model">amunet.limpieza.item</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

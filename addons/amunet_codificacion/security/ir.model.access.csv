@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_clave_abreviatura_user,clave.abreviatura.user,model_amunet_clave_abreviatura,stock.group_stock_user,1,0,0,0
+access_clave_abreviatura_manager,clave.abreviatura.manager,model_amunet_clave_abreviatura,product.group_product_manager,1,1,1,1
+access_clave_registro_user,clave.registro.user,model_amunet_clave_registro,stock.group_stock_user,1,0,0,0
+access_clave_registro_manager,clave.registro.manager,model_amunet_clave_registro,product.group_product_manager,1,1,1,1
