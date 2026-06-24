@@ -13,6 +13,7 @@ de firmas configurables.""",
     'data': [
         'data/seeds_20260619_180814.xml',
         'data/seeds_pnoal009_relacionados.xml',
+        'data/seeds_pnoal005_relacionados.xml',
         'security/amunet_documentos_security.xml',
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             PNOAL-005  Asignación de clave y lote interno
+             ═══════════════════════════════════════════════════════════════ -->
+        <record id="seed_amunet_documento_pnoal005" model="amunet.documento">
+            <field name="codigo">PNOAL-005</field>
+            <field name="name">ASIGNACIÓN DE CLAVE Y LOTE INTERNO</field>
+            <field name="area">AL</field>
+            <field name="tipo">pno</field>
+            <field name="version_actual">01</field>
+            <field name="state">vigente</field>
+            <field name="seccion_objetivo">&lt;p&gt;Establecer una metodología integral y estandarizada para la asignación de claves y lotes internos que permitan identificar de manera única, trazable y eficiente todos los materiales utilizados y generados por AMUNET, incluyendo materia prima, producto semiterminado, producto semiprocesado, material impreso y producto terminado, asegurando la integridad de la información en los procesos de producción, almacenamiento y distribución.&lt;/p&gt;</field>
+            <field name="seccion_alcance">&lt;p&gt;El procedimiento aplica para la asignación de clave y lote interno de los materiales utilizados y generados por AMUNET.&lt;/p&gt;</field>
+            <field name="seccion_condiciones_generales">&lt;ul&gt;&lt;li&gt;La asignación de clave y lote a todos los materiales, tanto provenientes de proveedores como de origen interno, con el propósito de evitar mezclas, pérdidas de identificación y asegurar la trazabilidad de los procesos dentro de la organización.&lt;/li&gt;&lt;/ul&gt;</field>
+            <field name="seccion_referencias">&lt;p&gt;ISO 9000:2015 "Sistemas de gestión de la calidad. Principios y vocabulario".&lt;/p&gt;&lt;p&gt;ISO 9001:2015 "Sistemas de Gestión de la Calidad – Requisitos".&lt;/p&gt;&lt;p&gt;NOM-241-SSA1 "Buenas prácticas de fabricación para establecimientos dedicados a la fabricación de dispositivos médicos", versión vigente.&lt;/p&gt;&lt;p&gt;FEUM "Suplemento para establecimientos dedicados a la venta y suministro de medicamentos y demás insumos para la salud", versión vigente.&lt;/p&gt;</field>
+            <field name="seccion_anexos">&lt;p&gt;No aplica&lt;/p&gt;</field>
+        </record>
+
+        <!-- Actividades PNOAL-005 -->
+        <record id="seed_pnoal005_actividad_1" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">10</field>
+            <field name="actividad">Asignación de clave interna de insumos</field>
+            <field name="descripcion">&lt;p&gt;1. Identificar el tipo de material.&lt;br&gt;Determinar si el insumo corresponde a materia prima, material de empaque, etc., conforme a la tabla clasificación de materiales.&lt;br&gt;Ejemplo: Materia Prima = MP / Semiprocesado = SP&lt;/p&gt;&lt;p&gt;2. Asignar la sigla base.&lt;br&gt;Seleccionar la sigla correspondiente al tipo de material según la tabla de abreviaturas técnicas.&lt;br&gt;Ejemplo: Cartucho General = CAG / Hoja maestra con Cartucho = HMC / Producto terminado = DM&lt;/p&gt;&lt;p&gt;3. Generar el número consecutivo.&lt;br&gt;Asignar un número secuencial único que corresponda al orden de ingreso del material.&lt;/p&gt;&lt;p&gt;4. Formar la clave completa.&lt;br&gt;Unir los tres elementos: [Tipo][Sigla][Consecutivo]&lt;br&gt;Ejemplo: MPCAR01&lt;/p&gt;&lt;p&gt;5. Registrar la clave en el sistema.&lt;br&gt;Ingresar la clave generada en el sistema y en la documentación correspondiente (Etiquetas, registros, etc.).&lt;/p&gt;&lt;p&gt;6. Verificar y validar.&lt;br&gt;Confirmar que la clave no esté duplicada y que cumpla con el formato establecido.&lt;/p&gt;</field>
+            <field name="responsable">Personal de almacén</field>
+            <field name="registro">F-AL-008/004
+Temperatura y humedad</field>
+        </record>
+        <record id="seed_pnoal005_actividad_2" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">20</field>
+            <field name="actividad">Asignación de lote interno</field>
+            <field name="descripcion">&lt;p&gt;La asignación del lote interno se realiza conforme a los siguientes elementos:&lt;/p&gt;&lt;p&gt;1. Inicio del lote.&lt;br&gt;Se conforma por la abreviatura técnica y el número consecutivo ya registrado en la clave del material.&lt;br&gt;Ejemplo: Si la clave es MPCAG17, el lote inicia con CAG17.&lt;/p&gt;&lt;p&gt;2. Fecha de ingreso.&lt;br&gt;Se añade en formato DDMMYY inmediatamente después del identificador.&lt;br&gt;Ejemplo: 050924 para el 5 de septiembre de 2024.&lt;/p&gt;&lt;p&gt;3. Formato final del lote.&lt;br&gt;Identificador del material + fecha de ingreso (sin espacios ni guiones).&lt;br&gt;Ejemplo: CAG17050924&lt;/p&gt;&lt;p&gt;4. Registro y validación.&lt;br&gt;El lote debe ser ingresado en el sistema y validado por el personal autorizado. Se verifica que no exista duplicidad y que el formato esté conforme al procedimiento.&lt;/p&gt;</field>
+            <field name="responsable">Supervisor de almacén</field>
+            <field name="registro">No aplica</field>
+        </record>
+
+        <!-- Responsabilidades PNOAL-005 -->
+        <record id="seed_pnoal005_resp_1" model="amunet.documento.responsabilidad">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">10</field>
+            <field name="rol">Del personal de almacén</field>
+            <field name="descripcion">&lt;ul&gt;&lt;li&gt;Asignar clave a los insumos que ingresan por primera vez al almacén, así como los insumos que se generan internamente.&lt;/li&gt;&lt;li&gt;Asignar lote a cada uno de los nuevos ingresos de los materiales tanto de proveedor como internos&lt;/li&gt;&lt;li&gt;Verificar que no haya duplicidad en claves o lotes.&lt;/li&gt;&lt;/ul&gt;</field>
+        </record>
+        <record id="seed_pnoal005_resp_2" model="amunet.documento.responsabilidad">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">20</field>
+            <field name="rol">Del supervisor de Almacén</field>
+            <field name="descripcion">&lt;ul&gt;&lt;li&gt;Verificar que en las claves y lotes internos no haya duplicidad&lt;/li&gt;&lt;li&gt;Verificar que tanto las claves como los lotes respeten las reglas designadas en este procedimiento.&lt;/li&gt;&lt;li&gt;Verificar que los materiales estén correctamente identificados.&lt;/li&gt;&lt;/ul&gt;</field>
+        </record>
+        <record id="seed_pnoal005_resp_3" model="amunet.documento.responsabilidad">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">30</field>
+            <field name="rol">Del Responsable Sanitario</field>
+            <field name="descripcion">&lt;ul&gt;&lt;li&gt;Supervisar el cumplimiento del procedimiento.&lt;/li&gt;&lt;li&gt;Autorizar cambios o ajustes en el sistema de codificación cuando sea necesario.&lt;/li&gt;&lt;li&gt;Asegurar el cumplimiento de normativas sanitarias aplicables.&lt;/li&gt;&lt;/ul&gt;</field>
+        </record>
+        <record id="seed_pnoal005_resp_4" model="amunet.documento.responsabilidad">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">40</field>
+            <field name="rol">Del auxiliar de Responsable Sanitario</field>
+            <field name="descripcion">&lt;ul&gt;&lt;li&gt;Supervisar que se elaboren los PNO necesarios para llevar a cabo las actividades de todas las áreas del establecimiento.&lt;/li&gt;&lt;li&gt;Dar a conocer los PNO al personal dedicado a cada proceso.&lt;/li&gt;&lt;li&gt;Vigilar que los procedimientos cumplan con la normatividad vigente.&lt;/li&gt;&lt;li&gt;Autorizar los PNO una vez revisados y vigilar su cumplimiento en ausencia del Responsable Sanitario.&lt;/li&gt;&lt;/ul&gt;</field>
+        </record>
+
+        <!-- Términos y definiciones PNOAL-005 -->
+        <record id="seed_pnoal005_term_1" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">10</field>
+            <field name="concepto">Claves</field>
+            <field name="definicion">&lt;p&gt;Control de identificación que permite la identificación de materia prima, material impreso, producto semiprocesado, producto semiterminado, producto terminado.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal005_term_2" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">20</field>
+            <field name="concepto">Trazabilidad o rastreabilidad</field>
+            <field name="definicion">&lt;p&gt;Capacidad de reconstruir la historia, localización de un elemento, un componente o de una actividad, utilizando los registros como evidencia.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal005_term_3" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">30</field>
+            <field name="concepto">Lote interno</field>
+            <field name="definicion">&lt;p&gt;Control de identificación interno de los insumos que permita la trazabilidad de los mismos en el lote de fabricación.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal005_term_4" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">40</field>
+            <field name="concepto">Insumos</field>
+            <field name="definicion">&lt;p&gt;Aquellas materias primas, componentes para ensamble, material de envase primario, material de acondicionamiento y producto que se reciben en un establecimiento.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal005_term_5" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_pnoal005"/>
+            <field name="sequence">50</field>
+            <field name="concepto">Producto terminado</field>
+            <field name="definicion">&lt;p&gt;Dispositivo médico que ha cumplido con todas las etapas de fabricación y que se encuentran en su presentación final.&lt;/p&gt;</field>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             PNOAL-009  Responsabilidades y términos (documento ya en seed
+             seeds_20260619_180814.xml como seed_amunet_documento_73)
+             ═══════════════════════════════════════════════════════════════ -->
+
+        <!-- Responsabilidades PNOAL-009 -->
+        <record id="seed_pnoal009_resp_1" model="amunet.documento.responsabilidad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">10</field>
+            <field name="rol">Del personal de almacén</field>
+            <field name="descripcion">&lt;ul&gt;&lt;li&gt;Identificar las necesidades de pretratamiento y corte con base en la orden de producción.&lt;/li&gt;&lt;li&gt;Llenar y entregar el formato F-AL-009/001 "Solicitud de pretratamiento y corte de insumos".&lt;/li&gt;&lt;li&gt;Recepcionar los insumos pretratados y/o colocarlos en cuarentena hasta su liberación.&lt;/li&gt;&lt;/ul&gt;</field>
+        </record>
+        <record id="seed_pnoal009_resp_2" model="amunet.documento.responsabilidad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">20</field>
+            <field name="rol">Del personal de producción</field>
+            <field name="descripcion">&lt;ul&gt;&lt;li&gt;Recibir la solicitud y los insumos correspondientes.&lt;/li&gt;&lt;li&gt;Ejecutar el pretratamiento y/o corte de acuerdo con la instrucción de trabajo aplicable.&lt;/li&gt;&lt;li&gt;Registrar las condiciones ambientales (temperatura y humedad) durante el proceso.&lt;/li&gt;&lt;li&gt;Entregar los insumos procesados al almacén junto con la solicitud debidamente requisitada.&lt;/li&gt;&lt;/ul&gt;</field>
+        </record>
+        <record id="seed_pnoal009_resp_3" model="amunet.documento.responsabilidad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">30</field>
+            <field name="rol">Del personal de control de calidad</field>
+            <field name="descripcion">&lt;ul&gt;&lt;li&gt;Verificar que los insumos pretratados y/o cortados cumplan con las especificaciones establecidas.&lt;/li&gt;&lt;li&gt;Autorizar o rechazar el lote para su uso en producción.&lt;/li&gt;&lt;/ul&gt;</field>
+        </record>
+        <record id="seed_pnoal009_resp_4" model="amunet.documento.responsabilidad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">40</field>
+            <field name="rol">Del Responsable Sanitario</field>
+            <field name="descripcion">&lt;ul&gt;&lt;li&gt;Evaluar la aplicabilidad de los procedimientos y autorizar los PNOs&lt;/li&gt;&lt;li&gt;Autorizar los PNOs una vez revisados y vigilar su cumplimiento&lt;/li&gt;&lt;li&gt;Vigilar que los procedimientos cumplan con la normatividad vigente.&lt;/li&gt;&lt;/ul&gt;</field>
+        </record>
+
+        <!-- Términos y definiciones PNOAL-009 -->
+        <record id="seed_pnoal009_term_1" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">10</field>
+            <field name="concepto">Almohadilla</field>
+            <field name="definicion">&lt;p&gt;Material poroso (generalmente de fibra de vidrio, celulosa o poliéster) utilizado en pruebas de flujo lateral para la aplicación de muestras, conjugados o reactivos.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_2" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">20</field>
+            <field name="concepto">Almohadilla con conjugado</field>
+            <field name="definicion">&lt;p&gt;Almohadilla que contiene partículas conjugadas (ej. oro coloidal) que se disuelven al contacto con la muestra para formar el complejo de detección.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_3" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">30</field>
+            <field name="concepto">Almohadillas de muestra</field>
+            <field name="definicion">&lt;p&gt;Almohadilla que recibe la muestra biológica (suero, sangre, orina, etc.) y la filtra para permitir su flujo hacia la membrana.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_4" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">40</field>
+            <field name="concepto">Corte</field>
+            <field name="definicion">&lt;p&gt;Acción de transformar una almohadilla o material en tiras, rectángulos o formas con dimensiones específicas para su uso en el laminado de pruebas de flujo lateral.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_5" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">50</field>
+            <field name="concepto">Cuarentena</field>
+            <field name="definicion">&lt;p&gt;Área o estatus designado para productos o insumos que han sido recibidos o procesados, pero aún no han sido liberados por Control de Calidad para su uso.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_6" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">60</field>
+            <field name="concepto">Formato</field>
+            <field name="definicion">&lt;p&gt;Documento elaborado para consignar el resultado de una actividad o tarea.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_7" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">70</field>
+            <field name="concepto">Insumos</field>
+            <field name="definicion">&lt;p&gt;Material o componentes utilizados en el proceso de fabricación de dispositivos médicos. En este documento, se refiere específicamente a almohadillas y material absorbente.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_8" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">80</field>
+            <field name="concepto">Lote</field>
+            <field name="definicion">&lt;p&gt;Cantidad definida de insumos procesados en las mismas condiciones (mismo día, mismo operador, mismos reactivos) que puede ser rastreada mediante un número de identificación único.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_9" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">90</field>
+            <field name="concepto">Pretratamiento</field>
+            <field name="definicion">&lt;p&gt;Proceso de impregnación de almohadillas con soluciones amortiguadoras, surfactantes, bloqueadores u otros reactivos que optimizan el entorno químico de la muestra, mejorando la sensibilidad y fiabilidad de la prueba.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_10" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">100</field>
+            <field name="concepto">Registro</field>
+            <field name="definicion">&lt;p&gt;Documento que presenta resultados obtenidos o proporciona evidencia de actividades desempeñadas.&lt;/p&gt;</field>
+        </record>
+        <record id="seed_pnoal009_term_11" model="amunet.documento.termino">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">110</field>
+            <field name="concepto">Solicitud</field>
+            <field name="definicion">&lt;p&gt;Formato documental mediante el cual el almacén comunica formalmente a producción la necesidad de pretratar y/o cortar un lote específico de insumos.&lt;/p&gt;</field>
+        </record>
+
+    </data>
+</odoo>
