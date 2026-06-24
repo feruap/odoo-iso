@@ -233,7 +233,13 @@ class AmunetTempReading(models.Model):
     @api.model
     def _cron_generate_and_mark(self):
         today = fields.Date.context_today(self)
-        Area = self.env['amunet.temp.area'].search([('active', '=', True)])
+        # Amunet no trabaja sabados ni domingos: esos dias NO se generan tomas
+        # de temperatura (weekday() 5=sabado, 6=domingo). La marcacion de turnos
+        # vencidos de dias previos sigue corriendo normalmente mas abajo.
+        if today.weekday() >= 5:
+            Area = self.env['amunet.temp.area'].browse()
+        else:
+            Area = self.env['amunet.temp.area'].search([('active', '=', True)])
         Day = self.env['amunet.temp.daysignoff']
         for area in Area:
             if not area.slot_ids:
