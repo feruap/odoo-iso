@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="seed_product_template_1934" model="product.template">
+            <field name="name">Zapatones</field>
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_75"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_1"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_1935" model="product.template">
+            <field name="name">Aguja Vacutainer (verde)</field>
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_81"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_1"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_1936" model="product.template">
+            <field name="name">Contenedor de RPBI</field>
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_77"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_1"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_1937" model="product.template">
+            <field name="name">Contenedor para RPBI punzocortantes</field>
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_77"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_1"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,124 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="seed_product_category_105" model="product.category">
+            <field name="name">Material de Laboratorio</field>
+            <field name="complete_name">Material de Laboratorio</field>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_106" model="product.category">
+            <field name="name">Caja petri</field>
+            <field name="complete_name">Material de Laboratorio / Caja petri</field>
+            <field name="parent_id" ref="seed_product_category_105"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MLPLP</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_107" model="product.category">
+            <field name="name">Criovial</field>
+            <field name="complete_name">Material de Laboratorio / Criovial</field>
+            <field name="parent_id" ref="seed_product_category_105"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MLCRI</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_108" model="product.category">
+            <field name="name">Envase</field>
+            <field name="complete_name">Material de Laboratorio / Envase</field>
+            <field name="parent_id" ref="seed_product_category_105"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MLENV</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_109" model="product.category">
+            <field name="name">Filtro</field>
+            <field name="complete_name">Material de Laboratorio / Filtro</field>
+            <field name="parent_id" ref="seed_product_category_105"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MLACR</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_110" model="product.category">
+            <field name="name">Placa Elisa</field>
+            <field name="complete_name">Material de Laboratorio / Placa Elisa</field>
+            <field name="parent_id" ref="seed_product_category_105"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MLPLE</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_111" model="product.category">
+            <field name="name">Punta</field>
+            <field name="complete_name">Material de Laboratorio / Punta</field>
+            <field name="parent_id" ref="seed_product_category_105"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MLPUN</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_112" model="product.category">
+            <field name="name">Rack de puntas</field>
+            <field name="complete_name">Material de Laboratorio / Rack de puntas</field>
+            <field name="parent_id" ref="seed_product_category_105"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MLRAC</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_113" model="product.category">
+            <field name="name">Tubo</field>
+            <field name="complete_name">Material de Laboratorio / Tubo</field>
+            <field name="parent_id" ref="seed_product_category_105"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MLTUB</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_114" model="product.category">
+            <field name="name">Vial</field>
+            <field name="complete_name">Material de Laboratorio / Vial</field>
+            <field name="parent_id" ref="seed_product_category_105"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MLVIA</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+        <record id="seed_product_category_115" model="product.category">
+            <field name="name">Bolsa</field>
+            <field name="complete_name">Material impreso / Bolsa</field>
+            <field name="parent_id" ref="seed_product_category_19"/>
+            <field name="property_account_income_categ_id" ref="seed_account_account_63"/>
+            <field name="property_account_expense_categ_id" ref="seed_account_account_81"/>
+            <field name="amunet_prefijo">MIBOL</field>
+            <field name="property_valuation">periodic</field>
+            <field name="property_cost_method">standard</field>
+            <field name="reanalysis_extension_months">0</field>
+        </record>
+    </data>
+</odoo>
