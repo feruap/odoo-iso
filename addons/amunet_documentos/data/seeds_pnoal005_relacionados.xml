@@ -13,10 +13,10 @@
             <field name="version_actual">02</field>
             <field name="sustituye_version">01</field>
             <field name="state">vigente</field>
-            <field name="elabora_id" model="res.users" search="[('login','=','documentacion@amunet.com.mx')]"/>
+            <field name="elabora_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
             <field name="revisor_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
             <field name="autorizador_id" model="res.users" search="[('login','=','s.validacion@amunet.com.mx')]"/>
-            <field name="responsable_id" model="res.users" search="[('login','=','documentacion@amunet.com.mx')]"/>
+            <field name="responsable_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
             <field name="seccion_objetivo">&lt;p&gt;Establecer una metodología integral y estandarizada para la asignación de claves y lotes internos que permitan identificar de manera única, trazable y eficiente todos los materiales utilizados y generados por AMUNET, incluyendo materia prima, producto semiterminado, producto semiprocesado, material impreso y producto terminado, asegurando la integridad de la información en los procesos de producción, almacenamiento y distribución.&lt;/p&gt;</field>
             <field name="seccion_alcance">&lt;p&gt;El procedimiento aplica para la asignación de clave y lote interno de los materiales utilizados y generados por AMUNET.&lt;/p&gt;</field>
             <field name="seccion_condiciones_generales">&lt;ul&gt;&lt;li&gt;La asignación de clave y lote a todos los materiales, tanto provenientes de proveedores como de origen interno, con el propósito de evitar mezclas, pérdidas de identificación y asegurar la trazabilidad de los procesos dentro de la organización.&lt;/li&gt;&lt;/ul&gt;</field>

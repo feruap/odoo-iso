@@ -9,10 +9,10 @@
             <field name="version_actual">02</field>
             <field name="state">vigente</field>
             <field name="fecha_vigencia">2026-07-01</field>
-            <field name="elabora_id" model="res.users" search="[('login','=','documentacion@amunet.com.mx')]"/>
+            <field name="elabora_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
             <field name="revisor_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
             <field name="autorizador_id" model="res.users" search="[('login','=','s.validacion@amunet.com.mx')]"/>
-            <field name="responsable_id" model="res.users" search="[('login','=','documentacion@amunet.com.mx')]"/>
+            <field name="responsable_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
             <field name="archivo_filename">PNOAL-009 Solicitud de pretratamiento y corte de material.docx</field>
             <field name="seccion_objetivo">&lt;p&gt;Establecer los lineamientos para la solicitud, ejecución y control del pretratamiento y corte de insumos (almohadillas de conjugado, almohadillas de muestras y otros materiales absorbentes) utilizados en la fabricación de dispositivos médicos de diagnóstico.&lt;/p&gt;</field>
             <field name="seccion_alcance">&lt;p&gt;Este procedimiento aplica para:&lt;/p&gt;
