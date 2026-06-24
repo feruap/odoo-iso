@@ -10,7 +10,7 @@
             <field name="state">vigente</field>
             <field name="fecha_vigencia">2026-07-01</field>
             <field name="elabora_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
-            <field name="revisor_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
+            <field name="revisor_id" model="res.users" search="[('login','=','desarrollo@amunet.com.mx')]"/>
             <field name="autorizador_id" model="res.users" search="[('login','=','s.validacion@amunet.com.mx')]"/>
             <field name="responsable_id" model="res.users" search="[('login','=','supalmacen@amunet.com.mx')]"/>
             <field name="archivo_filename">PNOAL-009 Solicitud de pretratamiento y corte de material.docx</field>
