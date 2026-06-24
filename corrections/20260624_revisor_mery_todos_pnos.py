@@ -21,3 +21,13 @@ print(f"OK: {cur.rowcount} documentos actualizados con revisor_id={mery_id}")
 
 conn.commit()
 conn.close()
+
+# Tecnovigilancia: revisor es Stacy Palma (documentacion@amunet.com.mx)
+conn2 = psycopg2.connect(host="localhost", dbname="Amunet", user="odoo", password="odoo_prod_password")
+cur2 = conn2.cursor()
+cur2.execute("SELECT id FROM res_users WHERE login = 'documentacion@amunet.com.mx'")
+stacy_id = cur2.fetchone()[0]
+cur2.execute("UPDATE amunet_documento SET revisor_id = %s WHERE area = 'TV'", (stacy_id,))
+print(f"OK: {cur2.rowcount} PNOs de TV con revisor_id={stacy_id} (Stacy Palma)")
+conn2.commit()
+conn2.close()
