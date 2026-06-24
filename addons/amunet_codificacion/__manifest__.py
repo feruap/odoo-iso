@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Codificación de productos',
-    'version': '19.0.1.1.0',
+    'version': '19.0.2.0.0',
     'category': 'Inventory',
     'summary': 'Normativa de claves de productos: catálogo de abreviaturas y registro/documentación',
     'description': """

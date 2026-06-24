@@ -1,26 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Form de producto: la clave se DERIVA de la Categoria (no se piden
+         clasificacion/subcategoria por separado: la categoria ya lo dice). -->
     <record id="view_product_template_form_codificacion" model="ir.ui.view">
         <field name="name">product.template.form.codificacion</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='categ_id']" position="after">
-                <label for="amunet_clasificacion" string="Codificación Amunet"
-                       groups="product.group_product_manager"/>
-                <div groups="product.group_product_manager" class="o_row">
-                    <field name="amunet_clasificacion" placeholder="Clasificación..."/>
-                    <field name="amunet_abreviatura_id"
-                           options="{'no_quick_create': True}"
-                           placeholder="Sub-categoría / abreviatura..."/>
-                </div>
+                <field name="amunet_categ_prefijo" invisible="1"/>
+                <field name="amunet_clave_bloqueada" invisible="1"/>
                 <field name="amunet_analito" groups="product.group_product_manager"
-                       invisible="amunet_clasificacion != 'PT'"
-                       placeholder="Analito / enfermedad (para PT)"/>
+                       placeholder="Analito / enfermedad (para Producto Terminado)"
+                       invisible="not amunet_categ_prefijo"/>
                 <div groups="product.group_product_manager" colspan="2"
                      invisible="not amunet_clave_propuesta and not amunet_clave_aviso">
-                    <field name="amunet_clave_bloqueada" invisible="1"/>
                     <div class="alert alert-danger" role="alert"
                          invisible="not amunet_clave_bloqueada">
                         <field name="amunet_clave_aviso" readonly="1" nolabel="1"/>
@@ -31,13 +26,45 @@
                     </div>
                     <div class="alert alert-info" role="alert"
                          invisible="not amunet_clave_propuesta or default_code or amunet_clave_bloqueada">
-                        Clave propuesta: <field name="amunet_clave_propuesta" readonly="1" nolabel="1" class="oe_inline"/>
+                        Clave propuesta (de la categoría): <field name="amunet_clave_propuesta" readonly="1" nolabel="1" class="oe_inline"/>
                         <button name="action_amunet_asignar_clave" type="object"
                                 string="Crear o validar" class="btn-primary btn-sm ms-2"/>
                     </div>
                 </div>
             </xpath>
         </field>
+    </record>
+
+    <!-- Catalogo: prefijo de clave por categoria (la "tabla" de PNOAL-005). -->
+    <record id="view_product_category_prefijo_list" model="ir.ui.view">
+        <field name="name">product.category.prefijo.list</field>
+        <field name="model">product.category</field>
+        <field name="arch" type="xml">
+            <list string="Prefijos de clave por categoría" editable="bottom">
+                <field name="complete_name" string="Categoría"/>
+                <field name="amunet_prefijo" string="Prefijo"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_product_category_prefijo_search" model="ir.ui.view">
+        <field name="name">product.category.prefijo.search</field>
+        <field name="model">product.category</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="complete_name"/>
+                <field name="amunet_prefijo"/>
+                <filter name="sin_prefijo" string="Sin prefijo" domain="[('amunet_prefijo','=',False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_categoria_prefijo" model="ir.actions.act_window">
+        <field name="name">Prefijos por categoría</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_product_category_prefijo_list"/>
+        <field name="search_view_id" ref="view_product_category_prefijo_search"/>
     </record>
 
 </odoo>

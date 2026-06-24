@@ -13,10 +13,10 @@
               sequence="10"
               groups="stock.group_stock_user"/>
 
-    <menuitem id="menu_codificacion_abreviaturas"
-              name="Catálogo de abreviaturas"
+    <menuitem id="menu_codificacion_prefijos"
+              name="Prefijos por categoría"
               parent="menu_codificacion_root"
-              action="action_clave_abreviatura"
+              action="action_categoria_prefijo"
               sequence="20"
               groups="stock.group_stock_user"/>
 

@@ -4,14 +4,6 @@ import unicodedata
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
-CLASIFICACIONES = [
-    ('MP', 'MP - Materia Prima'),
-    ('MI', 'MI - Material Impreso'),
-    ('SP', 'SP - Producto Semiprocesado (granel)'),
-    ('ST', 'ST - Producto Semiterminado'),
-    ('PT', 'PT - Producto Terminado'),
-]
-
 # Palabras vacias (no significativas) para comparar nombres
 _STOP = {
     'de', 'del', 'la', 'el', 'los', 'las', 'un', 'una', 'unos', 'unas',
@@ -43,11 +35,6 @@ def _palabras_sig(txt):
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
-    amunet_clasificacion = fields.Selection(
-        CLASIFICACIONES, string='Clasificación (clave)')
-    amunet_abreviatura_id = fields.Many2one(
-        'amunet.clave.abreviatura', string='Sub-categoría / Abreviatura',
-        domain="[('clasificacion','=',amunet_clasificacion)]")
     amunet_analito = fields.Char(
         string='Analito / Enfermedad',
         help="Para Producto Terminado: enfermedad o analito que detecta.")
@@ -58,17 +45,16 @@ class ProductTemplate(models.Model):
     amunet_clave_bloqueada = fields.Boolean(
         string='Alta bloqueada por duplicado', compute='_compute_amunet_clave',
         store=False)
+    amunet_categ_prefijo = fields.Char(
+        related='categ_id.amunet_prefijo', string='Prefijo de la categoría',
+        readonly=True)
 
-    @api.depends('amunet_clasificacion', 'amunet_abreviatura_id', 'name')
+    @api.depends('categ_id', 'categ_id.amunet_prefijo', 'name')
     def _compute_amunet_clave(self):
         Reg = self.env['amunet.clave.registro']
         for r in self:
-            prop = False
-            ab = r.amunet_abreviatura_id
-            if ab and r.amunet_clasificacion and ab.clasificacion == r.amunet_clasificacion:
-                prop = Reg._amunet_siguiente_clave(ab.prefijo)
-            r.amunet_clave_propuesta = prop
-
+            prefijo = r.categ_id.amunet_prefijo if r.categ_id else False
+            r.amunet_clave_propuesta = Reg._amunet_siguiente_clave(prefijo) if prefijo else False
             avisos = []
             equiv = r._amunet_buscar_equivalente()
             if equiv:
@@ -77,6 +63,11 @@ class ProductTemplate(models.Model):
                     "Usa ese producto. Si de verdad es distinto, ajusta el nombre "
                     "para diferenciarlo (por ejemplo, agrega la presentación)."
                 ) % (equiv.name, equiv.default_code or 'sin clave'))
+            if r.name and r.categ_id and not prefijo:
+                avisos.append(_(
+                    "La categoría '%s' no tiene prefijo de clave configurado. "
+                    "Pídelo a Documentación (PNOAL-005) antes de codificar."
+                ) % r.categ_id.complete_name)
             if r._amunet_tiene_ingles():
                 avisos.append(_(
                     "Sugerencia: el nombre parece tener palabras en inglés; usa "
@@ -86,13 +77,9 @@ class ProductTemplate(models.Model):
 
     @api.model
     def _amunet_equivalente_de(self, nombre, excluir_id=0):
-        """Producto existente equivalente a `nombre` (mismo material) o False.
-
-        Equivalente = duplicado exacto (normalizado) O todas las palabras
-        significativas del nombre nuevo estan dentro de un producto existente
-        (ej. 'Caja Drogas' es subconjunto de 'Caja caple Drogas'). El subconjunto
-        solo cuenta con 2+ palabras, para no sobre-bloquear nombres genericos.
-        """
+        """Producto existente equivalente (mismo material) o False.
+        Duplicado exacto (normalizado) O todas las palabras significativas del
+        nombre nuevo estan dentro de un producto existente (>=2 palabras)."""
         nm = (nombre or '').strip()
         if not nm:
             return False
@@ -115,32 +102,35 @@ class ProductTemplate(models.Model):
         return self.env['product.template']._amunet_equivalente_de(
             self.name, excluir_id=self._origin.id or 0)
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        # Candado duro: no permitir GUARDAR un producto del flujo de alta Amunet
-        # (clasificacion puesta, sin clave aun) si el nombre es duplicado/equivalente.
-        for vals in vals_list:
-            if vals.get('amunet_clasificacion') and vals.get('name') and not vals.get('default_code'):
-                equiv = self._amunet_equivalente_de(vals['name'])
-                if equiv:
-                    raise UserError(_(
-                        "No se puede guardar: ya existe un producto equivalente "
-                        "'%s' (%s).\n\nUsa ese producto. Si de verdad es distinto, "
-                        "ajusta el nombre para diferenciarlo (por ejemplo, agrega "
-                        "la presentación)."
-                    ) % (equiv.name, equiv.default_code or 'sin clave'))
-        return super().create(vals_list)
-
     def _amunet_tiene_ingles(self):
         self.ensure_one()
         return bool(set(re.findall(r'[a-zA-Z]+', (self.name or '').lower())) & _ENG)
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Candado duro: no permitir GUARDAR un producto duplicado en una categoria
+        # que ya esta codificada (tiene prefijo) y sin clave aun.
+        for vals in vals_list:
+            if vals.get('categ_id') and vals.get('name') and not vals.get('default_code'):
+                cat = self.env['product.category'].browse(vals['categ_id'])
+                if cat.amunet_prefijo:
+                    equiv = self._amunet_equivalente_de(vals['name'])
+                    if equiv:
+                        raise UserError(_(
+                            "No se puede guardar: ya existe un producto equivalente "
+                            "'%s' (%s).\n\nUsa ese producto. Si de verdad es distinto, "
+                            "ajusta el nombre para diferenciarlo."
+                        ) % (equiv.name, equiv.default_code or 'sin clave'))
+        return super().create(vals_list)
+
     def action_amunet_asignar_clave(self):
         self.ensure_one()
-        ab = self.amunet_abreviatura_id
-        if not ab or not self.amunet_clasificacion or ab.clasificacion != self.amunet_clasificacion:
+        prefijo = self.categ_id.amunet_prefijo if self.categ_id else False
+        if not prefijo:
             raise UserError(_(
-                "Selecciona una Clasificación y una Sub-categoría/Abreviatura coherentes antes de asignar la clave."))
+                "La categoría '%s' no tiene prefijo de clave configurado. "
+                "Pídelo a Documentación antes de codificar."
+            ) % (self.categ_id.complete_name if self.categ_id else 'sin categoría'))
         if self.default_code:
             raise UserError(_(
                 "Este producto ya tiene clave (%s). El auto-codificador es solo para productos nuevos.") % self.default_code)
@@ -148,16 +138,14 @@ class ProductTemplate(models.Model):
         if equiv:
             raise UserError(_(
                 "No se puede generar la clave: ya existe un producto equivalente "
-                "'%s' (%s).\n\nUsa ese producto. Si de verdad es distinto, ajusta "
-                "el nombre para diferenciarlo (por ejemplo, agrega la presentación)."
+                "'%s' (%s).\n\nUsa ese producto o diferencia el nombre."
             ) % (equiv.name, equiv.default_code or 'sin clave'))
-        clave = self.env['amunet.clave.registro']._amunet_siguiente_clave(ab.prefijo)
+        clave = self.env['amunet.clave.registro']._amunet_siguiente_clave(prefijo)
         self.default_code = clave
         self.env['amunet.clave.registro'].create({
             'clave': clave,
             'name': self.amunet_analito or self.name,
-            'area': ab.name,
-            'clasificacion': self.amunet_clasificacion,
+            'area': self.categ_id.name,
             'product_tmpl_id': self.id,
             'fecha_alta': fields.Date.context_today(self),
             'origen': 'sistema',
@@ -173,12 +161,8 @@ class ProductTemplate(models.Model):
             }}
 
     def _amunet_notificar_almacen(self, clave):
-        """Fase 3: aviso por correo al grupo Almacen al registrar un producto.
-
-        Solo se envia si el parametro 'amunet_codificacion.email_almacen_activo'
-        es '1' (se activa en produccion). Asi staging no manda correos reales al
-        probar.
-        """
+        """Fase 3: aviso por correo al grupo Almacen. Solo si el parametro
+        'amunet_codificacion.email_almacen_activo' es '1' (se activa en prod)."""
         self.ensure_one()
         if self.env['ir.config_parameter'].sudo().get_param(
                 'amunet_codificacion.email_almacen_activo') != '1':
