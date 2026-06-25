@@ -662,6 +662,13 @@ class AmunetDocumento(models.Model):
                 self.codigo, self.version_actual or ''),
         )
 
+    def action_eliminar_borrador(self):
+        for r in self:
+            if r.state != 'borrador':
+                raise UserError(_('Solo puedes eliminar documentos en estado Borrador.'))
+        self.unlink()
+        return {'type': 'ir.actions.act_window_close'}
+
     def action_obsoleto(self):
         self._workflow_write({'state': 'obsoleto'})
 

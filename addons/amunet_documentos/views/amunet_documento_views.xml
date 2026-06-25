@@ -43,6 +43,10 @@
                     <button name="action_volver_borrador" string="Volver a borrador"
                             type="object"
                             invisible="state not in ('en_revision','obsoleto')"/>
+                    <button name="action_eliminar_borrador" string="Eliminar borrador"
+                            type="object" class="btn-danger"
+                            invisible="state != 'borrador'"
+                            confirm="¿Seguro que quieres eliminar este documento? Esta acción no se puede deshacer."/>
                     <button name="action_open_sugerencia_wizard"
                             string="Control de cambios" type="object"
                             invisible="state != 'vigente'"
