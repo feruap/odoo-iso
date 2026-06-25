@@ -46,6 +46,10 @@
               parent="menu_amunet_mis_pendientes"
               action="action_amunet_mis_ccs" sequence="45"/>
 
+    <menuitem id="menu_amunet_distribucion_mis_docs" name="Mis documentos por acusar"
+              parent="menu_amunet_mis_pendientes"
+              action="action_distribucion_mis_docs" sequence="55"/>
+
     <!-- ── Submenú: Gestión (solo managers) ── -->
     <menuitem id="menu_amunet_gestion" name="Gestión"
               parent="menu_amunet_documentos_root"
@@ -61,6 +65,12 @@
               parent="menu_amunet_gestion"
               action="action_amunet_formato_permisos"
               sequence="7"
+              groups="amunet_documentos.group_supervisor_documentacion"/>
+
+    <menuitem id="menu_amunet_distribucion_panel" name="Panel de distribución"
+              parent="menu_amunet_gestion"
+              action="action_distribucion_panel"
+              sequence="8"
               groups="amunet_documentos.group_supervisor_documentacion"/>
 
     <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de impresión"

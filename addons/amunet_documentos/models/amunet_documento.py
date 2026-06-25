@@ -180,12 +180,22 @@ class AmunetDocumento(models.Model):
         string='Formatos descargables')
     es_supervisor_doc = fields.Boolean(
         compute='_compute_es_supervisor_doc', store=False)
+    mi_acuse_pendiente = fields.Boolean(
+        compute='_compute_mi_acuse_pendiente', store=False)
 
     def _compute_es_supervisor_doc(self):
         is_sup = self.env.user.has_group(
             'amunet_documentos.group_supervisor_documentacion')
         for r in self:
             r.es_supervisor_doc = is_sup
+
+    def _compute_mi_acuse_pendiente(self):
+        uid = self.env.uid
+        for r in self:
+            r.mi_acuse_pendiente = (
+                r.state == 'vigente'
+                and any(d.usuario_id.id == uid and not d.acuse for d in r.distribucion_ids)
+            )
 
     @api.depends('formato_ids', 'formato_ids.codigo', 'formato_ids.nombre',
                  'formato_ids.requiere_aprobacion', 'formato_ids.sequence')
@@ -608,9 +618,39 @@ class AmunetDocumento(models.Model):
                 'fecha_emision': fecha_emision,
                 'fecha_vigencia': fecha_emision + relativedelta(years=2),
             })
+            r._auto_distribuir_signatarios(today)
             r.activity_feedback(
                 ['mail.mail_activity_data_todo'],
                 feedback=_('Autorizado por %s') % self.env.user.name)
+
+    def _auto_distribuir_signatarios(self, today=None):
+        """Al publicar, registra acuse automatico para elaboro/reviso/autorizo."""
+        today = today or fields.Date.today()
+        Dist = self.env['amunet.documento.distribucion']
+        for r in self:
+            uids = {uid for uid in (
+                r.elabora_id.id, r.firma_revisa_id.id, r.firma_aprueba_id.id
+            ) if uid}
+            existentes = {d.usuario_id.id: d for d in r.distribucion_ids}
+            for uid in uids:
+                if uid in existentes:
+                    if not existentes[uid].acuse:
+                        existentes[uid].write({'acuse': True, 'fecha_acuse': today})
+                else:
+                    Dist.create({
+                        'documento_id': r.id,
+                        'usuario_id': uid,
+                        'acuse': True,
+                        'fecha_acuse': today,
+                    })
+
+    def action_yo_lo_lei(self):
+        self.ensure_one()
+        uid = self.env.uid
+        pendiente = self.distribucion_ids.filtered(
+            lambda d: d.usuario_id.id == uid and not d.acuse)
+        if pendiente:
+            pendiente.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
 
     def action_obsoleto(self):
         self._workflow_write({'state': 'obsoleto'})
@@ -817,9 +857,20 @@ class AmunetDocumentoDistribucion(models.Model):
     acuse = fields.Boolean(string='Acuse de recibido')
     fecha_acuse = fields.Date(string='Fecha de acuse', readonly=True)
 
+    doc_codigo = fields.Char(related='documento_id.codigo', store=True, string='Codigo')
+    doc_name = fields.Char(related='documento_id.name', store=True, string='Documento')
+    doc_area = fields.Selection(related='documento_id.area', store=True, string='Area')
+    doc_state = fields.Selection(related='documento_id.state', store=True, string='Estado')
+
     def action_acusar(self):
         for r in self:
             r.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
+
+    def action_yo_lo_lei_desde_lista(self):
+        self.ensure_one()
+        if self.usuario_id.id != self.env.uid:
+            raise UserError(_('Solo puedes confirmar tu propio acuse.'))
+        self.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
 
 
 class AmunetDocumentoActividad(models.Model):
