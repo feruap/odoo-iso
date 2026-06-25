@@ -737,16 +737,14 @@
                 <filter name="f_tv"  string="Tecnovigilancia"  domain="[('doc_area','=','TV')]"/>
                 <filter name="f_rh"  string="Recursos Humanos" domain="[('doc_area','=','RH')]"/>
                 <separator/>
-                <group expand="0" string="Agrupar por">
-                    <filter name="g_documento" string="Documento"
-                            context="{'group_by': 'doc_codigo'}"/>
-                    <filter name="g_area" string="Área"
-                            context="{'group_by': 'doc_area'}"/>
-                    <filter name="g_usuario" string="Persona"
-                            context="{'group_by': 'usuario_id'}"/>
-                    <filter name="g_acuse" string="Estado de acuse"
-                            context="{'group_by': 'acuse'}"/>
-                </group>
+                <filter name="g_documento" string="Agrupar por documento"
+                        context="{'group_by': 'doc_codigo'}"/>
+                <filter name="g_area" string="Agrupar por área"
+                        context="{'group_by': 'doc_area'}"/>
+                <filter name="g_usuario" string="Agrupar por persona"
+                        context="{'group_by': 'usuario_id'}"/>
+                <filter name="g_acuse" string="Agrupar por estado de acuse"
+                        context="{'group_by': 'acuse'}"/>
             </search>
         </field>
     </record>
