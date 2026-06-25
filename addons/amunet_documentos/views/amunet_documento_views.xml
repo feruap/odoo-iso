@@ -285,17 +285,20 @@
                                     <field name="solo_visualizacion" string="Solo visualizar"
                                            column_invisible="not parent.es_supervisor_doc"
                                            readonly="1"/>
+                                    <field name="archivo" string="Archivo"
+                                           widget="binary" filename="archivo_filename"/>
+                                    <field name="archivo_filename" string="Nombre del archivo"
+                                           optional="show"/>
                                     <button name="action_visualizar"
                                             type="object"
-                                            string="Visualizar"
+                                            string="Ver"
                                             icon="fa-eye"
-                                            invisible="not solo_visualizacion or requiere_aprobacion"/>
+                                            invisible="not archivo_filename or solo_visualizacion == False or requiere_aprobacion"/>
                                     <button name="action_solicitar_descarga"
                                             type="object"
                                             string="Solicitar impresión"
                                             icon="fa-envelope"
                                             invisible="not requiere_aprobacion"/>
-                                    <field name="archivo_filename" optional="hide"/>
                                 </list>
                             </field>
                             <separator string="Descripción de formatos"/>
