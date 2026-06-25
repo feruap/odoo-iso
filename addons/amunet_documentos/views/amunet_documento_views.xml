@@ -281,10 +281,10 @@
                                     <field name="nombre" string="Nombre"/>
                                     <field name="requiere_aprobacion" string="Solicitar impresión"
                                            column_invisible="not parent.es_supervisor_doc"
-                                           readonly="not es_supervisor_doc"/>
+                                           readonly="1"/>
                                     <field name="solo_visualizacion" string="Solo visualizar"
                                            column_invisible="not parent.es_supervisor_doc"
-                                           readonly="not es_supervisor_doc"/>
+                                           readonly="1"/>
                                     <button name="action_visualizar"
                                             type="object"
                                             string="Visualizar"
