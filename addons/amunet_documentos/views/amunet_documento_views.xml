@@ -54,7 +54,8 @@
                     <button name="action_print_documento"
                             string="Imprimir / Descargar"
                             type="object" class="btn-secondary"
-                            icon="fa-print"/>
+                            icon="fa-print"
+                            groups="amunet_documentos.group_supervisor_documentacion"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="borrador,en_revision,vigente,obsoleto"/>
                 </header>
