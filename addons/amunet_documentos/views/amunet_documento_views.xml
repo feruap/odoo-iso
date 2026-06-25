@@ -121,10 +121,10 @@
                     <div class="alert alert-primary mb16" role="alert" style="padding:16px;"
                          invisible="not mi_acuse_pendiente">
                         <strong>Este documento esta en tu lista de distribucion.</strong>
-                        Cuando lo hayas leido, confirma tu acuse:
-                        <button name="action_yo_lo_lei" string="Confirmar que lo lei"
+                        Cuando lo hayas leido, firma tu acuse con tu contrasena o PIN:
+                        <button name="action_yo_lo_lei" string="Firmar acuse de lectura"
                                 type="object" class="btn btn-primary btn-sm ms-2"
-                                icon="fa-check-circle"/>
+                                icon="fa-pencil"/>
                     </div>
                     <div class="oe_title">
                         <h1>
@@ -747,6 +747,61 @@
                         context="{'group_by': 'acuse'}"/>
             </search>
         </field>
+    </record>
+
+    <!-- Vista lista bitácora de firmas de documentos -->
+    <record id="view_bitacora_firmas_docs_list" model="ir.ui.view">
+        <field name="name">amunet.quality.audit.log.docs.list</field>
+        <field name="model">amunet.quality.audit.log</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="new_value == 'FALLIDA'"
+                  decoration-success="new_value == 'EXITOSA'"
+                  default_order="create_date desc">
+                <field name="create_date" string="Fecha y hora"/>
+                <field name="user_id" string="Usuario"/>
+                <field name="res_name" string="Documento"/>
+                <field name="field_description" string="Acción"/>
+                <field name="new_value" string="Resultado" widget="badge"
+                       decoration-success="new_value == 'EXITOSA'"
+                       decoration-danger="new_value == 'FALLIDA'"/>
+                <field name="justification" string="Motivo / Documento"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Búsqueda bitácora -->
+    <record id="view_bitacora_firmas_docs_search" model="ir.ui.view">
+        <field name="name">amunet.quality.audit.log.docs.search</field>
+        <field name="model">amunet.quality.audit.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="user_id" string="Usuario"/>
+                <field name="res_name" string="Documento"/>
+                <field name="justification" string="Motivo"/>
+                <separator/>
+                <filter name="f_exitosa" string="Exitosas"
+                        domain="[('new_value','=','EXITOSA')]"/>
+                <filter name="f_fallida" string="Fallidas / intentos incorrectos"
+                        domain="[('new_value','=','FALLIDA')]"/>
+                <separator/>
+                <filter name="f_acuse" string="Solo acuses de lectura"
+                        domain="[('field_description','=','Acuse de lectura')]"/>
+                <filter name="g_usuario" string="Agrupar por usuario"
+                        context="{'group_by': 'user_id'}"/>
+                <filter name="g_fecha" string="Agrupar por fecha"
+                        context="{'group_by': 'create_date:day'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción: bitácora de firmas de documentos -->
+    <record id="action_bitacora_firmas_docs" model="ir.actions.act_window">
+        <field name="name">Bitácora de firmas</field>
+        <field name="res_model">amunet.quality.audit.log</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_bitacora_firmas_docs_list"/>
+        <field name="domain">[('model_name','in',['amunet.documento','amunet.documento.distribucion'])]</field>
+        <field name="search_view_id" ref="view_bitacora_firmas_docs_search"/>
     </record>
 
     <!-- Acción: mis documentos en distribución -->

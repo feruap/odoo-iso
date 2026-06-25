@@ -73,6 +73,12 @@
               sequence="8"
               groups="amunet_documentos.group_supervisor_documentacion"/>
 
+    <menuitem id="menu_amunet_bitacora_firmas" name="Bitácora de firmas"
+              parent="menu_amunet_gestion"
+              action="action_bitacora_firmas_docs"
+              sequence="9"
+              groups="amunet_documentos.group_supervisor_documentacion"/>
+
     <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de impresión"
               parent="menu_amunet_gestion"
               action="action_amunet_formato_solicitudes_pendientes" sequence="10"

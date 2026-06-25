@@ -415,7 +415,16 @@ class AmunetDocumento(models.Model):
         return {
             '_signature_aprobar_revision': _('Aprobar revision de documento'),
             '_signature_aprobar': _('Aprobar y publicar documento'),
+            '_signature_acuse_lectura': _('Confirmar lectura de documento'),
         }
+
+    def _signature_acuse_lectura(self):
+        self.ensure_one()
+        uid = self.env.uid
+        pendiente = self.distribucion_ids.filtered(
+            lambda d: d.usuario_id.id == uid and not d.acuse)
+        if pendiente:
+            pendiente.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
 
     def _open_signature_wizard(self, method_name, signature_type, reason):
         self.ensure_one()
@@ -646,11 +655,12 @@ class AmunetDocumento(models.Model):
 
     def action_yo_lo_lei(self):
         self.ensure_one()
-        uid = self.env.uid
-        pendiente = self.distribucion_ids.filtered(
-            lambda d: d.usuario_id.id == uid and not d.acuse)
-        if pendiente:
-            pendiente.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
+        return self._open_signature_wizard(
+            '_signature_acuse_lectura',
+            'Acuse de lectura',
+            'Confirmo que he leido y entendido el documento %s v%s' % (
+                self.codigo, self.version_actual or ''),
+        )
 
     def action_obsoleto(self):
         self._workflow_write({'state': 'obsoleto'})
@@ -866,11 +876,26 @@ class AmunetDocumentoDistribucion(models.Model):
         for r in self:
             r.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
 
+    def _amunet_signature_allowed_methods(self):
+        return {'_signature_acuse': _('Confirmar lectura de documento')}
+
+    def _signature_acuse(self):
+        self.ensure_one()
+        if self.usuario_id.id != self.env.uid:
+            raise UserError(_('Solo puedes firmar tu propio acuse.'))
+        self.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
+
     def action_yo_lo_lei_desde_lista(self):
         self.ensure_one()
         if self.usuario_id.id != self.env.uid:
             raise UserError(_('Solo puedes confirmar tu propio acuse.'))
-        self.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_acuse',
+            'Acuse de lectura',
+            'Confirmo que he leido y entendido el documento %s v%s' % (
+                self.doc_codigo or '', self.documento_id.version_actual or ''),
+        )
 
 
 class AmunetDocumentoActividad(models.Model):
