@@ -424,7 +424,8 @@ class AmunetDocumento(models.Model):
         pendiente = self.distribucion_ids.filtered(
             lambda d: d.usuario_id.id == uid and not d.acuse)
         if pendiente:
-            pendiente.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
+            pendiente.with_context(amunet_documento_workflow_write=True).write(
+                {'acuse': True, 'fecha_acuse': fields.Date.today()})
 
     def _open_signature_wizard(self, method_name, signature_type, reason):
         self.ensure_one()
@@ -644,7 +645,9 @@ class AmunetDocumento(models.Model):
             for uid in uids:
                 if uid in existentes:
                     if not existentes[uid].acuse:
-                        existentes[uid].write({'acuse': True, 'fecha_acuse': today})
+                        existentes[uid].with_context(
+                            amunet_documento_workflow_write=True
+                        ).write({'acuse': True, 'fecha_acuse': today})
                 else:
                     Dist.create({
                         'documento_id': r.id,
@@ -879,9 +882,18 @@ class AmunetDocumentoDistribucion(models.Model):
     doc_area = fields.Selection(related='documento_id.area', store=True, string='Area')
     doc_state = fields.Selection(related='documento_id.state', store=True, string='Estado')
 
+    def write(self, vals):
+        if ('acuse' in vals or 'fecha_acuse' in vals) \
+                and not self.env.context.get('amunet_documento_workflow_write') \
+                and not self.env.su:
+            raise UserError(_(
+                'El acuse de lectura solo puede registrarse mediante firma electronica.'))
+        return super().write(vals)
+
     def action_acusar(self):
         for r in self:
-            r.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
+            r.with_context(amunet_documento_workflow_write=True).write(
+                {'acuse': True, 'fecha_acuse': fields.Date.today()})
 
     def _amunet_signature_allowed_methods(self):
         return {'_signature_acuse': _('Confirmar lectura de documento')}
@@ -890,7 +902,8 @@ class AmunetDocumentoDistribucion(models.Model):
         self.ensure_one()
         if self.usuario_id.id != self.env.uid:
             raise UserError(_('Solo puedes firmar tu propio acuse.'))
-        self.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
+        self.with_context(amunet_documento_workflow_write=True).write(
+            {'acuse': True, 'fecha_acuse': fields.Date.today()})
 
     def action_yo_lo_lei_desde_lista(self):
         self.ensure_one()
