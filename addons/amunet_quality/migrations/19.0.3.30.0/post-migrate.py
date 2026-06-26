@@ -51,19 +51,28 @@ NUEVAS_CAJAS = [MICAJ16, MICAJ19]
 ALL_MICAJ_CODES = CAJAS_ESTANDAR + CAJAS_69 + ['MICAJ15'] + [c['code'] for c in NUEVAS_CAJAS]
 
 
+INSCC001_NAME = 'Revisión de información'
+
+
 def _get_inscc001_id(cr):
     """Obtiene o crea el parámetro INSCC-001 y devuelve su id."""
     cr.execute("SELECT id FROM amunet_quality_check_parameter WHERE code='INSCC-001'")
     row = cr.fetchone()
     if row:
-        return row[0]
+        inscc001_id = row[0]
+        # Asegurar nombre correcto aunque ya existiera
+        cr.execute("""
+            UPDATE amunet_quality_check_parameter
+            SET name=%s, write_date=NOW() WHERE id=%s AND name != %s
+        """, (INSCC001_NAME, inscc001_id, INSCC001_NAME))
+        return inscc001_id
     cr.execute("""
         INSERT INTO amunet_quality_check_parameter
             (name, code, active, create_uid, write_uid, create_date, write_date)
         VALUES
-            ('Determinación de información en caja','INSCC-001',true,1,1,NOW(),NOW())
+            (%s,'INSCC-001',true,1,1,NOW(),NOW())
         RETURNING id
-    """)
+    """, (INSCC001_NAME,))
     inscc001_id = cr.fetchone()[0]
     _logger.info("Migración 3.30.0 — Creado parámetro INSCC-001 id=%d", inscc001_id)
 
@@ -136,11 +145,11 @@ def _replace_vama063_with_inscc001(cr, inscc001_id):
         UPDATE amunet_quality_parameter_product_rel
         SET parameter_id    = %s,
             parameter_code  = 'INSCC-001',
-            parameter_name  = 'Determinación de información en caja',
-            display_name    = '[INSCC-001] Determinación de información en caja',
+            parameter_name  = %s,
+            display_name    = '[INSCC-001] ' || %s,
             write_date      = NOW()
         WHERE parameter_id = %s
-    """, (inscc001_id, VAMA063_ID))
+    """, (inscc001_id, INSCC001_NAME, INSCC001_NAME, VAMA063_ID))
     rels_updated = cr.rowcount
 
     # spec_configs
@@ -374,5 +383,28 @@ def migrate(cr, version):
 
     # Poblar bridge table
     _poblar_bridge_table(cr)
+
+    # Renombrar INSCC-001 al nombre correcto en product_parameter_rels (si venían de otra versión)
+    cr.execute("""
+        UPDATE amunet_quality_parameter_product_rel
+        SET parameter_name = %s,
+            display_name   = '[INSCC-001] ' || %s,
+            write_date     = NOW()
+        WHERE parameter_id = %s AND parameter_name != %s
+    """, (INSCC001_NAME, INSCC001_NAME, inscc001_id, INSCC001_NAME))
+
+    # Actualizar líneas de hojas de análisis en progreso que aún usen VAMA-063
+    cr.execute("""
+        UPDATE amunet_quality_test_line
+        SET parameter_id = %s,
+            name         = %s,
+            write_date   = NOW()
+        WHERE parameter_id = %s
+          AND check_id IN (
+              SELECT id FROM amunet_quality_check WHERE state = 'in_progress'
+          )
+    """, (inscc001_id, INSCC001_NAME, VAMA063_ID))
+    lines_updated = cr.rowcount
+    _logger.info("Migración 3.30.0 — %d líneas de hojas en progreso actualizadas a INSCC-001", lines_updated)
 
     _logger.info("Migración 3.30.0 completada")
