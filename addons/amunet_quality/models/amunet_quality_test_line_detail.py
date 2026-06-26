@@ -203,6 +203,10 @@ class AmunetQualityTestLineDetail(models.Model):
         string='Notas obligatorias',
         help='Notas obligatorias cuando no cumple'
     )
+    result_additional_info = fields.Text(
+        string='Información adicional',
+        help='Observaciones opcionales; no afecta el dictamen'
+    )
 
     # -- Ternary with N/A --
     result_ternary = fields.Selection([
@@ -1110,6 +1114,9 @@ class AmunetQualityTestLineDetail(models.Model):
         if not self.result_binary_option:
             return {'verdict': 'pending', 'message': 'Seleccione una opción'}
 
+        if self.result_binary_option == 'na':
+            return {'verdict': 'not_applicable', 'message': 'No aplica'}
+
         if self.result_binary_option == 'pass':
             return {
                 'verdict': 'pass',
@@ -1899,6 +1906,8 @@ class AmunetQualityTestLineDetail(models.Model):
                     record.result_display = record.binary_notes_option_pass or 'Cumple'
                 elif record.result_binary_option == 'fail':
                     record.result_display = record.binary_notes_option_fail or 'No cumple'
+                elif record.result_binary_option == 'na':
+                    record.result_display = 'No aplica'
                 else:
                     record.result_display = ''
 
