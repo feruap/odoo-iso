@@ -318,6 +318,78 @@ def _crear_qp_caja(cr, caja, inscc001_id, picking_type_id):
     return (qp_id, rel_ids)
 
 
+def _cleanup_inscc001_spec_configs(cr, inscc001_id):
+    """Limpia spec_configs duplicados/incorrectos de INSCC-001.
+
+    Al actualizar parameter_id de VAMA-063 a INSCC-001, pueden quedar configs
+    con specification_id de las specs viejas de VAMA-063. Esta función asegura
+    que cada product_parameter_rel de INSCC-001 tenga SOLO las 3 specs correctas
+    (Nombre/Contacto/Registro sanitario) con binary_with_notes.
+    """
+    spec_nombre, spec_contacto, spec_registro = _get_inscc001_spec_ids(cr, inscc001_id)
+    valid_spec_ids = [s for s in [spec_nombre, spec_contacto, spec_registro] if s]
+    if not valid_spec_ids:
+        _logger.warning("Migración 3.30.0 — Sin specs de INSCC-001, omitiendo limpieza")
+        return
+
+    cr.execute("""
+        SELECT id, product_tmpl_id FROM amunet_quality_parameter_product_rel
+        WHERE parameter_id = %s
+    """, (inscc001_id,))
+    rels = cr.fetchall()
+
+    inscc_spec_data = [
+        (spec_nombre,   'Nombre (Cuando aplique).'),
+        (spec_contacto, 'Contacto (Cuando aplique).'),
+        (spec_registro, 'Registro sanitario (Cuando aplique).'),
+    ]
+
+    deleted_total = 0
+    created_total = 0
+    for rel_id, tmpl_id in rels:
+        # Crear las 3 specs correctas si no existen
+        for spec_id, sname in inscc_spec_data:
+            if not spec_id:
+                continue
+            cr.execute("""
+                SELECT 1 FROM amunet_quality_parameter_specification_config
+                WHERE product_parameter_rel_id=%s AND specification_id=%s AND parameter_id=%s
+            """, (rel_id, spec_id, inscc001_id))
+            if not cr.fetchone():
+                cr.execute("""
+                    INSERT INTO amunet_quality_parameter_specification_config
+                        (product_parameter_rel_id, specification_id, parameter_id, product_tmpl_id,
+                         specification_name, evaluation_type,
+                         binary_option_pass, binary_option_fail,
+                         create_uid, write_uid, create_date, write_date)
+                    VALUES (%s, %s, %s, %s, %s, 'binary_with_notes',
+                            'La información es completa y correcta.',
+                            'La información es incompleta e incorrecta. (Cuadro de texto)',
+                            1, 1, NOW(), NOW())
+                """, (rel_id, spec_id, inscc001_id, tmpl_id, sname))
+                created_total += 1
+
+        # Borrar spec_configs con spec IDs incorrectos (que venían de VAMA-063),
+        # salvo los que ya están referenciados por alguna línea de detalle
+        cr.execute("""
+            DELETE FROM amunet_quality_parameter_specification_config
+            WHERE product_parameter_rel_id = %s
+              AND parameter_id = %s
+              AND specification_id != ALL(%s)
+              AND id NOT IN (
+                  SELECT DISTINCT specification_config_id
+                  FROM amunet_quality_test_line_detail
+                  WHERE specification_config_id IS NOT NULL
+              )
+        """, (rel_id, inscc001_id, valid_spec_ids))
+        deleted_total += cr.rowcount
+
+    _logger.info(
+        "Migración 3.30.0 — INSCC-001 spec_configs: %d creados, %d eliminados en %d rels",
+        created_total, deleted_total, len(rels)
+    )
+
+
 def _poblar_bridge_table(cr):
     """Llena amunet_quality_point_rel_personalization_rel para todos los QPs de cajas."""
     for code in ALL_MICAJ_CODES:
@@ -370,6 +442,7 @@ def migrate(cr, version):
 
     inscc001_id = _get_inscc001_id(cr)
     _replace_vama063_with_inscc001(cr, inscc001_id)
+    _cleanup_inscc001_spec_configs(cr, inscc001_id)
 
     # Corregir dimensiones en cajas existentes
     _fix_dimensiones(cr, CAJAS_ESTANDAR, DIM_ESTANDAR)
