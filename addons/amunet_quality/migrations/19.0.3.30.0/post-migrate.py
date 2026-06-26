@@ -46,12 +46,17 @@ MICAJ17 = {
     'qp_name':  'Caja Caple ANTIDOPING-NET',
     'dims':     {SPEC_ANCHO: (105, 110, 115), SPEC_LARGO: (195, 200, 205), SPEC_ALTO: (85, 90, 95)},
 }
+MICAJ18 = {
+    'code':     'MICAJ18',
+    'qp_name':  'Caja Caple COVINET Ag-SALIVA',
+    'dims':     {SPEC_ANCHO: (105, 110, 115), SPEC_LARGO: (195, 200, 205), SPEC_ALTO: (85, 90, 95)},
+}
 MICAJ19 = {
     'code':     'MICAJ19',
     'qp_name':  'Caja Caple HEMOGLINET 5 piezas',
     'dims':     {SPEC_ANCHO: (75, 80, 85), SPEC_LARGO: (125, 130, 135), SPEC_ALTO: (75, 80, 85)},
 }
-NUEVAS_CAJAS = [MICAJ16, MICAJ17, MICAJ19]
+NUEVAS_CAJAS = [MICAJ16, MICAJ17, MICAJ18, MICAJ19]
 
 ALL_MICAJ_CODES = CAJAS_ESTANDAR + CAJAS_69 + ['MICAJ15'] + [c['code'] for c in NUEVAS_CAJAS]
 
