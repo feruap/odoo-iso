@@ -398,6 +398,7 @@ def migrate(cr, version):
         UPDATE amunet_quality_test_line
         SET parameter_id = %s,
             name         = %s,
+            code         = 'INSCC-001',
             write_date   = NOW()
         WHERE parameter_id = %s
           AND check_id IN (
