@@ -41,12 +41,17 @@ MICAJ16 = {
     'qp_name':  'Caja Caple Antidoping Saliva',
     'dims':     {SPEC_ANCHO: (105, 110, 115), SPEC_LARGO: (195, 200, 205), SPEC_ALTO: (85, 90, 95)},
 }
+MICAJ17 = {
+    'code':     'MICAJ17',
+    'qp_name':  'Caja Caple ANTIDOPING-NET',
+    'dims':     {SPEC_ANCHO: (105, 110, 115), SPEC_LARGO: (195, 200, 205), SPEC_ALTO: (85, 90, 95)},
+}
 MICAJ19 = {
     'code':     'MICAJ19',
     'qp_name':  'Caja Caple HEMOGLINET 5 piezas',
     'dims':     {SPEC_ANCHO: (75, 80, 85), SPEC_LARGO: (125, 130, 135), SPEC_ALTO: (75, 80, 85)},
 }
-NUEVAS_CAJAS = [MICAJ16, MICAJ19]
+NUEVAS_CAJAS = [MICAJ16, MICAJ17, MICAJ19]
 
 ALL_MICAJ_CODES = CAJAS_ESTANDAR + CAJAS_69 + ['MICAJ15'] + [c['code'] for c in NUEVAS_CAJAS]
 
@@ -194,13 +199,40 @@ def _get_picking_type_id(cr):
     return row[0] if row else 1
 
 
+def _crear_producto_si_no_existe(cr, caja):
+    """Crea product.template + product.product si el código no existe."""
+    code = caja['code']
+    cr.execute("SELECT id FROM product_product WHERE default_code=%s", (code,))
+    row = cr.fetchone()
+    if row:
+        return
+    name_json = '{{"en_US": "{0}", "es_MX": "{0}"}}'.format(caja['qp_name'])
+    cr.execute("""
+        INSERT INTO product_template
+            (name, type, active, categ_id, uom_id, tracking, service_tracking,
+             sale_ok, purchase_ok,
+             create_uid, write_uid, create_date, write_date)
+        VALUES (%s, 'consu', true, 20, 1, 'none', 'no', true, true, 1, 1, NOW(), NOW())
+        RETURNING id
+    """, (name_json,))
+    tmpl_id = cr.fetchone()[0]
+    cr.execute("""
+        INSERT INTO product_product
+            (product_tmpl_id, default_code, active, create_uid, write_uid, create_date, write_date)
+        VALUES (%s, %s, true, 1, 1, NOW(), NOW())
+    """, (tmpl_id, code))
+    _logger.info("Migración 3.30.0 — Producto %s creado (tmpl=%d)", code, tmpl_id)
+
+
 def _crear_qp_caja(cr, caja, inscc001_id, picking_type_id):
     """Crea un Quality Point completo para la nueva caja si no existe."""
     code = caja['code']
+    _crear_producto_si_no_existe(cr, caja)
+
     cr.execute("SELECT id FROM product_product WHERE default_code=%s", (code,))
     pp_row = cr.fetchone()
     if not pp_row:
-        _logger.warning("Migración 3.30.0 — Producto %s no encontrado, omitiendo", code)
+        _logger.warning("Migración 3.30.0 — Producto %s no encontrado tras intento de creación", code)
         return None
 
     pp_id = pp_row[0]
@@ -264,18 +296,23 @@ def _crear_qp_caja(cr, caja, inscc001_id, picking_type_id):
         """, (tmpl_id, param_id, pcode, pname, dname))
         rel_ids[param_id] = cr.fetchone()[0]
 
-    # spec_configs para MAVI-04
+    # spec_configs para MAVI-04 (insertar solo si no existe ya ese spec_id en este rel)
     mavi04_rel_id = rel_ids[MAVI04_ID]
     for spec_id, sname, ev, opt_pass, opt_fail in MAVI04_SPECS:
         cr.execute("""
-            INSERT INTO amunet_quality_parameter_specification_config
-                (product_parameter_rel_id, specification_id, parameter_id, product_tmpl_id,
-                 specification_name, evaluation_type,
-                 binary_option_pass, binary_option_fail,
-                 create_uid, write_uid, create_date, write_date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, 1, NOW(), NOW())
-        """, (mavi04_rel_id, spec_id, MAVI04_ID, tmpl_id,
-              sname, ev, opt_pass, opt_fail))
+            SELECT 1 FROM amunet_quality_parameter_specification_config
+            WHERE product_parameter_rel_id=%s AND specification_id=%s AND parameter_id=%s
+        """, (mavi04_rel_id, spec_id, MAVI04_ID))
+        if not cr.fetchone():
+            cr.execute("""
+                INSERT INTO amunet_quality_parameter_specification_config
+                    (product_parameter_rel_id, specification_id, parameter_id, product_tmpl_id,
+                     specification_name, evaluation_type,
+                     binary_option_pass, binary_option_fail,
+                     create_uid, write_uid, create_date, write_date)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, 1, NOW(), NOW())
+            """, (mavi04_rel_id, spec_id, MAVI04_ID, tmpl_id,
+                  sname, ev, opt_pass, opt_fail))
 
     # spec_configs para MAVI-11 (dimensiones)
     mavi11_rel_id = rel_ids[MAVI11_ID]
