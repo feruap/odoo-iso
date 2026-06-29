@@ -502,6 +502,28 @@ def _configurar_hisopos(cr):
 
         _logger.info("Migración 3.30.0 — Hisopo %s (QP %d) configurado", code, qp_id)
 
+    # Corregir binary_prefix 'Selección Sin/Con' → 'Sin/Con' y recalcular opciones
+    cr.execute("""
+        UPDATE amunet_quality_parameter_specification_config
+        SET binary_prefix = 'Sin/Con',
+            binary_option_pass = 'Sin ' || binary_suffix,
+            binary_option_fail = 'Con ' || binary_suffix,
+            config_summary = 'Sin ' || binary_suffix,
+            write_date = NOW()
+        WHERE binary_prefix = 'Selección Sin/Con'
+          AND binary_suffix IS NOT NULL AND binary_suffix != ''
+    """)
+    cr.execute("""
+        UPDATE amunet_quality_parameter_specification_config
+        SET binary_prefix = 'Sellado/No sellado',
+            binary_option_pass = 'Sellado',
+            binary_option_fail = 'No sellado',
+            config_summary = 'Sellado',
+            write_date = NOW()
+        WHERE binary_prefix = 'Selección Sellado/No sellado'
+    """)
+    _logger.info("Migración 3.30.0 — binary_option_pass corregido en specs de hisopos")
+
 
 def _poblar_bridge_table(cr):
     """Llena amunet_quality_point_rel_personalization_rel para todos los QPs de cajas."""
