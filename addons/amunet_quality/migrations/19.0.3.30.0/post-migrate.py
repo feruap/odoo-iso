@@ -432,6 +432,77 @@ def _cleanup_inscc001_spec_configs(cr, inscc001_id):
     )
 
 
+STHIS_PARAMS = {
+    'STHIS01': ['MAVI-04', 'MAVI-11'],
+    'STHIS02': ['MAVI-04', 'MAVI-11', 'VAMA-093'],
+    'STHIS03': ['MAVI-04', 'MAVI-11', 'VAMA-093'],
+    'STHIS04': ['MAVI-04', 'MAVI-11', 'VAMA-092'],
+    'STHIS05': ['MAVI-04', 'MAVI-11', 'VAMA-104'],
+    'STHIS06': ['MAVI-04', 'MAVI-11', 'VAMA-093'],
+}
+
+
+def _configurar_hisopos(cr):
+    """Vincula parámetros y bridge table para los QPs de hisopos (STHIS01-06).
+
+    Los product_parameter_rels y spec_configs ya existen; solo falta conectarlos
+    al QP via many2many y bridge table.
+    """
+    # Obtener ids de parámetros por código
+    cr.execute("SELECT code, id FROM amunet_quality_check_parameter WHERE code = ANY(%s)",
+               (['MAVI-04', 'MAVI-11', 'VAMA-093', 'VAMA-092', 'VAMA-104'],))
+    param_ids = {row[0]: row[1] for row in cr.fetchall()}
+
+    for code, param_codes in STHIS_PARAMS.items():
+        # Obtener QP del producto
+        cr.execute("""
+            SELECT qp.id FROM amunet_quality_point qp
+            JOIN amunet_quality_point_product_product_rel r ON r.amunet_quality_point_id=qp.id
+            JOIN product_product pp ON pp.id=r.product_product_id
+            WHERE pp.default_code=%s LIMIT 1
+        """, (code,))
+        row = cr.fetchone()
+        if not row:
+            _logger.warning("Migración 3.30.0 — QP no encontrado para %s", code)
+            continue
+        qp_id = row[0]
+
+        # Vincular parámetros al QP (many2many)
+        for pcode in param_codes:
+            pid = param_ids.get(pcode)
+            if not pid:
+                continue
+            cr.execute("""
+                SELECT 1 FROM amunet_quality_check_parameter_amunet_quality_point_rel
+                WHERE amunet_quality_point_id=%s AND amunet_quality_check_parameter_id=%s
+            """, (qp_id, pid))
+            if not cr.fetchone():
+                cr.execute("""
+                    INSERT INTO amunet_quality_check_parameter_amunet_quality_point_rel
+                        (amunet_quality_point_id, amunet_quality_check_parameter_id)
+                    VALUES (%s, %s)
+                """, (qp_id, pid))
+
+        # Poblar bridge table con todos los rels activos del producto
+        cr.execute("""
+            SELECT pr.id FROM amunet_quality_parameter_product_rel pr
+            JOIN product_product pp ON pp.product_tmpl_id=pr.product_tmpl_id
+            WHERE pp.default_code=%s AND pr.active=true
+        """, (code,))
+        for (rel_id,) in cr.fetchall():
+            cr.execute("""
+                SELECT 1 FROM amunet_quality_point_rel_personalization_rel
+                WHERE point_id=%s AND rel_id=%s
+            """, (qp_id, rel_id))
+            if not cr.fetchone():
+                cr.execute("""
+                    INSERT INTO amunet_quality_point_rel_personalization_rel (point_id, rel_id)
+                    VALUES (%s, %s)
+                """, (qp_id, rel_id))
+
+        _logger.info("Migración 3.30.0 — Hisopo %s (QP %d) configurado", code, qp_id)
+
+
 def _poblar_bridge_table(cr):
     """Llena amunet_quality_point_rel_personalization_rel para todos los QPs de cajas."""
     for code in ALL_MICAJ_CODES:
@@ -496,8 +567,11 @@ def migrate(cr, version):
     for caja in NUEVAS_CAJAS:
         _crear_qp_caja(cr, caja, inscc001_id, picking_type_id)
 
-    # Poblar bridge table
+    # Poblar bridge table (cajas)
     _poblar_bridge_table(cr)
+
+    # Configurar hisopos (vincular parámetros y bridge table)
+    _configurar_hisopos(cr)
 
     # Renombrar INSCC-001 al nombre correcto en product_parameter_rels (si venían de otra versión)
     cr.execute("""
