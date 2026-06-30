@@ -109,10 +109,7 @@
                                             <t t-esc="move.amunet_mfg_date or '—'"/>
                                         </td>
                                         <td>
-                                            <t t-if="move.amunet_exp_date">
-                                                <t t-esc="move.amunet_exp_date.strftime('%d/%m/%Y')"/>
-                                            </t>
-                                            <t t-else="">—</t>
+                                            <t t-esc="move.amunet_exp_date or '—'"/>
                                         </td>
                                         <td class="text-end">
                                             <t t-esc="'%.2f' % move.product_uom_qty"/>

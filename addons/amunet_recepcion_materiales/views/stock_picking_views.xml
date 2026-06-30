@@ -33,16 +33,15 @@
                        placeholder="DD/MM/AAAA o NA"
                        column_invisible="parent.picking_type_code != 'incoming'"
                        readonly="parent.state == 'draft'"/>
-                <field name="amunet_is_equipment" column_invisible="1"/>
                 <field name="amunet_exp_date"
                        string="Fecha caducidad"
-                       widget="date"
-                       column_invisible="parent.picking_type_code != 'incoming' or amunet_is_equipment"
+                       placeholder="DD/MM/AAAA o NA"
+                       column_invisible="parent.picking_type_code != 'incoming'"
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_removal_date"
                        string="Fecha remoción"
                        readonly="1"
-                       column_invisible="parent.picking_type_code != 'incoming' or amunet_is_equipment"/>
+                       column_invisible="parent.picking_type_code != 'incoming'"/>
                 <field name="location_dest_id"
                        string="Destino"
                        readonly="1"
