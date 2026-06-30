@@ -11,10 +11,10 @@ de firmas configurables.""",
     'version': '19.0.5.0.2',
     'depends': ['mail', 'amunet_quality'],
     'data': [
-        'data/seeds_20260619_180814.xml',
-        'data/seeds_pnoal009_relacionados.xml',
-        'data/seeds_pnoal005_relacionados.xml',
-        'data/seeds_pnoge009_actividades.xml',
+        # seeds_20260619_180814.xml, seeds_pnoal005/009_relacionados.xml y
+        # seeds_pnoge009_actividades.xml removidos del manifest — los datos
+        # ya existen en producción (replicados 29-jun-2026). Los archivos
+        # se conservan en /data/ como referencia histórica.
         'security/amunet_documentos_security.xml',
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
