@@ -619,4 +619,14 @@ def migrate(cr, version):
     lines_updated = cr.rowcount
     _logger.info("Migración 3.30.0 — %d líneas de hojas en progreso actualizadas a INSCC-001", lines_updated)
 
+    # Recalcular reanalysis_date en QCs que tienen expiration_date pero reanalysis_date vacío
+    cr.execute("""
+        UPDATE amunet_quality_check
+        SET reanalysis_date = (expiration_date - INTERVAL '30 days')::date,
+            write_date = NOW()
+        WHERE expiration_date IS NOT NULL
+          AND (reanalysis_date IS NULL OR reanalysis_date::text = '')
+    """)
+    _logger.info("Migración 3.30.0 — %d QCs con reanalysis_date recalculado", cr.rowcount)
+
     _logger.info("Migración 3.30.0 completada")
