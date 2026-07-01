@@ -1,9 +1,27 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, Command, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 class MrpProduction(models.Model):
     _inherit = 'mrp.production'
+
+    @api.constrains('product_id', 'state')
+    def _amunet_check_no_duplicate_draft(self):
+        """Bloquea crear/tener otra orden de produccion del mismo producto
+        si ya existe una en Borrador."""
+        for mo in self:
+            if mo.state == 'draft' and mo.product_id:
+                otra = self.search([
+                    ('id', '!=', mo.id),
+                    ('product_id', '=', mo.product_id.id),
+                    ('state', '=', 'draft'),
+                ], limit=1)
+                if otra:
+                    raise ValidationError(_(
+                        'Ya existe una orden de produccion en Borrador para '
+                        '"%(prod)s" (%(mo)s). Confirmala o eliminala antes de '
+                        'crear otra del mismo producto.'
+                    ) % {'prod': mo.product_id.display_name, 'mo': otra.name})
 
     # Campos requeridos para Módulo de Soluciones
     quality_ph_initial = fields.Float(string='pH Inicial Objetivo', compute='_compute_quality_params', store=True, readonly=False)
