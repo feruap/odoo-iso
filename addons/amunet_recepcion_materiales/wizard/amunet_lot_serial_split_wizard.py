@@ -67,7 +67,9 @@ class AmunetLotSerialSplitWizard(models.TransientModel):
 
         # El lote origen es siempre el lote raíz (no el padre inmediato si ya es derivado)
         source = self.lot_id.amunet_source_lot_id or self.lot_id
-        new_lot = self.env['stock.lot'].create({
+        # sudo() para que Calidad pueda confirmar sin necesitar permisos de escritura
+        # en stock.lot ni en amunet.equipment.serial
+        new_lot = self.env['stock.lot'].sudo().create({
             'name': self.new_lot_name,
             'product_id': self.lot_id.product_id.id,
             'company_id': self.lot_id.company_id.id,
@@ -75,7 +77,7 @@ class AmunetLotSerialSplitWizard(models.TransientModel):
         })
 
         n = len(defective_lines)
-        defective_lines.mapped('serial_id').write({'lot_id': new_lot.id})
+        defective_lines.mapped('serial_id').sudo().write({'lot_id': new_lot.id})
 
         # Mueve las unidades en stock (1 unidad por serial defectuoso)
         quants_01 = self.env['stock.quant'].sudo().search([

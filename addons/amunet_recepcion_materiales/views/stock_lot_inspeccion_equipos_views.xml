@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vista lista de lotes de equipo para Calidad (debe definirse ANTES de la acción) -->
+    <record id="view_stock_lot_inspeccion_equipos_list" model="ir.ui.view">
+        <field name="name">stock.lot.inspeccion.equipos.list</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <list string="Lotes de equipos" decoration-muted="amunet_source_lot_id != False">
+                <field name="name" string="Lote"/>
+                <field name="product_id" string="Equipo" readonly="1"/>
+                <field name="amunet_serial_list" string="Números de serie"/>
+                <field name="amunet_source_lot_id" string="Separado de" optional="show"/>
+                <field name="amunet_serial_count" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Acción: lista de lotes de equipo pendientes de inspección (para Calidad) -->
+    <record id="action_inspeccion_equipos" model="ir.actions.act_window">
+        <field name="name">Inspección de equipos</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('product_id.amunet_allow_multi_serial', '=', True)]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_stock_lot_inspeccion_equipos_list')}),
+        ]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay lotes de equipos registrados todavía.
+            </p>
+            <p>
+                Los lotes de equipos aparecen aquí después de que Almacén recibe
+                y registra los números de serie en la recepción.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menú: Almacén MP > Inspección de equipos (solo visible a Calidad) -->
+    <menuitem id="menu_inspeccion_equipos_root"
+              name="Inspección de equipos"
+              parent="stock.menu_stock_root"
+              action="action_inspeccion_equipos"
+              sequence="95"
+              groups="amunet_quality.group_quality_user"/>
+
+</odoo>
