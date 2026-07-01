@@ -24,27 +24,41 @@ class StockPicking(models.Model):
              'Quedará registrado y se notificará a Calidad.',
     )
 
-    # ── Lotes de equipos (para pestaña de seriales en recepción) ────────────
-    amunet_equipment_lot_ids = fields.Many2many(
-        'stock.lot',
-        compute='_compute_amunet_equipment_lot_ids',
-        string='Lotes de equipos',
+    # ── Resumen de lotes de equipos con seriales ────────────────────────────
+    amunet_equipment_lots_html = fields.Html(
+        compute='_compute_amunet_equipment_lots_html',
+        string='Lotes de equipo',
+        store=False,
     )
 
-    @api.depends('move_line_ids.lot_id', 'move_line_ids.lot_id.amunet_serial_ids')
-    def _compute_amunet_equipment_lot_ids(self):
+    @api.depends('move_line_ids.lot_id', 'move_line_ids.lot_id.amunet_serial_ids',
+                 'move_line_ids.lot_id.amunet_serial_ids.serial_number')
+    def _compute_amunet_equipment_lots_html(self):
         for picking in self:
             if picking.picking_type_code != 'incoming':
-                picking.amunet_equipment_lot_ids = self.env['stock.lot']
+                picking.amunet_equipment_lots_html = False
                 continue
             direct = picking.move_line_ids.lot_id.filtered('amunet_allow_multi_serial')
             if not direct:
-                picking.amunet_equipment_lot_ids = self.env['stock.lot']
+                picking.amunet_equipment_lots_html = False
                 continue
             derived = self.env['stock.lot'].search([
                 ('amunet_source_lot_id', 'in', direct.ids)
             ])
-            picking.amunet_equipment_lot_ids = direct | derived
+            all_lots = (direct | derived).sorted('name')
+            rows = []
+            for lot in all_lots:
+                serials = lot.amunet_serial_ids.sorted('serial_number').mapped('serial_number')
+                serial_text = ', '.join(serials) if serials else '<em>Sin seriales capturados</em>'
+                origen = (f' <span style="color:#6c757d;font-size:12px;">'
+                          f'(separado de {lot.amunet_source_lot_id.name})</span>'
+                          if lot.amunet_source_lot_id else '')
+                rows.append(
+                    f'<div style="margin-bottom:4px;">'
+                    f'<b>{lot.name}</b>{origen}: {serial_text}'
+                    f'</div>'
+                )
+            picking.amunet_equipment_lots_html = ''.join(rows)
 
     # ── Firma ────────────────────────────────────────────────────────────────
     amunet_receptor_id = fields.Many2one(

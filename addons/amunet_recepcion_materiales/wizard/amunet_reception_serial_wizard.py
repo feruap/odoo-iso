@@ -105,7 +105,6 @@ class AmunetReceptionSerialWizardLine(models.TransientModel):
     wizard_id = fields.Many2one(
         'amunet.reception.serial.wizard', required=True, ondelete='cascade')
     lot_id = fields.Many2one('stock.lot', string='Lote')
-    lot_name = fields.Char(related='lot_id.name', string='Lote', readonly=True)
     serial_id = fields.Many2one(
         'amunet.equipment.serial', string='Serial existente')
     serial_number = fields.Char(string='Número de serie')

@@ -13,10 +13,9 @@
 
                 <field name="line_ids">
                     <list editable="bottom">
-                        <field name="lot_name" string="Lote" readonly="1"
-                               column_invisible="parent.lot_count &lt;= 1"/>
-                        <field name="lot_id" invisible="1"/>
-                        <field name="serial_id" invisible="1"/>
+                        <field name="lot_id" string="Lote" readonly="1"
+                               options="{'no_open': True}"/>
+                        <field name="serial_id" column_invisible="1"/>
                         <field name="serial_number" string="Número de serie"/>
                         <field name="notes" string="Notas" optional="show"/>
                     </list>
