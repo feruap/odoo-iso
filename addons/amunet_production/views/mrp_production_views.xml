@@ -227,6 +227,16 @@
                 </xpath>
 
                 <!--
+                    Quitar el boton de BORRAR lineas de la lista de
+                    componentes. Evita que se elimine material por error
+                    durante la conciliacion. Los componentes se gestionan
+                    desde la lista de materiales / el BoM.
+                -->
+                <xpath expr="//field[@name='move_raw_ids']/list" position="attributes">
+                    <attribute name="delete">0</attribute>
+                </xpath>
+
+                <!--
                     2. Quitar widget 'mrp_should_consume' (muestra solo
                     la cantidad teorica) y bloquear edicion al almacen
                     en la columna 'Por consumir'.

@@ -174,6 +174,24 @@ class StockMove(models.Model):
                         {'quantity': used})
         return res
 
+    def unlink(self):
+        # Candado: no borrar componentes (move_raw) de una orden que ya
+        # salio de Borrador (planificada / en surtido / en conciliacion).
+        # Evita que se elimine material por error durante la conciliacion.
+        # Se omite en flujos internos (sudo / contexto).
+        if not self.env.su and not self.env.context.get('amunet_supply_internal'):
+            bloqueados = self.filtered(
+                lambda m: m.raw_material_production_id
+                and m.raw_material_production_id.state not in ('draft', 'cancel')
+                and m.state != 'cancel')
+            if bloqueados:
+                raise UserError(_(
+                    'No se pueden borrar componentes de una orden ya '
+                    'planificada / en conciliacion: %(prod)s. Los materiales '
+                    'solo se pueden eliminar mientras la orden esta en Borrador.'
+                ) % {'prod': ', '.join(bloqueados.mapped('product_id.display_name'))})
+        return super().unlink()
+
     amunet_is_valid = fields.Boolean(
         string='Valido',
         compute='_compute_amunet_is_valid',
