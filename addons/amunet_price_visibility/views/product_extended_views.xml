@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="product.product_template_tree_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='list_price']" position="attributes">
-                <attribute name="column_invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>
     </record>
@@ -19,7 +19,7 @@
         <field name="inherit_id" ref="product.product_product_tree_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='lst_price']" position="attributes">
-                <attribute name="column_invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>
     </record>
@@ -31,10 +31,10 @@
         <field name="inherit_id" ref="product.product_normal_form_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='list_price']" position="attributes">
-                <attribute name="invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
             <xpath expr="//field[@name='standard_price']" position="attributes">
-                <attribute name="invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>
     </record>
@@ -46,7 +46,7 @@
         <field name="inherit_id" ref="product.product_pricelist_item_form_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='fixed_price']" position="attributes">
-                <attribute name="invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>
     </record>
