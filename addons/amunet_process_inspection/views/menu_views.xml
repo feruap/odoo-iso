@@ -2,18 +2,29 @@
 <odoo>
 
     <!--
-        Menu de Inspecciones de proceso, dentro del modulo de Manufactura
-        nativo de Odoo (visible solo para usuarios de Produccion o QC).
+        Manufactura: SUPERVISIONES (production_supervision).
+        Las firma el Supervisor de Produccion; no son de Calidad.
     -->
     <menuitem id="menu_amunet_process_inspection_root"
-              name="Inspecciones de proceso"
+              name="Supervisiones"
               parent="mrp.menu_mrp_root"
               sequence="25"/>
 
     <menuitem id="menu_amunet_process_inspection_all"
-              name="Todas"
+              name="Supervisiones"
               parent="menu_amunet_process_inspection_root"
-              action="action_amunet_process_inspection"
+              action="action_amunet_process_inspection_sup"
               sequence="10"/>
+
+    <!--
+        Calidad amunet: INSPECCIONES DE PROCESO (qc_formal).
+        Son responsabilidad de Control de Calidad; viven en su menu.
+    -->
+    <menuitem id="menu_amunet_process_inspection_qc"
+              name="Inspecciones de proceso"
+              parent="amunet_quality.menu_quality_root"
+              action="action_amunet_process_inspection_qc"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"
+              sequence="30"/>
 
 </odoo>
