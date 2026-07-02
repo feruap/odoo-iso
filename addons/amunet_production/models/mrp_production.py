@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, Command, _
 from odoo.exceptions import UserError, ValidationError
+from markupsafe import Markup
 
 class MrpProduction(models.Model):
     _inherit = 'mrp.production'
@@ -899,27 +900,89 @@ class MrpProduction(models.Model):
         self._auto_generate_lot_draft()
 
     def button_plan(self):
+        # Politica Amunet (mejora 2026-07-02): NO bloquear la planeacion por
+        # falta de material. Planear != consumir: solo programa actividades.
+        # Se permite planear y, si falta material en Fabrica, se avisa a
+        # Almacen (actividad) para que lo traslade desde otro almacen (ej.
+        # Burgos) y se advierte al planificador del posible retraso en el
+        # historial de la orden. El candado real de material se mantiene en
+        # el flujo de Surtir/Producir (no se produce sin material).
         for mo in self.filtered(lambda m: not m.is_planned):
             sin_material = mo.move_raw_ids.filtered(
                 lambda m: m.state not in ('assigned', 'done', 'cancel')
             )
             if sin_material:
-                nombres = '\n'.join(
-                    '- %s (disponible: %.2f / requerido: %.2f %s)' % (
-                        m.product_id.display_name,
-                        m.quantity,
-                        m.product_uom_qty,
-                        m.product_uom.name,
-                    )
-                    for m in sin_material
-                )
-                raise UserError(
-                    'No se puede planificar la orden %s.\n\n'
-                    'Los siguientes materiales no están completamente disponibles:\n%s\n\n'
-                    'Surtir el material faltante antes de planificar.'
-                    % (mo.name, nombres)
-                )
+                mo._amunet_notify_plan_material_shortage(sin_material)
         return super().button_plan()
+
+    def _amunet_notify_plan_material_shortage(self, short_moves):
+        """Al planificar con material incompleto: crea actividad a Almacen para
+        trasladar el faltante desde otro almacen a Fabrica (o escalar a compras
+        si no hay en ningun lado) y deja un mensaje al planificador en el
+        historial de la orden. NO bloquea la planeacion."""
+        self.ensure_one()
+        Quant = self.env['stock.quant'].sudo()
+        Loc = self.env['stock.location'].sudo()
+        lineas_planif = []
+        lineas_almacen = []
+        for m in short_moves:
+            falta = (m.product_uom_qty or 0.0) - (m.quantity or 0.0)
+            if falta <= 0:
+                continue
+            origen = m.location_id
+            origen_ids = Loc.search([('id', 'child_of', origen.id)]).ids
+            otros = Quant.search([
+                ('product_id', '=', m.product_id.id),
+                ('location_id.usage', '=', 'internal'),
+                ('location_id', 'not in', origen_ids),
+            ])
+            disp = {}
+            for q in otros:
+                libre = (q.quantity or 0.0) - (q.reserved_quantity or 0.0)
+                if libre > 0:
+                    disp[q.location_id] = disp.get(q.location_id, 0.0) + libre
+            pname = m.product_id.display_name
+            uom = m.product_uom.name or ''
+            if disp:
+                fuentes = ', '.join('%s (%.0f)' % (loc.complete_name, v)
+                                    for loc, v in disp.items())
+                lineas_almacen.append(
+                    '- %s: TRASLADAR %.2f %s a %s. Disponible en: %s'
+                    % (pname, falta, uom, origen.complete_name, fuentes))
+                lineas_planif.append(
+                    '- %s: faltan %.2f %s en Fabrica (hay en %s -> requiere traslado)'
+                    % (pname, falta, uom, fuentes))
+            else:
+                lineas_almacen.append(
+                    '- %s: faltan %.2f %s y NO hay en otro almacen -> ESCALAR A COMPRAS'
+                    % (pname, falta, uom))
+                lineas_planif.append(
+                    '- %s: faltan %.2f %s (sin stock en ningun almacen -> requiere compra)'
+                    % (pname, falta, uom))
+        if not lineas_almacen:
+            return
+        # 1) Mensaje al planificador (historial de la orden)
+        self.sudo().message_post(body=Markup(
+            '<b>Orden planificada con material INCOMPLETO.</b> Puede retrasar la '
+            'entrega. Se avisó a Almacén para el traslado:<br/>%s'
+            % '<br/>'.join(lineas_planif)))
+        # 2) Actividad a Almacen (traslado del material)
+        wh_group = self.env.ref(
+            'amunet_material_request.group_material_warehouse',
+            raise_if_not_found=False)
+        if not wh_group:
+            return
+        users = wh_group.sudo().all_user_ids.filtered(
+            lambda u: u.active and u.id != 1)
+        note = Markup(
+            'Falta material para la orden <b>%s</b> (ya planificada). Traslada '
+            'de otro almacén a Fábrica antes de surtir:<br/>%s'
+            % (self.name, '<br/>'.join(lineas_almacen)))
+        for u in users:
+            self.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Trasladar material para %s') % self.name,
+                note=note, user_id=u.id)
 
     def action_confirm(self):
         # Crear fisicamente el lote ahora que se esta confirmando.
