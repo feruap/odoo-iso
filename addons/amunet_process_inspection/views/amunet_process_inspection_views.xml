@@ -55,7 +55,8 @@
                             <field name="inspection_date"
                                    readonly="state == 'signed'"/>
                         </group>
-                        <group string="Resultado">
+                        <group string="Resultado"
+                               invisible="inspection_type == 'production_supervision'">
                             <field name="qty_inspected"
                                    readonly="state == 'signed'"/>
                             <field name="qty_removed"
@@ -66,7 +67,7 @@
                                    required="qty_removed > 0"/>
                             <field name="result"
                                    readonly="state == 'signed'"
-                                   required="1"/>
+                                   required="inspection_type != 'production_supervision'"/>
                         </group>
                     </group>
 
