@@ -7,10 +7,10 @@
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             <field name="list_price" position="attributes">
-                <attribute name="invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </field>
             <field name="standard_price" position="attributes">
-                <attribute name="invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </field>
         </field>
     </record>
@@ -21,10 +21,10 @@
         <field name="inherit_id" ref="product.product_normal_form_view"/>
         <field name="arch" type="xml">
             <field name="list_price" position="attributes">
-                <attribute name="invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </field>
             <field name="standard_price" position="attributes">
-                <attribute name="invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </field>
         </field>
     </record>

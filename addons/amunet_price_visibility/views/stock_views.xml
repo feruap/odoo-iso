@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="stock_account.view_production_lot_form_stock_account"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='standard_price']" position="attributes">
-                <attribute name="invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>
     </record>
@@ -19,13 +19,13 @@
         <field name="inherit_id" ref="stock_account.stock_move_view_list_valuation"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='value']" position="attributes">
-                <attribute name="column_invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
             <xpath expr="//field[@name='standard_price']" position="attributes">
-                <attribute name="column_invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
             <xpath expr="//field[@name='remaining_value']" position="attributes">
-                <attribute name="column_invisible">not amunet_price_visible</attribute>
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
             </xpath>
         </field>
     </record>
