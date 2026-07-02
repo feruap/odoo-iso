@@ -212,14 +212,15 @@ class AmunetProcessInspection(models.Model):
         for rec in self:
             if rec.state == 'signed':
                 continue
-            if not rec.result:
-                raise UserError(_(
-                    'Captura el resultado antes de firmar.'))
-            if not rec.qty_inspected:
-                raise UserError(_(
-                    'Captura cuantas piezas inspeccionaste.'))
-            # Validar grupos
+            # Validar grupos y requisitos por tipo
             if rec.inspection_type == 'qc_formal':
+                # La inspeccion formal de QC SI exige resultado y piezas
+                if not rec.result:
+                    raise UserError(_(
+                        'Captura el resultado antes de firmar.'))
+                if not rec.qty_inspected:
+                    raise UserError(_(
+                        'Captura cuantas piezas inspeccionaste.'))
                 if not (
                     self.env.user.has_group('amunet_quality.group_quality_user')
                     or self.env.user.has_group('amunet_quality.group_quality_supervisor')
@@ -229,6 +230,9 @@ class AmunetProcessInspection(models.Model):
                         'Solo personal de Calidad puede firmar '
                         'inspecciones formales de QC.'))
             elif rec.inspection_type == 'production_supervision':
+                # La supervision de produccion solo requiere PIN (y una
+                # observacion opcional); NO exige resultado ni piezas
+                # inspeccionadas.
                 if not (
                     self.env.user.has_group('amunet_production.group_production_supervisor')
                     or self.env.user.has_group('amunet_quality.group_quality_supervisor')
@@ -248,13 +252,18 @@ class AmunetProcessInspection(models.Model):
                 'signed_by_id': self.env.user.id,
                 'signed_date': fields.Datetime.now(),
             })
-            rec.message_post(body=_(
-                'Inspeccion firmada por %(u)s. Resultado: %(r)s.'
-            ) % {
-                'u': self.env.user.display_name,
-                'r': dict(rec._fields['result'].selection).get(
-                    rec.result, rec.result),
-            })
+            if rec.inspection_type == 'production_supervision':
+                rec.message_post(body=_(
+                    'Supervision firmada por %(u)s.'
+                ) % {'u': self.env.user.display_name})
+            else:
+                rec.message_post(body=_(
+                    'Inspeccion firmada por %(u)s. Resultado: %(r)s.'
+                ) % {
+                    'u': self.env.user.display_name,
+                    'r': dict(rec._fields['result'].selection).get(
+                        rec.result, rec.result),
+                })
         return True
 
     def write(self, vals):

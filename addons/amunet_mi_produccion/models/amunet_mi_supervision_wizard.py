@@ -27,7 +27,7 @@ class AmunetMiSupervisionWizard(models.TransientModel):
             ('conforme_con_retiros', 'Conforme con retiros'),
             ('detener', 'Detener proceso (escalar)'),
         ],
-        string='Resultado', required=True, default='conforme')
+        string='Resultado', default='conforme')
     qty_inspected = fields.Float(
         string='Piezas revisadas', digits='Product Unit of Measure')
     qty_removed = fields.Float(
@@ -86,9 +86,6 @@ class AmunetMiSupervisionWizard(models.TransientModel):
             'signed_date': fields.Datetime.now(),
         })
         ins.sudo().message_post(body=_(
-            'Supervision firmada con PIN por %(u)s. Resultado: %(r)s.'
-        ) % {
-            'u': self.env.user.display_name,
-            'r': dict(ins._fields['result'].selection).get(self.result, self.result),
-        })
+            'Supervision firmada con PIN por %(u)s.'
+        ) % {'u': self.env.user.display_name})
         return {'type': 'ir.actions.act_window_close'}
