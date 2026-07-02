@@ -159,7 +159,20 @@ class StockMove(models.Model):
                     raise UserError(_(
                         'No se puede ajustar la cantidad por consumir: la orden '
                         '%s ya esta planificada.') % mo.name)
-        return super().write(vals)
+        res = super().write(vals)
+        # Sincroniza el 'quantity' nativo (consumo real) con la 'Cantidad
+        # utilizada' cada vez que se captura/edita. Asi el consumo registrado
+        # y el check de cierre (button_mark_done, que valida quantity) usan
+        # siempre el valor real capturado, aunque se edite la Cantidad
+        # utilizada DESPUES de conciliar. Reentrada controlada por contexto.
+        if 'amunet_qty_used' in vals and not self.env.context.get('amunet_skip_qty_sync'):
+            for m in self:
+                used = m.amunet_qty_used or 0.0
+                if (m.raw_material_production_id and used > 0
+                        and abs((m.quantity or 0.0) - used) > 0.0001):
+                    m.sudo().with_context(amunet_skip_qty_sync=True).write(
+                        {'quantity': used})
+        return res
 
     amunet_is_valid = fields.Boolean(
         string='Valido',
