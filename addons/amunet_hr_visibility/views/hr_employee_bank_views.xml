@@ -10,17 +10,8 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
-            <!-- Reemplazar los dos campos que usan el widget Enterprise -->
-            <xpath expr="//field[@name='bank_account_ids'][@widget='many2many_tags_salary_bank'][1]"
-                   position="replace">
-                <field name="bank_account_ids"
-                       widget="many2many_tags"
-                       string="Cuentas bancarias (CLABE)"
-                       context="{'default_partner_id': work_contact_id}"
-                       options="{'no_quick_create': True}"
-                       readonly="not id"/>
-            </xpath>
-            <xpath expr="//field[@name='bank_account_ids'][@widget='many2many_tags_salary_bank'][2]"
+            <!-- Reemplazar ambos campos que usan el widget Enterprise (uno por cada div) -->
+            <xpath expr="//field[@name='bank_account_ids'][@widget='many2many_tags_salary_bank']"
                    position="replace">
                 <field name="bank_account_ids"
                        widget="many2many_tags"
