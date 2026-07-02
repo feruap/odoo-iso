@@ -214,13 +214,12 @@ class AmunetProcessInspection(models.Model):
                 continue
             # Validar grupos y requisitos por tipo
             if rec.inspection_type == 'qc_formal':
-                # La inspeccion formal de QC SI exige resultado y piezas
-                if not rec.result:
-                    raise UserError(_(
-                        'Captura el resultado antes de firmar.'))
+                # La inspeccion de QC solo exige piezas analizadas. El
+                # detalle va en Observaciones; la liberacion formal de lote
+                # (conforme/rechazo) vive aparte en Calidad.
                 if not rec.qty_inspected:
                     raise UserError(_(
-                        'Captura cuantas piezas inspeccionaste.'))
+                        'Captura cuantas piezas analizaste.'))
                 if not (
                     self.env.user.has_group('amunet_quality.group_quality_user')
                     or self.env.user.has_group('amunet_quality.group_quality_supervisor')
@@ -258,12 +257,8 @@ class AmunetProcessInspection(models.Model):
                 ) % {'u': self.env.user.display_name})
             else:
                 rec.message_post(body=_(
-                    'Inspeccion firmada por %(u)s. Resultado: %(r)s.'
-                ) % {
-                    'u': self.env.user.display_name,
-                    'r': dict(rec._fields['result'].selection).get(
-                        rec.result, rec.result),
-                })
+                    'Inspeccion firmada por %(u)s.'
+                ) % {'u': self.env.user.display_name})
         return True
 
     def write(self, vals):

@@ -24,57 +24,28 @@
                     </div>
 
                     <group>
-                        <group string="Orden y estacion">
-                            <field name="production_id"
-                                   readonly="state == 'signed'"
+                        <group string="Referencia">
+                            <field name="production_id" readonly="1"
                                    options="{'no_create': True}"/>
-                            <field name="product_id" readonly="1"/>
-                            <field name="workcenter_id"
-                                   readonly="state == 'signed'"
+                            <field name="workorder_id" readonly="1"
+                                   string="Actividad"
                                    options="{'no_create': True}"/>
-                            <field name="workorder_id"
-                                   readonly="state == 'signed'"
-                                   options="{'no_create': True}"
-                                   domain="[('production_id','=',production_id)]"/>
-                            <field name="inspection_type"
-                                   readonly="state == 'signed'"/>
-                        </group>
-                        <group string="Lote">
-                            <field name="lot_id"
-                                   readonly="state == 'signed'"
+                            <field name="lot_id" readonly="1"
                                    options="{'no_create': True}"/>
-                            <field name="lot_name"
-                                   readonly="state == 'signed'"
-                                   invisible="lot_id"/>
+                            <field name="inspection_type" invisible="1"/>
                         </group>
-                    </group>
-
-                    <group>
-                        <group string="Inspector">
-                            <field name="inspector_id" readonly="1"/>
-                            <field name="inspection_date"
-                                   readonly="state == 'signed'"/>
-                        </group>
-                        <group string="Resultado"
+                        <group string="Inspeccion"
                                invisible="inspection_type == 'production_supervision'">
                             <field name="qty_inspected"
+                                   string="Piezas analizadas"
                                    readonly="state == 'signed'"/>
-                            <field name="qty_removed"
-                                   readonly="state == 'signed'"/>
-                            <field name="removal_reason"
-                                   readonly="state == 'signed'"
-                                   invisible="qty_removed == 0"
-                                   required="qty_removed > 0"/>
-                            <field name="result"
-                                   readonly="state == 'signed'"
-                                   required="inspection_type != 'production_supervision'"/>
                         </group>
                     </group>
 
                     <separator string="Observaciones"/>
                     <field name="notes"
                            readonly="state == 'signed'"
-                           placeholder="Detalle del retiro, contexto, instrumentos usados, etc."/>
+                           placeholder="Observaciones (opcional)…"/>
 
                     <group invisible="state != 'signed'">
                         <group string="Firma">
@@ -175,6 +146,34 @@
             <p>Documenta los retiros de piezas durante el flujo
             productivo. NO sustituye la liberacion de lote (eso vive
             en Calidad).</p>
+        </field>
+    </record>
+
+    <!-- Accion filtrada: solo INSPECCIONES de QC (para el menu de Calidad) -->
+    <record id="action_amunet_process_inspection_qc" model="ir.actions.act_window">
+        <field name="name">Inspecciones de proceso</field>
+        <field name="res_model">amunet.process.inspection</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('inspection_type', '=', 'qc_formal')]</field>
+        <field name="context">{'default_inspection_type': 'qc_formal'}</field>
+        <field name="search_view_id" ref="view_amunet_process_inspection_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sin inspecciones de proceso</p>
+            <p>Inspecciones en proceso que firma Control de Calidad.</p>
+        </field>
+    </record>
+
+    <!-- Accion filtrada: solo SUPERVISIONES (para el menu de Manufactura) -->
+    <record id="action_amunet_process_inspection_sup" model="ir.actions.act_window">
+        <field name="name">Supervisiones</field>
+        <field name="res_model">amunet.process.inspection</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('inspection_type', '=', 'production_supervision')]</field>
+        <field name="context">{'default_inspection_type': 'production_supervision'}</field>
+        <field name="search_view_id" ref="view_amunet_process_inspection_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sin supervisiones</p>
+            <p>Supervisiones de actividad que firma el Supervisor de Produccion.</p>
         </field>
     </record>
 
