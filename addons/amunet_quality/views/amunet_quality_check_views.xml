@@ -1300,34 +1300,45 @@
                                                placeholder="Ingrese notas explicativas..."/>
                                     </group>
                                     
-                                    <!-- MATRIZ DE DECISIÓN (MAVI-16) -->
-                                    <group string="Matriz de decisión multi-paso" invisible="evaluation_type != 'decision_matrix'" col="1">
+                                    <!-- MATRIZ DE DECISIÓN (MAVI-15 semicuantitativo / MAVI-16 colorimétrico) -->
+                                    <group string="Visualización de líneas" invisible="evaluation_type != 'decision_matrix'" col="1">
                                         <field name="dm_step2_1_unlocked" invisible="1"/>
                                         <field name="dm_step2_2_unlocked" invisible="1"/>
-                                        
+                                        <field name="acceptance_criteria" invisible="1"/>
+
                                         <div class="alert alert-info mb-2" role="alert">
                                             Complete los pasos en secuencia. Si la línea C no es visible, la prueba falla.
                                         </div>
-                                        
-                                        <group string="1️⃣ Concentración objetivo">
-                                            <field name="result_dm_step1_concentration" widget="radio" 
+
+                                        <!-- Concentración fija (MAVI-15): muestra etiqueta de solo lectura -->
+                                        <div class="mb-3" invisible="acceptance_criteria not in ('low', 'medium', 'high')">
+                                            <strong>1️⃣ Concentración objetivo: </strong>
+                                            <span class="badge bg-primary fs-6" invisible="acceptance_criteria != 'low'">Baja  (T≠R o T&lt;R)</span>
+                                            <span class="badge bg-warning fs-6 text-dark" invisible="acceptance_criteria != 'medium'">Intermedia (T~R)</span>
+                                            <span class="badge bg-success fs-6" invisible="acceptance_criteria != 'high'">Alta  (T&gt;R)</span>
+                                        </div>
+
+                                        <!-- Concentración seleccionable (MAVI-16 y variantes sin fijo) -->
+                                        <group string="1️⃣ Concentración objetivo"
+                                               invisible="acceptance_criteria in ('low', 'medium', 'high')">
+                                            <field name="result_dm_step1_concentration" widget="radio"
                                                    options="{'horizontal': true}" nolabel="1"/>
                                         </group>
-                                        
+
                                         <group string="2️⃣ Línea C visible" invisible="not dm_step2_1_unlocked">
-                                            <field name="result_dm_step2_1_control_visible" widget="radio" 
+                                            <field name="result_dm_step2_1_control_visible" widget="radio"
                                                    options="{'horizontal': true}" nolabel="1"/>
                                         </group>
-                                        
+
                                         <div class="alert alert-danger" role="alert"
                                              invisible="result_dm_step2_1_control_visible != 'no'">
                                             <strong>❌ Prueba Inválida:</strong> Línea C no visible.
                                         </div>
-                                        
+
                                         <group string="3️⃣ Comparación T vs R" invisible="not dm_step2_2_unlocked">
                                             <field name="result_dm_step2_2_comparison" widget="radio" nolabel="1"/>
                                         </group>
-                                        
+
                                         <group string="Escenario" invisible="not dm_matched_scenario_id">
                                             <field name="dm_matched_scenario_id" readonly="1"/>
                                         </group>

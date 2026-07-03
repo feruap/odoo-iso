@@ -151,7 +151,7 @@ export class QualityTestLineRow extends Component {
                     "result_checkbox_1", "result_checkbox_2",
                     "result_text_pattern", "constructed_phrase",
                     "result_expected_type", "result_obtained_type",
-                    "result_binary_option", "result_notes",
+                    "result_binary_option", "result_notes", "result_additional_info",
                     "result_ternary", "mavi15_result",
                     // VAMA-034: Two-step widget fields
                     "vama034_sample_type", "vama034_observed_result",
@@ -172,6 +172,7 @@ export class QualityTestLineRow extends Component {
                     "result_dm_step1_concentration",
                     "result_dm_step2_1_control_visible",
                     "result_dm_step2_2_comparison",
+                    "result_dm_na",
                     "dm_step2_1_unlocked",
                     "dm_step2_2_unlocked",
                     "dm_current_step",
@@ -372,6 +373,11 @@ export class QualityTestLineRow extends Component {
     onNotesChange(ev) {
         const detailId = parseInt(ev.target.dataset.detailId);
         this.onDetailChange(detailId, 'result_notes', ev.target.value);
+    }
+
+    onAdditionalInfoChange(ev) {
+        const detailId = parseInt(ev.target.dataset.detailId);
+        this.onDetailChange(detailId, 'result_additional_info', ev.target.value);
     }
 
     // Conditional Numeric Range handlers

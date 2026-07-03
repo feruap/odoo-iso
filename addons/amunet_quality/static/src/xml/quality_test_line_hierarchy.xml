@@ -298,17 +298,27 @@
                                                 <option value="">Seleccionar...</option>
                                                 <option value="pass" t-att-selected="detail.result_binary_option === 'pass'">Cumple</option>
                                                 <option value="fail" t-att-selected="detail.result_binary_option === 'fail'">No Cumple</option>
+                                                <option value="na" t-att-selected="detail.result_binary_option === 'na'">No aplica</option>
                                             </select>
                                             <textarea t-if="!props.readonly and detail.result_binary_option === 'fail'"
-                                                      class="form-control form-control-sm"
+                                                      class="form-control form-control-sm mb-1"
                                                       rows="2"
                                                       placeholder="Notas explicativas..."
                                                       t-att-value="detail.result_notes"
                                                       t-att-data-detail-id="detail.id"
                                                       t-on-change="onNotesChange"/>
-                                            <span t-else="" class="form-control-plaintext">
+                                            <span t-if="props.readonly" class="form-control-plaintext">
                                                 <t t-esc="detail.result_display || '-'"/>
                                             </span>
+                                            <div t-if="!props.readonly" class="mt-1">
+                                                <label class="form-label small text-muted mb-0">Información adicional (opcional)</label>
+                                                <textarea class="form-control form-control-sm"
+                                                          rows="2"
+                                                          placeholder="Observaciones o situaciones encontradas..."
+                                                          t-att-value="detail.result_additional_info"
+                                                          t-att-data-detail-id="detail.id"
+                                                          t-on-change="onAdditionalInfoChange"/>
+                                            </div>
                                         </t>
 
                                         <!-- VAMA-034: Two-step widget (Restored) -->

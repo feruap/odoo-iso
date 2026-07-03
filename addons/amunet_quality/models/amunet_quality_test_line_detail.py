@@ -203,6 +203,10 @@ class AmunetQualityTestLineDetail(models.Model):
         string='Notas obligatorias',
         help='Notas obligatorias cuando no cumple'
     )
+    result_additional_info = fields.Text(
+        string='Información adicional',
+        help='Observaciones opcionales; no afecta el dictamen'
+    )
 
     # -- Ternary with N/A --
     result_ternary = fields.Selection([
@@ -232,6 +236,12 @@ class AmunetQualityTestLineDetail(models.Model):
         ('t_gt_r', 'T > R (Mayor intensidad)'),
     ], string='3️⃣ Comparación T vs R',
         help='Paso 2.2: Compare visualmente la región de prueba (T) con la de referencia (R)')
+
+    result_dm_na = fields.Boolean(
+        string='N/A – Muestra no disponible',
+        default=False,
+        help='Marcar cuando esta concentración no aplica o la muestra no está disponible'
+    )
 
     # -- MAVI-07 --
     mavi07_sample_type = fields.Selection([
@@ -806,7 +816,7 @@ class AmunetQualityTestLineDetail(models.Model):
         except (json.JSONDecodeError, KeyError, TypeError):
             return pattern_input
 
-    @api.depends('result_dm_step1_concentration', 'result_dm_step2_1_control_visible')
+    @api.depends('result_dm_step1_concentration', 'result_dm_step2_1_control_visible', 'acceptance_criteria', 'result_dm_na')
     def _compute_dm_step_states(self):
         """Calcula el estado de desbloqueo de los pasos de la matriz de decisión"""
         for record in self:
@@ -816,18 +826,25 @@ class AmunetQualityTestLineDetail(models.Model):
                 record.dm_current_step = 0
                 continue
 
-            # Paso 1 siempre disponible
-            # Paso 2.1 se desbloquea cuando hay valor en paso 1
-            record.dm_step2_1_unlocked = bool(record.result_dm_step1_concentration)
+            if record.result_dm_na:
+                record.dm_step2_1_unlocked = False
+                record.dm_step2_2_unlocked = False
+                record.dm_current_step = 0
+                continue
 
-            # Paso 2.2 se desbloquea cuando línea C es visible
-            # Si línea C NO es visible, el paso 2.2 permanece bloqueado
+            # Paso 1 siempre disponible.
+            # Si acceptance_criteria contiene la concentración fija ('low'/'medium'/'high'),
+            # el paso 1 se considera completo automáticamente.
+            _fixed_concs = {'low', 'medium', 'high'}
+            has_step1 = bool(record.result_dm_step1_concentration) or \
+                        (record.acceptance_criteria in _fixed_concs)
+            record.dm_step2_1_unlocked = has_step1
+
             record.dm_step2_2_unlocked = (
                 record.result_dm_step2_1_control_visible == 'yes'
             )
 
-            # Determinar paso actual
-            if not record.result_dm_step1_concentration:
+            if not has_step1:
                 record.dm_current_step = 1
             elif not record.result_dm_step2_1_control_visible:
                 record.dm_current_step = 2
@@ -846,7 +863,7 @@ class AmunetQualityTestLineDetail(models.Model):
         'text_pattern_regex', 'result_expected_type', 'result_obtained_type',
         'result_binary_option', 'result_notes', 'result_ternary',
         'result_dm_step1_concentration', 'result_dm_step2_1_control_visible',
-        'result_dm_step2_2_comparison', 'specification_config_id',
+        'result_dm_step2_2_comparison', 'specification_config_id', 'acceptance_criteria',
         'min_value', 'max_value', 'expected_value_binary',
         'binary_option_pass', 'binary_option_fail',
         'checkbox_label_1', 'checkbox_label_2',
@@ -864,6 +881,7 @@ class AmunetQualityTestLineDetail(models.Model):
         'mavi15_result',
         'mavi11_target_height', 'mavi11_measured_height',
         'multi_check_results_json',
+        'result_dm_na',
     )
     def _compute_verdict(self):
         """Evalúa el resultado y determina el dictamen"""
@@ -1096,6 +1114,9 @@ class AmunetQualityTestLineDetail(models.Model):
         if not self.result_binary_option:
             return {'verdict': 'pending', 'message': 'Seleccione una opción'}
 
+        if self.result_binary_option == 'na':
+            return {'verdict': 'not_applicable', 'message': 'No aplica'}
+
         if self.result_binary_option == 'pass':
             return {
                 'verdict': 'pass',
@@ -1142,8 +1163,22 @@ class AmunetQualityTestLineDetail(models.Model):
         Returns:
             dict: {'verdict': str, 'message': str, 'scenario_id': int or False}
         """
-        # Validar Paso 1: Concentración objetivo
-        if not self.result_dm_step1_concentration:
+        # N/A: muestra no disponible para esta concentración
+        if self.result_dm_na:
+            return {
+                'verdict': 'not_applicable',
+                'message': 'N/A: Muestra no disponible para esta concentración.',
+                'scenario_id': False,
+            }
+
+        # Concentración: puede ser fija (acceptance_criteria='low'/'medium'/'high')
+        # o seleccionada por el analista en el paso 1
+        _fixed_concs = ('low', 'medium', 'high')
+        concentration = self.result_dm_step1_concentration or (
+            self.acceptance_criteria if self.acceptance_criteria in _fixed_concs else None
+        )
+
+        if not concentration:
             return {
                 'verdict': 'pending',
                 'message': '1️⃣ Seleccione la concentración objetivo',
@@ -1160,9 +1195,8 @@ class AmunetQualityTestLineDetail(models.Model):
 
         # Si línea C NO es visible: Fallo inmediato (Escenario 1)
         if self.result_dm_step2_1_control_visible == 'no':
-            # Buscar escenario de fallo por línea C no visible
             scenario = self._find_decision_matrix_scenario(
-                concentration=self.result_dm_step1_concentration,
+                concentration=concentration,
                 control_visible=False,
                 comparison=None
             )
@@ -1187,9 +1221,8 @@ class AmunetQualityTestLineDetail(models.Model):
                 'scenario_id': False
             }
 
-        # Buscar escenario en la matriz de decisión
         scenario = self._find_decision_matrix_scenario(
-            concentration=self.result_dm_step1_concentration,
+            concentration=concentration,
             control_visible=True,
             comparison=self.result_dm_step2_2_comparison
         )
@@ -1873,6 +1906,8 @@ class AmunetQualityTestLineDetail(models.Model):
                     record.result_display = record.binary_notes_option_pass or 'Cumple'
                 elif record.result_binary_option == 'fail':
                     record.result_display = record.binary_notes_option_fail or 'No cumple'
+                elif record.result_binary_option == 'na':
+                    record.result_display = 'No aplica'
                 else:
                     record.result_display = ''
 
@@ -1885,27 +1920,25 @@ class AmunetQualityTestLineDetail(models.Model):
                 record.result_display = ternary_labels.get(record.result_ternary, '')
 
             elif record.evaluation_type == 'decision_matrix':
-                # Mostrar los pasos completados
-                concentration_labels = {
-                    'low': 'Baja',
-                    'medium': 'Intermedia',
-                    'high': 'Alta',
-                }
+                if record.result_dm_na:
+                    record.result_display = 'N/A'
+                    continue
+                _fixed_concs = ('low', 'medium', 'high')
+                concentration_labels = {'low': 'Baja', 'medium': 'Intermedia', 'high': 'Alta'}
                 comparison_labels = {
-                    't_neq_r': 'T≠R',
-                    't_lt_r': 'T<R',
-                    't_eq_r': 'T~R',
-                    't_gt_r': 'T>R',
+                    't_neq_r': 'T≠R', 't_lt_r': 'T<R',
+                    't_eq_r': 'T~R', 't_gt_r': 'T>R',
                 }
                 parts = []
-                if record.result_dm_step1_concentration:
-                    parts.append(f"1️⃣ {concentration_labels.get(record.result_dm_step1_concentration, '?')}")
+                is_fixed = record.acceptance_criteria in _fixed_concs
+                if not is_fixed and record.result_dm_step1_concentration:
+                    parts.append(concentration_labels.get(record.result_dm_step1_concentration, '?'))
                 if record.result_dm_step2_1_control_visible:
-                    ctrl = 'Sí' if record.result_dm_step2_1_control_visible == 'yes' else 'No'
-                    parts.append(f"2️⃣ C:{ctrl}")
+                    ctrl = 'C: Sí' if record.result_dm_step2_1_control_visible == 'yes' else 'C: No'
+                    parts.append(ctrl)
                 if record.result_dm_step2_2_comparison:
-                    parts.append(f"3️⃣ {comparison_labels.get(record.result_dm_step2_2_comparison, '?')}")
-                record.result_display = ' → '.join(parts) if parts else ''
+                    parts.append(comparison_labels.get(record.result_dm_step2_2_comparison, '?'))
+                record.result_display = ' | '.join(parts) if parts else ''
 
             elif record.evaluation_type == 'mavi_07':
                 if record.mavi07_sample_type and record.mavi07_observed_result:
