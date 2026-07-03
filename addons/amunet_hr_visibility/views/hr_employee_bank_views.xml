@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        En Odoo 19 Community el widget many2many_tags_salary_bank no existe
+        (es exclusivo de Enterprise). Esta vista lo reemplaza por many2many_tags
+        para que las cuentas CLABE sean visibles en la ficha del empleado.
+    -->
+    <record id="hr_employee_view_form_bank_ce" model="ir.ui.view">
+        <field name="name">hr.employee.form.bank.ce</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Reemplazar ambos campos que usan el widget Enterprise (uno por cada div) -->
+            <xpath expr="//field[@name='bank_account_ids'][@widget='many2many_tags_salary_bank']"
+                   position="replace">
+                <field name="bank_account_ids"
+                       widget="many2many_tags"
+                       string="Cuentas bancarias (CLABE)"
+                       context="{'default_partner_id': work_contact_id}"
+                       options="{'no_quick_create': True}"
+                       readonly="not id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

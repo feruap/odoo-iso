@@ -24,9 +24,12 @@ y todos los empleados internos veran la app de Empleados nuevamente.
     'license': 'LGPL-3',
     'depends': [
         'hr',
+        'payroll',
     ],
     'data': [
         'data/menu_visibility.xml',
+        'views/hr_employee_bank_views.xml',
+        'views/hr_payslip_input_views.xml',
     ],
     'installable': True,
     'application': False,
