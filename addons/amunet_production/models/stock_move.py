@@ -247,6 +247,46 @@ class StockMove(models.Model):
 
             move.amunet_is_valid = in_range
 
+    def _amunet_check_single_lot_per_component(self):
+        """Candado ISO 13485: cada componente de una orden de produccion debe
+        consumir de UN SOLO lote. A primera vista la linea muestra un lote,
+        pero en el detalle puede haber 2-3 (split automatico de Odoo cuando un
+        lote no alcanza la cantidad). Aqui se bloquea ese caso.
+
+        Solo aplica a ordenes NUEVAS: creadas despues del cutoff configurado en
+        el parametro 'amunet.single_lot_cutoff'. Sin cutoff, el candado no
+        aplica (rule off), para no bloquear ordenes previas en curso."""
+        cutoff = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet.single_lot_cutoff')
+        cutoff_dt = fields.Datetime.to_datetime(cutoff) if cutoff else None
+        if not cutoff_dt:
+            return
+        problemas = []
+        for move in self.filtered(
+            lambda m: m.raw_material_production_id
+            and m.state not in ('draft', 'cancel')
+        ):
+            mo = move.raw_material_production_id
+            # Solo ordenes creadas despues de activar el candado.
+            if mo.create_date and mo.create_date <= cutoff_dt:
+                continue
+            lotes = move.move_line_ids.filtered(
+                lambda ml: ml.lot_id and ml.quantity > 0
+            ).mapped('lot_id')
+            if len(lotes) > 1:
+                problemas.append('  - %s (orden %s): lotes %s' % (
+                    move.product_id.display_name,
+                    mo.name,
+                    ', '.join(lotes.mapped('name')),
+                ))
+        if problemas:
+            raise UserError(_(
+                'Solo se permite UN lote por componente en la orden de '
+                'produccion (trazabilidad ISO 13485). Estos componentes tienen '
+                'mas de un lote cargado:\n%(det)s\n\nAjusta el surtido/detalle '
+                'para dejar un solo lote por componente antes de cerrar.'
+            ) % {'det': '\n'.join(problemas)})
+
     def _action_done(self, cancel_backorder=False):
         """Gate SGC de salida: bloquea movimientos que sacan un lote
         fuera del inventario interno (a customer/transit) si el lote
@@ -258,6 +298,8 @@ class StockMove(models.Model):
         ISO 13485 / Cofepris: producto NO se libera al mercado sin
         autorizacion de QC.
         """
+        # Candado ISO: un solo lote por componente de la orden de produccion.
+        self._amunet_check_single_lot_per_component()
         for move in self:
             if move.location_id.usage != 'internal':
                 continue

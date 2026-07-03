@@ -281,7 +281,10 @@ class MrpProduction(models.Model):
         self.ensure_one()
         if not self.amunet_supply_workorder_id:
             raise UserError(_('Esta orden no tiene workorder de Surtido (AMP).'))
-        return self.amunet_supply_workorder_id.action_amunet_confirm_supply()
+        res = self.amunet_supply_workorder_id.action_amunet_confirm_supply()
+        # Candado ISO: un solo lote por componente (bloqueo temprano al surtir).
+        self.move_raw_ids._amunet_check_single_lot_per_component()
+        return res
 
     def action_amunet_mo_receive_supply(self):
         self.ensure_one()
