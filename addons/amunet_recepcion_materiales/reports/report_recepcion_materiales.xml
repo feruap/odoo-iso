@@ -10,8 +10,6 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">amunet_recepcion_materiales.report_recepcion_materiales</field>
         <field name="report_file">amunet_recepcion_materiales.report_recepcion_materiales</field>
-        <field name="binding_model_id" ref="stock.model_stock_picking"/>
-        <field name="binding_type">report</field>
         <field name="paperformat_id" ref="base.paperformat_euro"/>
     </record>
 
@@ -111,10 +109,7 @@
                                             <t t-esc="move.amunet_mfg_date or '—'"/>
                                         </td>
                                         <td>
-                                            <t t-if="move.amunet_exp_date">
-                                                <t t-esc="move.amunet_exp_date.strftime('%d/%m/%Y')"/>
-                                            </t>
-                                            <t t-else="">—</t>
+                                            <t t-esc="move.amunet_exp_date or '—'"/>
                                         </td>
                                         <td class="text-end">
                                             <t t-esc="'%.2f' % move.product_uom_qty"/>

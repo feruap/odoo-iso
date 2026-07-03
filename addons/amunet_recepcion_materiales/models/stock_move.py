@@ -2,7 +2,7 @@
 import pytz
 from datetime import datetime, time as dt_time
 from dateutil.relativedelta import relativedelta
-from odoo import models, fields
+from odoo import models, fields, api
 
 RECEPTION_FIELDS = {'amunet_mfg_date', 'amunet_exp_date', 'amunet_supplier_lot'}
 LINE_TRIGGER = {'amunet_supplier_lot', 'amunet_mfg_date', 'expiration_date'}
@@ -26,8 +26,8 @@ def _calc_removal_date(exp_date, env):
     return _date_to_local_9am(calculated, env)
 
 
-def _parse_mfg_date(val):
-    """Intenta parsear una fecha de fabricación en texto. Devuelve date o None."""
+def _parse_date(val):
+    """Parsea una fecha en texto (DD/MM/AAAA, YYYY-MM-DD o NA). Devuelve date o None."""
     clean = val.strip().upper()
     if clean == 'NA':
         return None
@@ -39,12 +39,16 @@ def _parse_mfg_date(val):
     return None
 
 
+# Alias para compatibilidad con llamadas existentes
+_parse_mfg_date = _parse_date
+
+
 class StockMove(models.Model):
     _inherit = 'stock.move'
 
     amunet_supplier_lot = fields.Char('Lote del proveedor')
     amunet_mfg_date = fields.Char('Fecha de fabricación')
-    amunet_exp_date = fields.Date('Fecha de caducidad')
+    amunet_exp_date = fields.Char('Fecha de caducidad')
     amunet_removal_date = fields.Datetime(
         compute='_compute_amunet_removal_date',
         string='Fecha de remoción',
@@ -53,10 +57,8 @@ class StockMove(models.Model):
 
     def _compute_amunet_removal_date(self):
         for move in self:
-            if move.amunet_exp_date:
-                move.amunet_removal_date = _calc_removal_date(move.amunet_exp_date, move.env)
-            else:
-                move.amunet_removal_date = False
+            exp = _parse_date(move.amunet_exp_date) if move.amunet_exp_date else None
+            move.amunet_removal_date = _calc_removal_date(exp, move.env) if exp else False
 
     def write(self, vals):
         res = super().write(vals)
@@ -80,8 +82,10 @@ class StockMove(models.Model):
                 if mfg:
                     line_vals['manufacturing_date'] = mfg
             if 'amunet_exp_date' in vals and move.amunet_exp_date:
-                line_vals['expiration_date'] = _date_to_local_9am(move.amunet_exp_date, move.env)
-                line_vals['removal_date'] = _calc_removal_date(move.amunet_exp_date, move.env)
+                exp = _parse_date(move.amunet_exp_date)
+                if exp:
+                    line_vals['expiration_date'] = _date_to_local_9am(exp, move.env)
+                    line_vals['removal_date'] = _calc_removal_date(exp, move.env)
             if line_vals:
                 move.move_line_ids.write(line_vals)
         return res
@@ -106,8 +110,10 @@ class StockMove(models.Model):
                 if mfg:
                     vals['manufacturing_date'] = mfg
             if move.amunet_exp_date:
-                vals['expiration_date'] = _date_to_local_9am(move.amunet_exp_date, move.env)
-                vals['removal_date'] = _calc_removal_date(move.amunet_exp_date, move.env)
+                exp = _parse_date(move.amunet_exp_date)
+                if exp:
+                    vals['expiration_date'] = _date_to_local_9am(exp, move.env)
+                    vals['removal_date'] = _calc_removal_date(exp, move.env)
             move.move_line_ids.write(vals)
         return super()._action_done(cancel_backorder=cancel_backorder)
 
@@ -117,6 +123,28 @@ class StockMoveLine(models.Model):
 
     amunet_supplier_lot = fields.Char('Lote del proveedor')
     amunet_mfg_date = fields.Char('Fecha fab. (texto)')
+
+    amunet_calidad_estado = fields.Selection([
+        ('quarantine', 'En cuarentena'),
+        ('in_review', 'En revisión'),
+        ('released', 'Liberado'),
+    ], string='Estado en Calidad', compute='_compute_amunet_calidad_estado')
+
+    @api.depends('lot_id', 'lot_id.amunet_lot_release_state')
+    def _compute_amunet_calidad_estado(self):
+        for line in self:
+            lot = line.lot_id
+            if not lot:
+                line.amunet_calidad_estado = False
+                continue
+            if lot.amunet_lot_release_state == 'released':
+                line.amunet_calidad_estado = 'released'
+            else:
+                qc_activo = self.env['amunet.quality.check'].search([
+                    ('lot_id', '=', lot.id),
+                    ('state', 'in', ('in_progress', 'pending', 'awaiting_reception')),
+                ], limit=1)
+                line.amunet_calidad_estado = 'in_review' if qc_activo else 'quarantine'
 
     def write(self, vals):
         res = super().write(vals)

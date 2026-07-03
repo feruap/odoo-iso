@@ -24,6 +24,42 @@ class StockPicking(models.Model):
              'Quedará registrado y se notificará a Calidad.',
     )
 
+    # ── Resumen de lotes de equipos con seriales ────────────────────────────
+    amunet_equipment_lots_html = fields.Html(
+        compute='_compute_amunet_equipment_lots_html',
+        string='Lotes de equipo',
+        store=False,
+    )
+
+    @api.depends('move_line_ids.lot_id', 'move_line_ids.lot_id.amunet_serial_ids',
+                 'move_line_ids.lot_id.amunet_serial_ids.serial_number')
+    def _compute_amunet_equipment_lots_html(self):
+        for picking in self:
+            if picking.picking_type_code != 'incoming':
+                picking.amunet_equipment_lots_html = False
+                continue
+            direct = picking.move_line_ids.lot_id.filtered('amunet_allow_multi_serial')
+            if not direct:
+                picking.amunet_equipment_lots_html = False
+                continue
+            derived = self.env['stock.lot'].search([
+                ('amunet_source_lot_id', 'in', direct.ids)
+            ])
+            all_lots = (direct | derived).sorted('name')
+            rows = []
+            for lot in all_lots:
+                serials = lot.amunet_serial_ids.sorted('serial_number').mapped('serial_number')
+                serial_text = ', '.join(serials) if serials else '<em>Sin seriales capturados</em>'
+                origen = (f' <span style="color:#6c757d;font-size:12px;">'
+                          f'(separado de {lot.amunet_source_lot_id.name})</span>'
+                          if lot.amunet_source_lot_id else '')
+                rows.append(
+                    f'<div style="margin-bottom:4px;">'
+                    f'<b>{lot.name}</b>{origen}: {serial_text}'
+                    f'</div>'
+                )
+            picking.amunet_equipment_lots_html = ''.join(rows)
+
     # ── Firma ────────────────────────────────────────────────────────────────
     amunet_receptor_id = fields.Many2one(
         'res.users', 'Recibió',
@@ -94,10 +130,10 @@ class StockPicking(models.Model):
                                  and p.state not in ('done', 'cancel'))
         if not incoming:
             return super().button_validate()
-        # Recepcion permitida aunque falten criterios: el material que requiere
-        # cuarentena entra a Control de calidad y se notifica a Calidad para
-        # asignar criterios e inspeccionar antes de liberar. El candado
-        # regulatorio esta en la liberacion, no en recibir.
+        # La recepcion se permite aunque falten criterios de aceptacion: el
+        # material marcado requiere cuarentena entra a Control de calidad y se
+        # notifica a Calidad para asignar criterios e inspeccionar antes de
+        # liberar. El candado regulatorio esta en la liberacion, no en recibir.
         return {
             'type': 'ir.actions.act_window',
             'name': 'Confirmar recepcion',
@@ -108,7 +144,7 @@ class StockPicking(models.Model):
         }
 
     def _amunet_notify_quality_pending(self):
-        """Agenda actividad a Calidad cuando la recepcion se valida con
+        """Agenda una actividad a Calidad cuando la recepcion se valida con
         criterios de aceptacion pendientes (asignar criterios + inspeccionar)."""
         self.ensure_one()
         group = (self.env.ref('amunet_quality.group_quality_supervisor',
@@ -127,3 +163,46 @@ class StockPicking(models.Model):
                                    user_id=qc_user.id, summary=summary, note=note)
         except Exception:
             self.message_post(body=note)
+
+    def action_open_serial_wizard(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Números de serie del equipo',
+            'res_model': 'amunet.reception.serial.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_picking_id': self.id},
+        }
+
+    def _action_done(self):
+        res = super()._action_done()
+        for picking in self.filtered(
+            lambda p: p.picking_type_code == 'incoming' and p.amunet_con_observaciones
+        ):
+            criterios = {
+                'Empaque íntegro': picking.amunet_crit1,
+                'Etiqueta legible': picking.amunet_crit2,
+                'Sin daños visibles': picking.amunet_crit3,
+                'Certificado de análisis': picking.amunet_crit4,
+                'Cantidad correcta': picking.amunet_crit5,
+            }
+            fallidos = [nombre for nombre, val in criterios.items() if val == 'nok']
+            if not fallidos:
+                continue
+            detalle = ', '.join(fallidos)
+            obs = picking.amunet_crit_obs or '(sin observaciones adicionales)'
+            msg = (
+                f'⚠️ <b>Material recibido con observaciones — requiere revisión de Calidad</b><br/>'
+                f'Criterios que no cumplen: <b>{detalle}</b><br/>'
+                f'Observaciones: {obs}<br/>'
+                f'Recepción: {picking.name} | Recibió: {picking.amunet_receptor_id.name or "—"}'
+            )
+            lot_ids = picking.move_line_ids.mapped('lot_id').filtered(lambda l: l.id)
+            qcs = self.env['amunet.quality.check'].search([
+                ('lot_id', 'in', lot_ids.ids),
+                ('state', 'not in', ('done',)),
+            ])
+            for qc in qcs:
+                qc.message_post(body=msg, message_type='notification',
+                                subtype_xmlid='mail.mt_note')
+        return res
