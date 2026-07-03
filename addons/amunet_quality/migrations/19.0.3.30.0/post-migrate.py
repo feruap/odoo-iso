@@ -127,28 +127,32 @@ def _replace_vama063_with_inscc001(cr, inscc001_id):
     """, (VAMA063_ID,))
     qp_ids = [r[0] for r in cr.fetchall()]
 
-    if not qp_ids:
-        _logger.info("Migración 3.30.0 — VAMA-063 ya no está en ningún QP, omitiendo reemplazo")
-        return
-
-    # Borrar VAMA-063 de esos QPs
-    cr.execute("""
-        DELETE FROM amunet_quality_check_parameter_amunet_quality_point_rel
-        WHERE amunet_quality_check_parameter_id = %s
-    """, (VAMA063_ID,))
-
-    # Agregar INSCC-001 donde no esté ya
-    for qp_id in qp_ids:
+    # --- Nivel Quality Point: solo si VAMA-063 esta ligado a algun QP ---
+    # FIX 3.30.0: antes se hacia 'return' aqui cuando no habia QPs, lo que en
+    # prod (VAMA-063 solo en product_rels/lineas, 0 QPs) SALTABA la migracion de
+    # los 25 product_rels y dejaba cajas/fundas a medias. Ahora el bloque de QP
+    # es condicional y los product_rels/spec_configs se migran SIEMPRE (abajo).
+    if qp_ids:
+        # Borrar VAMA-063 de esos QPs
         cr.execute("""
-            SELECT 1 FROM amunet_quality_check_parameter_amunet_quality_point_rel
-            WHERE amunet_quality_check_parameter_id=%s AND amunet_quality_point_id=%s
-        """, (inscc001_id, qp_id))
-        if not cr.fetchone():
+            DELETE FROM amunet_quality_check_parameter_amunet_quality_point_rel
+            WHERE amunet_quality_check_parameter_id = %s
+        """, (VAMA063_ID,))
+
+        # Agregar INSCC-001 donde no esté ya
+        for qp_id in qp_ids:
             cr.execute("""
-                INSERT INTO amunet_quality_check_parameter_amunet_quality_point_rel
-                    (amunet_quality_check_parameter_id, amunet_quality_point_id)
-                VALUES (%s, %s)
+                SELECT 1 FROM amunet_quality_check_parameter_amunet_quality_point_rel
+                WHERE amunet_quality_check_parameter_id=%s AND amunet_quality_point_id=%s
             """, (inscc001_id, qp_id))
+            if not cr.fetchone():
+                cr.execute("""
+                    INSERT INTO amunet_quality_check_parameter_amunet_quality_point_rel
+                        (amunet_quality_check_parameter_id, amunet_quality_point_id)
+                    VALUES (%s, %s)
+                """, (inscc001_id, qp_id))
+    else:
+        _logger.info("Migración 3.30.0 — VAMA-063 sin QPs; se migran product_rels/spec_configs igual")
 
     # product_parameter_rels
     cr.execute("""
