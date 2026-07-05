@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bank_change_form" model="ir.ui.view">
+        <field name="name">amunet.bank.change.request.form</field>
+        <field name="model">amunet.bank.change.request</field>
+        <field name="arch" type="xml">
+            <form string="Solicitud de cambio de cuenta">
+                <header>
+                    <button name="action_open_approve" string="Aprobar (firma PIN)" type="object" class="btn-primary" invisible="state != 'pendiente'"/>
+                    <button name="action_reject" string="Rechazar" type="object" invisible="state != 'pendiente'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="old_acc"/>
+                            <field name="new_acc"/>
+                        </group>
+                        <group>
+                            <field name="requested_by_id"/>
+                            <field name="approved_by_id"/>
+                            <field name="approved_date"/>
+                        </group>
+                    </group>
+                    <field name="reason" placeholder="Motivo del cambio de cuenta..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_bank_change_list" model="ir.ui.view">
+        <field name="name">amunet.bank.change.request.list</field>
+        <field name="model">amunet.bank.change.request</field>
+        <field name="arch" type="xml">
+            <list string="Solicitudes de cambio de cuenta">
+                <field name="employee_id"/>
+                <field name="old_acc"/>
+                <field name="new_acc"/>
+                <field name="requested_by_id"/>
+                <field name="approved_by_id"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_bank_change" model="ir.actions.act_window">
+        <field name="name">Cambios de cuenta bancaria</field>
+        <field name="res_model">amunet.bank.change.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_nomina_control_root" name="Control de Nomina" sequence="90"/>
+    <menuitem id="menu_bank_change" name="Cambios de cuenta bancaria" parent="menu_nomina_control_root" action="action_bank_change"/>
+    <record id="view_salary_change_form" model="ir.ui.view">
+        <field name="name">amunet.salary.change.request.form</field>
+        <field name="model">amunet.salary.change.request</field>
+        <field name="arch" type="xml">
+            <form string="Solicitud de cambio de sueldo">
+                <header>
+                    <button name="action_open_approve" string="Aprobar (firma PIN)" type="object" class="btn-primary" invisible="state != 'pendiente'"/>
+                    <button name="action_reject" string="Rechazar" type="object" invisible="state != 'pendiente'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="old_wage"/>
+                            <field name="new_wage"/>
+                        </group>
+                        <group>
+                            <field name="requested_by_id"/>
+                            <field name="approved_by_id"/>
+                            <field name="approved_date"/>
+                        </group>
+                    </group>
+                    <field name="reason" placeholder="Motivo del cambio de sueldo..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_salary_change_list" model="ir.ui.view">
+        <field name="name">amunet.salary.change.request.list</field>
+        <field name="model">amunet.salary.change.request</field>
+        <field name="arch" type="xml">
+            <list string="Cambios de sueldo">
+                <field name="employee_id"/>
+                <field name="old_wage"/>
+                <field name="new_wage"/>
+                <field name="requested_by_id"/>
+                <field name="approved_by_id"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_salary_change" model="ir.actions.act_window">
+        <field name="name">Cambios de sueldo</field>
+        <field name="res_model">amunet.salary.change.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_salary_change" name="Cambios de sueldo" parent="menu_nomina_control_root" action="action_salary_change" sequence="20"/>
+</odoo>
