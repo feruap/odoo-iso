@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_nc" model="ir.ui.view">
+        <field name="name">hr.employee.form.nomina.control</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_aprobar_nomina" type="object"
+                        string="Aprobar para nomina (firma PIN)" class="btn-primary"
+                        invisible="nomina_aprobado"
+                        groups="amunet_nomina_control.group_nomina_autorizador"/>
+                <field name="nomina_aprobado" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_payslip_run_form_nc" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form.nomina.control</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="payroll.hr_payslip_run_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_validar_nomina" type="object" string="Validar (anti-fraude)"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <group string="Control anti-fraude">
+                    <field name="nomina_alertas" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

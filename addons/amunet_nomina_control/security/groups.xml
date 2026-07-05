@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_nomina_autorizador" model="res.groups">
+        <field name="name">Nomina: Autorizador (2a firma)</field>
+    </record>
+    <record id="group_nomina_captura" model="res.groups">
+        <field name="name">Nomina: Captura (RRHH)</field>
+    </record>
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_bank_change_captura,bank.change.captura,model_amunet_bank_change_request,group_nomina_captura,1,1,1,0
+access_bank_change_autoriza,bank.change.autoriza,model_amunet_bank_change_request,group_nomina_autorizador,1,1,1,1
+access_salary_change_captura,salary.change.captura,model_amunet_salary_change_request,group_nomina_captura,1,1,1,0
+access_salary_change_autoriza,salary.change.autoriza,model_amunet_salary_change_request,group_nomina_autorizador,1,1,1,1
