@@ -131,6 +131,7 @@ class AmunetProcessInspection(models.Model):
         selection=[
             ('draft', 'Borrador'),
             ('signed', 'Firmada'),
+            ('cancel', 'Cancelada'),
         ],
         string='Estado', default='draft', required=True, tracking=True,
         copy=False,
@@ -259,6 +260,20 @@ class AmunetProcessInspection(models.Model):
                 rec.message_post(body=_(
                     'Inspeccion firmada por %(u)s.'
                 ) % {'u': self.env.user.display_name})
+        return True
+
+    def action_amunet_cancel_unsigned(self):
+        """Cancela en cascada las inspecciones/supervisiones NO firmadas
+        (estado borrador). Se usa cuando se cancela la orden de produccion:
+        los controles que aun no se firmaron pasan a 'Cancelada'. Los
+        firmados se conservan como evidencia (ISO 13485 4.2.5)."""
+        drafts = self.filtered(lambda i: i.state == 'draft')
+        if drafts:
+            drafts.with_context(amunet_process_signature_write=True).write(
+                {'state': 'cancel'})
+            for rec in drafts:
+                rec.message_post(body=_(
+                    'Control cancelado: la orden de produccion fue cancelada.'))
         return True
 
     def write(self, vals):

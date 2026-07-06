@@ -126,7 +126,7 @@ class MrpProduction(models.Model):
             pendientes = mo.workorder_ids.filtered(
                 lambda w: w.state not in ('done', 'cancel'))
             sin_firmar = mo.process_inspection_ids.filtered(
-                lambda i: i.state != 'signed')
+                lambda i: i.state not in ('signed', 'cancel'))
             if not pendientes and not sin_firmar:
                 continue
             msg = _('No se puede cerrar la orden %s todavia:') % mo.name
@@ -153,7 +153,8 @@ class MrpProduction(models.Model):
         return super().button_mark_done()
 
     # ============================
-    # Override action_confirm: gate preflight + generar inspecciones
+    # Override action_confirm: gate preflight
+    # (las inspecciones YA NO se generan al confirmar; ver button_plan)
     # ============================
     def action_confirm(self):
         for rec in self:
@@ -165,10 +166,29 @@ class MrpProduction(models.Model):
                         'Crea o ejecuta un preflight ANTES de confirmar '
                         'esta orden (Manufactura > Preflight piloto).'
                     ) % rec.name)
-        res = super().action_confirm()
-        # 3. Generar inspecciones de proceso basadas en el routing
+        return super().action_confirm()
+
+    # ============================
+    # Override button_plan: generar inspecciones al PLANIFICAR.
+    # Planificar es el candado que declara "esta orden si se va a
+    # producir". Una orden solo confirmada NO genera controles.
+    # ============================
+    def button_plan(self):
+        res = super().button_plan()
         for rec in self:
             rec._generate_process_inspections()
+        return res
+
+    # ============================
+    # Override action_cancel: cancelar en cascada los controles NO
+    # firmados. Al cancelar la orden, sus inspecciones/supervisiones que
+    # aun estan en borrador pasan a 'Cancelada'; las firmadas se conservan.
+    # ============================
+    def action_cancel(self):
+        res = super().action_cancel()
+        for rec in self:
+            if rec.process_inspection_ids:
+                rec.process_inspection_ids.sudo().action_amunet_cancel_unsigned()
         return res
 
     def _generate_process_inspections(self):
