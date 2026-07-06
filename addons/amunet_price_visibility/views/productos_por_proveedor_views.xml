@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Vista fija "Productos por proveedor".
+        Lista los productos que surte cada proveedor con la clave Amunet
+        (default_code del producto) y la clave del proveedor (product_code).
+        El PRECIO solo se muestra al grupo group_price_viewer (Fernando);
+        para los demas la columna no existe (patron de grupos estricto).
+    -->
+    <record id="view_productos_por_proveedor_list" model="ir.ui.view">
+        <field name="name">product.supplierinfo.por.proveedor.list</field>
+        <field name="model">product.supplierinfo</field>
+        <field name="arch" type="xml">
+            <list string="Productos por proveedor" create="0" edit="0" delete="0">
+                <field name="partner_id" string="Proveedor"/>
+                <field name="product_tmpl_id" string="Producto (clave Amunet)"/>
+                <field name="product_code" string="Clave del proveedor"/>
+                <field name="product_name" string="Nombre en el proveedor" optional="show"/>
+                <field name="min_qty" string="Cant. minima" optional="hide"/>
+                <field name="delay" string="Dias de entrega" optional="hide"/>
+                <field name="price" string="Precio"
+                       groups="amunet_price_visibility.group_price_viewer"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_productos_por_proveedor_search" model="ir.ui.view">
+        <field name="name">product.supplierinfo.por.proveedor.search</field>
+        <field name="model">product.supplierinfo</field>
+        <field name="arch" type="xml">
+            <search string="Productos por proveedor">
+                <field name="partner_id" string="Proveedor"/>
+                <field name="product_tmpl_id" string="Producto"/>
+                <field name="product_code" string="Clave del proveedor"/>
+                <field name="product_name" string="Nombre en el proveedor"/>
+                <separator/>
+                <filter name="group_proveedor" string="Proveedor"
+                        context="{'group_by': 'partner_id'}"/>
+                <filter name="group_producto" string="Producto"
+                        context="{'group_by': 'product_tmpl_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_productos_por_proveedor" model="ir.actions.act_window">
+        <field name="name">Productos por proveedor</field>
+        <field name="res_model">product.supplierinfo</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_productos_por_proveedor_list"/>
+        <field name="search_view_id" ref="view_productos_por_proveedor_search"/>
+        <field name="context">{'search_default_group_proveedor': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aun no hay productos ligados a proveedores.</p>
+            <p>Aqui ves que productos surte cada proveedor, con la clave Amunet y la clave del proveedor.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_productos_por_proveedor"
+        name="Productos por proveedor"
+        action="action_productos_por_proveedor"
+        parent="purchase.menu_purchase_root"
+        sequence="25"/>
+</odoo>

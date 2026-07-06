@@ -30,7 +30,7 @@ puede mostrar, exportar ni filtrar.
     """,
     'author': 'Amunet',
     'category': 'Hidden',
-    'version': '19.0.4.0.0',
+    'version': '19.0.5.0.0',
     'depends': [
         'product',
         'purchase',
@@ -51,6 +51,7 @@ puede mostrar, exportar ni filtrar.
         'views/mrp_views.xml',
         'views/account_views.xml',
         'views/menu_security.xml',
+        'views/productos_por_proveedor_views.xml',
         'reports/purchase_report_qweb.xml',
         'reports/invoice_report_qweb.xml',
     ],
