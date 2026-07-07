@@ -1,53 +1,48 @@
 from odoo import models, fields, api
 
-CATEGORIAS = [
-    ('lfia', 'LFIA'),
-    ('nalf', 'NALF'),
-    ('equipos', 'EQUIPOS'),
-]
-
-SUBCAT_LFIA = [
-    ('sangre', 'Sangre total-capilar'),
-    ('suero', 'Suero o plasma'),
-    ('nasofaringea', 'Nasofaríngea'),
-    ('heces', 'Heces'),
-    ('orofaringea', 'Orofaríngea'),
-    ('saliva', 'Saliva'),
-]
-
-ESTADOS = [
-    ('borrador', 'Borrador'),
-    ('en_revision', 'En revisión'),
-    ('aprobado', 'Aprobado'),
-]
-
 
 class DocCompartida(models.Model):
     _name = 'amunet.doc.compartida'
     _description = 'Documentación Compartida'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'fecha desc, name'
+    _order = 'create_date desc'
 
-    name = fields.Char(string='Título', required=True, tracking=True)
+    # ── Columna 1: Manual ────────────────────────────────────
+    name = fields.Char(string='Manual', required=True, tracking=True)
     carpeta_id = fields.Many2one('amunet.doc.carpeta', string='Carpeta', tracking=True)
-    categoria = fields.Selection(CATEGORIAS, string='Apartado', required=True, tracking=True)
-    subcategoria_lfia = fields.Selection(SUBCAT_LFIA, string='Matriz / Muestra', tracking=True)
-    state = fields.Selection(ESTADOS, string='Estado', default='borrador',
-                             required=True, tracking=True)
-    version = fields.Char(string='Versión', default='1.0')
-    fecha = fields.Date(string='Fecha', default=fields.Date.today)
-    responsable_validacion_id = fields.Many2one(
-        'res.users', string='Responsable Validación', tracking=True)
-    responsable_calidad_id = fields.Many2one(
-        'res.users', string='Responsable Calidad', tracking=True)
-    descripcion = fields.Html(string='Descripción / Contenido')
-    notas = fields.Text(string='Notas internas')
+    manual_file = fields.Binary(string='Archivo DOCX', attachment=True)
+    manual_filename = fields.Char(string='Nombre del archivo')
 
-    def action_en_revision(self):
-        self.write({'state': 'en_revision'})
+    # ── Columna 2: Revisión Calidad (3 criterios) ────────────
+    rev_materiales = fields.Selection(
+        [('ok', '✓'), ('fail', '✗')],
+        string='Materiales', tracking=True)
+    rev_volumenes = fields.Selection(
+        [('ok', '✓'), ('fail', '✗')],
+        string='Volúmenes de reactivos', tracking=True)
+    rev_tiempos = fields.Selection(
+        [('ok', '✓'), ('fail', '✗')],
+        string='Tiempos de interpretación', tracking=True)
 
-    def action_aprobar(self):
-        self.write({'state': 'aprobado'})
+    # ── Columna 3: Observaciones ─────────────────────────────
+    obs_requeridas = fields.Boolean(compute='_compute_estado', store=True)
+    observaciones = fields.Text(string='Observaciones', tracking=True)
 
-    def action_borrador(self):
-        self.write({'state': 'borrador'})
+    # ── Columna 4: Estatus ────────────────────────────────────
+    state = fields.Selection(
+        [('aprobado', 'APROBADO'), ('pendiente', 'PENDIENTE')],
+        string='Estatus', default='pendiente',
+        compute='_compute_estado', store=True, tracking=True)
+
+    @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos')
+    def _compute_estado(self):
+        for rec in self:
+            reviews = [rec.rev_materiales, rec.rev_volumenes, rec.rev_tiempos]
+            all_ok = all(r == 'ok' for r in reviews)
+            any_fail = any(r == 'fail' for r in reviews)
+
+            rec.state = 'aprobado' if all_ok else 'pendiente'
+            rec.obs_requeridas = any_fail
+            # Si todas están aprobadas, limpia observaciones y pone "Ninguna"
+            if all_ok and not rec.observaciones:
+                rec.observaciones = 'Ninguna'

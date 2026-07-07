@@ -6,21 +6,48 @@
         <field name="name">amunet.doc.compartida.list</field>
         <field name="model">amunet.doc.compartida</field>
         <field name="arch" type="xml">
-            <list string="Documentación Compartida" decoration-success="state == 'aprobado'"
-                  decoration-warning="state == 'en_revision'" decoration-muted="state == 'borrador'">
-                <field name="name" string="Título"/>
-                <field name="categoria" string="Apartado" optional="hide"/>
-                <field name="subcategoria_lfia" string="Matriz / Muestra" optional="show"
-                       invisible="categoria != 'lfia'"/>
-                <field name="version" string="Versión"/>
-                <field name="fecha" string="Fecha"/>
-                <field name="responsable_validacion_id" string="Responsable Validación"/>
-                <field name="responsable_calidad_id" string="Responsable Calidad"/>
-                <field name="state" string="Estado"
+            <list string="Documentos"
+                  decoration-success="state == 'aprobado'"
+                  decoration-warning="state == 'pendiente'"
+                  editable="bottom">
+
+                <!-- Campo auxiliar para readonly condicional -->
+                <field name="obs_requeridas" column_invisible="1"/>
+
+                <!-- ── MANUAL ── -->
+                <field name="name" string="Manual" optional="show"/>
+                <field name="manual_file" string="CARGAR DOCX"
+                       filename="manual_filename" widget="binary" optional="show"/>
+                <field name="manual_filename" column_invisible="1"/>
+
+                <!-- ── REVISIÓN CALIDAD ── -->
+                <field name="rev_materiales" string="Materiales"
+                       widget="badge"
+                       decoration-success="rev_materiales == 'ok'"
+                       decoration-danger="rev_materiales == 'fail'"
+                       optional="show"/>
+                <field name="rev_volumenes" string="Vol. de reactivos"
+                       widget="badge"
+                       decoration-success="rev_volumenes == 'ok'"
+                       decoration-danger="rev_volumenes == 'fail'"
+                       optional="show"/>
+                <field name="rev_tiempos" string="Tiempos de interpret."
+                       widget="badge"
+                       decoration-success="rev_tiempos == 'ok'"
+                       decoration-danger="rev_tiempos == 'fail'"
+                       optional="show"/>
+
+                <!-- ── OBSERVACIONES ── -->
+                <field name="observaciones" string="Observaciones"
+                       readonly="not obs_requeridas"
+                       optional="show"/>
+
+                <!-- ── ESTATUS ── -->
+                <field name="state" string="Estatus"
+                       widget="badge"
                        decoration-success="state == 'aprobado'"
-                       decoration-warning="state == 'en_revision'"
-                       decoration-muted="state == 'borrador'"
-                       widget="badge"/>
+                       decoration-warning="state == 'pendiente'"
+                       optional="show"/>
             </list>
         </field>
     </record>
@@ -30,47 +57,54 @@
         <field name="name">amunet.doc.compartida.form</field>
         <field name="model">amunet.doc.compartida</field>
         <field name="arch" type="xml">
-            <form string="Documentación Compartida">
+            <form string="Manual">
                 <header>
-                    <button name="action_en_revision" string="Enviar a revisión"
-                            type="object" class="btn-primary"
-                            invisible="state != 'borrador'"/>
-                    <button name="action_aprobar" string="Aprobar"
-                            type="object" class="btn-primary"
-                            invisible="state != 'en_revision'"/>
-                    <button name="action_borrador" string="Regresar a borrador"
-                            type="object"
-                            invisible="state == 'borrador'"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="borrador,en_revision,aprobado"/>
+                           statusbar_visible="pendiente,aprobado"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <h1>
-                            <field name="name" placeholder="Título del documento o actividad…"/>
+                            <field name="name" placeholder="Nombre del manual…"/>
                         </h1>
                     </div>
-                    <group>
-                        <group string="Identificación">
-                            <field name="categoria"/>
-                            <field name="subcategoria_lfia" invisible="categoria != 'lfia'"/>
-                            <field name="version"/>
-                            <field name="fecha"/>
+
+                    <!-- ── Sección: Manual ── -->
+                    <group string="Manual">
+                        <group>
+                            <field name="carpeta_id" readonly="1"/>
                         </group>
-                        <group string="Responsables">
-                            <field name="responsable_validacion_id"/>
-                            <field name="responsable_calidad_id"/>
+                        <group>
+                            <field name="manual_file" string="CARGAR DOCX"
+                                   filename="manual_filename" widget="binary"/>
+                            <field name="manual_filename" invisible="1"/>
                         </group>
                     </group>
-                    <notebook>
-                        <page string="Descripción / Contenido">
-                            <field name="descripcion" widget="html"
-                                   placeholder="Escribe aquí el contenido, instrucciones o descripción del manual…"/>
-                        </page>
-                        <page string="Notas internas">
-                            <field name="notas" placeholder="Notas, comentarios o acuerdos internos…"/>
-                        </page>
-                    </notebook>
+
+                    <!-- ── Sección: Revisión Calidad ── -->
+                    <group string="Revisión Calidad">
+                        <group>
+                            <field name="rev_materiales" widget="radio"/>
+                            <field name="rev_volumenes" widget="radio"/>
+                            <field name="rev_tiempos" widget="radio"/>
+                        </group>
+                        <group>
+                            <!-- Indicador visual del resultado global -->
+                            <field name="state" readonly="1" widget="badge"
+                                   decoration-success="state == 'aprobado'"
+                                   decoration-warning="state == 'pendiente'"
+                                   string="Resultado"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Sección: Observaciones ── -->
+                    <group string="Observaciones">
+                        <field name="obs_requeridas" invisible="1"/>
+                        <field name="observaciones"
+                               nolabel="1"
+                               placeholder="Ninguna"
+                               readonly="not obs_requeridas"/>
+                    </group>
                 </sheet>
                 <chatter/>
             </form>
@@ -82,113 +116,25 @@
         <field name="name">amunet.doc.compartida.search</field>
         <field name="model">amunet.doc.compartida</field>
         <field name="arch" type="xml">
-            <search string="Buscar documentos">
-                <field name="name" string="Título"/>
-                <field name="responsable_validacion_id"/>
-                <field name="responsable_calidad_id"/>
-                <filter name="borrador" string="Borrador" domain="[('state','=','borrador')]"/>
-                <filter name="en_revision" string="En revisión" domain="[('state','=','en_revision')]"/>
-                <filter name="aprobado" string="Aprobado" domain="[('state','=','aprobado')]"/>
-                <separator/>
-                <filter name="lfia" string="LFIA" domain="[('categoria','=','lfia')]"/>
-                <filter name="nalf" string="NALF" domain="[('categoria','=','nalf')]"/>
-                <filter name="equipos" string="EQUIPOS" domain="[('categoria','=','equipos')]"/>
-                <filter name="group_categoria" string="Por apartado"
-                        context="{'group_by': 'categoria'}"/>
-                <filter name="group_state" string="Por estado"
+            <search string="Buscar manuales">
+                <field name="name" string="Manual"/>
+                <filter name="aprobado" string="Aprobados"
+                        domain="[('state','=','aprobado')]"/>
+                <filter name="pendiente" string="Pendientes"
+                        domain="[('state','=','pendiente')]"/>
+                <filter name="con_observaciones" string="Con observaciones"
+                        domain="[('obs_requeridas','=',True)]"/>
+                <filter name="group_state" string="Por estatus"
                         context="{'group_by': 'state'}"/>
             </search>
         </field>
     </record>
 
-    <!-- ── ACCIONES: APARTADOS PRINCIPALES ──────────────────── -->
-    <record id="action_doc_compartida_lfia" model="ir.actions.act_window">
-        <field name="name">LFIA — Todo</field>
-        <field name="res_model">amunet.doc.compartida</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('categoria', '=', 'lfia')]</field>
-        <field name="context">{'default_categoria': 'lfia'}</field>
-        <field name="view_id" ref="view_doc_compartida_list"/>
-    </record>
-
-    <record id="action_doc_compartida_nalf" model="ir.actions.act_window">
-        <field name="name">NALF</field>
-        <field name="res_model">amunet.doc.compartida</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('categoria', '=', 'nalf')]</field>
-        <field name="context">{'default_categoria': 'nalf'}</field>
-        <field name="view_id" ref="view_doc_compartida_list"/>
-    </record>
-
-    <record id="action_doc_compartida_equipos" model="ir.actions.act_window">
-        <field name="name">EQUIPOS</field>
-        <field name="res_model">amunet.doc.compartida</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('categoria', '=', 'equipos')]</field>
-        <field name="context">{'default_categoria': 'equipos'}</field>
-        <field name="view_id" ref="view_doc_compartida_list"/>
-    </record>
-
-    <!-- Acción general -->
+    <!-- ── ACCIÓN GENERAL ────────────────────────────────────── -->
     <record id="action_doc_compartida_all" model="ir.actions.act_window">
         <field name="name">Documentación Compartida</field>
         <field name="res_model">amunet.doc.compartida</field>
         <field name="view_mode">list,form</field>
-        <field name="view_id" ref="view_doc_compartida_list"/>
-    </record>
-
-    <!-- ── ACCIONES: SUBMATRICES LFIA ───────────────────────── -->
-    <record id="action_lfia_sangre" model="ir.actions.act_window">
-        <field name="name">Sangre total-capilar</field>
-        <field name="res_model">amunet.doc.compartida</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','sangre')]</field>
-        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'sangre'}</field>
-        <field name="view_id" ref="view_doc_compartida_list"/>
-    </record>
-
-    <record id="action_lfia_suero" model="ir.actions.act_window">
-        <field name="name">Suero o plasma</field>
-        <field name="res_model">amunet.doc.compartida</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','suero')]</field>
-        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'suero'}</field>
-        <field name="view_id" ref="view_doc_compartida_list"/>
-    </record>
-
-    <record id="action_lfia_nasofaringea" model="ir.actions.act_window">
-        <field name="name">Nasofaríngea</field>
-        <field name="res_model">amunet.doc.compartida</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','nasofaringea')]</field>
-        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'nasofaringea'}</field>
-        <field name="view_id" ref="view_doc_compartida_list"/>
-    </record>
-
-    <record id="action_lfia_heces" model="ir.actions.act_window">
-        <field name="name">Heces</field>
-        <field name="res_model">amunet.doc.compartida</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','heces')]</field>
-        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'heces'}</field>
-        <field name="view_id" ref="view_doc_compartida_list"/>
-    </record>
-
-    <record id="action_lfia_orofaringea" model="ir.actions.act_window">
-        <field name="name">Orofaríngea</field>
-        <field name="res_model">amunet.doc.compartida</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','orofaringea')]</field>
-        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'orofaringea'}</field>
-        <field name="view_id" ref="view_doc_compartida_list"/>
-    </record>
-
-    <record id="action_lfia_saliva" model="ir.actions.act_window">
-        <field name="name">Saliva</field>
-        <field name="res_model">amunet.doc.compartida</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','saliva')]</field>
-        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'saliva'}</field>
         <field name="view_id" ref="view_doc_compartida_list"/>
     </record>
 
