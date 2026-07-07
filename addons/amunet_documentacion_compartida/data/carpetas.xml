@@ -19,7 +19,7 @@
 
     <!-- Sub-carpetas de LFIA (matrices / tipos de muestra) -->
     <record id="carpeta_lfia_sangre" model="amunet.doc.carpeta">
-        <field name="name">Sangre total-capilar</field>
+        <field name="name">Sangre total-capilar, suero o plasma</field>
         <field name="parent_id" ref="carpeta_lfia"/>
         <field name="sequence">10</field>
     </record>
