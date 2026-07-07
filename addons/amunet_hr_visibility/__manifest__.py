@@ -27,9 +27,12 @@ y todos los empleados internos veran la app de Empleados nuevamente.
         'payroll',
     ],
     'data': [
+        'security/ir.model.access.csv',
         'data/menu_visibility.xml',
         'views/hr_employee_bank_views.xml',
         'views/hr_payslip_input_views.xml',
+        'views/hr_payslip_run_views.xml',
+        'views/dispersion_wizard_views.xml',
     ],
     'installable': True,
     'application': False,

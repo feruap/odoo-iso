@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_payslip_run_form_dispersion_btn" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form.dispersion.btn</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="payroll.hr_payslip_run_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[1]" position="before">
+                <button name="action_generar_dispersion"
+                        type="object"
+                        string="Generar dispersión"
+                        class="oe_highlight"
+                        invisible="state == 'close'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
