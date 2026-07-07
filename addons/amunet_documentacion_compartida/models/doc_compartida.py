@@ -15,13 +15,13 @@ class DocCompartida(models.Model):
 
     # ── Columna 2: Revisión Calidad (3 criterios) ────────────
     rev_materiales = fields.Selection(
-        [('ok', '✓'), ('fail', '✗')],
+        [('ok', '✓ Correcto'), ('fail', '✗ Incorrecto')],
         string='Materiales', tracking=True)
     rev_volumenes = fields.Selection(
-        [('ok', '✓'), ('fail', '✗')],
+        [('ok', '✓ Correcto'), ('fail', '✗ Incorrecto')],
         string='Volúmenes de reactivos', tracking=True)
     rev_tiempos = fields.Selection(
-        [('ok', '✓'), ('fail', '✗')],
+        [('ok', '✓ Correcto'), ('fail', '✗ Incorrecto')],
         string='Tiempos de interpretación', tracking=True)
 
     # ── Columna 3: Observaciones ─────────────────────────────
