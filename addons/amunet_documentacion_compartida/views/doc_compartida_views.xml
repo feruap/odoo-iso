@@ -22,17 +22,14 @@
 
                 <!-- ── REVISIÓN CALIDAD ── -->
                 <field name="rev_materiales" string="Materiales"
-                       widget="badge"
                        decoration-success="rev_materiales == 'ok'"
                        decoration-danger="rev_materiales == 'fail'"
                        optional="show"/>
                 <field name="rev_volumenes" string="Vol. de reactivos"
-                       widget="badge"
                        decoration-success="rev_volumenes == 'ok'"
                        decoration-danger="rev_volumenes == 'fail'"
                        optional="show"/>
                 <field name="rev_tiempos" string="Tiempos de interpret."
-                       widget="badge"
                        decoration-success="rev_tiempos == 'ok'"
                        decoration-danger="rev_tiempos == 'fail'"
                        optional="show"/>
