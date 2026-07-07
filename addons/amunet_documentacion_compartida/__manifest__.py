@@ -1,0 +1,17 @@
+{
+    'name': 'Documentación Compartida (Amunet)',
+    'version': '19.0.1.0.0',
+    'category': 'Quality',
+    'summary': 'Gestión de manuales y actividades documentales compartidas entre Validación y Calidad',
+    'author': 'Amunet',
+    'website': 'https://www.amunet.com',
+    'depends': ['base', 'mail'],
+    'data': [
+        'security/ir.model.access.csv',
+        'views/doc_compartida_views.xml',
+        'views/menus.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'license': 'LGPL-3',
+}

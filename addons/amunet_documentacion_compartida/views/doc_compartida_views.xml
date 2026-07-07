@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── VISTA LISTA ──────────────────────────────────────── -->
+    <record id="view_doc_compartida_list" model="ir.ui.view">
+        <field name="name">amunet.doc.compartida.list</field>
+        <field name="model">amunet.doc.compartida</field>
+        <field name="arch" type="xml">
+            <list string="Documentación Compartida" decoration-success="state == 'aprobado'"
+                  decoration-warning="state == 'en_revision'" decoration-muted="state == 'borrador'">
+                <field name="name" string="Título"/>
+                <field name="categoria" string="Apartado"/>
+                <field name="version" string="Versión"/>
+                <field name="fecha" string="Fecha"/>
+                <field name="responsable_validacion_id" string="Responsable Validación"/>
+                <field name="responsable_calidad_id" string="Responsable Calidad"/>
+                <field name="state" string="Estado"
+                       decoration-success="state == 'aprobado'"
+                       decoration-warning="state == 'en_revision'"
+                       decoration-muted="state == 'borrador'"
+                       widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── VISTA FORMULARIO ─────────────────────────────────── -->
+    <record id="view_doc_compartida_form" model="ir.ui.view">
+        <field name="name">amunet.doc.compartida.form</field>
+        <field name="model">amunet.doc.compartida</field>
+        <field name="arch" type="xml">
+            <form string="Documentación Compartida">
+                <header>
+                    <button name="action_en_revision" string="Enviar a revisión"
+                            type="object" class="btn-primary"
+                            invisible="state != 'borrador'"/>
+                    <button name="action_aprobar" string="Aprobar"
+                            type="object" class="btn-primary"
+                            invisible="state != 'en_revision'"/>
+                    <button name="action_borrador" string="Regresar a borrador"
+                            type="object"
+                            invisible="state == 'borrador'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,en_revision,aprobado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Título del documento o actividad…"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Identificación">
+                            <field name="categoria"/>
+                            <field name="version"/>
+                            <field name="fecha"/>
+                        </group>
+                        <group string="Responsables">
+                            <field name="responsable_validacion_id"/>
+                            <field name="responsable_calidad_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Descripción / Contenido">
+                            <field name="descripcion" widget="html"
+                                   placeholder="Escribe aquí el contenido, instrucciones o descripción del manual…"/>
+                        </page>
+                        <page string="Notas internas">
+                            <field name="notas" placeholder="Notas, comentarios o acuerdos internos…"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── VISTA BÚSQUEDA ───────────────────────────────────── -->
+    <record id="view_doc_compartida_search" model="ir.ui.view">
+        <field name="name">amunet.doc.compartida.search</field>
+        <field name="model">amunet.doc.compartida</field>
+        <field name="arch" type="xml">
+            <search string="Buscar documentos">
+                <field name="name" string="Título"/>
+                <field name="responsable_validacion_id"/>
+                <field name="responsable_calidad_id"/>
+                <filter name="borrador" string="Borrador" domain="[('state','=','borrador')]"/>
+                <filter name="en_revision" string="En revisión" domain="[('state','=','en_revision')]"/>
+                <filter name="aprobado" string="Aprobado" domain="[('state','=','aprobado')]"/>
+                <separator/>
+                <filter name="lfia" string="LFIA" domain="[('categoria','=','lfia')]"/>
+                <filter name="nalf" string="NALF" domain="[('categoria','=','nalf')]"/>
+                <filter name="equipos" string="EQUIPOS" domain="[('categoria','=','equipos')]"/>
+                <filter name="group_categoria" string="Por apartado"
+                        context="{'group_by': 'categoria'}"/>
+                <filter name="group_state" string="Por estado"
+                        context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── ACCIONES POR APARTADO ────────────────────────────── -->
+    <record id="action_doc_compartida_lfia" model="ir.actions.act_window">
+        <field name="name">LFIA</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('categoria', '=', 'lfia')]</field>
+        <field name="context">{'default_categoria': 'lfia'}</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+    <record id="action_doc_compartida_nalf" model="ir.actions.act_window">
+        <field name="name">NALF</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('categoria', '=', 'nalf')]</field>
+        <field name="context">{'default_categoria': 'nalf'}</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+    <record id="action_doc_compartida_equipos" model="ir.actions.act_window">
+        <field name="name">EQUIPOS</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('categoria', '=', 'equipos')]</field>
+        <field name="context">{'default_categoria': 'equipos'}</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+    <!-- Acción general (todos los apartados) -->
+    <record id="action_doc_compartida_all" model="ir.actions.act_window">
+        <field name="name">Documentación Compartida</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+</odoo>

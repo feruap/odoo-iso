@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Aplicación raíz -->
+    <menuitem id="menu_doc_compartida_root"
+              name="Documentación Compartida"
+              action="action_doc_compartida_all"
+              sequence="95"/>
+
+    <!-- Apartados -->
+    <menuitem id="menu_doc_compartida_lfia"
+              name="LFIA"
+              parent="menu_doc_compartida_root"
+              action="action_doc_compartida_lfia"
+              sequence="10"/>
+
+    <menuitem id="menu_doc_compartida_nalf"
+              name="NALF"
+              parent="menu_doc_compartida_root"
+              action="action_doc_compartida_nalf"
+              sequence="20"/>
+
+    <menuitem id="menu_doc_compartida_equipos"
+              name="EQUIPOS"
+              parent="menu_doc_compartida_root"
+              action="action_doc_compartida_equipos"
+              sequence="30"/>
+
+</odoo>
