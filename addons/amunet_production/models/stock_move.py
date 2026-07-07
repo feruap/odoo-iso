@@ -36,6 +36,31 @@ class StockMove(models.Model):
                 lots = quants.lot_id
             move.amunet_available_lot_ids = lots
 
+    # Lista legible de TODOS los lotes realmente reservados/consumidos
+    # para este componente, tomados de las operaciones detalladas
+    # (move_line_ids), con su cantidad. Complementa a 'amunet_lot_id'
+    # (Lote surtido), que solo puede mostrar UN lote: cuando la reserva
+    # nativa toma mas de un lote, aqui se ven todos a primera vista.
+    amunet_lotes_reales = fields.Text(
+        string='Lotes surtidos (reales)',
+        compute='_compute_amunet_lotes_reales',
+        help='Todos los lotes realmente tomados para este componente, con '
+             'su cantidad, segun las operaciones detalladas. Un lote por '
+             'renglon (apilados hacia abajo). Si se usa mas de un lote, '
+             'aqui aparecen todos.',
+    )
+
+    @api.depends('move_line_ids.lot_id', 'move_line_ids.quantity')
+    def _compute_amunet_lotes_reales(self):
+        for move in self:
+            partes = []
+            for ml in move.move_line_ids:
+                if ml.lot_id and (ml.quantity or 0.0) > 0:
+                    partes.append('%s (%s)' % (
+                        ml.lot_id.name, ('%g' % ml.quantity)))
+            # Un lote por renglon (apilados hacia abajo, no en linea).
+            move.amunet_lotes_reales = '\n'.join(partes)
+
     # Cantidad que el almacen registra al surtir. Es distinta a
     # 'quantity' (cantidad utilizada/consumida nativa Odoo): esta la
     # captura almacen al entregar, 'quantity' la concilia produccion al
