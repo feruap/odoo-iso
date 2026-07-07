@@ -888,6 +888,29 @@ class MrpProduction(models.Model):
                     ) % {'mo': mo.name, 'f': mo._fields[f].string})
 
     def write(self, vals):
+        # El formulario (sobre todo movil) reenvia date_start con la hora
+        # truncada a medianoche al guardar. Si la FECHA no cambia, no es un
+        # cambio real: lo descartamos ANTES de escribir para no disparar el
+        # candado de informacion general NI el error nativo de Odoo
+        # ("cannot unplan... work orders already started") al surtir lotes
+        # en una orden ya planificada.
+        if ('date_start' in vals and vals.get('date_start')
+                and not self.env.su):
+            import pytz
+            tz = pytz.timezone(self.env.user.tz or 'UTC')
+            new_dt = fields.Datetime.to_datetime(vals['date_start'])
+            new_local = (new_dt.replace(tzinfo=pytz.utc).astimezone(tz).date()
+                         if new_dt else False)
+
+            def _same_date(rec):
+                if not rec.date_start:
+                    return False
+                return rec.date_start.replace(
+                    tzinfo=pytz.utc).astimezone(tz).date() == new_local
+
+            if self and all(_same_date(rec) for rec in self):
+                vals = dict(vals)
+                vals.pop('date_start')
         self._amunet_check_general_info_lock(vals)
         res = super().write(vals)
         if 'product_id' in vals:
