@@ -34,6 +34,22 @@ class DocCompartida(models.Model):
         string='Estatus', default='pendiente',
         compute='_compute_estado', store=True, tracking=True)
 
+    # ── Columna 5: Revisado por ───────────────────────────────
+    revisado_por_id = fields.Many2one('res.users', string='Revisor', readonly=True)
+    fecha_revision = fields.Datetime(string='Fecha de revisión', readonly=True)
+    revisado_display = fields.Char(
+        string='Revisado por', compute='_compute_revisado_display', store=False)
+
+    @api.depends('revisado_por_id', 'fecha_revision')
+    def _compute_revisado_display(self):
+        for rec in self:
+            if rec.revisado_por_id and rec.fecha_revision:
+                fecha = fields.Datetime.context_timestamp(
+                    rec, rec.fecha_revision).strftime('%d/%m/%Y %H:%M')
+                rec.revisado_display = f"{rec.revisado_por_id.name} · {fecha}"
+            else:
+                rec.revisado_display = ''
+
     @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos')
     def _compute_estado(self):
         for rec in self:
@@ -43,6 +59,12 @@ class DocCompartida(models.Model):
 
             rec.state = 'aprobado' if all_ok else 'pendiente'
             rec.obs_requeridas = any_fail
-            # Si todas están aprobadas, limpia observaciones y pone "Ninguna"
             if all_ok and not rec.observaciones:
                 rec.observaciones = 'Ninguna'
+
+    def write(self, vals):
+        campos_revision = {'rev_materiales', 'rev_volumenes', 'rev_tiempos'}
+        if campos_revision & set(vals):
+            vals['revisado_por_id'] = self.env.user.id
+            vals['fecha_revision'] = fields.Datetime.now()
+        return super().write(vals)

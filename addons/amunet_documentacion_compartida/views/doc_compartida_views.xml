@@ -45,6 +45,10 @@
                        decoration-success="state == 'aprobado'"
                        decoration-warning="state == 'pendiente'"
                        optional="show"/>
+
+                <!-- ── REVISADO POR ── -->
+                <field name="revisado_display" string="Revisado por"
+                       readonly="1" optional="show"/>
             </list>
         </field>
     </record>
@@ -86,11 +90,12 @@
                             <field name="rev_tiempos" widget="radio"/>
                         </group>
                         <group>
-                            <!-- Indicador visual del resultado global -->
                             <field name="state" readonly="1" widget="badge"
                                    decoration-success="state == 'aprobado'"
                                    decoration-warning="state == 'pendiente'"
                                    string="Resultado"/>
+                            <field name="revisado_por_id" readonly="1" string="Revisor (Calidad)"/>
+                            <field name="fecha_revision" readonly="1" string="Fecha y hora"/>
                         </group>
                     </group>
 
