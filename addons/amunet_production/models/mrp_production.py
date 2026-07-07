@@ -847,8 +847,24 @@ class MrpProduction(models.Model):
         old = self[field_name]
         if field.type == 'many2one':
             return (old.id or False) != (new_value or False)
-        if field.type in ('date', 'datetime'):
+        if field.type == 'date':
             return str(old or '') != str(new_value or '')
+        if field.type == 'datetime':
+            # Lo unico que el usuario edita del calendario es la FECHA (el
+            # campo visible 'Fecha Programada' es solo fecha, sin hora). El
+            # formulario (sobre todo en movil) reenvia date_start con la hora
+            # truncada a medianoche; eso NO es un cambio real. Comparamos
+            # solo la FECHA en la zona horaria del usuario para no bloquear
+            # a Almacen al surtir lotes en una orden ya planificada.
+            import pytz
+            tz = pytz.timezone(self.env.user.tz or 'UTC')
+
+            def _local_date(v):
+                dt = fields.Datetime.to_datetime(v)
+                if not dt:
+                    return False
+                return dt.replace(tzinfo=pytz.utc).astimezone(tz).date()
+            return _local_date(old) != _local_date(new_value)
         return old != new_value
 
     def _amunet_check_general_info_lock(self, vals):
