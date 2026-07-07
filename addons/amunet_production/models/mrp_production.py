@@ -688,8 +688,26 @@ class MrpProduction(models.Model):
                 continue
             try:
                 user_tz = self.env.user.tz or 'UTC'
-                local_dt = datetime.strptime(val, '%d.%m.%y')
-                local_dt = pytz.timezone(user_tz).localize(local_dt)
+                tz = pytz.timezone(user_tz)
+                new_date = datetime.strptime(val, '%d.%m.%y').date()
+                # No reescribir date_start si la fecha mostrada NO cambio.
+                # El display solo trae fecha (sin hora); reconstruir a
+                # medianoche cambiaria date_start en cada guardado y
+                # dispararia el candado de "informacion general" (y el
+                # error nativo de desplanificar). Al guardar poniendo
+                # lotes, la fecha no cambia -> aqui salimos sin tocar nada.
+                if rec.date_start:
+                    orig_local = rec.date_start.replace(
+                        tzinfo=pytz.utc).astimezone(tz)
+                    if orig_local.date() == new_date:
+                        continue
+                    # La fecha SI cambio (Mery la edito): conservar la
+                    # hora original en vez de mandarla a medianoche.
+                    local_dt = tz.localize(
+                        datetime.combine(new_date, orig_local.time()))
+                else:
+                    local_dt = tz.localize(
+                        datetime.combine(new_date, datetime.min.time()))
                 rec.date_start = local_dt.astimezone(pytz.utc).replace(tzinfo=None)
             except ValueError:
                 pass
