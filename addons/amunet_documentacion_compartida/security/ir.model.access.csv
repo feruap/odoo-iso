@@ -1,3 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_doc_compartida_user,doc.compartida.user,model_amunet_doc_compartida,base.group_user,1,1,1,0
+access_doc_compartida_user,doc.compartida.user,model_amunet_doc_compartida,amunet_documentacion_compartida.group_doc_compartida_user,1,1,1,0
 access_doc_compartida_manager,doc.compartida.manager,model_amunet_doc_compartida,base.group_system,1,1,1,1
+access_doc_carpeta_user,doc.carpeta.user,model_amunet_doc_carpeta,amunet_documentacion_compartida.group_doc_compartida_user,1,0,0,0
+access_doc_carpeta_manager,doc.carpeta.manager,model_amunet_doc_carpeta,base.group_system,1,1,1,1

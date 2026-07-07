@@ -6,6 +6,15 @@ CATEGORIAS = [
     ('equipos', 'EQUIPOS'),
 ]
 
+SUBCAT_LFIA = [
+    ('sangre', 'Sangre total-capilar'),
+    ('suero', 'Suero o plasma'),
+    ('nasofaringea', 'Nasofaríngea'),
+    ('heces', 'Heces'),
+    ('orofaringea', 'Orofaríngea'),
+    ('saliva', 'Saliva'),
+]
+
 ESTADOS = [
     ('borrador', 'Borrador'),
     ('en_revision', 'En revisión'),
@@ -20,7 +29,9 @@ class DocCompartida(models.Model):
     _order = 'fecha desc, name'
 
     name = fields.Char(string='Título', required=True, tracking=True)
+    carpeta_id = fields.Many2one('amunet.doc.carpeta', string='Carpeta', tracking=True)
     categoria = fields.Selection(CATEGORIAS, string='Apartado', required=True, tracking=True)
+    subcategoria_lfia = fields.Selection(SUBCAT_LFIA, string='Matriz / Muestra', tracking=True)
     state = fields.Selection(ESTADOS, string='Estado', default='borrador',
                              required=True, tracking=True)
     version = fields.Char(string='Versión', default='1.0')

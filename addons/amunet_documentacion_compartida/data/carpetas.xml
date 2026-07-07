@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Carpetas raíz -->
+    <record id="carpeta_lfia" model="amunet.doc.carpeta">
+        <field name="name">LFIA</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="carpeta_nalf" model="amunet.doc.carpeta">
+        <field name="name">NALF</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="carpeta_equipos" model="amunet.doc.carpeta">
+        <field name="name">EQUIPOS</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- Sub-carpetas de LFIA (matrices / tipos de muestra) -->
+    <record id="carpeta_lfia_sangre" model="amunet.doc.carpeta">
+        <field name="name">Sangre total-capilar</field>
+        <field name="parent_id" ref="carpeta_lfia"/>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="carpeta_lfia_suero" model="amunet.doc.carpeta">
+        <field name="name">Suero o plasma</field>
+        <field name="parent_id" ref="carpeta_lfia"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="carpeta_lfia_nasofaringea" model="amunet.doc.carpeta">
+        <field name="name">Nasofaríngea</field>
+        <field name="parent_id" ref="carpeta_lfia"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <record id="carpeta_lfia_heces" model="amunet.doc.carpeta">
+        <field name="name">Heces</field>
+        <field name="parent_id" ref="carpeta_lfia"/>
+        <field name="sequence">40</field>
+    </record>
+
+    <record id="carpeta_lfia_orofaringea" model="amunet.doc.carpeta">
+        <field name="name">Orofaríngea</field>
+        <field name="parent_id" ref="carpeta_lfia"/>
+        <field name="sequence">50</field>
+    </record>
+
+    <record id="carpeta_lfia_saliva" model="amunet.doc.carpeta">
+        <field name="name">Saliva</field>
+        <field name="parent_id" ref="carpeta_lfia"/>
+        <field name="sequence">60</field>
+    </record>
+
+</odoo>

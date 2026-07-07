@@ -9,7 +9,9 @@
             <list string="Documentación Compartida" decoration-success="state == 'aprobado'"
                   decoration-warning="state == 'en_revision'" decoration-muted="state == 'borrador'">
                 <field name="name" string="Título"/>
-                <field name="categoria" string="Apartado"/>
+                <field name="categoria" string="Apartado" optional="hide"/>
+                <field name="subcategoria_lfia" string="Matriz / Muestra" optional="show"
+                       invisible="categoria != 'lfia'"/>
                 <field name="version" string="Versión"/>
                 <field name="fecha" string="Fecha"/>
                 <field name="responsable_validacion_id" string="Responsable Validación"/>
@@ -51,6 +53,7 @@
                     <group>
                         <group string="Identificación">
                             <field name="categoria"/>
+                            <field name="subcategoria_lfia" invisible="categoria != 'lfia'"/>
                             <field name="version"/>
                             <field name="fecha"/>
                         </group>
@@ -98,9 +101,9 @@
         </field>
     </record>
 
-    <!-- ── ACCIONES POR APARTADO ────────────────────────────── -->
+    <!-- ── ACCIONES: APARTADOS PRINCIPALES ──────────────────── -->
     <record id="action_doc_compartida_lfia" model="ir.actions.act_window">
-        <field name="name">LFIA</field>
+        <field name="name">LFIA — Todo</field>
         <field name="res_model">amunet.doc.compartida</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('categoria', '=', 'lfia')]</field>
@@ -126,11 +129,66 @@
         <field name="view_id" ref="view_doc_compartida_list"/>
     </record>
 
-    <!-- Acción general (todos los apartados) -->
+    <!-- Acción general -->
     <record id="action_doc_compartida_all" model="ir.actions.act_window">
         <field name="name">Documentación Compartida</field>
         <field name="res_model">amunet.doc.compartida</field>
         <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+    <!-- ── ACCIONES: SUBMATRICES LFIA ───────────────────────── -->
+    <record id="action_lfia_sangre" model="ir.actions.act_window">
+        <field name="name">Sangre total-capilar</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','sangre')]</field>
+        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'sangre'}</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+    <record id="action_lfia_suero" model="ir.actions.act_window">
+        <field name="name">Suero o plasma</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','suero')]</field>
+        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'suero'}</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+    <record id="action_lfia_nasofaringea" model="ir.actions.act_window">
+        <field name="name">Nasofaríngea</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','nasofaringea')]</field>
+        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'nasofaringea'}</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+    <record id="action_lfia_heces" model="ir.actions.act_window">
+        <field name="name">Heces</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','heces')]</field>
+        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'heces'}</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+    <record id="action_lfia_orofaringea" model="ir.actions.act_window">
+        <field name="name">Orofaríngea</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','orofaringea')]</field>
+        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'orofaringea'}</field>
+        <field name="view_id" ref="view_doc_compartida_list"/>
+    </record>
+
+    <record id="action_lfia_saliva" model="ir.actions.act_window">
+        <field name="name">Saliva</field>
+        <field name="res_model">amunet.doc.compartida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('categoria','=','lfia'),('subcategoria_lfia','=','saliva')]</field>
+        <field name="context">{'default_categoria': 'lfia', 'default_subcategoria_lfia': 'saliva'}</field>
         <field name="view_id" ref="view_doc_compartida_list"/>
     </record>
 
