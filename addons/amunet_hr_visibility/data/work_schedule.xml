@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Calendario oficial Amunet: lunes a viernes 9:00-18:00 con 1h de comida -->
+    <record id="calendar_amunet_estandar" model="resource.calendar">
+        <field name="name">Amunet - Jornada Estándar (9:00-18:00)</field>
+        <field name="hours_per_day">8.0</field>
+        <field name="tz">America/Mexico_City</field>
+        <field name="schedule_type">fully_fixed</field>
+    </record>
+
+    <record id="cal_att_lun_m" model="resource.calendar.attendance">
+        <field name="name">Lunes mañana</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">0</field>
+        <field name="hour_from">9.0</field>
+        <field name="hour_to">13.0</field>
+        <field name="day_period">morning</field>
+    </record>
+    <record id="cal_att_lun_t" model="resource.calendar.attendance">
+        <field name="name">Lunes tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">0</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+    <record id="cal_att_mar_m" model="resource.calendar.attendance">
+        <field name="name">Martes mañana</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">1</field>
+        <field name="hour_from">9.0</field>
+        <field name="hour_to">13.0</field>
+        <field name="day_period">morning</field>
+    </record>
+    <record id="cal_att_mar_t" model="resource.calendar.attendance">
+        <field name="name">Martes tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">1</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+    <record id="cal_att_mie_m" model="resource.calendar.attendance">
+        <field name="name">Miércoles mañana</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">2</field>
+        <field name="hour_from">9.0</field>
+        <field name="hour_to">13.0</field>
+        <field name="day_period">morning</field>
+    </record>
+    <record id="cal_att_mie_t" model="resource.calendar.attendance">
+        <field name="name">Miércoles tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">2</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+    <record id="cal_att_jue_m" model="resource.calendar.attendance">
+        <field name="name">Jueves mañana</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">3</field>
+        <field name="hour_from">9.0</field>
+        <field name="hour_to">13.0</field>
+        <field name="day_period">morning</field>
+    </record>
+    <record id="cal_att_jue_t" model="resource.calendar.attendance">
+        <field name="name">Jueves tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">3</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+    <record id="cal_att_vie_m" model="resource.calendar.attendance">
+        <field name="name">Viernes mañana</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">4</field>
+        <field name="hour_from">9.0</field>
+        <field name="hour_to">13.0</field>
+        <field name="day_period">morning</field>
+    </record>
+    <record id="cal_att_vie_t" model="resource.calendar.attendance">
+        <field name="name">Viernes tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_estandar"/>
+        <field name="dayofweek">4</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+
+    <!-- Calendario medio día tarde: 14:00-18:00 (Kim) -->
+    <record id="calendar_amunet_medio_dia" model="resource.calendar">
+        <field name="name">Amunet - Medio día tarde (14:00-18:00)</field>
+        <field name="hours_per_day">5.0</field>
+        <field name="tz">America/Mexico_City</field>
+        <field name="schedule_type">fully_fixed</field>
+    </record>
+    <record id="cal_med_lun" model="resource.calendar.attendance">
+        <field name="name">Lunes tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_medio_dia"/>
+        <field name="dayofweek">0</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+    <record id="cal_med_mar" model="resource.calendar.attendance">
+        <field name="name">Martes tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_medio_dia"/>
+        <field name="dayofweek">1</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+    <record id="cal_med_mie" model="resource.calendar.attendance">
+        <field name="name">Miércoles tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_medio_dia"/>
+        <field name="dayofweek">2</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+    <record id="cal_med_jue" model="resource.calendar.attendance">
+        <field name="name">Jueves tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_medio_dia"/>
+        <field name="dayofweek">3</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+    <record id="cal_med_vie" model="resource.calendar.attendance">
+        <field name="name">Viernes tarde</field>
+        <field name="calendar_id" ref="calendar_amunet_medio_dia"/>
+        <field name="dayofweek">4</field>
+        <field name="hour_from">14.0</field>
+        <field name="hour_to">18.0</field>
+        <field name="day_period">afternoon</field>
+    </record>
+</odoo>
