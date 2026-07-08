@@ -11,6 +11,9 @@
                     </div>
                     <group>
                         <field name="resumen" readonly="1" nolabel="1"/>
+                        <field name="advertencia" readonly="1" nolabel="1"
+                               invisible="not advertencia"
+                               style="color: #cc0000; font-weight: bold;"/>
                     </group>
                     <group string="Nómina (Grupo 1)">
                         <field name="nombre_nomina" readonly="1" string="Archivo"/>

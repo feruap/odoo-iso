@@ -10,6 +10,7 @@
                         type="object"
                         string="Generar dispersión"
                         class="oe_highlight"
+                        groups="hr.group_hr_manager"
                         invisible="state == 'close'"/>
             </xpath>
         </field>
