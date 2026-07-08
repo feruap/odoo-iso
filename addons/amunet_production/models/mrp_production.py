@@ -423,10 +423,14 @@ class MrpProduction(models.Model):
         moves = self.move_raw_ids.filtered(
             lambda m: m.state != 'cancel' and (m.amunet_qty_supplied or 0) > 0
         )
-        sin_uso = moves.filtered(lambda m: not m.amunet_qty_used or m.amunet_qty_used <= 0)
+        # Se permite cantidad utilizada = 0: el material se entrego pero NO se
+        # uso, y se devuelve todo (el sobrante = lo surtido). Como al iniciar la
+        # conciliacion se precarga qty_used = qty_supplied, un 0 es siempre una
+        # captura deliberada del operador. Solo se bloquea un valor negativo.
+        sin_uso = moves.filtered(lambda m: (m.amunet_qty_used or 0.0) < 0)
         if sin_uso:
             nombres = ', '.join(sin_uso.mapped('product_id.display_name'))
-            raise UserError(_('Falta cantidad utilizada para: %s') % nombres)
+            raise UserError(_('La cantidad utilizada no puede ser negativa: %s') % nombres)
         # Actualizar quantity = qty_used (lo que Odoo consumirá al validar la MO)
         for move in moves:
             move.sudo().write({'quantity': move.amunet_qty_used})
@@ -1245,11 +1249,13 @@ class MrpProduction(models.Model):
         if self.quality_analysis_status not in ('none', 'to_request', 'rejected'):
             raise UserError('El análisis de calidad ya fue solicitado o se encuentra aprobado.')
 
-        # Validar que todos los reactivos tengan cantidad utilizada
-        sin_cantidad = self.move_raw_ids.filtered(lambda m: not m.quantity or m.quantity <= 0)
+        # Validar que ningun reactivo tenga cantidad utilizada negativa. Se
+        # permite 0: el material se entrego pero NO se uso (se devuelve todo
+        # en la conciliacion, que es obligatoria antes de cerrar).
+        sin_cantidad = self.move_raw_ids.filtered(lambda m: (m.quantity or 0.0) < 0)
         if sin_cantidad:
             nombres = ', '.join(sin_cantidad.mapped('product_id.name'))
-            raise UserError(f'Los siguientes reactivos no tienen Cantidad Utilizada registrada:\n{nombres}\n\nIngresa el valor antes de confirmar el análisis.')
+            raise UserError(f'Los siguientes reactivos tienen Cantidad Utilizada inválida (negativa):\n{nombres}')
 
         if not self.amunet_all_ingredients_valid:
             raise UserError('Todos los reactivos deben estar marcados como Válidos para proceder.')

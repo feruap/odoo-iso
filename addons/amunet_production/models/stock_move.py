@@ -230,8 +230,16 @@ class StockMove(models.Model):
             qty_used = move.quantity
             product = move.product_id
 
-            if not qty_used or qty_used <= 0:
+            if qty_used < 0:
                 move.amunet_is_valid = False
+                continue
+
+            # Cantidad utilizada = 0: el material se entrego pero NO se uso
+            # (se devuelve todo en la conciliacion). Es un estado VALIDO, no
+            # invalido. La conciliacion es obligatoria antes de cerrar, asi que
+            # un 0 aqui es una captura deliberada, no un olvido.
+            if not qty_used:
+                move.amunet_is_valid = True
                 continue
 
             # Detectar si la MO es de tipo Solucion (categoria del
