@@ -7,7 +7,6 @@
         <field name="code">model._cron_cerrar_asistencias_abiertas()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
-        <field name="numbercall">-1</field>
         <field name="active">True</field>
         <field name="nextcall">2026-07-08 23:30:00</field>
     </record>
@@ -19,7 +18,6 @@
         <field name="code">model._cron_reporte_ausencias_quincena()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
-        <field name="numbercall">-1</field>
         <field name="active">True</field>
         <field name="nextcall">2026-08-01 15:00:00</field>
     </record>
