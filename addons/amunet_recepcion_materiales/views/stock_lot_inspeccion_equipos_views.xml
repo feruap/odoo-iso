@@ -36,12 +36,5 @@
         </field>
     </record>
 
-    <!-- Menú: Almacén MP > Inspección de equipos (solo visible a Calidad) -->
-    <menuitem id="menu_inspeccion_equipos_root"
-              name="Inspección de equipos"
-              parent="stock.menu_stock_root"
-              action="action_inspeccion_equipos"
-              sequence="95"
-              groups="amunet_quality.group_quality_user"/>
 
 </odoo>
