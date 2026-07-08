@@ -434,14 +434,12 @@ class MrpProduction(models.Model):
         # Actualizar quantity = qty_used (lo que Odoo consumirá al validar la MO)
         for move in moves:
             move.sudo().write({'quantity': move.amunet_qty_used})
-        # Si no hay sobrante, completar automáticamente sin esperar confirmación de almacén
-        has_surplus = any(
-            (m.amunet_qty_supplied or 0) - (m.amunet_qty_used or 0) > 0.001
-            for m in moves
-        )
-        new_state = 'validated' if has_surplus else 'completed'
+        # La conciliación SIEMPRE queda en 'validated' esperando la
+        # confirmación explícita (aunque no haya sobrante). Antes se
+        # auto-completaba sin sobrante; ahora siempre hay un paso de
+        # confirmación final (Almacén) para cerrar la conciliación.
         self.write({
-            'reconciliation_state': new_state,
+            'reconciliation_state': 'validated',
             'reconciliation_validated_by': self.env.user.id,
             'reconciliation_validated_date': fields.Datetime.now(),
         })
@@ -456,19 +454,29 @@ class MrpProduction(models.Model):
         if lines:
             msg += _('<br/>Sobrante a devolver a almacén:<br/>') + '<br/>'.join(lines)
         else:
-            msg += _('<br/>Sin sobrante — conciliación completada automáticamente.')
+            msg += _('<br/>Sin sobrante. Falta confirmar la conciliación.')
         self.message_post(body=msg)
 
     def action_complete_reconciliation(self):
         self.ensure_one()
         if self.reconciliation_state != 'validated':
-            raise UserError(_('Solo se puede confirmar la devolución cuando la conciliación está supervisada.'))
+            raise UserError(_('Solo se puede confirmar la conciliación cuando está validada.'))
         self.write({
             'reconciliation_state': 'completed',
             'reconciliation_completed_by': self.env.user.id,
             'reconciliation_completed_date': fields.Datetime.now(),
         })
-        self.message_post(body=_('Devolución de material sobrante confirmada por almacén (<b>%s</b>). Conciliación completada.') % self.env.user.name)
+        has_surplus = any(
+            (m.amunet_qty_supplied or 0) - (m.amunet_qty_used or 0) > 0.001
+            for m in self.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+        )
+        if has_surplus:
+            body = _('Devolución de material sobrante confirmada por almacén '
+                     '(<b>%s</b>). Conciliación completada.') % self.env.user.name
+        else:
+            body = _('Conciliación confirmada por almacén (<b>%s</b>) — sin '
+                     'sobrante que devolver. Conciliación completada.') % self.env.user.name
+        self.message_post(body=body)
     # ─────────────────────────────────────────────────────────────────────
 
     amunet_can_produce = fields.Boolean(

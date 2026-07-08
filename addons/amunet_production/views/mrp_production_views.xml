@@ -56,7 +56,7 @@
                             invisible="reconciliation_state != 'initiated'"
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor"/>
                     <button name="action_complete_reconciliation"
-                            string="Confirmar devolución recibida"
+                            string="Confirmar conciliación"
                             type="object" class="btn-success"
                             invisible="reconciliation_state != 'validated'"
                             groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
