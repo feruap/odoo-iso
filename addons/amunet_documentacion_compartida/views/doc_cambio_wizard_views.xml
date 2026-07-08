@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_doc_cambio_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.doc.cambio.wizard.form</field>
+        <field name="model">amunet.doc.cambio.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cambiar resultado">
+                <sheet>
+                    <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+                        <i class="fa fa-exclamation-triangle fa-lg"/>
+                        <div>
+                            Esta revisión ya fue realizada.
+                            ¿Deseas cambiar el resultado de <strong>
+                            <field name="campo_label" readonly="1" nolabel="1"/></strong>?
+                        </div>
+                    </div>
+                    <group>
+                        <field name="valor_actual" string="Resultado actual"
+                               widget="badge"
+                               decoration-success="valor_actual == 'ok'"
+                               decoration-danger="valor_actual == 'fail'"
+                               readonly="1"
+                               invisible="not valor_actual"/>
+                        <field name="nuevo_valor" string="Nuevo resultado" widget="radio"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirmar" type="object"
+                            string="Sí, realizar cambio"
+                            class="btn-primary"/>
+                    <button special="cancel"
+                            string="No, cancelar"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

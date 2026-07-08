@@ -11,33 +11,116 @@
                   decoration-warning="state == 'pendiente'"
                   editable="bottom">
 
-                <!-- Campo auxiliar para readonly condicional -->
-                <field name="obs_requeridas" column_invisible="1"/>
+                <!-- Auxiliares para condiciones -->
+                <field name="obs_requeridas"    column_invisible="1"/>
+                <field name="es_responsable"    column_invisible="1"/>
+                <field name="soy_revisor_activo" column_invisible="1"/>
 
                 <!-- ── MANUAL ── -->
-                <field name="name" string="Manual" optional="show"/>
-                <field name="manual_file" string="CARGAR DOCX"
-                       filename="manual_filename" widget="binary" optional="show"/>
+                <field name="name" string="Manual"
+                       readonly="not es_responsable" optional="show"/>
+
+                <!-- ── PDF: descarga para todos, reemplazar solo Jorge ── -->
+                <field name="manual_file" string="PDF"
+                       filename="manual_filename" widget="binary"
+                       readonly="1" optional="show"/>
+                <button name="action_reemplazar_pdf" type="object"
+                        string="🔄"
+                        title="Reemplazar PDF"
+                        class="btn-sm btn-outline-secondary"
+                        invisible="not manual_file or not es_responsable"/>
                 <field name="manual_filename" column_invisible="1"/>
 
-                <!-- ── REVISIÓN CALIDAD ── -->
-                <field name="rev_materiales" string="Materiales"
+                <!-- ── FECHA PROGRAMADA (solo Jorge puede editar) ── -->
+                <field name="fecha_programada" string="Fecha programada"
+                       readonly="not es_responsable" optional="show"/>
+
+                <!-- ── TOMAR REVISIÓN ── -->
+                <button name="action_tomar_revision" type="object"
+                        string="▶ Tomar revisión"
+                        class="btn-sm btn-outline-primary"
+                        invisible="soy_revisor_activo or state == 'aprobado'"/>
+
+                <!-- Auxiliares para condición de bloqueo cruzado y revisión cerrada -->
+                <field name="observaciones"    column_invisible="1"/>
+                <field name="revision_cerrada" column_invisible="1"/>
+
+                <!-- ── REVISIÓN CALIDAD ──
+                     Cada criterio tiene dos botones 📝:
+                     - Sin confirm: revisión activa (revision_cerrada = False)
+                     - Con confirm: revisión cerrada, alerta antes de cambiar -->
+
+                <!-- Precauciones -->
+                <field name="rev_materiales" string="Precauciones"
+                       widget="badge"
                        decoration-success="rev_materiales == 'ok'"
                        decoration-danger="rev_materiales == 'fail'"
-                       optional="show"/>
+                       readonly="1" optional="show"/>
+                <button name="action_marcar_materiales" type="object"
+                        string="📝" title="Marcar Precauciones"
+                        invisible="revision_cerrada or (rev_materiales != 'fail' and
+                                   (rev_volumenes == 'fail' or rev_tiempos == 'fail' or rev_adicional == 'fail') and
+                                   not observaciones)"
+                        class="btn-link btn-sm p-0"/>
+                <button name="action_marcar_materiales" type="object"
+                        string="📝" title="Marcar Precauciones"
+                        confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Precauciones?"
+                        invisible="not revision_cerrada"
+                        class="btn-link btn-sm p-0"/>
+
+                <!-- Volúmenes de reactivos -->
                 <field name="rev_volumenes" string="Vol. de reactivos"
+                       widget="badge"
                        decoration-success="rev_volumenes == 'ok'"
                        decoration-danger="rev_volumenes == 'fail'"
-                       optional="show"/>
+                       readonly="1" optional="show"/>
+                <button name="action_marcar_volumenes" type="object"
+                        string="📝" title="Marcar Vol. de reactivos"
+                        invisible="revision_cerrada or (rev_volumenes != 'fail' and
+                                   (rev_materiales == 'fail' or rev_tiempos == 'fail' or rev_adicional == 'fail') and
+                                   not observaciones)"
+                        class="btn-link btn-sm p-0"/>
+                <button name="action_marcar_volumenes" type="object"
+                        string="📝" title="Marcar Vol. de reactivos"
+                        confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Volúmenes?"
+                        invisible="not revision_cerrada"
+                        class="btn-link btn-sm p-0"/>
+
+                <!-- Tiempos de interpretación -->
                 <field name="rev_tiempos" string="Tiempos de interpret."
+                       widget="badge"
                        decoration-success="rev_tiempos == 'ok'"
                        decoration-danger="rev_tiempos == 'fail'"
-                       optional="show"/>
+                       readonly="1" optional="show"/>
+                <button name="action_marcar_tiempos" type="object"
+                        string="📝" title="Marcar Tiempos"
+                        invisible="revision_cerrada or (rev_tiempos != 'fail' and
+                                   (rev_materiales == 'fail' or rev_volumenes == 'fail' or rev_adicional == 'fail') and
+                                   not observaciones)"
+                        class="btn-link btn-sm p-0"/>
+                <button name="action_marcar_tiempos" type="object"
+                        string="📝" title="Marcar Tiempos"
+                        confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Tiempos?"
+                        invisible="not revision_cerrada"
+                        class="btn-link btn-sm p-0"/>
 
-                <!-- ── OBSERVACIONES ── -->
-                <field name="observaciones" string="Observaciones"
-                       readonly="not obs_requeridas"
-                       optional="show"/>
+                <!-- Adicional -->
+                <field name="rev_adicional" string="Adicional"
+                       widget="badge"
+                       decoration-success="rev_adicional == 'ok'"
+                       decoration-danger="rev_adicional == 'fail'"
+                       readonly="1" optional="show"/>
+                <button name="action_marcar_adicional" type="object"
+                        string="📝" title="Marcar Adicional"
+                        invisible="revision_cerrada or (rev_adicional != 'fail' and
+                                   (rev_materiales == 'fail' or rev_volumenes == 'fail' or rev_tiempos == 'fail') and
+                                   not observaciones)"
+                        class="btn-link btn-sm p-0"/>
+                <button name="action_marcar_adicional" type="object"
+                        string="📝" title="Marcar Adicional"
+                        confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Adicional?"
+                        invisible="not revision_cerrada"
+                        class="btn-link btn-sm p-0"/>
 
                 <!-- ── ESTATUS ── -->
                 <field name="state" string="Estatus"
@@ -60,52 +143,139 @@
         <field name="arch" type="xml">
             <form string="Manual">
                 <header>
+                    <!-- Tomar revisión (solo cuando pendiente y no soy el activo) -->
+                    <button name="action_tomar_revision" type="object"
+                            string="▶ Tomar revisión"
+                            class="btn-primary"
+                            invisible="soy_revisor_activo or state == 'aprobado'"/>
+                    <!-- Reabrir revisión (solo cuando ya está aprobado) -->
+                    <button name="action_reabrir_revision" type="object"
+                            string="🔄 Reabrir revisión"
+                            class="btn-warning"
+                            invisible="state != 'aprobado'"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="pendiente,aprobado"/>
                 </header>
                 <sheet>
+                    <!-- Auxiliares -->
+                    <field name="obs_requeridas"    invisible="1"/>
+                    <field name="es_responsable"    invisible="1"/>
+                    <field name="soy_revisor_activo" invisible="1"/>
+                    <field name="historial_count"   invisible="1"/>
+
+                    <!-- Smart button: historial de revisiones -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_ver_historial" type="object"
+                                class="oe_stat_button" icon="fa-history"
+                                invisible="historial_count == 0">
+                            <field name="historial_count" string="Revisiones"
+                                   widget="statinfo"/>
+                        </button>
+                    </div>
+
                     <div class="oe_title">
                         <h1>
-                            <field name="name" placeholder="Nombre del manual…"/>
+                            <field name="name" placeholder="Nombre del manual…"
+                                   readonly="not es_responsable"/>
                         </h1>
                     </div>
 
-                    <!-- ── Sección: Manual ── -->
-                    <group string="Manual">
+                    <!-- ── Aviso: otro analista tiene el cerrojo ── -->
+                    <div class="alert alert-info d-flex align-items-center gap-2"
+                         role="alert"
+                         invisible="not revisor_activo_id or soy_revisor_activo or state == 'aprobado'">
+                        <i class="fa fa-lock fa-lg"/>
+                        <span>
+                            <field name="revisor_activo_id" readonly="1" nolabel="1" class="fw-bold"/>
+                            está revisando este manual. Haz clic en "Tomar revisión" para
+                            continuar tú (el otro analista perderá el acceso).
+                        </span>
+                    </div>
+
+                    <!-- ── Aviso: tú tienes el cerrojo ── -->
+                    <div class="alert alert-success d-flex align-items-center gap-2"
+                         role="alert"
+                         invisible="not soy_revisor_activo or state == 'aprobado'">
+                        <i class="fa fa-check-circle fa-lg"/>
+                        <span>Tienes la revisión activa. Puedes marcar los criterios.</span>
+                    </div>
+
+                    <!-- ── Aviso: obs pendiente ── -->
+                    <div class="alert alert-warning d-flex align-items-center gap-2"
+                         role="alert"
+                         invisible="not obs_requeridas or observaciones">
+                        <i class="fa fa-exclamation-triangle fa-lg"/>
+                        <span>
+                            Hay un criterio marcado como ✗ Incorrecto.
+                            Escribe la observación antes de continuar con los demás.
+                        </span>
+                    </div>
+
+                    <!-- ── Archivo y fecha ── -->
+                    <group string="Archivo">
                         <group>
                             <field name="carpeta_id" readonly="1"/>
+                            <field name="fecha_programada"
+                                   readonly="not es_responsable"
+                                   widget="date"
+                                   string="Fecha programada"/>
                         </group>
                         <group>
-                            <field name="manual_file" string="CARGAR DOCX"
-                                   filename="manual_filename" widget="binary"/>
+                            <!-- Primera carga: solo Jorge, solo cuando no hay archivo -->
+                            <field name="manual_file" string="CARGAR PDF"
+                                   filename="manual_filename" widget="binary"
+                                   options="{'accept': '.pdf'}"
+                                   invisible="manual_file or not es_responsable"/>
+                            <!-- Descarga: todos cuando hay archivo -->
+                            <field name="manual_file" string="PDF actual"
+                                   filename="manual_filename" widget="binary"
+                                   readonly="1"
+                                   invisible="not manual_file"/>
                             <field name="manual_filename" invisible="1"/>
+                            <!-- Reemplazar: solo Jorge cuando hay archivo -->
+                            <button name="action_reemplazar_pdf" type="object"
+                                    string="🔄 Reemplazar PDF"
+                                    class="btn btn-outline-secondary btn-sm mt-1"
+                                    invisible="not manual_file or not es_responsable"/>
                         </group>
                     </group>
 
-                    <!-- ── Sección: Revisión Calidad ── -->
+                    <!-- ── Revisión Calidad ── -->
                     <group string="Revisión Calidad">
                         <group>
-                            <field name="rev_materiales" widget="radio"/>
-                            <field name="rev_volumenes" widget="radio"/>
-                            <field name="rev_tiempos" widget="radio"/>
+                            <field name="rev_materiales" string="Precauciones" widget="radio"
+                                   readonly="rev_materiales != 'fail' and
+                                             (rev_volumenes == 'fail' or rev_tiempos == 'fail' or rev_adicional == 'fail') and
+                                             not observaciones"/>
+                            <field name="rev_volumenes" widget="radio"
+                                   readonly="rev_volumenes != 'fail' and
+                                             (rev_materiales == 'fail' or rev_tiempos == 'fail' or rev_adicional == 'fail') and
+                                             not observaciones"/>
+                            <field name="rev_tiempos" widget="radio"
+                                   readonly="rev_tiempos != 'fail' and
+                                             (rev_materiales == 'fail' or rev_volumenes == 'fail' or rev_adicional == 'fail') and
+                                             not observaciones"/>
+                            <field name="rev_adicional" widget="radio"
+                                   readonly="rev_adicional != 'fail' and
+                                             (rev_materiales == 'fail' or rev_volumenes == 'fail' or rev_tiempos == 'fail') and
+                                             not observaciones"/>
                         </group>
                         <group>
                             <field name="state" readonly="1" widget="badge"
                                    decoration-success="state == 'aprobado'"
                                    decoration-warning="state == 'pendiente'"
                                    string="Resultado"/>
-                            <field name="revisado_por_id" readonly="1" string="Revisor (Calidad)"/>
-                            <field name="fecha_revision" readonly="1" string="Fecha y hora"/>
+                            <field name="revisor_activo_id" readonly="1" string="Revisor activo"/>
+                            <field name="revisado_por_id"   readonly="1" string="Cerró revisión"/>
+                            <field name="fecha_revision"    readonly="1" string="Fecha y hora"/>
                         </group>
                     </group>
 
-                    <!-- ── Sección: Observaciones ── -->
+                    <!-- ── Observaciones ── -->
                     <group string="Observaciones">
-                        <field name="obs_requeridas" invisible="1"/>
                         <field name="observaciones"
                                nolabel="1"
-                               placeholder="Ninguna"
-                               readonly="not obs_requeridas"/>
+                               placeholder="Describe qué debe corregirse…"/>
                     </group>
                 </sheet>
                 <chatter/>

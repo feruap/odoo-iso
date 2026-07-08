@@ -3,3 +3,13 @@ access_doc_compartida_user,doc.compartida.user,model_amunet_doc_compartida,amune
 access_doc_compartida_manager,doc.compartida.manager,model_amunet_doc_compartida,base.group_system,1,1,1,1
 access_doc_carpeta_user,doc.carpeta.user,model_amunet_doc_carpeta,amunet_documentacion_compartida.group_doc_compartida_user,1,0,0,0
 access_doc_carpeta_manager,doc.carpeta.manager,model_amunet_doc_carpeta,base.group_system,1,1,1,1
+access_doc_revision_wizard_user,doc.revision.wizard.user,model_amunet_doc_revision_wizard,amunet_documentacion_compartida.group_doc_compartida_user,1,1,1,1
+access_doc_revision_wizard_manager,doc.revision.wizard.manager,model_amunet_doc_revision_wizard,base.group_system,1,1,1,1
+access_doc_reemplazo_wizard_user,doc.reemplazo.wizard.user,model_amunet_doc_reemplazo_wizard,amunet_documentacion_compartida.group_doc_compartida_user,1,1,1,1
+access_doc_reemplazo_wizard_manager,doc.reemplazo.wizard.manager,model_amunet_doc_reemplazo_wizard,base.group_system,1,1,1,1
+access_doc_revision_historial_user,doc.revision.historial.user,model_amunet_doc_revision_historial,amunet_documentacion_compartida.group_doc_compartida_user,1,0,0,0
+access_doc_revision_historial_manager,doc.revision.historial.manager,model_amunet_doc_revision_historial,base.group_system,1,1,1,1
+access_doc_reopen_wizard_user,doc.reopen.wizard.user,model_amunet_doc_reopen_wizard,amunet_documentacion_compartida.group_doc_compartida_user,1,1,1,1
+access_doc_reopen_wizard_manager,doc.reopen.wizard.manager,model_amunet_doc_reopen_wizard,base.group_system,1,1,1,1
+access_doc_tomar_wizard_user,doc.tomar.wizard.user,model_amunet_doc_tomar_wizard,amunet_documentacion_compartida.group_doc_compartida_user,1,1,1,1
+access_doc_tomar_wizard_manager,doc.tomar.wizard.manager,model_amunet_doc_tomar_wizard,base.group_system,1,1,1,1
