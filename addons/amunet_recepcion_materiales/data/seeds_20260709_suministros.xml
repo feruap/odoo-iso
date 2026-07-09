@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<odoo>
+    <!--
+        Semiterminado / Suministros y producto STESP01.
+
+        NOTA PARA DESARROLLO (deploy a producción):
+        Las categorías seed_product_category_28 (Semiterminado, prod id=28)
+        y seed_product_category_126 (Suministros, prod id=57) ya existen en
+        producción sin external ID. Antes de hacer -u amunet_recepcion_materiales
+        en prod, ejecutar:
+          INSERT INTO ir_model_data (module,name,model,res_id,noupdate)
+          VALUES
+            ('amunet_recepcion_materiales','seed_product_category_28','product.category',28,true),
+            ('amunet_recepcion_materiales','seed_product_category_126','product.category',57,true);
+        Así el seed no crea duplicados.
+    -->
+    <data noupdate="1">
+
+        <!-- Categoría padre: Semiterminado (ya existe en prod id=28) -->
+        <record id="seed_product_category_28" model="product.category">
+            <field name="name">Semiterminado</field>
+            <field name="property_cost_method">average</field>
+        </record>
+
+        <!-- Subcategoría: Semiterminado / Suministros (ya existe en prod id=57) -->
+        <record id="seed_product_category_126" model="product.category">
+            <field name="name">Suministros</field>
+            <field name="parent_id" ref="seed_product_category_28"/>
+            <field name="property_cost_method">average</field>
+        </record>
+
+        <!-- Producto: Esponja para toma de muestra (NUEVO — no existe en prod) -->
+        <record id="seed_product_template_2015" model="product.template">
+            <field name="name">Esponja para toma de muestra</field>
+            <field name="default_code">STESP01</field>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="service_tracking">no</field>
+            <field name="tracking">lot</field>
+            <field name="categ_id" ref="seed_product_category_126"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="active" eval="True"/>
+            <field name="use_expiration_date" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
