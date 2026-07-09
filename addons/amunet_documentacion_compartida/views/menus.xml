@@ -3,7 +3,7 @@
 
     <!-- Aplicación raíz — abre el explorador de carpetas -->
     <menuitem id="menu_doc_compartida_root"
-              name="Documentación Compartida"
+              name="Documentación Técnica"
               action="action_doc_explorador"
               sequence="95"
               groups="amunet_documentacion_compartida.group_doc_compartida_user"/>

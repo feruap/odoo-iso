@@ -13,3 +13,5 @@ access_doc_reopen_wizard_user,doc.reopen.wizard.user,model_amunet_doc_reopen_wiz
 access_doc_reopen_wizard_manager,doc.reopen.wizard.manager,model_amunet_doc_reopen_wizard,base.group_system,1,1,1,1
 access_doc_tomar_wizard_user,doc.tomar.wizard.user,model_amunet_doc_tomar_wizard,amunet_documentacion_compartida.group_doc_compartida_user,1,1,1,1
 access_doc_tomar_wizard_manager,doc.tomar.wizard.manager,model_amunet_doc_tomar_wizard,base.group_system,1,1,1,1
+access_doc_actualizar_wizard_user,doc.actualizar.wizard.user,model_amunet_doc_actualizar_wizard,amunet_documentacion_compartida.group_doc_compartida_user,1,1,1,1
+access_doc_actualizar_wizard_manager,doc.actualizar.wizard.manager,model_amunet_doc_actualizar_wizard,base.group_system,1,1,1,1

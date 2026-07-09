@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_doc_actualizar_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.doc.actualizar.wizard.form</field>
+        <field name="model">amunet.doc.actualizar.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Manual aprobado">
+                <sheet>
+                    <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
+                        <i class="fa fa-check-circle fa-lg"/>
+                        <span>
+                            El manual <strong><field name="doc_name" readonly="1" nolabel="1"/></strong>
+                            ha sido marcado como <strong>APROBADO</strong>.
+                        </span>
+                    </div>
+                    <p>Para que el manual sea sustituido en la carpeta del sistema,
+                       selecciona <b>Aceptar y actualizar</b>.<br/>
+                       Si deseas hacerlo más tarde, selecciona <b>Posponer actualización</b>.</p>
+                    <div class="alert alert-info" role="alert"
+                         invisible="tiene_carpeta">
+                        <i class="fa fa-info-circle"/> Aún no hay una carpeta configurada.
+                        Al aceptar, se enviará el PDF a Stacy por correo con las instrucciones
+                        para crear la carpeta y dar acceso al sistema.
+                    </div>
+                    <div class="alert alert-success" role="alert"
+                         invisible="not tiene_carpeta">
+                        <i class="fa fa-folder-open"/> Carpeta configurada:
+                        <field name="carpeta_url" readonly="1" nolabel="1"/>
+                    </div>
+                    <field name="tiene_carpeta" invisible="1"/>
+                </sheet>
+                <footer>
+                    <button name="action_aceptar" type="object"
+                            string="Aceptar y actualizar" class="btn-primary"/>
+                    <button name="action_posponer" type="object"
+                            string="Posponer actualización" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,8 +1,8 @@
 {
-    'name': 'Documentación Compartida (Amunet)',
+    'name': 'Documentación Técnica (Amunet)',
     'version': '19.0.2.0.0',
     'category': 'Quality',
-    'summary': 'Gestión de manuales y actividades documentales compartidas entre Validación y Calidad',
+    'summary': 'Gestión de manuales técnicos y revisión cruzada entre Validación y Calidad',
     'author': 'Amunet',
     'website': 'https://www.amunet.com',
     'depends': ['base', 'mail'],
@@ -16,6 +16,7 @@
         'views/doc_revision_historial_views.xml',
         'views/doc_reopen_wizard_views.xml',
         'views/doc_tomar_wizard_views.xml',
+        'views/doc_actualizar_wizard_views.xml',
         'views/menus.xml',
         'data/carpetas.xml',
         'data/cron_revision.xml',

@@ -8,17 +8,12 @@
         <field name="arch" type="xml">
             <list string="Documentos"
                   decoration-success="state == 'aprobado'"
-                  decoration-warning="state == 'pendiente'"
-                  editable="bottom">
+                  decoration-warning="state == 'pendiente'">
 
                 <!-- Auxiliares para condiciones -->
                 <field name="obs_requeridas"    column_invisible="1"/>
                 <field name="es_responsable"    column_invisible="1"/>
                 <field name="soy_revisor_activo" column_invisible="1"/>
-
-                <!-- ── MANUAL ── -->
-                <field name="name" string="Manual"
-                       readonly="not es_responsable" optional="show"/>
 
                 <!-- ── PDF: descarga para todos, reemplazar solo Jorge ── -->
                 <field name="manual_file" string="PDF"
@@ -153,6 +148,11 @@
                             string="🔄 Reabrir revisión"
                             class="btn-warning"
                             invisible="state != 'aprobado'"/>
+                    <!-- Actualizar en sistema (cuando aprobado) -->
+                    <button name="action_actualizar_en_sistema" type="object"
+                            string="📤 Actualizar en sistema"
+                            class="btn-success"
+                            invisible="state != 'aprobado'"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="pendiente,aprobado"/>
                 </header>
@@ -163,13 +163,18 @@
                     <field name="soy_revisor_activo" invisible="1"/>
                     <field name="historial_count"   invisible="1"/>
 
-                    <!-- Smart button: historial de revisiones -->
+                    <!-- Smart buttons -->
                     <div class="oe_button_box" name="button_box">
                         <button name="action_ver_historial" type="object"
                                 class="oe_stat_button" icon="fa-history"
                                 invisible="historial_count == 0">
                             <field name="historial_count" string="Revisiones"
                                    widget="statinfo"/>
+                        </button>
+                        <button name="action_ver_registro_cambios" type="object"
+                                class="oe_stat_button" icon="fa-list-alt"
+                                invisible="not es_responsable">
+                            <span class="o_stat_text">Registro</span>
                         </button>
                     </div>
 
@@ -304,7 +309,7 @@
 
     <!-- ── ACCIÓN GENERAL ────────────────────────────────────── -->
     <record id="action_doc_compartida_all" model="ir.actions.act_window">
-        <field name="name">Documentación Compartida</field>
+        <field name="name">Documentación Técnica</field>
         <field name="res_model">amunet.doc.compartida</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_doc_compartida_list"/>

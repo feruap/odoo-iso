@@ -1,4 +1,11 @@
-from odoo import models, fields
+from odoo import models, fields, api
+
+CAMPOS_LABEL = {
+    'rev_materiales': 'Precauciones',
+    'rev_volumenes': 'Volúmenes de reactivos',
+    'rev_tiempos': 'Tiempos de interpretación',
+    'rev_adicional': 'Adicional',
+}
 
 
 class DocRevisionHistorial(models.Model):
@@ -13,6 +20,24 @@ class DocRevisionHistorial(models.Model):
     accion = fields.Selection([
         ('cierre', '✓ Revisión cerrada'),
         ('reapertura', '🔄 Reapertura'),
+        ('cambio_criterio', '✏️ Cambio de criterio'),
     ], string='Acción', required=True)
     fecha = fields.Datetime(
         string='Fecha', default=fields.Datetime.now, readonly=True)
+
+    # Campos para cambios de criterio
+    campo = fields.Char(string='Criterio (técnico)')
+    campo_label = fields.Char(
+        string='Criterio', compute='_compute_campo_label', store=True)
+    valor_anterior = fields.Selection(
+        [('ok', '✓ Correcto'), ('fail', '✗ Incorrecto')],
+        string='Antes')
+    valor_nuevo = fields.Selection(
+        [('ok', '✓ Correcto'), ('fail', '✗ Incorrecto')],
+        string='Después')
+    motivo = fields.Text(string='Motivo')
+
+    @api.depends('campo')
+    def _compute_campo_label(self):
+        for rec in self:
+            rec.campo_label = CAMPOS_LABEL.get(rec.campo, rec.campo or '')

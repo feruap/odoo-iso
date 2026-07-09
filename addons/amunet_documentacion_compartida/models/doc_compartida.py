@@ -144,17 +144,22 @@ class DocCompartida(models.Model):
                 vals['revisado_por_id'] = uid
                 vals['fecha_revision'] = fields.Datetime.now()
 
-        # Capturar estado antes de escribir (para detectar cierre)
+        # Capturar estado y valores de criterios antes de escribir
         campos_revision = {'rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_adicional'}
+        criterios_cambiados = campos_revision & set(vals)
         state_antes = {}
-        if campos_revision & set(vals):
+        valores_antes = {}
+        if criterios_cambiados:
             state_antes = {rec.id: rec.state for rec in self}
+            valores_antes = {
+                rec.id: {c: getattr(rec, c) for c in criterios_cambiados}
+                for rec in self
+            }
 
         result = super().write(vals)
 
-        # Sincronizar observaciones según resultado final (no puede hacerse en _compute
-        # porque observaciones no es un campo calculado por ese método)
-        if campos_revision & set(vals) and 'observaciones' not in vals:
+        # Sincronizar observaciones según resultado final
+        if criterios_cambiados and 'observaciones' not in vals:
             for rec in self:
                 reviews = [rec.rev_materiales, rec.rev_volumenes, rec.rev_tiempos, rec.rev_adicional]
                 all_ok = all(r == 'ok' for r in reviews)
@@ -163,15 +168,29 @@ class DocCompartida(models.Model):
                 elif any(r == 'fail' for r in reviews) and rec.observaciones == 'Ninguna':
                     rec._write({'observaciones': False})
 
-        # Registrar cierre en historial cuando el estado pasa a APROBADO
-        if state_antes:
+        # Registrar cambios de criterio y cierre en historial
+        if criterios_cambiados:
             for rec in self:
+                for campo in criterios_cambiados:
+                    antes = valores_antes[rec.id][campo]
+                    despues = getattr(rec, campo)
+                    if antes != despues:
+                        self.env['amunet.doc.revision.historial'].sudo().create({
+                            'doc_id': rec.id,
+                            'usuario_id': self.env.user.id,
+                            'accion': 'cambio_criterio',
+                            'campo': campo,
+                            'valor_anterior': antes or False,
+                            'valor_nuevo': despues or False,
+                            'motivo': vals.get('observaciones') if despues == 'fail' else False,
+                        })
                 if state_antes.get(rec.id) != 'aprobado' and rec.state == 'aprobado':
                     self.env['amunet.doc.revision.historial'].sudo().create({
                         'doc_id': rec.id,
                         'usuario_id': self.env.user.id,
                         'accion': 'cierre',
                     })
+                    rec._notificar_diana_manual_aprobado()
 
         # Notificar a Calidad cuando se programa una fecha
         if 'fecha_programada' in vals and vals.get('fecha_programada'):
@@ -219,7 +238,26 @@ class DocCompartida(models.Model):
             'name': f'Historial — {self.name}',
             'res_model': 'amunet.doc.revision.historial',
             'view_mode': 'list',
-            'domain': [('doc_id', '=', self.id)],
+            'views': [(False, 'list')],
+            'domain': [('doc_id', '=', self.id),
+                       ('accion', 'in', ['cierre', 'reapertura'])],
+            'target': 'new',
+        }
+
+    def action_ver_registro_cambios(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Registro de cambios — {self.name}',
+            'res_model': 'amunet.doc.revision.historial',
+            'view_mode': 'list',
+            'views': [
+                (self.env.ref(
+                    'amunet_documentacion_compartida.view_doc_criterio_log_list'
+                ).id, 'list')
+            ],
+            'domain': [('doc_id', '=', self.id),
+                       ('accion', '=', 'cambio_criterio')],
             'target': 'new',
         }
 
@@ -262,9 +300,39 @@ class DocCompartida(models.Model):
             }
         self.revisor_activo_id = uid
 
+    def action_actualizar_en_sistema(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Manual aprobado',
+            'res_model': 'amunet.doc.actualizar.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_doc_id': self.id},
+        }
+
     # ────────────────────────────────────────────────────────────────
     # Notificaciones
     # ────────────────────────────────────────────────────────────────
+
+    def _notificar_diana_manual_aprobado(self):
+        self.ensure_one()
+        diana_uid = 64
+        ya_tiene = self.activity_ids.filtered(
+            lambda a: a.user_id.id == diana_uid
+            and 'aprobado' in (a.summary or '').lower()
+        )
+        if ya_tiene:
+            return
+        self.activity_schedule(
+            'mail.mail_activity_data_todo',
+            date_deadline=fields.Date.today(),
+            summary=f'Manual aprobado: {self.name}',
+            note=f'El manual <b>{self.name}</b> ha sido <b>APROBADO</b> por Calidad.<br/>'
+                 f'Entra al manual y selecciona <b>"Actualizar en sistema"</b> para notificar '
+                 f'a Documentación y archivar la versión definitiva.',
+            user_id=diana_uid,
+        )
 
     # ────────────────────────────────────────────────────────────────
     # Cron: auto-cierre y recordatorio de revisión
@@ -285,14 +353,31 @@ class DocCompartida(models.Model):
             ('rev_adicional', '!=', False),
         ])
         for rec in cierre:
+            revisor_nombre = rec.revisor_activo_id.name
             rec.with_context(bypass_revisor_check=True).write(
                 {'revisor_activo_id': False})
+            resultado = 'APROBADO ✓' if rec.state == 'aprobado' else 'CON OBSERVACIONES ✗'
             rec.message_post(
-                body='✅ Revisión cerrada automáticamente '
-                     '(todas las columnas completadas, sin cambios por 1 minuto).',
+                body=f'✅ Revisión cerrada automáticamente por {revisor_nombre} '
+                     f'(todas las columnas completadas, sin cambios por 1 minuto).',
                 message_type='notification',
                 subtype_xmlid='mail.mt_note',
             )
+            # Notificar al responsable (Jorge) para que ejecute los cambios
+            ya_tiene = rec.activity_ids.filtered(
+                lambda a: a.user_id.id == JORGE_UID
+                and 'Revisión lista' in (a.summary or '')
+            )
+            if not ya_tiene:
+                rec.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    date_deadline=fields.Date.today(),
+                    summary=f'Revisión lista: {rec.name}',
+                    note=f'<b>{revisor_nombre}</b> completó la revisión de <b>{rec.name}</b>.<br/>'
+                         f'Resultado: <b>{resultado}</b><br/>'
+                         f'Entra al manual, revisa los criterios y ejecuta los cambios si aplica.',
+                    user_id=JORGE_UID,
+                )
 
         # ── Recordatorio: revisión parcial + 5 min sin actividad ──
         parciales = self.search([
