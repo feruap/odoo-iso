@@ -1311,20 +1311,26 @@ class MrpProduction(models.Model):
                     'Estado actual: %s'
                 ) % estado)
 
-            # 1. Validar cantidades utilizadas en reactivos
-            sin_cantidad = record.move_raw_ids.filtered(lambda m: not m.quantity or m.quantity <= 0)
+            # 1. Validar cantidades utilizadas en reactivos. Se permite 0
+            # (material entregado pero NO usado: se devuelve todo en la
+            # conciliacion). Solo se bloquea un valor negativo.
+            sin_cantidad = record.move_raw_ids.filtered(lambda m: (m.quantity or 0.0) < 0)
             if sin_cantidad:
                 nombres = ', '.join(sin_cantidad.mapped('product_id.name'))
-                raise UserError(f'ATENCIÓN: Los siguientes reactivos no tienen Cantidad Utilizada:\n{nombres}\n\nCompleta los valores antes de marcar como hecho.')
+                raise UserError(f'ATENCIÓN: Los siguientes reactivos tienen Cantidad Utilizada inválida (negativa):\n{nombres}')
 
-            # 2. Validar Checklist Operativa
-            missing = []
-            if record.amunet_sys_req_history and not record.amunet_check_history_log: missing.append("Registro en Bitácoras")
-            if record.amunet_sys_req_calc and not record.amunet_check_calculations: missing.append("Cálculos Realizados")
-            if record.amunet_sys_req_dilution and not record.amunet_check_dilution: missing.append("Dilución de Reactivos")
-            if record.amunet_sys_req_aforar and not record.amunet_check_aforar: missing.append("Aforar")
-            if missing:
-                raise UserError('ATENCIÓN: Faltan las siguientes actividades operativas por marcar en la Pestaña de Actividades:\n- ' + '\n- '.join(missing))
+            # 2. Validar Checklist Operativa — SOLO para SOLUCIONES (preparacion
+            # quimica: bitacora/calculos/dilucion/aforar). Los kits, reactivos y
+            # medios de cultivo no llevan este checklist aunque tengan los flags
+            # amunet_sys_req_* puestos (heredados al dar de alta el producto).
+            if record.amunet_is_solution_product:
+                missing = []
+                if record.amunet_sys_req_history and not record.amunet_check_history_log: missing.append("Registro en Bitácoras")
+                if record.amunet_sys_req_calc and not record.amunet_check_calculations: missing.append("Cálculos Realizados")
+                if record.amunet_sys_req_dilution and not record.amunet_check_dilution: missing.append("Dilución de Reactivos")
+                if record.amunet_sys_req_aforar and not record.amunet_check_aforar: missing.append("Aforar")
+                if missing:
+                    raise UserError('ATENCIÓN: Faltan las siguientes actividades operativas por marcar en la Pestaña de Actividades:\n- ' + '\n- '.join(missing))
             
             # 2. Validar Calidad (solo si el producto lo requiere)
             if record.amunet_sys_req_qc and record.quality_analysis_status != 'approved':
