@@ -26,6 +26,8 @@ Funcionalidades:
         'amunet_hr_training',
     ],
     'data': [
+        'data/seeds_20260709_162924.xml',
+        'data/seeds_cursos_virtuales_preguntas.xml',
         # Seguridad
         'security/amunet_competencias_security.xml',
         'security/ir.model.access.csv',
