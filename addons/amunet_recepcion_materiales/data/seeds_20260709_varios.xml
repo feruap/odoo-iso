@@ -1,0 +1,67 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Categoría padre: Consumible (ya existe en prod id=4) -->
+        <record id="seed_product_category_4" model="product.category">
+            <field name="name">Consumible</field>
+            <field name="property_cost_method">average</field>
+        </record>
+
+        <!-- Subcategoría: Consumible / Varios (nueva) -->
+        <record id="seed_product_category_127" model="product.category">
+            <field name="name">Varios</field>
+            <field name="parent_id" ref="seed_product_category_4"/>
+            <field name="property_cost_method">average</field>
+        </record>
+
+        <!-- Piseta -->
+        <record id="seed_product_template_2016" model="product.template">
+            <field name="name">Piseta</field>
+            <field name="default_code">COPIS01</field>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="service_tracking">no</field>
+            <field name="tracking">lot</field>
+            <field name="categ_id" ref="seed_product_category_127"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="active" eval="True"/>
+            <field name="use_expiration_date" eval="False"/>
+        </record>
+
+        <!-- Caja de almacenamiento de tubos PCR -->
+        <record id="seed_product_template_2017" model="product.template">
+            <field name="name">Caja de almacenamiento de tubos PCR</field>
+            <field name="default_code">COCAT01</field>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="service_tracking">no</field>
+            <field name="tracking">lot</field>
+            <field name="categ_id" ref="seed_product_category_127"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="active" eval="True"/>
+            <field name="use_expiration_date" eval="False"/>
+        </record>
+
+        <!-- Tira para pH -->
+        <record id="seed_product_template_2018" model="product.template">
+            <field name="name">Tira para pH</field>
+            <field name="default_code">COTPH01</field>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="service_tracking">no</field>
+            <field name="tracking">lot</field>
+            <field name="categ_id" ref="seed_product_category_127"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="active" eval="True"/>
+            <field name="use_expiration_date" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
