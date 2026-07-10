@@ -10,6 +10,7 @@
         'data/cron_reorder_notify.xml',
         'data/seeds_20260709_suministros.xml',
         'data/seeds_20260709_varios.xml',
+        'data/seeds_20260710_varios.xml',
         'wizard/recepcion_pin_wizard_views.xml',
         'wizard/amunet_lot_serial_split_wizard_views.xml',
         'wizard/amunet_reception_serial_wizard_views.xml',

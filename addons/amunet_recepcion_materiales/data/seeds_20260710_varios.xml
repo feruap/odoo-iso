@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Centricon 0.5 — Consumible / Varios -->
+        <record id="seed_product_template_2023" model="product.template">
+            <field name="name">Centricon 0.5</field>
+            <field name="default_code">COCEN01</field>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="service_tracking">no</field>
+            <field name="tracking">lot</field>
+            <field name="categ_id" ref="seed_product_category_127"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="active" eval="True"/>
+            <field name="use_expiration_date" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
