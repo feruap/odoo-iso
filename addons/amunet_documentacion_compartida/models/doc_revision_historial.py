@@ -21,6 +21,7 @@ class DocRevisionHistorial(models.Model):
         ('cierre', '✓ Revisión cerrada'),
         ('reapertura', '🔄 Reapertura'),
         ('cambio_criterio', '✏️ Cambio de criterio'),
+        ('firma', '✍️ Firma de aprobación'),
     ], string='Acción', required=True)
     fecha = fields.Datetime(
         string='Fecha', default=fields.Datetime.now, readonly=True)

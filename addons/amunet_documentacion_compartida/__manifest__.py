@@ -1,11 +1,11 @@
 {
     'name': 'Documentación Técnica (Amunet)',
-    'version': '19.0.2.0.0',
+    'version': '19.0.3.0.0',
     'category': 'Quality',
     'summary': 'Gestión de manuales técnicos y revisión cruzada entre Validación y Calidad',
     'author': 'Amunet',
     'website': 'https://www.amunet.com',
-    'depends': ['base', 'mail'],
+    'depends': ['base', 'mail', 'amunet_quality'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
@@ -17,6 +17,7 @@
         'views/doc_reopen_wizard_views.xml',
         'views/doc_tomar_wizard_views.xml',
         'views/doc_actualizar_wizard_views.xml',
+        'views/doc_firma_wizard_views.xml',
         'views/menus.xml',
         'data/carpetas.xml',
         'data/cron_revision.xml',

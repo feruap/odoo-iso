@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
             <list string="Documentos"
                   decoration-success="state == 'aprobado'"
+                  decoration-info="state == 'por_aprobar'"
                   decoration-warning="state == 'pendiente'">
 
                 <!-- Auxiliares para condiciones -->
@@ -121,6 +122,7 @@
                 <field name="state" string="Estatus"
                        widget="badge"
                        decoration-success="state == 'aprobado'"
+                       decoration-info="state == 'por_aprobar'"
                        decoration-warning="state == 'pendiente'"
                        optional="show"/>
 
@@ -143,6 +145,12 @@
                             string="▶ Tomar revisión"
                             class="btn-primary"
                             invisible="soy_revisor_activo or state == 'aprobado'"/>
+                    <!-- Aprobar y FIRMAR: solo Calidad, cuando la revisión está
+                         completa y aún no aprobado. Pide PIN. -->
+                    <button name="action_abrir_firma" type="object"
+                            string="✍️ Aprobar y firmar"
+                            class="btn-primary"
+                            invisible="state == 'aprobado' or not revision_completa or not es_calidad"/>
                     <!-- Reabrir revisión (solo cuando ya está aprobado) -->
                     <button name="action_reabrir_revision" type="object"
                             string="🔄 Reabrir revisión"
@@ -154,12 +162,14 @@
                             class="btn-success"
                             invisible="state != 'aprobado'"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="pendiente,aprobado"/>
+                           statusbar_visible="pendiente,por_aprobar,aprobado"/>
                 </header>
                 <sheet>
                     <!-- Auxiliares -->
                     <field name="obs_requeridas"    invisible="1"/>
                     <field name="es_responsable"    invisible="1"/>
+                    <field name="es_calidad"        invisible="1"/>
+                    <field name="revision_completa" invisible="1"/>
                     <field name="soy_revisor_activo" invisible="1"/>
                     <field name="historial_count"   invisible="1"/>
 
@@ -268,11 +278,16 @@
                         <group>
                             <field name="state" readonly="1" widget="badge"
                                    decoration-success="state == 'aprobado'"
+                                   decoration-info="state == 'por_aprobar'"
                                    decoration-warning="state == 'pendiente'"
                                    string="Resultado"/>
                             <field name="revisor_activo_id" readonly="1" string="Revisor activo"/>
                             <field name="revisado_por_id"   readonly="1" string="Cerró revisión"/>
                             <field name="fecha_revision"    readonly="1" string="Fecha y hora"/>
+                            <field name="firmante_id" readonly="1" string="Aprobado y firmado por"
+                                   invisible="state != 'aprobado'"/>
+                            <field name="fecha_firma" readonly="1" string="Fecha de firma"
+                                   invisible="state != 'aprobado'"/>
                         </group>
                     </group>
 

@@ -6,3 +6,4 @@ from . import doc_revision_historial
 from . import doc_reopen_wizard
 from . import doc_tomar_wizard
 from . import doc_actualizar_wizard
+from . import doc_firma_wizard

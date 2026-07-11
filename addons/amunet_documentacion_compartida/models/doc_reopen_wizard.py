@@ -21,7 +21,8 @@ class DocReopenWizard(models.TransientModel):
             'usuario_id': uid,
             'accion': 'reapertura',
         })
-        # Limpiar revisión anterior y asignar cerrojo al que reabre
+        # Limpiar revisión anterior, INVALIDAR la firma y regresar a PENDIENTE,
+        # asignando el cerrojo al que reabre.
         doc.with_context(bypass_revisor_check=True).write({
             'rev_materiales': False,
             'rev_volumenes': False,
@@ -31,6 +32,9 @@ class DocReopenWizard(models.TransientModel):
             'revisado_por_id': False,
             'fecha_revision': False,
             'revisor_activo_id': uid,
+            'state': 'pendiente',
+            'firmante_id': False,
+            'fecha_firma': False,
         })
         grupo = self.env.ref(
             'amunet_documentacion_compartida.group_doc_compartida_user',

@@ -4,7 +4,12 @@ from odoo.exceptions import ValidationError, UserError
 
 _CAMPOS_REV = ['rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_adicional']
 
-JORGE_UID = 70  # único autorizado a editar fecha_programada
+# Grupos (reemplazan los UIDs hardcodeados JORGE_UID/diana_uid).
+#  - Validación: programa la fecha y ejecuta los cambios.
+#  - Calidad (Supervisor QC o Responsable Sanitario): revisa, aprueba y FIRMA.
+G_VALIDACION = 'amunet_documentacion_compartida.group_doc_validacion'
+G_CAL_SUP = 'amunet_quality.group_quality_supervisor'
+G_CAL_RS = 'amunet_quality.group_quality_sanitary'
 
 
 class DocCompartida(models.Model):
@@ -39,10 +44,23 @@ class DocCompartida(models.Model):
     # ── Observaciones / Estatus ──────────────────────────────
     obs_requeridas = fields.Boolean(compute='_compute_estado', store=True)
     observaciones = fields.Text(string='Observaciones', tracking=True)
+    # Estado ya NO se auto-aprueba con marcar criterios. Al completar los 4
+    # criterios en '✓ Correcto' pasa a 'por_aprobar'; la APROBACIÓN final la
+    # da Calidad con FIRMA (PIN) via action_aprobar_firmar.
     state = fields.Selection(
-        [('aprobado', 'APROBADO'), ('pendiente', 'PENDIENTE')],
-        string='Estatus', default='pendiente',
-        compute='_compute_estado', store=True, tracking=True)
+        [('pendiente', 'PENDIENTE'),
+         ('por_aprobar', 'LISTO PARA APROBAR'),
+         ('aprobado', 'APROBADO')],
+        string='Estatus', default='pendiente', tracking=True, copy=False)
+    # Revisión completa = los 4 criterios en 'ok' (aún sin firmar).
+    revision_completa = fields.Boolean(
+        compute='_compute_estado', store=True,
+        string='Revisión completa')
+    # ── Firma de aprobación (ISO 13485 / CFR 21 Part 11) ─────
+    firmante_id = fields.Many2one(
+        'res.users', string='Aprobado y firmado por', readonly=True, copy=False)
+    fecha_firma = fields.Datetime(
+        string='Fecha de firma', readonly=True, copy=False)
 
     # ── Cerrojo de revisión ──────────────────────────────────
     revisor_activo_id = fields.Many2one(
@@ -62,6 +80,7 @@ class DocCompartida(models.Model):
 
     # ── Computed contextuales (varían por usuario) ───────────
     es_responsable = fields.Boolean(compute='_compute_ctx_usuario')
+    es_calidad = fields.Boolean(compute='_compute_ctx_usuario')
     soy_revisor_activo = fields.Boolean(compute='_compute_ctx_usuario')
 
     # ── Revisión cerrada (todas las columnas llenas y sin revisor activo) ──
@@ -87,9 +106,36 @@ class DocCompartida(models.Model):
     @api.depends_context('uid')
     def _compute_ctx_usuario(self):
         uid = self.env.user.id
+        es_val = self.env.user.has_group(G_VALIDACION)
+        es_cal = self._es_calidad()
         for rec in self:
-            rec.es_responsable = (uid == JORGE_UID)
+            rec.es_responsable = es_val
+            rec.es_calidad = es_cal
             rec.soy_revisor_activo = bool(rec.revisor_activo_id) and rec.revisor_activo_id.id == uid
+
+    # ── Helpers de rol ───────────────────────────────────────
+    def _es_validacion(self):
+        return self.env.user.has_group(G_VALIDACION)
+
+    def _es_calidad(self):
+        u = self.env.user
+        return u.has_group(G_CAL_SUP) or u.has_group(G_CAL_RS)
+
+    def _usuarios_calidad(self):
+        """Usuarios activos de Calidad (Supervisor QC o Responsable Sanitario)."""
+        sup = self.env.ref(G_CAL_SUP, raise_if_not_found=False)
+        rs = self.env.ref(G_CAL_RS, raise_if_not_found=False)
+        users = self.env['res.users']
+        for g in (sup, rs):
+            if g:
+                users |= g.sudo().user_ids
+        return users.filtered(lambda u: u.active and u.id != 1)
+
+    def _usuarios_validacion(self):
+        g = self.env.ref(G_VALIDACION, raise_if_not_found=False)
+        if not g:
+            return self.env['res.users']
+        return g.sudo().user_ids.filtered(lambda u: u.active and u.id != 1)
 
     @api.depends('revisado_por_id', 'fecha_revision')
     def _compute_revisado_display(self):
@@ -105,10 +151,8 @@ class DocCompartida(models.Model):
     def _compute_estado(self):
         for rec in self:
             reviews = [rec.rev_materiales, rec.rev_volumenes, rec.rev_tiempos, rec.rev_adicional]
-            all_ok = all(r == 'ok' for r in reviews)
-            any_fail = any(r == 'fail' for r in reviews)
-            rec.state = 'aprobado' if all_ok else 'pendiente'
-            rec.obs_requeridas = any_fail
+            rec.revision_completa = all(r == 'ok' for r in reviews)
+            rec.obs_requeridas = any(r == 'fail' for r in reviews)
 
     # ────────────────────────────────────────────────────────────────
     # Constrains
@@ -129,28 +173,35 @@ class DocCompartida(models.Model):
 
     def write(self, vals):
         uid = self.env.user.id
+        campos_revision = {'rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_adicional'}
+        criterios_cambiados = campos_revision & set(vals)
+        bypass = self.env.context.get('bypass_revisor_check')
 
-        # Solo Jorge puede cambiar la fecha programada
-        if 'fecha_programada' in vals and uid != JORGE_UID:
+        # Solo Validación puede cambiar la fecha programada
+        if 'fecha_programada' in vals and not bypass and not self._es_validacion():
             raise UserError(
                 'Solo el responsable de Validación puede modificar la fecha programada.')
 
-        # Cualquier usuario del módulo puede marcar criterios.
-        # Auto-registramos quién revisó y cuándo.
-        campos_revision = {'rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_adicional'}
-        if campos_revision & set(vals):
-            if not self.env.context.get('bypass_revisor_check'):
-                vals['revisor_activo_id'] = uid
-                vals['revisado_por_id'] = uid
-                vals['fecha_revision'] = fields.Datetime.now()
+        # Solo Calidad (Supervisor QC / Responsable Sanitario) puede marcar
+        # los criterios de revisión. Y no se pueden cambiar si ya está APROBADO
+        # y firmado (hay que reabrir primero).
+        if criterios_cambiados and not bypass:
+            if not self._es_calidad():
+                raise UserError(
+                    'Solo Calidad (Supervisor QC o Responsable Sanitario) puede '
+                    'marcar los criterios de revisión.')
+            if any(rec.state == 'aprobado' for rec in self):
+                raise UserError(
+                    'El manual ya está APROBADO y firmado. Reabre la revisión '
+                    'antes de modificar los criterios.')
+            # Auto-registramos quién revisó y cuándo.
+            vals['revisor_activo_id'] = uid
+            vals['revisado_por_id'] = uid
+            vals['fecha_revision'] = fields.Datetime.now()
 
-        # Capturar estado y valores de criterios antes de escribir
-        campos_revision = {'rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_adicional'}
-        criterios_cambiados = campos_revision & set(vals)
-        state_antes = {}
+        # Capturar valores de criterios antes de escribir
         valores_antes = {}
         if criterios_cambiados:
-            state_antes = {rec.id: rec.state for rec in self}
             valores_antes = {
                 rec.id: {c: getattr(rec, c) for c in criterios_cambiados}
                 for rec in self
@@ -161,14 +212,12 @@ class DocCompartida(models.Model):
         # Sincronizar observaciones según resultado final
         if criterios_cambiados and 'observaciones' not in vals:
             for rec in self:
-                reviews = [rec.rev_materiales, rec.rev_volumenes, rec.rev_tiempos, rec.rev_adicional]
-                all_ok = all(r == 'ok' for r in reviews)
-                if all_ok and rec.observaciones != 'Ninguna':
+                if rec.revision_completa and rec.observaciones != 'Ninguna':
                     rec._write({'observaciones': 'Ninguna'})
-                elif any(r == 'fail' for r in reviews) and rec.observaciones == 'Ninguna':
+                elif rec.obs_requeridas and rec.observaciones == 'Ninguna':
                     rec._write({'observaciones': False})
 
-        # Registrar cambios de criterio y cierre en historial
+        # Transición de estado + historial + aviso a Calidad para FIRMAR
         if criterios_cambiados:
             for rec in self:
                 for campo in criterios_cambiados:
@@ -184,13 +233,20 @@ class DocCompartida(models.Model):
                             'valor_nuevo': despues or False,
                             'motivo': vals.get('observaciones') if despues == 'fail' else False,
                         })
-                if state_antes.get(rec.id) != 'aprobado' and rec.state == 'aprobado':
-                    self.env['amunet.doc.revision.historial'].sudo().create({
-                        'doc_id': rec.id,
-                        'usuario_id': self.env.user.id,
-                        'accion': 'cierre',
-                    })
-                    rec._notificar_diana_manual_aprobado()
+                # Estado: la revisión completa deja el manual LISTO PARA APROBAR
+                # (la aprobación real la da la firma). Si deja de estar completa,
+                # regresa a PENDIENTE.
+                if rec.state != 'aprobado':
+                    nuevo = 'por_aprobar' if rec.revision_completa else 'pendiente'
+                    if rec.state != nuevo:
+                        rec._write({'state': nuevo})
+                        if nuevo == 'por_aprobar':
+                            self.env['amunet.doc.revision.historial'].sudo().create({
+                                'doc_id': rec.id,
+                                'usuario_id': self.env.user.id,
+                                'accion': 'cierre',
+                            })
+                            rec._notificar_calidad_por_aprobar()
 
         # Notificar a Calidad cuando se programa una fecha
         if 'fecha_programada' in vals and vals.get('fecha_programada'):
@@ -198,6 +254,62 @@ class DocCompartida(models.Model):
                 rec._notificar_revision_programada()
 
         return result
+
+    # ────────────────────────────────────────────────────────────────
+    # Aprobación con FIRMA (PIN) — ISO 13485 / CFR 21 Part 11
+    # ────────────────────────────────────────────────────────────────
+
+    def _validate_pin(self, password):
+        """Reusa el validador de firma de Calidad (PIN o contraseña del usuario)."""
+        sig = self.env['amunet.quality.signature.wizard'].new({
+            'password': password, 'signature_type': 'authorized'})
+        return sig._validate_credentials(password)
+
+    def action_abrir_firma(self):
+        """Abre el wizard de firma para aprobar el manual."""
+        self.ensure_one()
+        if self.state == 'aprobado':
+            raise UserError('Este manual ya fue aprobado y firmado.')
+        if not self.revision_completa:
+            raise UserError('Faltan criterios de revisión por marcar como "✓ Correcto".')
+        if not self._es_calidad():
+            raise UserError('Solo Calidad (Supervisor QC o Responsable Sanitario) puede firmar.')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Aprobar y firmar',
+            'res_model': 'amunet.doc.firma.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_doc_id': self.id},
+        }
+
+    def action_aprobar_firmar(self, password):
+        """Aprueba el manual con firma electrónica (PIN). Solo Calidad."""
+        self.ensure_one()
+        if self.state == 'aprobado':
+            raise UserError('Este manual ya fue aprobado y firmado.')
+        if not self.revision_completa:
+            raise UserError('Faltan criterios por marcar como "✓ Correcto".')
+        if not self._es_calidad():
+            raise UserError('Solo Calidad (Supervisor QC o Responsable Sanitario) puede firmar.')
+        if not self._validate_pin(password):
+            raise UserError('PIN o contraseña incorrectos.')
+        self.with_context(bypass_revisor_check=True).write({
+            'state': 'aprobado',
+            'firmante_id': self.env.user.id,
+            'fecha_firma': fields.Datetime.now(),
+            'revisor_activo_id': False,
+        })
+        self.env['amunet.doc.revision.historial'].sudo().create({
+            'doc_id': self.id,
+            'usuario_id': self.env.user.id,
+            'accion': 'firma',
+        })
+        self.message_post(
+            body='✍️ Manual <b>APROBADO y FIRMADO</b> por <b>%s</b>.' % self.env.user.name,
+            message_type='notification', subtype_xmlid='mail.mt_note')
+        self._notificar_actualizar_en_sistema()
+        return True
 
     # ────────────────────────────────────────────────────────────────
     # Acciones de botón
@@ -315,24 +427,40 @@ class DocCompartida(models.Model):
     # Notificaciones
     # ────────────────────────────────────────────────────────────────
 
-    def _notificar_diana_manual_aprobado(self):
+    def _notificar_calidad_por_aprobar(self):
+        """Revisión completa: avisar a Calidad que el manual está LISTO PARA
+        APROBAR y debe firmarse."""
         self.ensure_one()
-        diana_uid = 64
-        ya_tiene = self.activity_ids.filtered(
-            lambda a: a.user_id.id == diana_uid
-            and 'aprobado' in (a.summary or '').lower()
-        )
-        if ya_tiene:
-            return
-        self.activity_schedule(
-            'mail.mail_activity_data_todo',
-            date_deadline=fields.Date.today(),
-            summary=f'Manual aprobado: {self.name}',
-            note=f'El manual <b>{self.name}</b> ha sido <b>APROBADO</b> por Calidad.<br/>'
-                 f'Entra al manual y selecciona <b>"Actualizar en sistema"</b> para notificar '
-                 f'a Documentación y archivar la versión definitiva.',
-            user_id=diana_uid,
-        )
+        for user in self._usuarios_calidad():
+            ya = self.activity_ids.filtered(
+                lambda a: a.user_id.id == user.id and 'firmar' in (a.summary or '').lower())
+            if ya:
+                continue
+            self.activity_schedule(
+                'mail.mail_activity_data_todo',
+                date_deadline=fields.Date.today(),
+                summary=f'Aprobar y firmar: {self.name}',
+                note=f'La revisión del manual <b>{self.name}</b> está completa.<br/>'
+                     f'Entra al manual y pulsa <b>"Aprobar y firmar"</b> (requiere tu PIN) '
+                     f'para aprobarlo formalmente.',
+                user_id=user.id,
+            )
+
+    def _notificar_actualizar_en_sistema(self):
+        """Tras la firma: avisar a Validación para que ejecute la actualización
+        en el sistema y archive la versión definitiva."""
+        self.ensure_one()
+        for user in self._usuarios_validacion():
+            self.activity_schedule(
+                'mail.mail_activity_data_todo',
+                date_deadline=fields.Date.today(),
+                summary=f'Manual firmado: {self.name}',
+                note=f'El manual <b>{self.name}</b> fue <b>APROBADO y FIRMADO</b> por '
+                     f'<b>{self.env.user.name}</b>.<br/>'
+                     f'Entra al manual y selecciona <b>"Actualizar en sistema"</b> para '
+                     f'archivar la versión definitiva.',
+                user_id=user.id,
+            )
 
     # ────────────────────────────────────────────────────────────────
     # Cron: auto-cierre y recordatorio de revisión
@@ -356,19 +484,21 @@ class DocCompartida(models.Model):
             revisor_nombre = rec.revisor_activo_id.name
             rec.with_context(bypass_revisor_check=True).write(
                 {'revisor_activo_id': False})
-            resultado = 'APROBADO ✓' if rec.state == 'aprobado' else 'CON OBSERVACIONES ✗'
+            resultado = 'COMPLETA ✓ (lista para firmar)' if rec.revision_completa else 'CON OBSERVACIONES ✗'
             rec.message_post(
                 body=f'✅ Revisión cerrada automáticamente por {revisor_nombre} '
                      f'(todas las columnas completadas, sin cambios por 1 minuto).',
                 message_type='notification',
                 subtype_xmlid='mail.mt_note',
             )
-            # Notificar al responsable (Jorge) para que ejecute los cambios
-            ya_tiene = rec.activity_ids.filtered(
-                lambda a: a.user_id.id == JORGE_UID
-                and 'Revisión lista' in (a.summary or '')
-            )
-            if not ya_tiene:
+            # Notificar a Validación para que ejecute los cambios si aplica
+            for val_user in rec._usuarios_validacion():
+                ya_tiene = rec.activity_ids.filtered(
+                    lambda a: a.user_id.id == val_user.id
+                    and 'Revisión lista' in (a.summary or '')
+                )
+                if ya_tiene:
+                    continue
                 rec.activity_schedule(
                     'mail.mail_activity_data_todo',
                     date_deadline=fields.Date.today(),
@@ -376,7 +506,7 @@ class DocCompartida(models.Model):
                     note=f'<b>{revisor_nombre}</b> completó la revisión de <b>{rec.name}</b>.<br/>'
                          f'Resultado: <b>{resultado}</b><br/>'
                          f'Entra al manual, revisa los criterios y ejecuta los cambios si aplica.',
-                    user_id=JORGE_UID,
+                    user_id=val_user.id,
                 )
 
         # ── Recordatorio: revisión parcial + 5 min sin actividad ──
