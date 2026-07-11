@@ -24,7 +24,8 @@
                         string="🔄"
                         title="Reemplazar PDF"
                         class="btn-sm btn-outline-secondary"
-                        invisible="not manual_file or not es_responsable"/>
+                        invisible="not manual_file or not es_responsable"
+                        groups="amunet_documentacion_compartida.group_doc_validacion"/>
                 <field name="manual_filename" column_invisible="1"/>
 
                 <!-- ── FECHA PROGRAMADA (solo Jorge puede editar) ── -->
@@ -35,7 +36,8 @@
                 <button name="action_tomar_revision" type="object"
                         string="▶ Tomar revisión"
                         class="btn-sm btn-outline-primary"
-                        invisible="soy_revisor_activo or state == 'aprobado'"/>
+                        invisible="soy_revisor_activo or state == 'aprobado'"
+                        groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
 
                 <!-- Auxiliares para condición de bloqueo cruzado y revisión cerrada -->
                 <field name="observaciones"    column_invisible="1"/>
@@ -57,12 +59,14 @@
                         invisible="revision_cerrada or (rev_materiales != 'fail' and
                                    (rev_volumenes == 'fail' or rev_tiempos == 'fail' or rev_adicional == 'fail') and
                                    not observaciones)"
-                        class="btn-link btn-sm p-0"/>
+                        class="btn-link btn-sm p-0"
+                        groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
                 <button name="action_marcar_materiales" type="object"
                         string="📝" title="Marcar Precauciones"
                         confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Precauciones?"
                         invisible="not revision_cerrada"
-                        class="btn-link btn-sm p-0"/>
+                        class="btn-link btn-sm p-0"
+                        groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
 
                 <!-- Volúmenes de reactivos -->
                 <field name="rev_volumenes" string="Vol. de reactivos"
@@ -75,12 +79,14 @@
                         invisible="revision_cerrada or (rev_volumenes != 'fail' and
                                    (rev_materiales == 'fail' or rev_tiempos == 'fail' or rev_adicional == 'fail') and
                                    not observaciones)"
-                        class="btn-link btn-sm p-0"/>
+                        class="btn-link btn-sm p-0"
+                        groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
                 <button name="action_marcar_volumenes" type="object"
                         string="📝" title="Marcar Vol. de reactivos"
                         confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Volúmenes?"
                         invisible="not revision_cerrada"
-                        class="btn-link btn-sm p-0"/>
+                        class="btn-link btn-sm p-0"
+                        groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
 
                 <!-- Tiempos de interpretación -->
                 <field name="rev_tiempos" string="Tiempos de interpret."
@@ -93,12 +99,14 @@
                         invisible="revision_cerrada or (rev_tiempos != 'fail' and
                                    (rev_materiales == 'fail' or rev_volumenes == 'fail' or rev_adicional == 'fail') and
                                    not observaciones)"
-                        class="btn-link btn-sm p-0"/>
+                        class="btn-link btn-sm p-0"
+                        groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
                 <button name="action_marcar_tiempos" type="object"
                         string="📝" title="Marcar Tiempos"
                         confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Tiempos?"
                         invisible="not revision_cerrada"
-                        class="btn-link btn-sm p-0"/>
+                        class="btn-link btn-sm p-0"
+                        groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
 
                 <!-- Adicional -->
                 <field name="rev_adicional" string="Adicional"
@@ -111,12 +119,14 @@
                         invisible="revision_cerrada or (rev_adicional != 'fail' and
                                    (rev_materiales == 'fail' or rev_volumenes == 'fail' or rev_tiempos == 'fail') and
                                    not observaciones)"
-                        class="btn-link btn-sm p-0"/>
+                        class="btn-link btn-sm p-0"
+                        groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
                 <button name="action_marcar_adicional" type="object"
                         string="📝" title="Marcar Adicional"
                         confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Adicional?"
                         invisible="not revision_cerrada"
-                        class="btn-link btn-sm p-0"/>
+                        class="btn-link btn-sm p-0"
+                        groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
 
                 <!-- ── ESTATUS ── -->
                 <field name="state" string="Estatus"
@@ -144,7 +154,8 @@
                     <button name="action_tomar_revision" type="object"
                             string="▶ Tomar revisión"
                             class="btn-primary"
-                            invisible="soy_revisor_activo or state == 'aprobado'"/>
+                            invisible="soy_revisor_activo or state == 'aprobado'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
                     <!-- Aprobar y FIRMAR: solo Calidad, cuando la revisión está
                          completa y aún no aprobado. Pide PIN. -->
                     <button name="action_abrir_firma" type="object"
@@ -155,12 +166,14 @@
                     <button name="action_reabrir_revision" type="object"
                             string="🔄 Reabrir revisión"
                             class="btn-warning"
-                            invisible="state != 'aprobado'"/>
+                            invisible="state != 'aprobado'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary"/>
                     <!-- Actualizar en sistema (cuando aprobado) -->
                     <button name="action_actualizar_en_sistema" type="object"
                             string="📤 Actualizar en sistema"
                             class="btn-success"
-                            invisible="state != 'aprobado'"/>
+                            invisible="state != 'aprobado'"
+                            groups="amunet_documentacion_compartida.group_doc_validacion"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="pendiente,por_aprobar,aprobado"/>
                 </header>
@@ -251,7 +264,8 @@
                             <button name="action_reemplazar_pdf" type="object"
                                     string="🔄 Reemplazar PDF"
                                     class="btn btn-outline-secondary btn-sm mt-1"
-                                    invisible="not manual_file or not es_responsable"/>
+                                    invisible="not manual_file or not es_responsable"
+                                    groups="amunet_documentacion_compartida.group_doc_validacion"/>
                         </group>
                     </group>
 
