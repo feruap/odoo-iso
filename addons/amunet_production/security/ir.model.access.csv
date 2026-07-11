@@ -14,3 +14,6 @@ access_stock_move_line_amunet_operator,stock.move.line amunet operator,stock.mod
 access_stock_lot_amunet_operator,stock.lot amunet operator,stock.model_stock_lot,amunet_production.group_production_operator,1,0,0,0
 access_stock_scrap_amunet_operator,stock.scrap amunet operator,stock.model_stock_scrap,amunet_production.group_production_operator,1,0,0,0
 access_mrp_production_supervisor_create,mrp.production supervisor create,mrp.model_mrp_production,amunet_production.group_production_supervisor,1,1,1,0
+access_mrp_production_solution_maker,mrp.production solution maker,mrp.model_mrp_production,amunet_production.group_solution_maker,1,1,1,0
+access_stock_move_solution_maker,stock.move solution maker,stock.model_stock_move,amunet_production.group_solution_maker,1,1,1,0
+access_stock_move_line_solution_maker,stock.move.line solution maker,stock.model_stock_move_line,amunet_production.group_solution_maker,1,1,1,1

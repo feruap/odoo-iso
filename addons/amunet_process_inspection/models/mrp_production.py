@@ -148,7 +148,35 @@ class MrpProduction(models.Model):
                          '\n- %s') % '\n- '.join(faltan)
             raise UserError(msg)
 
+    # ============================
+    # Candado: solo el personal autorizado de Soluciones (grupo
+    # group_solution_maker) puede FABRICAR ordenes de solucion, es decir
+    # crearlas, confirmarlas o producirlas. Mery y Fernando (superuser /
+    # miembros del grupo) pasan. Un supervisor de Linea Corta que no sea
+    # fabricante puede VER la orden pero no actuar sobre ella.
+    # ============================
+    def _amunet_check_solution_maker(self):
+        if self.env.su or self.env.user.has_group(
+                'amunet_production.group_solution_maker'):
+            return
+        sols = self.filtered(
+            lambda m: m.route_type == 'solution' or m.amunet_is_solution_product)
+        if sols:
+            raise UserError(_(
+                'Solo el personal autorizado de Soluciones puede fabricar '
+                'esta orden (%s).\n\n'
+                'Actualmente fabrican soluciones: Julissa y Alondra. Si '
+                'necesitas acceso, pideselo a Fernando o Mery.'
+            ) % ', '.join(sols.mapped('name')))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._amunet_check_solution_maker()
+        return records
+
     def button_mark_done(self):
+        self._amunet_check_solution_maker()
         self._amunet_lc_check_close_gate()
         return super().button_mark_done()
 
@@ -157,6 +185,7 @@ class MrpProduction(models.Model):
     # (las inspecciones YA NO se generan al confirmar; ver button_plan)
     # ============================
     def action_confirm(self):
+        self._amunet_check_solution_maker()
         for rec in self:
             if rec.route_type in ('short', 'long'):
                 if not rec.preflight_approved:

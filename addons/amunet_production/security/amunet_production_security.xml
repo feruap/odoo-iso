@@ -134,4 +134,36 @@
     <record id="mrp.access_mrp_production" model="ir.model.access">
         <field name="perm_create" eval="False"/>
     </record>
+
+    <!--
+        Fabricante de Soluciones (2026-07-09):
+        Grupo dedicado para quien fabrica SOLUCIONES (por ahora Julissa y
+        Alondra). NO hereda Operador/Supervisor a proposito: asi su
+        visibilidad de ordenes se puede acotar SOLO a soluciones via
+        ir.rule (ver amunet_process_inspection). Hereda unicamente los
+        grupos TECNICOS necesarios para operar la orden (crear, registrar
+        lotes/movimientos, producir).
+
+        - Quien fabrica solo soluciones (ej. Julissa): se pone SOLO en este
+          grupo -> ve unicamente ordenes de solucion.
+        - Quien tambien hace Linea Corta (ej. Alondra, supervisora): este
+          grupo + Supervisor -> ve todo (el OR de reglas de Odoo la abre).
+        Para sumar mas fabricantes: agregarlos a este grupo, sin tocar codigo.
+    -->
+    <record id="group_solution_maker" model="res.groups">
+        <field name="name">Produccion / Fabricante de Soluciones</field>
+        <field name="implied_ids" eval="[
+            (4, ref('base.group_user')),
+            (4, ref('mrp.group_mrp_user')),
+            (4, ref('mrp.group_mrp_routings')),
+            (4, ref('stock.group_stock_user')),
+            (4, ref('stock.group_tracking_lot')),
+            (4, ref('amunet_material_request.group_material_requester'))
+        ]"/>
+        <field name="comment">
+            Fabrica ordenes de SOLUCIONES (crear, surtir directo, conciliar,
+            solicitar analisis y producir). Su vista de ordenes se limita a
+            soluciones salvo que ademas sea Supervisor.
+        </field>
+    </record>
 </odoo>

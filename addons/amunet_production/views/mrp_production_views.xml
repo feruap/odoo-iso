@@ -36,7 +36,7 @@
                     -->
                     <button name="action_request_analysis" string="Solicitar análisis" type="object" class="oe_highlight"
                             invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"
-                            groups="amunet_production.group_production_supervisor"/>
+                            groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>
                     <button name="%(amunet_production.action_report_production_zebra_label)d" string="Imprimir Etiqueta" type="action" class="oe_highlight" invisible="not amunet_all_ingredients_valid or amunet_user_is_warehouse"/>
                     <!--
                         'Producir' es el ultimo paso: marca la MO como
