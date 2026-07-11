@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_doc_tomar_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.doc.tomar.wizard.form</field>
+        <field name="model">amunet.doc.tomar.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Tomar revisión activa">
+                <sheet>
+                    <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+                        <i class="fa fa-lock fa-lg"/>
+                        <div>
+                            Esta revisión ya fue iniciada por
+                            <strong><field name="revisor_actual_id" readonly="1" nolabel="1"/></strong>.<br/><br/>
+                            ¿Deseas continuar? El analista actual perderá el acceso
+                            y la revisión quedará asignada a ti.
+                        </div>
+                    </div>
+                </sheet>
+                <footer>
+                    <button name="action_confirmar" type="object"
+                            string="Sí, tomar revisión"
+                            class="btn-warning"/>
+                    <button special="cancel" string="Cancelar" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

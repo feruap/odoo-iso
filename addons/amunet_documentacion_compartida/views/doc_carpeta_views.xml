@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── KANBAN: vista explorador de carpetas ─────────────── -->
+    <record id="view_doc_carpeta_kanban" model="ir.ui.view">
+        <field name="name">amunet.doc.carpeta.kanban</field>
+        <field name="model">amunet.doc.carpeta</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="name"/>
+                <field name="child_count"/>
+                <field name="doc_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="text-center p-4" style="cursor:pointer; min-width:130px;">
+                            <div style="font-size:3.5rem; line-height:1; color:#f6c23e;">
+                                <i class="fa fa-folder"/>
+                            </div>
+                            <div class="fw-bold mt-2" style="font-size:0.95rem;">
+                                <field name="name"/>
+                            </div>
+                            <div class="text-muted" style="font-size:0.78rem; margin-top:4px;">
+                                <t t-if="record.child_count.raw_value">
+                                    <t t-esc="record.child_count.raw_value"/> carpetas
+                                </t>
+                                <t t-elif="record.doc_count.raw_value">
+                                    <t t-esc="record.doc_count.raw_value"/> documentos
+                                </t>
+                                <t t-else="">Vacía</t>
+                            </div>
+                        </div>
+                        <footer class="text-center pb-2">
+                            <button name="action_open" type="object"
+                                    class="btn btn-sm btn-outline-warning">
+                                Abrir
+                            </button>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ── LISTA: vista alternativa de carpetas ─────────────── -->
+    <record id="view_doc_carpeta_list" model="ir.ui.view">
+        <field name="name">amunet.doc.carpeta.list</field>
+        <field name="model">amunet.doc.carpeta</field>
+        <field name="arch" type="xml">
+            <list string="Carpetas">
+                <field name="name" string="Nombre"/>
+                <field name="child_count" string="Sub-carpetas"/>
+                <field name="doc_count" string="Documentos"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── ACCIÓN: raíz del explorador (solo carpetas sin padre) -->
+    <record id="action_doc_explorador" model="ir.actions.act_window">
+        <field name="name">Documentación Compartida</field>
+        <field name="res_model">amunet.doc.carpeta</field>
+        <field name="view_mode">kanban,list</field>
+        <field name="domain">[('parent_id', '=', False)]</field>
+        <field name="view_id" ref="view_doc_carpeta_kanban"/>
+    </record>
+
+</odoo>

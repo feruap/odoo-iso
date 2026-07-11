@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="group_doc_compartida_user" model="res.groups">
+            <field name="name">Documentación Compartida / Usuario</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">Acceso de solo lectura a los manuales compartidos.</field>
+        </record>
+
+        <!--
+            Validación: programa la fecha de revisión, reemplaza el PDF y
+            ejecuta "Actualizar en sistema". Reemplaza el antiguo JORGE_UID
+            hardcodeado. La aprobación/firma la hace Calidad (Supervisor QC o
+            Responsable Sanitario), no este grupo.
+        -->
+        <record id="group_doc_validacion" model="res.groups">
+            <field name="name">Documentación Compartida / Validación</field>
+            <field name="implied_ids" eval="[(4, ref('group_doc_compartida_user'))]"/>
+            <field name="comment">Responsable de Validación: programa revisiones y ejecuta actualizaciones.</field>
+        </record>
+    </data>
+</odoo>

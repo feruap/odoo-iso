@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vista historial general (cierres y reaperturas) -->
+    <record id="view_doc_revision_historial_list" model="ir.ui.view">
+        <field name="name">amunet.doc.revision.historial.list</field>
+        <field name="model">amunet.doc.revision.historial</field>
+        <field name="arch" type="xml">
+            <list string="Historial de revisiones"
+                  create="0" edit="0" delete="0"
+                  decoration-success="accion == 'cierre'"
+                  decoration-warning="accion == 'reapertura'">
+                <field name="fecha" string="Fecha"/>
+                <field name="usuario_id" string="Usuario"/>
+                <field name="accion" string="Acción" widget="badge"
+                       decoration-success="accion == 'cierre'"
+                       decoration-warning="accion == 'reapertura'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista registro de cambios de criterios (solo responsable) -->
+    <record id="view_doc_criterio_log_list" model="ir.ui.view">
+        <field name="name">amunet.doc.criterio.log.list</field>
+        <field name="model">amunet.doc.revision.historial</field>
+        <field name="arch" type="xml">
+            <list string="Registro de cambios"
+                  create="0" edit="0" delete="0">
+                <field name="fecha" string="Fecha"/>
+                <field name="usuario_id" string="Quién"/>
+                <field name="campo_label" string="Criterio"/>
+                <field name="valor_anterior" string="Antes" widget="badge"
+                       decoration-success="valor_anterior == 'ok'"
+                       decoration-danger="valor_anterior == 'fail'"/>
+                <field name="valor_nuevo" string="Después" widget="badge"
+                       decoration-success="valor_nuevo == 'ok'"
+                       decoration-danger="valor_nuevo == 'fail'"/>
+                <field name="motivo" string="Motivo" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>
