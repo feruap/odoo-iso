@@ -28,11 +28,24 @@
             -->
             <xpath expr="//field[@name='product_id']" position="before">
                 <field name="route_type"
+                       required="1"
                        readonly="state != 'draft'"/>
                 <field name="preflight_approved" readonly="1"
                        widget="boolean_toggle"
                        invisible="state != 'draft'"
                        help="True si existe un preflight aprobado para esta orden. Requisito DURO para confirmar."/>
+            </xpath>
+
+            <!--
+                Filtrar el Producto segun la LINEA de produccion elegida
+                (route_type), para que solo se puedan elegir los productos que
+                aplican a esa linea:
+                  - Linea Corta ('short')   -> productos terminados
+                  - Soluciones ('solution') -> soluciones de trabajo
+                Las demas lineas (larga/reventa) aun no filtran.
+            -->
+            <xpath expr="//field[@name='product_id']" position="attributes">
+                <attribute name="domain">[('categ_id.complete_name', '=ilike', 'Producto terminado%')] if route_type == 'short' else ([('categ_id.complete_name', 'ilike', 'solucion')] if route_type == 'solution' else [])</attribute>
             </xpath>
 
             <!--
@@ -49,14 +62,26 @@
                 button_unplan y button_mark_done se controlan via campo
                 amunet_can_produce y por reglas nativas).
             -->
+            <!--
+                Boton Confirmar:
+                  - SOLUCIONES: se MUESTRA en borrador como accion UNICA
+                    (no llevan preflight ni Planificar; ver nota abajo).
+                  - Linea Corta / Larga: se oculta hasta que exista un
+                    preflight aprobado (candado regulatorio).
+            -->
             <xpath expr="//button[@name='action_confirm']" position="attributes">
-                <attribute name="invisible">state != 'draft' or amunet_is_solution_product or (not preflight_approved and route_type in ('short','long'))</attribute>
+                <attribute name="invisible">state != 'draft' or (not amunet_is_solution_product and not preflight_approved and route_type in ('short','long'))</attribute>
             </xpath>
             <xpath expr="//button[@name='action_assign']" position="attributes">
                 <attribute name="invisible">state in ('draft','done','cancel') or not reserve_visible or (not preflight_approved and route_type in ('short','long'))</attribute>
             </xpath>
+            <!--
+                Planificar NO aplica a Soluciones (no tienen actividades/
+                workorders que planear). Ademas de 'not workorder_ids' se
+                oculta explicitamente para soluciones.
+            -->
             <xpath expr="//button[@name='button_plan']" position="attributes">
-                <attribute name="invisible">state not in ('confirmed','progress','to_close') or not workorder_ids or is_planned or (not preflight_approved and route_type in ('short','long'))</attribute>
+                <attribute name="invisible">amunet_is_solution_product or state not in ('confirmed','progress','to_close') or not workorder_ids or is_planned or (not preflight_approved and route_type in ('short','long'))</attribute>
                 <attribute name="groups">amunet_production.group_production_supervisor</attribute>
             </xpath>
             <xpath expr="//button[@name='button_unplan']" position="attributes">

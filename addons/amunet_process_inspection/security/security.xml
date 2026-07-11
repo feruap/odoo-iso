@@ -22,4 +22,25 @@
         <field name="global" eval="True"/>
     </record>
 
+    <!--
+        Fabricante de Soluciones: SOLO ve ordenes de fabricacion de la
+        linea Soluciones (route_type = 'solution'). Regla por grupo (no
+        global): en Odoo las reglas por grupo se combinan con OR, asi
+        que si el usuario ademas es Supervisor (regla '1=1'), ve todo.
+        Un usuario que SOLO esta en este grupo (ej. Julissa) queda
+        limitado a soluciones y no ve Linea Corta.
+        Se usa route_type (campo almacenado); amunet_is_solution_product
+        no esta almacenado y no puede ir en una ir.rule.
+    -->
+    <record id="rule_mrp_production_solution_maker_only" model="ir.rule">
+        <field name="name">MOs: fabricante de soluciones solo ve soluciones</field>
+        <field name="model_id" ref="mrp.model_mrp_production"/>
+        <field name="domain_force">[('route_type', '=', 'solution')]</field>
+        <field name="groups" eval="[(4, ref('amunet_production.group_solution_maker'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
 </odoo>
