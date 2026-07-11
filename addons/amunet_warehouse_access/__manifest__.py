@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Control de acceso dinámico por almacén',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.0.3',
     'category': 'Inventory/Warehouse',
     'summary': 'Sistema de control de acceso granular a almacenes y operaciones de inventario',
     'description': """
