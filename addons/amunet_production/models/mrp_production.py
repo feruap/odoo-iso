@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 from odoo import models, fields, api, Command, _
 from odoo.exceptions import UserError, ValidationError
 from markupsafe import Markup
@@ -1056,22 +1057,44 @@ class MrpProduction(models.Model):
                 summary=_('Trasladar material para %s') % self.name,
                 note=note, user_id=u.id)
 
+    def _amunet_next_solution_lot_name(self):
+        """Numero de lote de SOLUCIONES segun PNOGE-014 'Asignacion de Numeros
+        de Lote': formato DDMMYY-NN, donde DD/MM/YY = dia/mes/anio de
+        elaboracion y NN = consecutivo de la solucion elaborada ese MISMO dia.
+        El consecutivo se calcula contra los lotes existentes con ese prefijo
+        para que sea unico e irrepetible."""
+        self.ensure_one()
+        fecha = fields.Date.context_today(self)
+        prefix = fecha.strftime('%d%m%y')
+        Lot = self.env['stock.lot'].sudo()
+        patron = re.compile(r'^%s-(\d+)$' % prefix)
+        consec = 0
+        for lot in Lot.search([('name', '=like', prefix + '-%')]):
+            m = patron.match(lot.name or '')
+            if m:
+                consec = max(consec, int(m.group(1)))
+        return '%s-%02d' % (prefix, consec + 1)
+
     def action_confirm(self):
         # Crear fisicamente el lote ahora que se esta confirmando.
-        # Politica Amunet: el lote del producto terminado tiene EL MISMO
-        # nombre que el folio de la MO (ej. MO 0526/04/IGE -> lote
-        # 0526/04/IGE). Un solo identificador por batch para
-        # trazabilidad simplificada (ISO 13485 / Cofepris).
+        # Politica Amunet (PNOGE-014):
+        #  - Producto TERMINADO: el lote = folio de la MO (ej. 0526/04/IGE).
+        #  - SOLUCIONES: el lote = DDMMYY-NN (dia de elaboracion + consecutivo),
+        #    ver _amunet_next_solution_lot_name.
+        # Un solo identificador por batch para trazabilidad (ISO 13485 / Cofepris).
         for prod in self:
             if prod.state == 'draft' and prod.product_id and prod.product_id.tracking != 'none' and not prod.lot_producing_ids:
                 try:
+                    lot_name = prod.name
+                    if prod.amunet_is_solution_product:
+                        lot_name = prod._amunet_next_solution_lot_name()
                     lot_vals = {
-                        'name': prod.name,
+                        'name': lot_name,
                         'product_id': prod.product_id.id,
                         'company_id': prod.company_id.id,
                     }
                     prod.lot_producing_ids = [Command.create(lot_vals)]
-                    prod.solution_lot_id = prod.name
+                    prod.solution_lot_id = lot_name
                 except Exception:
                     pass
         res = super().action_confirm()
