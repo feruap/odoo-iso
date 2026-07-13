@@ -16,9 +16,8 @@
                                readonly="1"
                                invisible="not valor_actual"/>
                         <field name="nuevo_valor" string="Resultado" widget="radio"/>
-                        <field name="observacion" string="Motivo (obligatorio)"
-                               placeholder="Describe qué debe corregirse…"
-                               invisible="nuevo_valor != 'fail'"/>
+                        <field name="observacion" string="Motivo (obligatorio si es ✗ Incorrecto)"
+                               placeholder="Describe qué debe corregirse…"/>
                     </group>
                 </sheet>
                 <footer>
