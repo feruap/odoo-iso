@@ -9,7 +9,7 @@ DIANA_UID = 64
 STACEY_UID = 69
 STACEY_EMAIL = 'documentacion@amunet.com.mx'
 PARAM_CARPETA = 'amunet_doc_compartida.stacey_folder_url'
-NEXTCLOUD_URL = 'https://next.amunet.com.mx/apps/files/files?dir=/Drive-Migration/Documentaci%C3%B3n/Manuales%2C%20fichas%2C%20polizas%2C%20etc/LFIA%20%28Pruebas%20r%C3%A1pidas%29'
+NEXTCLOUD_URL = 'https://next.amunet.com.mx/apps/files/files/377815?dir=/Drive-Migration/LFIA%20PDF/Nueva%20versi%C3%B3n'
 
 
 class DocActualizarWizard(models.TransientModel):
@@ -73,8 +73,8 @@ class DocActualizarWizard(models.TransientModel):
         if exito:
             self._notificar_stacey_subida(doc, filename)
             doc.message_post(
-                body=f'✅ PDF subido a Nextcloud: <b>{carpeta_rclone}/{filename}</b>. '
-                     f'Stacy fue notificada.',
+                body=f'✅ PDF subido a <a href="{NEXTCLOUD_URL}">LFIA PDF / Nueva versión</a> '
+                     f'como <b>{filename}</b>. Stacy fue notificada para archivarlo.',
                 message_type='notification',
                 subtype_xmlid='mail.mt_note',
             )
@@ -91,16 +91,16 @@ class DocActualizarWizard(models.TransientModel):
         cuerpo = (
             f'<p>Hola Stacy,</p>'
             f'<p>El manual <b>{doc.name}</b> ha sido revisado y <b>aprobado</b> por Calidad.</p>'
-            f'<p>El PDF actualizado ya está disponible en tu carpeta de Nextcloud '
-            f'(<a href="{NEXTCLOUD_URL}">LFIA — Pruebas rápidas</a>) '
-            f'con el nombre <b>{filename}</b>.</p>'
+            f'<p>El PDF (<b>{filename}</b>) ya fue subido a la carpeta '
+            f'<a href="{NEXTCLOUD_URL}">LFIA PDF / Nueva versión</a> en Nextcloud.</p>'
+            f'<p>Por favor archívalo en la carpeta correspondiente cuando puedas.</p>'
             f'<p>Gracias.</p>'
         )
         self.env['mail.mail'].sudo().create({
-            'subject': f'Manual actualizado en Nextcloud: {doc.name}',
+            'subject': f'Manual subido a Nextcloud (pendiente archivar): {doc.name}',
             'body_html': cuerpo,
             'email_to': STACEY_EMAIL,
-            'author_id': self.env.user.partner_id.id,
+'author_id': self.env.user.partner_id.id,
         }).send()
 
     def _enviar_pdf_por_correo(self, doc):
