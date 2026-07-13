@@ -728,8 +728,11 @@ class MrpProduction(models.Model):
     def _auto_generate_lot_draft(self, force_recreate=False):
         """Pre-visualiza el nombre del lote en draft SIN crearlo en BD.
 
-        Politica Amunet: lote = folio del MO. Aqui solo previsualizamos
-        ese nombre para que el supervisor lo vea antes de confirmar.
+        Politica Amunet (PNOGE-014):
+          - Producto TERMINADO: lote = folio del MO.
+          - SOLUCIONES: lote = DDMMYY-NN (otra forma de lotificar). Aqui se
+            previsualiza ese formato para que se vea que la solucion lleva
+            un lote distinto al folio.
         """
         for prod in self:
             if prod.state != 'draft':
@@ -737,9 +740,28 @@ class MrpProduction(models.Model):
             # NUNCA reservamos/creamos lote fisico en draft para evitar lotes fantasma
             prod.lot_producing_ids = [Command.clear()]
             if prod.product_id and prod.product_id.tracking != 'none':
-                prod.solution_lot_id = prod.name or 'Auto-Lote'
+                if prod.amunet_is_solution_product:
+                    prod.solution_lot_id = prod._amunet_next_solution_lot_name()
+                else:
+                    prod.solution_lot_id = prod.name or 'Auto-Lote'
             else:
                 prod.solution_lot_id = ''
+
+    @api.onchange('product_id', 'route_type')
+    def _amunet_onchange_preview_lote_solucion(self):
+        """Al elegir el producto o poner la linea = Soluciones, refresca en
+        vivo la vista previa del lote para que muestre el formato correcto
+        (DDMMYY-NN para soluciones, folio para lo demas)."""
+        for prod in self:
+            if prod.state and prod.state != 'draft':
+                continue
+            if not (prod.product_id and prod.product_id.tracking != 'none'):
+                prod.solution_lot_id = ''
+                continue
+            if prod.amunet_is_solution_product:
+                prod.solution_lot_id = prod._amunet_next_solution_lot_name()
+            else:
+                prod.solution_lot_id = prod.name or 'Auto-Lote'
 
     def _amunet_complete_workorder_workcenters(self, vals):
         """Completa work centers cuando la UI manda work orders parciales."""
