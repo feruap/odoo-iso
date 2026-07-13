@@ -57,6 +57,7 @@
                             <list editable="bottom">
                                 <field name="time_hour"/>
                                 <field name="name"/>
+                                <field name="early_minutes"/>
                             </list>
                         </field>
                     </group>

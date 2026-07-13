@@ -151,6 +151,11 @@ class AmunetTempSlot(models.Model):
     time_hour = fields.Float(
         string='Hora (24h)', required=True,
         help='Hora programada del turno, formato 24h (ej. 9.0, 13.0, 18.0).')
+    early_minutes = fields.Integer(
+        string='Habilitar antes (min)', default=0,
+        help='Minutos antes del horario en que se habilita la captura de este '
+             'turno (ej. 60 = una hora antes). 0 = usa la tolerancia del area '
+             '(15 min por defecto).')
     name = fields.Char(string='Etiqueta', compute='_compute_name', store=True)
 
     @api.depends('time_hour')
