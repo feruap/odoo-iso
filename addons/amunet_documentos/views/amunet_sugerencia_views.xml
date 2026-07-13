@@ -228,7 +228,7 @@
         <field name="name">Controles de cambio por decidir</field>
         <field name="res_model">amunet.documento.sugerencia</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">['|','|','|',
+        <field name="domain">['|','|',
             ('state','=','borrador'),
             '&amp;',('state','=','rechazada'),('creado_por_id','=',uid),
             '&amp;',('state','=','pendiente'),
