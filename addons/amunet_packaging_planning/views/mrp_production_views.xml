@@ -19,17 +19,17 @@
                         string="Planear presentación"
                         type="object"
                         class="oe_highlight"
-                        invisible="state in ('cancel',) or not product_id or amunet_packaging_plan_approved"
+                        invisible="state in ('cancel',) or not product_id or amunet_packaging_plan_approved or amunet_is_solution_product"
                         groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_manager"/>
                 <button name="action_create_packaging_plan"
                         string="Planear presentación"
                         type="object"
-                        invisible="state in ('cancel',) or not product_id or not amunet_packaging_plan_approved"
+                        invisible="state in ('cancel',) or not product_id or not amunet_packaging_plan_approved or amunet_is_solution_product"
                         groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_manager"/>
                 <button name="action_view_packaging_plans"
                         string="Ver planes de presentación"
                         type="object"
-                        invisible="packaging_plan_count == 0"
+                        invisible="packaging_plan_count == 0 or amunet_is_solution_product"
                         groups="amunet_production.group_production_supervisor,amunet_packaging_planning.group_packaging_user,amunet_quality.group_quality_supervisor"/>
             </xpath>
         </field>

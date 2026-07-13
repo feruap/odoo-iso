@@ -857,6 +857,13 @@ class MrpProduction(models.Model):
         # poblados desde el inicio.
         productions._compute_quality_params()
         productions._auto_generate_lot_draft()
+        # SOLUCIONES: el folio de la orden = numero codificado DDMMYY-NN (igual
+        # que el lote), en lugar de la secuencia generica del picking_type
+        # (AMP/MO/xxxxx). En borrador es una vista previa; se finaliza al
+        # confirmar (ver action_confirm). PNOGE-014.
+        for prod in productions:
+            if prod.amunet_is_solution_product and prod.solution_lot_id:
+                prod.name = prod.solution_lot_id
         return productions
 
     # Campos de "informacion general" de la orden que NO se pueden
@@ -1117,6 +1124,9 @@ class MrpProduction(models.Model):
                     }
                     prod.lot_producing_ids = [Command.create(lot_vals)]
                     prod.solution_lot_id = lot_name
+                    # El folio de la solucion coincide con el lote codificado.
+                    if prod.amunet_is_solution_product:
+                        prod.name = lot_name
                 except Exception:
                     pass
         res = super().action_confirm()
