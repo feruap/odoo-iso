@@ -17,6 +17,10 @@
               parent="menu_amunet_documentos_root"
               action="action_amunet_documento_formato" sequence="21"/>
 
+    <menuitem id="menu_amunet_documentos_obsoletos" name="Documentos obsoletos"
+              parent="menu_amunet_documentos_root"
+              action="action_amunet_documento_obsoletos" sequence="22"/>
+
     <!-- ── Submenú: Mis pendientes ── -->
     <menuitem id="menu_amunet_mis_pendientes" name="Mis pendientes"
               parent="menu_amunet_documentos_root"

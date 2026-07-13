@@ -479,6 +479,12 @@ class AmunetDocumento(models.Model):
         faltantes = [label for (f, label) in requeridos if _vacio(getattr(self, f))]
         if self.tipo in ('pno', 'manual', 'instructivo') and not self.actividad_ids and not self.archivo:
             faltantes.append('Desarrollo del proceso (al menos una actividad)')
+        actos_vacias = [a for a in self.actividad_ids if not (a.actividad or '').strip()]
+        if actos_vacias:
+            faltantes.append(
+                'Actividades sin número/nombre (%d fila(s) vacías en Desarrollo del proceso)'
+                % len(actos_vacias)
+            )
         if faltantes:
             raise UserError(_(
                 'Faltan secciones obligatorias del documento segun PNOGE-001:\n- %s\n\n'
@@ -905,6 +911,16 @@ class AmunetDocumentoDistribucion(models.Model):
         self.with_context(amunet_documento_workflow_write=True).write(
             {'acuse': True, 'fecha_acuse': fields.Date.today()})
 
+    def action_abrir_documento(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'amunet.documento',
+            'res_id': self.documento_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
     def action_yo_lo_lei_desde_lista(self):
         self.ensure_one()
         if self.usuario_id.id != self.env.uid:
@@ -926,7 +942,7 @@ class AmunetDocumentoActividad(models.Model):
     documento_id = fields.Many2one(
         'amunet.documento', required=True, ondelete='cascade')
     sequence = fields.Integer(string='#', default=10)
-    actividad = fields.Char(string='Actividad', required=True)
+    actividad = fields.Char(string='Actividad')
     descripcion = fields.Html(string='Descripcion', sanitize=True, sanitize_tags=False)
     responsable = fields.Char(string='Responsable')
     registro = fields.Char(string='Registro')

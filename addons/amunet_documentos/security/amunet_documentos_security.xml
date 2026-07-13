@@ -19,4 +19,22 @@
         <field name="name">Documentos: Supervisora de Documentación</field>
         <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
     </record>
+
+    <!-- Grupos por área para control de visibilidad de documentos -->
+    <record id="group_docs_area_al" model="res.groups">
+        <field name="name">Documentos: Área Almacén</field>
+        <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
+    </record>
+    <record id="group_docs_area_cc" model="res.groups">
+        <field name="name">Documentos: Área Control Calidad</field>
+        <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
+    </record>
+    <record id="group_docs_area_pr" model="res.groups">
+        <field name="name">Documentos: Área Producción</field>
+        <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
+    </record>
+    <record id="group_docs_area_rh" model="res.groups">
+        <field name="name">Documentos: Área Recursos Humanos</field>
+        <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
+    </record>
 </odoo>

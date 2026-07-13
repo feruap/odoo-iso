@@ -16,6 +16,7 @@ de firmas configurables.""",
         # ya existen en producción (replicados 29-jun-2026). Los archivos
         # se conservan en /data/ como referencia histórica.
         'security/amunet_documentos_security.xml',
+        'security/ir_rules.xml',
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
         'data/ir_cron_data.xml',

@@ -247,7 +247,7 @@
                             <field name="actividad_ids" readonly="state == 'vigente'">
                                 <list>
                                     <field name="sequence" widget="handle"/>
-                                    <field name="actividad" required="1"/>
+                                    <field name="actividad"/>
                                     <field name="descripcion" widget="html"/>
                                     <field name="responsable"/>
                                     <field name="registro"/>
@@ -257,7 +257,7 @@
                                         <group>
                                             <group>
                                                 <field name="sequence"/>
-                                                <field name="actividad" required="1"/>
+                                                <field name="actividad"/>
                                             </group>
                                             <group>
                                                 <field name="responsable"/>
@@ -466,6 +466,14 @@
         <field name="name">Documentos controlados</field>
         <field name="res_model">amunet.documento</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_documento_search"/>
+    </record>
+
+    <record id="action_amunet_documento_obsoletos" model="ir.actions.act_window">
+        <field name="name">Documentos obsoletos</field>
+        <field name="res_model">amunet.documento</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','obsoleto')]</field>
         <field name="search_view_id" ref="view_amunet_documento_search"/>
     </record>
 
@@ -691,6 +699,11 @@
                        decoration-muted="doc_state == 'obsoleto'"/>
                 <field name="acuse" string="Leído"/>
                 <field name="fecha_acuse" string="Fecha de acuse"/>
+                <button name="action_abrir_documento"
+                        string="Ver documento"
+                        type="object"
+                        icon="fa-eye"
+                        class="btn-secondary btn-sm"/>
                 <button name="action_yo_lo_lei_desde_lista"
                         string="Confirmar lectura"
                         type="object"
