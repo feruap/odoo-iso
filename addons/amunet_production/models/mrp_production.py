@@ -848,7 +848,7 @@ class MrpProduction(models.Model):
                     vals['product_id']).exists()
                 mo_seq = product and product.product_tmpl_id.mo_sequence_id
                 if mo_seq:
-                    vals['name'] = mo_seq.next_by_id()
+                    vals['name'] = mo_seq._amunet_next_folio_mensual()
         productions = super().create(vals_list)
         # Forzar recompute de los campos de calidad/caducidad. El
         # compute @api.depends('product_id','date_start') a veces no
