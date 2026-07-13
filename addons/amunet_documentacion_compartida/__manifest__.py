@@ -1,6 +1,6 @@
 {
     'name': 'Documentación Técnica (Amunet)',
-    'version': '19.0.3.1.0',
+    'version': '19.0.3.2.0',
     'category': 'Quality',
     'summary': 'Gestión de manuales técnicos y revisión cruzada entre Validación y Calidad',
     'author': 'Amunet',
