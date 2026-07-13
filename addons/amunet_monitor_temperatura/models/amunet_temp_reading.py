@@ -18,6 +18,10 @@ class AmunetTempReading(models.Model):
                        default=fields.Date.context_today)
     scheduled_time = fields.Float(string='Turno (hora)', required=True)
     scheduled_label = fields.Char(string='Turno', compute='_compute_sched_label', store=True)
+    early_open_minutes = fields.Integer(
+        string='Habilitar antes (min)', default=0,
+        help='Minutos antes del horario en que abre la ventana de captura de '
+             'esta toma. 0 = usa la tolerancia del area.')
 
     # Valores capturados
     temp_value = fields.Float(string='Temperatura (C)', tracking=True)
@@ -123,11 +127,18 @@ class AmunetTempReading(models.Model):
         now = fields.Datetime.context_timestamp(self, fields.Datetime.now())
         return now.hour + now.minute / 60.0, now.date()
 
+    def _amunet_early_minutes(self):
+        """Minutos de apertura anticipada de la ventana. Si la toma trae un
+        valor propio (heredado del turno) se usa ese; si no, cae a la
+        tolerancia del area."""
+        self.ensure_one()
+        return self.early_open_minutes or self.area_id.tolerance_minutes or 0
+
     def _compute_capture_available(self):
         for r in self:
             avail = False
             label = False
-            tol = (r.area_id.tolerance_minutes or 0) / 60.0
+            tol = r._amunet_early_minutes() / 60.0
             open_hour = (r.scheduled_time or 0) - tol
             label = fmt_hour12(open_hour)
             if r.state in ('pending', 'missed'):
@@ -145,15 +156,15 @@ class AmunetTempReading(models.Model):
         """Bloquea la captura ANTES de que abra la ventana del turno
         (horario menos la tolerancia). La captura tardia si se permite."""
         self.ensure_one()
-        tol = (self.area_id.tolerance_minutes or 0) / 60.0
+        tol = self._amunet_early_minutes() / 60.0
         open_hour = (self.scheduled_time or 0) - tol
         now_hour, today = self._amunet_now_local()
         if self.date and self.date == today and now_hour < open_hour:
             raise UserError(_(
                 'Todavia no puedes capturar el turno de las %(t)s.\n\n'
-                'Se habilita a partir de las %(o)s (15 min antes del '
-                'horario).') % {'t': fmt_hour12(self.scheduled_time),
-                                'o': fmt_hour12(open_hour)})
+                'Se habilita a partir de las %(o)s.') % {
+                    't': fmt_hour12(self.scheduled_time),
+                    'o': fmt_hour12(open_hour)})
 
     # ------------------------------------------------------------------
     # Inmutabilidad: una vez firmado el dia, no se edita.
@@ -256,6 +267,7 @@ class AmunetTempReading(models.Model):
                         'area_id': area.id,
                         'date': today,
                         'scheduled_time': slot.time_hour,
+                        'early_open_minutes': slot.early_minutes,
                         'temp_min': area.temp_min, 'temp_max': area.temp_max,
                         'hum_min': area.hum_min, 'hum_max': area.hum_max,
                         'hum_required': area.hum_required,

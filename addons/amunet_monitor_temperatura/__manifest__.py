@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet Monitor de Temperatura',
-    'version': '19.0.1.18.1',
+    'version': '19.0.1.19.0',
     'summary': 'Captura rapida e interactiva de temperatura y humedad por area',
     'description': """
 Monitor de Temperatura (control ambiental) — app interactiva estilo
