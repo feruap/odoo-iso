@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from dateutil.relativedelta import relativedelta
+
 from odoo import models, fields, api, _
 
 
@@ -60,27 +62,57 @@ class StockLot(models.Model):
             else:
                 lot.amunet_ubicacion_display = ''
 
+    def _amunet_removal_from_expiration(self, expiration, product=None):
+        """Fecha de remocion = caducidad - anticipo configurado en la CATEGORIA
+        del producto (Materia prima=1 mes, Soluciones=7 dias, Terminados=4 meses;
+        default 1 mes). Si el resultado cae en el pasado, se iguala a la caducidad
+        (no tiene sentido una remocion anterior a hoy). False si no hay caducidad.
+        """
+        if not expiration:
+            return False
+        expiration = fields.Datetime.to_datetime(expiration)
+        if product is None:
+            product = self.product_id if self else False
+        value, unit = 1, 'months'
+        categ = product.categ_id if product else False
+        if categ:
+            value, unit = categ._amunet_get_removal_offset()
+        delta = relativedelta(months=value) if unit == 'months' else relativedelta(days=value)
+        calculated_removal = expiration - delta
+        today = fields.Date.context_today(self)
+        calculated_date = calculated_removal.date() if hasattr(calculated_removal, 'date') else calculated_removal
+        if calculated_date < today:
+            return expiration
+        return calculated_removal
+
     @api.onchange('expiration_date')
     def _onchange_expiration_date_amunet(self):
-        """
-        Calcula automáticamente la fecha de remoción 2 meses antes de la caducidad.
-        Si cae en el pasado, la iguala a la fecha de caducidad.
-        Si se borra la caducidad, se borra la remoción.
-        """
-        if not self.expiration_date:
-            self.removal_date = False
-            return
+        """En el formulario: al poner/cambiar la caducidad, calcula la remocion
+        segun la categoria del producto. Si se borra la caducidad, se borra."""
+        self.removal_date = self._amunet_removal_from_expiration(
+            self.expiration_date, product=self.product_id)
 
-        from dateutil.relativedelta import relativedelta
-        from odoo import fields as odoo_fields
-        
-        calculated_removal = self.expiration_date - relativedelta(months=2)
-        today = odoo_fields.Date.context_today(self)
-        
-        # Convertir a date para comparación si es datetime
-        calculated_date = calculated_removal.date() if hasattr(calculated_removal, 'date') else calculated_removal
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Aplica la remocion automatica tambien cuando el lote se crea por
+        codigo/importacion/auto-generacion (el onchange solo corre en la UI).
+        Respeta una remocion provista explicitamente en los mismos vals."""
+        for vals in vals_list:
+            if vals.get('expiration_date') and not vals.get('removal_date'):
+                product = (self.env['product.product'].browse(vals['product_id'])
+                           if vals.get('product_id') else False)
+                vals['removal_date'] = self._amunet_removal_from_expiration(
+                    vals['expiration_date'], product=product)
+        return super().create(vals_list)
 
-        if calculated_date < today:
-            self.removal_date = self.expiration_date
-        else:
-            self.removal_date = calculated_removal
+    def write(self, vals):
+        """Al cambiar la caducidad por codigo/UI, recalcula la remocion segun la
+        categoria, salvo que se escriba una remocion explicita a la vez."""
+        res = super().write(vals)
+        if 'expiration_date' in vals and 'removal_date' not in vals:
+            for lot in self:
+                nueva = lot._amunet_removal_from_expiration(
+                    lot.expiration_date, product=lot.product_id)
+                if lot.removal_date != nueva:
+                    super(StockLot, lot).write({'removal_date': nueva})
+        return res

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_category_form_removal_amunet" model="ir.ui.view">
+        <field name="name">product.category.form.removal.amunet</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Remocion de lotes (Amunet)">
+                    <field name="amunet_removal_value"/>
+                    <field name="amunet_removal_unit"/>
+                    <div colspan="2" class="text-muted">
+                        Fecha de remocion de un lote = caducidad - este anticipo.
+                        0 hereda de la categoria padre; si ninguna lo define, se usa 1 mes.
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
