@@ -550,7 +550,14 @@ class MrpWorkorder(models.Model):
             wc = wo.workcenter_id
             if not wc:
                 continue
-            res = wc._amunet_check_equipment_calibration() or {}
+            # Validacion por ACTIVIDAD si la operacion la define; si no, el
+            # metodo de la operacion delega al centro de trabajo (comportamiento
+            # anterior). Sin operacion ligada, se valida por centro de trabajo.
+            op = wo.operation_id
+            if op:
+                res = op._amunet_check_operation_equipment() or {}
+            else:
+                res = wc._amunet_check_equipment_calibration() or {}
             if res.get('no_equipment_required') and wo.production_id:
                 wo.production_id.message_post(body=_(
                     'WO <b>%s</b> (id=%s) iniciada sin equipos calibrados. '

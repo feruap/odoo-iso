@@ -403,20 +403,24 @@ class AmunetPilotPreflight(models.Model):
                         sequence=130,
                     )
                     continue
+                # Validacion de equipo POR ACTIVIDAD: si la operacion define su
+                # propio equipo, valida solo ese (aunque sea de otra area); si
+                # no, delega al centro de trabajo (comportamiento anterior).
+                etiqueta = operation.name or (wc.code or wc.name)
                 try:
-                    wc._amunet_check_equipment_calibration()
+                    operation._amunet_check_operation_equipment()
                     rec._add_line(
                         'equipment',
-                        'Equipo/metrologia: %s' % (wc.code or wc.name),
+                        'Equipo/metrologia: %s' % etiqueta,
                         'pass',
-                        'Workcenter listo: equipos calibrados o excepcion documentada.',
+                        'Actividad lista: equipos calibrados, sin equipo requerido, o excepcion documentada.',
                         related=wc,
                         sequence=140,
                     )
                 except UserError as exc:
                     rec._add_line(
                         'equipment',
-                        'Equipo/metrologia: %s' % (wc.code or wc.name),
+                        'Equipo/metrologia: %s' % etiqueta,
                         'block',
                         str(exc),
                         'Corregir equipos/calibracion antes de iniciar work orders.',
