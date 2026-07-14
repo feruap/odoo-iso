@@ -344,6 +344,22 @@ class AmunetMaterialRequest(models.Model):
                 'Reinstala el modulo "Solicitudes de Material".'))
         return loc
 
+    def _amunet_aru_stock_location(self):
+        """Ubicacion de existencias del Almacen de reactivos en uso (ARU), o
+        False si aun no existe."""
+        wh = self.env['stock.warehouse'].sudo().search(
+            [('code', '=', 'ARU')], limit=1)
+        return wh.lot_stock_id if wh else False
+
+    def _amunet_dest_for_product(self, product, default_loc):
+        """Destino de la transferencia para un producto: el Almacen de reactivos
+        en uso (ARU) si su categoria enruta ahi (criterio por categoria de
+        reactivo); si no, la ubicacion de consumo por defecto."""
+        aru = self._amunet_aru_stock_location()
+        if aru and product.categ_id and product.categ_id._amunet_routes_to_aru():
+            return aru
+        return default_loc
+
     def _get_internal_picking_type(self):
         self.ensure_one()
         # Preferimos el tipo "Traslados internos" del warehouse (int_type_id),
@@ -674,7 +690,8 @@ class AmunetMaterialRequest(models.Model):
                     'product_uom_qty': line.qty_requested,
                     'product_uom': line.uom_id.id,
                     'location_id': src_loc.id,
-                    'location_dest_id': consumption_loc.id,
+                    'location_dest_id': rec._amunet_dest_for_product(
+                        line.product_id, consumption_loc).id,
                 }) for line in rec.line_ids],
             }
             step_started_at = mark('build_values', step_started_at)
@@ -774,7 +791,8 @@ class AmunetMaterialRequest(models.Model):
                     'product_uom_qty': line.qty_requested,
                     'product_uom': line.uom_id.id,
                     'location_id': src_loc.id,
-                    'location_dest_id': consumption_loc.id,
+                    'location_dest_id': self._amunet_dest_for_product(
+                        line.product_id, consumption_loc).id,
                     'company_id': self.warehouse_id.company_id.id,
                 })
                 new_move._action_confirm()
