@@ -169,6 +169,40 @@ class MrpProduction(models.Model):
                 'necesitas acceso, pideselo a Fernando o Mery.'
             ) % ', '.join(sols.mapped('name')))
 
+    def _amunet_check_solution_equipment(self):
+        """Al PRODUCIR una solucion, valida que los equipos que usan sus
+        actividades (Balanza=pesado, Agitador=disolucion, Analizador=pH) esten
+        operativos y con calibracion vigente. Las soluciones NO usan operaciones
+        de ruta, por eso el candado es a nivel orden (no por workorder).
+        Configurable por parametro de sistema amunet.solution.equipment.serials
+        (por defecto PRO/BAL/01,PRO/AGI/01,PRO/AMO/01). Respeta el periodo de
+        gracia global de calibracion (via _amunet_calibration_problems_for)."""
+        if self.env.su:
+            return
+        sols = self.filtered(
+            lambda m: m.route_type == 'solution' or m.amunet_is_solution_product)
+        if not sols:
+            return
+        serials = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet.solution.equipment.serials',
+            'PRO/BAL/01,PRO/AGI/01,PRO/AMO/01')
+        serials = [s.strip() for s in (serials or '').split(',') if s.strip()]
+        if not serials:
+            return
+        equipos = self.env['amunet.equipment'].sudo().search(
+            [('serial_number', 'in', serials)])
+        problemas = self.env['mrp.workcenter']._amunet_calibration_problems_for(
+            equipos, 'Soluciones')
+        for f in sorted(set(serials) - set(equipos.mapped('serial_number'))):
+            problemas.append(' - Equipo %s no existe en el catalogo' % f)
+        if problemas:
+            raise UserError(_(
+                'No se puede producir la solucion. Equipos de Soluciones sin '
+                'calibracion vigente o no operativos:\n%s\n\n'
+                'Sube certificados de calibracion vigentes o reactiva los '
+                'equipos antes de producir.'
+            ) % '\n'.join(problemas))
+
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
@@ -177,6 +211,7 @@ class MrpProduction(models.Model):
 
     def button_mark_done(self):
         self._amunet_check_solution_maker()
+        self._amunet_check_solution_equipment()
         self._amunet_lc_check_close_gate()
         return super().button_mark_done()
 
