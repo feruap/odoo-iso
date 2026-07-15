@@ -28,6 +28,19 @@ class MrpProduction(models.Model):
     # Campos requeridos para Módulo de Soluciones
     quality_ph_initial = fields.Float(string='pH Inicial Objetivo', compute='_compute_quality_params', store=True, readonly=False)
     quality_ph_final = fields.Float(string='pH Final Obtenido')
+    amunet_all_dissolved = fields.Boolean(
+        string='Reactivos disueltos',
+        compute='_compute_amunet_all_dissolved',
+        help='Verdadero cuando TODOS los reactivos de la orden estan marcados '
+             'como disueltos. El pH final solo se puede capturar cuando esto es '
+             'verdadero.')
+
+    @api.depends('move_raw_ids.amunet_dissolution', 'move_raw_ids.state')
+    def _compute_amunet_all_dissolved(self):
+        for rec in self:
+            moves = rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            rec.amunet_all_dissolved = bool(moves) and all(
+                m.amunet_dissolution for m in moves)
     solution_lot_id = fields.Char(string='Lote de produccion', copy=False, help="Lote asignado al producto final (interno)")
 
     amunet_scheduled_date_display = fields.Char(

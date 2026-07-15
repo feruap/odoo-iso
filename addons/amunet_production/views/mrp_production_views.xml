@@ -143,13 +143,15 @@
                     <div class="o_row" invisible="quality_ph_initial == 0.0">
                         Inicial: <field name="quality_ph_initial" readonly="1" force_save="1" style="width:50px"/>
                         | Rango: <field name="amunet_sys_ph_range" readonly="1"/>
-                        <!-- pH Final editable y visible solo cuando todos los ingredientes esten validados -->
-                        <span invisible="not amunet_all_ingredients_valid">
+                        <!-- pH Final: solo cuando TODOS los reactivos estan marcados
+                             como disueltos (regla de Fernando). -->
+                        <field name="amunet_all_dissolved" invisible="1"/>
+                        <span invisible="not amunet_all_dissolved">
                             | Final: <field name="quality_ph_final" readonly="0"/>
                         </span>
                     </div>
 
-                    <label for="amunet_expiration_text" string="Caducidad (YYYY-MM)"/>
+                    <label for="amunet_expiration_text" string="Caducidad"/>
                     <div class="o_row">
                         <field name="amunet_expiration_text"
                                placeholder="2026-05"
