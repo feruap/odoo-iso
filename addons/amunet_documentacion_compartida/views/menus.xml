@@ -6,6 +6,6 @@
               name="Documentación Técnica"
               action="action_doc_explorador"
               sequence="95"
-              groups="amunet_documentacion_compartida.group_doc_validacion,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_user,amunet_documentacion_compartida.group_doc_compartida_user"/>
+              groups="amunet_documentacion_compartida.group_doc_validacion,amunet_documentacion_compartida.group_doc_revisor,amunet_documentacion_compartida.group_doc_compartida_user"/>
 
 </odoo>

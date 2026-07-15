@@ -22,6 +22,7 @@
         'data/carpetas.xml',
         'data/cron_revision.xml',
     ],
+    'post_init_hook': 'post_init_hook',
     'installable': True,
     'application': True,
     'license': 'LGPL-3',

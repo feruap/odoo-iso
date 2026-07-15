@@ -5,6 +5,7 @@ CAMPOS = {
     'rev_materiales': 'Precauciones',
     'rev_volumenes': 'Volúmenes de reactivos',
     'rev_tiempos': 'Tiempos de interpretación',
+    'rev_interpretacion': 'Interpretación',
     'rev_adicional': 'Adicional',
 }
 
@@ -24,6 +25,21 @@ class DocRevisionWizard(models.TransientModel):
         [('ok', '✓ Correcto'), ('fail', '✗ Incorrecto')],
         string='Resultado', required=True)
     observacion = fields.Text(string='Motivo')
+
+    @api.model
+    def default_get(self, fields_list):
+        vals = super().default_get(fields_list)
+        doc_id = vals.get('doc_id') or self.env.context.get('default_doc_id')
+        campo = vals.get('campo') or self.env.context.get('default_campo')
+        if doc_id and campo:
+            ultimo = self.env['amunet.doc.revision.historial'].search([
+                ('doc_id', '=', doc_id),
+                ('campo', '=', campo),
+                ('motivo', '!=', False),
+            ], order='fecha desc', limit=1)
+            if ultimo:
+                vals['observacion'] = ultimo.motivo
+        return vals
 
     @api.depends('campo')
     def _compute_campo_label(self):

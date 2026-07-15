@@ -13,27 +13,14 @@
                             ha sido marcado como <strong>APROBADO</strong>.
                         </span>
                     </div>
-                    <p>Para que el manual sea sustituido en la carpeta del sistema,
-                       selecciona <b>Aceptar y actualizar</b>.<br/>
-                       Si deseas hacerlo más tarde, selecciona <b>Posponer actualización</b>.</p>
-                    <div class="alert alert-info" role="alert"
-                         invisible="tiene_carpeta">
-                        <i class="fa fa-info-circle"/> Aún no hay una carpeta configurada.
-                        Al aceptar, se enviará el PDF a Stacy por correo con las instrucciones
-                        para crear la carpeta y dar acceso al sistema.
-                    </div>
-                    <div class="alert alert-success" role="alert"
-                         invisible="not tiene_carpeta">
-                        <i class="fa fa-folder-open"/> Carpeta configurada:
-                        <field name="carpeta_url" readonly="1" nolabel="1"/>
-                    </div>
-                    <field name="tiene_carpeta" invisible="1"/>
+                    <p>Al confirmar, el PDF quedará disponible para descarga también para
+                       Stacy y Mery dentro del módulo.</p>
                 </sheet>
                 <footer>
                     <button name="action_aceptar" type="object"
-                            string="Aceptar y actualizar" class="btn-primary"/>
+                            string="Confirmar disponibilidad" class="btn-primary"/>
                     <button name="action_posponer" type="object"
-                            string="Posponer actualización" class="btn-secondary"/>
+                            string="Posponer" class="btn-secondary"/>
                 </footer>
             </form>
         </field>
