@@ -42,8 +42,12 @@ class MrpProduction(models.Model):
                 'product_qty': self.product_qty,
                 'bom_id': self.bom_id.id or False,
                 'company_id': self.company_id.id,
+                'route_type': self.route_type or 'short',
             })
-        preflight.action_run_checks()
+        # Los checks leen modelos que el fabricante de soluciones no siempre
+        # puede ver (capacitacion, cambios, calibracion, etc.). Es una validacion
+        # de sistema de solo lectura -> se corre en sudo para evitar AccessError.
+        preflight.sudo().action_run_checks()
         return {
             'type': 'ir.actions.act_window',
             'name': _('Preflight del piloto'),

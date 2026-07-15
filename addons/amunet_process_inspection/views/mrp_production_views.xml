@@ -70,7 +70,7 @@
                     preflight aprobado (candado regulatorio).
             -->
             <xpath expr="//button[@name='action_confirm']" position="attributes">
-                <attribute name="invisible">state != 'draft' or (not amunet_is_solution_product and not preflight_approved and route_type in ('short','long'))</attribute>
+                <attribute name="invisible">state != 'draft' or (not preflight_approved and route_type in ('short','long','solution'))</attribute>
             </xpath>
             <xpath expr="//button[@name='action_assign']" position="attributes">
                 <attribute name="invisible">state in ('draft','done','cancel') or not reserve_visible or (not preflight_approved and route_type in ('short','long'))</attribute>

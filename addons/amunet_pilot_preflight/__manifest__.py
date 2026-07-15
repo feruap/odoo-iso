@@ -11,7 +11,7 @@
     """,
     'author': 'Amunet',
     'category': 'Manufacturing',
-    'version': '19.0.1.1.3',
+    'version': '19.0.1.1.7',
     'depends': [
         'mail',
         'mrp',

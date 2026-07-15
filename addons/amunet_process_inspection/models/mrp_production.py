@@ -245,7 +245,7 @@ class MrpProduction(models.Model):
     def action_confirm(self):
         self._amunet_check_solution_maker()
         for rec in self:
-            if rec.route_type in ('short', 'long'):
+            if rec.route_type in ('short', 'long', 'solution'):
                 if not rec.preflight_approved:
                     raise UserError(_(
                         'No se puede confirmar la orden %s sin un '

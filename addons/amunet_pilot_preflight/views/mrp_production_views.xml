@@ -72,6 +72,14 @@
                         invisible="state != 'draft' or (amunet_packaging_plan_approved and not amunet_preflight_accepted) or amunet_is_solution_product"
                         groups="amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
 
+                <!-- Validar piloto para SOLUCIONES: sin plan de presentacion previo -->
+                <button name="action_run_pilot_preflight"
+                        string="Validar piloto"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="state != 'draft' or not amunet_is_solution_product or amunet_preflight_accepted"
+                        groups="amunet_production.group_solution_maker,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+
                 <!-- Boton auxiliar 'Ver planes de presentacion' -->
                 <button name="action_view_packaging_plans"
                         string="Ver planes de presentación"
@@ -101,7 +109,7 @@
                 gris visible si NO listo.
             -->
             <xpath expr="//button[@name='action_confirm']" position="attributes">
-                <attribute name="invisible">state != 'draft' or (not amunet_is_solution_product and (not amunet_packaging_plan_approved or not amunet_preflight_accepted))</attribute>
+                <attribute name="invisible">state != 'draft' or not amunet_preflight_accepted or (not amunet_is_solution_product and not amunet_packaging_plan_approved)</attribute>
             </xpath>
             <xpath expr="//button[@name='action_confirm']" position="after">
                 <button name="action_confirm"
