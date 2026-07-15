@@ -518,6 +518,26 @@ class MrpProduction(models.Model):
             rec.amunet_is_solution_product = 'solucion' in category_name.lower()
 
     @api.depends('product_id', 'date_start')
+    def _amunet_compute_expiration(self, product, base_date):
+        """Caducidad = base_date + duracion del producto RESPETANDO su unidad
+        (dias/meses/años), con fecha dia-precisa. Default 24 meses si no hay
+        duracion o no se puede parsear."""
+        from dateutil.relativedelta import relativedelta
+        txt = (product.amunet_expiration_text or '').lower()
+        try:
+            val = float(''.join(c for c in txt if c.isdigit() or c == '.'))
+        except Exception:
+            val = None
+        if not val:
+            return base_date + relativedelta(months=24)
+        if 'año' in txt or 'ano' in txt:
+            return base_date + relativedelta(months=int(round(val * 12)))
+        if 'mes' in txt:
+            return base_date + relativedelta(months=int(round(val)))
+        if 'dia' in txt or 'día' in txt:
+            return base_date + relativedelta(days=int(round(val)))
+        return base_date + relativedelta(months=24)
+
     def _compute_quality_params(self):
         for rec in self:
             if not rec.product_id:
@@ -537,45 +557,40 @@ class MrpProduction(models.Model):
             else:
                 rec.quality_analysis_status = 'none'
 
-            # Calculo de caducidad en formato Amunet "YYYY-MM":
-            # 1. Si el producto define duracion (amunet_expiration_text
-            #    del template, ej. "24 meses" o "2 años"), se usa esa.
-            # 2. Si NO define duracion, default Amunet = 2 anos (24 meses).
-            # El campo en la MO sigue editable manualmente para
-            # excepciones.
-            from datetime import timedelta
-            from dateutil.relativedelta import relativedelta
-            DEFAULT_MONTHS = 24  # 2 anos
-            base_text = product.amunet_expiration_text or ''
-            txt = base_text.lower()
-            months_to_add = DEFAULT_MONTHS
-            try:
-                val = float(
-                    ''.join(c for c in txt if c.isdigit() or c == '.'))
-                if 'año' in txt or 'ano' in txt:
-                    months_to_add = int(val * 12)
-                elif 'mes' in txt:
-                    months_to_add = int(val)
-                elif 'dia' in txt or 'día' in txt:
-                    months_to_add = int(val / 30) or DEFAULT_MONTHS
-            except Exception:
-                # texto del producto no parseable -> usar default 24 meses
-                pass
-
+            # Caducidad = fecha de FABRICACION (date_start) + duracion del
+            # producto, RESPETANDO la unidad real (dias/meses/años), con fecha
+            # dia-precisa. Antes se convertia todo a meses y los "N dias" (<30)
+            # caian al default de 24 meses (bug). El texto de soluciones se
+            # muestra en DD.MM.YY; el resto conserva YYYY-MM.
             base_date = rec.date_start or fields.Datetime.now()
-            expiration = base_date + relativedelta(months=months_to_add)
+            expiration = rec._amunet_compute_expiration(product, base_date)
             rec.solution_expiration_date = expiration
-            # Formato exacto pedido por el operador: YYYY-MM
-            rec.amunet_expiration_text = expiration.strftime('%Y-%m')
+            if expiration:
+                if rec.amunet_is_solution_product:
+                    rec.amunet_expiration_text = expiration.strftime('%d.%m.%y')
+                else:
+                    rec.amunet_expiration_text = expiration.strftime('%Y-%m')
+            else:
+                rec.amunet_expiration_text = False
 
     @api.constrains('amunet_expiration_text')
     def _check_expiration_text_format(self):
-        """Valida el formato YYYY-MM cuando el usuario edita manualmente."""
+        """Valida el formato al editar manualmente: soluciones DD.MM.YY
+        (ej. 28.05.26); el resto YYYY-MM (ej. 2026-05)."""
         import re
-        pattern = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
+        pat_sol = re.compile(r'^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.\d{2}$')
+        pat_gen = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
         for rec in self:
-            if rec.amunet_expiration_text and not pattern.match(
-                    rec.amunet_expiration_text):
+            if not rec.amunet_expiration_text:
+                continue
+            if rec.amunet_is_solution_product:
+                if not pat_sol.match(rec.amunet_expiration_text):
+                    from odoo.exceptions import ValidationError
+                    raise ValidationError(_(
+                        'El formato de caducidad de soluciones debe ser '
+                        'DD.MM.YY (ejemplo: 28.05.26). Recibido: "%s"'
+                    ) % rec.amunet_expiration_text)
+            elif not pat_gen.match(rec.amunet_expiration_text):
                 from odoo.exceptions import ValidationError
                 raise ValidationError(_(
                     'El formato de caducidad debe ser YYYY-MM '
@@ -605,20 +620,19 @@ class MrpProduction(models.Model):
             if bom:
                 self.bom_id = bom
 
-        self.amunet_expiration_text = product.amunet_expiration_text
         self.quality_ph_initial = product.amunet_initial_ph
 
-        days_to_add = 0
-        if product.amunet_expiration_text:
-            txt = product.amunet_expiration_text.lower()
-            try:
-                val = float(''.join(c for c in txt if c.isdigit() or c == '.'))
-                if 'mes' in txt: days_to_add = val * 30
-                elif 'año' in txt or 'ano' in txt: days_to_add = val * 365
-                elif 'dia' in txt or 'día' in txt: days_to_add = val
-            except:
-                pass
-        self.solution_expiration_date = fields.Datetime.now() + timedelta(days=days_to_add) if days_to_add > 0 else False
+        # Vista previa en vivo alineada al calculo almacenado (mismo helper):
+        # caducidad = fecha de fabricacion + duracion, respetando la unidad.
+        base_date = self.date_start or fields.Datetime.now()
+        expiration = self._amunet_compute_expiration(product, base_date)
+        self.solution_expiration_date = expiration
+        if expiration:
+            self.amunet_expiration_text = (
+                expiration.strftime('%d.%m.%y') if self.amunet_is_solution_product
+                else expiration.strftime('%Y-%m'))
+        else:
+            self.amunet_expiration_text = False
 
     @api.onchange('product_id', 'product_qty', 'product_uom_id')
     def _onchange_amunet_product_setup(self):
