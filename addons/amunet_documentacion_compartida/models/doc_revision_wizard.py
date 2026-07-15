@@ -41,5 +41,7 @@ class DocRevisionWizard(models.TransientModel):
         vals = {self.campo: self.nuevo_valor}
         if self.nuevo_valor == 'fail':
             vals['observaciones'] = self.observacion
-        self.doc_id.write(vals)
+        # sudo() necesario: el analista tiene perm_write=0 en el modelo principal;
+        # la validación de negocio ya ocurrió en el override write() con el uid real.
+        self.doc_id.sudo().write(vals)
         return {'type': 'ir.actions.act_window_close'}

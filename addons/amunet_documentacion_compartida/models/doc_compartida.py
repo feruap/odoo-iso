@@ -12,6 +12,9 @@ G_CAL_SUP = 'amunet_quality.group_quality_supervisor'
 G_CAL_RS = 'amunet_quality.group_quality_sanitary'
 G_CAL_ANALISTA = 'amunet_quality.group_quality_user'
 
+# UIDs fijos para el correo de aprobación (Diana, Stacey, Jorge)
+_UID_APROBACION = [64, 69, 70]
+
 
 class DocCompartida(models.Model):
     _name = 'amunet.doc.compartida'
@@ -446,7 +449,7 @@ class DocCompartida(models.Model):
         }).send()
 
     def _notificar_calidad_por_aprobar(self):
-        """Revisión completa: avisar a Calidad (actividad + correo) para que aprueben y firmen."""
+        """Revisión completa: avisar a Calidad (solo actividad Odoo) para que aprueben y firmen."""
         self.ensure_one()
         calidad = self._usuarios_calidad()
         for user in calidad:
@@ -463,17 +466,9 @@ class DocCompartida(models.Model):
                      f'Entra al manual y pulsa <b>"Aprobar y firmar"</b> (requiere tu PIN).',
                 user_id=user.id,
             )
-        self._enviar_correo(
-            calidad,
-            f'✅ Listo para aprobar: {self.name}',
-            f'<p>La revisión del manual <b>{self.name}</b> está completa con todos los '
-            f'criterios marcados como ✓ Correcto.</p>'
-            f'<p>Entra a Odoo → Documentación Técnica → <b>{self.name}</b> y pulsa '
-            f'"Aprobar y firmar" (requiere tu PIN).</p>',
-        )
 
     def _notificar_actualizar_en_sistema(self):
-        """Tras la firma: notificar a TODOS (Calidad + Validación) con actividad + correo."""
+        """Tras la firma: actividad Odoo a todos + correo solo a Diana, Stacey y Jorge."""
         self.ensure_one()
         firmante = self.env.user.name
         todos = (self._usuarios_calidad() | self._usuarios_validacion()).filtered(
@@ -489,8 +484,11 @@ class DocCompartida(models.Model):
                      f'para subir la versión definitiva a la carpeta LFIA.)',
                 user_id=user.id,
             )
+        # Correo solo a Diana (64), Stacey (69) y Jorge (70)
+        destinatarios_correo = self.env['res.users'].sudo().browse(_UID_APROBACION).filtered(
+            lambda u: u.active and u.email)
         self._enviar_correo(
-            todos,
+            destinatarios_correo,
             f'✍️ Manual aprobado y firmado: {self.name}',
             f'<p>El manual <b>{self.name}</b> fue <b>APROBADO y FIRMADO</b> por '
             f'<b>{firmante}</b>.</p>'
@@ -551,15 +549,6 @@ class DocCompartida(models.Model):
                              f'Corrige el manual, recarga el PDF y programa nueva revisión.',
                         user_id=val_user.id,
                     )
-                rec._enviar_correo(
-                    validacion,
-                    f'⚠️ Manual con observaciones: {rec.name}',
-                    f'<p><b>{revisor_nombre}</b> completó la revisión de <b>{rec.name}</b> '
-                    f'y encontró criterios marcados como ✗ Incorrecto.</p>'
-                    f'<p><b>Observación:</b> {observ}</p>'
-                    f'<p>Entra a Odoo → Documentación Técnica → <b>{rec.name}</b>, '
-                    f'corrige el manual y recarga el PDF.</p>',
-                )
 
         # ── Recordatorio: revisión parcial + 5 min sin actividad ──
         parciales = self.search([
@@ -587,7 +576,7 @@ class DocCompartida(models.Model):
             )
 
     def _notificar_recarga_pdf(self):
-        """PDF reemplazado: avisar a toda Calidad (actividad + correo) para que revisen."""
+        """PDF reemplazado: avisar a toda Calidad (solo actividad Odoo)."""
         self.ensure_one()
         calidad = self._usuarios_calidad()
         cuerpo = (
@@ -611,18 +600,9 @@ class DocCompartida(models.Model):
                      f'Por favor revisa los criterios con la nueva versión.',
                 user_id=user.id,
             )
-        self._enviar_correo(
-            calidad,
-            f'🔄 PDF actualizado: {self.name}',
-            f'<p>El PDF del manual <b>{self.name}</b> fue actualizado por '
-            f'<b>{self.env.user.name}</b>.</p>'
-            f'<p>Por favor revisen si los criterios de revisión siguen siendo válidos '
-            f'con la nueva versión del documento.</p>'
-            + (f'<p>Fecha límite de revisión: <b>{fecha_str}</b></p>' if fecha_str else ''),
-        )
 
     def _notificar_revision_programada(self):
-        """Fecha de revisión programada: avisar a toda Calidad (actividad + correo)."""
+        """Fecha de revisión programada: avisar a toda Calidad (solo actividad Odoo)."""
         self.ensure_one()
         if not self.fecha_programada:
             return
@@ -638,26 +618,9 @@ class DocCompartida(models.Model):
                      f'antes del <b>{fecha_str}</b>.',
                 user_id=user.id,
             )
-        self._enviar_correo(
-            calidad,
-            f'📅 Revisión programada: {self.name}',
-            f'<p>El manual <b>{self.name}</b> requiere revisión de Calidad '
-            f'antes del <b>{fecha_str}</b>.</p>'
-            f'<p>Entra a Odoo → Documentación Técnica para tomar la revisión.</p>',
-        )
         self.message_post(
             body=f'📅 Revisión programada para el <b>{fecha_str}</b>. '
-                 f'Notificación (actividad + correo) enviada a {len(calidad)} persona(s) de Calidad.',
-            message_type='notification',
-            subtype_xmlid='mail.mt_comment',
-        )
-
-        # Mensaje en el chatter
-        partner_ids = destinatarios.mapped('partner_id').ids
-        self.message_post(
-            body=f'📅 Revisión programada para el <b>{fecha_str}</b>. '
-                 f'Notificación enviada a {len(destinatarios)} revisor(es) de Calidad.',
-            partner_ids=partner_ids,
+                 f'Actividad enviada a {len(calidad)} persona(s) de Calidad.',
             message_type='notification',
             subtype_xmlid='mail.mt_comment',
         )
