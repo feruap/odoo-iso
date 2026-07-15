@@ -2372,9 +2372,8 @@ class AmunetQualityCheck(models.Model):
     def action_sign_authorized(self):
         """Abre wizard para firmar como Autorizó (Sanitario)"""
         self.ensure_one()
-        if not (self.env.user.has_group('amunet_quality.group_quality_sanitary') or
-                self.env.user.has_group('amunet_quality.group_quality_supervisor')):
-            raise AccessDenied("No tiene permisos de Responsable Sanitario o Supervisor.")
+        if not self.env.user.has_group('amunet_quality.group_quality_sanitary'):
+            raise AccessDenied("Solo el Responsable Sanitario puede firmar como Autorizó.")
 
         if self.global_result == 'pending':
              raise ValidationError("No se puede firmar si el análisis no está completo (Dictamen: Pendiente).")
