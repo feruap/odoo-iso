@@ -43,13 +43,24 @@ class ResUsers(models.Model):
 
     # ========== COMPUTED FIELDS ==========
 
-    @api.depends('warehouse_access_ids', 'warehouse_access_ids.warehouse_id', 'warehouse_access_ids.active')
+    def _amunet_group_access_warehouses(self):
+        """Almacenes cuyo 'grupo con acceso completo' pertenece a este usuario.
+        Esos almacenes se conceden por pertenencia al grupo (acceso completo),
+        sin necesitar un registro de acceso por usuario."""
+        self.ensure_one()
+        whs = self.env['stock.warehouse'].sudo().search(
+            [('amunet_access_group_id', '!=', False)])
+        return whs.filtered(lambda w: w.amunet_access_group_id in self.group_ids)
+
+    @api.depends('warehouse_access_ids', 'warehouse_access_ids.warehouse_id',
+                 'warehouse_access_ids.active', 'group_ids')
     def _compute_warehouse_ids(self):
-        """Calcular almacenes permitidos desde configuraciones activas."""
+        """Calcular almacenes permitidos: accesos por usuario + los concedidos
+        por pertenencia a un grupo con acceso."""
         for user in self:
-            # Solo accesos activos
             active_accesses = user.warehouse_access_ids.filtered(lambda a: a.active)
-            user.warehouse_ids = active_accesses.mapped('warehouse_id')
+            user.warehouse_ids = (active_accesses.mapped('warehouse_id')
+                                  | user._amunet_group_access_warehouses())
 
     @api.depends('warehouse_ids')
     def _compute_warehouse_count(self):
@@ -130,6 +141,13 @@ class ResUsers(models.Model):
             elif access.access_type == 'restricted':
                 # Acceso restringido: solo operaciones configuradas
                 operation_types |= access.operation_type_ids
+
+        # Almacenes concedidos por grupo -> acceso completo a sus operaciones
+        for w in self._amunet_group_access_warehouses():
+            if warehouse and w != warehouse:
+                continue
+            operation_types |= (w.pick_type_id | w.in_type_id
+                                | w.out_type_id | w.int_type_id)
 
         return operation_types
 

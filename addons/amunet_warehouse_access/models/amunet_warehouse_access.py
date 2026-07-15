@@ -302,6 +302,12 @@ class AmunetWarehouseAccess(models.Model):
         if user.has_group('base.group_system'):
             return True
 
+        # Acceso por GRUPO: si el almacen tiene un grupo con acceso y el usuario
+        # pertenece a el, tiene acceso completo (sin registro por usuario).
+        if warehouse.amunet_access_group_id and \
+                warehouse.amunet_access_group_id in user.group_ids:
+            return True
+
         # Buscar configuración de acceso
         access = self.sudo().search([
             ('user_id', '=', user.id),
