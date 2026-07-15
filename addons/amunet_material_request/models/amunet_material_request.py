@@ -828,6 +828,14 @@ class AmunetMaterialRequest(models.Model):
                 raise UserError(_(
                     'La cantidad recibida de %s no puede ser negativa.'
                 ) % line.product_id.display_name)
+            # No se puede validar la recepcion con la Cantidad recibida en
+            # blanco: hay que capturar cuanto se recibio (puede ser parcial).
+            if line.qty_supplied > 0 and line.qty_received <= 0:
+                raise UserError(_(
+                    'Falta capturar la Cantidad recibida de %s. Ingresa cuanto '
+                    'recibiste (puede ser parcial, ej. "8 de 10") antes de '
+                    'validar la recepcion.'
+                ) % line.product_id.display_name)
             if line.qty_received > line.qty_supplied:
                 raise UserError(_(
                     'La cantidad recibida de %(prod)s (%(recv)s) no puede '
