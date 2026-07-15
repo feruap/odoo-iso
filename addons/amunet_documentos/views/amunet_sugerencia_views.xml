@@ -31,7 +31,7 @@
                             invisible="state != 'borrador'"
                             confirm="¿Estás segura de que el control de cambios está completo y listo para enviarse?"/>
                     <button name="action_descartar" string="Eliminar borrador"
-                            type="object" class="btn-secondary"
+                            type="object" class="btn-danger"
                             icon="fa-trash"
                             invisible="state != 'borrador'"
                             confirm="¿Segura que quieres eliminar este borrador? Se eliminará permanentemente."/>

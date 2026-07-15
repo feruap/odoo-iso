@@ -118,7 +118,7 @@ class AmunetDocumentoSugerencia(models.Model):
 
     name = fields.Char(string='Resumen', compute='_compute_name', store=True)
     documento_id = fields.Many2one(
-        'amunet.documento', required=True, ondelete='cascade', tracking=True)
+        'amunet.documento', ondelete='cascade', tracking=True)
     documento_codigo = fields.Char(related='documento_id.codigo',
                                    string='Codigo del documento', store=True)
     secciones_ids = fields.Many2many(
@@ -138,7 +138,7 @@ class AmunetDocumentoSugerencia(models.Model):
         string='Resumen de cambios',
         compute='_compute_diff_html',
         sanitize=False)
-    motivo = fields.Text(string='Justificación del cambio', required=True, tracking=True)
+    motivo = fields.Text(string='Justificación del cambio', tracking=True)
     aplica_analisis_riesgos = fields.Boolean(
         string='Aplica análisis de riesgos', default=False, tracking=True)
     numero_analisis_riesgos = fields.Char(
@@ -451,7 +451,8 @@ class AmunetDocumentoSugerencia(models.Model):
         for r in self:
             if r.state != 'borrador':
                 raise UserError(_('Solo puedes descartar un control de cambios en borrador.'))
-        return self.unlink()
+        self.unlink()
+        return {'type': 'ir.actions.client', 'tag': 'history_back'}
 
     def action_aceptar(self):
         for r in self:

@@ -398,6 +398,14 @@
                                                   invisible="not contenido_html">
                                                 <field name="contenido_html" readonly="1"/>
                                             </page>
+                                            <page string="Cambios vs. versión anterior"
+                                                  invisible="not diff_html">
+                                                <div class="alert alert-info mb8" role="alert">
+                                                    Texto <strong style="background:#dcfce7;color:#166534;padding:0 2px">resaltado en verde</strong> fue agregado;
+                                                    texto <del style="background:#fee2e2;color:#991b1b;padding:0 2px">tachado en rojo</del> fue eliminado.
+                                                </div>
+                                                <field name="diff_html" readonly="1"/>
+                                            </page>
                                         </notebook>
                                     </sheet>
                                 </form>

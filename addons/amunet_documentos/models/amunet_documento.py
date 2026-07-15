@@ -849,6 +849,62 @@ class AmunetDocumentoVersion(models.Model):
         ('obsoleto', 'Obsoleto'),
     ], string='Estado historico', default='obsoleto')
     cambios = fields.Text(string='Resumen de cambios')
+    diff_html = fields.Html(string='Cambios vs. versión anterior', compute='_compute_diff_html', sanitize=False)
+
+    def _compute_diff_html(self):
+        import re
+        from difflib import SequenceMatcher
+
+        def strip_html(html_text):
+            if not html_text:
+                return ''
+            text = re.sub(r'<[^>]+>', ' ', html_text)
+            text = re.sub(r'&nbsp;', ' ', text)
+            text = re.sub(r'&[a-z]+;', '', text)
+            text = re.sub(r'\s+', ' ', text)
+            return text.strip()
+
+        for record in self:
+            prev = self.env['amunet.documento.version'].search([
+                ('documento_id', '=', record.documento_id.id),
+                ('fecha', '<', record.fecha),
+            ], order='fecha desc', limit=1)
+
+            if not prev:
+                record.diff_html = (
+                    '<p style="color:#6b7280;font-style:italic">'
+                    'Primera versión — sin versión anterior para comparar.</p>'
+                )
+                continue
+
+            old_words = strip_html(prev.contenido_html).split()
+            new_words = strip_html(record.contenido_html).split()
+            matcher = SequenceMatcher(None, old_words, new_words, autojunk=False)
+            parts = []
+
+            for op, i1, i2, j1, j2 in matcher.get_opcodes():
+                if op == 'equal':
+                    parts.append(' '.join(new_words[j1:j2]))
+                elif op == 'insert':
+                    chunk = ' '.join(new_words[j1:j2])
+                    parts.append(
+                        '<strong style="background:#dcfce7;color:#166534;padding:0 2px">%s</strong>' % chunk
+                    )
+                elif op == 'delete':
+                    chunk = ' '.join(old_words[i1:i2])
+                    parts.append(
+                        '<del style="background:#fee2e2;color:#991b1b;padding:0 2px">%s</del>' % chunk
+                    )
+                elif op == 'replace':
+                    old_chunk = ' '.join(old_words[i1:i2])
+                    new_chunk = ' '.join(new_words[j1:j2])
+                    parts.append(
+                        '<del style="background:#fee2e2;color:#991b1b;padding:0 2px">%s</del> '
+                        '<strong style="background:#dcfce7;color:#166534;padding:0 2px">%s</strong>'
+                        % (old_chunk, new_chunk)
+                    )
+
+            record.diff_html = '<div style="line-height:2;font-size:0.95em">%s</div>' % ' '.join(parts)
 
     def _check_version_workflow_write(self):
         if (
