@@ -128,6 +128,7 @@ class AmunetQualitySignatureWizard(models.TransientModel):
 
             if self.signature_type == 'finalize':
                 if not (self.env.user.has_group('amunet_quality.group_quality_sanitary') or
+                        self.env.user.has_group('amunet_quality.group_quality_supervisor') or
                         self.env.user.has_group('amunet_quality.group_quality_manager')):
                     raise AccessDenied("Solo el Responsable Sanitario puede finalizar el QC.")
                 check._action_finalize_logic()
