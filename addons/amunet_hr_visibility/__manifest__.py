@@ -26,6 +26,7 @@ y todos los empleados internos veran la app de Empleados nuevamente.
         'hr',
         'payroll',
         'hr_attendance',
+        'hr_holidays',
     ],
     'data': [
         'security/ir.model.access.csv',
@@ -36,6 +37,7 @@ y todos los empleados internos veran la app de Empleados nuevamente.
         'views/hr_payslip_input_views.xml',
         'views/hr_payslip_run_views.xml',
         'views/dispersion_wizard_views.xml',
+        'views/hr_leave_tutorial_views.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,
