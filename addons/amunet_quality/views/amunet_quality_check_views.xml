@@ -67,7 +67,7 @@
                     <button name="action_finalize" string="Finalizar"
                             type="object" class="oe_highlight"
                             invisible="state != 'in_progress' or not sampling_confirmed or not display_action_finalize"
-                            groups="amunet_quality.group_quality_sanitary"
+                            groups="amunet_quality.group_quality_sanitary,amunet_quality.group_quality_supervisor"
                             confirm="¿Está seguro de finalizar el control de calidad?"/>
 
                     <button name="action_reanalysis" string="Reanálisis"
@@ -84,13 +84,13 @@
                             string="Imprimir Reporte"
                             type="object"
                             class="btn-secondary"
-                            invisible="not analysis_number"/>
+                            invisible="state == 'draft'"/>
 
                     <button name="action_print_certificado_interno"
                             string="Imprimir Certificado Interno"
                             type="object"
                             class="btn-secondary"
-                            invisible="not analysis_number"/>
+                            invisible="state == 'draft'"/>
 
 
                     <button name="action_create_capa" string="🚨 Crear CAPA"
@@ -99,7 +99,7 @@
 
                     <button name="action_sign_realized" string="Firmar: Realizó" type="object" class="btn-primary"
                             invisible="not sampling_confirmed or user_realized_id or state == 'done'"
-                            groups="amunet_quality.group_quality_user"
+                            groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor"
                             confirm="¿Confirmar que Realizó el análisis?"/>
 
                     <button name="action_sign_verified" string="Firmar: Verificó" type="object" class="btn-primary"
@@ -109,7 +109,7 @@
 
                     <button name="action_sign_authorized" string="Firmar: Autorizó" type="object" class="btn-primary"
                             invisible="not user_verified_id or user_authorized_id or state == 'done'"
-                            groups="amunet_quality.group_quality_sanitary"
+                            groups="amunet_quality.group_quality_sanitary,amunet_quality.group_quality_supervisor"
                             confirm="¿Confirmar Autorización?"/>
 
                     <field name="state" widget="statusbar"
@@ -189,6 +189,8 @@
                     <group invisible="not analysis_number">
                         <field name="analysis_number" readonly="1"/>
                         <field name="analysis_type" readonly="1"/>
+                        <field name="lot_amunet" invisible="not is_equipment"
+                               placeholder="Ej: VOR01072601"/>
                     </group>
 
                     <!-- Vista previa del folio (visible mientras no esté finalizado) -->
@@ -196,6 +198,8 @@
                         <field name="analysis_number_preview" readonly="1"
                                string="Vista previa del No. de análisis"
                                help="Formato estimado. 'NN' se sustituye por el consecutivo real al finalizar."/>
+                        <field name="lot_amunet" invisible="not is_equipment"
+                               placeholder="Ej: VOR01072601"/>
                     </group>
 
 
@@ -350,7 +354,7 @@
                     </group>
 
                     <!-- Tabla de Determinaciones -->
-                    <group colspan="4" col="1" invisible="not sampling_confirmed">
+                    <group colspan="4" col="1" invisible="not sampling_confirmed and not is_equipment">
                         <field name="test_line_ids" nolabel="1"
                                readonly="state == 'done'"
                                widget="quality_test_line_hierarchy"/>
@@ -626,6 +630,61 @@
 
                     </group>
 
+                    <!-- REGISTRO UNITARIO DE EQUIPOS -->
+                    <field name="is_equipment" invisible="1"/>
+                    <div class="o_horizontal_separator" invisible="not is_equipment">Registro de Unidades (Equipos)</div>
+                    <group invisible="not is_equipment">
+                        <group colspan="4" col="1">
+                            <div class="alert alert-info" role="alert"
+                                 invisible="equipment_unit_ids or state == 'done'">
+                                Registra cada equipo de este lote con su número de serie y resultado individual.
+                                Al finalizar el análisis, Karla y Verónica recibirán automáticamente esta lista.
+                            </div>
+                            <div invisible="not equipment_unit_ids" class="mb-2">
+                                <span class="badge bg-success me-2">Aprobados: <field name="equipment_approved_count" readonly="1" nolabel="1"/></span>
+                                <span class="badge bg-danger">Rechazados: <field name="equipment_rejected_count" readonly="1" nolabel="1"/></span>
+                            </div>
+                            <field name="is_termobloque" invisible="1"/>
+                            <field name="equipment_unit_ids" nolabel="1"
+                                   readonly="state == 'done'">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="serial_number" string="No. de serie"/>
+                                    <!-- Columnas genéricas (Vórtex y otros no-Termobloque) -->
+                                    <field name="result_apariencia" string="Apariencia"
+                                           column_invisible="parent.is_termobloque"/>
+                                    <field name="result_funcionalidad" string="Funcionalidad"
+                                           column_invisible="parent.is_termobloque"/>
+                                    <field name="result_dimensiones" string="Dimensiones"
+                                           column_invisible="parent.is_termobloque" optional="show"/>
+                                    <!-- Columnas Termobloque (EQTER01 / EQTER02) -->
+                                    <field name="temp_termometro" string="Temp Termómetro (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_a" string="Pozo A (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_b" string="Pozo B (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_c" string="Pozo C (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_d" string="Pozo D (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_e" string="Pozo E (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="tiempo_alcanzar_temp" string="Tiempo (min)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="diam_grande" string="Diám. Grande"
+                                           column_invisible="not parent.is_termobloque" optional="show"/>
+                                    <field name="diam_chico" string="Diám. Chico"
+                                           column_invisible="not parent.is_termobloque" optional="show"/>
+                                    <field name="status" string="Estatus"
+                                           decoration-success="status == 'approved'"
+                                           decoration-danger="status == 'rejected'"/>
+                                    <field name="observations" string="Observaciones" optional="show"/>
+                                </list>
+                            </field>
+                        </group>
+                    </group>
+
                     <!-- SEPARATOR FIRMAS -->
                     <div class="o_horizontal_separator" invisible="not sampling_confirmed">Numeral 8: Firmas</div>
                     <hr invisible="not sampling_confirmed"/>
@@ -867,11 +926,19 @@
                         <page string="Selección" name="binary_selection"
                               invisible="evaluation_type != 'binary_selection'">
                             <group>
-                                <field name="binary_option_pass" invisible="1"/>
-                                <field name="binary_option_fail" invisible="1"/>
-                                <field name="result_selection" widget="radio"
-                                       options="{'horizontal': true}"/>
+                                <field name="binary_option_pass" readonly="1" string="Opción Cumple"/>
+                                <field name="binary_option_fail" readonly="1" string="Opción No cumple"/>
+                                <field name="result_selection" readonly="1" string="Resultado registrado"
+                                       invisible="not result_selection"/>
                             </group>
+                            <div class="d-flex gap-3 justify-content-center mt-3 mb-2">
+                                <button name="action_select_pass" type="object"
+                                        class="btn btn-success btn-lg"
+                                        string="✓ Cumple"/>
+                                <button name="action_select_fail" type="object"
+                                        class="btn btn-danger btn-lg"
+                                        string="✗ No cumple"/>
+                            </div>
                         </page>
 
                         <!-- Numeric Range -->

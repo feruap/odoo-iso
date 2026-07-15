@@ -60,15 +60,17 @@ dispositivos médicos y productos farmacéuticos.""",
         'views/amunet_lot_extension_views.xml',
         'views/purchase_order_views.xml',
         'views/amunet_quality_tecno_standalone_views.xml',
+        'views/amunet_equipment_inspection_views.xml',
 
         # Menús (Hijos)
         'views/menus.xml',
-        
+
         # Reportes
         'reports/quality_certificate_report.xml',
         'reports/solicitud_reporte_report.xml',
         'reports/report_anexo_solicitud.xml',
         'reports/report_certificado_interno.xml',
+        'reports/report_equipment_inspection.xml',
     ],
     'assets': {
         'web.assets_backend': [

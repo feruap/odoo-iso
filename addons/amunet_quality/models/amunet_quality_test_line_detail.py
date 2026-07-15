@@ -197,6 +197,7 @@ class AmunetQualityTestLineDetail(models.Model):
     result_binary_option = fields.Selection([
         ('pass', 'Cumple'),
         ('fail', 'No Cumple'),
+        ('na', 'No aplica'),
     ], string='Resultado (binary con notas)')
 
     result_notes = fields.Text(

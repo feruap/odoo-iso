@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Reporte: Equipos Aprobados -->
+    <record id="action_report_equipment_inspection_approved" model="ir.actions.report">
+        <field name="name">Documento de Aprobación de Equipos</field>
+        <field name="model">amunet.equipment.inspection</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_quality.report_equipment_inspection_approved</field>
+        <field name="report_file">amunet_quality.report_equipment_inspection_approved</field>
+    </record>
+
+    <template id="report_equipment_inspection_approved">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 style="text-align:center;">DOCUMENTO DE APROBACIÓN DE EQUIPOS</h2>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Referencia:</strong> <span t-field="doc.name"/><br/>
+                                <strong>No. de análisis:</strong> <span t-field="doc.analysis_number"/><br/>
+                                <strong>Tipo de equipo:</strong>
+                                <span t-esc="dict(doc._fields['equipment_type'].selection).get(doc.equipment_type, '')"/><br/>
+                                <t t-if="doc.equipment_model">
+                                    <strong>Modelo:</strong> <span t-field="doc.equipment_model"/><br/>
+                                </t>
+                                <t t-if="doc.equipment_code">
+                                    <strong>Clave:</strong> <span t-field="doc.equipment_code"/><br/>
+                                </t>
+                            </div>
+                            <div class="col-6">
+                                <strong>Lote Amunet:</strong> <span t-field="doc.lot_amunet"/><br/>
+                                <strong>Lote aprobados:</strong> <span t-field="doc.lot_approved"/><br/>
+                                <strong>Fecha de entrada:</strong> <span t-field="doc.entry_date"/><br/>
+                                <strong>Fecha de análisis:</strong> <span t-field="doc.analysis_date"/><br/>
+                                <strong>Cantidad recibida:</strong> <span t-esc="int(doc.quantity_received)"/><br/>
+                            </div>
+                        </div>
+
+                        <h4>Equipos APROBADOS (<t t-esc="doc.approved_count"/>)</h4>
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>No. de serie / Lote fabricante</th>
+                                    <th>Estatus</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.line_ids.filtered(lambda l: l.status == 'approved')" t-as="line">
+                                    <tr>
+                                        <td><t t-esc="line_index + 1"/></td>
+                                        <td><span t-field="line.serial_number"/></td>
+                                        <td style="color:green;"><strong>APROBADO</strong></td>
+                                        <td><span t-field="line.observations"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <t t-if="doc.notes">
+                            <p><strong>Observaciones generales:</strong> <span t-field="doc.notes"/></p>
+                        </t>
+
+                        <div class="row mt-5">
+                            <div class="col-6" style="text-align:center;">
+                                <p>____________________________</p>
+                                <p><strong><span t-esc="doc.user_realized_id.name or ''"/></strong></p>
+                                <p>Realizó</p>
+                                <p><span t-field="doc.sign_realized_date" t-options='{"widget": "date"}'/></p>
+                            </div>
+                            <div class="col-6" style="text-align:center;">
+                                <p>____________________________</p>
+                                <p><strong><span t-esc="doc.user_verified_id.name or ''"/></strong></p>
+                                <p>Verificó</p>
+                                <p><span t-field="doc.sign_verified_date" t-options='{"widget": "date"}'/></p>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Reporte: Equipos Rechazados -->
+    <record id="action_report_equipment_inspection_rejected" model="ir.actions.report">
+        <field name="name">Documento de Rechazo de Equipos</field>
+        <field name="model">amunet.equipment.inspection</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_quality.report_equipment_inspection_rejected</field>
+        <field name="report_file">amunet_quality.report_equipment_inspection_rejected</field>
+    </record>
+
+    <template id="report_equipment_inspection_rejected">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 style="text-align:center;">DOCUMENTO DE RECHAZO DE EQUIPOS</h2>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Referencia:</strong> <span t-field="doc.name"/><br/>
+                                <strong>No. de análisis:</strong> <span t-field="doc.analysis_number"/><br/>
+                                <strong>Tipo de equipo:</strong>
+                                <span t-esc="dict(doc._fields['equipment_type'].selection).get(doc.equipment_type, '')"/><br/>
+                                <t t-if="doc.equipment_model">
+                                    <strong>Modelo:</strong> <span t-field="doc.equipment_model"/><br/>
+                                </t>
+                                <t t-if="doc.equipment_code">
+                                    <strong>Clave:</strong> <span t-field="doc.equipment_code"/><br/>
+                                </t>
+                            </div>
+                            <div class="col-6">
+                                <strong>Lote Amunet:</strong> <span t-field="doc.lot_amunet"/><br/>
+                                <strong>Lote rechazados:</strong> <span t-field="doc.lot_rejected"/><br/>
+                                <strong>Fecha de entrada:</strong> <span t-field="doc.entry_date"/><br/>
+                                <strong>Fecha de análisis:</strong> <span t-field="doc.analysis_date"/><br/>
+                                <strong>Cantidad recibida:</strong> <span t-esc="int(doc.quantity_received)"/><br/>
+                            </div>
+                        </div>
+
+                        <h4>Equipos RECHAZADOS (<t t-esc="doc.rejected_count"/>)</h4>
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>No. de serie / Lote fabricante</th>
+                                    <th>Estatus</th>
+                                    <th>Observaciones / Causa de rechazo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.line_ids.filtered(lambda l: l.status == 'rejected')" t-as="line">
+                                    <tr>
+                                        <td><t t-esc="line_index + 1"/></td>
+                                        <td><span t-field="line.serial_number"/></td>
+                                        <td style="color:red;"><strong>RECHAZADO</strong></td>
+                                        <td><span t-field="line.observations"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <t t-if="doc.notes">
+                            <p><strong>Observaciones generales:</strong> <span t-field="doc.notes"/></p>
+                        </t>
+
+                        <div class="row mt-5">
+                            <div class="col-6" style="text-align:center;">
+                                <p>____________________________</p>
+                                <p><strong><span t-esc="doc.user_realized_id.name or ''"/></strong></p>
+                                <p>Realizó</p>
+                                <p><span t-field="doc.sign_realized_date" t-options='{"widget": "date"}'/></p>
+                            </div>
+                            <div class="col-6" style="text-align:center;">
+                                <p>____________________________</p>
+                                <p><strong><span t-esc="doc.user_verified_id.name or ''"/></strong></p>
+                                <p>Verificó</p>
+                                <p><span t-field="doc.sign_verified_date" t-options='{"widget": "date"}'/></p>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

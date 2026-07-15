@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import base64
 
 from odoo import models, fields, api, _ # Force update
 from odoo.exceptions import ValidationError, AccessDenied, UserError
@@ -50,6 +51,12 @@ class AmunetQualityCheck(models.Model):
         help='Folio legal generado al finalizar. Formato: AN-CCCDDMMAA-NN'
     )
 
+    lot_amunet = fields.Char(
+        string='Lote Amunet',
+        tracking=True,
+        help='Lote interno Amunet asignado a este lote de equipos (ej: VOR01072601)'
+    )
+
     analysis_number_preview = fields.Char(
         string='Vista previa del No. de análisis',
         compute='_compute_analysis_number_preview',
@@ -70,6 +77,20 @@ class AmunetQualityCheck(models.Model):
         compute='_compute_display_action_finalize',
         string="Mostrar botón Finalizar"
     )
+
+    @api.depends('product_id.default_code')
+    def _compute_is_equipment(self):
+        for rec in self:
+            code = rec.product_id.default_code or ''
+            rec.is_equipment = code.upper().startswith('EQ')
+            rec.is_termobloque = code.upper().startswith('EQTER')
+
+    @api.depends('equipment_unit_ids.status')
+    def _compute_equipment_counts(self):
+        for rec in self:
+            units = rec.equipment_unit_ids
+            rec.equipment_approved_count = sum(1 for u in units if u.status == 'approved')
+            rec.equipment_rejected_count = sum(1 for u in units if u.status == 'rejected')
 
     @api.depends('tiene_anexos', 'user_realized_id')
     def _compute_puede_descargar_anexo(self):
@@ -762,6 +783,37 @@ class AmunetQualityCheck(models.Model):
         'amunet.quality.anexo.line',
         'check_id',
         string='Líneas del Anexo',
+    )
+
+    # ========== Registro Unitario de Equipos ==========
+    equipment_unit_ids = fields.One2many(
+        'amunet.quality.check.equipment.unit',
+        'check_id',
+        string='Registro de Unidades',
+    )
+
+    is_equipment = fields.Boolean(
+        string='Es equipo',
+        compute='_compute_is_equipment',
+        store=True,
+    )
+
+    is_termobloque = fields.Boolean(
+        string='Es termobloque',
+        compute='_compute_is_equipment',
+        store=True,
+    )
+
+    equipment_approved_count = fields.Integer(
+        string='Unidades que cumplen',
+        compute='_compute_equipment_counts',
+        store=True,
+    )
+
+    equipment_rejected_count = fields.Integer(
+        string='Unidades que no cumplen',
+        compute='_compute_equipment_counts',
+        store=True,
     )
     # Fotografías del anexo — se adjuntan como archivos (sin límite fijo)
     anexo_photo_ids  = fields.Many2many(
@@ -2214,10 +2266,11 @@ class AmunetQualityCheck(models.Model):
             )
 
     def action_sign_realized(self):
-        """Abre wizard para firmar como Realizó (Analista)"""
+        """Abre wizard para firmar como Realizó (Analista o Supervisor)"""
         self.ensure_one()
-        if not self.env.user.has_group('amunet_quality.group_quality_user'):
-             raise AccessDenied("No tiene permisos de Analista.")
+        if not (self.env.user.has_group('amunet_quality.group_quality_user') or
+                self.env.user.has_group('amunet_quality.group_quality_supervisor')):
+             raise AccessDenied("No tiene permisos de Analista o Supervisor.")
 
         if self.global_result == 'pending':
             raise ValidationError("No se puede firmar si el análisis no está completo (Dictamen: Pendiente).")
@@ -2319,8 +2372,9 @@ class AmunetQualityCheck(models.Model):
     def action_sign_authorized(self):
         """Abre wizard para firmar como Autorizó (Sanitario)"""
         self.ensure_one()
-        if not self.env.user.has_group('amunet_quality.group_quality_sanitary'):
-             raise AccessDenied("No tiene permisos de Responsable Sanitario.")
+        if not (self.env.user.has_group('amunet_quality.group_quality_sanitary') or
+                self.env.user.has_group('amunet_quality.group_quality_supervisor')):
+            raise AccessDenied("No tiene permisos de Responsable Sanitario o Supervisor.")
 
         if self.global_result == 'pending':
              raise ValidationError("No se puede firmar si el análisis no está completo (Dictamen: Pendiente).")
@@ -2475,11 +2529,146 @@ class AmunetQualityCheck(models.Model):
                 f'Finalizó el Control de Calidad <b>{self.name}</b>'
                 f' (Folio: {analysis_number}) — Resultado: <b>{result_text}</b>'
             )
+
+            # Notificar a almacén si es equipo y hay registro de unidades
+            if self.is_equipment and self.equipment_unit_ids:
+                self._notify_almacen_equipment_units()
+
         except Exception as e:
             _logger.error(f"Error in _action_finalize_logic for QC {self.id}: {str(e)}")
             import traceback
             _logger.error(traceback.format_exc())
             raise
+
+    def _notify_almacen_equipment_units(self):
+        """Notifica a Karla y Verónica (almacén) con la lista de unidades aprobadas y rechazadas."""
+        self.ensure_one()
+        approved = self.equipment_unit_ids.filtered(lambda u: u.status == 'approved')
+        rejected = self.equipment_unit_ids.filtered(lambda u: u.status == 'rejected')
+
+        lot_name = self.lot_id.name if self.lot_id else '—'
+        lot_amunet_display = self.lot_amunet or lot_name
+        lot_rejected_suggested = f'{lot_amunet_display}-R' if lot_amunet_display != '—' else '—'
+
+        def unit_card(u, bg, label, badge_color):
+            obs = f'<div style="color:#555;font-size:12px;margin-top:4px;">📝 {u.observations}</div>' if u.observations else ''
+            dim = f'<span style="margin-left:16px;">📐 {u.result_dimensiones}</span>' if u.result_dimensiones else ''
+            return (
+                f'<div style="background:{bg};border-radius:8px;padding:12px 16px;margin-bottom:8px;">'
+                f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+                f'<span style="font-size:15px;font-weight:bold;">🔩 Serie: {u.serial_number or "—"}</span>'
+                f'<span style="background:{badge_color};color:white;padding:3px 10px;border-radius:12px;font-size:13px;font-weight:bold;">{label}</span>'
+                f'</div>'
+                f'<div style="margin-top:6px;color:#333;font-size:13px;">'
+                f'<span>👁 {u.result_apariencia or "—"}</span>'
+                f'<span style="margin-left:16px;">⚙️ {u.result_funcionalidad or "—"}</span>'
+                f'{dim}'
+                f'</div>'
+                f'{obs}'
+                f'</div>'
+            )
+
+        approved_cards = ''.join(unit_card(u, '#f0fff4', 'APROBADO', '#22863a') for u in approved)
+        rejected_cards = ''.join(unit_card(u, '#fff5f5', 'RECHAZADO', '#c0392b') for u in rejected)
+
+        rejected_section = ''
+        if rejected:
+            rejected_section = f'''
+            <div style="margin-top:24px;">
+                <div style="background:#c0392b;color:white;padding:10px 16px;border-radius:8px 8px 0 0;font-weight:bold;font-size:14px;">
+                    ❌ UNIDADES RECHAZADAS ({len(rejected)})
+                </div>
+                <div style="border:1px solid #f5c6cb;border-top:none;border-radius:0 0 8px 8px;padding:12px;">
+                    {rejected_cards}
+                    <div style="margin-top:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:10px 14px;font-size:13px;">
+                        ⚠️ <strong>Acción requerida:</strong> Favor de mover estas unidades al lote de rechazo
+                        <strong>{lot_rejected_suggested}</strong> en el sistema de inventario.
+                    </div>
+                </div>
+            </div>'''
+
+        from markupsafe import Markup
+        body = Markup(f"""
+<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;">
+
+  <!-- Encabezado -->
+  <div style="background:#1a56a0;color:white;padding:20px 24px;border-radius:10px 10px 0 0;">
+    <div style="font-size:18px;font-weight:bold;">Control de Calidad — Análisis de Equipos</div>
+    <div style="font-size:13px;margin-top:4px;opacity:0.85;">Folio: {self.analysis_number or self.name}</div>
+  </div>
+
+  <!-- Info del lote -->
+  <div style="background:#f8f9fa;border:1px solid #dee2e6;border-top:none;padding:14px 24px;font-size:13px;">
+    <strong>Producto:</strong> {self.product_id.display_name} &nbsp;|&nbsp;
+    <strong>Lote Amunet:</strong> {lot_amunet_display} &nbsp;|&nbsp;
+    <strong>Lote sistema:</strong> {lot_name}
+  </div>
+
+  <!-- Aprobados -->
+  <div style="border:1px solid #dee2e6;border-top:none;padding:16px 24px;">
+    <div style="background:#22863a;color:white;padding:10px 16px;border-radius:8px 8px 0 0;font-weight:bold;font-size:14px;margin:-16px -24px 12px -24px;padding:10px 24px;">
+        ✅ UNIDADES APROBADAS ({len(approved)})
+    </div>
+    {approved_cards or '<p style="color:#888;font-size:13px;">Ninguna unidad aprobada.</p>'}
+    {rejected_section}
+  </div>
+
+  <!-- Pie -->
+  <div style="background:#f1f3f5;border:1px solid #dee2e6;border-top:none;border-radius:0 0 10px 10px;padding:12px 24px;font-size:12px;color:#666;text-align:center;">
+    Este correo fue generado automáticamente por el sistema de Calidad — Amunet.<br/>
+    Diana Flores · Control de Calidad · s.controldecalidad@amunet.com.mx
+  </div>
+
+</div>
+""")
+
+        # Generar PDFs: Solicitud Reporte + Certificado Interno
+        attachment_ids = []
+        folio = self.analysis_number or self.name
+        for report_ref, label in [
+            ('amunet_quality.action_report_solicitud_reporte_v2', f'Reporte-Equipos-{folio}.pdf'),
+            ('amunet_quality.action_report_certificado_interno', f'Certificado-Interno-{folio}.pdf'),
+        ]:
+            try:
+                report = self.env.ref(report_ref)
+                pdf_content, _ = report._render_qweb_pdf(report_ref, [self.id])
+                attachment = self.env['ir.attachment'].create({
+                    'name': label,
+                    'type': 'binary',
+                    'datas': base64.b64encode(pdf_content),
+                    'mimetype': 'application/pdf',
+                    'res_model': self._name,
+                    'res_id': self.id,
+                })
+                attachment_ids.append(attachment.id)
+            except Exception as e:
+                _logger.warning(f'No se pudo generar PDF {label} para notificación almacén: {e}')
+
+        subject = f'Equipos analizados — {self.name} | {self.product_id.display_name}'
+        simple_body = Markup(f"""
+<p>Hola,</p>
+<p>Se finalizó el análisis de equipos <strong>{self.analysis_number or self.name}</strong>
+({self.product_id.display_name}, lote: {lot_amunet_display}).</p>
+<p>Adjunto encontrarás el reporte completo con el resultado de cada unidad.</p>
+{'<p><strong>Acción requerida:</strong> ' + str(len(rejected)) + ' unidad(es) rechazada(s) — favor de moverla(s) al lote <strong>' + lot_rejected_suggested + '</strong> en inventario.</p>' if rejected else '<p>Todas las unidades fueron <strong>aprobadas</strong>.</p>'}
+<p>Saludos,<br/>Diana Flores · Control de Calidad</p>
+""")
+        for email_to in ['almacen.mp@amunet.com.mx', 'supalmacen@amunet.com.mx']:
+            mail = self.env['mail.mail'].create({
+                'subject': subject,
+                'email_to': email_to,
+                'email_from': 'odoobot@amunet.com.mx',
+                'body_html': simple_body,
+                'attachment_ids': [(6, 0, attachment_ids)],
+                'auto_delete': True,
+            })
+            mail.send()
+        # Registrar en el chatter para trazabilidad
+        self.message_post(
+            body=simple_body,
+            subject=subject,
+            attachment_ids=attachment_ids,
+        )
 
     # ========================================================================
     # RECEPCIÓN FINAL DE ALMACÉN (nuevo flujo post-QC aprobado)

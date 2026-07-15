@@ -111,7 +111,10 @@
                             <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Nombre:</strong> <span t-field="o.product_id.name"/></td>
                         </tr>
                         <tr style="border: 0 !important;">
-                            <t t-if="o.product_id.default_code and o.product_id.default_code.startswith('SPHM')">
+                            <t t-if="o.is_equipment">
+                                <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Clave:</strong> <span t-field="o.product_code"/></td>
+                            </t>
+                            <t t-elif="o.product_id.default_code and o.product_id.default_code.startswith('SPHM')">
                                 <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Catálogo:</strong> <span t-field="o.product_code"/></td>
                             </t>
                             <t t-else="">
@@ -203,14 +206,13 @@
                     </div>
                     <table class="tabla-full tabla-datos">
                         <tr style="background-color: #f2f2f2;">
-                            <td style="width: 35%;">Nombre / Código</td>
+                            <td style="width: 35%;">Nombre</td>
                             <td style="width: 65%;">DESCRIPCIÓN DEL RESULTADO</td>
                         </tr>
                         <t t-foreach="o.test_line_ids" t-as="line">
                             <tr>
                                 <td>
-                                    <span t-field="line.name"/><br/>
-                                    <span t-field="line.code"/>
+                                    <span t-field="line.name"/>
                                 </td>
                                 <td>
                                     <t t-foreach="line.detail_line_ids" t-as="detail">
@@ -219,6 +221,9 @@
                                             <t t-if="detail.verdict != 'pass'">☐</t>
                                             <span t-field="detail.name"/>:
                                             <span t-field="detail.result_display"/>
+                                            <t t-if="detail.evaluation_type == 'binary_with_notes' and detail.result_additional_info">
+                                                — <span t-field="detail.result_additional_info"/>
+                                            </t>
                                         </div>
                                     </t>
                                 </td>
@@ -267,6 +272,106 @@
                             No asignadas
                         </t>
                     </div>
+
+                    <!-- Tabla de unidades (solo equipos) -->
+                    <t t-if="o.is_equipment and o.equipment_unit_ids">
+
+                        <!-- TERMOBLOQUE: tabla con temperatura por pozo, termómetro, tiempo y diámetros -->
+                        <t t-if="o.is_termobloque">
+                            <style>@page { size: A4 landscape; margin: 10mm 15mm; }</style>
+                            <div style="width:100%;margin-top:20px;page-break-inside:avoid;">
+                                <div style="font-weight:bold;font-size:11pt;border-bottom:2px solid #1a56a0;padding-bottom:4px;margin-bottom:8px;">
+                                    REGISTRO DE UNIDADES — TERMOBLOQUE
+                                </div>
+                                <table style="width:100%;border-collapse:collapse;font-size:8pt;">
+                                    <thead>
+                                        <tr style="background:#1a56a0;color:white;">
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:left;">No. de serie</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Apariencia</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Temp A<br/>(°C)</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Temp B<br/>(°C)</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Temp C<br/>(°C)</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Temp D<br/>(°C)</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Temp E<br/>(°C)</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Temp<br/>Termómetro<br/>(°C)</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Tiempo<br/>(min)</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Diám.<br/>Grande<br/>(mm)</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Diám.<br/>Chico<br/>(mm)</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:center;">Estatus</th>
+                                            <th style="border:1px solid #999;padding:3px 5px;text-align:left;">Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="o.equipment_unit_ids" t-as="unit">
+                                            <tr t-att-style="'background:#f0fff4;' if unit.status == 'approved' else 'background:#fff5f5;'">
+                                                <td style="border:1px solid #ccc;padding:3px 5px;"><t t-out="unit.serial_number or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="unit.result_apariencia or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="'%.1f' % unit.temp_pozo_a if unit.temp_pozo_a else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="'%.1f' % unit.temp_pozo_b if unit.temp_pozo_b else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="'%.1f' % unit.temp_pozo_c if unit.temp_pozo_c else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="'%.1f' % unit.temp_pozo_d if unit.temp_pozo_d else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="'%.1f' % unit.temp_pozo_e if unit.temp_pozo_e else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="'%.1f' % unit.temp_termometro if unit.temp_termometro else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="'%.1f' % unit.tiempo_alcanzar_temp if unit.tiempo_alcanzar_temp else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="unit.diam_grande or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;"><t t-out="unit.diam_chico or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;text-align:center;font-weight:bold;">
+                                                    <t t-if="unit.status == 'approved'">
+                                                        <span style="color:#22863a;">APROBADO</span>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span style="color:#c0392b;">RECHAZADO</span>
+                                                    </t>
+                                                </td>
+                                                <td style="border:1px solid #ccc;padding:3px 5px;"><t t-out="unit.observations or ''"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+
+                        <!-- OTROS EQUIPOS (Vórtex, etc.): tabla genérica -->
+                        <t t-else="">
+                            <div style="width:100%;margin-top:30px;page-break-inside:avoid;">
+                                <div style="font-weight:bold;font-size:11pt;border-bottom:2px solid #1a56a0;padding-bottom:4px;margin-bottom:8px;">
+                                    REGISTRO DE UNIDADES
+                                </div>
+                                <table style="width:100%;border-collapse:collapse;font-size:10pt;">
+                                    <thead>
+                                        <tr style="background:#1a56a0;color:white;">
+                                            <th style="border:1px solid #ccc;padding:5px 8px;text-align:left;">No. de serie</th>
+                                            <th style="border:1px solid #ccc;padding:5px 8px;text-align:left;">Apariencia</th>
+                                            <th style="border:1px solid #ccc;padding:5px 8px;text-align:left;">Funcionalidad</th>
+                                            <th style="border:1px solid #ccc;padding:5px 8px;text-align:left;">Dimensiones</th>
+                                            <th style="border:1px solid #ccc;padding:5px 8px;text-align:center;">Estatus</th>
+                                            <th style="border:1px solid #ccc;padding:5px 8px;text-align:left;">Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="o.equipment_unit_ids" t-as="unit">
+                                            <tr t-att-style="'background:#f0fff4;' if unit.status == 'approved' else 'background:#fff5f5;'">
+                                                <td style="border:1px solid #ccc;padding:5px 8px;"><t t-out="unit.serial_number or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:5px 8px;"><t t-out="unit.result_apariencia or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:5px 8px;"><t t-out="unit.result_funcionalidad or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:5px 8px;"><t t-out="unit.result_dimensiones or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:5px 8px;text-align:center;font-weight:bold;">
+                                                    <t t-if="unit.status == 'approved'">
+                                                        <span style="color:#22863a;">APROBADO</span>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span style="color:#c0392b;">RECHAZADO</span>
+                                                    </t>
+                                                </td>
+                                                <td style="border:1px solid #ccc;padding:5px 8px;"><t t-out="unit.observations or ''"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+
+                    </t>
 
                     <div style="width: 100%; margin-top: 40px; page-break-inside: avoid;">
                         <table style="width: 100%; text-align: center; border: 0 !important; border-collapse: separate; border-spacing: 0;">

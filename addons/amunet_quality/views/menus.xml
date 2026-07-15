@@ -14,6 +14,12 @@
               action="action_amunet_quality_check"
               sequence="10"/>
 
+    <menuitem id="menu_equipment_inspection"
+              name="Inspección de equipos"
+              parent="menu_quality_operations"
+              action="action_equipment_inspection"
+              sequence="25"/>
+
     <!-- Submenú: Configuración (Ya definido en menu_parents.xml) -->
     <menuitem id="menu_quality_parameter"
               name="Parámetros de calidad"
