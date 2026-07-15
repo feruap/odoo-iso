@@ -68,6 +68,9 @@ class AmunetPilotPreflight(models.Model):
     quality_supervisor_id = fields.Many2one('res.users', string='Supervisor QC')
     warehouse_user_id = fields.Many2one('res.users', string='Almacen')
     packaging_user_id = fields.Many2one('res.users', string='Empaque / envios')
+    amunet_req_analysis = fields.Boolean(
+        string='Requiere analisis',
+        related='product_tmpl_id.amunet_req_quality_control', readonly=True)
 
     state = fields.Selection([
         ('draft', 'Borrador'),
@@ -158,16 +161,33 @@ class AmunetPilotPreflight(models.Model):
     def _set_default_participants(self):
         for rec in self:
             vals = {}
+            is_solution = rec.route_type == 'solution'
             if not rec.production_user_id:
-                vals['production_user_id'] = rec._first_user('amunet_production.group_production_supervisor').id
+                if is_solution:
+                    # El responsable de una solucion es el Fabricante de
+                    # Soluciones: el responsable de la orden si lo es, o el
+                    # primero del grupo group_solution_maker.
+                    mo_user = rec.production_id.user_id
+                    G = self.env.ref('amunet_production.group_solution_maker',
+                                     raise_if_not_found=False)
+                    if mo_user and G and G in mo_user.group_ids:
+                        vals['production_user_id'] = mo_user.id
+                    else:
+                        vals['production_user_id'] = rec._first_user(
+                            'amunet_production.group_solution_maker').id
+                else:
+                    vals['production_user_id'] = rec._first_user(
+                        'amunet_production.group_production_supervisor').id
             if not rec.quality_user_id:
                 vals['quality_user_id'] = rec._first_user('amunet_quality.group_quality_user').id
             if not rec.quality_supervisor_id:
                 vals['quality_supervisor_id'] = rec._first_user('amunet_quality.group_quality_supervisor').id
-            if not rec.warehouse_user_id:
-                vals['warehouse_user_id'] = rec._first_user('amunet_material_request.group_material_warehouse').id
-            if not rec.packaging_user_id:
-                vals['packaging_user_id'] = rec._first_user('amunet_packaging_planning.group_packaging_manager').id
+            # Soluciones: NO se asigna Almacen ni Empaque (no aplican).
+            if not is_solution:
+                if not rec.warehouse_user_id:
+                    vals['warehouse_user_id'] = rec._first_user('amunet_material_request.group_material_warehouse').id
+                if not rec.packaging_user_id:
+                    vals['packaging_user_id'] = rec._first_user('amunet_packaging_planning.group_packaging_manager').id
             if vals:
                 rec.write(vals)
 
@@ -701,7 +721,8 @@ class AmunetPilotPreflight(models.Model):
                             raise_if_not_found=False)
         for rec in self:
             if rec.route_type == 'solution':
-                prod_user = rec.production_id.user_id if rec.production_id else False
+                prod_user = rec.production_user_id or (
+                    rec.production_id.user_id if rec.production_id else False)
                 if prod_user and SolG and SolG in prod_user.group_ids:
                     rec._add_line('people', 'Fabricante de Soluciones', 'pass',
                         '%s puede fabricar soluciones.' % prod_user.display_name,
