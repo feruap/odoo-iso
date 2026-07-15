@@ -92,6 +92,42 @@ class StockMove(models.Model):
             surplus = (move.amunet_qty_supplied or 0.0) - (move.amunet_qty_used or 0.0)
             move.amunet_qty_surplus = max(surplus, 0.0)
 
+    amunet_line_lot_id = fields.Many2one(
+        'stock.lot', string='Lote (real)',
+        compute='_compute_amunet_line_lot_id',
+        inverse='_inverse_amunet_line_lot_id',
+        help='Lote realmente usado, capturable EN LA MISMA LINEA (soluciones). '
+             'Escribe/actualiza el lote del movimiento (move_line unico).')
+
+    @api.depends('move_line_ids.lot_id')
+    def _compute_amunet_line_lot_id(self):
+        for move in self:
+            lots = move.move_line_ids.mapped('lot_id')
+            move.amunet_line_lot_id = lots[0].id if len(lots) == 1 else False
+
+    def _inverse_amunet_line_lot_id(self):
+        for move in self:
+            lot = move.amunet_line_lot_id
+            if not lot:
+                continue
+            mls = move.move_line_ids
+            if len(mls) > 1:
+                # dejar una sola linea (captura inline = 1 lote por componente)
+                (mls[1:]).sudo().unlink()
+                mls = move.move_line_ids
+            if mls:
+                mls[0].sudo().lot_id = lot.id
+            else:
+                self.env['stock.move.line'].sudo().create({
+                    'move_id': move.id,
+                    'product_id': move.product_id.id,
+                    'product_uom_id': move.product_uom.id,
+                    'lot_id': lot.id,
+                    'quantity': move.amunet_qty_used or 0.0,
+                    'location_id': move.location_id.id,
+                    'location_dest_id': move.location_dest_id.id,
+                })
+
     amunet_needs_surtido = fields.Boolean(
         string='Requiere surtido',
         compute='_compute_amunet_needs_surtido',

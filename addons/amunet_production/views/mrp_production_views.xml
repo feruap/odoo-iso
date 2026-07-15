@@ -239,9 +239,22 @@
                         columna nativa 'quantity' (que se autollena con lo
                         reservado).
                     -->
+                    <!-- Lote (real): en SOLUCIONES el fabricante lo captura EN LA
+                         MISMA LINEA (no en Operaciones detalladas). Solo se muestra
+                         en soluciones. -->
+                    <field name="amunet_line_lot_id"
+                        string="Lote (real)"
+                        domain="[('product_id', '=', product_id)]"
+                        options="{'no_create': True, 'no_open': True}"
+                        column_invisible="not parent.amunet_is_solution_product"
+                        readonly="parent.state in ('done','cancel') or not amunet_user_can_edit_consume"
+                        optional="show"/>
+                    <!-- Cantidad Utilizada: editable EN LA MISMA LINEA en soluciones
+                         (para el fabricante); en linea corta sigue readonly (se captura
+                         en la conciliacion). -->
                     <field name="amunet_qty_used"
                         string="Cantidad Utilizada"
-                        readonly="1"
+                        readonly="parent.state in ('done','cancel') or not (parent.amunet_is_solution_product and amunet_user_can_edit_consume)"
                         optional="show"/>
                 </xpath>
 
@@ -317,10 +330,13 @@
                     Produccion pura NO la ve.
                 -->
                 <xpath expr="//field[@name='move_raw_ids']/list/button[@name='action_show_details'][not(@class)]" position="attributes">
-                    <attribute name="invisible">not show_details_visible or has_tracking == 'none' or not parent.amunet_user_can_see_supply_details</attribute>
+                    <!-- En SOLUCIONES el fabricante toma el material directo, asi que
+                         el mismo captura el lote real y la cantidad en Operaciones
+                         detalladas: se le muestra el boton (ademas de Almacen/admin). -->
+                    <attribute name="invisible">not show_details_visible or has_tracking == 'none' or not (parent.amunet_user_can_see_supply_details or (parent.amunet_is_solution_product and amunet_user_can_edit_consume))</attribute>
                 </xpath>
                 <xpath expr="//field[@name='move_raw_ids']/list/button[@name='action_show_details'][@class='o_optional_button btn']" position="attributes">
-                    <attribute name="invisible">has_tracking != 'none' or not show_details_visible or not parent.amunet_user_can_see_supply_details</attribute>
+                    <attribute name="invisible">has_tracking != 'none' or not show_details_visible or not (parent.amunet_user_can_see_supply_details or (parent.amunet_is_solution_product and amunet_user_can_edit_consume))</attribute>
                 </xpath>
 
                 <!-- Pestaña de Conciliación de materiales -->
