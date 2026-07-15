@@ -219,6 +219,29 @@ class MrpProduction(models.Model):
     # Override action_confirm: gate preflight
     # (las inspecciones YA NO se generan al confirmar; ver button_plan)
     # ============================
+    def _amunet_solution_moves_from_aru(self):
+        """Para ordenes de SOLUCION, los componentes cuya categoria enruta al
+        Almacen de reactivos en uso (ARU) se consumen desde ARU/Stock, no desde
+        el almacen general. El agua y las sub-soluciones (que no son reactivos)
+        siguen desde su ubicacion normal. Se corre tras confirmar."""
+        wh = self.env['stock.warehouse'].sudo().search(
+            [('code', '=', 'ARU')], limit=1)
+        if not wh:
+            return
+        aru_loc = wh.lot_stock_id
+        for mo in self.filtered(
+                lambda m: m.route_type == 'solution' or m.amunet_is_solution_product):
+            moves = mo.move_raw_ids.filtered(
+                lambda mv: mv.state not in ('done', 'cancel')
+                and mv.product_id.categ_id
+                and hasattr(mv.product_id.categ_id, '_amunet_routes_to_aru')
+                and mv.product_id.categ_id._amunet_routes_to_aru())
+            if not moves:
+                continue
+            moves._do_unreserve()
+            moves.write({'location_id': aru_loc.id})
+            moves._action_assign()
+
     def action_confirm(self):
         self._amunet_check_solution_maker()
         for rec in self:
@@ -230,7 +253,9 @@ class MrpProduction(models.Model):
                         'Crea o ejecuta un preflight ANTES de confirmar '
                         'esta orden (Manufactura > Preflight piloto).'
                     ) % rec.name)
-        return super().action_confirm()
+        res = super().action_confirm()
+        self._amunet_solution_moves_from_aru()
+        return res
 
     # ============================
     # Override button_plan: generar inspecciones al PLANIFICAR.
