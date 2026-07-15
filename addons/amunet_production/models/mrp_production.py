@@ -41,6 +41,18 @@ class MrpProduction(models.Model):
             moves = rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
             rec.amunet_all_dissolved = bool(moves) and all(
                 m.amunet_dissolution for m in moves)
+
+    amunet_has_surtido_components = fields.Boolean(
+        string='Tiene componentes de surtido',
+        compute='_compute_amunet_has_surtido_components',
+        help='Solo soluciones: True si algun componente es sub-solucion (requiere '
+             'surtido). Controla si se muestra la columna Cantidad surtida.')
+
+    @api.depends('move_raw_ids.amunet_needs_surtido')
+    def _compute_amunet_has_surtido_components(self):
+        for rec in self:
+            rec.amunet_has_surtido_components = any(
+                rec.move_raw_ids.mapped('amunet_needs_surtido'))
     solution_lot_id = fields.Char(string='Lote de produccion', copy=False, help="Lote asignado al producto final (interno)")
 
     amunet_scheduled_date_display = fields.Char(

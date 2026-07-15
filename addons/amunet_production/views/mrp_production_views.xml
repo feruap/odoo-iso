@@ -178,6 +178,7 @@
                 <xpath expr="//field[@name='product_id']" position="after">
                     <field name="amunet_product_categ_id" string="Categoria" readonly="1"/>
                     <field name="amunet_is_solution_product" invisible="1"/>
+                    <field name="amunet_has_surtido_components" invisible="1"/>
                 </xpath>
                 <!-- Fecha programada: reemplazar campo nativo por display DD.MM.AA editable -->
                 <xpath expr="//div[@name='date_start']/field[@name='date_start']" position="replace">
@@ -200,6 +201,7 @@
                     <field name="amunet_user_can_edit_consume" column_invisible="True"/>
                     <field name="amunet_user_is_warehouse" column_invisible="True"/>
                     <field name="amunet_available_lot_ids" column_invisible="True"/>
+                    <field name="amunet_needs_surtido" column_invisible="True"/>
                     <field name="amunet_lot_id"
                         domain="[('product_id', '=', product_id), ('id', 'in', amunet_available_lot_ids)]"
                         context="{'default_product_id': product_id}"
@@ -221,9 +223,14 @@
                         durante el surtido activo (in_progress). Bloqueada
                         para produccion y fuera de ese estado.
                     -->
+                    <!-- Cantidad surtida: en soluciones solo aplica a sub-soluciones
+                         (que se piden por surtido). Se OCULTA si la solucion no tiene
+                         sub-soluciones (todo reactivo/agua = material directo), y se
+                         bloquea en las lineas de reactivo/agua de una solucion mixta. -->
                     <field name="amunet_qty_supplied"
                         string="Cantidad surtida"
-                        readonly="not amunet_user_is_warehouse or (parent.amunet_supply_workorder_id and parent.amunet_supply_state != 'in_progress') or parent.state in ('done','cancel')"
+                        column_invisible="parent.amunet_is_solution_product and not parent.amunet_has_surtido_components"
+                        readonly="not amunet_user_is_warehouse or (parent.amunet_supply_workorder_id and parent.amunet_supply_state != 'in_progress') or parent.state in ('done','cancel') or (parent.amunet_is_solution_product and not amunet_needs_surtido)"
                         optional="show"/>
                     <!--
                         Cantidad Utilizada: refleja amunet_qty_used, que se

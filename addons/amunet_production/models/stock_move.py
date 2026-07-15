@@ -92,6 +92,31 @@ class StockMove(models.Model):
             surplus = (move.amunet_qty_supplied or 0.0) - (move.amunet_qty_used or 0.0)
             move.amunet_qty_surplus = max(surplus, 0.0)
 
+    amunet_needs_surtido = fields.Boolean(
+        string='Requiere surtido',
+        compute='_compute_amunet_needs_surtido',
+        help='Solo soluciones: True si el componente NO va al Almacen de '
+             'reactivos en uso (ARU), es decir es una SUB-SOLUCION que si se '
+             'pide por surtido. Los reactivos/agua (van a ARU) son material '
+             'directo y NO requieren surtido (solo se captura la utilizada).')
+
+    @api.depends('product_id',
+                 'raw_material_production_id.amunet_is_solution_product',
+                 'raw_material_production_id.product_id')
+    def _compute_amunet_needs_surtido(self):
+        for move in self:
+            mo = move.raw_material_production_id
+            is_sol = mo and (mo.route_type == 'solution'
+                             or mo.amunet_is_solution_product)
+            if not is_sol:
+                move.amunet_needs_surtido = False
+                continue
+            categ = move.product_id.categ_id
+            routes = (categ._amunet_routes_to_aru()
+                      if categ and hasattr(categ, '_amunet_routes_to_aru')
+                      else False)
+            move.amunet_needs_surtido = not routes
+
     # Flag de UI: True si el usuario actual puede editar la cantidad
     # teorica (product_uom_qty) y la utilizada (quantity). Almacen puro
     # NO debe modificarlas; solo produccion. Mery tiene ambos grupos en
