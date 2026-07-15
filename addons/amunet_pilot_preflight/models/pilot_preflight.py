@@ -162,22 +162,23 @@ class AmunetPilotPreflight(models.Model):
         for rec in self:
             vals = {}
             is_solution = rec.route_type == 'solution'
-            if not rec.production_user_id:
-                if is_solution:
-                    # El responsable de una solucion es el Fabricante de
-                    # Soluciones: el responsable de la orden si lo es, o el
-                    # primero del grupo group_solution_maker.
-                    mo_user = rec.production_id.user_id
-                    G = self.env.ref('amunet_production.group_solution_maker',
-                                     raise_if_not_found=False)
-                    if mo_user and G and G in mo_user.group_ids:
-                        vals['production_user_id'] = mo_user.id
-                    else:
-                        vals['production_user_id'] = rec._first_user(
-                            'amunet_production.group_solution_maker').id
+            if is_solution:
+                # El responsable de una solucion SIEMPRE es el Fabricante de
+                # Soluciones de la orden (mo.user_id si es del grupo; si no, el
+                # primero del grupo). Se sincroniza siempre para que coincida con
+                # la orden (no se queda un responsable viejo/erroneo).
+                mo_user = rec.production_id.user_id
+                G = self.env.ref('amunet_production.group_solution_maker',
+                                 raise_if_not_found=False)
+                if mo_user and G and G in mo_user.group_ids:
+                    target = mo_user
                 else:
-                    vals['production_user_id'] = rec._first_user(
-                        'amunet_production.group_production_supervisor').id
+                    target = rec._first_user('amunet_production.group_solution_maker')
+                if target and rec.production_user_id != target:
+                    vals['production_user_id'] = target.id
+            elif not rec.production_user_id:
+                vals['production_user_id'] = rec._first_user(
+                    'amunet_production.group_production_supervisor').id
             if not rec.quality_user_id:
                 vals['quality_user_id'] = rec._first_user('amunet_quality.group_quality_user').id
             if not rec.quality_supervisor_id:
