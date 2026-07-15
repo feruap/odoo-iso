@@ -225,13 +225,12 @@ class StockMove(models.Model):
         # (movimiento hecho) para no romper la trazabilidad de lo usado.
         # Se omite en flujos internos (sudo / contexto).
         if not self.env.su and not self.env.context.get('amunet_supply_internal'):
-            # Soluciones con BoM: las lineas de reactivos son fijas, no se borran.
-            locked = self._amunet_solution_bom_locked_moves()
-            if locked:
-                raise UserError(_(
-                    'No se pueden borrar las lineas de reactivos de una solucion '
-                    'con receta (BoM) definida: %(prod)s. Las lineas son fijas.'
-                ) % {'prod': ', '.join(locked.mapped('product_id.display_name'))})
+            # NOTA: NO se bloquea aqui el borrado de lineas de reactivos de
+            # soluciones. La proteccion contra que el OPERADOR borre lineas la da
+            # la vista (delete deshabilitado para soluciones). Un candado backend
+            # de unlink rompia la VALIDACION/produccion, porque el sistema borra y
+            # recrea movimientos internamente al confirmar/producir (no es el
+            # usuario). Cambiar el reactivo (product_id) si se bloquea en write().
             bloqueados = self.filtered(
                 lambda m: m.raw_material_production_id and m.state == 'done')
             if bloqueados:
