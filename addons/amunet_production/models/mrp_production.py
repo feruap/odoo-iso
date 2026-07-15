@@ -857,13 +857,10 @@ class MrpProduction(models.Model):
         # poblados desde el inicio.
         productions._compute_quality_params()
         productions._auto_generate_lot_draft()
-        # SOLUCIONES: el folio de la orden = numero codificado DDMMYY-NN (igual
-        # que el lote), en lugar de la secuencia generica del picking_type
-        # (AMP/MO/xxxxx). En borrador es una vista previa; se finaliza al
-        # confirmar (ver action_confirm). PNOGE-014.
-        for prod in productions:
-            if prod.amunet_is_solution_product and prod.solution_lot_id:
-                prod.name = prod.solution_lot_id
+        # SOLUCIONES: el folio codificado DDMMYY-NN NO se asigna en borrador (asi
+        # dos borradores del mismo dia no comparten folio ni chocan). El borrador
+        # conserva su nombre generico; el folio codificado se asigna al CONFIRMAR
+        # (ver action_confirm), donde ya es unico. PNOGE-014.
         return productions
 
     # Campos de "informacion general" de la orden que NO se pueden
