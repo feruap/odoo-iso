@@ -93,7 +93,7 @@ class StockPicking(models.Model):
             if not qc_loc:
                 continue
             for move in picking.move_ids.filtered(lambda m: m.state not in ('done', 'cancel')):
-                if move.product_id.product_tmpl_id.amunet_requires_quarantine:
+                if move.product_id.product_tmpl_id._amunet_effective_requires_quarantine():
                     move.location_dest_id = qc_loc.id
 
         result = super().action_confirm()
@@ -122,7 +122,11 @@ class StockPicking(models.Model):
             res = super().button_validate()
             for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
                                    and p.state == 'done'):
-                if not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
+                requiere_inspeccion = any(
+                    m.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
+                    for m in p.move_ids
+                )
+                if requiere_inspeccion and not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
                             p.amunet_crit4, p.amunet_crit5]):
                     p._amunet_notify_quality_pending()
             return res

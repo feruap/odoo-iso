@@ -15,6 +15,7 @@
         'wizard/amunet_lot_serial_split_wizard_views.xml',
         'wizard/amunet_reception_serial_wizard_views.xml',
         'reports/report_recepcion_materiales.xml',
+        'views/product_category_views.xml',
         'views/product_template_views.xml',
         'views/stock_picking_views.xml',
         'views/stock_lot_alert_views.xml',
