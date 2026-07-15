@@ -243,7 +243,14 @@
                     consumidos (movimiento hecho), para no romper trazabilidad.
                 -->
                 <xpath expr="//field[@name='move_raw_ids']/list" position="attributes">
-                    <attribute name="delete">1</attribute>
+                    <!-- Soluciones con BoM: lineas de reactivos fijas (no
+                         agregar/borrar). Linea corta si permite. -->
+                    <attribute name="delete">not parent.amunet_is_solution_product</attribute>
+                    <attribute name="create">not parent.amunet_is_solution_product</attribute>
+                </xpath>
+                <!-- En soluciones, el reactivo (producto) de cada linea es de solo lectura -->
+                <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_id']" position="attributes">
+                    <attribute name="readonly">parent.amunet_is_solution_product</attribute>
                 </xpath>
 
                 <!--

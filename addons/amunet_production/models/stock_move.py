@@ -128,7 +128,26 @@ class StockMove(models.Model):
         for rec in self:
             rec.amunet_user_is_warehouse = is_wh
 
+    def _amunet_solution_bom_locked_moves(self):
+        """Reactivos de una MO de SOLUCION con BoM definido: sus lineas (que
+        reactivos) son FIJAS -> no se pueden agregar/borrar/cambiar. La cantidad
+        real usada SI se captura (amunet_qty_used)."""
+        return self.filtered(
+            lambda m: m.raw_material_production_id
+            and m.raw_material_production_id.bom_id
+            and (m.raw_material_production_id.route_type == 'solution'
+                 or m.raw_material_production_id.amunet_is_solution_product))
+
     def write(self, vals):
+        # Candado: en soluciones con BoM no se puede CAMBIAR el reactivo de una
+        # linea (product_id). Cantidades/lote/consumo si (otros candados).
+        if ('product_id' in vals and not self.env.su
+                and not self.env.context.get('amunet_supply_internal')):
+            if self._amunet_solution_bom_locked_moves():
+                raise UserError(_(
+                    'No se puede cambiar el reactivo de una linea de una '
+                    'solucion con receta (BoM) definida. Las lineas de '
+                    'reactivos son fijas.'))
         # Candado: solo Almacen puede capturar 'Cantidad surtida' y 'Lote'
         # del material de una orden de produccion. Produccion nunca.
         # Se omite en escrituras internas del flujo (contexto/sudo).
@@ -206,6 +225,13 @@ class StockMove(models.Model):
         # (movimiento hecho) para no romper la trazabilidad de lo usado.
         # Se omite en flujos internos (sudo / contexto).
         if not self.env.su and not self.env.context.get('amunet_supply_internal'):
+            # Soluciones con BoM: las lineas de reactivos son fijas, no se borran.
+            locked = self._amunet_solution_bom_locked_moves()
+            if locked:
+                raise UserError(_(
+                    'No se pueden borrar las lineas de reactivos de una solucion '
+                    'con receta (BoM) definida: %(prod)s. Las lineas son fijas.'
+                ) % {'prod': ', '.join(locked.mapped('product_id.display_name'))})
             bloqueados = self.filtered(
                 lambda m: m.raw_material_production_id and m.state == 'done')
             if bloqueados:
