@@ -34,6 +34,17 @@
                         producto requiere analisis de QC. Es el
                         momento de mandar muestra al laboratorio.
                     -->
+                    <field name="amunet_is_supervisor" invisible="1"/>
+                    <field name="amunet_supervision_state" widget="badge"
+                           invisible="not amunet_is_solution_product"
+                           decoration-warning="amunet_supervision_state == 'requested'"
+                           decoration-success="amunet_supervision_state == 'done'"/>
+                    <!-- Supervision del jefe directo antes de solicitar analisis / producir -->
+                    <button name="action_amunet_request_supervision" string="Enviar a supervisión" type="object" class="oe_highlight"
+                            invisible="not amunet_is_solution_product or amunet_supervision_state != 'none' or state not in ('confirmed','progress','to_close')"
+                            groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>
+                    <button name="action_amunet_do_supervision" string="Firmar supervisión" type="object" class="oe_highlight"
+                            invisible="not amunet_is_solution_product or amunet_supervision_state != 'requested' or not amunet_is_supervisor"/>
                     <button name="action_request_analysis" string="Solicitar análisis" type="object" class="oe_highlight"
                             invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>

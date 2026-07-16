@@ -97,6 +97,30 @@ class MrpProduction(models.Model):
         ('rejected', 'Rechazado')
     ], string='Integración de Calidad', default='none', tracking=True, compute='_compute_quality_params', store=True, readonly=False)
 
+    # ── Supervisión de elaboración (soluciones) ─────────────────────────────
+    # Al terminar de elaborar la solucion, el fabricante la envia a supervision
+    # de su JEFE DIRECTO (manager de RRHH), que firma con PIN. Sin esa firma no
+    # se puede solicitar analisis (Flujo A) ni producir (Flujo B).
+    amunet_supervision_state = fields.Selection([
+        ('none', 'Sin enviar'),
+        ('requested', 'Enviada a supervisión'),
+        ('done', 'Supervisada'),
+    ], string='Supervisión de elaboración', default='none', copy=False, tracking=True)
+    amunet_supervisor_id = fields.Many2one(
+        'res.users', string='Jefe que supervisa', readonly=True, copy=False)
+    amunet_supervised_by_id = fields.Many2one(
+        'res.users', string='Supervisado por', readonly=True, copy=False)
+    amunet_supervised_date = fields.Datetime(
+        string='Fecha de supervisión', readonly=True, copy=False)
+    amunet_is_supervisor = fields.Boolean(
+        string='Es supervisor actual', compute='_compute_amunet_is_supervisor')
+
+    @api.depends('amunet_supervisor_id')
+    def _compute_amunet_is_supervisor(self):
+        for mo in self:
+            mo.amunet_is_supervisor = bool(
+                mo.amunet_supervisor_id and mo.amunet_supervisor_id == self.env.user)
+
     amunet_all_ingredients_valid = fields.Boolean(
         compute='_compute_all_ingredients_valid',
         string='Todos los ingredientes validos'
@@ -1409,9 +1433,83 @@ class MrpProduction(models.Model):
             }
         return super()._prepare_stock_lot_values()
 
+    # ── Supervisión de elaboración ──────────────────────────────────────────
+    def _amunet_get_direct_manager_user(self):
+        """Usuario del JEFE DIRECTO (manager de RRHH) de quien elabora la orden."""
+        self.ensure_one()
+        Emp = self.env['hr.employee'].sudo()
+        emp = Emp.search([('user_id', '=', self.env.user.id)], limit=1)
+        if not emp and self.create_uid:
+            emp = Emp.search([('user_id', '=', self.create_uid.id)], limit=1)
+        mgr = emp.parent_id if emp else False
+        return mgr.user_id if (mgr and mgr.user_id) else False
+
+    def action_amunet_request_supervision(self):
+        """El fabricante envia la solucion elaborada a supervision de su jefe
+        directo. Crea una actividad al jefe y deja la orden 'Enviada a
+        supervision'. Sin la firma del jefe no se puede solicitar analisis ni
+        producir."""
+        self.ensure_one()
+        if not self.amunet_is_solution_product:
+            raise UserError(_('La supervisión de elaboración solo aplica a soluciones.'))
+        if self.amunet_supervision_state == 'done':
+            raise UserError(_('Esta orden ya fue supervisada.'))
+        mgr = self._amunet_get_direct_manager_user()
+        if not mgr:
+            raise UserError(_(
+                'No se encontró el jefe directo de quien elabora. '
+                'Configura su Responsable en Recursos Humanos.'))
+        self.sudo().write({'amunet_supervision_state': 'requested', 'amunet_supervisor_id': mgr.id})
+        self.sudo().activity_schedule(
+            'mail.mail_activity_data_todo', user_id=mgr.id,
+            summary=_('Supervisar elaboración de solución %s') % self.name,
+            note=_('Revisa la elaboración de la solución %s y firma la '
+                   'supervisión (con PIN) antes de que continue.') % self.name)
+        self.sudo().message_post(body=_('Enviada a supervisión de <b>%s</b>.') % mgr.name)
+        return True
+
+    def action_amunet_do_supervision(self):
+        """El jefe directo abre la firma (PIN) para supervisar la elaboración."""
+        self.ensure_one()
+        if self.amunet_supervision_state != 'requested':
+            raise UserError(_('No hay supervisión pendiente en esta orden.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_signature_amunet_supervision',
+            _('Supervisión de elaboración'),
+            _('Firma del jefe directo que supervisa la elaboración de %s.') % self.name)
+
+    def _signature_amunet_supervision(self):
+        self.ensure_one()
+        self.sudo().write({
+            'amunet_supervision_state': 'done',
+            'amunet_supervised_by_id': self.env.user.id,
+            'amunet_supervised_date': fields.Datetime.now(),
+        })
+        # Cerrar la actividad de supervision pendiente.
+        acts = self.activity_ids.filtered(
+            lambda a: a.user_id == self.amunet_supervisor_id)
+        if acts:
+            acts.sudo().action_feedback(feedback=_('Elaboración supervisada.'))
+        self.sudo().message_post(
+            body=_('Elaboración supervisada por <b>%s</b>.') % self.env.user.name)
+        return True
+
+    def _amunet_signature_allowed_methods(self):
+        return {'_signature_amunet_supervision': _('Supervisión de elaboración')}
+
+    def _amunet_signature_required_procedures(self):
+        # La supervision de elaboracion no exige capacitacion en SOPs al jefe.
+        return self.env['amunet.quality.procedure']
+
     def action_request_analysis(self):
         """Valida estado/reactivos/checklist y abre el Wizard de análisis"""
         self.ensure_one()
+
+        # Gate de supervisión: sin la firma del jefe directo no se solicita analisis.
+        if self.amunet_is_solution_product and self.amunet_supervision_state != 'done':
+            raise UserError(_(
+                'Falta la SUPERVISIÓN del jefe directo antes de solicitar el '
+                'análisis. Usa "Enviar a supervisión" y espera la firma del jefe.'))
 
         if self.quality_analysis_status not in ('none', 'to_request', 'rejected'):
             raise UserError('El análisis de calidad ya fue solicitado o se encuentra aprobado.')
@@ -1458,6 +1556,13 @@ class MrpProduction(models.Model):
     def button_mark_done(self):
         """Bloqueo del flujo nativo de la orden de producción"""
         for record in self:
+            # Gate de supervisión: una SOLUCION no se puede producir sin la
+            # firma del jefe directo (para Flujo B sin analisis; en Flujo A la
+            # supervision ya se exigio antes de solicitar analisis).
+            if record.amunet_is_solution_product and record.amunet_supervision_state != 'done':
+                raise UserError(_(
+                    'Falta la SUPERVISIÓN del jefe directo antes de producir la '
+                    'solución. Usa "Enviar a supervisión" y espera la firma del jefe.'))
             # 0. Conciliación de materiales obligatoria si hay surtido registrado
             moves_with_supply = record.move_raw_ids.filtered(
                 lambda m: m.state != 'cancel' and (m.amunet_qty_supplied or 0) > 0
