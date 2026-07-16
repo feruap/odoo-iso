@@ -19,6 +19,14 @@ class AmunetQualityCheckEquipmentUnit(models.Model):
     result_funcionalidad = fields.Char(string='Funcionalidad')
     result_dimensiones = fields.Char(string='Dimensiones', help='Dejar vacío si no aplica')
 
+    # Campos Termómetro de varilla (EQTRV01)
+    temp_instrumento = fields.Float(
+        string='Temp. instrumento (°C)', digits=(5, 1),
+        help='Temperatura leída en el termómetro de varilla inspeccionado')
+    temp_referencia = fields.Float(
+        string='Temp. referencia (°C)', digits=(5, 1),
+        help='Temperatura leída en el termómetro aprobado o sensor de calor de referencia')
+
     # Campos Termobloque (EQTER01, EQTER02)
     temp_pozo_a = fields.Float(string='Temp A (°C)', digits=(5, 1))
     temp_pozo_b = fields.Float(string='Temp B (°C)', digits=(5, 1))

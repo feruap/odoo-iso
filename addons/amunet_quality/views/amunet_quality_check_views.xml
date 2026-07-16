@@ -51,9 +51,14 @@
                             type="object" class="oe_highlight"
                             invisible="state != 'in_progress' or info_reviewed"/>
 
+                    <button name="action_iniciar_inspeccion_equipo" string="Iniciar inspección"
+                            type="object" class="oe_highlight"
+                            invisible="state not in ('draft','in_progress') or sampling_confirmed or not is_equipment"
+                            confirm="¿Confirmar inicio de inspección del equipo?"/>
+
                     <button name="action_confirm_sampling" string="Confirmar muestreo"
                             type="object" class="oe_highlight"
-                            invisible="state != 'in_progress' or not info_reviewed or sampling_confirmed"/>
+                            invisible="state != 'in_progress' or not info_reviewed or sampling_confirmed or is_equipment"/>
 
                     <button name="action_apply_sampling_plan" string="Aplicar plan de muestreo"
                             type="object"
@@ -645,18 +650,28 @@
                                 <span class="badge bg-danger">Rechazados: <field name="equipment_rejected_count" readonly="1" nolabel="1"/></span>
                             </div>
                             <field name="is_termobloque" invisible="1"/>
+                            <field name="is_termometro_varilla" invisible="1"/>
                             <field name="equipment_unit_ids" nolabel="1"
                                    readonly="state == 'done'">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="serial_number" string="No. de serie"/>
-                                    <!-- Columnas genéricas (Vórtex y otros no-Termobloque) -->
+                                    <!-- Columnas genéricas (Vórtex, Soporte y otros) -->
                                     <field name="result_apariencia" string="Apariencia"
-                                           column_invisible="parent.is_termobloque"/>
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla"/>
                                     <field name="result_funcionalidad" string="Funcionalidad"
-                                           column_invisible="parent.is_termobloque"/>
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla"/>
                                     <field name="result_dimensiones" string="Dimensiones"
-                                           column_invisible="parent.is_termobloque" optional="show"/>
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla" optional="show"/>
+                                    <!-- Columnas Termómetro de varilla (EQTRV01) -->
+                                    <field name="result_apariencia" string="Apariencia"
+                                           column_invisible="not parent.is_termometro_varilla"/>
+                                    <field name="tiempo_alcanzar_temp" string="Tiempo (min) ≤5"
+                                           column_invisible="not parent.is_termometro_varilla"/>
+                                    <field name="temp_instrumento" string="Temp. instrumento (°C)"
+                                           column_invisible="not parent.is_termometro_varilla"/>
+                                    <field name="temp_referencia" string="Temp. referencia (°C)"
+                                           column_invisible="not parent.is_termometro_varilla"/>
                                     <!-- Columnas Termobloque (EQTER01 / EQTER02) -->
                                     <field name="temp_termometro" string="Temp Termómetro (°C)"
                                            column_invisible="not parent.is_termobloque"/>

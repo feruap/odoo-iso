@@ -331,7 +331,51 @@
                             </div>
                         </t>
 
-                        <!-- OTROS EQUIPOS (Vórtex, etc.): tabla genérica -->
+                        <!-- TERMÓMETRO DE VARILLA: tabla con apariencia, tiempo y comparación de temperatura -->
+                        <t t-elif="o.is_termometro_varilla">
+                            <div style="width:100%;margin-top:20px;page-break-inside:avoid;">
+                                <div style="font-weight:bold;font-size:11pt;border-bottom:2px solid #1a56a0;padding-bottom:4px;margin-bottom:8px;">
+                                    REGISTRO DE UNIDADES — TERMÓMETRO DE VARILLA
+                                </div>
+                                <table style="width:100%;border-collapse:collapse;font-size:9pt;">
+                                    <thead>
+                                        <tr style="background:#1a56a0;color:white;">
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:left;">No. de serie</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Apariencia</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Tiempo en alcanzar<br/>temperatura (min)<br/>Criterio: ≤ 5 min</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Temp. instrumento<br/>(°C)</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Temp. referencia<br/>(termómetro aprobado<br/>o sensor) (°C)</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Diferencia<br/>(°C)<br/>Criterio: ≤ ±1°C</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Estatus</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:left;">Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="o.equipment_unit_ids" t-as="unit">
+                                            <t t-set="dif" t-value="round(unit.temp_instrumento - unit.temp_referencia, 1) if (unit.temp_instrumento or unit.temp_referencia) else None"/>
+                                            <tr t-att-style="'background:#f0fff4;' if unit.status == 'approved' else 'background:#fff5f5;'">
+                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="unit.serial_number or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="unit.result_apariencia or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="'%.1f' % unit.tiempo_alcanzar_temp if unit.tiempo_alcanzar_temp else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="'%.1f' % unit.temp_instrumento if unit.temp_instrumento else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="'%.1f' % unit.temp_referencia if unit.temp_referencia else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;font-weight:bold;">
+                                                    <t t-if="dif is not None"><t t-out="'%+.1f' % dif"/></t>
+                                                    <t t-else="">—</t>
+                                                </td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;font-weight:bold;">
+                                                    <t t-if="unit.status == 'approved'"><span style="color:#22863a;">APROBADO</span></t>
+                                                    <t t-else=""><span style="color:#c0392b;">RECHAZADO</span></t>
+                                                </td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="unit.observations or ''"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+
+                        <!-- OTROS EQUIPOS (Vórtex, Soporte, etc.): tabla genérica -->
                         <t t-else="">
                             <div style="width:100%;margin-top:30px;page-break-inside:avoid;">
                                 <div style="font-weight:bold;font-size:11pt;border-bottom:2px solid #1a56a0;padding-bottom:4px;margin-bottom:8px;">

@@ -84,6 +84,7 @@ class AmunetQualityCheck(models.Model):
             code = rec.product_id.default_code or ''
             rec.is_equipment = code.upper().startswith('EQ')
             rec.is_termobloque = code.upper().startswith('EQTER')
+            rec.is_termometro_varilla = code.upper().startswith('EQTRV')
 
     @api.depends('equipment_unit_ids.status')
     def _compute_equipment_counts(self):
@@ -266,7 +267,7 @@ class AmunetQualityCheck(models.Model):
 
     qty_sampling = fields.Float(
         string='Cantidad muestreada',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Cantidad de producto muestreada'
     )
 
@@ -278,14 +279,14 @@ class AmunetQualityCheck(models.Model):
 
     qty_analyzed = fields.Float(
         string='Cantidad analizada',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Cantidad consumida/destruida en el análisis'
     )
 
     qty_to_return = fields.Float(
         string='A devolver',
         store=True,
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Cantidad a devolver al lote (editable; auto-calculado al cambiar muestreo o análisis)'
     )
 
@@ -312,7 +313,7 @@ class AmunetQualityCheck(models.Model):
 
     suggested_qty_sampling = fields.Float(
         string='Muestra sugerida',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Cantidad sugerida por el plan de muestreo para el lote'
     )
 
@@ -601,7 +602,7 @@ class AmunetQualityCheck(models.Model):
     
     original_qty_received = fields.Float(
         string='Cantidad Total Recibida',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Cantidad original enviada a cuarentena'
     )
 
@@ -800,6 +801,12 @@ class AmunetQualityCheck(models.Model):
 
     is_termobloque = fields.Boolean(
         string='Es termobloque',
+        compute='_compute_is_equipment',
+        store=True,
+    )
+
+    is_termometro_varilla = fields.Boolean(
+        string='Es termómetro de varilla',
         compute='_compute_is_equipment',
         store=True,
     )
@@ -1878,6 +1885,19 @@ class AmunetQualityCheck(models.Model):
             message_type='notification'
         )
 
+    def action_iniciar_inspeccion_equipo(self):
+        """Confirma el inicio de inspección para equipos (sin muestreo ni cantidad)."""
+        self.ensure_one()
+        if not self.is_equipment:
+            return
+        self.write({
+            'sampling_confirmed': True,
+            'qty_sampling': 1,
+            'state': 'in_progress',
+        })
+        self._generate_test_lines()
+        return True
+
     def action_confirm_sampling(self):
         """
         Botón CONFIRMAR MUESTREO: Valida, genera movimiento, bloquea Numeral 4
@@ -2711,7 +2731,7 @@ class AmunetQualityCheck(models.Model):
                 messages.append(f'AVISO: No se pudo crear el picking de recepción final')
         else:
             # No hay stock que liberar (todo se muestreó y destruyó)
-            self.write({'state': 'done'})
+            self.write({'state': 'done', 'change_reason': 'Disposición automática: sin stock a liberar'})
             messages.append('Lote finalizado sin stock a liberar (todo muestreado/desechado)')
 
         return '. '.join(messages)
@@ -2959,7 +2979,7 @@ class AmunetQualityCheck(models.Model):
                 _logger.warning(f"Error al cancelar picking {picking.name}: {e}")
 
         # Regresar QC a pending para permitir reanálisis
-        self.write({'state': 'pending'})
+        self.write({'state': 'pending', 'change_reason': 'Cancelación de recepción: regreso a pendiente disposición'})
 
         from markupsafe import Markup
         self.message_post(
@@ -3654,13 +3674,17 @@ class AmunetQualityCheck(models.Model):
         """
         TRACKED_FIELDS = ['state', 'global_result', 'lot_id', 'product_id', 'active']
         tracked_in_vals = [f for f in TRACKED_FIELDS if f in vals]
-        
-        # Exigir justificación si el registro no está en borrador y se cambian campos críticos
-        if tracked_in_vals:
+        # global_result es calculado automáticamente por los resultados capturados;
+        # no requiere razón de cambio manual (solo los campos que el usuario edita directamente).
+        MANUAL_FIELDS = ['state', 'lot_id', 'product_id', 'active']
+        manual_in_vals = [f for f in MANUAL_FIELDS if f in vals]
+
+        # Exigir justificación si el registro no está en borrador y se cambian campos críticos manuales
+        if manual_in_vals:
             for record in self:
                 if record.state != 'draft' and not (vals.get('change_reason') or record.change_reason):
                     # Solo exigir si los valores realmente cambian
-                    for field in tracked_in_vals:
+                    for field in manual_in_vals:
                         if record[field] != vals[field]:
                             raise UserError(_("Se requiere una 'Razón de cambio' para modificar registros que no están en estado Borrador."))
 
