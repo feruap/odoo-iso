@@ -1184,11 +1184,31 @@ class MrpProduction(models.Model):
                 except Exception:
                     pass
         res = super().action_confirm()
+        # Ruteo del terminado de SOLUCIONES sin analisis -> ARU/Stock.
+        self._amunet_route_solution_no_qc_to_aru()
         # Notificar a almacen que hay una MO pendiente de surtir.
         # Reutiliza el patron de amunet_material_request._notify_warehouse_pending.
         for prod in self:
             prod._amunet_notify_warehouse_pending_supply()
         return res
+
+    def _amunet_route_solution_no_qc_to_aru(self):
+        """Soluciones que NO requieren analisis (amunet_req_quality_control=False)
+        se producen directo a ARU/Stock, disponibles para hacer o ajustar otras
+        soluciones. Las que SI requieren analisis conservan su ruta y van por el
+        flujo de custodia de Calidad. Kits y otros productos no se tocan."""
+        aru = self.env['stock.warehouse'].sudo().search([('code', '=', 'ARU')], limit=1)
+        if not aru or not aru.lot_stock_id:
+            return
+        dest = aru.lot_stock_id
+        for mo in self.filtered(
+                lambda m: m.amunet_is_solution_product
+                and not m.product_id.product_tmpl_id.amunet_req_quality_control):
+            mo.location_dest_id = dest.id
+            moves = mo.move_finished_ids.filtered(
+                lambda mv: mv.state not in ('done', 'cancel'))
+            if moves:
+                moves.write({'location_dest_id': dest.id})
 
     def _amunet_notify_warehouse_pending_supply(self):
         """Crea actividades para los almacenistas avisando que hay una
