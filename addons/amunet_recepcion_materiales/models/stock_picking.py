@@ -122,8 +122,15 @@ class StockPicking(models.Model):
             res = super().button_validate()
             for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
                                    and p.state == 'done'):
-                if not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
-                            p.amunet_crit4, p.amunet_crit5]):
+                # Solo se notifica a Calidad si algun producto de la recepcion
+                # requiere inspeccion (amunet_requires_quarantine). Los
+                # consumibles no la requieren, por eso ya no disparan aviso.
+                requiere_inspeccion = any(
+                    m.product_id.product_tmpl_id.amunet_requires_quarantine
+                    for m in p.move_ids
+                )
+                if requiere_inspeccion and not all([p.amunet_crit1, p.amunet_crit2,
+                            p.amunet_crit3, p.amunet_crit4, p.amunet_crit5]):
                     p._amunet_notify_quality_pending()
             return res
         incoming = self.filtered(lambda p: p.picking_type_code == 'incoming'
