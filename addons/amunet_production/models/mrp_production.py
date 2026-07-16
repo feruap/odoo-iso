@@ -35,10 +35,13 @@ class MrpProduction(models.Model):
              'como disueltos. El pH final solo se puede capturar cuando esto es '
              'verdadero.')
 
-    @api.depends('move_raw_ids.amunet_dissolution', 'move_raw_ids.state')
+    @api.depends('move_raw_ids.amunet_dissolution', 'move_raw_ids.state',
+                 'move_raw_ids.product_id.categ_id')
     def _compute_amunet_all_dissolved(self):
         for rec in self:
-            moves = rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            # El agua (solvente) no se disuelve: se excluye del candado.
+            moves = rec.move_raw_ids.filtered(
+                lambda m: m.state != 'cancel' and not m._amunet_is_water_solvent())
             rec.amunet_all_dissolved = bool(moves) and all(
                 m.amunet_dissolution for m in moves)
 
@@ -1038,6 +1041,21 @@ class MrpProduction(models.Model):
         self._auto_generate_lot_draft()
 
     def button_plan(self):
+        # Candado anti-duplicacion (2026-07-16): "Planificar" es IDEMPOTENTE.
+        # Ejecutarlo dos veces (doble clic o replanificacion) regeneraba las
+        # ordenes de trabajo dejando juegos duplicados (caso MO 0726/02/R01:
+        # 2 planeaciones con 2 min de diferencia -> 14 OT en vez de 7). Si la
+        # orden YA esta planificada y ya tiene OT, se omite (no se regenera).
+        ya_planificadas = self.filtered(
+            lambda m: m.is_planned and m.workorder_ids)
+        a_planificar = self - ya_planificadas
+        if ya_planificadas:
+            ya_planificadas.sudo().message_post(body=Markup(
+                'Se omitió <b>Planificar</b>: la orden ya estaba planificada '
+                'con órdenes de trabajo. No se regeneraron para evitar '
+                'duplicados.'))
+        if not a_planificar:
+            return True
         # Politica Amunet (mejora 2026-07-02): NO bloquear la planeacion por
         # falta de material. Planear != consumir: solo programa actividades.
         # Se permite planear y, si falta material en Fabrica, se avisa a
@@ -1045,13 +1063,13 @@ class MrpProduction(models.Model):
         # Burgos) y se advierte al planificador del posible retraso en el
         # historial de la orden. El candado real de material se mantiene en
         # el flujo de Surtir/Producir (no se produce sin material).
-        for mo in self.filtered(lambda m: not m.is_planned):
+        for mo in a_planificar.filtered(lambda m: not m.is_planned):
             sin_material = mo.move_raw_ids.filtered(
                 lambda m: m.state not in ('assigned', 'done', 'cancel')
             )
             if sin_material:
                 mo._amunet_notify_plan_material_shortage(sin_material)
-        return super().button_plan()
+        return super(MrpProduction, a_planificar).button_plan()
 
     def _amunet_notify_plan_material_shortage(self, short_moves):
         """Al planificar con material incompleto: crea actividad a Almacen para
