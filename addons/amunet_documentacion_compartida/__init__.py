@@ -11,7 +11,7 @@ def post_init_hook(env):
             user = env['res.users'].sudo().search(
                 [('login', '=', login), ('active', '=', True)], limit=1)
             if user:
-                group.sudo().write({'users': [(4, user.id)]})
+                group.sudo().write({'user_ids': [(4, user.id)]})
 
     _add('amunet_documentacion_compartida.group_doc_revisor', [
         'ensayo@amunet.com.mx',            # Jorge
