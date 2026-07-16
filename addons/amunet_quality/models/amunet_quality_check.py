@@ -85,6 +85,8 @@ class AmunetQualityCheck(models.Model):
             rec.is_equipment = code.upper().startswith('EQ')
             rec.is_termobloque = code.upper().startswith('EQTER')
             rec.is_termometro_varilla = code.upper().startswith('EQTRV')
+            rec.is_agitador = code.upper().startswith('EQAMC')
+            rec.is_esterilizador = code.upper().startswith('EQEPV')
 
     @api.depends('equipment_unit_ids.status')
     def _compute_equipment_counts(self):
@@ -807,6 +809,18 @@ class AmunetQualityCheck(models.Model):
 
     is_termometro_varilla = fields.Boolean(
         string='Es termómetro de varilla',
+        compute='_compute_is_equipment',
+        store=True,
+    )
+
+    is_agitador = fields.Boolean(
+        string='Es agitador magnético',
+        compute='_compute_is_equipment',
+        store=True,
+    )
+
+    is_esterilizador = fields.Boolean(
+        string='Es esterilizador/autoclave',
         compute='_compute_is_equipment',
         store=True,
     )

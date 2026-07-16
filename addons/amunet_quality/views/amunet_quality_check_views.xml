@@ -651,18 +651,20 @@
                             </div>
                             <field name="is_termobloque" invisible="1"/>
                             <field name="is_termometro_varilla" invisible="1"/>
+                            <field name="is_agitador" invisible="1"/>
+                            <field name="is_esterilizador" invisible="1"/>
                             <field name="equipment_unit_ids" nolabel="1"
                                    readonly="state == 'done'">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="serial_number" string="No. de serie"/>
-                                    <!-- Columnas genéricas (Vórtex, Soporte y otros) -->
+                                    <!-- Columnas genéricas (Vórtex, Soporte, Agitador y otros) -->
                                     <field name="result_apariencia" string="Apariencia"
-                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla"/>
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_esterilizador"/>
                                     <field name="result_funcionalidad" string="Funcionalidad"
-                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla"/>
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_esterilizador"/>
                                     <field name="result_dimensiones" string="Dimensiones"
-                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla" optional="show"/>
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_esterilizador" optional="show"/>
                                     <!-- Columnas Termómetro de varilla (EQTRV01) -->
                                     <field name="result_apariencia" string="Apariencia"
                                            column_invisible="not parent.is_termometro_varilla"/>
@@ -672,6 +674,15 @@
                                            column_invisible="not parent.is_termometro_varilla"/>
                                     <field name="temp_referencia" string="Temp. referencia (°C)"
                                            column_invisible="not parent.is_termometro_varilla"/>
+                                    <!-- Columnas Esterilizador/Autoclave (EQEPV01) -->
+                                    <field name="result_apariencia" string="Apariencia"
+                                           column_invisible="not parent.is_esterilizador"/>
+                                    <field name="tiempo_alcanzar_temp" string="Tiempo T° (min)"
+                                           column_invisible="not parent.is_esterilizador"/>
+                                    <field name="temp_instrumento" string="Temperatura alcanzada (°C)"
+                                           column_invisible="not parent.is_esterilizador"/>
+                                    <field name="result_funcionalidad" string="Mantiene presión"
+                                           column_invisible="not parent.is_esterilizador"/>
                                     <!-- Columnas Termobloque (EQTER01 / EQTER02) -->
                                     <field name="temp_termometro" string="Temp Termómetro (°C)"
                                            column_invisible="not parent.is_termobloque"/>

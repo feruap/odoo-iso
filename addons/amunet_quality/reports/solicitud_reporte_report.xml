@@ -375,6 +375,80 @@
                             </div>
                         </t>
 
+                        <!-- AGITADOR MAGNÉTICO CON PLACA CALEFACTORA (EQAMC) -->
+                        <t t-elif="o.is_agitador">
+                            <div style="width:100%;margin-top:20px;page-break-inside:avoid;">
+                                <div style="font-weight:bold;font-size:11pt;border-bottom:2px solid #1a56a0;padding-bottom:4px;margin-bottom:8px;">
+                                    REGISTRO DE UNIDADES — AGITADOR MAGNÉTICO CON PLACA CALEFACTORA
+                                </div>
+                                <table style="width:100%;border-collapse:collapse;font-size:9pt;">
+                                    <thead>
+                                        <tr style="background:#1a56a0;color:white;">
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:left;">No. de serie</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Apariencia</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Calentamiento<br/>(transfiere calor)</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Agitación<br/>(vórtice visible)</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Estatus</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:left;">Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="o.equipment_unit_ids" t-as="unit">
+                                            <tr t-att-style="'background:#f0fff4;' if unit.status == 'approved' else 'background:#fff5f5;'">
+                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="unit.serial_number or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="unit.result_apariencia or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="unit.result_funcionalidad or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="unit.result_dimensiones or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;font-weight:bold;">
+                                                    <t t-if="unit.status == 'approved'"><span style="color:#22863a;">APROBADO</span></t>
+                                                    <t t-else=""><span style="color:#c0392b;">RECHAZADO</span></t>
+                                                </td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="unit.observations or ''"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+
+                        <!-- ESTERILIZADOR / AUTOCLAVE (EQEPV) -->
+                        <t t-elif="o.is_esterilizador">
+                            <div style="width:100%;margin-top:20px;page-break-inside:avoid;">
+                                <div style="font-weight:bold;font-size:11pt;border-bottom:2px solid #1a56a0;padding-bottom:4px;margin-bottom:8px;">
+                                    REGISTRO DE UNIDADES — ESTERILIZADOR DE VAPOR A PRESIÓN
+                                </div>
+                                <table style="width:100%;border-collapse:collapse;font-size:9pt;">
+                                    <thead>
+                                        <tr style="background:#1a56a0;color:white;">
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:left;">No. de serie</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Apariencia</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Tiempo en alcanzar<br/>temperatura (min)</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Temperatura<br/>final alcanzada (°C)</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Mantiene presión<br/>durante ciclo</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;">Estatus</th>
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:left;">Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="o.equipment_unit_ids" t-as="unit">
+                                            <tr t-att-style="'background:#f0fff4;' if unit.status == 'approved' else 'background:#fff5f5;'">
+                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="unit.serial_number or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="unit.result_apariencia or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="'%.1f' % unit.tiempo_alcanzar_temp if unit.tiempo_alcanzar_temp else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="'%.1f' % unit.temp_instrumento if unit.temp_instrumento else '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="unit.result_funcionalidad or '—'"/></td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;font-weight:bold;">
+                                                    <t t-if="unit.status == 'approved'"><span style="color:#22863a;">APROBADO</span></t>
+                                                    <t t-else=""><span style="color:#c0392b;">RECHAZADO</span></t>
+                                                </td>
+                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="unit.observations or ''"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+
                         <!-- OTROS EQUIPOS (Vórtex, Soporte, etc.): tabla genérica -->
                         <t t-else="">
                             <div style="width:100%;margin-top:30px;page-break-inside:avoid;">

@@ -49,26 +49,26 @@ class AmunetQualityParameterConditionalOption(models.Model):
 
     nominal_value = fields.Float(
         string='Valor nominal',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Valor nominal de referencia (ej: 5, 100, 500)'
     )
 
     tolerance = fields.Float(
         string='Tolerancia (±)',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Tolerancia aplicada al valor nominal para calcular min/max'
     )
 
     min_value = fields.Float(
         string='Valor mínimo',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         required=True,
         help='Valor mínimo aceptable para esta opción'
     )
 
     max_value = fields.Float(
         string='Valor máximo',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         required=True,
         help='Valor máximo aceptable para esta opción'
     )
