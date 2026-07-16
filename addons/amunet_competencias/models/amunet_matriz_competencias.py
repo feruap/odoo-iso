@@ -45,10 +45,14 @@ class AmunetMatrizCompetencias(models.AbstractModel):
         # solo se evalua si EL tiene capacitacion vigente y se devuelve bool.
         RegistroCapacitacion = self.env['amunet.registro.capacitacion'].sudo()
 
-        # Construir dominio base
+        # Construir dominio base.
+        # Se aceptan 'vigente' y 'proxima': ambas son capacitaciones AUN VALIDAS
+        # (proxima = por vencer <30 dias, todavia no vencida). Bloquear una
+        # 'proxima' dejaria a la persona sin poder firmar en sus ultimos 30 dias
+        # mientras se programa la renovacion. Solo 'vencida' bloquea.
         base_domain = [
             ('user_id', '=', user_id),
-            ('state', '=', 'vigente'),
+            ('state', 'in', ['vigente', 'proxima']),
         ]
 
         # Buscar por SOP

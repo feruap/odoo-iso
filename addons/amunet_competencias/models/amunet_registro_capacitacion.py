@@ -207,6 +207,20 @@ class AmunetRegistroCapacitacion(models.Model):
             else:
                 rec.state = 'vigente'
 
+    @api.model
+    def _cron_recompute_states(self):
+        """Recalcula el estado de todas las capacitaciones vigentes/por vencer.
+        Necesario porque 'state' es almacenado y su @depends no incluye el paso
+        del tiempo: sin esto, una capacitacion que vence hoy sigue mostrandose
+        'vigente'/'proxima' hasta que algo toque expiry_date. Corre a diario y
+        alimenta correctamente el gate de firmas (que bloquea 'vencida')."""
+        recs = self.search([('state', '!=', 'cancelada')])
+        recs._compute_state()
+        recs.flush_recordset()
+        _logger.info(
+            'Recompute diario de estados de capacitacion: %s registros procesados.',
+            len(recs))
+
     @api.depends('state', 'certificate_file', 'expiry_date', 'procedure_id', 'parameter_id')
     def _compute_workqueue_guidance(self):
         for rec in self:
