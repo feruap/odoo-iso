@@ -19,7 +19,7 @@
                         de esta MO via wrappers de mrp.production.
                     -->
                     <button name="action_amunet_mo_start_supply" string="Iniciar Surtido" type="object" class="oe_highlight"
-                            invisible="state not in ('confirmed','progress','to_close') or not amunet_supply_workorder_id or amunet_supply_state != 'pending' or not is_planned"
+                            invisible="state not in ('confirmed','progress','to_close') or not amunet_supply_workorder_id or amunet_supply_state != 'pending' or (not is_planned and not amunet_is_solution_product)"
                             groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
                     <button name="action_amunet_mo_confirm_supply" string="Confirmar Surtido" type="object" class="oe_highlight"
                             invisible="not amunet_supply_workorder_id or amunet_supply_state != 'in_progress'"
@@ -306,10 +306,12 @@
                     producto padre.
                 -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='quantity']" position="after">
+                    <field name="amunet_is_water_solvent" column_invisible="1"/>
                     <field name="amunet_dissolution"
                         widget="boolean_toggle"
                         string="Disolucion"
-                        column_invisible="not parent.amunet_is_solution_product"/>
+                        column_invisible="not parent.amunet_is_solution_product"
+                        invisible="amunet_is_water_solvent"/>
                     <field name="amunet_is_valid"
                         widget="boolean"
                         readonly="1"

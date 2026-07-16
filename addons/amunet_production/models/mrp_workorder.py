@@ -409,8 +409,13 @@ class MrpWorkorder(models.Model):
         # cada componente debe tener qty_supplied > 0 y, si el producto
         # es trazable, lote asignado en move_line_ids.
         errores = []
+        es_solucion = self.production_id.amunet_is_solution_product
         for move in self.production_id.move_raw_ids:
             if move.state == 'cancel':
+                continue
+            # En SOLUCIONES solo se surten las sub-soluciones (needs_surtido);
+            # los reactivos vienen de ARU y no se surten dentro de la orden.
+            if es_solucion and not move.amunet_needs_surtido:
                 continue
             if (move.amunet_qty_supplied or 0.0) <= 0.0:
                 errores.append(_(

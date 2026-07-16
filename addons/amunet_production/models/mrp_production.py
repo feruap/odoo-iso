@@ -1186,6 +1186,8 @@ class MrpProduction(models.Model):
         res = super().action_confirm()
         # Ruteo del terminado de SOLUCIONES segun requieran analisis o no.
         self._amunet_route_solution_finished()
+        # Surtido DENTRO de la orden solo si la solucion lleva sub-soluciones.
+        self._amunet_create_solution_supply_workorder()
         # Notificar a almacen que hay una MO pendiente de surtir.
         # Reutiliza el patron de amunet_material_request._notify_warehouse_pending.
         for prod in self:
@@ -1214,6 +1216,29 @@ class MrpProduction(models.Model):
                 lambda mv: mv.state not in ('done', 'cancel'))
             if moves:
                 moves.write({'location_dest_id': dest.id})
+
+    def _amunet_create_solution_supply_workorder(self):
+        """Surtido DENTRO de la orden de SOLUCION: solo cuando la solucion lleva
+        componentes sub-solucion (needs_surtido=True, ej. una 'Solucion de
+        trabajo' que Almacen tiene en existencia). Crea un workorder de Surtido
+        (centro de trabajo AMP) para que Almacen la surta con Iniciar/Confirmar/
+        Recibir. Los reactivos vienen de ARU y NO se surten aqui. Si la solucion
+        no lleva sub-soluciones, no se crea nada."""
+        amp = self.env['mrp.workcenter'].sudo().search([('code', '=', 'AMP')], limit=1)
+        if not amp:
+            return
+        for mo in self.filtered(lambda m: m.amunet_is_solution_product):
+            if mo.amunet_supply_workorder_id:
+                continue
+            needs = mo.move_raw_ids.filtered(
+                lambda mv: mv.amunet_needs_surtido and mv.state != 'cancel')
+            if not needs:
+                continue
+            self.env['mrp.workorder'].sudo().create({
+                'name': _('Surtido de materiales - %s') % (mo.product_id.name or ''),
+                'production_id': mo.id,
+                'workcenter_id': amp.id,
+            })
 
     def _amunet_notify_warehouse_pending_supply(self):
         """Crea actividades para los almacenistas avisando que hay una
