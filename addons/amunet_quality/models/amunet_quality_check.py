@@ -2652,7 +2652,7 @@ class AmunetQualityCheck(models.Model):
             try:
                 report = self.env.ref(report_ref)
                 pdf_content, _ = report._render_qweb_pdf(report_ref, [self.id])
-                attachment = self.env['ir.attachment'].create({
+                attachment = self.env['ir.attachment'].sudo().create({
                     'name': label,
                     'type': 'binary',
                     'datas': base64.b64encode(pdf_content),
@@ -2674,7 +2674,7 @@ class AmunetQualityCheck(models.Model):
 <p>Saludos,<br/>Diana Flores · Control de Calidad</p>
 """)
         for email_to in ['almacen.mp@amunet.com.mx', 'supalmacen@amunet.com.mx']:
-            mail = self.env['mail.mail'].create({
+            mail = self.env['mail.mail'].sudo().create({
                 'subject': subject,
                 'email_to': email_to,
                 'email_from': 'odoobot@amunet.com.mx',
@@ -2682,7 +2682,7 @@ class AmunetQualityCheck(models.Model):
                 'attachment_ids': [(6, 0, attachment_ids)],
                 'auto_delete': True,
             })
-            mail.send()
+            mail.sudo().send()
         # Registrar en el chatter para trazabilidad
         self.message_post(
             body=simple_body,
