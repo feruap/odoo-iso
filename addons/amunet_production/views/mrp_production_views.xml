@@ -46,7 +46,7 @@
                     <button name="action_amunet_do_supervision" string="Firmar supervisión" type="object" class="oe_highlight"
                             invisible="not amunet_is_solution_product or amunet_supervision_state != 'requested' or not amunet_is_supervisor"/>
                     <button name="action_request_analysis" string="Solicitar análisis" type="object" class="oe_highlight"
-                            invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"
+                            invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or quality_analysis_status in ('requested', 'approved')"
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>
                     <button name="%(amunet_production.action_report_production_zebra_label)d" string="Imprimir Etiqueta" type="action" class="oe_highlight" invisible="not amunet_all_ingredients_valid or amunet_user_is_warehouse"/>
                     <!--
@@ -190,6 +190,9 @@
                     <field name="amunet_product_categ_id" string="Categoria" readonly="1"/>
                     <field name="amunet_is_solution_product" invisible="1"/>
                     <field name="amunet_has_surtido_components" invisible="1"/>
+                    <field name="amunet_es_desarrollo" string="Es desarrollo"
+                           invisible="not amunet_is_solution_product"
+                           readonly="state in ('done','cancel')"/>
                 </xpath>
                 <!-- Fecha programada: reemplazar campo nativo por display DD.MM.AA editable -->
                 <xpath expr="//div[@name='date_start']/field[@name='date_start']" position="replace">
@@ -277,13 +280,16 @@
                 -->
                 <xpath expr="//field[@name='move_raw_ids']/list" position="attributes">
                     <!-- Soluciones con BoM: lineas de reactivos fijas (no
-                         agregar/borrar). Linea corta si permite. -->
-                    <attribute name="delete">not parent.amunet_is_solution_product</attribute>
-                    <attribute name="create">not parent.amunet_is_solution_product</attribute>
+                         agregar/borrar). Linea corta si permite. Soluciones de
+                         DESARROLLO: sin receta justa -> SI se pueden agregar/
+                         borrar/ajustar componentes. -->
+                    <attribute name="delete">not parent.amunet_is_solution_product or parent.amunet_es_desarrollo</attribute>
+                    <attribute name="create">not parent.amunet_is_solution_product or parent.amunet_es_desarrollo</attribute>
                 </xpath>
-                <!-- En soluciones, el reactivo (producto) de cada linea es de solo lectura -->
+                <!-- En soluciones el reactivo es de solo lectura, EXCEPTO en
+                     desarrollo (receta ajustable). -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_id']" position="attributes">
-                    <attribute name="readonly">parent.amunet_is_solution_product</attribute>
+                    <attribute name="readonly">parent.amunet_is_solution_product and not parent.amunet_es_desarrollo</attribute>
                 </xpath>
 
                 <!--

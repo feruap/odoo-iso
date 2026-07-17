@@ -138,6 +138,13 @@ class MrpProduction(models.Model):
         compute='_compute_product_categ',
         store=False,
     )
+    amunet_es_desarrollo = fields.Boolean(
+        string='Es desarrollo',
+        copy=False,
+        help='Solucion de DESARROLLO: sin receta justa (cantidades ajustables), '
+             'sin analisis de Calidad; el terminado entra a ARU/Desarrollo '
+             '(segregado del stock de produccion). Requiere la supervision del '
+             'jefe directo antes de producir.')
 
     # Surtido a nivel MO: vinculos al workorder de Surtido (AMP) para
     # exponer los botones del flujo (Iniciar/Confirmar/Recibir) en la
@@ -297,7 +304,7 @@ class MrpProduction(models.Model):
                             next_step = _('Confirmar devolucion recibida')
                         blocker = _('Conciliacion: %s') % reconciliation_labels.get(
                             mo.reconciliation_state, mo.reconciliation_state)
-                    elif mo.amunet_sys_req_qc and mo.quality_analysis_status != 'approved':
+                    elif mo.amunet_sys_req_qc and not mo.amunet_es_desarrollo and mo.quality_analysis_status != 'approved':
                         if mo.quality_analysis_status in ('to_request', 'rejected'):
                             priority = 'ready'
                             owner = 'supervisor'
@@ -551,7 +558,7 @@ class MrpProduction(models.Model):
             else:
                 wos_done = True
             qc_ok = True
-            if rec.amunet_sys_req_qc:
+            if rec.amunet_sys_req_qc and not rec.amunet_es_desarrollo:
                 qc_ok = rec.quality_analysis_status == 'approved'
             # Gate de conciliación: si hay material surtido, debe estar conciliado.
             has_supply = any(
@@ -1225,14 +1232,21 @@ class MrpProduction(models.Model):
         - CON analisis: -> Control de calidad (custodia mientras Calidad analiza).
           Al aprobar, la maquinaria QC lo entrega a existencias validado por
           Almacen (recepcion) y merma el muestreo.
+        - DESARROLLO (amunet_es_desarrollo): -> ARU/Desarrollo (segregado, sin
+          analisis), sin importar el flag de QC del producto.
         Kits y otros productos no se tocan."""
         aru = self.env['stock.warehouse'].sudo().search([('code', '=', 'ARU')], limit=1)
         aru_stock = aru.lot_stock_id if aru else False
         qc_loc = self.env['stock.location'].sudo().search(
             [('complete_name', '=', 'AMP/Control de calidad')], limit=1)
+        aru_dev = self.env['stock.location'].sudo().search(
+            [('complete_name', '=', 'ARU/Desarrollo')], limit=1)
         for mo in self.filtered(lambda m: m.amunet_is_solution_product):
-            req_qc = mo.product_id.product_tmpl_id.amunet_req_quality_control
-            dest = qc_loc if req_qc else aru_stock
+            if mo.amunet_es_desarrollo:
+                dest = aru_dev
+            else:
+                req_qc = mo.product_id.product_tmpl_id.amunet_req_quality_control
+                dest = qc_loc if req_qc else aru_stock
             if not dest:
                 continue
             mo.location_dest_id = dest.id
@@ -1596,8 +1610,8 @@ class MrpProduction(models.Model):
                 if missing:
                     raise UserError('ATENCIÓN: Faltan las siguientes actividades operativas por marcar en la Pestaña de Actividades:\n- ' + '\n- '.join(missing))
             
-            # 2. Validar Calidad (solo si el producto lo requiere)
-            if record.amunet_sys_req_qc and record.quality_analysis_status != 'approved':
+            # 2. Validar Calidad (solo si el producto lo requiere y NO es desarrollo)
+            if record.amunet_sys_req_qc and not record.amunet_es_desarrollo and record.quality_analysis_status != 'approved':
                 raise UserError('ATENCIÓN: Este producto requiere Análisis C.C. No puedes "Marcar como Hecho" hasta que el área de Calidad apruebe el análisis.')
                 
         return super(MrpProduction, self).button_mark_done()
