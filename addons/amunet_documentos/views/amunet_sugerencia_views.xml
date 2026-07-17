@@ -97,10 +97,11 @@
                             <field name="alcance_sgc" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
                         </group>
                     </group>
-                    <group string="Justificación del cambio">
-                        <field name="motivo" nolabel="1" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
-                               placeholder="Describe por qué se propone este cambio."/>
-                    </group>
+                    <separator string="Justificación del cambio"/>
+                    <field name="motivo" nolabel="1"
+                           readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
+                           placeholder="Describe por qué se propone este cambio."
+                           rows="6"/>
                     <group string="Análisis de riesgos">
                         <field name="aplica_analisis_riesgos"
                                string="¿Aplica análisis de riesgos?"
