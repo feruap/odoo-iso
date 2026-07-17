@@ -214,9 +214,10 @@ class StockLot(models.Model):
             'analysis_number',
             'manufacturing_date',
             'expiration_date',
-            'removal_date',
-            'use_date',
-            'alert_date',
+            # NOTA: removal_date/use_date/alert_date NO se bloquean: son fechas
+            # DERIVADAS de la caducidad (expiration_date, que si queda bloqueada)
+            # y las operaciones de stock (surtido, movimientos) las recalculan.
+            # Bloquearlas rompia el surtido de lotes liberados.
             'amunet_auto_generated',
             'amunet_lot_release_state',
             'amunet_lot_release_quality_check_id',
@@ -710,10 +711,24 @@ class StockLot(models.Model):
         if locked_fields and not self.env.context.get('skip_lot_release_lock'):
             locked_records = self.filtered(lambda lot: lot.amunet_lot_release_state == 'released')
             if locked_records:
-                raise UserError(
-                    'No se pueden modificar campos críticos de un lote liberado. '
-                    'Cree un reanálisis o registre una desviación/CAPA si necesita cambiar el expediente.'
-                )
+                # Solo bloquear si el valor REALMENTE cambia. Las operaciones de
+                # stock (surtido, movimientos) recalculan campos derivados del
+                # lote (use_date/removal_date/alert_date, computados desde la
+                # caducidad) y escriben el MISMO valor: eso no es un cambio de
+                # expediente y no debe bloquearse. Un cambio real (editar la
+                # caducidad, el nombre, etc.) si se bloquea.
+                def _norm(v):
+                    return v.id if hasattr(v, 'id') else v
+                cambios = [
+                    f for lot in locked_records for f in locked_fields
+                    if _norm(lot[f]) != _norm(vals[f])
+                ]
+                if cambios:
+                    raise UserError(
+                        'No se pueden modificar campos críticos de un lote liberado '
+                        '(%s). Cree un reanálisis o registre una desviación/CAPA si '
+                        'necesita cambiar el expediente.' % ', '.join(sorted(set(cambios)))
+                    )
         return super().write(vals)
 
     # ========== Alerta automática de reanálisis ==========
