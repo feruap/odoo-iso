@@ -1727,14 +1727,43 @@ class AmunetQualityCheck(models.Model):
         return records
 
     def _auto_enable_anexo(self):
-        """Activa el anexo automáticamente para cartuchos, hojas maestras y goteros."""
+        """Activa el anexo y preconfigurar encabezados según el tipo de producto."""
         self.ensure_one()
-        if self.tiene_anexos:
-            return
         code = (self.product_id.default_code or '').upper()
-        prefixes = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO')
-        if any(code.startswith(p) for p in prefixes):
-            self.tiene_anexos = True
+
+        if code.startswith(('MPCAR', 'MPCAC', 'MPCAG')):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO CARTUCHO',
+                'anexo_col1_header': 'Apariencia',
+                'anexo_col2_header': 'Ancho Interno (mm)',
+                'anexo_col3_header': 'Largo Interno (mm)',
+                'anexo_col4_header': 'Ancho Externo (mm)',
+                'anexo_col5_header': 'Largo Externo (mm)',
+                'anexo_col6_header': 'Desempeño',
+            })
+        elif code.startswith(('SPHMC', 'SPHMT')):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO HOJA MAESTRA',
+                'anexo_col1_header': 'Apariencia',
+                'anexo_col2_header': 'Ancho (mm)',
+                'anexo_col3_header': 'Largo (mm)',
+                'anexo_col4_header': 'T. Liberación (s)',
+                'anexo_col5_header': 'T. Migración (s)',
+                'anexo_col6_header': 'Desempeño',
+            })
+        elif code.startswith('STGO'):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO GOTERO',
+                'anexo_col1_header': 'Determinación de aspectos',
+                'anexo_col2_header': 'Punta del gotero (mm)',
+                'anexo_col3_header': 'Largo del gotero (mm)',
+                'anexo_col4_header': 'Volumen (µL)',
+                'anexo_col5_header': '',
+                'anexo_col6_header': '',
+            })
 
     def _load_product_parameters(self):
         """
