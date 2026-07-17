@@ -116,8 +116,42 @@ class StockPicking(models.Model):
 
         return result
 
+    def _amunet_check_duplicate_supplier_lots(self):
+        """Aviso al validar una recepcion: si el MISMO producto tiene 2 o mas
+        lotes Amunet con el MISMO lote de proveedor, probablemente llego de mas
+        y se capturo en lotes separados por error (deberia ser UN solo lote).
+        Se avisa para que revisen/consoliden antes de validar. Solo se dispara
+        cuando el lote de proveedor coincide -> sin falsos positivos si de verdad
+        son lotes distintos."""
+        Prod = self.env['product.product']
+        for p in self.filtered(lambda x: x.picking_type_code == 'incoming'):
+            grupos = {}
+            for line in p.move_line_ids:
+                sup = line.factory_lot_id.name if line.factory_lot_id else False
+                if not sup:
+                    continue
+                key = (line.product_id.id, sup)
+                lote = line.lot_id.name or line.lot_name or ''
+                grupos.setdefault(key, set()).add(lote)
+            dups = {k: v for k, v in grupos.items() if len(v) > 1}
+            if dups:
+                lineas = []
+                for (prod_id, sup), lotes in dups.items():
+                    lineas.append('  - %s: lote de proveedor "%s" en %s lotes distintos (%s)'
+                                  % (Prod.browse(prod_id).display_name, sup,
+                                     len(lotes), ', '.join(sorted(lotes))))
+                raise UserError(_(
+                    'AVISO — revisa la informacion antes de validar.\n\n'
+                    'Hay lotes duplicados con el MISMO lote de proveedor:\n%s\n\n'
+                    'Si es el MISMO lote (llego de mas), captura todo en UN solo '
+                    'lote (sube la cantidad en la misma linea). Si de verdad son '
+                    'lotes distintos del proveedor, deben tener numeros de lote de '
+                    'proveedor distintos. Corrige y vuelve a validar.'
+                ) % '\n'.join(lineas))
+
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
     def button_validate(self):
+        self._amunet_check_duplicate_supplier_lots()
         if self.env.context.get('_skip_pin_wizard'):
             res = super().button_validate()
             for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
