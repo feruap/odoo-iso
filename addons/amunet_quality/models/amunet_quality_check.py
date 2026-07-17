@@ -1722,8 +1722,19 @@ class AmunetQualityCheck(models.Model):
         for record in records:
             record._load_product_parameters()
             record._set_sampling_plan_suggestion(force=False)
+            record._auto_enable_anexo()
 
         return records
+
+    def _auto_enable_anexo(self):
+        """Activa el anexo automáticamente para cartuchos, hojas maestras y goteros."""
+        self.ensure_one()
+        if self.tiene_anexos:
+            return
+        code = (self.product_id.default_code or '').upper()
+        prefixes = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO')
+        if any(code.startswith(p) for p in prefixes):
+            self.tiene_anexos = True
 
     def _load_product_parameters(self):
         """
