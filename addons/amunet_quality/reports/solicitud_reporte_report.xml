@@ -519,6 +519,9 @@
                                         <t t-if="o.anexo_col6_header">
                                             <th style="border:1px solid #999;padding:4px 6px;text-align:center;"><t t-out="o.anexo_col6_header"/></th>
                                         </t>
+                                        <t t-if="o.anexo_col7_header">
+                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;"><t t-out="o.anexo_col7_header"/></th>
+                                        </t>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -542,6 +545,9 @@
                                             </t>
                                             <t t-if="o.anexo_col6_header">
                                                 <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="line.col6 or ''"/></td>
+                                            </t>
+                                            <t t-if="o.anexo_col7_header">
+                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="line.col7 or ''"/></td>
                                             </t>
                                         </tr>
                                     </t>

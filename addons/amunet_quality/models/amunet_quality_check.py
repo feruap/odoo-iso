@@ -781,6 +781,7 @@ class AmunetQualityCheck(models.Model):
     anexo_col4_header = fields.Char(string='Encabezado Col 4', default='')
     anexo_col5_header = fields.Char(string='Encabezado Col 5', default='')
     anexo_col6_header = fields.Char(string='Encabezado Col 6', default='')
+    anexo_col7_header = fields.Char(string='Encabezado Col 7', default='')
     # Filas de datos
     anexo_line_ids = fields.One2many(
         'amunet.quality.anexo.line',
@@ -1740,7 +1741,8 @@ class AmunetQualityCheck(models.Model):
                 'anexo_col3_header': 'Largo Interno (mm)',
                 'anexo_col4_header': 'Ancho Externo (mm)',
                 'anexo_col5_header': 'Largo Externo (mm)',
-                'anexo_col6_header': 'Desempeño',
+                'anexo_col6_header': 'Alineación',
+                'anexo_col7_header': 'Desempeño',
             })
         elif code.startswith(('SPHMC', 'SPHMT')):
             self.write({
