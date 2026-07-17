@@ -149,9 +149,44 @@ class StockPicking(models.Model):
                     'proveedor distintos. Corrige y vuelve a validar.'
                 ) % '\n'.join(lineas))
 
+    def _amunet_check_expiration_captured(self):
+        """Aviso al validar una recepcion: los productos que usan caducidad DEBEN
+        tener la caducidad real capturada. Bloquea si esta vacia o si quedo en la
+        fecha de recepcion o anterior (caso tipico: se puso la fecha de hoy por
+        defecto). Asi Almacen no valida con caducidades erroneas."""
+        hoy = fields.Date.context_today(self)
+        for p in self.filtered(lambda x: x.picking_type_code == 'incoming'):
+            faltan, malas = [], []
+            for line in p.move_line_ids:
+                if (line.quantity or 0) <= 0:
+                    continue
+                if not line.product_id.product_tmpl_id.use_expiration_date:
+                    continue
+                exp = line.expiration_date or (
+                    line.lot_id.expiration_date if line.lot_id else False)
+                lote = line.lot_id.name or line.lot_name or 's/l'
+                etq = '%s (lote %s)' % (line.product_id.display_name, lote)
+                if not exp:
+                    faltan.append('  - ' + etq)
+                else:
+                    exp_d = exp.date() if hasattr(exp, 'date') else exp
+                    if exp_d <= hoy:
+                        malas.append('  - %s: caducidad %s' % (etq, exp_d))
+            partes = []
+            if faltan:
+                partes.append('SIN caducidad capturada:\n' + '\n'.join(faltan))
+            if malas:
+                partes.append('Caducidad = fecha de recepcion o anterior '
+                              '(captura la real):\n' + '\n'.join(malas))
+            if partes:
+                raise UserError(_(
+                    'AVISO — captura la CADUCIDAD real antes de validar.\n\n%s'
+                ) % '\n\n'.join(partes))
+
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
     def button_validate(self):
         self._amunet_check_duplicate_supplier_lots()
+        self._amunet_check_expiration_captured()
         if self.env.context.get('_skip_pin_wizard'):
             res = super().button_validate()
             for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
