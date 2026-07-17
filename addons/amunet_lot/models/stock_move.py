@@ -123,8 +123,13 @@ class StockMove(models.Model):
             # Fallback nativo
             serial_names = self.env['stock.lot'].generate_lot_names(self.product_id.id, count=count, first_lot=next_serial)
         
-        # 3. Mapear líneas existentes a actualizar
-        lines_to_update = self.move_line_ids.filtered(lambda l: not l.lot_id and not l.lot_name and (l.quantity == 0 or l.quantity == 1))
+        # 3. Mapear líneas existentes a actualizar.
+        # Para tracking='lot' una sola línea cubre toda la demanda (puede ser qty>1),
+        # por eso no filtramos por cantidad. Para 'serial' sí aplica qty==0 o qty==1.
+        if self.product_id.tracking == 'lot':
+            lines_to_update = self.move_line_ids.filtered(lambda l: not l.lot_id and not l.lot_name)
+        else:
+            lines_to_update = self.move_line_ids.filtered(lambda l: not l.lot_id and not l.lot_name and (l.quantity == 0 or l.quantity == 1))
         
         vals_list = []
         for i, name in enumerate(serial_names):

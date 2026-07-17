@@ -125,17 +125,22 @@ class StockMoveLine(models.Model):
     amunet_mfg_date = fields.Char('Fecha fab. (texto)')
 
     amunet_calidad_estado = fields.Selection([
+        ('na', 'N/A'),
         ('quarantine', 'En cuarentena'),
         ('in_review', 'En revisión'),
         ('released', 'Liberado'),
     ], string='Estado en Calidad', compute='_compute_amunet_calidad_estado')
 
-    @api.depends('lot_id', 'lot_id.amunet_lot_release_state')
+    @api.depends('lot_id', 'lot_id.amunet_lot_release_state', 'product_id')
     def _compute_amunet_calidad_estado(self):
         for line in self:
             lot = line.lot_id
             if not lot:
                 line.amunet_calidad_estado = False
+                continue
+            # Consumibles y productos sin cuarentena → N/A
+            if not line.product_id.product_tmpl_id._amunet_effective_requires_quarantine():
+                line.amunet_calidad_estado = 'na'
                 continue
             if lot.amunet_lot_release_state == 'released':
                 line.amunet_calidad_estado = 'released'

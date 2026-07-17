@@ -79,6 +79,7 @@
                 <field name="amunet_calidad_estado"
                        string="Estado en Calidad"
                        widget="badge"
+                       decoration-muted="amunet_calidad_estado == 'na'"
                        decoration-danger="amunet_calidad_estado == 'quarantine'"
                        decoration-warning="amunet_calidad_estado == 'in_review'"
                        decoration-success="amunet_calidad_estado == 'released'"

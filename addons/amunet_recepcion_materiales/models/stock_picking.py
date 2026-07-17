@@ -89,12 +89,16 @@ class StockPicking(models.Model):
     # ── action_confirm: asignar destino automático + corregir lote ──────────
     def action_confirm(self):
         for picking in self.filtered(lambda p: p.picking_type_code == 'incoming'):
+            wh = picking.picking_type_id.warehouse_id
             qc_loc = picking._get_quarantine_location()
-            if not qc_loc:
-                continue
+            stock_loc = wh.lot_stock_id if wh else None
             for move in picking.move_ids.filtered(lambda m: m.state not in ('done', 'cancel')):
                 if move.product_id.product_tmpl_id._amunet_effective_requires_quarantine():
-                    move.location_dest_id = qc_loc.id
+                    if qc_loc:
+                        move.location_dest_id = qc_loc.id
+                else:
+                    if stock_loc:
+                        move.location_dest_id = stock_loc.id
 
         result = super().action_confirm()
 
@@ -198,6 +202,12 @@ class StockPicking(models.Model):
                 if requiere_inspeccion and not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
                             p.amunet_crit4, p.amunet_crit5]):
                     p._amunet_notify_quality_pending()
+                # Lotes de productos sin cuarentena → liberar automáticamente
+                for line in p.move_line_ids:
+                    if (line.lot_id
+                            and not line.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
+                            and line.lot_id.amunet_lot_release_state != 'released'):
+                        line.lot_id.sudo().write({'amunet_lot_release_state': 'released'})
             return res
         incoming = self.filtered(lambda p: p.picking_type_code == 'incoming'
                                  and p.state not in ('done', 'cancel'))

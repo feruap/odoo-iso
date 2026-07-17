@@ -43,7 +43,8 @@ class ProductProduct(models.Model):
         ).mapped('name')
         pending = MoveLine.search(
             [('product_id', '=', self.id), ('lot_id', '=', False),
-             ('lot_name', '=like', prefix + '%')]
+             ('lot_name', '=like', prefix + '%'),
+             ('state', 'not in', ('done', 'cancel'))]
         ).mapped('lot_name')
 
         maxn = 0
