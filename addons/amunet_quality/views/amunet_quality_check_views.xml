@@ -444,7 +444,9 @@
                     <div class="o_horizontal_separator" invisible="not sampling_confirmed">Numeral 7: Anexos</div>
                     <hr invisible="not sampling_confirmed"/>
 
-                    <group invisible="not sampling_confirmed">
+                    <field name="is_material_con_anexo" invisible="1"/>
+                    <!-- Toggle solo visible para productos que NO son cartucho/hoja/gotero -->
+                    <group invisible="not sampling_confirmed or is_material_con_anexo">
                         <group colspan="4">
                             <field name="tiene_anexos" widget="boolean_toggle"
                                    string="Incluir Anexo en el Reporte"
@@ -452,8 +454,8 @@
                         </group>
                     </group>
 
-                    <!-- Contenido visible solo si tiene_anexos -->
-                    <group invisible="not tiene_anexos or not sampling_confirmed" colspan="4" col="1">
+                    <!-- Contenido: siempre visible para material_con_anexo; o si tiene_anexos está activado -->
+                    <group invisible="not (tiene_anexos or is_material_con_anexo) or not sampling_confirmed" colspan="4" col="1">
 
                         <!-- ══════════════════════════════════════════════════════════════
                              TABLA EDITABLE — espejo visual del reporte PDF

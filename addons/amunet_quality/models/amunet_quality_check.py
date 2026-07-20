@@ -88,6 +88,14 @@ class AmunetQualityCheck(models.Model):
             rec.is_agitador = code.upper().startswith('EQAMC')
             rec.is_esterilizador = code.upper().startswith('EQEPV')
 
+    _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO')
+
+    @api.depends('product_id.default_code')
+    def _compute_is_material_con_anexo(self):
+        for rec in self:
+            code = (rec.product_id.default_code or '').upper()
+            rec.is_material_con_anexo = code.startswith(self._PREFIJOS_ANEXO)
+
     @api.depends('equipment_unit_ids.status')
     def _compute_equipment_counts(self):
         for rec in self:
@@ -95,10 +103,14 @@ class AmunetQualityCheck(models.Model):
             rec.equipment_approved_count = sum(1 for u in units if u.status == 'approved')
             rec.equipment_rejected_count = sum(1 for u in units if u.status == 'rejected')
 
-    @api.depends('tiene_anexos', 'user_realized_id')
+    @api.depends('tiene_anexos', 'user_realized_id', 'is_material_con_anexo')
     def _compute_puede_descargar_anexo(self):
         for rec in self:
-            rec.puede_descargar_anexo = bool(rec.tiene_anexos and rec.user_realized_id)
+            # Para cartucho/hoja maestra/gotero el anexo va integrado en el reporte principal
+            if rec.is_material_con_anexo:
+                rec.puede_descargar_anexo = False
+            else:
+                rec.puede_descargar_anexo = bool(rec.tiene_anexos and rec.user_realized_id)
 
     def action_download_anexo(self):
         self.ensure_one()
@@ -823,6 +835,12 @@ class AmunetQualityCheck(models.Model):
     is_esterilizador = fields.Boolean(
         string='Es esterilizador/autoclave',
         compute='_compute_is_equipment',
+        store=True,
+    )
+
+    is_material_con_anexo = fields.Boolean(
+        string='Material con Anexo integrado',
+        compute='_compute_is_material_con_anexo',
         store=True,
     )
 
