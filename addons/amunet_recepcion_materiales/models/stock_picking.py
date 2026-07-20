@@ -91,15 +91,17 @@ class StockPicking(models.Model):
     def action_confirm(self):
         for picking in self.filtered(lambda p: p.picking_type_code == 'incoming'):
             wh = picking.picking_type_id.warehouse_id
-            qc_loc = picking._get_quarantine_location()
             stock_loc = wh.lot_stock_id if wh else None
+            qc_loc = wh.wh_qc_stock_loc_id if wh else None
             for move in picking.move_ids.filtered(lambda m: m.state not in ('done', 'cancel')):
+                # Requiere analisis (flag del producto o de su categoria): va a
+                # Control de calidad. Si NO requiere: entra DIRECTO a Existencias
+                # en un solo paso, sin pasar por Control de calidad.
                 if move.product_id.product_tmpl_id._amunet_effective_requires_quarantine():
                     if qc_loc:
                         move.location_dest_id = qc_loc.id
-                else:
-                    if stock_loc:
-                        move.location_dest_id = stock_loc.id
+                elif stock_loc:
+                    move.location_dest_id = stock_loc.id
 
         result = super().action_confirm()
 
