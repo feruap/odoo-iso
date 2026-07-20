@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models, fields, _
 from odoo.exceptions import UserError
+from .stock_move import _parse_date
 
 CRITERIO_SEL = [('ok', 'Cumple'), ('nok', 'No cumple')]
 CRITERIO_SEL_NA = [('ok', 'Cumple'), ('nok', 'No cumple'), ('na', 'N/A')]
@@ -168,6 +169,13 @@ class StockPicking(models.Model):
                     continue
                 exp = line.expiration_date or (
                     line.lot_id.expiration_date if line.lot_id else False)
+                # Si la caducidad se capturo en el movimiento (texto) y aun no se
+                # propago a la linea, considerarla para no bloquear en falso.
+                mv = line.move_id
+                if mv and mv.amunet_exp_date:
+                    parsed = _parse_date(mv.amunet_exp_date)
+                    if parsed:
+                        exp = parsed
                 lote = line.lot_id.name or line.lot_name or 's/l'
                 etq = '%s (lote %s)' % (line.product_id.display_name, lote)
                 if not exp:
