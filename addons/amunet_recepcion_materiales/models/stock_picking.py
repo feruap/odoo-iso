@@ -90,12 +90,18 @@ class StockPicking(models.Model):
     # ── action_confirm: asignar destino automático + corregir lote ──────────
     def action_confirm(self):
         for picking in self.filtered(lambda p: p.picking_type_code == 'incoming'):
-            qc_loc = picking._get_quarantine_location()
-            if not qc_loc:
-                continue
+            wh = picking.picking_type_id.warehouse_id
+            stock_loc = wh.lot_stock_id if wh else None
+            qc_loc = wh.wh_qc_stock_loc_id if wh else None
             for move in picking.move_ids.filtered(lambda m: m.state not in ('done', 'cancel')):
-                if move.product_id.product_tmpl_id.amunet_requires_quarantine:
-                    move.location_dest_id = qc_loc.id
+                # Requiere analisis (flag del producto o de su categoria): va a
+                # Control de calidad. Si NO requiere: entra DIRECTO a Existencias
+                # en un solo paso, sin pasar por Control de calidad.
+                if move.product_id.product_tmpl_id._amunet_effective_requires_quarantine():
+                    if qc_loc:
+                        move.location_dest_id = qc_loc.id
+                elif stock_loc:
+                    move.location_dest_id = stock_loc.id
 
         result = super().action_confirm()
 
@@ -199,16 +205,19 @@ class StockPicking(models.Model):
             res = super().button_validate()
             for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
                                    and p.state == 'done'):
-                # Solo se notifica a Calidad si algun producto de la recepcion
-                # requiere inspeccion (amunet_requires_quarantine). Los
-                # consumibles no la requieren, por eso ya no disparan aviso.
                 requiere_inspeccion = any(
-                    m.product_id.product_tmpl_id.amunet_requires_quarantine
+                    m.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
                     for m in p.move_ids
                 )
-                if requiere_inspeccion and not all([p.amunet_crit1, p.amunet_crit2,
-                            p.amunet_crit3, p.amunet_crit4, p.amunet_crit5]):
+                if requiere_inspeccion and not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
+                            p.amunet_crit4, p.amunet_crit5]):
                     p._amunet_notify_quality_pending()
+                # Lotes de productos sin cuarentena → liberar automáticamente
+                for line in p.move_line_ids:
+                    if (line.lot_id
+                            and not line.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
+                            and line.lot_id.amunet_lot_release_state != 'released'):
+                        line.lot_id.sudo().write({'amunet_lot_release_state': 'released'})
             return res
         incoming = self.filtered(lambda p: p.picking_type_code == 'incoming'
                                  and p.state not in ('done', 'cancel'))

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_product_category_quarantine" model="ir.ui.view">
+        <field name="name">product.category.form.amunet.quarantine</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Control de Calidad (Recepción)">
+                    <field name="amunet_requires_quarantine"
+                           string="Requiere inspección de Calidad al recibir"
+                           help="Si está activo, todos los productos de esta categoría irán a AMP/Control de calidad al recibirlos."/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
