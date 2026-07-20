@@ -473,7 +473,7 @@
 
                                 <!-- Fila 1 · Título (campo editable centrado) -->
                                 <tr>
-                                    <td colspan="7"
+                                    <td colspan="8"
                                         style="background:#D9D9D9; border:1.5px solid #1F4E79;
                                                padding:4px 8px; text-align:center;">
                                         <field name="anexo_titulo"
@@ -487,14 +487,14 @@
                                     </td>
                                 </tr>
 
-                                <!-- Fila 2 · Fecha (1 col) | valor (2 cols) | No. Análisis (1 col) | valor (3 cols) = 7 -->
+                                <!-- Fila 2 · Fecha (1 col) | valor (3 cols) | No. Análisis (1 col) | valor (3 cols) = 8 -->
                                 <tr>
                                     <td style="background:#D9D9D9; border:1.5px solid #1F4E79;
                                                padding:3px 6px; font-weight:bold; white-space:nowrap;
                                                vertical-align:middle;">
                                         Fecha:
                                     </td>
-                                    <td colspan="2"
+                                    <td colspan="3"
                                         style="background:#fff; border:1.5px solid #1F4E79;
                                                padding:3px 6px; vertical-align:middle;">
                                         <field name="analysis_date" nolabel="1" readonly="1"
