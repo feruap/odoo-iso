@@ -27,11 +27,12 @@ def _calc_removal_date(exp_date, env):
 
 
 def _parse_date(val):
-    """Parsea una fecha en texto (DD/MM/AAAA, YYYY-MM-DD o NA). Devuelve date o None."""
+    """Parsea una fecha en texto. Acepta separadores / . o - (DD/MM/AAAA,
+    DD.MM.AAAA, DD-MM-AAAA, YYYY-MM-DD) o NA. Devuelve date o None."""
     clean = val.strip().upper()
     if clean == 'NA':
         return None
-    for fmt in ('%d/%m/%Y', '%Y-%m-%d'):
+    for fmt in ('%d/%m/%Y', '%Y-%m-%d', '%d.%m.%Y', '%d-%m-%Y'):
         try:
             return datetime.strptime(clean, fmt).date()
         except ValueError:
