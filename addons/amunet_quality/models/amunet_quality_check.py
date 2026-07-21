@@ -2874,10 +2874,14 @@ class AmunetQualityCheck(models.Model):
         if qty_product_uom <= 0:
             return False
 
-        # Destino del picking (header y move principal) = ubicacion stock del almacen
+        # Destino del picking (header y move principal) = Existencias del almacen.
+        # SIEMPRE se deriva del almacen de la ubicacion de origen (Control de
+        # calidad), para que la liberacion aterrice en Existencias del almacen
+        # correcto. NO se usa original_dest_location_id porque puede quedar mal
+        # capturado (zona de Entrada) y mandaria el lote a un lugar equivocado.
+        warehouse = source_location.warehouse_id
         dest_location = (
-            self.original_dest_location_id
-            or (self.destination_line_ids[0].location_dest_id if self.destination_line_ids else False)
+            (warehouse.lot_stock_id if warehouse else False)
             or self._get_stock_location()
         )
 
