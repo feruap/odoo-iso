@@ -3016,6 +3016,22 @@ class AmunetQualityCheck(models.Model):
             'change_reason': 'Recepción final validada por almacén',
         })
 
+        # Liberar el lote automaticamente: el material aprobado ya ingreso a
+        # Existencias; si el lote no se marca 'released' aparece "en cuarentena"
+        # aunque el analisis este aprobado. Se usa _action_release_lot (snapshot
+        # DHR). Si hay algun bloqueo, se registra pero NO se rompe la validacion
+        # de la recepcion del almacenista.
+        if self.lot_id and self.lot_id.amunet_lot_release_state != 'released':
+            try:
+                self.lot_id._action_release_lot(
+                    notes='Liberado automaticamente al validar la recepcion final %s' % self.name
+                )
+            except Exception as e:
+                _logger.warning(
+                    'No se pudo liberar automaticamente el lote %s tras recepcion final de %s: %s',
+                    self.lot_id.name, self.name, e
+                )
+
         # Mensaje de confirmación
         msg = (
             f'Recepción de ingreso validada por <b>{self.env.user.name}</b>.<br/>'
