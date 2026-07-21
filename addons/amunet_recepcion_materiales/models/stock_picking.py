@@ -175,6 +175,8 @@ class StockPicking(models.Model):
                 # propago a la linea, considerarla para no bloquear en falso.
                 mv = line.move_id
                 if mv and mv.amunet_exp_date:
+                    if mv.amunet_exp_date.strip().upper() == 'VIGENTE':
+                        continue  # "vigente" es explícitamente válido
                     parsed = _parse_date(mv.amunet_exp_date)
                     if parsed:
                         exp = parsed
@@ -197,19 +199,39 @@ class StockPicking(models.Model):
                     'AVISO — captura la CADUCIDAD real antes de validar.\n\n%s'
                 ) % '\n\n'.join(partes))
 
+    def _amunet_check_inspeccion_entrada(self):
+        """Bloquea la validación si la inspección de entrada no está completa.
+        ISO 13485 §7.4.3: obligatoria para TODA recepción entrante sin excepción."""
+        for p in self.filtered(lambda x: x.picking_type_code == 'incoming'
+                               and x.state not in ('done', 'cancel')):
+            faltantes = []
+            if not p.amunet_crit1:
+                faltantes.append('• Empaque íntegro, sin perforaciones ni daños externos')
+            if not p.amunet_crit2:
+                faltantes.append('• Etiqueta legible con información correcta')
+            if not p.amunet_crit3:
+                faltantes.append('• Sin daños visibles en el material')
+            if not p.amunet_crit4:
+                faltantes.append('• Certificado de análisis (si no aplica, selecciona N/A)')
+            if not p.amunet_crit5:
+                faltantes.append('• Cantidad recibida coincide con lo solicitado')
+            if faltantes:
+                raise UserError(_(
+                    'Completa la Inspección de entrada antes de validar.\n\n'
+                    'Faltan los siguientes criterios:\n%s\n\n'
+                    'Encuéntralos en la pestaña "Inspección de entrada".'
+                ) % '\n'.join(faltantes))
+
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
     def button_validate(self):
         self._amunet_check_duplicate_supplier_lots()
         self._amunet_check_expiration_captured()
+        self._amunet_check_inspeccion_entrada()
         if self.env.context.get('_skip_pin_wizard'):
             res = super().button_validate()
             for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
                                    and p.state == 'done'):
-                requiere_inspeccion = any(
-                    m.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
-                    for m in p.move_ids
-                )
-                if requiere_inspeccion and not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
+                if not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
                             p.amunet_crit4, p.amunet_crit5]):
                     p._amunet_notify_quality_pending()
                 # Lotes de productos sin cuarentena → liberar automáticamente
@@ -223,10 +245,6 @@ class StockPicking(models.Model):
                                  and p.state not in ('done', 'cancel'))
         if not incoming:
             return super().button_validate()
-        # La recepcion se permite aunque falten criterios de aceptacion: el
-        # material marcado requiere cuarentena entra a Control de calidad y se
-        # notifica a Calidad para asignar criterios e inspeccionar antes de
-        # liberar. El candado regulatorio esta en la liberacion, no en recibir.
         return {
             'type': 'ir.actions.act_window',
             'name': 'Confirmar recepcion',

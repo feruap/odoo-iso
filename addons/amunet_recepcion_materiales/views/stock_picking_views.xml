@@ -35,7 +35,7 @@
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_exp_date"
                        string="Fecha caducidad"
-                       placeholder="DD/MM/AAAA o NA"
+                       placeholder="DD/MM/AAAA o vigente"
                        column_invisible="parent.picking_type_code != 'incoming'"
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_removal_date"
