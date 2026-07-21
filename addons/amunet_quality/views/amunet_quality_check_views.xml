@@ -555,6 +555,14 @@
                             </table>
                         </div>
 
+                        <!-- Botón: captura del anexo vía wizard (evita pérdida de datos) -->
+                        <div style="padding: 8px 0 12px 0;" invisible="state == 'done'">
+                            <button string="✎  Capturar / Editar Datos del Anexo"
+                                    type="object"
+                                    name="action_open_anexo_wizard"
+                                    class="btn btn-primary btn-lg"/>
+                        </div>
+
                         <!-- Grilla de datos (one2many) — sin header propio, usa la tabla de arriba -->
                         <style>
                             /* Ocultar encabezados nativos de Odoo */

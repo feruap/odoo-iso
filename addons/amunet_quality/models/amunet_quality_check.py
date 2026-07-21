@@ -82,6 +82,23 @@ class AmunetQualityCheck(models.Model):
             'amunet_quality.action_report_anexo_solicitud'
         ).report_action(self)
 
+    def action_open_anexo_wizard(self):
+        """Abre el wizard de captura del anexo: los datos se editan en un popup
+        y se guardan en el analisis al cerrar, sin perderse por los onchanges
+        del formulario principal."""
+        self.ensure_one()
+        WizardModel = self.env['amunet.quality.anexo.wizard']
+        lineas = WizardModel._load_lines_from_check(self)
+        wizard = WizardModel.create({'check_id': self.id, 'line_ids': lineas})
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.anexo_titulo or 'Datos del Anexo',
+            'res_model': 'amunet.quality.anexo.wizard',
+            'res_id': wizard.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
     @api.depends('user_realized_id', 'user_verified_id', 'user_authorized_id')
     def _compute_display_action_finalize(self):
         """

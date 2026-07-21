@@ -5,6 +5,7 @@ from . import amunet_quality_signature_wizard
 from . import amunet_generic_signature_wizard
 from . import amunet_lot_extension_sign_wizard
 from . import amunet_lot_release_wizard
+from . import amunet_quality_anexo_wizard
 
 # Epic-034: Wizards movidos a otros módulos
 # - amunet_quality_force_unlock_wizard → amunet_quality_lock
