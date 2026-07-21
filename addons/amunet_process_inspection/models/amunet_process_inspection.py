@@ -85,11 +85,11 @@ class AmunetProcessInspection(models.Model):
     # ============================
     qty_inspected = fields.Float(
         string='Piezas inspeccionadas',
-        digits='Product Unit of Measure', tracking=True,
+        digits='Product Unit', tracking=True,
     )
     qty_removed = fields.Float(
         string='Piezas retiradas',
-        digits='Product Unit of Measure', tracking=True,
+        digits='Product Unit', tracking=True,
         help='Cantidad de piezas que el inspector retiro del lote por '
              'no conformidad detectada.',
     )

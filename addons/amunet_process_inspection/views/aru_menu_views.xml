@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Existencias del Almacen de reactivos en uso (ARU): ver cantidad -->
+    <record id="action_aru_existencias" model="ir.actions.act_window">
+        <field name="name">Existencias de reactivos</field>
+        <field name="res_model">stock.quant</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="stock.view_stock_quant_tree"/>
+        <field name="domain">[('location_id.warehouse_id.code', '=', 'ARU'), ('location_id.usage', '=', 'internal')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aun no hay reactivos en el Almacen de reactivos en uso.</p>
+            <p>Los reactivos llegan aqui al surtir una Solicitud de Material o con un ajuste de inventario.</p>
+        </field>
+    </record>
+
+    <!-- Conteo / ajuste de inventario de ARU -->
+    <record id="action_aru_conteo" model="ir.actions.act_window">
+        <field name="name">Conteo / ajuste de reactivos</field>
+        <field name="res_model">stock.quant</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="stock.view_stock_quant_tree_inventory_editable"/>
+        <field name="domain">[('location_id.warehouse_id.code', '=', 'ARU'), ('location_id.usage', '=', 'internal')]</field>
+        <field name="context">{'inventory_mode': True}</field>
+    </record>
+
+    <!-- Menu dentro de Fabricacion -->
+    <menuitem id="menu_aru_root"
+              name="Almacen de reactivos en uso"
+              parent="mrp.menu_mrp_root"
+              sequence="90"
+              groups="amunet_production.group_solution_maker"/>
+    <menuitem id="menu_aru_existencias"
+              parent="menu_aru_root"
+              action="action_aru_existencias"
+              sequence="10"/>
+    <menuitem id="menu_aru_conteo"
+              parent="menu_aru_root"
+              action="action_aru_conteo"
+              sequence="20"/>
+
+</odoo>

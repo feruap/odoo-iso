@@ -169,6 +169,40 @@ class MrpProduction(models.Model):
                 'necesitas acceso, pideselo a Fernando o Mery.'
             ) % ', '.join(sols.mapped('name')))
 
+    def _amunet_check_solution_equipment(self):
+        """Al PRODUCIR una solucion, valida que los equipos que usan sus
+        actividades (Balanza=pesado, Agitador=disolucion, Analizador=pH) esten
+        operativos y con calibracion vigente. Las soluciones NO usan operaciones
+        de ruta, por eso el candado es a nivel orden (no por workorder).
+        Configurable por parametro de sistema amunet.solution.equipment.serials
+        (por defecto PRO/BAL/01,PRO/AGI/01,PRO/AMO/01). Respeta el periodo de
+        gracia global de calibracion (via _amunet_calibration_problems_for)."""
+        if self.env.su:
+            return
+        sols = self.filtered(
+            lambda m: m.route_type == 'solution' or m.amunet_is_solution_product)
+        if not sols:
+            return
+        serials = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet.solution.equipment.serials',
+            'PRO/BAL/01,PRO/AGI/01,PRO/AMO/01')
+        serials = [s.strip() for s in (serials or '').split(',') if s.strip()]
+        if not serials:
+            return
+        equipos = self.env['amunet.equipment'].sudo().search(
+            [('serial_number', 'in', serials)])
+        problemas = self.env['mrp.workcenter']._amunet_calibration_problems_for(
+            equipos, 'Soluciones')
+        for f in sorted(set(serials) - set(equipos.mapped('serial_number'))):
+            problemas.append(' - Equipo %s no existe en el catalogo' % f)
+        if problemas:
+            raise UserError(_(
+                'No se puede producir la solucion. Equipos de Soluciones sin '
+                'calibracion vigente o no operativos:\n%s\n\n'
+                'Sube certificados de calibracion vigentes o reactiva los '
+                'equipos antes de producir.'
+            ) % '\n'.join(problemas))
+
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
@@ -177,6 +211,7 @@ class MrpProduction(models.Model):
 
     def button_mark_done(self):
         self._amunet_check_solution_maker()
+        self._amunet_check_solution_equipment()
         self._amunet_lc_check_close_gate()
         return super().button_mark_done()
 
@@ -184,10 +219,33 @@ class MrpProduction(models.Model):
     # Override action_confirm: gate preflight
     # (las inspecciones YA NO se generan al confirmar; ver button_plan)
     # ============================
+    def _amunet_solution_moves_from_aru(self):
+        """Para ordenes de SOLUCION, los componentes cuya categoria enruta al
+        Almacen de reactivos en uso (ARU) se consumen desde ARU/Stock, no desde
+        el almacen general. El agua y las sub-soluciones (que no son reactivos)
+        siguen desde su ubicacion normal. Se corre tras confirmar."""
+        wh = self.env['stock.warehouse'].sudo().search(
+            [('code', '=', 'ARU')], limit=1)
+        if not wh:
+            return
+        aru_loc = wh.lot_stock_id
+        for mo in self.filtered(
+                lambda m: m.route_type == 'solution' or m.amunet_is_solution_product):
+            moves = mo.move_raw_ids.filtered(
+                lambda mv: mv.state not in ('done', 'cancel')
+                and mv.product_id.categ_id
+                and hasattr(mv.product_id.categ_id, '_amunet_routes_to_aru')
+                and mv.product_id.categ_id._amunet_routes_to_aru())
+            if not moves:
+                continue
+            moves._do_unreserve()
+            moves.write({'location_id': aru_loc.id})
+            moves._action_assign()
+
     def action_confirm(self):
         self._amunet_check_solution_maker()
         for rec in self:
-            if rec.route_type in ('short', 'long'):
+            if rec.route_type in ('short', 'long', 'solution'):
                 if not rec.preflight_approved:
                     raise UserError(_(
                         'No se puede confirmar la orden %s sin un '
@@ -195,7 +253,9 @@ class MrpProduction(models.Model):
                         'Crea o ejecuta un preflight ANTES de confirmar '
                         'esta orden (Manufactura > Preflight piloto).'
                     ) % rec.name)
-        return super().action_confirm()
+        res = super().action_confirm()
+        self._amunet_solution_moves_from_aru()
+        return res
 
     # ============================
     # Override button_plan: generar inspecciones al PLANIFICAR.
