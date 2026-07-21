@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_amunet_quality_anexo_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.quality.anexo.wizard.form</field>
+        <field name="model">amunet.quality.anexo.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Datos del Anexo">
+                <sheet>
+                    <div class="o_form_title" style="font-size:14pt; font-weight:bold; margin-bottom:12px;">
+                        <field name="anexo_titulo" readonly="1" nolabel="1"/>
+                    </div>
+
+                    <div class="alert alert-info" role="alert" style="margin-bottom:12px;">
+                        Captura aquí los datos crudos del anexo. Al cerrar esta ventana
+                        quedan guardados automáticamente en el análisis.
+                    </div>
+
+                    <!-- Encabezados de columnas (informativos) -->
+                    <group string="Columnas configuradas" col="4" colspan="4">
+                        <field name="col1_header" string="Col 1" readonly="1"/>
+                        <field name="col2_header" string="Col 2" readonly="1"/>
+                        <field name="col3_header" string="Col 3" readonly="1"/>
+                        <field name="col4_header" string="Col 4" readonly="1"/>
+                        <field name="col5_header" string="Col 5" readonly="1"/>
+                        <field name="col6_header" string="Col 6" readonly="1"/>
+                        <field name="col7_header" string="Col 7" readonly="1"/>
+                    </group>
+
+                    <!-- Tabla de datos -->
+                    <field name="line_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="muestra" string="# Muestra"/>
+                            <field name="col1" string="Col 1"/>
+                            <field name="col2" string="Col 2"/>
+                            <field name="col3" string="Col 3"/>
+                            <field name="col4" string="Col 4"/>
+                            <field name="col5" string="Col 5"/>
+                            <field name="col6" string="Col 6"/>
+                            <field name="col7" string="Col 7"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button string="Guardar y Cerrar" class="btn-primary" type="object" name="action_cerrar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción para abrir el wizard desde el botón en el QC -->
+    <record id="action_amunet_quality_anexo_wizard" model="ir.actions.act_window">
+        <field name="name">Datos del Anexo</field>
+        <field name="res_model">amunet.quality.anexo.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

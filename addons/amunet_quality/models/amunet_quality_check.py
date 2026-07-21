@@ -118,6 +118,18 @@ class AmunetQualityCheck(models.Model):
             'amunet_quality.action_report_anexo_solicitud'
         ).report_action(self)
 
+    def action_open_anexo_wizard(self):
+        self.ensure_one()
+        wizard = self.env['amunet.quality.anexo.wizard'].create({'check_id': self.id})
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.anexo_titulo or 'Datos del Anexo',
+            'res_model': 'amunet.quality.anexo.wizard',
+            'res_id': wizard.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
     @api.depends('user_realized_id', 'user_verified_id', 'user_authorized_id')
     def _compute_display_action_finalize(self):
         """

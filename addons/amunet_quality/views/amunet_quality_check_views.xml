@@ -457,155 +457,21 @@
                     <!-- Contenido: siempre visible para material_con_anexo; o si tiene_anexos está activado -->
                     <group invisible="not (tiene_anexos or is_material_con_anexo) or not sampling_confirmed" colspan="4" col="1">
 
-                        <!-- ══════════════════════════════════════════════════════════════
-                             TABLA EDITABLE — espejo visual del reporte PDF
-                             ══════════════════════════════════════════════════════════════ -->
-                        <div style="width:100%; overflow-x:auto; margin-bottom:0px;">
-                            <table style="width:100%; border-collapse:collapse; font-family:Arial,sans-serif; font-size:10pt; table-layout:fixed;">
-                                <colgroup>
-                                    <col style="width:12%;"/>  <!-- # Muestra -->
-                                    <col style="width:14%;"/>  <!-- col1 -->
-                                    <col style="width:14%;"/>  <!-- col2 -->
-                                    <col style="width:14%;"/>  <!-- col3 -->
-                                    <col style="width:15%;"/>  <!-- col4 -->
-                                    <col style="width:15%;"/>  <!-- col5 -->
-                                    <col style="width:12%;"/>  <!-- col6 -->
-                                    <col style="width:12%;"/>  <!-- col7 -->
-                                </colgroup>
-
-                                <!-- Fila 1 · Título (campo editable centrado) -->
-                                <tr>
-                                    <td colspan="8"
-                                        style="background:#D9D9D9; border:1.5px solid #1F4E79;
-                                               padding:4px 8px; text-align:center;">
-                                        <field name="anexo_titulo"
-                                               placeholder="ANEXO GENERAL"
-                                               nolabel="1"
-                                               readonly="state == 'done'"
-                                               style="font-weight:bold; font-size:13pt;
-                                                      text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      outline:none;"/>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 2 · Fecha (1 col) | valor (3 cols) | No. Análisis (1 col) | valor (3 cols) = 8 -->
-                                <tr>
-                                    <td style="background:#D9D9D9; border:1.5px solid #1F4E79;
-                                               padding:3px 6px; font-weight:bold; white-space:nowrap;
-                                               vertical-align:middle;">
-                                        Fecha:
-                                    </td>
-                                    <td colspan="3"
-                                        style="background:#fff; border:1.5px solid #1F4E79;
-                                               padding:3px 6px; vertical-align:middle;">
-                                        <field name="analysis_date" nolabel="1" readonly="1"
-                                               options="{'datepicker': {'warn_future': false}}"/>
-                                    </td>
-                                    <td style="background:#D9D9D9; border:1.5px solid #1F4E79;
-                                               padding:3px 6px; font-weight:bold; white-space:nowrap;
-                                               vertical-align:middle;">
-                                        No. Análisis:
-                                    </td>
-                                    <td colspan="3"
-                                        style="background:#fff; border:1.5px solid #1F4E79;
-                                               padding:3px 6px; vertical-align:middle;">
-                                        <field name="analysis_number" nolabel="1" readonly="1"
-                                               placeholder="(sin folio aún)"/>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 3 · Encabezados de columnas (editables) — 7 celdas = 7 cols -->
-                                <tr style="background:#D9D9D9; font-weight:bold; text-align:center;">
-                                    <td style="border:1.5px solid #1F4E79; padding:4px; vertical-align:middle;">
-                                        # Muestra
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col1_header" nolabel="1"
-                                               placeholder="Col 1" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col2_header" nolabel="1"
-                                               placeholder="Col 2" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col3_header" nolabel="1"
-                                               placeholder="Col 3" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col4_header" nolabel="1"
-                                               placeholder="Col 4" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col5_header" nolabel="1"
-                                               placeholder="Col 5" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col6_header" nolabel="1"
-                                               placeholder="Col 6" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col7_header" nolabel="1"
-                                               placeholder="Col 7" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                </tr>
-
-                            </table>
+                        <!-- Botón principal de captura -->
+                        <div style="padding: 8px 0 12px 0;" invisible="state == 'done'">
+                            <button string="✎  Capturar / Editar Datos del Anexo"
+                                    type="object"
+                                    name="action_open_anexo_wizard"
+                                    class="btn btn-primary btn-lg"/>
                         </div>
 
-                        <!-- Grilla de datos (one2many) — sin header propio, usa la tabla de arriba -->
-                        <style>
-                            /* Ocultar encabezados nativos de Odoo */
-                            .o_anexo_nohdr .o_list_renderer thead { display: none !important; }
-                            /* Bordes azul marino en celdas de datos */
-                            .o_anexo_nohdr .o_list_renderer .o_data_row td {
-                                border: 1px solid #1F4E79 !important;
-                                padding: 3px 5px !important;
-                            }
-                            /* Forzar anchos de columnas para alinear con la tabla de encabezados */
-                            .o_anexo_nohdr .o_list_renderer td[name="muestra"] { width: 12% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col1"]    { width: 14% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col2"]    { width: 14% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col3"]    { width: 14% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col4"]    { width: 15% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col5"]    { width: 15% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col6"]    { width: 12% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col7"]    { width: 12% !important; }
-                            /* También en colgroup */
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(1) { width: 12% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(2) { width: 13% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(3) { width: 13% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(4) { width: 13% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(5) { width: 13% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(6) { width: 12% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(7) { width: 12% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(8) { width: 12% !important; }
-                        </style>
-                        <div class="o_anexo_nohdr">
-                            <field name="anexo_line_ids" nolabel="1"
-                                   readonly="state == 'done'">
-                                <list editable="bottom">
+                        <!-- Vista de solo lectura de las filas ya guardadas -->
+                        <div invisible="not anexo_line_ids">
+                            <div style="font-weight:bold; font-size:11pt; margin-bottom:4px; color:#1F4E79;">
+                                <field name="anexo_titulo" readonly="1" nolabel="1"/>
+                            </div>
+                            <field name="anexo_line_ids" nolabel="1" readonly="1">
+                                <list>
                                     <field name="muestra" string="# Muestra"/>
                                     <field name="col1"    string="Col 1"/>
                                     <field name="col2"    string="Col 2"/>
@@ -618,6 +484,11 @@
                             </field>
                         </div>
 
+                        <div invisible="anexo_line_ids"
+                             style="color:#6c757d; font-style:italic; font-size:12px; padding:8px 0;">
+                            Aún no hay muestras capturadas. Usa el botón de arriba para ingresar los datos.
+                        </div>
+
                         <!-- Fotografías -->
                         <group string="Fotografías del Anexo" colspan="4" col="1">
                             <div class="text-muted mb-2" style="font-size:12px;"
@@ -628,22 +499,6 @@
                                    widget="many2many_binary"
                                    nolabel="1"
                                    readonly="state == 'done'"/>
-                        </group>
-
-                        <!-- Botón de descarga -->
-                        <group colspan="4" col="1">
-                            <field name="puede_descargar_anexo" invisible="1"/>
-                            <div style="padding: 8px 0;">
-                                <button string="Descargar Anexo"
-                                        type="object"
-                                        name="action_download_anexo"
-                                        class="btn btn-primary"
-                                        invisible="not puede_descargar_anexo"/>
-                                <span invisible="puede_descargar_anexo"
-                                      style="color:#6c757d; font-size:12px; font-style:italic;">
-                                    Disponible después de la primera firma (Realizó)
-                                </span>
-                            </div>
                         </group>
 
                     </group>

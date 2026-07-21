@@ -40,6 +40,7 @@ dispositivos médicos y productos farmacéuticos.""",
         'wizard/amunet_generic_signature_wizard_views.xml',
         'wizard/amunet_lot_release_wizard_views.xml',
         'wizard/amunet_lot_extension_sign_wizard_views.xml',
+        'wizard/amunet_quality_anexo_wizard_views.xml',
 
         # Vistas de Modelos
         'views/amunet_quality_procedure_views.xml',
