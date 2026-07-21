@@ -2051,10 +2051,7 @@ class AmunetQualityCheck(models.Model):
         self.write({
             'sampling_confirmed': True,
             'sampling_move_id': sampling_move.id if sampling_move else False,
-            # Fecha de muestreo y fecha de análisis se estampan juntas al confirmar
-            # el muestreo — el análisis no puede ser anterior al muestreo.
             'sampling_date': fields.Datetime.now(),
-            'analysis_date': fields.Date.today(),
         })
 
         # FIX EPIC-031: Asegurar que los parámetros estén cargados con sus detalles
@@ -2408,7 +2405,10 @@ class AmunetQualityCheck(models.Model):
                     'Debe completar la Información Adicional antes de firmar como "Realizó":\n\n'
                     + '\n'.join([f'• {f}' for f in empty_fields])
                 )
-            record.write({'user_realized_id': self.env.user.id})
+            record.write({
+                'user_realized_id': self.env.user.id,
+                'analysis_date': fields.Date.today(),
+            })
 
             if not record.analysis_number:
                 analysis_number = record._generate_analysis_number()
