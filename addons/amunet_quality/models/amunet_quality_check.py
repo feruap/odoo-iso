@@ -120,7 +120,9 @@ class AmunetQualityCheck(models.Model):
 
     def action_open_anexo_wizard(self):
         self.ensure_one()
-        wizard = self.env['amunet.quality.anexo.wizard'].create({'check_id': self.id})
+        WizardModel = self.env['amunet.quality.anexo.wizard']
+        lineas = WizardModel._load_lines_from_check(self)
+        wizard = WizardModel.create({'check_id': self.id, 'line_ids': lineas})
         return {
             'type': 'ir.actions.act_window',
             'name': self.anexo_titulo or 'Datos del Anexo',
@@ -1980,6 +1982,7 @@ class AmunetQualityCheck(models.Model):
             'sampling_confirmed': True,
             'qty_sampling': 1,
             'state': 'in_progress',
+            'sampling_date': fields.Datetime.now(),
         })
         self._generate_test_lines()
         return True
@@ -2049,6 +2052,9 @@ class AmunetQualityCheck(models.Model):
         self.write({
             'sampling_confirmed': True,
             'sampling_move_id': sampling_move.id if sampling_move else False,
+            # La fecha y hora de muestreo se estampan automaticamente en el
+            # momento de confirmar el muestreo (no antes, no la captura el analista).
+            'sampling_date': fields.Datetime.now(),
         })
 
         # FIX EPIC-031: Asegurar que los parámetros estén cargados con sus detalles

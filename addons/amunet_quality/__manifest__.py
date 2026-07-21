@@ -17,6 +17,7 @@ dispositivos médicos y productos farmacéuticos.""",
         'uom',
         'mail',
         'amunet_lot',
+        'amunet_date_format',
     ],
     'data': [
         # Seguridad y Datos Maestros
