@@ -53,3 +53,9 @@ from . import amunet_quality_tecno_standalone
 
 # Extensión de caducidad por reanálisis
 from . import amunet_lot_extension
+
+# Inspección de Equipos Entrantes (ISO 13485 - Calidad)
+from . import amunet_equipment_inspection
+
+# Registro Unitario de Equipos en QC
+from . import amunet_quality_check_equipment_unit

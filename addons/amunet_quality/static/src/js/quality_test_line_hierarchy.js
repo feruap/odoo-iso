@@ -367,7 +367,14 @@ export class QualityTestLineRow extends Component {
 
     onBinaryOptionChange(ev) {
         const detailId = parseInt(ev.target.dataset.detailId);
-        this.onDetailChange(detailId, 'result_binary_option', ev.target.value);
+        const value = ev.target.value;
+        this.onDetailChange(detailId, 'result_binary_option', value);
+        if (value === 'na') {
+            const detail = this.details.find(d => d.id === detailId);
+            if (detail && !detail.result_additional_info) {
+                this.onDetailChange(detailId, 'result_additional_info', 'N.A.');
+            }
+        }
     }
 
     onNotesChange(ev) {

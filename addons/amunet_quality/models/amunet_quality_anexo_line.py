@@ -21,3 +21,4 @@ class AmunetQualityAnexoLine(models.Model):
     col4     = fields.Char(string='Col 4')
     col5     = fields.Char(string='Col 5')
     col6     = fields.Char(string='Col 6')
+    col7     = fields.Char(string='Col 7')

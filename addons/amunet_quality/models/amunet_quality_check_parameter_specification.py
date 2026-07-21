@@ -118,19 +118,19 @@ class AmunetQualityParameterSpecification(models.Model):
 
     nominal_value = fields.Float(
         string='Valor nominal',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Valor nominal/objetivo (ej: 60 mm)'
     )
 
     tolerance = fields.Float(
         string='Tolerancia (±)',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Tolerancia aplicada al valor nominal (ej: ±1 mm)'
     )
 
     min_value = fields.Float(
         string='Mínimo',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         compute='_compute_min_max',
         store=True,
         help='Valor mínimo aceptable (nominal - tolerancia)'
@@ -138,7 +138,7 @@ class AmunetQualityParameterSpecification(models.Model):
 
     max_value = fields.Float(
         string='Máximo',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         compute='_compute_min_max',
         store=True,
         help='Valor máximo aceptable (nominal + tolerancia)'
@@ -146,13 +146,13 @@ class AmunetQualityParameterSpecification(models.Model):
 
     min_value_manual = fields.Float(
         string='Mínimo manual',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Valor mínimo ingresado manualmente'
     )
 
     max_value_manual = fields.Float(
         string='Máximo manual',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Valor máximo ingresado manualmente'
     )
 

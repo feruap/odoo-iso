@@ -108,7 +108,7 @@ class AmunetQualityTestLineDetail(models.Model):
     # -- Numeric Range --
     result_numeric = fields.Float(
         string='Resultado (Numérico)',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Valor numérico medido'
     )
     
@@ -152,7 +152,7 @@ class AmunetQualityTestLineDetail(models.Model):
 
     result_conditional_value = fields.Float(
         string='Valor medido (condicional)',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Valor numérico medido para la opción seleccionada'
     )
     
@@ -197,6 +197,7 @@ class AmunetQualityTestLineDetail(models.Model):
     result_binary_option = fields.Selection([
         ('pass', 'Cumple'),
         ('fail', 'No Cumple'),
+        ('na', 'No aplica'),
     ], string='Resultado (binary con notas)')
 
     result_notes = fields.Text(
@@ -473,12 +474,12 @@ class AmunetQualityTestLineDetail(models.Model):
     # -- Numeric Range --
     min_value = fields.Float(
         string='Mínimo',
-        digits='Product Unit of Measure'
+        digits='Product Unit'
     )
 
     max_value = fields.Float(
         string='Máximo',
-        digits='Product Unit of Measure'
+        digits='Product Unit'
     )
 
     uom_id = fields.Many2one(

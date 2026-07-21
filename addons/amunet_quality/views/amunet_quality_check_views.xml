@@ -51,9 +51,14 @@
                             type="object" class="oe_highlight"
                             invisible="state != 'in_progress' or info_reviewed"/>
 
+                    <button name="action_iniciar_inspeccion_equipo" string="Iniciar inspección"
+                            type="object" class="oe_highlight"
+                            invisible="state not in ('draft','in_progress') or sampling_confirmed or not is_equipment"
+                            confirm="¿Confirmar inicio de inspección del equipo?"/>
+
                     <button name="action_confirm_sampling" string="Confirmar muestreo"
                             type="object" class="oe_highlight"
-                            invisible="state != 'in_progress' or not info_reviewed or sampling_confirmed"/>
+                            invisible="state != 'in_progress' or not info_reviewed or sampling_confirmed or is_equipment"/>
 
                     <button name="action_apply_sampling_plan" string="Aplicar plan de muestreo"
                             type="object"
@@ -84,13 +89,13 @@
                             string="Imprimir Reporte"
                             type="object"
                             class="btn-secondary"
-                            invisible="not analysis_number"/>
+                            invisible="state == 'draft'"/>
 
                     <button name="action_print_certificado_interno"
                             string="Imprimir Certificado Interno"
                             type="object"
                             class="btn-secondary"
-                            invisible="not analysis_number"/>
+                            invisible="state == 'draft'"/>
 
 
                     <button name="action_create_capa" string="🚨 Crear CAPA"
@@ -99,7 +104,7 @@
 
                     <button name="action_sign_realized" string="Firmar: Realizó" type="object" class="btn-primary"
                             invisible="not sampling_confirmed or user_realized_id or state == 'done'"
-                            groups="amunet_quality.group_quality_user"
+                            groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor"
                             confirm="¿Confirmar que Realizó el análisis?"/>
 
                     <button name="action_sign_verified" string="Firmar: Verificó" type="object" class="btn-primary"
@@ -189,6 +194,8 @@
                     <group invisible="not analysis_number">
                         <field name="analysis_number" readonly="1"/>
                         <field name="analysis_type" readonly="1"/>
+                        <field name="lot_amunet" invisible="not is_equipment"
+                               placeholder="Ej: VOR01072601"/>
                     </group>
 
                     <!-- Vista previa del folio (visible mientras no esté finalizado) -->
@@ -196,6 +203,8 @@
                         <field name="analysis_number_preview" readonly="1"
                                string="Vista previa del No. de análisis"
                                help="Formato estimado. 'NN' se sustituye por el consecutivo real al finalizar."/>
+                        <field name="lot_amunet" invisible="not is_equipment"
+                               placeholder="Ej: VOR01072601"/>
                     </group>
 
 
@@ -350,7 +359,7 @@
                     </group>
 
                     <!-- Tabla de Determinaciones -->
-                    <group colspan="4" col="1" invisible="not sampling_confirmed">
+                    <group colspan="4" col="1" invisible="not sampling_confirmed and not is_equipment">
                         <field name="test_line_ids" nolabel="1"
                                readonly="state == 'done'"
                                widget="quality_test_line_hierarchy"/>
@@ -435,7 +444,9 @@
                     <div class="o_horizontal_separator" invisible="not sampling_confirmed">Numeral 7: Anexos</div>
                     <hr invisible="not sampling_confirmed"/>
 
-                    <group invisible="not sampling_confirmed">
+                    <field name="is_material_con_anexo" invisible="1"/>
+                    <!-- Toggle solo visible para productos que NO son cartucho/hoja/gotero -->
+                    <group invisible="not sampling_confirmed or is_material_con_anexo">
                         <group colspan="4">
                             <field name="tiene_anexos" widget="boolean_toggle"
                                    string="Incluir Anexo en el Reporte"
@@ -443,119 +454,10 @@
                         </group>
                     </group>
 
-                    <!-- Contenido visible solo si tiene_anexos -->
-                    <group invisible="not tiene_anexos or not sampling_confirmed" colspan="4" col="1">
+                    <!-- Contenido: siempre visible para material_con_anexo; o si tiene_anexos está activado -->
+                    <group invisible="not (tiene_anexos or is_material_con_anexo) or not sampling_confirmed" colspan="4" col="1">
 
-                        <!-- ══════════════════════════════════════════════════════════════
-                             TABLA EDITABLE — espejo visual del reporte PDF
-                             ══════════════════════════════════════════════════════════════ -->
-                        <div style="width:100%; overflow-x:auto; margin-bottom:0px;">
-                            <table style="width:100%; border-collapse:collapse; font-family:Arial,sans-serif; font-size:10pt; table-layout:fixed;">
-                                <colgroup>
-                                    <col style="width:12%;"/>  <!-- # Muestra -->
-                                    <col style="width:14%;"/>  <!-- col1 -->
-                                    <col style="width:14%;"/>  <!-- col2 -->
-                                    <col style="width:14%;"/>  <!-- col3 -->
-                                    <col style="width:15%;"/>  <!-- col4 -->
-                                    <col style="width:15%;"/>  <!-- col5 -->
-                                    <col style="width:16%;"/>  <!-- col6 -->
-                                </colgroup>
-
-                                <!-- Fila 1 · Título (campo editable centrado) -->
-                                <tr>
-                                    <td colspan="7"
-                                        style="background:#D9D9D9; border:1.5px solid #1F4E79;
-                                               padding:4px 8px; text-align:center;">
-                                        <field name="anexo_titulo"
-                                               placeholder="ANEXO GENERAL"
-                                               nolabel="1"
-                                               readonly="state == 'done'"
-                                               style="font-weight:bold; font-size:13pt;
-                                                      text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      outline:none;"/>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 2 · Fecha (1 col) | valor (2 cols) | No. Análisis (1 col) | valor (3 cols) = 7 -->
-                                <tr>
-                                    <td style="background:#D9D9D9; border:1.5px solid #1F4E79;
-                                               padding:3px 6px; font-weight:bold; white-space:nowrap;
-                                               vertical-align:middle;">
-                                        Fecha:
-                                    </td>
-                                    <td colspan="2"
-                                        style="background:#fff; border:1.5px solid #1F4E79;
-                                               padding:3px 6px; vertical-align:middle;">
-                                        <field name="analysis_date" nolabel="1" readonly="1"
-                                               options="{'datepicker': {'warn_future': false}}"/>
-                                    </td>
-                                    <td style="background:#D9D9D9; border:1.5px solid #1F4E79;
-                                               padding:3px 6px; font-weight:bold; white-space:nowrap;
-                                               vertical-align:middle;">
-                                        No. Análisis:
-                                    </td>
-                                    <td colspan="3"
-                                        style="background:#fff; border:1.5px solid #1F4E79;
-                                               padding:3px 6px; vertical-align:middle;">
-                                        <field name="analysis_number" nolabel="1" readonly="1"
-                                               placeholder="(sin folio aún)"/>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 3 · Encabezados de columnas (editables) — 7 celdas = 7 cols -->
-                                <tr style="background:#D9D9D9; font-weight:bold; text-align:center;">
-                                    <td style="border:1.5px solid #1F4E79; padding:4px; vertical-align:middle;">
-                                        # Muestra
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col1_header" nolabel="1"
-                                               placeholder="Col 1" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col2_header" nolabel="1"
-                                               placeholder="Col 2" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col3_header" nolabel="1"
-                                               placeholder="Col 3" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col4_header" nolabel="1"
-                                               placeholder="Col 4" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col5_header" nolabel="1"
-                                               placeholder="Col 5" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                    <td style="border:1.5px solid #1F4E79; padding:2px;">
-                                        <field name="anexo_col6_header" nolabel="1"
-                                               placeholder="Col 6" readonly="state == 'done'"
-                                               style="text-align:center; width:100%;
-                                                      background:transparent; border:none;
-                                                      font-weight:bold;"/>
-                                    </td>
-                                </tr>
-
-                            </table>
-                        </div>
-
-                        <!-- Botón: captura del anexo vía wizard (evita pérdida de datos) -->
+                        <!-- Botón principal de captura -->
                         <div style="padding: 8px 0 12px 0;" invisible="state == 'done'">
                             <button string="✎  Capturar / Editar Datos del Anexo"
                                     type="object"
@@ -563,36 +465,13 @@
                                     class="btn btn-primary btn-lg"/>
                         </div>
 
-                        <!-- Grilla de datos (one2many) — sin header propio, usa la tabla de arriba -->
-                        <style>
-                            /* Ocultar encabezados nativos de Odoo */
-                            .o_anexo_nohdr .o_list_renderer thead { display: none !important; }
-                            /* Bordes azul marino en celdas de datos */
-                            .o_anexo_nohdr .o_list_renderer .o_data_row td {
-                                border: 1px solid #1F4E79 !important;
-                                padding: 3px 5px !important;
-                            }
-                            /* Forzar anchos de columnas para alinear con la tabla de encabezados */
-                            .o_anexo_nohdr .o_list_renderer td[name="muestra"] { width: 12% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col1"]    { width: 14% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col2"]    { width: 14% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col3"]    { width: 14% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col4"]    { width: 15% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col5"]    { width: 15% !important; }
-                            .o_anexo_nohdr .o_list_renderer td[name="col6"]    { width: 16% !important; }
-                            /* También en colgroup */
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(1) { width: 12% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(2) { width: 14% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(3) { width: 14% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(4) { width: 14% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(5) { width: 15% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(6) { width: 15% !important; }
-                            .o_anexo_nohdr .o_list_renderer colgroup col:nth-child(7) { width: 16% !important; }
-                        </style>
-                        <div class="o_anexo_nohdr">
-                            <field name="anexo_line_ids" nolabel="1"
-                                   readonly="state == 'done'">
-                                <list editable="bottom">
+                        <!-- Vista de solo lectura de las filas ya guardadas -->
+                        <div invisible="not anexo_line_ids">
+                            <div style="font-weight:bold; font-size:11pt; margin-bottom:4px; color:#1F4E79;">
+                                <field name="anexo_titulo" readonly="1" nolabel="1"/>
+                            </div>
+                            <field name="anexo_line_ids" nolabel="1" readonly="1">
+                                <list>
                                     <field name="muestra" string="# Muestra"/>
                                     <field name="col1"    string="Col 1"/>
                                     <field name="col2"    string="Col 2"/>
@@ -600,8 +479,14 @@
                                     <field name="col4"    string="Col 4"/>
                                     <field name="col5"    string="Col 5"/>
                                     <field name="col6"    string="Col 6"/>
+                                    <field name="col7"    string="Col 7"/>
                                 </list>
                             </field>
+                        </div>
+
+                        <div invisible="anexo_line_ids"
+                             style="color:#6c757d; font-style:italic; font-size:12px; padding:8px 0;">
+                            Aún no hay muestras capturadas. Usa el botón de arriba para ingresar los datos.
                         </div>
 
                         <!-- Fotografías -->
@@ -616,22 +501,89 @@
                                    readonly="state == 'done'"/>
                         </group>
 
-                        <!-- Botón de descarga -->
-                        <group colspan="4" col="1">
-                            <field name="puede_descargar_anexo" invisible="1"/>
-                            <div style="padding: 8px 0;">
-                                <button string="Descargar Anexo"
-                                        type="object"
-                                        name="action_download_anexo"
-                                        class="btn btn-primary"
-                                        invisible="not puede_descargar_anexo"/>
-                                <span invisible="puede_descargar_anexo"
-                                      style="color:#6c757d; font-size:12px; font-style:italic;">
-                                    Disponible después de la primera firma (Realizó)
-                                </span>
-                            </div>
-                        </group>
+                    </group>
 
+                    <!-- REGISTRO UNITARIO DE EQUIPOS -->
+                    <field name="is_equipment" invisible="1"/>
+                    <div class="o_horizontal_separator" invisible="not is_equipment">Registro de Unidades (Equipos)</div>
+                    <group invisible="not is_equipment">
+                        <group colspan="4" col="1">
+                            <div class="alert alert-info" role="alert"
+                                 invisible="equipment_unit_ids or state == 'done'">
+                                Registra cada equipo de este lote con su número de serie y resultado individual.
+                                Al finalizar el análisis, Karla y Verónica recibirán automáticamente esta lista.
+                            </div>
+                            <div invisible="not equipment_unit_ids" class="mb-2">
+                                <span class="badge bg-success me-2">Aprobados: <field name="equipment_approved_count" readonly="1" nolabel="1"/></span>
+                                <span class="badge bg-danger">Rechazados: <field name="equipment_rejected_count" readonly="1" nolabel="1"/></span>
+                            </div>
+                            <field name="is_termobloque" invisible="1"/>
+                            <field name="is_termometro_varilla" invisible="1"/>
+                            <field name="is_agitador" invisible="1"/>
+                            <field name="is_esterilizador" invisible="1"/>
+                            <field name="equipment_unit_ids" nolabel="1"
+                                   readonly="state == 'done'">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="serial_number" string="No. de serie"/>
+                                    <!-- Columnas genéricas (Vórtex, Soporte, Microscopio y otros) -->
+                                    <field name="result_apariencia" string="Apariencia"
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_agitador or parent.is_esterilizador"/>
+                                    <field name="result_funcionalidad" string="Funcionalidad"
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_agitador or parent.is_esterilizador"/>
+                                    <field name="result_dimensiones" string="Dimensiones"
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_agitador or parent.is_esterilizador" optional="show"/>
+                                    <!-- Columnas Agitador magnético con placa calefactora (EQAMC01) -->
+                                    <field name="result_apariencia" string="Apariencia"
+                                           column_invisible="not parent.is_agitador"/>
+                                    <field name="result_funcionalidad" string="Calentamiento"
+                                           column_invisible="not parent.is_agitador"/>
+                                    <field name="result_dimensiones" string="Agitación"
+                                           column_invisible="not parent.is_agitador"/>
+                                    <!-- Columnas Termómetro de varilla (EQTRV01) -->
+                                    <field name="result_apariencia" string="Apariencia"
+                                           column_invisible="not parent.is_termometro_varilla"/>
+                                    <field name="tiempo_alcanzar_temp" string="Tiempo (min) ≤5"
+                                           column_invisible="not parent.is_termometro_varilla"/>
+                                    <field name="temp_instrumento" string="Temp. instrumento (°C)"
+                                           column_invisible="not parent.is_termometro_varilla"/>
+                                    <field name="temp_referencia" string="Temp. referencia (°C)"
+                                           column_invisible="not parent.is_termometro_varilla"/>
+                                    <!-- Columnas Esterilizador/Autoclave (EQEPV01) -->
+                                    <field name="result_apariencia" string="Apariencia"
+                                           column_invisible="not parent.is_esterilizador"/>
+                                    <field name="tiempo_alcanzar_temp" string="Tiempo T° (min)"
+                                           column_invisible="not parent.is_esterilizador"/>
+                                    <field name="temp_instrumento" string="Temperatura alcanzada (°C)"
+                                           column_invisible="not parent.is_esterilizador"/>
+                                    <field name="result_funcionalidad" string="Mantiene presión"
+                                           column_invisible="not parent.is_esterilizador"/>
+                                    <!-- Columnas Termobloque (EQTER01 / EQTER02) -->
+                                    <field name="temp_termometro" string="Temp Termómetro (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_a" string="Pozo A (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_b" string="Pozo B (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_c" string="Pozo C (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_d" string="Pozo D (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="temp_pozo_e" string="Pozo E (°C)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="tiempo_alcanzar_temp" string="Tiempo (min)"
+                                           column_invisible="not parent.is_termobloque"/>
+                                    <field name="diam_grande" string="Diám. Grande"
+                                           column_invisible="not parent.is_termobloque" optional="show"/>
+                                    <field name="diam_chico" string="Diám. Chico"
+                                           column_invisible="not parent.is_termobloque" optional="show"/>
+                                    <field name="status" string="Estatus"
+                                           decoration-success="status == 'approved'"
+                                           decoration-danger="status == 'rejected'"/>
+                                    <field name="observations" string="Observaciones" optional="show"/>
+                                </list>
+                            </field>
+                        </group>
                     </group>
 
                     <!-- SEPARATOR FIRMAS -->
@@ -875,11 +827,19 @@
                         <page string="Selección" name="binary_selection"
                               invisible="evaluation_type != 'binary_selection'">
                             <group>
-                                <field name="binary_option_pass" invisible="1"/>
-                                <field name="binary_option_fail" invisible="1"/>
-                                <field name="result_selection" widget="radio"
-                                       options="{'horizontal': true}"/>
+                                <field name="binary_option_pass" readonly="1" string="Opción Cumple"/>
+                                <field name="binary_option_fail" readonly="1" string="Opción No cumple"/>
+                                <field name="result_selection" readonly="1" string="Resultado registrado"
+                                       invisible="not result_selection"/>
                             </group>
+                            <div class="d-flex gap-3 justify-content-center mt-3 mb-2">
+                                <button name="action_select_pass" type="object"
+                                        class="btn btn-success btn-lg"
+                                        string="✓ Cumple"/>
+                                <button name="action_select_fail" type="object"
+                                        class="btn btn-danger btn-lg"
+                                        string="✗ No cumple"/>
+                            </div>
                         </page>
 
                         <!-- Numeric Range -->

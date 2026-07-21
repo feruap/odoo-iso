@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vista Lista -->
+    <record id="view_equipment_inspection_tree" model="ir.ui.view">
+        <field name="name">amunet.equipment.inspection.tree</field>
+        <field name="model">amunet.equipment.inspection</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="analysis_number"/>
+                <field name="equipment_type"/>
+                <field name="equipment_model"/>
+                <field name="lot_amunet"/>
+                <field name="entry_date"/>
+                <field name="analysis_date"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista Formulario -->
+    <record id="view_equipment_inspection_form" model="ir.ui.view">
+        <field name="name">amunet.equipment.inspection.form</field>
+        <field name="model">amunet.equipment.inspection</field>
+        <field name="arch" type="xml">
+            <form string="Inspección de Equipos">
+                <header>
+                    <button name="action_start" string="Iniciar" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_sign_realized" string="Firmar: Realizó" type="object"
+                            class="btn-secondary"
+                            invisible="state != 'in_progress' or user_realized_id"/>
+                    <button name="action_sign_verified" string="Firmar: Verificó" type="object"
+                            class="btn-secondary"
+                            invisible="state != 'in_progress' or not user_realized_id or user_verified_id"/>
+                    <button name="action_finalize" string="Finalizar" type="object"
+                            class="btn-primary"
+                            invisible="state != 'in_progress' or not user_realized_id or not user_verified_id"/>
+                    <button name="action_print_approved" string="Imprimir: Aprobados" type="object"
+                            class="btn-secondary" invisible="state != 'done'"/>
+                    <button name="action_print_rejected" string="Imprimir: Rechazados" type="object"
+                            class="btn-secondary"
+                            invisible="state != 'done' or rejected_count == 0"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,in_progress,done"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <h3 class="text-muted">
+                            <field name="analysis_number_preview" readonly="1"/>
+                        </h3>
+                    </div>
+
+                    <group>
+                        <group string="1. Datos del equipo">
+                            <field name="equipment_type" readonly="state == 'done'"/>
+                            <field name="equipment_model" readonly="state == 'done'"
+                                   placeholder="Ej: MB100, DB100"/>
+                            <field name="equipment_code" readonly="state == 'done'"
+                                   placeholder="Ej: EQTER01"/>
+                            <field name="quantity_received" readonly="state == 'done'"/>
+                        </group>
+                        <group string="2. Lotes y fechas">
+                            <field name="lot_amunet" readonly="state == 'done'"
+                                   placeholder="Ej: TER01032601"/>
+                            <field name="lot_approved" readonly="state == 'done'"
+                                   placeholder="Lote para los equipos aprobados"/>
+                            <field name="lot_rejected" readonly="state == 'done'"
+                                   invisible="rejected_count == 0"/>
+                            <field name="entry_date" readonly="state == 'done'"/>
+                            <field name="analysis_date" readonly="state == 'done'"/>
+                        </group>
+                    </group>
+
+                    <!-- Líneas de números de serie -->
+                    <notebook>
+                        <page string="Números de serie">
+                            <field name="line_ids" readonly="state == 'done'"
+                                   widget="one2many">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="serial_number"
+                                           placeholder="No. de serie o lote del fabricante"/>
+                                    <field name="status"
+                                           decoration-success="status == 'approved'"
+                                           decoration-danger="status == 'rejected'"/>
+                                    <field name="observations" optional="show"/>
+                                </list>
+                            </field>
+
+                            <!-- Resumen -->
+                            <group invisible="not line_ids">
+                                <group>
+                                    <field name="approved_count" string="Total aprobados"/>
+                                    <field name="rejected_count" string="Total rechazados"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Observaciones generales">
+                            <field name="notes" readonly="state == 'done'"
+                                   placeholder="Observaciones del lote completo..."/>
+                        </page>
+
+                        <page string="Firmas">
+                            <group>
+                                <group string="Realizó">
+                                    <field name="user_realized_id" readonly="1"/>
+                                    <field name="sign_realized_date" readonly="1"/>
+                                </group>
+                                <group string="Verificó">
+                                    <field name="user_verified_id" readonly="1"/>
+                                    <field name="sign_verified_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción de ventana -->
+    <record id="action_equipment_inspection" model="ir.actions.act_window">
+        <field name="name">Inspección de Equipos</field>
+        <field name="res_model">amunet.equipment.inspection</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registrar una nueva inspección de equipos
+            </p>
+            <p>
+                Aquí se registran los resultados de inspección de equipos
+                que llegan al almacén (termobloques, vórtex, micropipetas, etc.)
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -71,8 +71,13 @@
                         <div class="row mt32 mb32">
                             <div class="col-6">
                                 <strong>Producto:</strong> <span t-field="o.product_id.name"/><br/>
-                                <strong>Código:</strong> <span t-field="o.product_id.default_code"/><br/>
-                                <strong>Proveedor:</strong> <span t-field="o.partner_id.name"/>
+                                <t t-if="o.is_equipment">
+                                    <strong>Clave:</strong> <span t-field="o.product_id.default_code"/><br/>
+                                </t>
+                                <t t-else="">
+                                    <strong>Código:</strong> <span t-field="o.product_id.default_code"/><br/>
+                                    <strong>Proveedor:</strong> <span t-field="o.partner_id.name"/>
+                                </t>
                             </div>
                             <div class="col-6">
                                 <strong>Lote Amunet:</strong> <span t-field="o.lot_name_amunet"/><br/>
@@ -123,7 +128,12 @@
                                                     <t t-elif="detail.acceptance_criteria == 'high'">T&gt;R</t>
                                                     <t t-else=""><span t-field="detail.acceptance_criteria"/></t>
                                                 </td>
-                                                <td><span t-field="detail.result_display"/></td>
+                                                <td>
+                                                    <span t-field="detail.result_display"/>
+                                                    <t t-if="detail.evaluation_type == 'binary_with_notes' and detail.result_additional_info">
+                                                        — <span t-field="detail.result_additional_info"/>
+                                                    </t>
+                                                </td>
                                                 <td>
                                                     <span t-if="detail.verdict == 'pass'">CUMPLE</span>
                                                     <span t-if="detail.verdict == 'fail'">NO CUMPLE</span>
