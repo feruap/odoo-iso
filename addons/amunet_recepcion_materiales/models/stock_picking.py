@@ -156,6 +156,27 @@ class StockPicking(models.Model):
                     'proveedor distintos. Corrige y vuelve a validar.'
                 ) % '\n'.join(lineas))
 
+    def _amunet_check_datos_recepcion(self):
+        """Bloquea la validación si falta lote de proveedor, fecha de fabricación
+        o fecha de caducidad en cualquier línea de la recepción."""
+        for p in self.filtered(lambda x: x.picking_type_code == 'incoming'
+                               and x.state not in ('done', 'cancel')):
+            faltan = []
+            for move in p.move_ids.filtered(lambda m: m.state not in ('done', 'cancel')
+                                            and m.product_uom_qty > 0):
+                prod = move.product_id.display_name
+                if not move.amunet_supplier_lot:
+                    faltan.append(f'  • {prod}: falta Lote de proveedor')
+                if not move.amunet_mfg_date:
+                    faltan.append(f'  • {prod}: falta Fecha de fabricación')
+                if not move.amunet_exp_date:
+                    faltan.append(f'  • {prod}: falta Fecha de caducidad')
+            if faltan:
+                raise UserError(_(
+                    'Completa los datos de recepción antes de validar.\n\n%s\n\n'
+                    'Encuéntralos en las columnas de la tabla de operaciones.'
+                ) % '\n'.join(faltan))
+
     def _amunet_check_expiration_captured(self):
         """Aviso al validar una recepcion: los productos que usan caducidad DEBEN
         tener la caducidad real capturada. Bloquea si esta vacia o si quedo en la
@@ -225,6 +246,7 @@ class StockPicking(models.Model):
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
     def button_validate(self):
         self._amunet_check_duplicate_supplier_lots()
+        self._amunet_check_datos_recepcion()
         self._amunet_check_expiration_captured()
         self._amunet_check_inspeccion_entrada()
         if self.env.context.get('_skip_pin_wizard'):
