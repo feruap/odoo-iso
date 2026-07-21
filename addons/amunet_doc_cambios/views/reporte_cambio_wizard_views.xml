@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_reporte_cambio_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.reporte.cambio.wizard.form</field>
+        <field name="model">amunet.reporte.cambio.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Aviso de impacto">
+                <sheet>
+                    <div class="alert alert-info mb-3">
+                        <p class="mb-0">¿Notaste algo diferente a lo previsto en esta orden?
+                        Repórtalo aquí — Calidad recibirá una notificación para revisarlo.</p>
+                    </div>
+                    <group>
+                        <field name="production_id" invisible="1"/>
+                        <field name="descripcion"
+                               placeholder="Ej: se usó un cartucho diferente al especificado en la orden..."
+                               widget="text"/>
+                    </group>
+                    <group string="Parámetro afectado (opcional)">
+                        <field name="instruccion_vigente"
+                               placeholder="¿Qué decía el proceso original? Ej: 2 gotas de buffer"
+                               widget="text"/>
+                        <field name="instruccion_propuesta"
+                               placeholder="¿Qué se hizo en cambio? Ej: se usaron 3 gotas"
+                               widget="text"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_enviar" type="object"
+                            string="Enviar a Calidad" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
