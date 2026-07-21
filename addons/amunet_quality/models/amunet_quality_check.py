@@ -1914,7 +1914,6 @@ class AmunetQualityCheck(models.Model):
         self.write({
             'state': 'in_progress',
             'analysis_start_date': fields.Datetime.now(),
-            'analysis_date': fields.Date.today(),
         })
         self._generate_test_lines()
         self._post_employee_activity(
@@ -2052,9 +2051,10 @@ class AmunetQualityCheck(models.Model):
         self.write({
             'sampling_confirmed': True,
             'sampling_move_id': sampling_move.id if sampling_move else False,
-            # La fecha y hora de muestreo se estampan automaticamente en el
-            # momento de confirmar el muestreo (no antes, no la captura el analista).
+            # Fecha de muestreo y fecha de análisis se estampan juntas al confirmar
+            # el muestreo — el análisis no puede ser anterior al muestreo.
             'sampling_date': fields.Datetime.now(),
+            'analysis_date': fields.Date.today(),
         })
 
         # FIX EPIC-031: Asegurar que los parámetros estén cargados con sus detalles
