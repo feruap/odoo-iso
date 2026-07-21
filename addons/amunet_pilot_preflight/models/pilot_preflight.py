@@ -38,7 +38,7 @@ class AmunetPilotPreflight(models.Model):
     )
     product_qty = fields.Float(
         string='Cantidad piloto',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         default=70.0,
         required=True,
         tracking=True,
@@ -434,7 +434,13 @@ class AmunetPilotPreflight(models.Model):
                 # no, delega al centro de trabajo (comportamiento anterior).
                 etiqueta = operation.name or (wc.code or wc.name)
                 try:
-                    operation._amunet_check_operation_equipment()
+                    # Equipo por ACTIVIDAD si el modulo lo define (amunet_process_
+                    # inspection); si no, se valida por CENTRO DE TRABAJO (comporta-
+                    # miento anterior). Defensivo para entornos sin ese modulo.
+                    if hasattr(operation, '_amunet_check_operation_equipment'):
+                        operation._amunet_check_operation_equipment()
+                    elif operation.workcenter_id:
+                        operation.workcenter_id._amunet_check_equipment_calibration()
                     rec._add_line(
                         'equipment',
                         'Equipo/metrologia: %s' % etiqueta,
