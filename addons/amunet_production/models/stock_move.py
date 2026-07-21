@@ -8,6 +8,26 @@ class StockMove(models.Model):
     _inherit = 'stock.move'
 
     amunet_dissolution = fields.Boolean(string='Disolucion', default=False)
+    amunet_is_water_solvent = fields.Boolean(
+        string='Es agua (solvente)',
+        compute='_compute_amunet_is_water_solvent',
+        help='True si el componente es agua destilada/bi/tridestilada '
+             '(categoria Agua). El agua es el solvente, no se disuelve: no '
+             'pide bloque de disolucion ni cuenta para el candado del pH.')
+
+    @api.depends('product_id', 'product_id.categ_id')
+    def _compute_amunet_is_water_solvent(self):
+        for move in self:
+            move.amunet_is_water_solvent = move._amunet_is_water_solvent()
+
+    def _amunet_is_water_solvent(self):
+        """Agua como solvente: categoria hoja == 'Agua' (destilada, bi, tri).
+        NO incluye 'aguas' que son reactivos (peptonada, desionizada, HPLC),
+        que viven en la categoria Reactivo."""
+        self.ensure_one()
+        categ = self.product_id.categ_id
+        return bool(categ) and (categ.name or '').strip().lower() == 'agua'
+
     amunet_ph_adjustment = fields.Char(string='Ajuste de pH')
     amunet_lot_id = fields.Many2one('stock.lot', string='Lote')
 
@@ -68,13 +88,13 @@ class StockMove(models.Model):
     # amunet_material_request_line para mantener vocabulario.
     amunet_qty_supplied = fields.Float(
         string='Cantidad surtida',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         copy=False,
     )
 
     amunet_qty_used = fields.Float(
         string='Cantidad utilizada',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         copy=False,
         help='Cantidad real consumida en producción. Se captura durante la conciliación.',
     )
@@ -82,7 +102,7 @@ class StockMove(models.Model):
     amunet_qty_surplus = fields.Float(
         string='Sobrante',
         compute='_compute_amunet_qty_surplus',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         store=False,
     )
 
@@ -110,6 +130,7 @@ class StockMove(models.Model):
             lot = move.amunet_line_lot_id
             if not lot:
                 continue
+            move._amunet_check_preflight_gate()
             mls = move.move_line_ids
             if len(mls) > 1:
                 # dejar una sola linea (captura inline = 1 lote por componente)
@@ -199,7 +220,24 @@ class StockMove(models.Model):
             and (m.raw_material_production_id.route_type == 'solution'
                  or m.raw_material_production_id.amunet_is_solution_product))
 
+    def _amunet_check_preflight_gate(self):
+        """Soluciones: no permitir colocar lote (real) ni registrar pesado si el
+        preflight de la orden NO esta validado (aceptado). Aplica a TODAS las
+        soluciones. Se omite en su o contexto interno."""
+        if self.env.su or self.env.context.get('amunet_skip_preflight_gate'):
+            return
+        for move in self:
+            prod = move.raw_material_production_id
+            if (prod and prod.amunet_is_solution_product
+                    and not prod.amunet_preflight_accepted):
+                raise UserError(_(
+                    'Antes de colocar lotes o registrar pesados en %s, valida el '
+                    'preflight de la orden: usa "Validar piloto" y luego "Aceptar '
+                    'para piloto".') % (prod.name or ''))
+
     def write(self, vals):
+        if 'amunet_qty_used' in vals:
+            self._amunet_check_preflight_gate()
         # Candado: en soluciones con BoM no se puede CAMBIAR el reactivo de una
         # linea (product_id). Cantidades/lote/consumo si (otros candados).
         if ('product_id' in vals and not self.env.su
@@ -309,7 +347,7 @@ class StockMove(models.Model):
         help='Automatico: cantidad dentro del rango de pesaje y disolucion confirmada si aplica.'
     )
 
-    @api.depends('quantity', 'product_uom_qty', 'product_id', 'amunet_dissolution', 'raw_material_production_id.product_id.categ_id')
+    @api.depends('quantity', 'product_uom_qty', 'product_id', 'product_id.categ_id', 'amunet_dissolution', 'raw_material_production_id.product_id.categ_id')
     def _compute_amunet_is_valid(self):
         for move in self:
             qty_used = move.quantity
@@ -359,7 +397,8 @@ class StockMove(models.Model):
             else:
                 in_range = qty_used > 0
 
-            if not move.amunet_dissolution:
+            # El agua es el solvente: no se disuelve, no exige la marca.
+            if not move.amunet_dissolution and not move._amunet_is_water_solvent():
                 move.amunet_is_valid = False
                 continue
 

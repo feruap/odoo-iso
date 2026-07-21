@@ -170,7 +170,7 @@
                                force_save="1"/>
                         <field name="solution_expiration_date" invisible="1"/>
                     </div>
-                    <field name="quality_analysis_status" readonly="1" force_save="1" decoration-info="quality_analysis_status == 'requested'" decoration-success="quality_analysis_status == 'approved'" decoration-danger="quality_analysis_status == 'rejected'"/>
+                    <field name="quality_analysis_status" readonly="1" force_save="1" invisible="amunet_es_desarrollo" decoration-info="quality_analysis_status == 'requested'" decoration-success="quality_analysis_status == 'approved'" decoration-danger="quality_analysis_status == 'rejected'"/>
                     <field name="amunet_all_ingredients_valid" invisible="1"/>
                     <field name="amunet_sys_req_qc" invisible="1"/>
                 </xpath>
@@ -180,9 +180,23 @@
                     <attribute name="invisible">1</attribute>
                 </xpath>
 
-                <!-- Permitir fabricar productos con BoM: soluciones y pruebas rapidas ruta corta. -->
+                <!-- Permitir fabricar productos con BoM, y ademas la solucion de
+                     DESARROLLO (STDES01) que no lleva BoM (receta libre). -->
                 <xpath expr="//field[@name='product_id']" position="attributes">
-                    <attribute name="domain">[('bom_ids', '!=', False)]</attribute>
+                    <attribute name="domain">['|', ('bom_ids', '!=', False), ('amunet_es_desarrollo', '=', True)]</attribute>
+                </xpath>
+
+                <!-- En desarrollo el BoM nativo sobra: la receta se arma con
+                     "Tomar receta base de" + edicion libre. Se oculta el campo,
+                     su ETIQUETA (bom_label) y su contenedor (bom_div). -->
+                <xpath expr="//field[@name='bom_id']" position="attributes">
+                    <attribute name="invisible">amunet_es_desarrollo</attribute>
+                </xpath>
+                <xpath expr="//label[@name='bom_label']" position="attributes">
+                    <attribute name="invisible">amunet_es_desarrollo</attribute>
+                </xpath>
+                <xpath expr="//div[@name='bom_div']" position="attributes">
+                    <attribute name="invisible">amunet_es_desarrollo</attribute>
                 </xpath>
 
                 <!-- Categoria del producto seleccionado (solo lectura) -->
@@ -190,8 +204,28 @@
                     <field name="amunet_product_categ_id" string="Categoria" readonly="1"/>
                     <field name="amunet_is_solution_product" invisible="1"/>
                     <field name="amunet_has_surtido_components" invisible="1"/>
-                    <field name="amunet_es_desarrollo" string="Es desarrollo"
-                           invisible="not amunet_is_solution_product"
+                    <!-- Oculto: "Es desarrollo" se activa solo al elegir el
+                         producto de desarrollo (STDES01). El campo sigue en la
+                         vista (invisible) porque otras condiciones dependen de el. -->
+                    <field name="amunet_es_desarrollo" invisible="1"/>
+                    <field name="amunet_desarrollo_nombre" string="Nombre de desarrollo"
+                           invisible="not amunet_es_desarrollo"
+                           readonly="state in ('done','cancel')"
+                           placeholder="Ej. Buffer de lisis experimental v2"/>
+                    <label for="amunet_receta_base_id" string="Tomar receta base de"
+                           invisible="not amunet_es_desarrollo"/>
+                    <div class="o_row" invisible="not amunet_es_desarrollo">
+                        <field name="amunet_receta_base_id" nolabel="1"
+                               readonly="state in ('done','cancel')"
+                               options="{'no_create': True}"
+                               domain="[('categ_id.complete_name', 'ilike', 'soluc'), ('bom_ids', '!=', False)]"
+                               placeholder="Elige una solución para copiar su receta"/>
+                        <button name="action_amunet_cargar_receta_base" type="object"
+                                string="Cargar receta base" class="btn-secondary"
+                                invisible="not amunet_receta_base_id or state in ('done','cancel')"/>
+                    </div>
+                    <field name="amunet_ph_final" string="pH final"
+                           invisible="not amunet_es_desarrollo"
                            readonly="state in ('done','cancel')"/>
                 </xpath>
                 <!-- Fecha programada: reemplazar campo nativo por display DD.MM.AA editable -->
@@ -231,6 +265,7 @@
                     -->
                     <field name="amunet_lotes_reales"
                         string="Lotes surtidos (reales)"
+                        column_invisible="parent.amunet_is_solution_product"
                         optional="show"/>
                     <!--
                         Cantidad surtida: editable solo por Almacen y solo
@@ -257,7 +292,7 @@
                          MISMA LINEA (no en Operaciones detalladas). Solo se muestra
                          en soluciones. -->
                     <field name="amunet_line_lot_id"
-                        string="Lote (real)"
+                        string="Lote"
                         domain="[('product_id', '=', product_id)]"
                         options="{'no_create': True, 'no_open': True}"
                         column_invisible="not parent.amunet_is_solution_product"

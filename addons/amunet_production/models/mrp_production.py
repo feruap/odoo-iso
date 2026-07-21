@@ -145,6 +145,24 @@ class MrpProduction(models.Model):
              'sin analisis de Calidad; el terminado entra a ARU/Desarrollo '
              '(segregado del stock de produccion). Requiere la supervision del '
              'jefe directo antes de producir.')
+    amunet_desarrollo_nombre = fields.Char(
+        string='Nombre de desarrollo',
+        copy=False,
+        help='Nombre/etiqueta de esta solucion de desarrollo, SOLO para esta '
+             'orden. No cambia el producto maestro; se registra como referencia '
+             'del lote producido.')
+    amunet_receta_base_id = fields.Many2one(
+        'product.product',
+        string='Tomar receta base de',
+        copy=False,
+        help='Solucion existente cuya receta (lista de materiales) se copia como '
+             'BASE a esta orden de desarrollo, para partir de ahi y ajustar. No '
+             'cambia el producto ni su BoM; solo llena los componentes de esta orden.')
+    amunet_ph_final = fields.Float(
+        string='pH final',
+        copy=False,
+        digits=(4, 2),
+        help='pH final obtenido de la solucion, capturado por quien la fabrica.')
 
     # Surtido a nivel MO: vinculos al workorder de Surtido (AMP) para
     # exponer los botones del flujo (Iniciar/Confirmar/Recibir) en la
@@ -898,6 +916,44 @@ class MrpProduction(models.Model):
             else:
                 vals.pop('workorder_ids', None)
 
+    @api.onchange('product_id')
+    def _amunet_onchange_product_desarrollo(self):
+        # Al elegir un producto de desarrollo (STDES01), marcar la orden como
+        # desarrollo para que aparezcan sus campos y se active la receta libre.
+        if self.product_id and self.product_id.product_tmpl_id.amunet_es_desarrollo:
+            self.amunet_es_desarrollo = True
+
+    def action_amunet_cargar_receta_base(self):
+        """Copia la receta (BoM) de la solucion base elegida a los componentes de
+        esta orden de desarrollo, escalada a la cantidad de la orden. Es solo una
+        BASE de partida: despues se editan/agregan/quitan componentes libremente.
+        No cambia el producto ni su BoM."""
+        self.ensure_one()
+        if not self.amunet_es_desarrollo:
+            raise UserError(_('Esta funcion es solo para soluciones de desarrollo.'))
+        base = self.amunet_receta_base_id
+        if not base:
+            raise UserError(_('Elige en "Tomar receta base de" la solucion cuya '
+                              'receta quieres copiar como base.'))
+        bom = self.env['mrp.bom']._bom_find(base, company_id=self.company_id.id).get(base)
+        if not bom or not bom.bom_line_ids:
+            raise UserError(_('La solucion "%s" no tiene una receta (lista de '
+                              'materiales) para copiar.') % base.display_name)
+        factor = (self.product_qty / bom.product_qty) if bom.product_qty else 1.0
+        # Limpiar los componentes actuales en borrador antes de cargar la base.
+        self.move_raw_ids.filtered(lambda m: m.state == 'draft').unlink()
+        vals_list = []
+        for bl in bom.bom_line_ids:
+            qty = bl.product_qty * factor
+            vals = self._get_move_raw_values(
+                bl.product_id, qty, bl.product_uom_id, bom_line=bl)
+            vals_list.append((0, 0, vals))
+        self.move_raw_ids = vals_list
+        self.message_post(body=_(
+            'Receta base copiada de %s (x%.4f de la cantidad). Ajusta los '
+            'componentes segun el desarrollo.') % (base.display_name, factor))
+        return True
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -909,6 +965,13 @@ class MrpProduction(models.Model):
                 product = self.env['product.product'].browse(vals['product_id']).exists()
                 if product and (product.amunet_req_quality_control or product.qc_required):
                     vals['quality_analysis_status'] = 'to_request'
+            # Solucion de DESARROLLO: si el producto esta marcado como de
+            # desarrollo, la orden hereda es_desarrollo automaticamente (receta
+            # ajustable, sin analisis de Calidad, ARU/Desarrollo, con supervision).
+            if vals.get('product_id') and 'amunet_es_desarrollo' not in vals:
+                prod_dev = self.env['product.product'].browse(vals['product_id']).exists()
+                if prod_dev and prod_dev.product_tmpl_id.amunet_es_desarrollo:
+                    vals['amunet_es_desarrollo'] = True
             self._amunet_complete_workorder_workcenters(vals)
             # Folio Amunet de la MO: si el producto tiene
             # mo_sequence_id (formato MMAA/NN/ABR), usar esa
@@ -1207,6 +1270,11 @@ class MrpProduction(models.Model):
                         'product_id': prod.product_id.id,
                         'company_id': prod.company_id.id,
                     }
+                    # Soluciones de desarrollo: el nombre de desarrollo se guarda
+                    # como referencia del lote (identifica el batch sin tocar el
+                    # producto maestro).
+                    if prod.amunet_es_desarrollo and prod.amunet_desarrollo_nombre:
+                        lot_vals['ref'] = prod.amunet_desarrollo_nombre
                     prod.lot_producing_ids = [Command.create(lot_vals)]
                     prod.solution_lot_id = lot_name
                     # El folio de la solucion coincide con el lote codificado.

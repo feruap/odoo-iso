@@ -258,8 +258,22 @@ class MrpWorkorder(models.Model):
         ):
             raise AccessError(_('No tiene permisos para operar ordenes de trabajo de produccion.'))
 
+    def _amunet_gate_preflight_solution(self):
+        """Soluciones: no permitir EMPEZAR a colocar lotes ni pesados si el
+        preflight de la orden no esta validado (aceptado). Aplica a TODAS las
+        soluciones (desarrollo o no)."""
+        for wo in self:
+            prod = wo.production_id
+            if prod and prod.amunet_is_solution_product and not prod.amunet_preflight_accepted:
+                raise UserError(_(
+                    'Antes de colocar lotes o registrar pesados, valida el preflight '
+                    'de la orden %s: usa "Validar piloto" y luego "Aceptar para '
+                    'piloto". No se puede iniciar el trabajo hasta que el preflight '
+                    'este validado.') % (prod.name or ''))
+
     def action_amunet_operator_start(self):
         self._check_amunet_operator_access()
+        self._amunet_gate_preflight_solution()
         for wo in self:
             if wo.state != 'ready':
                 raise UserError(_('Solo se puede iniciar una operacion en estado Por realizar.'))
@@ -349,6 +363,7 @@ class MrpWorkorder(models.Model):
         if not self.amunet_is_supply_workorder:
             raise UserError(_('Esta accion solo aplica al workorder de Surtido (AMP).'))
         self._amunet_check_warehouse_role()
+        self._amunet_gate_preflight_solution()
         if self.amunet_supply_state != 'pending':
             raise UserError(_(
                 'El surtido ya esta iniciado (estado actual: %s).') % self.amunet_supply_state)
