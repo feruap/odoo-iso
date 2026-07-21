@@ -574,7 +574,7 @@ class MrpWorkorder(models.Model):
             # metodo de la operacion delega al centro de trabajo (comportamiento
             # anterior). Sin operacion ligada, se valida por centro de trabajo.
             op = wo.operation_id
-            if op:
+            if op and hasattr(op, '_amunet_check_operation_equipment'):
                 res = op._amunet_check_operation_equipment() or {}
             else:
                 res = wc._amunet_check_equipment_calibration() or {}
