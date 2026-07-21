@@ -274,8 +274,8 @@
                             <field name="suggested_qty_sampling"
                                    readonly="1"/>
                             <field name="sampling_date"
-                                   readonly="sampling_confirmed"
-                                   required="info_reviewed"/>
+                                   readonly="1"
+                                   help="Se estampa automaticamente (fecha y hora) al confirmar el muestreo."/>
                             <field name="qty_sampling"
                                    readonly="sampling_confirmed"/>
                             <field name="sampling_uom_id"

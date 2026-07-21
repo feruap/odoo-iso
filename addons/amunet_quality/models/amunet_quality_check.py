@@ -1891,6 +1891,9 @@ class AmunetQualityCheck(models.Model):
         self.write({
             'sampling_confirmed': True,
             'sampling_move_id': sampling_move.id if sampling_move else False,
+            # La fecha y hora de muestreo se estampan automaticamente en el
+            # momento de confirmar el muestreo (no antes, no la captura el analista).
+            'sampling_date': fields.Datetime.now(),
         })
 
         # FIX EPIC-031: Asegurar que los parámetros estén cargados con sus detalles
