@@ -342,8 +342,8 @@ class StockLot(models.Model):
             blockers.append('El lote ya está liberado.')
         if not self.product_id:
             blockers.append('El lote no tiene producto asignado.')
-        if 'manufacturing_date' in self._fields and not self.manufacturing_date:
-            blockers.append('Falta la fecha de fabricación del lote.')
+        # La fecha de fabricacion NO se exige para liberar: no todos los
+        # productos la tienen (ej. hojas maestras compradas, reactivos).
 
         product_tmpl = self.product_id.product_tmpl_id if self.product_id else False
         if (
