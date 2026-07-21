@@ -28,6 +28,34 @@ class MrpProduction(models.Model):
     # Campos requeridos para Módulo de Soluciones
     quality_ph_initial = fields.Float(string='pH Inicial Objetivo', compute='_compute_quality_params', store=True, readonly=False)
     quality_ph_final = fields.Float(string='pH Final Obtenido')
+    amunet_all_dissolved = fields.Boolean(
+        string='Reactivos disueltos',
+        compute='_compute_amunet_all_dissolved',
+        help='Verdadero cuando TODOS los reactivos de la orden estan marcados '
+             'como disueltos. El pH final solo se puede capturar cuando esto es '
+             'verdadero.')
+
+    @api.depends('move_raw_ids.amunet_dissolution', 'move_raw_ids.state',
+                 'move_raw_ids.product_id.categ_id')
+    def _compute_amunet_all_dissolved(self):
+        for rec in self:
+            # El agua (solvente) no se disuelve: se excluye del candado.
+            moves = rec.move_raw_ids.filtered(
+                lambda m: m.state != 'cancel' and not m._amunet_is_water_solvent())
+            rec.amunet_all_dissolved = bool(moves) and all(
+                m.amunet_dissolution for m in moves)
+
+    amunet_has_surtido_components = fields.Boolean(
+        string='Tiene componentes de surtido',
+        compute='_compute_amunet_has_surtido_components',
+        help='Solo soluciones: True si algun componente es sub-solucion (requiere '
+             'surtido). Controla si se muestra la columna Cantidad surtida.')
+
+    @api.depends('move_raw_ids.amunet_needs_surtido')
+    def _compute_amunet_has_surtido_components(self):
+        for rec in self:
+            rec.amunet_has_surtido_components = any(
+                rec.move_raw_ids.mapped('amunet_needs_surtido'))
     solution_lot_id = fields.Char(string='Lote de produccion', copy=False, help="Lote asignado al producto final (interno)")
 
     amunet_scheduled_date_display = fields.Char(
@@ -69,6 +97,30 @@ class MrpProduction(models.Model):
         ('rejected', 'Rechazado')
     ], string='Integración de Calidad', default='none', tracking=True, compute='_compute_quality_params', store=True, readonly=False)
 
+    # ── Supervisión de elaboración (soluciones) ─────────────────────────────
+    # Al terminar de elaborar la solucion, el fabricante la envia a supervision
+    # de su JEFE DIRECTO (manager de RRHH), que firma con PIN. Sin esa firma no
+    # se puede solicitar analisis (Flujo A) ni producir (Flujo B).
+    amunet_supervision_state = fields.Selection([
+        ('none', 'Sin enviar'),
+        ('requested', 'Enviada a supervisión'),
+        ('done', 'Supervisada'),
+    ], string='Supervisión de elaboración', default='none', copy=False, tracking=True)
+    amunet_supervisor_id = fields.Many2one(
+        'res.users', string='Jefe que supervisa', readonly=True, copy=False)
+    amunet_supervised_by_id = fields.Many2one(
+        'res.users', string='Supervisado por', readonly=True, copy=False)
+    amunet_supervised_date = fields.Datetime(
+        string='Fecha de supervisión', readonly=True, copy=False)
+    amunet_is_supervisor = fields.Boolean(
+        string='Es supervisor actual', compute='_compute_amunet_is_supervisor')
+
+    @api.depends('amunet_supervisor_id')
+    def _compute_amunet_is_supervisor(self):
+        for mo in self:
+            mo.amunet_is_supervisor = bool(
+                mo.amunet_supervisor_id and mo.amunet_supervisor_id == self.env.user)
+
     amunet_all_ingredients_valid = fields.Boolean(
         compute='_compute_all_ingredients_valid',
         string='Todos los ingredientes validos'
@@ -86,6 +138,31 @@ class MrpProduction(models.Model):
         compute='_compute_product_categ',
         store=False,
     )
+    amunet_es_desarrollo = fields.Boolean(
+        string='Es desarrollo',
+        copy=False,
+        help='Solucion de DESARROLLO: sin receta justa (cantidades ajustables), '
+             'sin analisis de Calidad; el terminado entra a ARU/Desarrollo '
+             '(segregado del stock de produccion). Requiere la supervision del '
+             'jefe directo antes de producir.')
+    amunet_desarrollo_nombre = fields.Char(
+        string='Nombre de desarrollo',
+        copy=False,
+        help='Nombre/etiqueta de esta solucion de desarrollo, SOLO para esta '
+             'orden. No cambia el producto maestro; se registra como referencia '
+             'del lote producido.')
+    amunet_receta_base_id = fields.Many2one(
+        'product.product',
+        string='Tomar receta base de',
+        copy=False,
+        help='Solucion existente cuya receta (lista de materiales) se copia como '
+             'BASE a esta orden de desarrollo, para partir de ahi y ajustar. No '
+             'cambia el producto ni su BoM; solo llena los componentes de esta orden.')
+    amunet_ph_final = fields.Float(
+        string='pH final',
+        copy=False,
+        digits=(4, 2),
+        help='pH final obtenido de la solucion, capturado por quien la fabrica.')
 
     # Surtido a nivel MO: vinculos al workorder de Surtido (AMP) para
     # exponer los botones del flujo (Iniciar/Confirmar/Recibir) en la
@@ -245,7 +322,7 @@ class MrpProduction(models.Model):
                             next_step = _('Confirmar devolucion recibida')
                         blocker = _('Conciliacion: %s') % reconciliation_labels.get(
                             mo.reconciliation_state, mo.reconciliation_state)
-                    elif mo.amunet_sys_req_qc and mo.quality_analysis_status != 'approved':
+                    elif mo.amunet_sys_req_qc and not mo.amunet_es_desarrollo and mo.quality_analysis_status != 'approved':
                         if mo.quality_analysis_status in ('to_request', 'rejected'):
                             priority = 'ready'
                             owner = 'supervisor'
@@ -499,7 +576,7 @@ class MrpProduction(models.Model):
             else:
                 wos_done = True
             qc_ok = True
-            if rec.amunet_sys_req_qc:
+            if rec.amunet_sys_req_qc and not rec.amunet_es_desarrollo:
                 qc_ok = rec.quality_analysis_status == 'approved'
             # Gate de conciliación: si hay material surtido, debe estar conciliado.
             has_supply = any(
@@ -518,6 +595,26 @@ class MrpProduction(models.Model):
             rec.amunet_is_solution_product = 'solucion' in category_name.lower()
 
     @api.depends('product_id', 'date_start')
+    def _amunet_compute_expiration(self, product, base_date):
+        """Caducidad = base_date + duracion del producto RESPETANDO su unidad
+        (dias/meses/años), con fecha dia-precisa. Default 24 meses si no hay
+        duracion o no se puede parsear."""
+        from dateutil.relativedelta import relativedelta
+        txt = (product.amunet_expiration_text or '').lower()
+        try:
+            val = float(''.join(c for c in txt if c.isdigit() or c == '.'))
+        except Exception:
+            val = None
+        if not val:
+            return base_date + relativedelta(months=24)
+        if 'año' in txt or 'ano' in txt:
+            return base_date + relativedelta(months=int(round(val * 12)))
+        if 'mes' in txt:
+            return base_date + relativedelta(months=int(round(val)))
+        if 'dia' in txt or 'día' in txt:
+            return base_date + relativedelta(days=int(round(val)))
+        return base_date + relativedelta(months=24)
+
     def _compute_quality_params(self):
         for rec in self:
             if not rec.product_id:
@@ -537,45 +634,40 @@ class MrpProduction(models.Model):
             else:
                 rec.quality_analysis_status = 'none'
 
-            # Calculo de caducidad en formato Amunet "YYYY-MM":
-            # 1. Si el producto define duracion (amunet_expiration_text
-            #    del template, ej. "24 meses" o "2 años"), se usa esa.
-            # 2. Si NO define duracion, default Amunet = 2 anos (24 meses).
-            # El campo en la MO sigue editable manualmente para
-            # excepciones.
-            from datetime import timedelta
-            from dateutil.relativedelta import relativedelta
-            DEFAULT_MONTHS = 24  # 2 anos
-            base_text = product.amunet_expiration_text or ''
-            txt = base_text.lower()
-            months_to_add = DEFAULT_MONTHS
-            try:
-                val = float(
-                    ''.join(c for c in txt if c.isdigit() or c == '.'))
-                if 'año' in txt or 'ano' in txt:
-                    months_to_add = int(val * 12)
-                elif 'mes' in txt:
-                    months_to_add = int(val)
-                elif 'dia' in txt or 'día' in txt:
-                    months_to_add = int(val / 30) or DEFAULT_MONTHS
-            except Exception:
-                # texto del producto no parseable -> usar default 24 meses
-                pass
-
+            # Caducidad = fecha de FABRICACION (date_start) + duracion del
+            # producto, RESPETANDO la unidad real (dias/meses/años), con fecha
+            # dia-precisa. Antes se convertia todo a meses y los "N dias" (<30)
+            # caian al default de 24 meses (bug). El texto de soluciones se
+            # muestra en DD.MM.YY; el resto conserva YYYY-MM.
             base_date = rec.date_start or fields.Datetime.now()
-            expiration = base_date + relativedelta(months=months_to_add)
+            expiration = rec._amunet_compute_expiration(product, base_date)
             rec.solution_expiration_date = expiration
-            # Formato exacto pedido por el operador: YYYY-MM
-            rec.amunet_expiration_text = expiration.strftime('%Y-%m')
+            if expiration:
+                if rec.amunet_is_solution_product:
+                    rec.amunet_expiration_text = expiration.strftime('%d.%m.%y')
+                else:
+                    rec.amunet_expiration_text = expiration.strftime('%Y-%m')
+            else:
+                rec.amunet_expiration_text = False
 
     @api.constrains('amunet_expiration_text')
     def _check_expiration_text_format(self):
-        """Valida el formato YYYY-MM cuando el usuario edita manualmente."""
+        """Valida el formato al editar manualmente: soluciones DD.MM.YY
+        (ej. 28.05.26); el resto YYYY-MM (ej. 2026-05)."""
         import re
-        pattern = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
+        pat_sol = re.compile(r'^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.\d{2}$')
+        pat_gen = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
         for rec in self:
-            if rec.amunet_expiration_text and not pattern.match(
-                    rec.amunet_expiration_text):
+            if not rec.amunet_expiration_text:
+                continue
+            if rec.amunet_is_solution_product:
+                if not pat_sol.match(rec.amunet_expiration_text):
+                    from odoo.exceptions import ValidationError
+                    raise ValidationError(_(
+                        'El formato de caducidad de soluciones debe ser '
+                        'DD.MM.YY (ejemplo: 28.05.26). Recibido: "%s"'
+                    ) % rec.amunet_expiration_text)
+            elif not pat_gen.match(rec.amunet_expiration_text):
                 from odoo.exceptions import ValidationError
                 raise ValidationError(_(
                     'El formato de caducidad debe ser YYYY-MM '
@@ -605,20 +697,19 @@ class MrpProduction(models.Model):
             if bom:
                 self.bom_id = bom
 
-        self.amunet_expiration_text = product.amunet_expiration_text
         self.quality_ph_initial = product.amunet_initial_ph
 
-        days_to_add = 0
-        if product.amunet_expiration_text:
-            txt = product.amunet_expiration_text.lower()
-            try:
-                val = float(''.join(c for c in txt if c.isdigit() or c == '.'))
-                if 'mes' in txt: days_to_add = val * 30
-                elif 'año' in txt or 'ano' in txt: days_to_add = val * 365
-                elif 'dia' in txt or 'día' in txt: days_to_add = val
-            except:
-                pass
-        self.solution_expiration_date = fields.Datetime.now() + timedelta(days=days_to_add) if days_to_add > 0 else False
+        # Vista previa en vivo alineada al calculo almacenado (mismo helper):
+        # caducidad = fecha de fabricacion + duracion, respetando la unidad.
+        base_date = self.date_start or fields.Datetime.now()
+        expiration = self._amunet_compute_expiration(product, base_date)
+        self.solution_expiration_date = expiration
+        if expiration:
+            self.amunet_expiration_text = (
+                expiration.strftime('%d.%m.%y') if self.amunet_is_solution_product
+                else expiration.strftime('%Y-%m'))
+        else:
+            self.amunet_expiration_text = False
 
     @api.onchange('product_id', 'product_qty', 'product_uom_id')
     def _onchange_amunet_product_setup(self):
@@ -825,6 +916,44 @@ class MrpProduction(models.Model):
             else:
                 vals.pop('workorder_ids', None)
 
+    @api.onchange('product_id')
+    def _amunet_onchange_product_desarrollo(self):
+        # Al elegir un producto de desarrollo (STDES01), marcar la orden como
+        # desarrollo para que aparezcan sus campos y se active la receta libre.
+        if self.product_id and self.product_id.product_tmpl_id.amunet_es_desarrollo:
+            self.amunet_es_desarrollo = True
+
+    def action_amunet_cargar_receta_base(self):
+        """Copia la receta (BoM) de la solucion base elegida a los componentes de
+        esta orden de desarrollo, escalada a la cantidad de la orden. Es solo una
+        BASE de partida: despues se editan/agregan/quitan componentes libremente.
+        No cambia el producto ni su BoM."""
+        self.ensure_one()
+        if not self.amunet_es_desarrollo:
+            raise UserError(_('Esta funcion es solo para soluciones de desarrollo.'))
+        base = self.amunet_receta_base_id
+        if not base:
+            raise UserError(_('Elige en "Tomar receta base de" la solucion cuya '
+                              'receta quieres copiar como base.'))
+        bom = self.env['mrp.bom']._bom_find(base, company_id=self.company_id.id).get(base)
+        if not bom or not bom.bom_line_ids:
+            raise UserError(_('La solucion "%s" no tiene una receta (lista de '
+                              'materiales) para copiar.') % base.display_name)
+        factor = (self.product_qty / bom.product_qty) if bom.product_qty else 1.0
+        # Limpiar los componentes actuales en borrador antes de cargar la base.
+        self.move_raw_ids.filtered(lambda m: m.state == 'draft').unlink()
+        vals_list = []
+        for bl in bom.bom_line_ids:
+            qty = bl.product_qty * factor
+            vals = self._get_move_raw_values(
+                bl.product_id, qty, bl.product_uom_id, bom_line=bl)
+            vals_list.append((0, 0, vals))
+        self.move_raw_ids = vals_list
+        self.message_post(body=_(
+            'Receta base copiada de %s (x%.4f de la cantidad). Ajusta los '
+            'componentes segun el desarrollo.') % (base.display_name, factor))
+        return True
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -836,6 +965,13 @@ class MrpProduction(models.Model):
                 product = self.env['product.product'].browse(vals['product_id']).exists()
                 if product and (product.amunet_req_quality_control or product.qc_required):
                     vals['quality_analysis_status'] = 'to_request'
+            # Solucion de DESARROLLO: si el producto esta marcado como de
+            # desarrollo, la orden hereda es_desarrollo automaticamente (receta
+            # ajustable, sin analisis de Calidad, ARU/Desarrollo, con supervision).
+            if vals.get('product_id') and 'amunet_es_desarrollo' not in vals:
+                prod_dev = self.env['product.product'].browse(vals['product_id']).exists()
+                if prod_dev and prod_dev.product_tmpl_id.amunet_es_desarrollo:
+                    vals['amunet_es_desarrollo'] = True
             self._amunet_complete_workorder_workcenters(vals)
             # Folio Amunet de la MO: si el producto tiene
             # mo_sequence_id (formato MMAA/NN/ABR), usar esa
@@ -857,13 +993,10 @@ class MrpProduction(models.Model):
         # poblados desde el inicio.
         productions._compute_quality_params()
         productions._auto_generate_lot_draft()
-        # SOLUCIONES: el folio de la orden = numero codificado DDMMYY-NN (igual
-        # que el lote), en lugar de la secuencia generica del picking_type
-        # (AMP/MO/xxxxx). En borrador es una vista previa; se finaliza al
-        # confirmar (ver action_confirm). PNOGE-014.
-        for prod in productions:
-            if prod.amunet_is_solution_product and prod.solution_lot_id:
-                prod.name = prod.solution_lot_id
+        # SOLUCIONES: el folio codificado DDMMYY-NN NO se asigna en borrador (asi
+        # dos borradores del mismo dia no comparten folio ni chocan). El borrador
+        # conserva su nombre generico; el folio codificado se asigna al CONFIRMAR
+        # (ver action_confirm), donde ya es unico. PNOGE-014.
         return productions
 
     # Campos de "informacion general" de la orden que NO se pueden
@@ -1137,6 +1270,11 @@ class MrpProduction(models.Model):
                         'product_id': prod.product_id.id,
                         'company_id': prod.company_id.id,
                     }
+                    # Soluciones de desarrollo: el nombre de desarrollo se guarda
+                    # como referencia del lote (identifica el batch sin tocar el
+                    # producto maestro).
+                    if prod.amunet_es_desarrollo and prod.amunet_desarrollo_nombre:
+                        lot_vals['ref'] = prod.amunet_desarrollo_nombre
                     prod.lot_producing_ids = [Command.create(lot_vals)]
                     prod.solution_lot_id = lot_name
                     # El folio de la solucion coincide con el lote codificado.
@@ -1145,11 +1283,68 @@ class MrpProduction(models.Model):
                 except Exception:
                     pass
         res = super().action_confirm()
+        # Ruteo del terminado de SOLUCIONES segun requieran analisis o no.
+        self._amunet_route_solution_finished()
+        # Surtido DENTRO de la orden solo si la solucion lleva sub-soluciones.
+        self._amunet_create_solution_supply_workorder()
         # Notificar a almacen que hay una MO pendiente de surtir.
         # Reutiliza el patron de amunet_material_request._notify_warehouse_pending.
         for prod in self:
             prod._amunet_notify_warehouse_pending_supply()
         return res
+
+    def _amunet_route_solution_finished(self):
+        """Ruta del terminado de SOLUCIONES:
+        - SIN analisis (amunet_req_quality_control=False): -> ARU/Stock, disponible
+          para hacer/ajustar otras soluciones.
+        - CON analisis: -> Control de calidad (custodia mientras Calidad analiza).
+          Al aprobar, la maquinaria QC lo entrega a existencias validado por
+          Almacen (recepcion) y merma el muestreo.
+        - DESARROLLO (amunet_es_desarrollo): -> ARU/Desarrollo (segregado, sin
+          analisis), sin importar el flag de QC del producto.
+        Kits y otros productos no se tocan."""
+        aru = self.env['stock.warehouse'].sudo().search([('code', '=', 'ARU')], limit=1)
+        aru_stock = aru.lot_stock_id if aru else False
+        qc_loc = self.env['stock.location'].sudo().search(
+            [('complete_name', '=', 'AMP/Control de calidad')], limit=1)
+        aru_dev = self.env['stock.location'].sudo().search(
+            [('complete_name', '=', 'ARU/Desarrollo')], limit=1)
+        for mo in self.filtered(lambda m: m.amunet_is_solution_product):
+            if mo.amunet_es_desarrollo:
+                dest = aru_dev
+            else:
+                req_qc = mo.product_id.product_tmpl_id.amunet_req_quality_control
+                dest = qc_loc if req_qc else aru_stock
+            if not dest:
+                continue
+            mo.location_dest_id = dest.id
+            moves = mo.move_finished_ids.filtered(
+                lambda mv: mv.state not in ('done', 'cancel'))
+            if moves:
+                moves.write({'location_dest_id': dest.id})
+
+    def _amunet_create_solution_supply_workorder(self):
+        """Surtido DENTRO de la orden de SOLUCION: solo cuando la solucion lleva
+        componentes sub-solucion (needs_surtido=True, ej. una 'Solucion de
+        trabajo' que Almacen tiene en existencia). Crea un workorder de Surtido
+        (centro de trabajo AMP) para que Almacen la surta con Iniciar/Confirmar/
+        Recibir. Los reactivos vienen de ARU y NO se surten aqui. Si la solucion
+        no lleva sub-soluciones, no se crea nada."""
+        amp = self.env['mrp.workcenter'].sudo().search([('code', '=', 'AMP')], limit=1)
+        if not amp:
+            return
+        for mo in self.filtered(lambda m: m.amunet_is_solution_product):
+            if mo.amunet_supply_workorder_id:
+                continue
+            needs = mo.move_raw_ids.filtered(
+                lambda mv: mv.amunet_needs_surtido and mv.state != 'cancel')
+            if not needs:
+                continue
+            self.env['mrp.workorder'].sudo().create({
+                'name': _('Surtido de materiales - %s') % (mo.product_id.name or ''),
+                'production_id': mo.id,
+                'workcenter_id': amp.id,
+            })
 
     def _amunet_notify_warehouse_pending_supply(self):
         """Crea actividades para los almacenistas avisando que hay una
@@ -1320,9 +1515,83 @@ class MrpProduction(models.Model):
             }
         return super()._prepare_stock_lot_values()
 
+    # ── Supervisión de elaboración ──────────────────────────────────────────
+    def _amunet_get_direct_manager_user(self):
+        """Usuario del JEFE DIRECTO (manager de RRHH) de quien elabora la orden."""
+        self.ensure_one()
+        Emp = self.env['hr.employee'].sudo()
+        emp = Emp.search([('user_id', '=', self.env.user.id)], limit=1)
+        if not emp and self.create_uid:
+            emp = Emp.search([('user_id', '=', self.create_uid.id)], limit=1)
+        mgr = emp.parent_id if emp else False
+        return mgr.user_id if (mgr and mgr.user_id) else False
+
+    def action_amunet_request_supervision(self):
+        """El fabricante envia la solucion elaborada a supervision de su jefe
+        directo. Crea una actividad al jefe y deja la orden 'Enviada a
+        supervision'. Sin la firma del jefe no se puede solicitar analisis ni
+        producir."""
+        self.ensure_one()
+        if not self.amunet_is_solution_product:
+            raise UserError(_('La supervisión de elaboración solo aplica a soluciones.'))
+        if self.amunet_supervision_state == 'done':
+            raise UserError(_('Esta orden ya fue supervisada.'))
+        mgr = self._amunet_get_direct_manager_user()
+        if not mgr:
+            raise UserError(_(
+                'No se encontró el jefe directo de quien elabora. '
+                'Configura su Responsable en Recursos Humanos.'))
+        self.sudo().write({'amunet_supervision_state': 'requested', 'amunet_supervisor_id': mgr.id})
+        self.sudo().activity_schedule(
+            'mail.mail_activity_data_todo', user_id=mgr.id,
+            summary=_('Supervisar elaboración de solución %s') % self.name,
+            note=_('Revisa la elaboración de la solución %s y firma la '
+                   'supervisión (con PIN) antes de que continue.') % self.name)
+        self.sudo().message_post(body=_('Enviada a supervisión de <b>%s</b>.') % mgr.name)
+        return True
+
+    def action_amunet_do_supervision(self):
+        """El jefe directo abre la firma (PIN) para supervisar la elaboración."""
+        self.ensure_one()
+        if self.amunet_supervision_state != 'requested':
+            raise UserError(_('No hay supervisión pendiente en esta orden.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_signature_amunet_supervision',
+            _('Supervisión de elaboración'),
+            _('Firma del jefe directo que supervisa la elaboración de %s.') % self.name)
+
+    def _signature_amunet_supervision(self):
+        self.ensure_one()
+        self.sudo().write({
+            'amunet_supervision_state': 'done',
+            'amunet_supervised_by_id': self.env.user.id,
+            'amunet_supervised_date': fields.Datetime.now(),
+        })
+        # Cerrar la actividad de supervision pendiente.
+        acts = self.activity_ids.filtered(
+            lambda a: a.user_id == self.amunet_supervisor_id)
+        if acts:
+            acts.sudo().action_feedback(feedback=_('Elaboración supervisada.'))
+        self.sudo().message_post(
+            body=_('Elaboración supervisada por <b>%s</b>.') % self.env.user.name)
+        return True
+
+    def _amunet_signature_allowed_methods(self):
+        return {'_signature_amunet_supervision': _('Supervisión de elaboración')}
+
+    def _amunet_signature_required_procedures(self):
+        # La supervision de elaboracion no exige capacitacion en SOPs al jefe.
+        return self.env['amunet.quality.procedure']
+
     def action_request_analysis(self):
         """Valida estado/reactivos/checklist y abre el Wizard de análisis"""
         self.ensure_one()
+
+        # Gate de supervisión: sin la firma del jefe directo no se solicita analisis.
+        if self.amunet_is_solution_product and self.amunet_supervision_state != 'done':
+            raise UserError(_(
+                'Falta la SUPERVISIÓN del jefe directo antes de solicitar el '
+                'análisis. Usa "Enviar a supervisión" y espera la firma del jefe.'))
 
         if self.quality_analysis_status not in ('none', 'to_request', 'rejected'):
             raise UserError('El análisis de calidad ya fue solicitado o se encuentra aprobado.')
@@ -1369,6 +1638,13 @@ class MrpProduction(models.Model):
     def button_mark_done(self):
         """Bloqueo del flujo nativo de la orden de producción"""
         for record in self:
+            # Gate de supervisión: una SOLUCION no se puede producir sin la
+            # firma del jefe directo (para Flujo B sin analisis; en Flujo A la
+            # supervision ya se exigio antes de solicitar analisis).
+            if record.amunet_is_solution_product and record.amunet_supervision_state != 'done':
+                raise UserError(_(
+                    'Falta la SUPERVISIÓN del jefe directo antes de producir la '
+                    'solución. Usa "Enviar a supervisión" y espera la firma del jefe.'))
             # 0. Conciliación de materiales obligatoria si hay surtido registrado
             moves_with_supply = record.move_raw_ids.filtered(
                 lambda m: m.state != 'cancel' and (m.amunet_qty_supplied or 0) > 0
@@ -1402,8 +1678,8 @@ class MrpProduction(models.Model):
                 if missing:
                     raise UserError('ATENCIÓN: Faltan las siguientes actividades operativas por marcar en la Pestaña de Actividades:\n- ' + '\n- '.join(missing))
             
-            # 2. Validar Calidad (solo si el producto lo requiere)
-            if record.amunet_sys_req_qc and record.quality_analysis_status != 'approved':
+            # 2. Validar Calidad (solo si el producto lo requiere y NO es desarrollo)
+            if record.amunet_sys_req_qc and not record.amunet_es_desarrollo and record.quality_analysis_status != 'approved':
                 raise UserError('ATENCIÓN: Este producto requiere Análisis C.C. No puedes "Marcar como Hecho" hasta que el área de Calidad apruebe el análisis.')
                 
         return super(MrpProduction, self).button_mark_done()

@@ -27,7 +27,15 @@ class ProductTemplate(models.Model):
     amunet_ph_adj_range_text = fields.Char(string='Tolerancia Ajuste pH', default='± 0.05', help='Ejemplo: ± 0.05')
     amunet_req_aforar = fields.Boolean(string='Requiere Aforar', default=True)
     amunet_req_quality_control = fields.Boolean(string='Requiere Análisis C.C', default=True, help='Si se desmarca, control de calidad no bloqueará la producción de este producto.')
-    
+
+    # Producto generico de SOLUCION DE DESARROLLO. Si esta activo, toda orden de
+    # este producto es de desarrollo automaticamente: receta ajustable, sin
+    # analisis de Calidad, entra a ARU/Desarrollo y requiere supervision del
+    # jefe. Se usa UN solo producto generico (STDES01) para no dar de alta un
+    # producto por cada prueba; la trazabilidad se lleva por lote + nombre.
+    amunet_es_desarrollo = fields.Boolean(
+        string='Producto de desarrollo', default=False)
+
     # Parametros Adicionales extraidos del Excel
     amunet_solution_dependency_id = fields.Many2one('product.product', string='Solución Requerida Previamente', help='Si requiere que otra solución se prepare primero (para lanzar la advertencia).')
     amunet_initial_ph = fields.Float(string='pH Inicial', help='El pH por defecto esperado para la solución (ej. 7.4)')

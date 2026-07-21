@@ -116,6 +116,52 @@ class MrpWorkcenter(models.Model):
         for wc in self:
             wc.amunet_equipment_count = len(wc.amunet_equipment_ids)
 
+    def _amunet_calibration_problems_for(self, equipments, label):
+        """Devuelve la lista de problemas (estado no operativo / calibracion
+        vencida o ausente) de un CONJUNTO de equipos dado. Reutilizable por el
+        centro de trabajo y por la actividad (operacion). Respeta el periodo de
+        gracia global amunet.calibration.grace.deadline. NO levanta; devuelve
+        la lista para que el caller decida."""
+        today = fields.Date.context_today(self)
+        grace_param = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet.calibration.grace.deadline', default='')
+        try:
+            from datetime import date as _date
+            grace_date = _date.fromisoformat(grace_param) if grace_param else None
+        except ValueError:
+            grace_date = None
+        in_grace = grace_date is not None and today <= grace_date
+        problemas = []
+        for eq in equipments:
+            eq_state = eq.state if hasattr(eq, 'state') else 'active'
+            if eq_state != 'active':
+                state_label = dict(
+                    eq._fields['state'].selection).get(eq_state, eq_state)
+                problemas.append(
+                    ' - %s (%s) en %s: estado "%s" (no operativo)'
+                    % (eq.serial_number, eq.name, label, state_label))
+            cal = self.env['amunet.equipment.calibration'].search([
+                ('equipment_id', '=', eq.id),
+                ('state', '=', 'done'),
+                ('expiration_date', '>=', today),
+            ], limit=1)
+            if not cal:
+                if in_grace:
+                    continue
+                last = self.env['amunet.equipment.calibration'].search([
+                    ('equipment_id', '=', eq.id),
+                ], order='expiration_date desc', limit=1)
+                if last:
+                    problemas.append(
+                        ' - %s (%s) en %s: ultima calibracion vence %s (state=%s)'
+                        % (eq.serial_number, eq.name, label,
+                           last.expiration_date, last.state))
+                else:
+                    problemas.append(
+                        ' - %s (%s) en %s: sin calibracion registrada'
+                        % (eq.serial_number, eq.name, label))
+        return problemas
+
     def _amunet_check_equipment_calibration(self):
         """Valida que el WC pueda iniciar trabajo segun reglas Amunet:
 
@@ -123,24 +169,12 @@ class MrpWorkcenter(models.Model):
            es False -> bloquea (fail-closed, evita default permisivo).
         2. Si amunet_no_equipment_required es True -> permite y devuelve
            {'no_equipment_required': True} para que el caller registre log.
-        3. Para cada equipo vinculado:
-           a) state debe ser 'active' (no maintenance ni out_of_service).
-           b) Debe existir al menos una calibracion done con expiration_date
-              >= hoy.
+        3. Para cada equipo vinculado: estado operativo + calibracion vigente
+           (via _amunet_calibration_problems_for).
 
         Devuelve dict {'no_equipment_required': bool} si todo OK.
         Levanta UserError consolidando todos los problemas detectados.
         """
-        today = fields.Date.context_today(self)
-        grace_param = self.env['ir.config_parameter'].sudo().get_param(
-            'amunet.calibration.grace.deadline', default=''
-        )
-        try:
-            from datetime import date as _date
-            grace_date = _date.fromisoformat(grace_param) if grace_param else None
-        except ValueError:
-            grace_date = None
-        in_grace = grace_date is not None and today <= grace_date
         problemas = []
         any_skipped = False
 
@@ -182,43 +216,9 @@ class MrpWorkcenter(models.Model):
                 )
                 continue
 
-            for eq in wc.amunet_equipment_ids:
-                # (a) estado del equipo
-                eq_state = eq.state if hasattr(eq, 'state') else 'active'
-                if eq_state != 'active':
-                    state_label = dict(
-                        eq._fields['state'].selection
-                    ).get(eq_state, eq_state)
-                    problemas.append(
-                        ' - %s (%s) en %s: estado "%s" (no operativo)'
-                        % (eq.serial_number, eq.name, wc_label, state_label)
-                    )
-                    # No haga continue: tambien reporta cert si aplica
-                # (b) calibracion vigente
-                cal = self.env['amunet.equipment.calibration'].search([
-                    ('equipment_id', '=', eq.id),
-                    ('state', '=', 'done'),
-                    ('expiration_date', '>=', today),
-                ], limit=1)
-                if not cal:
-                    if in_grace:
-                        continue
-                    last = self.env['amunet.equipment.calibration'].search([
-                        ('equipment_id', '=', eq.id),
-                    ], order='expiration_date desc', limit=1)
-                    if last:
-                        problemas.append(
-                            ' - %s (%s) en %s: ultima calibracion vence %s '
-                            '(state=%s)' % (
-                                eq.serial_number, eq.name, wc_label,
-                                last.expiration_date, last.state,
-                            )
-                        )
-                    else:
-                        problemas.append(
-                            ' - %s (%s) en %s: sin calibracion registrada'
-                            % (eq.serial_number, eq.name, wc_label)
-                        )
+            problemas.extend(
+                self._amunet_calibration_problems_for(
+                    wc.amunet_equipment_ids, wc_label))
 
         if problemas:
             raise UserError(_(

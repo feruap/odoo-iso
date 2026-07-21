@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_category_form_aru_material_request" model="ir.ui.view">
+        <field name="name">product.category.form.aru.material.request</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Solicitud de material (Amunet)">
+                    <field name="amunet_route_to_aru"/>
+                    <div colspan="2" class="text-muted">
+                        Si esta activo, al surtir por Solicitud de Material un producto de esta
+                        categoria, el material se transfiere al Almacen de reactivos en uso (ARU).
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

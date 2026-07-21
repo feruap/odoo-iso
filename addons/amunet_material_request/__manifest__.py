@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Solicitudes de Material',
-    'version': '19.0.1.4.3',
+    'version': '19.0.1.5.1',
     'category': 'Inventory/Inventory',
     'summary': 'Solicitudes internas de material con trazabilidad de lotes',
     'description': """
@@ -33,6 +33,7 @@ Flujo:
         'security/ir_rule.xml',
         'data/ir_sequence_data.xml',
         'data/stock_location_data.xml',
+        'views/product_category_views.xml',
         'views/amunet_material_request_views.xml',
         'views/res_users_views.xml',
         'views/hr_department_views.xml',

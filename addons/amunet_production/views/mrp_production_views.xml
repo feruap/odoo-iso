@@ -19,7 +19,7 @@
                         de esta MO via wrappers de mrp.production.
                     -->
                     <button name="action_amunet_mo_start_supply" string="Iniciar Surtido" type="object" class="oe_highlight"
-                            invisible="state not in ('confirmed','progress','to_close') or not amunet_supply_workorder_id or amunet_supply_state != 'pending' or not is_planned"
+                            invisible="state not in ('confirmed','progress','to_close') or not amunet_supply_workorder_id or amunet_supply_state != 'pending' or (not is_planned and not amunet_is_solution_product)"
                             groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
                     <button name="action_amunet_mo_confirm_supply" string="Confirmar Surtido" type="object" class="oe_highlight"
                             invisible="not amunet_supply_workorder_id or amunet_supply_state != 'in_progress'"
@@ -34,8 +34,19 @@
                         producto requiere analisis de QC. Es el
                         momento de mandar muestra al laboratorio.
                     -->
+                    <field name="amunet_is_supervisor" invisible="1"/>
+                    <field name="amunet_supervision_state" widget="badge"
+                           invisible="not amunet_is_solution_product"
+                           decoration-warning="amunet_supervision_state == 'requested'"
+                           decoration-success="amunet_supervision_state == 'done'"/>
+                    <!-- Supervision del jefe directo antes de solicitar analisis / producir -->
+                    <button name="action_amunet_request_supervision" string="Enviar a supervisión" type="object" class="oe_highlight"
+                            invisible="not amunet_is_solution_product or amunet_supervision_state != 'none' or state not in ('confirmed','progress','to_close')"
+                            groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>
+                    <button name="action_amunet_do_supervision" string="Firmar supervisión" type="object" class="oe_highlight"
+                            invisible="not amunet_is_solution_product or amunet_supervision_state != 'requested' or not amunet_is_supervisor"/>
                     <button name="action_request_analysis" string="Solicitar análisis" type="object" class="oe_highlight"
-                            invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or quality_analysis_status in ('requested', 'approved')"
+                            invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or quality_analysis_status in ('requested', 'approved')"
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>
                     <button name="%(amunet_production.action_report_production_zebra_label)d" string="Imprimir Etiqueta" type="action" class="oe_highlight" invisible="not amunet_all_ingredients_valid or amunet_user_is_warehouse"/>
                     <!--
@@ -143,13 +154,15 @@
                     <div class="o_row" invisible="quality_ph_initial == 0.0">
                         Inicial: <field name="quality_ph_initial" readonly="1" force_save="1" style="width:50px"/>
                         | Rango: <field name="amunet_sys_ph_range" readonly="1"/>
-                        <!-- pH Final editable y visible solo cuando todos los ingredientes esten validados -->
-                        <span invisible="not amunet_all_ingredients_valid">
+                        <!-- pH Final: solo cuando TODOS los reactivos estan marcados
+                             como disueltos (regla de Fernando). -->
+                        <field name="amunet_all_dissolved" invisible="1"/>
+                        <span invisible="not amunet_all_dissolved">
                             | Final: <field name="quality_ph_final" readonly="0"/>
                         </span>
                     </div>
 
-                    <label for="amunet_expiration_text" string="Caducidad (YYYY-MM)"/>
+                    <label for="amunet_expiration_text" string="Caducidad"/>
                     <div class="o_row">
                         <field name="amunet_expiration_text"
                                placeholder="2026-05"
@@ -157,7 +170,7 @@
                                force_save="1"/>
                         <field name="solution_expiration_date" invisible="1"/>
                     </div>
-                    <field name="quality_analysis_status" readonly="1" force_save="1" decoration-info="quality_analysis_status == 'requested'" decoration-success="quality_analysis_status == 'approved'" decoration-danger="quality_analysis_status == 'rejected'"/>
+                    <field name="quality_analysis_status" readonly="1" force_save="1" invisible="amunet_es_desarrollo" decoration-info="quality_analysis_status == 'requested'" decoration-success="quality_analysis_status == 'approved'" decoration-danger="quality_analysis_status == 'rejected'"/>
                     <field name="amunet_all_ingredients_valid" invisible="1"/>
                     <field name="amunet_sys_req_qc" invisible="1"/>
                 </xpath>
@@ -167,15 +180,53 @@
                     <attribute name="invisible">1</attribute>
                 </xpath>
 
-                <!-- Permitir fabricar productos con BoM: soluciones y pruebas rapidas ruta corta. -->
+                <!-- Permitir fabricar productos con BoM, y ademas la solucion de
+                     DESARROLLO (STDES01) que no lleva BoM (receta libre). -->
                 <xpath expr="//field[@name='product_id']" position="attributes">
-                    <attribute name="domain">[('bom_ids', '!=', False)]</attribute>
+                    <attribute name="domain">['|', ('bom_ids', '!=', False), ('amunet_es_desarrollo', '=', True)]</attribute>
+                </xpath>
+
+                <!-- En desarrollo el BoM nativo sobra: la receta se arma con
+                     "Tomar receta base de" + edicion libre. Se oculta el campo,
+                     su ETIQUETA (bom_label) y su contenedor (bom_div). -->
+                <xpath expr="//field[@name='bom_id']" position="attributes">
+                    <attribute name="invisible">amunet_es_desarrollo</attribute>
+                </xpath>
+                <xpath expr="//label[@name='bom_label']" position="attributes">
+                    <attribute name="invisible">amunet_es_desarrollo</attribute>
+                </xpath>
+                <xpath expr="//div[@name='bom_div']" position="attributes">
+                    <attribute name="invisible">amunet_es_desarrollo</attribute>
                 </xpath>
 
                 <!-- Categoria del producto seleccionado (solo lectura) -->
                 <xpath expr="//field[@name='product_id']" position="after">
                     <field name="amunet_product_categ_id" string="Categoria" readonly="1"/>
                     <field name="amunet_is_solution_product" invisible="1"/>
+                    <field name="amunet_has_surtido_components" invisible="1"/>
+                    <!-- Oculto: "Es desarrollo" se activa solo al elegir el
+                         producto de desarrollo (STDES01). El campo sigue en la
+                         vista (invisible) porque otras condiciones dependen de el. -->
+                    <field name="amunet_es_desarrollo" invisible="1"/>
+                    <field name="amunet_desarrollo_nombre" string="Nombre de desarrollo"
+                           invisible="not amunet_es_desarrollo"
+                           readonly="state in ('done','cancel')"
+                           placeholder="Ej. Buffer de lisis experimental v2"/>
+                    <label for="amunet_receta_base_id" string="Tomar receta base de"
+                           invisible="not amunet_es_desarrollo"/>
+                    <div class="o_row" invisible="not amunet_es_desarrollo">
+                        <field name="amunet_receta_base_id" nolabel="1"
+                               readonly="state in ('done','cancel')"
+                               options="{'no_create': True}"
+                               domain="[('categ_id.complete_name', 'ilike', 'soluc'), ('bom_ids', '!=', False)]"
+                               placeholder="Elige una solución para copiar su receta"/>
+                        <button name="action_amunet_cargar_receta_base" type="object"
+                                string="Cargar receta base" class="btn-secondary"
+                                invisible="not amunet_receta_base_id or state in ('done','cancel')"/>
+                    </div>
+                    <field name="amunet_ph_final" string="pH final"
+                           invisible="not amunet_es_desarrollo"
+                           readonly="state in ('done','cancel')"/>
                 </xpath>
                 <!-- Fecha programada: reemplazar campo nativo por display DD.MM.AA editable -->
                 <xpath expr="//div[@name='date_start']/field[@name='date_start']" position="replace">
@@ -198,6 +249,7 @@
                     <field name="amunet_user_can_edit_consume" column_invisible="True"/>
                     <field name="amunet_user_is_warehouse" column_invisible="True"/>
                     <field name="amunet_available_lot_ids" column_invisible="True"/>
+                    <field name="amunet_needs_surtido" column_invisible="True"/>
                     <field name="amunet_lot_id"
                         domain="[('product_id', '=', product_id), ('id', 'in', amunet_available_lot_ids)]"
                         context="{'default_product_id': product_id}"
@@ -213,15 +265,21 @@
                     -->
                     <field name="amunet_lotes_reales"
                         string="Lotes surtidos (reales)"
+                        column_invisible="parent.amunet_is_solution_product"
                         optional="show"/>
                     <!--
                         Cantidad surtida: editable solo por Almacen y solo
                         durante el surtido activo (in_progress). Bloqueada
                         para produccion y fuera de ese estado.
                     -->
+                    <!-- Cantidad surtida: en soluciones solo aplica a sub-soluciones
+                         (que se piden por surtido). Se OCULTA si la solucion no tiene
+                         sub-soluciones (todo reactivo/agua = material directo), y se
+                         bloquea en las lineas de reactivo/agua de una solucion mixta. -->
                     <field name="amunet_qty_supplied"
                         string="Cantidad surtida"
-                        readonly="not amunet_user_is_warehouse or (parent.amunet_supply_workorder_id and parent.amunet_supply_state != 'in_progress') or parent.state in ('done','cancel')"
+                        column_invisible="parent.amunet_is_solution_product and not parent.amunet_has_surtido_components"
+                        readonly="not amunet_user_is_warehouse or (parent.amunet_supply_workorder_id and parent.amunet_supply_state != 'in_progress') or parent.state in ('done','cancel') or (parent.amunet_is_solution_product and not amunet_needs_surtido)"
                         optional="show"/>
                     <!--
                         Cantidad Utilizada: refleja amunet_qty_used, que se
@@ -230,9 +288,22 @@
                         columna nativa 'quantity' (que se autollena con lo
                         reservado).
                     -->
+                    <!-- Lote (real): en SOLUCIONES el fabricante lo captura EN LA
+                         MISMA LINEA (no en Operaciones detalladas). Solo se muestra
+                         en soluciones. -->
+                    <field name="amunet_line_lot_id"
+                        string="Lote"
+                        domain="[('product_id', '=', product_id)]"
+                        options="{'no_create': True, 'no_open': True}"
+                        column_invisible="not parent.amunet_is_solution_product"
+                        readonly="parent.state in ('done','cancel') or not amunet_user_can_edit_consume"
+                        optional="show"/>
+                    <!-- Cantidad Utilizada: editable EN LA MISMA LINEA en soluciones
+                         (para el fabricante); en linea corta sigue readonly (se captura
+                         en la conciliacion). -->
                     <field name="amunet_qty_used"
                         string="Cantidad Utilizada"
-                        readonly="1"
+                        readonly="parent.state in ('done','cancel') or not (parent.amunet_is_solution_product and amunet_user_can_edit_consume)"
                         optional="show"/>
                 </xpath>
 
@@ -243,7 +314,17 @@
                     consumidos (movimiento hecho), para no romper trazabilidad.
                 -->
                 <xpath expr="//field[@name='move_raw_ids']/list" position="attributes">
-                    <attribute name="delete">1</attribute>
+                    <!-- Soluciones con BoM: lineas de reactivos fijas (no
+                         agregar/borrar). Linea corta si permite. Soluciones de
+                         DESARROLLO: sin receta justa -> SI se pueden agregar/
+                         borrar/ajustar componentes. -->
+                    <attribute name="delete">not parent.amunet_is_solution_product or parent.amunet_es_desarrollo</attribute>
+                    <attribute name="create">not parent.amunet_is_solution_product or parent.amunet_es_desarrollo</attribute>
+                </xpath>
+                <!-- En soluciones el reactivo es de solo lectura, EXCEPTO en
+                     desarrollo (receta ajustable). -->
+                <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_id']" position="attributes">
+                    <attribute name="readonly">parent.amunet_is_solution_product and not parent.amunet_es_desarrollo</attribute>
                 </xpath>
 
                 <!--
@@ -277,10 +358,12 @@
                     producto padre.
                 -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='quantity']" position="after">
+                    <field name="amunet_is_water_solvent" column_invisible="1"/>
                     <field name="amunet_dissolution"
                         widget="boolean_toggle"
                         string="Disolucion"
-                        column_invisible="not parent.amunet_is_solution_product"/>
+                        column_invisible="not parent.amunet_is_solution_product"
+                        invisible="amunet_is_water_solvent"/>
                     <field name="amunet_is_valid"
                         widget="boolean"
                         readonly="1"
@@ -301,10 +384,13 @@
                     Produccion pura NO la ve.
                 -->
                 <xpath expr="//field[@name='move_raw_ids']/list/button[@name='action_show_details'][not(@class)]" position="attributes">
-                    <attribute name="invisible">not show_details_visible or has_tracking == 'none' or not parent.amunet_user_can_see_supply_details</attribute>
+                    <!-- En SOLUCIONES el fabricante toma el material directo, asi que
+                         el mismo captura el lote real y la cantidad en Operaciones
+                         detalladas: se le muestra el boton (ademas de Almacen/admin). -->
+                    <attribute name="invisible">not show_details_visible or has_tracking == 'none' or not (parent.amunet_user_can_see_supply_details or (parent.amunet_is_solution_product and amunet_user_can_edit_consume))</attribute>
                 </xpath>
                 <xpath expr="//field[@name='move_raw_ids']/list/button[@name='action_show_details'][@class='o_optional_button btn']" position="attributes">
-                    <attribute name="invisible">has_tracking != 'none' or not show_details_visible or not parent.amunet_user_can_see_supply_details</attribute>
+                    <attribute name="invisible">has_tracking != 'none' or not show_details_visible or not (parent.amunet_user_can_see_supply_details or (parent.amunet_is_solution_product and amunet_user_can_edit_consume))</attribute>
                 </xpath>
 
                 <!-- Pestaña de Conciliación de materiales -->

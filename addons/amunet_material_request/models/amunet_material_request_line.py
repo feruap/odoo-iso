@@ -33,9 +33,9 @@ class AmunetMaterialRequestLine(models.Model):
                                 string='Trazabilidad')
 
     qty_requested = fields.Float(string='Cantidad solicitada', default=1.0,
-                                 digits='Product Unit of Measure')
+                                 digits='Product Unit')
     qty_supplied = fields.Float(string='Cantidad surtida', default=0.0,
-                                digits='Product Unit of Measure')
+                                digits='Product Unit')
 
     lot_id = fields.Many2one(
         'stock.lot', string='Lote',
@@ -94,12 +94,12 @@ class AmunetMaterialRequestLine(models.Model):
     stock_available = fields.Float(
         string='Stock disponible',
         compute='_compute_stock_available',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
     )
     lot_available_qty = fields.Float(
         string='Disponible en lote',
         compute='_compute_lot_available_qty',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
     )
 
     # Validacion de recepcion: el solicitante (o su jefe) confirma cuanto
@@ -107,7 +107,7 @@ class AmunetMaterialRequestLine(models.Model):
     # pending_reception y por quien puede validar.
     qty_received = fields.Float(
         string='Cantidad recibida', default=0.0,
-        digits='Product Unit of Measure',
+        digits='Product Unit',
     )
     line_reception_note = fields.Char(
         string='Observacion recepcion',

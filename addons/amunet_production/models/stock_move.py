@@ -8,6 +8,26 @@ class StockMove(models.Model):
     _inherit = 'stock.move'
 
     amunet_dissolution = fields.Boolean(string='Disolucion', default=False)
+    amunet_is_water_solvent = fields.Boolean(
+        string='Es agua (solvente)',
+        compute='_compute_amunet_is_water_solvent',
+        help='True si el componente es agua destilada/bi/tridestilada '
+             '(categoria Agua). El agua es el solvente, no se disuelve: no '
+             'pide bloque de disolucion ni cuenta para el candado del pH.')
+
+    @api.depends('product_id', 'product_id.categ_id')
+    def _compute_amunet_is_water_solvent(self):
+        for move in self:
+            move.amunet_is_water_solvent = move._amunet_is_water_solvent()
+
+    def _amunet_is_water_solvent(self):
+        """Agua como solvente: categoria hoja == 'Agua' (destilada, bi, tri).
+        NO incluye 'aguas' que son reactivos (peptonada, desionizada, HPLC),
+        que viven en la categoria Reactivo."""
+        self.ensure_one()
+        categ = self.product_id.categ_id
+        return bool(categ) and (categ.name or '').strip().lower() == 'agua'
+
     amunet_ph_adjustment = fields.Char(string='Ajuste de pH')
     amunet_lot_id = fields.Many2one('stock.lot', string='Lote')
 
@@ -68,13 +88,13 @@ class StockMove(models.Model):
     # amunet_material_request_line para mantener vocabulario.
     amunet_qty_supplied = fields.Float(
         string='Cantidad surtida',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         copy=False,
     )
 
     amunet_qty_used = fields.Float(
         string='Cantidad utilizada',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         copy=False,
         help='Cantidad real consumida en producción. Se captura durante la conciliación.',
     )
@@ -82,7 +102,7 @@ class StockMove(models.Model):
     amunet_qty_surplus = fields.Float(
         string='Sobrante',
         compute='_compute_amunet_qty_surplus',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         store=False,
     )
 
@@ -91,6 +111,68 @@ class StockMove(models.Model):
         for move in self:
             surplus = (move.amunet_qty_supplied or 0.0) - (move.amunet_qty_used or 0.0)
             move.amunet_qty_surplus = max(surplus, 0.0)
+
+    amunet_line_lot_id = fields.Many2one(
+        'stock.lot', string='Lote (real)',
+        compute='_compute_amunet_line_lot_id',
+        inverse='_inverse_amunet_line_lot_id',
+        help='Lote realmente usado, capturable EN LA MISMA LINEA (soluciones). '
+             'Escribe/actualiza el lote del movimiento (move_line unico).')
+
+    @api.depends('move_line_ids.lot_id')
+    def _compute_amunet_line_lot_id(self):
+        for move in self:
+            lots = move.move_line_ids.mapped('lot_id')
+            move.amunet_line_lot_id = lots[0].id if len(lots) == 1 else False
+
+    def _inverse_amunet_line_lot_id(self):
+        for move in self:
+            lot = move.amunet_line_lot_id
+            if not lot:
+                continue
+            move._amunet_check_preflight_gate()
+            mls = move.move_line_ids
+            if len(mls) > 1:
+                # dejar una sola linea (captura inline = 1 lote por componente)
+                (mls[1:]).sudo().unlink()
+                mls = move.move_line_ids
+            if mls:
+                mls[0].sudo().lot_id = lot.id
+            else:
+                self.env['stock.move.line'].sudo().create({
+                    'move_id': move.id,
+                    'product_id': move.product_id.id,
+                    'product_uom_id': move.product_uom.id,
+                    'lot_id': lot.id,
+                    'quantity': move.amunet_qty_used or 0.0,
+                    'location_id': move.location_id.id,
+                    'location_dest_id': move.location_dest_id.id,
+                })
+
+    amunet_needs_surtido = fields.Boolean(
+        string='Requiere surtido',
+        compute='_compute_amunet_needs_surtido',
+        help='Solo soluciones: True si el componente NO va al Almacen de '
+             'reactivos en uso (ARU), es decir es una SUB-SOLUCION que si se '
+             'pide por surtido. Los reactivos/agua (van a ARU) son material '
+             'directo y NO requieren surtido (solo se captura la utilizada).')
+
+    @api.depends('product_id',
+                 'raw_material_production_id.amunet_is_solution_product',
+                 'raw_material_production_id.product_id')
+    def _compute_amunet_needs_surtido(self):
+        for move in self:
+            mo = move.raw_material_production_id
+            is_sol = mo and (mo.route_type == 'solution'
+                             or mo.amunet_is_solution_product)
+            if not is_sol:
+                move.amunet_needs_surtido = False
+                continue
+            categ = move.product_id.categ_id
+            routes = (categ._amunet_routes_to_aru()
+                      if categ and hasattr(categ, '_amunet_routes_to_aru')
+                      else False)
+            move.amunet_needs_surtido = not routes
 
     # Flag de UI: True si el usuario actual puede editar la cantidad
     # teorica (product_uom_qty) y la utilizada (quantity). Almacen puro
@@ -128,7 +210,43 @@ class StockMove(models.Model):
         for rec in self:
             rec.amunet_user_is_warehouse = is_wh
 
+    def _amunet_solution_bom_locked_moves(self):
+        """Reactivos de una MO de SOLUCION con BoM definido: sus lineas (que
+        reactivos) son FIJAS -> no se pueden agregar/borrar/cambiar. La cantidad
+        real usada SI se captura (amunet_qty_used)."""
+        return self.filtered(
+            lambda m: m.raw_material_production_id
+            and m.raw_material_production_id.bom_id
+            and (m.raw_material_production_id.route_type == 'solution'
+                 or m.raw_material_production_id.amunet_is_solution_product))
+
+    def _amunet_check_preflight_gate(self):
+        """Soluciones: no permitir colocar lote (real) ni registrar pesado si el
+        preflight de la orden NO esta validado (aceptado). Aplica a TODAS las
+        soluciones. Se omite en su o contexto interno."""
+        if self.env.su or self.env.context.get('amunet_skip_preflight_gate'):
+            return
+        for move in self:
+            prod = move.raw_material_production_id
+            if (prod and prod.amunet_is_solution_product
+                    and not prod.amunet_preflight_accepted):
+                raise UserError(_(
+                    'Antes de colocar lotes o registrar pesados en %s, valida el '
+                    'preflight de la orden: usa "Validar piloto" y luego "Aceptar '
+                    'para piloto".') % (prod.name or ''))
+
     def write(self, vals):
+        if 'amunet_qty_used' in vals:
+            self._amunet_check_preflight_gate()
+        # Candado: en soluciones con BoM no se puede CAMBIAR el reactivo de una
+        # linea (product_id). Cantidades/lote/consumo si (otros candados).
+        if ('product_id' in vals and not self.env.su
+                and not self.env.context.get('amunet_supply_internal')):
+            if self._amunet_solution_bom_locked_moves():
+                raise UserError(_(
+                    'No se puede cambiar el reactivo de una linea de una '
+                    'solucion con receta (BoM) definida. Las lineas de '
+                    'reactivos son fijas.'))
         # Candado: solo Almacen puede capturar 'Cantidad surtida' y 'Lote'
         # del material de una orden de produccion. Produccion nunca.
         # Se omite en escrituras internas del flujo (contexto/sudo).
@@ -206,6 +324,12 @@ class StockMove(models.Model):
         # (movimiento hecho) para no romper la trazabilidad de lo usado.
         # Se omite en flujos internos (sudo / contexto).
         if not self.env.su and not self.env.context.get('amunet_supply_internal'):
+            # NOTA: NO se bloquea aqui el borrado de lineas de reactivos de
+            # soluciones. La proteccion contra que el OPERADOR borre lineas la da
+            # la vista (delete deshabilitado para soluciones). Un candado backend
+            # de unlink rompia la VALIDACION/produccion, porque el sistema borra y
+            # recrea movimientos internamente al confirmar/producir (no es el
+            # usuario). Cambiar el reactivo (product_id) si se bloquea en write().
             bloqueados = self.filtered(
                 lambda m: m.raw_material_production_id and m.state == 'done')
             if bloqueados:
@@ -223,7 +347,7 @@ class StockMove(models.Model):
         help='Automatico: cantidad dentro del rango de pesaje y disolucion confirmada si aplica.'
     )
 
-    @api.depends('quantity', 'product_uom_qty', 'product_id', 'amunet_dissolution', 'raw_material_production_id.product_id.categ_id')
+    @api.depends('quantity', 'product_uom_qty', 'product_id', 'product_id.categ_id', 'amunet_dissolution', 'raw_material_production_id.product_id.categ_id')
     def _compute_amunet_is_valid(self):
         for move in self:
             qty_used = move.quantity
@@ -273,7 +397,8 @@ class StockMove(models.Model):
             else:
                 in_range = qty_used > 0
 
-            if not move.amunet_dissolution:
+            # El agua es el solvente: no se disuelve, no exige la marca.
+            if not move.amunet_dissolution and not move._amunet_is_water_solvent():
                 move.amunet_is_valid = False
                 continue
 

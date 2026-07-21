@@ -258,8 +258,22 @@ class MrpWorkorder(models.Model):
         ):
             raise AccessError(_('No tiene permisos para operar ordenes de trabajo de produccion.'))
 
+    def _amunet_gate_preflight_solution(self):
+        """Soluciones: no permitir EMPEZAR a colocar lotes ni pesados si el
+        preflight de la orden no esta validado (aceptado). Aplica a TODAS las
+        soluciones (desarrollo o no)."""
+        for wo in self:
+            prod = wo.production_id
+            if prod and prod.amunet_is_solution_product and not prod.amunet_preflight_accepted:
+                raise UserError(_(
+                    'Antes de colocar lotes o registrar pesados, valida el preflight '
+                    'de la orden %s: usa "Validar piloto" y luego "Aceptar para '
+                    'piloto". No se puede iniciar el trabajo hasta que el preflight '
+                    'este validado.') % (prod.name or ''))
+
     def action_amunet_operator_start(self):
         self._check_amunet_operator_access()
+        self._amunet_gate_preflight_solution()
         for wo in self:
             if wo.state != 'ready':
                 raise UserError(_('Solo se puede iniciar una operacion en estado Por realizar.'))
@@ -349,6 +363,7 @@ class MrpWorkorder(models.Model):
         if not self.amunet_is_supply_workorder:
             raise UserError(_('Esta accion solo aplica al workorder de Surtido (AMP).'))
         self._amunet_check_warehouse_role()
+        self._amunet_gate_preflight_solution()
         if self.amunet_supply_state != 'pending':
             raise UserError(_(
                 'El surtido ya esta iniciado (estado actual: %s).') % self.amunet_supply_state)
@@ -409,8 +424,13 @@ class MrpWorkorder(models.Model):
         # cada componente debe tener qty_supplied > 0 y, si el producto
         # es trazable, lote asignado en move_line_ids.
         errores = []
+        es_solucion = self.production_id.amunet_is_solution_product
         for move in self.production_id.move_raw_ids:
             if move.state == 'cancel':
+                continue
+            # En SOLUCIONES solo se surten las sub-soluciones (needs_surtido);
+            # los reactivos vienen de ARU y no se surten dentro de la orden.
+            if es_solucion and not move.amunet_needs_surtido:
                 continue
             if (move.amunet_qty_supplied or 0.0) <= 0.0:
                 errores.append(_(
@@ -550,7 +570,14 @@ class MrpWorkorder(models.Model):
             wc = wo.workcenter_id
             if not wc:
                 continue
-            res = wc._amunet_check_equipment_calibration() or {}
+            # Validacion por ACTIVIDAD si la operacion la define; si no, el
+            # metodo de la operacion delega al centro de trabajo (comportamiento
+            # anterior). Sin operacion ligada, se valida por centro de trabajo.
+            op = wo.operation_id
+            if op:
+                res = op._amunet_check_operation_equipment() or {}
+            else:
+                res = wc._amunet_check_equipment_calibration() or {}
             if res.get('no_equipment_required') and wo.production_id:
                 wo.production_id.message_post(body=_(
                     'WO <b>%s</b> (id=%s) iniciada sin equipos calibrados. '

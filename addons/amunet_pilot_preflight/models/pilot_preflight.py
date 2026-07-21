@@ -38,7 +38,7 @@ class AmunetPilotPreflight(models.Model):
     )
     product_qty = fields.Float(
         string='Cantidad piloto',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         default=70.0,
         required=True,
         tracking=True,
@@ -68,6 +68,9 @@ class AmunetPilotPreflight(models.Model):
     quality_supervisor_id = fields.Many2one('res.users', string='Supervisor QC')
     warehouse_user_id = fields.Many2one('res.users', string='Almacen')
     packaging_user_id = fields.Many2one('res.users', string='Empaque / envios')
+    amunet_req_analysis = fields.Boolean(
+        string='Requiere analisis',
+        related='product_tmpl_id.amunet_req_quality_control', readonly=True)
 
     state = fields.Selection([
         ('draft', 'Borrador'),
@@ -158,16 +161,34 @@ class AmunetPilotPreflight(models.Model):
     def _set_default_participants(self):
         for rec in self:
             vals = {}
-            if not rec.production_user_id:
-                vals['production_user_id'] = rec._first_user('amunet_production.group_production_supervisor').id
+            is_solution = rec.route_type == 'solution'
+            if is_solution:
+                # El responsable de una solucion SIEMPRE es el Fabricante de
+                # Soluciones de la orden (mo.user_id si es del grupo; si no, el
+                # primero del grupo). Se sincroniza siempre para que coincida con
+                # la orden (no se queda un responsable viejo/erroneo).
+                mo_user = rec.production_id.user_id
+                G = self.env.ref('amunet_production.group_solution_maker',
+                                 raise_if_not_found=False)
+                if mo_user and G and G in mo_user.group_ids:
+                    target = mo_user
+                else:
+                    target = rec._first_user('amunet_production.group_solution_maker')
+                if target and rec.production_user_id != target:
+                    vals['production_user_id'] = target.id
+            elif not rec.production_user_id:
+                vals['production_user_id'] = rec._first_user(
+                    'amunet_production.group_production_supervisor').id
             if not rec.quality_user_id:
                 vals['quality_user_id'] = rec._first_user('amunet_quality.group_quality_user').id
             if not rec.quality_supervisor_id:
                 vals['quality_supervisor_id'] = rec._first_user('amunet_quality.group_quality_supervisor').id
-            if not rec.warehouse_user_id:
-                vals['warehouse_user_id'] = rec._first_user('amunet_material_request.group_material_warehouse').id
-            if not rec.packaging_user_id:
-                vals['packaging_user_id'] = rec._first_user('amunet_packaging_planning.group_packaging_manager').id
+            # Soluciones: NO se asigna Almacen ni Empaque (no aplican).
+            if not is_solution:
+                if not rec.warehouse_user_id:
+                    vals['warehouse_user_id'] = rec._first_user('amunet_material_request.group_material_warehouse').id
+                if not rec.packaging_user_id:
+                    vals['packaging_user_id'] = rec._first_user('amunet_packaging_planning.group_packaging_manager').id
             if vals:
                 rec.write(vals)
 
@@ -236,6 +257,7 @@ class AmunetPilotPreflight(models.Model):
             rec.bom_id = rec._find_bom()
             rec._check_master_data()
             rec._check_bom_and_inventory()
+            rec._check_solution_equipment()
             rec._check_quality()
             rec._check_packaging()
             rec._check_people_and_training()
@@ -314,10 +336,9 @@ class AmunetPilotPreflight(models.Model):
             elif rec.route_type == 'solution':
                 rec._add_line(
                     'master',
-                    'Ruta soluciones',
-                    'warn',
-                    'El area de Soluciones participa solo si el producto/BOM requiere fabricar buffer o solucion.',
-                    'Confirmar receta y solicitud de analisis de la solucion.',
+                    'Linea: Soluciones',
+                    'pass',
+                    'Orden de fabricacion de solucion.',
                     sequence=30,
                 )
             else:
@@ -371,7 +392,12 @@ class AmunetPilotPreflight(models.Model):
                     related=bom,
                     sequence=110,
                 )
-            if not bom.operation_ids:
+            if rec.route_type == 'solution':
+                # Las soluciones no llevan operaciones de ruta por diseño (su
+                # trabajo es checklist + validaciones por componente). No se
+                # advierte por falta de operaciones.
+                pass
+            elif not bom.operation_ids:
                 rec._add_line(
                     'bom',
                     'Operaciones / routing',
@@ -403,20 +429,24 @@ class AmunetPilotPreflight(models.Model):
                         sequence=130,
                     )
                     continue
+                # Validacion de equipo POR ACTIVIDAD: si la operacion define su
+                # propio equipo, valida solo ese (aunque sea de otra area); si
+                # no, delega al centro de trabajo (comportamiento anterior).
+                etiqueta = operation.name or (wc.code or wc.name)
                 try:
-                    wc._amunet_check_equipment_calibration()
+                    operation._amunet_check_operation_equipment()
                     rec._add_line(
                         'equipment',
-                        'Equipo/metrologia: %s' % (wc.code or wc.name),
+                        'Equipo/metrologia: %s' % etiqueta,
                         'pass',
-                        'Workcenter listo: equipos calibrados o excepcion documentada.',
+                        'Actividad lista: equipos calibrados, sin equipo requerido, o excepcion documentada.',
                         related=wc,
                         sequence=140,
                     )
                 except UserError as exc:
                     rec._add_line(
                         'equipment',
-                        'Equipo/metrologia: %s' % (wc.code or wc.name),
+                        'Equipo/metrologia: %s' % etiqueta,
                         'block',
                         str(exc),
                         'Corregir equipos/calibracion antes de iniciar work orders.',
@@ -497,6 +527,34 @@ class AmunetPilotPreflight(models.Model):
                     sequence=210,
                 )
 
+    def _check_solution_equipment(self):
+        """Solo soluciones: valida los equipos fijos del area de Soluciones
+        (balanza=pesado, agitador=disolucion, analizador=pH). Las soluciones no
+        tienen operaciones de ruta, por eso el equipo se valida a nivel orden.
+        Mismo criterio/parametro que el candado al Producir."""
+        for rec in self:
+            if rec.route_type != 'solution':
+                continue
+            serials = self.env['ir.config_parameter'].sudo().get_param(
+                'amunet.solution.equipment.serials',
+                'PRO/BAL/01,PRO/AGI/01,PRO/AMO/01')
+            serials = [s.strip() for s in (serials or '').split(',') if s.strip()]
+            equipos = self.env['amunet.equipment'].sudo().search(
+                [('serial_number', 'in', serials)])
+            problemas = self.env['mrp.workcenter']._amunet_calibration_problems_for(
+                equipos, 'Soluciones')
+            for f in sorted(set(serials) - set(equipos.mapped('serial_number'))):
+                problemas.append(' - Equipo %s no existe en el catalogo' % f)
+            if problemas:
+                rec._add_line('equipment', 'Equipos de Soluciones', 'block',
+                    '\n'.join(problemas),
+                    'Calibrar o reactivar los equipos antes de fabricar.',
+                    sequence=140)
+            else:
+                rec._add_line('equipment', 'Equipos de Soluciones', 'pass',
+                    'Balanza, agitador y analizador operativos y con calibracion vigente.',
+                    sequence=140)
+
     def _check_quality(self):
         SamplingPlan = self.env['amunet.quality.sampling.plan']
         # Modo desarrollo: si el parametro de sistema esta activo, los
@@ -507,6 +565,17 @@ class AmunetPilotPreflight(models.Model):
         qblock = 'warn' if skip_quality_block else 'block'
         for rec in self:
             tmpl = rec.product_tmpl_id
+            if rec.route_type == 'solution':
+                # En soluciones el 'requiere analisis' es config del producto:
+                # solo se refleja, no se advierte (hay soluciones que NO lo llevan).
+                req = bool(getattr(tmpl, 'amunet_req_quality_control', False) or tmpl.qc_required)
+                rec._add_line(
+                    'quality', 'Analisis de calidad', 'pass',
+                    ('Requiere analisis: se solicitara y Calidad debe aprobarlo antes de '
+                     'liberar el lote.') if req else
+                    'Este producto NO requiere analisis de calidad (configurado asi).',
+                    related=tmpl, sequence=300)
+                continue
             qc_required = bool(tmpl.qc_required or getattr(tmpl, 'amunet_req_quality_control', False))
             if qc_required:
                 rec._add_line(
@@ -575,6 +644,8 @@ class AmunetPilotPreflight(models.Model):
         Presentation = self.env['amunet.packaging.presentation']
         Trend = self.env['amunet.woo.sales.trend']
         for rec in self:
+            if rec.route_type == 'solution':
+                continue  # las soluciones no se empacan en presentaciones
             presentations = Presentation.search([
                 ('product_tmpl_id', '=', rec.product_tmpl_id.id),
                 ('is_authorized', '=', True),
@@ -647,7 +718,28 @@ class AmunetPilotPreflight(models.Model):
         return qty in reachable
 
     def _check_people_and_training(self):
+        SolG = self.env.ref('amunet_production.group_solution_maker',
+                            raise_if_not_found=False)
         for rec in self:
+            if rec.route_type == 'solution':
+                prod_user = rec.production_user_id or (
+                    rec.production_id.user_id if rec.production_id else False)
+                if prod_user and SolG and SolG in prod_user.group_ids:
+                    rec._add_line('people', 'Fabricante de Soluciones', 'pass',
+                        '%s puede fabricar soluciones.' % prod_user.display_name,
+                        related=prod_user, sequence=500)
+                elif prod_user:
+                    rec._add_line('people', 'Fabricante de Soluciones', 'block',
+                        '%s no esta en el grupo Fabricante de Soluciones.' % prod_user.display_name,
+                        'Asignar un responsable que pueda fabricar soluciones.',
+                        related=prod_user, sequence=500)
+                else:
+                    rec._add_line('people', 'Fabricante de Soluciones', 'warn',
+                        'La orden no tiene responsable asignado.',
+                        'Asignar responsable (fabricante de soluciones).', sequence=500)
+                if prod_user:
+                    self._check_training_for_user(rec, 'Fabricante de Soluciones', prod_user)
+                continue
             role_specs = [
                 ('people', 'Supervisor Produccion', rec.production_user_id, 'amunet_production.group_production_supervisor'),
                 ('people', 'Analista QC', rec.quality_user_id, 'amunet_quality.group_quality_user'),
