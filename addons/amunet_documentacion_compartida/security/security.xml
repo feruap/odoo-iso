@@ -18,5 +18,11 @@
             <field name="implied_ids" eval="[(4, ref('group_doc_compartida_user'))]"/>
             <field name="comment">Responsable de Validación: programa revisiones y ejecuta actualizaciones.</field>
         </record>
+
+        <record id="group_doc_revisor" model="res.groups">
+            <field name="name">Documentación Compartida / Revisor</field>
+            <field name="implied_ids" eval="[(4, ref('group_doc_compartida_user'))]"/>
+            <field name="comment">Revisores autorizados: marcan criterios de revisión. Asignar individualmente (no por área).</field>
+        </record>
     </data>
 </odoo>

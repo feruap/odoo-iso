@@ -5,6 +5,7 @@ CAMPOS = {
     'rev_materiales': 'Precauciones',
     'rev_volumenes': 'Volúmenes de reactivos',
     'rev_tiempos': 'Tiempos de interpretación',
+    'rev_interpretacion': 'Interpretación',
     'rev_adicional': 'Adicional',
 }
 
@@ -25,6 +26,21 @@ class DocRevisionWizard(models.TransientModel):
         string='Resultado', required=True)
     observacion = fields.Text(string='Motivo')
 
+    @api.model
+    def default_get(self, fields_list):
+        vals = super().default_get(fields_list)
+        doc_id = vals.get('doc_id') or self.env.context.get('default_doc_id')
+        campo = vals.get('campo') or self.env.context.get('default_campo')
+        if doc_id and campo:
+            ultimo = self.env['amunet.doc.revision.historial'].search([
+                ('doc_id', '=', doc_id),
+                ('campo', '=', campo),
+                ('motivo', '!=', False),
+            ], order='fecha desc', limit=1)
+            if ultimo:
+                vals['observacion'] = ultimo.motivo
+        return vals
+
     @api.depends('campo')
     def _compute_campo_label(self):
         for rec in self:
@@ -41,5 +57,7 @@ class DocRevisionWizard(models.TransientModel):
         vals = {self.campo: self.nuevo_valor}
         if self.nuevo_valor == 'fail':
             vals['observaciones'] = self.observacion
-        self.doc_id.write(vals)
+        # sudo() necesario: el analista tiene perm_write=0 en el modelo principal;
+        # la validación de negocio ya ocurrió en el override write() con el uid real.
+        self.doc_id.sudo().write(vals)
         return {'type': 'ir.actions.act_window_close'}

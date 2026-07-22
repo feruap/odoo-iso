@@ -2,15 +2,17 @@ from datetime import timedelta
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
 
-_CAMPOS_REV = ['rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_adicional']
+_CAMPOS_REV = ['rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_interpretacion', 'rev_adicional']
 
 # Grupos (reemplazan los UIDs hardcodeados JORGE_UID/diana_uid).
 #  - Validación: programa la fecha y ejecuta los cambios.
 #  - Calidad (Supervisor QC o Responsable Sanitario): revisa, aprueba y FIRMA.
 G_VALIDACION = 'amunet_documentacion_compartida.group_doc_validacion'
+G_REVISOR = 'amunet_documentacion_compartida.group_doc_revisor'
 G_CAL_SUP = 'amunet_quality.group_quality_supervisor'
-G_CAL_RS = 'amunet_quality.group_quality_sanitary'
-G_CAL_ANALISTA = 'amunet_quality.group_quality_user'
+
+# UIDs fijos para el correo de aprobación (Diana, Stacey, Jorge, Mery)
+_UID_APROBACION = [64, 69, 70, 61]
 
 
 class DocCompartida(models.Model):
@@ -38,6 +40,9 @@ class DocCompartida(models.Model):
     rev_tiempos = fields.Selection(
         [('ok', '✓ Correcto'), ('fail', '✗ Incorrecto')],
         string='Tiempos de interpretación', tracking=True)
+    rev_interpretacion = fields.Selection(
+        [('ok', '✓ Correcto'), ('fail', '✗ Incorrecto')],
+        string='Interpretación', tracking=True)
     rev_adicional = fields.Selection(
         [('ok', '✓ Correcto'), ('fail', '✗ Incorrecto')],
         string='Adicional', tracking=True)
@@ -79,10 +84,15 @@ class DocCompartida(models.Model):
     historial_count = fields.Integer(
         compute='_compute_historial_count', string='Revisiones')
 
+    # ── Disponibilidad del PDF para visores ──────────────────
+    pdf_disponible = fields.Boolean(
+        string='PDF disponible para visores', default=False, copy=False)
+
     # ── Computed contextuales (varían por usuario) ───────────
     es_responsable = fields.Boolean(compute='_compute_ctx_usuario')
     es_calidad = fields.Boolean(compute='_compute_ctx_usuario')
     soy_revisor_activo = fields.Boolean(compute='_compute_ctx_usuario')
+    pdf_descargable = fields.Boolean(compute='_compute_ctx_usuario')
 
     # ── Revisión cerrada (todas las columnas llenas y sin revisor activo) ──
     revision_cerrada = fields.Boolean(
@@ -92,7 +102,7 @@ class DocCompartida(models.Model):
     # Computes
     # ────────────────────────────────────────────────────────────────
 
-    @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_adicional', 'revisor_activo_id')
+    @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_interpretacion', 'rev_adicional', 'revisor_activo_id')
     def _compute_revision_cerrada(self):
         for rec in self:
             todos_llenos = all(getattr(rec, f) for f in _CAMPOS_REV)
@@ -103,33 +113,34 @@ class DocCompartida(models.Model):
         for rec in self:
             rec.historial_count = len(rec.historial_ids)
 
-    @api.depends('revisor_activo_id')
+    @api.depends('revisor_activo_id', 'pdf_disponible')
     @api.depends_context('uid')
     def _compute_ctx_usuario(self):
         uid = self.env.user.id
         es_val = self.env.user.has_group(G_VALIDACION)
         es_cal = self._es_calidad()
+        es_revisor_o_val = es_val or es_cal
         for rec in self:
             rec.es_responsable = es_val
             rec.es_calidad = es_cal
             rec.soy_revisor_activo = bool(rec.revisor_activo_id) and rec.revisor_activo_id.id == uid
+            # Revisores y Validación siempre pueden descargar;
+            # visores solo cuando el PDF fue marcado como disponible
+            rec.pdf_descargable = es_revisor_o_val or rec.pdf_disponible
 
     # ── Helpers de rol ───────────────────────────────────────
     def _es_validacion(self):
         return self.env.user.has_group(G_VALIDACION)
 
     def _es_calidad(self):
-        u = self.env.user
-        return u.has_group(G_CAL_SUP) or u.has_group(G_CAL_ANALISTA)
+        return self.env.user.has_group(G_REVISOR)
 
     def _usuarios_calidad(self):
-        """Usuarios activos de Calidad: Supervisor QC y Analistas QC."""
-        users = self.env['res.users']
-        for xml_id in (G_CAL_SUP, G_CAL_ANALISTA):
-            g = self.env.ref(xml_id, raise_if_not_found=False)
-            if g:
-                users |= g.sudo().user_ids
-        return users.filtered(lambda u: u.active and u.id != 1)
+        """Revisores autorizados del módulo (grupo_doc_revisor)."""
+        g = self.env.ref(G_REVISOR, raise_if_not_found=False)
+        if not g:
+            return self.env['res.users']
+        return g.sudo().user_ids.filtered(lambda u: u.active and u.id != 1)
 
     def _usuarios_validacion(self):
         g = self.env.ref(G_VALIDACION, raise_if_not_found=False)
@@ -147,10 +158,10 @@ class DocCompartida(models.Model):
             else:
                 rec.revisado_display = ''
 
-    @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_adicional')
+    @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_interpretacion', 'rev_adicional')
     def _compute_estado(self):
         for rec in self:
-            reviews = [rec.rev_materiales, rec.rev_volumenes, rec.rev_tiempos, rec.rev_adicional]
+            reviews = [rec.rev_materiales, rec.rev_volumenes, rec.rev_tiempos, rec.rev_interpretacion, rec.rev_adicional]
             rec.revision_completa = all(r == 'ok' for r in reviews)
             rec.obs_requeridas = any(r == 'fail' for r in reviews)
 
@@ -173,7 +184,7 @@ class DocCompartida(models.Model):
 
     def write(self, vals):
         uid = self.env.user.id
-        campos_revision = {'rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_adicional'}
+        campos_revision = {'rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_interpretacion', 'rev_adicional'}
         criterios_cambiados = campos_revision & set(vals)
         bypass = self.env.context.get('bypass_revisor_check')
 
@@ -339,6 +350,9 @@ class DocCompartida(models.Model):
     def action_marcar_tiempos(self):
         return self._open_revision_wizard('rev_tiempos', 'Tiempos de interpretación')
 
+    def action_marcar_interpretacion(self):
+        return self._open_revision_wizard('rev_interpretacion', 'Interpretación')
+
     def action_marcar_adicional(self):
         return self._open_revision_wizard('rev_adicional', 'Adicional')
 
@@ -446,7 +460,7 @@ class DocCompartida(models.Model):
         }).send()
 
     def _notificar_calidad_por_aprobar(self):
-        """Revisión completa: avisar a Calidad (actividad + correo) para que aprueben y firmen."""
+        """Revisión completa: avisar a Calidad (solo actividad Odoo) para que aprueben y firmen."""
         self.ensure_one()
         calidad = self._usuarios_calidad()
         for user in calidad:
@@ -463,17 +477,9 @@ class DocCompartida(models.Model):
                      f'Entra al manual y pulsa <b>"Aprobar y firmar"</b> (requiere tu PIN).',
                 user_id=user.id,
             )
-        self._enviar_correo(
-            calidad,
-            f'✅ Listo para aprobar: {self.name}',
-            f'<p>La revisión del manual <b>{self.name}</b> está completa con todos los '
-            f'criterios marcados como ✓ Correcto.</p>'
-            f'<p>Entra a Odoo → Documentación Técnica → <b>{self.name}</b> y pulsa '
-            f'"Aprobar y firmar" (requiere tu PIN).</p>',
-        )
 
     def _notificar_actualizar_en_sistema(self):
-        """Tras la firma: notificar a TODOS (Calidad + Validación) con actividad + correo."""
+        """Tras la firma: actividad Odoo a todos + correo solo a Diana, Stacey y Jorge."""
         self.ensure_one()
         firmante = self.env.user.name
         todos = (self._usuarios_calidad() | self._usuarios_validacion()).filtered(
@@ -489,15 +495,6 @@ class DocCompartida(models.Model):
                      f'para subir la versión definitiva a la carpeta LFIA.)',
                 user_id=user.id,
             )
-        self._enviar_correo(
-            todos,
-            f'✍️ Manual aprobado y firmado: {self.name}',
-            f'<p>El manual <b>{self.name}</b> fue <b>APROBADO y FIRMADO</b> por '
-            f'<b>{firmante}</b>.</p>'
-            f'<p><b>Diana:</b> entra a Odoo → Documentación Técnica → <b>{self.name}</b> '
-            f'y pulsa "Actualizar en sistema" para archivar la versión definitiva en la '
-            f'carpeta LFIA de Nextcloud.</p>',
-        )
 
     # ────────────────────────────────────────────────────────────────
     # Cron: auto-cierre y recordatorio de revisión
@@ -515,6 +512,7 @@ class DocCompartida(models.Model):
             ('rev_materiales', '!=', False),
             ('rev_volumenes', '!=', False),
             ('rev_tiempos', '!=', False),
+            ('rev_interpretacion', '!=', False),
             ('rev_adicional', '!=', False),
         ])
         for rec in cierre:
@@ -551,15 +549,6 @@ class DocCompartida(models.Model):
                              f'Corrige el manual, recarga el PDF y programa nueva revisión.',
                         user_id=val_user.id,
                     )
-                rec._enviar_correo(
-                    validacion,
-                    f'⚠️ Manual con observaciones: {rec.name}',
-                    f'<p><b>{revisor_nombre}</b> completó la revisión de <b>{rec.name}</b> '
-                    f'y encontró criterios marcados como ✗ Incorrecto.</p>'
-                    f'<p><b>Observación:</b> {observ}</p>'
-                    f'<p>Entra a Odoo → Documentación Técnica → <b>{rec.name}</b>, '
-                    f'corrige el manual y recarga el PDF.</p>',
-                )
 
         # ── Recordatorio: revisión parcial + 5 min sin actividad ──
         parciales = self.search([
@@ -587,7 +576,7 @@ class DocCompartida(models.Model):
             )
 
     def _notificar_recarga_pdf(self):
-        """PDF reemplazado: avisar a toda Calidad (actividad + correo) para que revisen."""
+        """PDF reemplazado: avisar a toda Calidad (solo actividad Odoo)."""
         self.ensure_one()
         calidad = self._usuarios_calidad()
         cuerpo = (
@@ -611,18 +600,9 @@ class DocCompartida(models.Model):
                      f'Por favor revisa los criterios con la nueva versión.',
                 user_id=user.id,
             )
-        self._enviar_correo(
-            calidad,
-            f'🔄 PDF actualizado: {self.name}',
-            f'<p>El PDF del manual <b>{self.name}</b> fue actualizado por '
-            f'<b>{self.env.user.name}</b>.</p>'
-            f'<p>Por favor revisen si los criterios de revisión siguen siendo válidos '
-            f'con la nueva versión del documento.</p>'
-            + (f'<p>Fecha límite de revisión: <b>{fecha_str}</b></p>' if fecha_str else ''),
-        )
 
     def _notificar_revision_programada(self):
-        """Fecha de revisión programada: avisar a toda Calidad (actividad + correo)."""
+        """Fecha de revisión programada: avisar a toda Calidad (solo actividad Odoo)."""
         self.ensure_one()
         if not self.fecha_programada:
             return
@@ -638,26 +618,9 @@ class DocCompartida(models.Model):
                      f'antes del <b>{fecha_str}</b>.',
                 user_id=user.id,
             )
-        self._enviar_correo(
-            calidad,
-            f'📅 Revisión programada: {self.name}',
-            f'<p>El manual <b>{self.name}</b> requiere revisión de Calidad '
-            f'antes del <b>{fecha_str}</b>.</p>'
-            f'<p>Entra a Odoo → Documentación Técnica para tomar la revisión.</p>',
-        )
         self.message_post(
             body=f'📅 Revisión programada para el <b>{fecha_str}</b>. '
-                 f'Notificación (actividad + correo) enviada a {len(calidad)} persona(s) de Calidad.',
-            message_type='notification',
-            subtype_xmlid='mail.mt_comment',
-        )
-
-        # Mensaje en el chatter
-        partner_ids = destinatarios.mapped('partner_id').ids
-        self.message_post(
-            body=f'📅 Revisión programada para el <b>{fecha_str}</b>. '
-                 f'Notificación enviada a {len(destinatarios)} revisor(es) de Calidad.',
-            partner_ids=partner_ids,
+                 f'Actividad enviada a {len(calidad)} persona(s) de Calidad.',
             message_type='notification',
             subtype_xmlid='mail.mt_comment',
         )
