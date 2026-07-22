@@ -131,7 +131,9 @@ class AmunetDocumento(models.Model):
     seccion_condiciones_generales = fields.Html(
         string='Condiciones generales', sanitize=True, sanitize_tags=False)
     seccion_formatos_derivados = fields.Html(
-        string='Formatos derivados', sanitize=True, sanitize_tags=False)
+        string='Formatos derivados',
+        compute='_compute_seccion_formatos_derivados',
+        sanitize=False)
     seccion_referencias = fields.Html(
         string='Referencias bibliograficas', sanitize=True, sanitize_tags=False)
     seccion_anexos = fields.Html(
@@ -176,6 +178,54 @@ class AmunetDocumento(models.Model):
     formato_ids = fields.One2many(
         'amunet.documento.formato', 'documento_id',
         string='Formatos descargables')
+    es_supervisor_doc = fields.Boolean(
+        compute='_compute_es_supervisor_doc', store=False)
+    mi_acuse_pendiente = fields.Boolean(
+        compute='_compute_mi_acuse_pendiente', store=False)
+
+    def _compute_es_supervisor_doc(self):
+        is_sup = self.env.user.has_group(
+            'amunet_documentos.group_supervisor_documentacion')
+        for r in self:
+            r.es_supervisor_doc = is_sup
+
+    def _compute_mi_acuse_pendiente(self):
+        uid = self.env.uid
+        for r in self:
+            r.mi_acuse_pendiente = (
+                r.state == 'vigente'
+                and any(d.usuario_id.id == uid and not d.acuse for d in r.distribucion_ids)
+            )
+
+    @api.depends('formato_ids', 'formato_ids.codigo', 'formato_ids.nombre',
+                 'formato_ids.requiere_aprobacion', 'formato_ids.sequence')
+    def _compute_seccion_formatos_derivados(self):
+        for r in self:
+            if not r.formato_ids:
+                r.seccion_formatos_derivados = False
+                continue
+            filas = ''
+            for f in r.formato_ids.sorted('sequence'):
+                if f.requiere_aprobacion:
+                    badge = (
+                        ' <span style="display:inline-block;background:#fef3c7;'
+                        'color:#92400e;border-radius:4px;padding:1px 7px;'
+                        'font-size:0.78em;font-weight:700;margin-left:6px">'
+                        'Solicitar impresión</span>'
+                    )
+                else:
+                    badge = (
+                        ' <span style="display:inline-block;background:#f0fdf4;'
+                        'color:#166534;border-radius:4px;padding:1px 7px;'
+                        'font-size:0.78em;font-weight:700;margin-left:6px">'
+                        'Solo lectura</span>'
+                    )
+                filas += (
+                    '<li style="margin-bottom:4px">'
+                    '<b>%s</b> — %s%s</li>'
+                ) % (f.codigo, f.nombre, badge)
+            r.seccion_formatos_derivados = '<ul style="margin:0;padding-left:20px">%s</ul>' % filas
+
     sugerencia_ids = fields.One2many(
         'amunet.documento.sugerencia', 'documento_id',
         string='Sugerencias de cambio')
@@ -365,7 +415,17 @@ class AmunetDocumento(models.Model):
         return {
             '_signature_aprobar_revision': _('Aprobar revision de documento'),
             '_signature_aprobar': _('Aprobar y publicar documento'),
+            '_signature_acuse_lectura': _('Confirmar lectura de documento'),
         }
+
+    def _signature_acuse_lectura(self):
+        self.ensure_one()
+        uid = self.env.uid
+        pendiente = self.distribucion_ids.filtered(
+            lambda d: d.usuario_id.id == uid and not d.acuse)
+        if pendiente:
+            pendiente.with_context(amunet_documento_workflow_write=True).write(
+                {'acuse': True, 'fecha_acuse': fields.Date.today()})
 
     def _open_signature_wizard(self, method_name, signature_type, reason):
         self.ensure_one()
@@ -419,6 +479,12 @@ class AmunetDocumento(models.Model):
         faltantes = [label for (f, label) in requeridos if _vacio(getattr(self, f))]
         if self.tipo in ('pno', 'manual', 'instructivo') and not self.actividad_ids and not self.archivo:
             faltantes.append('Desarrollo del proceso (al menos una actividad)')
+        actos_vacias = [a for a in self.actividad_ids if not (a.actividad or '').strip()]
+        if actos_vacias:
+            faltantes.append(
+                'Actividades sin número/nombre (%d fila(s) vacías en Desarrollo del proceso)'
+                % len(actos_vacias)
+            )
         if faltantes:
             raise UserError(_(
                 'Faltan secciones obligatorias del documento segun PNOGE-001:\n- %s\n\n'
@@ -568,9 +634,49 @@ class AmunetDocumento(models.Model):
                 'fecha_emision': fecha_emision,
                 'fecha_vigencia': fecha_emision + relativedelta(years=2),
             })
+            r._auto_distribuir_signatarios(today)
             r.activity_feedback(
                 ['mail.mail_activity_data_todo'],
                 feedback=_('Autorizado por %s') % self.env.user.name)
+
+    def _auto_distribuir_signatarios(self, today=None):
+        """Al publicar, registra acuse automatico para elaboro/reviso/autorizo."""
+        today = today or fields.Date.today()
+        Dist = self.env['amunet.documento.distribucion']
+        for r in self:
+            uids = {uid for uid in (
+                r.elabora_id.id, r.firma_revisa_id.id, r.firma_aprueba_id.id
+            ) if uid}
+            existentes = {d.usuario_id.id: d for d in r.distribucion_ids}
+            for uid in uids:
+                if uid in existentes:
+                    if not existentes[uid].acuse:
+                        existentes[uid].with_context(
+                            amunet_documento_workflow_write=True
+                        ).write({'acuse': True, 'fecha_acuse': today})
+                else:
+                    Dist.create({
+                        'documento_id': r.id,
+                        'usuario_id': uid,
+                        'acuse': True,
+                        'fecha_acuse': today,
+                    })
+
+    def action_yo_lo_lei(self):
+        self.ensure_one()
+        return self._open_signature_wizard(
+            '_signature_acuse_lectura',
+            'Acuse de lectura',
+            'Confirmo que he leido y entendido el documento %s v%s' % (
+                self.codigo, self.version_actual or ''),
+        )
+
+    def action_eliminar_borrador(self):
+        for r in self:
+            if r.state != 'borrador':
+                raise UserError(_('Solo puedes eliminar documentos en estado Borrador.'))
+        self.unlink()
+        return {'type': 'ir.actions.act_window_close'}
 
     def action_obsoleto(self):
         self._workflow_write({'state': 'obsoleto'})
@@ -743,6 +849,62 @@ class AmunetDocumentoVersion(models.Model):
         ('obsoleto', 'Obsoleto'),
     ], string='Estado historico', default='obsoleto')
     cambios = fields.Text(string='Resumen de cambios')
+    diff_html = fields.Html(string='Cambios vs. versión anterior', compute='_compute_diff_html', sanitize=False)
+
+    def _compute_diff_html(self):
+        import re
+        from difflib import SequenceMatcher
+
+        def strip_html(html_text):
+            if not html_text:
+                return ''
+            text = re.sub(r'<[^>]+>', ' ', html_text)
+            text = re.sub(r'&nbsp;', ' ', text)
+            text = re.sub(r'&[a-z]+;', '', text)
+            text = re.sub(r'\s+', ' ', text)
+            return text.strip()
+
+        for record in self:
+            prev = self.env['amunet.documento.version'].search([
+                ('documento_id', '=', record.documento_id.id),
+                ('fecha', '<', record.fecha),
+            ], order='fecha desc', limit=1)
+
+            if not prev:
+                record.diff_html = (
+                    '<p style="color:#6b7280;font-style:italic">'
+                    'Primera versión — sin versión anterior para comparar.</p>'
+                )
+                continue
+
+            old_words = strip_html(prev.contenido_html).split()
+            new_words = strip_html(record.contenido_html).split()
+            matcher = SequenceMatcher(None, old_words, new_words, autojunk=False)
+            parts = []
+
+            for op, i1, i2, j1, j2 in matcher.get_opcodes():
+                if op == 'equal':
+                    parts.append(' '.join(new_words[j1:j2]))
+                elif op == 'insert':
+                    chunk = ' '.join(new_words[j1:j2])
+                    parts.append(
+                        '<strong style="background:#dcfce7;color:#166534;padding:0 2px">%s</strong>' % chunk
+                    )
+                elif op == 'delete':
+                    chunk = ' '.join(old_words[i1:i2])
+                    parts.append(
+                        '<del style="background:#fee2e2;color:#991b1b;padding:0 2px">%s</del>' % chunk
+                    )
+                elif op == 'replace':
+                    old_chunk = ' '.join(old_words[i1:i2])
+                    new_chunk = ' '.join(new_words[j1:j2])
+                    parts.append(
+                        '<del style="background:#fee2e2;color:#991b1b;padding:0 2px">%s</del> '
+                        '<strong style="background:#dcfce7;color:#166534;padding:0 2px">%s</strong>'
+                        % (old_chunk, new_chunk)
+                    )
+
+            record.diff_html = '<div style="line-height:2;font-size:0.95em">%s</div>' % ' '.join(parts)
 
     def _check_version_workflow_write(self):
         if (
@@ -777,9 +939,55 @@ class AmunetDocumentoDistribucion(models.Model):
     acuse = fields.Boolean(string='Acuse de recibido')
     fecha_acuse = fields.Date(string='Fecha de acuse', readonly=True)
 
+    doc_codigo = fields.Char(related='documento_id.codigo', store=True, string='Codigo')
+    doc_name = fields.Char(related='documento_id.name', store=True, string='Documento')
+    doc_area = fields.Selection(related='documento_id.area', store=True, string='Area')
+    doc_state = fields.Selection(related='documento_id.state', store=True, string='Estado')
+
+    def write(self, vals):
+        if ('acuse' in vals or 'fecha_acuse' in vals) \
+                and not self.env.context.get('amunet_documento_workflow_write') \
+                and not self.env.su:
+            raise UserError(_(
+                'El acuse de lectura solo puede registrarse mediante firma electronica.'))
+        return super().write(vals)
+
     def action_acusar(self):
         for r in self:
-            r.write({'acuse': True, 'fecha_acuse': fields.Date.today()})
+            r.with_context(amunet_documento_workflow_write=True).write(
+                {'acuse': True, 'fecha_acuse': fields.Date.today()})
+
+    def _amunet_signature_allowed_methods(self):
+        return {'_signature_acuse': _('Confirmar lectura de documento')}
+
+    def _signature_acuse(self):
+        self.ensure_one()
+        if self.usuario_id.id != self.env.uid:
+            raise UserError(_('Solo puedes firmar tu propio acuse.'))
+        self.with_context(amunet_documento_workflow_write=True).write(
+            {'acuse': True, 'fecha_acuse': fields.Date.today()})
+
+    def action_abrir_documento(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'amunet.documento',
+            'res_id': self.documento_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_yo_lo_lei_desde_lista(self):
+        self.ensure_one()
+        if self.usuario_id.id != self.env.uid:
+            raise UserError(_('Solo puedes confirmar tu propio acuse.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self,
+            '_signature_acuse',
+            'Acuse de lectura',
+            'Confirmo que he leido y entendido el documento %s v%s' % (
+                self.doc_codigo or '', self.documento_id.version_actual or ''),
+        )
 
 
 class AmunetDocumentoActividad(models.Model):
@@ -790,7 +998,7 @@ class AmunetDocumentoActividad(models.Model):
     documento_id = fields.Many2one(
         'amunet.documento', required=True, ondelete='cascade')
     sequence = fields.Integer(string='#', default=10)
-    actividad = fields.Char(string='Actividad', required=True)
+    actividad = fields.Char(string='Actividad')
     descripcion = fields.Html(string='Descripcion', sanitize=True, sanitize_tags=False)
     responsable = fields.Char(string='Responsable')
     registro = fields.Char(string='Registro')

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import _, fields, models
+from odoo.exceptions import UserError
 from . import amunet_documento as _doc_module
 
 
@@ -21,6 +22,40 @@ class AmunetDocumentoFormato(models.Model):
         related='documento_id.codigo', string='Código PNO', store=False)
     requiere_aprobacion = fields.Boolean(
         string='Requiere aprobación para imprimir', default=False)
+    solo_visualizacion = fields.Boolean(
+        string='Solo visualización (sin descarga)', default=False)
+    es_supervisor_doc = fields.Boolean(
+        compute='_compute_es_supervisor_doc', store=False)
+
+    def _compute_es_supervisor_doc(self):
+        is_sup = self.env.user.has_group(
+            'amunet_documentos.group_supervisor_documentacion')
+        for r in self:
+            r.es_supervisor_doc = is_sup
+
+    def action_visualizar(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': (
+                f'/web/content?model=amunet.documento.formato'
+                f'&id={self.id}&field=archivo'
+                f'&filename={self.archivo_filename or self.codigo}'
+                f'&download=false'
+            ),
+            'target': 'new',
+        }
+
+    def action_descargar(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': (
+                f'/web/content?model=amunet.documento.formato'
+                f'&id={self.id}&field=archivo'
+                f'&filename={self.archivo_filename or self.codigo}'
+                f'&download=true'
+            ),
+            'target': 'self',
+        }
 
     def action_solicitar_descarga(self):
         Solicitud = self.env['amunet.documento.formato.solicitud']
@@ -60,7 +95,15 @@ class AmunetDocumentoFormato(models.Model):
         _doc_module._check_documento_child_editable(self, vals)
 
     def write(self, vals):
-        self._check_editable(vals)
+        if vals.get('archivo'):
+            self._check_editable(vals)
+        campos_supervisor = {'requiere_aprobacion', 'solo_visualizacion'}
+        if campos_supervisor & set(vals) and not self.env.user.has_group(
+                'amunet_documentos.group_supervisor_documentacion'):
+            raise UserError(_(
+                'Solo la Supervisora de Documentación puede cambiar '
+                'el tipo de acceso de los formatos.'
+            ))
         return super().write(vals)
 
     def unlink(self):

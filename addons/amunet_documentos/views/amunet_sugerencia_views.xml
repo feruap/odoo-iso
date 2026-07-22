@@ -31,7 +31,7 @@
                             invisible="state != 'borrador'"
                             confirm="¿Estás segura de que el control de cambios está completo y listo para enviarse?"/>
                     <button name="action_descartar" string="Eliminar borrador"
-                            type="object" class="btn-secondary"
+                            type="object" class="btn-danger"
                             icon="fa-trash"
                             invisible="state != 'borrador'"
                             confirm="¿Segura que quieres eliminar este borrador? Se eliminará permanentemente."/>
@@ -97,10 +97,11 @@
                             <field name="alcance_sgc" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"/>
                         </group>
                     </group>
-                    <group string="Justificación del cambio">
-                        <field name="motivo" nolabel="1" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
-                               placeholder="Describe por qué se propone este cambio."/>
-                    </group>
+                    <separator string="Justificación del cambio"/>
+                    <field name="motivo" nolabel="1"
+                           readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
+                           placeholder="Describe por qué se propone este cambio."
+                           rows="6"/>
                     <group string="Análisis de riesgos">
                         <field name="aplica_analisis_riesgos"
                                string="¿Aplica análisis de riesgos?"
@@ -136,6 +137,14 @@
                                    optional="show"/>
                         </list>
                     </field>
+                    <separator string="Archivos adjuntos del cambio"
+                               invisible="state in ('aceptada', 'rechazada')"/>
+                    <field name="adjunto_ids"
+                           widget="many2many_binary"
+                           nolabel="1"
+                           readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
+                           invisible="state in ('aceptada', 'rechazada')"
+                           string="Archivos adjuntos del cambio"/>
                     <group string="Motivo del rechazo (obligatorio para rechazar)"
                            invisible="state == 'borrador' or (creado_por_id == uid and state == 'pendiente')">
                         <field name="motivo_rechazo" nolabel="1"
@@ -220,7 +229,7 @@
         <field name="name">Controles de cambio por decidir</field>
         <field name="res_model">amunet.documento.sugerencia</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">['|','|','|',
+        <field name="domain">['|','|',
             ('state','=','borrador'),
             '&amp;',('state','=','rechazada'),('creado_por_id','=',uid),
             '&amp;',('state','=','pendiente'),

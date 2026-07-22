@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Usuario base: solo ve documentos generales (GE) -->
+    <record id="rule_docs_usuario_ge" model="ir.rule">
+        <field name="name">Documentos: Usuario - solo generales</field>
+        <field name="model_id" ref="model_amunet_documento"/>
+        <field name="groups" eval="[(4, ref('group_documentos_user'))]"/>
+        <field name="domain_force">[('area', '=', 'GE')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Almacén: ve documentos de su área (AL) -->
+    <record id="rule_docs_area_al" model="ir.rule">
+        <field name="name">Documentos: Área Almacén</field>
+        <field name="model_id" ref="model_amunet_documento"/>
+        <field name="groups" eval="[(4, ref('group_docs_area_al'))]"/>
+        <field name="domain_force">[('area', '=', 'AL')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Control Calidad: ve CC y Estabilidad (EST) -->
+    <record id="rule_docs_area_cc" model="ir.rule">
+        <field name="name">Documentos: Área Control Calidad</field>
+        <field name="model_id" ref="model_amunet_documento"/>
+        <field name="groups" eval="[(4, ref('group_docs_area_cc'))]"/>
+        <field name="domain_force">[('area', 'in', ['CC', 'EST'])]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Producción: ve documentos de su área (PR) -->
+    <record id="rule_docs_area_pr" model="ir.rule">
+        <field name="name">Documentos: Área Producción</field>
+        <field name="model_id" ref="model_amunet_documento"/>
+        <field name="groups" eval="[(4, ref('group_docs_area_pr'))]"/>
+        <field name="domain_force">[('area', '=', 'PR')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Recursos Humanos: ve documentos de su área (RH) -->
+    <record id="rule_docs_area_rh" model="ir.rule">
+        <field name="name">Documentos: Área Recursos Humanos</field>
+        <field name="model_id" ref="model_amunet_documento"/>
+        <field name="groups" eval="[(4, ref('group_docs_area_rh'))]"/>
+        <field name="domain_force">[('area', '=', 'RH')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Responsable (Stacy, Mery, Fernando): ve todos los documentos -->
+    <record id="rule_docs_responsable_all" model="ir.rule">
+        <field name="name">Documentos: Responsable - todos</field>
+        <field name="model_id" ref="model_amunet_documento"/>
+        <field name="groups" eval="[(4, ref('group_documentos_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Responsable Sanitario (Patricia Leany, Mery): ve todos los documentos -->
+    <record id="rule_docs_responsable_sanitario_all" model="ir.rule">
+        <field name="name">Documentos: Responsable Sanitario - todos</field>
+        <field name="model_id" ref="model_amunet_documento"/>
+        <field name="groups" eval="[(4, ref('group_responsable_sanitario'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- FORMATOS: Usuario base - sin acceso -->
+    <record id="rule_formato_usuario_ninguno" model="ir.rule">
+        <field name="name">Formatos: Usuario - sin acceso</field>
+        <field name="model_id" ref="model_amunet_documento_formato"/>
+        <field name="groups" eval="[(4, ref('group_documentos_user'))]"/>
+        <field name="domain_force">[(0, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- FORMATOS: Comité técnico - acceso completo -->
+    <record id="rule_formato_comite_all" model="ir.rule">
+        <field name="name">Formatos: Comité técnico - todos</field>
+        <field name="model_id" ref="model_amunet_documento_formato"/>
+        <field name="groups" eval="[(4, ref('group_comite_tecnico'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- FORMATOS: Responsable - acceso completo -->
+    <record id="rule_formato_responsable_all" model="ir.rule">
+        <field name="name">Formatos: Responsable - todos</field>
+        <field name="model_id" ref="model_amunet_documento_formato"/>
+        <field name="groups" eval="[(4, ref('group_documentos_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- FORMATOS: Responsable Sanitario - acceso completo -->
+    <record id="rule_formato_responsable_sanitario_all" model="ir.rule">
+        <field name="name">Formatos: Responsable Sanitario - todos</field>
+        <field name="model_id" ref="model_amunet_documento_formato"/>
+        <field name="groups" eval="[(4, ref('group_responsable_sanitario'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- SOLICITUDES DE FORMATO: Usuario base - sin acceso -->
+    <record id="rule_formato_solicitud_usuario_ninguno" model="ir.rule">
+        <field name="name">Solicitudes de Formato: Usuario - sin acceso</field>
+        <field name="model_id" ref="model_amunet_documento_formato_solicitud"/>
+        <field name="groups" eval="[(4, ref('group_documentos_user'))]"/>
+        <field name="domain_force">[(0, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- SOLICITUDES DE FORMATO: Comité técnico - acceso completo -->
+    <record id="rule_formato_solicitud_comite_all" model="ir.rule">
+        <field name="name">Solicitudes de Formato: Comité técnico - todos</field>
+        <field name="model_id" ref="model_amunet_documento_formato_solicitud"/>
+        <field name="groups" eval="[(4, ref('group_comite_tecnico'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- SOLICITUDES DE FORMATO: Responsable - acceso completo -->
+    <record id="rule_formato_solicitud_responsable_all" model="ir.rule">
+        <field name="name">Solicitudes de Formato: Responsable - todos</field>
+        <field name="model_id" ref="model_amunet_documento_formato_solicitud"/>
+        <field name="groups" eval="[(4, ref('group_documentos_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- SOLICITUDES DE FORMATO: Responsable Sanitario - acceso completo -->
+    <record id="rule_formato_solicitud_responsable_sanitario_all" model="ir.rule">
+        <field name="name">Solicitudes de Formato: Responsable Sanitario - todos</field>
+        <field name="model_id" ref="model_amunet_documento_formato_solicitud"/>
+        <field name="groups" eval="[(4, ref('group_responsable_sanitario'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+</odoo>
