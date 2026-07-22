@@ -29,9 +29,9 @@ class AmunetMiSupervisionWizard(models.TransientModel):
         ],
         string='Resultado', default='conforme')
     qty_inspected = fields.Float(
-        string='Piezas revisadas', digits='Product Unit of Measure')
+        string='Piezas revisadas', digits='Product Unit')
     qty_removed = fields.Float(
-        string='Piezas retiradas', digits='Product Unit of Measure')
+        string='Piezas retiradas', digits='Product Unit')
     notes = fields.Text(string='Observaciones')
     pin = fields.Char(string='PIN del supervisor', password=True)
 

@@ -58,7 +58,7 @@ class AmunetReworkOrder(models.Model):
 
     qty_nonconforming = fields.Float(
         string='Cantidad no conforme',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         tracking=True,
     )
     uom_id = fields.Many2one(
@@ -120,8 +120,8 @@ class AmunetReworkOrder(models.Model):
         readonly=True,
     )
 
-    qty_reworked = fields.Float(string='Cantidad reprocesada', digits='Product Unit of Measure')
-    qty_scrap = fields.Float(string='Cantidad scrap', digits='Product Unit of Measure')
+    qty_reworked = fields.Float(string='Cantidad reprocesada', digits='Product Unit')
+    qty_scrap = fields.Float(string='Cantidad scrap', digits='Product Unit')
     production_notes = fields.Html(string='Registro de ejecucion Produccion')
     reworked_by_id = fields.Many2one('res.users', string='Reprocesado por', readonly=True)
     reworked_date = fields.Datetime(string='Fecha reproceso', readonly=True)
@@ -568,7 +568,7 @@ class AmunetReworkOrderLine(models.Model):
     qty_requested = fields.Float(
         string='Cantidad requerida',
         default=1.0,
-        digits='Product Unit of Measure',
+        digits='Product Unit',
     )
     uom_id = fields.Many2one(
         'uom.uom',
