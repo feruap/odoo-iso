@@ -69,11 +69,9 @@
                             invisible="state != 'in_progress' or not sampling_confirmed"
                             confirm="¿Editar Muestreo? Se desbloqueará Numeral 4 y se reiniciarán los datos del muestreo."/>
 
-                    <button name="action_finalize" string="Finalizar"
-                            type="object" class="oe_highlight"
-                            invisible="state != 'in_progress' or not sampling_confirmed or not display_action_finalize"
-                            groups="amunet_quality.group_quality_sanitary"
-                            confirm="¿Está seguro de finalizar el control de calidad?"/>
+                    <!-- Botón "Finalizar" retirado 2026-07-22: la finalización se
+                         dispara automaticamente al firmar "Autorizó" (un solo acto,
+                         un solo PIN). Validado por Calidad/RS. -->
 
                     <button name="action_reanalysis" string="Reanálisis"
                             type="object"
