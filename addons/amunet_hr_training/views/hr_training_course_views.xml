@@ -18,6 +18,12 @@
                             string="Confirmar Ponente"
                             type="object" class="btn-primary"
                             invisible="state != 'draft' or speaker_confirmed or not is_speaker_for_user"/>
+                    <button name="action_send_speaker_confirm_request"
+                            string="Solicitar confirmacion (ponente)"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'draft' or speaker_confirmed"
+                            groups="hr.group_hr_user"
+                            help="Envia al ponente un correo con enlace de un clic para confirmar sin entrar a Odoo."/>
                     <button name="action_hr_approve"
                             string="Aprobar RH"
                             type="object" class="btn-primary"
@@ -101,8 +107,11 @@
                                    invisible="not hr_confirmed"/>
                         </group>
                         <group string="Registro de capacitación">
-                            <field name="nota_minima_aprobatoria"
+                            <field name="tipo_evaluacion"
                                    readonly="state == 'done'"/>
+                            <field name="nota_minima_aprobatoria"
+                                   readonly="state == 'done'"
+                                   invisible="tipo_evaluacion == 'asistencia'"/>
                             <field name="validez_meses"
                                    readonly="state == 'done'"/>
                         </group>
@@ -130,7 +139,9 @@
                                            options="{'no_create': True}"/>
                                     <field name="attendance"/>
                                     <field name="on_time"/>
-                                    <field name="grade"/>
+                                    <field name="grade"
+                                           optional="show"
+                                           column_invisible="parent.tipo_evaluacion == 'asistencia'"/>
                                     <field name="notes"/>
                                 </list>
                             </field>

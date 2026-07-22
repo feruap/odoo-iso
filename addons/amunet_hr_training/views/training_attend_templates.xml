@@ -65,6 +65,73 @@
     </template>
 
     <!--
+        === CONFIRMACION DE PONENTE POR MAGIC LINK ===
+        Estas tres paginas no requieren login (auth='public').
+    -->
+
+    <!-- Pagina de confirmacion: muestra detalles del curso y boton de confirmar -->
+    <template id="speaker_confirm_page" name="Speaker Confirm Page">
+        <t t-call="amunet_hr_training.training_attend_layout">
+            <t t-set="title">Confirmar participacion como ponente</t>
+            <h1 style="font-size:20px; margin:8px 0 16px 0; color:#222;">
+                Confirma tu participacion como ponente
+            </h1>
+            <p style="color:#555; font-size:15px; margin:0 0 12px 0;">
+                Eres el ponente asignado para:
+            </p>
+            <div class="course-name" t-esc="course.name"/>
+            <p style="color:#666; font-size:14px; margin-top:10px;">
+                Fecha: <span t-esc="course.date_start"/>
+            </p>
+            <p style="color:#555; font-size:14px; margin-top:16px; line-height:1.5;">
+                Al confirmar, Recursos Humanos recibira una notificacion
+                y el curso avanzara en el proceso de aprobacion.
+            </p>
+            <form t-attf-action="/training/confirmar-ponente/{{ token }}/confirmar"
+                  method="POST" style="margin-top:24px;">
+                <button type="submit"
+                        style="background:#3366cc; color:#fff; border:none;
+                               padding:14px 24px; border-radius:8px; font-size:16px;
+                               cursor:pointer; font-weight:600; width:100%;">
+                    &#10003; Confirmar mi participacion como ponente
+                </button>
+            </form>
+        </t>
+    </template>
+
+    <!-- Pagina de exito al confirmar ponente -->
+    <template id="speaker_confirm_success" name="Speaker Confirm Success">
+        <t t-call="amunet_hr_training.training_attend_layout">
+            <t t-set="title">Confirmacion registrada</t>
+            <div class="icon icon-ok">&#10004;</div>
+            <t t-if="already">
+                <h1>!Ya estabas confirmado!</h1>
+                <p>Tu participacion como ponente en este curso ya estaba registrada anteriormente.</p>
+            </t>
+            <t t-else="">
+                <h1>!Confirmacion registrada!</h1>
+                <p>Tu participacion como ponente quedo registrada.
+                   Recursos Humanos recibira una notificacion.</p>
+            </t>
+            <div class="course-name" t-esc="course.name"/>
+            <p class="meta">Ponente: <span t-esc="course.speaker_id.name"/></p>
+        </t>
+    </template>
+
+    <!-- Pagina de error al confirmar ponente -->
+    <template id="speaker_confirm_error" name="Speaker Confirm Error">
+        <t t-call="amunet_hr_training.training_attend_layout">
+            <t t-set="title">No se pudo confirmar</t>
+            <div class="icon icon-err">&#9888;</div>
+            <h1 t-esc="title"/>
+            <p t-esc="message"/>
+            <t t-if="course">
+                <div class="course-name" t-esc="course.name"/>
+            </t>
+        </t>
+    </template>
+
+    <!--
         Vista "form" fullscreen del QR: se abre como popup al pulsar
         "Proyectar QR". Solo se muestra el nombre del curso y el QR
         grande, sin botones ni distracciones.
