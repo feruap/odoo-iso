@@ -27,6 +27,15 @@ class StockWarehouse(models.Model):
         help="Configuración de usuarios y operaciones permitidas en este almacén."
     )
 
+    amunet_access_group_id = fields.Many2one(
+        comodel_name='res.groups',
+        string='Grupo con acceso completo',
+        help="Si se define, TODO miembro de este grupo tiene acceso completo a "
+             "este almacén automáticamente (sin necesidad de un registro de "
+             "acceso por usuario). Al entrar/salir del grupo, el acceso se "
+             "ajusta solo."
+    )
+
     allowed_user_ids = fields.Many2many(
         comodel_name='res.users',
         string='Usuarios permitidos',

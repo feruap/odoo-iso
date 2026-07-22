@@ -16,6 +16,8 @@
                     <group>
                         <group>
                             <field name="allowed_user_count" string="Usuarios con acceso"/>
+                            <field name="amunet_access_group_id"
+                                   options="{'no_create': True}"/>
                         </group>
                         <group>
                             <button name="action_view_user_accesses"
