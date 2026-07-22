@@ -2547,7 +2547,12 @@ class AmunetQualityCheck(models.Model):
             # Al firmar Autorizó se dispara la finalización completa (folio, estado,
             # disposición del lote y recepción final) con un solo PIN; el botón
             # "Finalizar" independiente se retiró de la vista.
-            record._action_finalize_logic()
+            # Se ejecuta con sudo(): la disposición (escribir product.template,
+            # crear recepción/merma, liberar lote) son operaciones de sistema que el
+            # RS no tiene permitidas directamente pero que ya autorizó con su firma+PIN.
+            # sudo() solo bypassa permisos ORM, no las validaciones de negocio, y
+            # conserva create_uid/write_uid = usuario real (trazabilidad ISO 13485).
+            record.sudo()._action_finalize_logic()
 
     def action_finalize(self):
         """
