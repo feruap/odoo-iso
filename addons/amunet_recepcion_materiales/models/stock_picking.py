@@ -89,7 +89,13 @@ class StockPicking(models.Model):
 
     # ── action_confirm: asignar destino automático + corregir lote ──────────
     def action_confirm(self):
-        for picking in self.filtered(lambda p: p.picking_type_code == 'incoming'):
+        for picking in self.filtered(
+            lambda p: p.picking_type_code == 'incoming'
+            # Las liberaciones de QC (recepcion de disposicion) ya traen destino
+            # Existencias puesto por Calidad; NO re-enrutar a Control de calidad,
+            # si no se re-cuarentena un lote ya aprobado.
+            and not getattr(p, 'amunet_disposition_qc_id', False)
+        ):
             wh = picking.picking_type_id.warehouse_id
             stock_loc = wh.lot_stock_id if wh else None
             qc_loc = wh.wh_qc_stock_loc_id if wh else None
