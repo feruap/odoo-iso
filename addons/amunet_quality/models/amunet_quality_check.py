@@ -2964,7 +2964,11 @@ class AmunetQualityCheck(models.Model):
                     'product_id': self.product_id.id,
                     'product_uom_id': self.product_id.uom_id.id,
                     'location_id': source_location.id,
-                    'location_dest_id': dest_line.location_dest_id.id,
+                    # La liberacion SIEMPRE aterriza en Existencias (dest_location);
+                    # las lineas de destino solo reparten CANTIDAD, no cambian el
+                    # lugar. Antes se copiaba dest_line.location_dest_id (a veces la
+                    # zona de Entrada) y el lote no llegaba a Existencias al validar.
+                    'location_dest_id': dest_location.id,
                     'lot_id': self.lot_id.id if self.lot_id else False,
                     'lot_name': self.lot_id.name if self.lot_id else False,
                     'manufacturing_date': self.manufacturing_date,
