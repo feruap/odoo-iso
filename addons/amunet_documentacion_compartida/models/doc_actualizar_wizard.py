@@ -1,7 +1,13 @@
 from odoo import models, fields
 
-DIANA_UID = 64
-_UIDS_VISORES = [69, 61]  # Stacy, Mery
+# Personas para notificaciones/actividades, por LOGIN (robusto entre bases;
+# los UIDs hardcodeados se rompen si se recrea el usuario y no coinciden entre
+# staging y produccion).
+_LOGIN_DIANA = 's.controldecalidad@amunet.com.mx'      # Diana (Control de Calidad)
+_LOGINS_VISORES = [
+    'documentacion@amunet.com.mx',                     # Stacy
+    'desarrollo@amunet.com.mx',                        # Mery
+]
 
 
 class DocActualizarWizard(models.TransientModel):
@@ -20,14 +26,17 @@ class DocActualizarWizard(models.TransientModel):
             message_type='notification',
             subtype_xmlid='mail.mt_note',
         )
-        # Cerrar actividad pendiente de Diana
-        doc.activity_ids.filtered(
-            lambda a: a.user_id.id == DIANA_UID
-            and 'aprobado' in (a.summary or '').lower()
-        ).action_done()
-        # Notificar a Stacy y Mery que el PDF ya está disponible
+        Users = self.env['res.users'].sudo()
+        # Cerrar actividad pendiente de Diana (por login, no UID)
+        diana = Users.search([('login', '=', _LOGIN_DIANA)], limit=1)
+        if diana:
+            doc.activity_ids.filtered(
+                lambda a: a.user_id == diana
+                and 'aprobado' in (a.summary or '').lower()
+            ).action_done()
+        # Notificar a los visores (Stacy y Mery) que el PDF ya está disponible
         tipo = self.env.ref('mail.mail_activity_data_todo')
-        visores = self.env['res.users'].sudo().browse(_UIDS_VISORES).filtered('active')
+        visores = Users.search([('login', 'in', _LOGINS_VISORES), ('active', '=', True)])
         for user in visores:
             doc.activity_schedule(
                 activity_type_id=tipo.id,
