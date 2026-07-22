@@ -87,6 +87,7 @@ class AmunetQualityCheck(models.Model):
             rec.is_termometro_varilla = code.upper().startswith('EQTRV')
             rec.is_agitador = code.upper().startswith('EQAMC')
             rec.is_esterilizador = code.upper().startswith('EQEPV')
+            rec.is_balanza = code.upper().startswith('EQBAD')
 
     _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO')
 
@@ -848,6 +849,12 @@ class AmunetQualityCheck(models.Model):
 
     is_esterilizador = fields.Boolean(
         string='Es esterilizador/autoclave',
+        compute='_compute_is_equipment',
+        store=True,
+    )
+
+    is_balanza = fields.Boolean(
+        string='Es balanza digital',
         compute='_compute_is_equipment',
         store=True,
     )
