@@ -53,6 +53,10 @@ Funcionalidades:
 
         # Crons (alertas y reporte mensual)
         'data/cron_alertas.xml',
+
+        # Seeds: cursos de renovacion anual de equipos + preguntas/respuestas
+        'data/seeds_20260709_162924.xml',
+        'data/seeds_cursos_virtuales_preguntas.xml',
     ],
     'installable': True,
     'application': True,

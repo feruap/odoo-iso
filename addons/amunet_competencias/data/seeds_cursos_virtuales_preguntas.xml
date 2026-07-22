@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ── Preguntas: PNOEP (curso 60) ── -->
+        <record id="seed_pregunta_243" model="amunet.curso.pregunta">
+            <field name="curso_id" ref="seed_amunet_curso_60"/>
+            <field name="texto">¿Cuál es el propósito de seguir el PNO antes de operar un equipo?</field>
+            <field name="secuencia">1</field>
+        </record>
+        <record id="seed_pregunta_244" model="amunet.curso.pregunta">
+            <field name="curso_id" ref="seed_amunet_curso_60"/>
+            <field name="texto">¿Qué debes hacer si detectas una anomalía en el equipo?</field>
+            <field name="secuencia">2</field>
+        </record>
+
+        <!-- ── Preguntas: PNOEC (curso 61) ── -->
+        <record id="seed_pregunta_245" model="amunet.curso.pregunta">
+            <field name="curso_id" ref="seed_amunet_curso_61"/>
+            <field name="texto">¿Qué se verifica antes de operar un equipo de laboratorio?</field>
+            <field name="secuencia">1</field>
+        </record>
+        <record id="seed_pregunta_246" model="amunet.curso.pregunta">
+            <field name="curso_id" ref="seed_amunet_curso_61"/>
+            <field name="texto">¿Con qué frecuencia se registra el uso de equipos de laboratorio?</field>
+            <field name="secuencia">2</field>
+        </record>
+
+        <!-- ── Preguntas: PNOEM (curso 62) ── -->
+        <record id="seed_pregunta_247" model="amunet.curso.pregunta">
+            <field name="curso_id" ref="seed_amunet_curso_62"/>
+            <field name="texto">¿Qué EPP es obligatorio al operar el autoclave?</field>
+            <field name="secuencia">1</field>
+        </record>
+        <record id="seed_pregunta_248" model="amunet.curso.pregunta">
+            <field name="curso_id" ref="seed_amunet_curso_62"/>
+            <field name="texto">¿Qué hacer si la campana de flujo genera ruido inusual?</field>
+            <field name="secuencia">2</field>
+        </record>
+
+        <!-- ── Preguntas: PNOEB (curso 63) ── -->
+        <record id="seed_pregunta_249" model="amunet.curso.pregunta">
+            <field name="curso_id" ref="seed_amunet_curso_63"/>
+            <field name="texto">¿A qué temperatura debe mantenerse el congelador para muestras biológicas?</field>
+            <field name="secuencia">1</field>
+        </record>
+        <record id="seed_pregunta_250" model="amunet.curso.pregunta">
+            <field name="curso_id" ref="seed_amunet_curso_63"/>
+            <field name="texto">¿Qué verificar antes de usar el termociclador?</field>
+            <field name="secuencia">2</field>
+        </record>
+
+        <!-- ── Respuestas: pregunta 243 ── -->
+        <record id="seed_respuesta_967" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_243"/>
+            <field name="texto">Asegurar la operación segura, correcta y reproducible</field>
+            <field name="es_correcta" eval="True"/>
+        </record>
+        <record id="seed_respuesta_968" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_243"/>
+            <field name="texto">Acelerar el proceso sin importar el resultado</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+        <record id="seed_respuesta_969" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_243"/>
+            <field name="texto">Evitar limpiar el equipo después de usarlo</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+
+        <!-- ── Respuestas: pregunta 244 ── -->
+        <record id="seed_respuesta_970" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_244"/>
+            <field name="texto">Continuar operando para no retrasar producción</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+        <record id="seed_respuesta_971" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_244"/>
+            <field name="texto">Detener, registrar la falla y avisar al supervisor</field>
+            <field name="es_correcta" eval="True"/>
+        </record>
+        <record id="seed_respuesta_972" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_244"/>
+            <field name="texto">Apagar el equipo y no reportar nada</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+
+        <!-- ── Respuestas: pregunta 245 ── -->
+        <record id="seed_respuesta_973" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_245"/>
+            <field name="texto">Que esté calibrado, limpio y dentro de su fecha de mantenimiento</field>
+            <field name="es_correcta" eval="True"/>
+        </record>
+        <record id="seed_respuesta_974" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_245"/>
+            <field name="texto">Solo que esté encendido</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+        <record id="seed_respuesta_975" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_245"/>
+            <field name="texto">Nada, basta con que funcione</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+
+        <!-- ── Respuestas: pregunta 246 ── -->
+        <record id="seed_respuesta_976" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_246"/>
+            <field name="texto">Solo cuando hay incidentes</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+        <record id="seed_respuesta_977" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_246"/>
+            <field name="texto">Cada vez que se utiliza, en la bitácora correspondiente</field>
+            <field name="es_correcta" eval="True"/>
+        </record>
+        <record id="seed_respuesta_978" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_246"/>
+            <field name="texto">Una vez por semana</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+
+        <!-- ── Respuestas: pregunta 247 ── -->
+        <record id="seed_respuesta_979" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_247"/>
+            <field name="texto">Ninguno, el autoclave es seguro sin EPP</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+        <record id="seed_respuesta_980" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_247"/>
+            <field name="texto">Guantes térmicos y careta protectora como mínimo</field>
+            <field name="es_correcta" eval="True"/>
+        </record>
+        <record id="seed_respuesta_981" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_247"/>
+            <field name="texto">Solo guantes de latex</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+
+        <!-- ── Respuestas: pregunta 248 ── -->
+        <record id="seed_respuesta_982" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_248"/>
+            <field name="texto">Ignorarlo y continuar el trabajo</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+        <record id="seed_respuesta_983" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_248"/>
+            <field name="texto">Detener, documentar y reportar a mantenimiento</field>
+            <field name="es_correcta" eval="True"/>
+        </record>
+        <record id="seed_respuesta_984" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_248"/>
+            <field name="texto">Aumentar la velocidad del ventilador</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+
+        <!-- ── Respuestas: pregunta 249 ── -->
+        <record id="seed_respuesta_985" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_249"/>
+            <field name="texto">Entre -20°C y -80°C según lo especificado en el PNO</field>
+            <field name="es_correcta" eval="True"/>
+        </record>
+        <record id="seed_respuesta_986" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_249"/>
+            <field name="texto">A temperatura ambiente</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+        <record id="seed_respuesta_987" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_249"/>
+            <field name="texto">Entre 2°C y 8°C siempre</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+
+        <!-- ── Respuestas: pregunta 250 ── -->
+        <record id="seed_respuesta_988" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_250"/>
+            <field name="texto">El programa, los parámetros y que el bloque esté limpio</field>
+            <field name="es_correcta" eval="True"/>
+        </record>
+        <record id="seed_respuesta_989" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_250"/>
+            <field name="texto">Solo encenderlo y empezar</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+        <record id="seed_respuesta_990" model="amunet.curso.respuesta">
+            <field name="pregunta_id" ref="seed_pregunta_250"/>
+            <field name="texto">Cambiar todos los parámetros</field>
+            <field name="es_correcta" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

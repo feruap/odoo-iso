@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="seed_amunet_curso_60" model="amunet.curso">
+            <field name="name">Renovación anual — Equipos Producción Empaque (PNOEP)</field>
+            <field name="code">CURSO-0052</field>
+            <field name="active" eval="True"/>
+            <field name="state">publicado</field>
+            <field name="procedure_ids" eval="[(6,0,[149,152,155,158,161,165,168,171,174])]"/>
+            <field name="validez_meses">12</field>
+            <field name="calificacion_minima">70.0</field>
+            <field name="tiempo_minimo_estudio">0</field>
+            <field name="tiempo_limite_examen">0</field>
+            <field name="total_preguntas">2</field>
+        </record>
+        <record id="seed_amunet_curso_61" model="amunet.curso">
+            <field name="name">Renovación anual — Equipos Control de Calidad (PNOEC)</field>
+            <field name="code">CURSO-0053</field>
+            <field name="active" eval="True"/>
+            <field name="state">publicado</field>
+            <field name="procedure_ids" eval="[(6,0,[86,89,95,98,101,104,107,116,122])]"/>
+            <field name="validez_meses">12</field>
+            <field name="calificacion_minima">70.0</field>
+            <field name="tiempo_minimo_estudio">0</field>
+            <field name="tiempo_limite_examen">0</field>
+            <field name="total_preguntas">2</field>
+        </record>
+        <record id="seed_amunet_curso_62" model="amunet.curso">
+            <field name="name">Renovación anual — Equipos Manufactura (PNOEM)</field>
+            <field name="code">CURSO-0054</field>
+            <field name="active" eval="True"/>
+            <field name="state">publicado</field>
+            <field name="procedure_ids" eval="[(6,0,[134,137,140,143])]"/>
+            <field name="validez_meses">12</field>
+            <field name="calificacion_minima">70.0</field>
+            <field name="tiempo_minimo_estudio">0</field>
+            <field name="tiempo_limite_examen">0</field>
+            <field name="total_preguntas">2</field>
+        </record>
+        <record id="seed_amunet_curso_63" model="amunet.curso">
+            <field name="name">Renovación anual — Equipos Biotecnología (PNOEB)</field>
+            <field name="code">CURSO-0055</field>
+            <field name="active" eval="True"/>
+            <field name="state">publicado</field>
+            <field name="procedure_ids" eval="[(6,0,[39,42,48,51,54,57,60,66,73,82])]"/>
+            <field name="validez_meses">12</field>
+            <field name="calificacion_minima">70.0</field>
+            <field name="tiempo_minimo_estudio">0</field>
+            <field name="tiempo_limite_examen">0</field>
+            <field name="total_preguntas">2</field>
+        </record>
+    </data>
+</odoo>
