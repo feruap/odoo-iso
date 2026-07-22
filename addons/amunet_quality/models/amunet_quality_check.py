@@ -2551,6 +2551,12 @@ class AmunetQualityCheck(models.Model):
                 f' <b>{record.name}</b> — Dictamen: {status}'
             )
 
+            # Autorizar = disponer en un solo acto (validado por Calidad/RS 2026-07-22).
+            # Al firmar Autorizó se dispara la finalización completa (folio, estado,
+            # disposición del lote y recepción final) con un solo PIN; el botón
+            # "Finalizar" independiente se retiró de la vista.
+            record._action_finalize_logic()
+
     def action_finalize(self):
         """
         Acción de botón Finalizar.
