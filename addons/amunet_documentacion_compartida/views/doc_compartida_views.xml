@@ -49,8 +49,9 @@
                         groups="amunet_documentacion_compartida.group_doc_revisor,amunet_documentacion_compartida.group_doc_validacion"/>
 
                 <!-- Auxiliares para condición de bloqueo cruzado y revisión cerrada -->
-                <field name="observaciones"    column_invisible="1"/>
-                <field name="revision_cerrada" column_invisible="1"/>
+                <field name="observaciones"      column_invisible="1"/>
+                <field name="revision_cerrada"   column_invisible="1"/>
+                <field name="es_carpeta_equipos" column_invisible="1"/>
 
                 <!-- ── REVISIÓN CALIDAD ──
                      Cada criterio tiene dos botones 📝:
@@ -62,10 +63,10 @@
                        widget="badge"
                        decoration-success="rev_materiales == 'ok'"
                        decoration-danger="rev_materiales == 'fail'"
-                       readonly="1" optional="show"/>
+                       readonly="1" optional="show" column_invisible="es_carpeta_equipos"/>
                 <button name="action_marcar_materiales" type="object"
                         string="📝" title="Marcar Precauciones"
-                        invisible="revision_cerrada or (rev_materiales != 'fail' and
+                        invisible="es_carpeta_equipos or revision_cerrada or (rev_materiales != 'fail' and
                                    (rev_volumenes == 'fail' or rev_tiempos == 'fail' or rev_interpretacion == 'fail' or rev_adicional == 'fail') and
                                    not observaciones)"
                         class="btn-link btn-sm p-0"
@@ -73,7 +74,7 @@
                 <button name="action_marcar_materiales" type="object"
                         string="📝" title="Marcar Precauciones"
                         confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Precauciones?"
-                        invisible="not revision_cerrada"
+                        invisible="es_carpeta_equipos or not revision_cerrada"
                         class="btn-link btn-sm p-0"
                         groups="amunet_documentacion_compartida.group_doc_revisor,amunet_documentacion_compartida.group_doc_validacion"/>
 
@@ -82,10 +83,10 @@
                        widget="badge"
                        decoration-success="rev_volumenes == 'ok'"
                        decoration-danger="rev_volumenes == 'fail'"
-                       readonly="1" optional="show"/>
+                       readonly="1" optional="show" column_invisible="es_carpeta_equipos"/>
                 <button name="action_marcar_volumenes" type="object"
                         string="📝" title="Marcar Vol. de reactivos"
-                        invisible="revision_cerrada or (rev_volumenes != 'fail' and
+                        invisible="es_carpeta_equipos or revision_cerrada or (rev_volumenes != 'fail' and
                                    (rev_materiales == 'fail' or rev_tiempos == 'fail' or rev_interpretacion == 'fail' or rev_adicional == 'fail') and
                                    not observaciones)"
                         class="btn-link btn-sm p-0"
@@ -93,7 +94,7 @@
                 <button name="action_marcar_volumenes" type="object"
                         string="📝" title="Marcar Vol. de reactivos"
                         confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Volúmenes?"
-                        invisible="not revision_cerrada"
+                        invisible="es_carpeta_equipos or not revision_cerrada"
                         class="btn-link btn-sm p-0"
                         groups="amunet_documentacion_compartida.group_doc_revisor,amunet_documentacion_compartida.group_doc_validacion"/>
 
@@ -102,10 +103,10 @@
                        widget="badge"
                        decoration-success="rev_tiempos == 'ok'"
                        decoration-danger="rev_tiempos == 'fail'"
-                       readonly="1" optional="show"/>
+                       readonly="1" optional="show" column_invisible="es_carpeta_equipos"/>
                 <button name="action_marcar_tiempos" type="object"
                         string="📝" title="Marcar Tiempos"
-                        invisible="revision_cerrada or (rev_tiempos != 'fail' and
+                        invisible="es_carpeta_equipos or revision_cerrada or (rev_tiempos != 'fail' and
                                    (rev_materiales == 'fail' or rev_volumenes == 'fail' or rev_interpretacion == 'fail' or rev_adicional == 'fail') and
                                    not observaciones)"
                         class="btn-link btn-sm p-0"
@@ -113,7 +114,7 @@
                 <button name="action_marcar_tiempos" type="object"
                         string="📝" title="Marcar Tiempos"
                         confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Tiempos?"
-                        invisible="not revision_cerrada"
+                        invisible="es_carpeta_equipos or not revision_cerrada"
                         class="btn-link btn-sm p-0"
                         groups="amunet_documentacion_compartida.group_doc_revisor,amunet_documentacion_compartida.group_doc_validacion"/>
 
@@ -122,10 +123,10 @@
                        widget="badge"
                        decoration-success="rev_interpretacion == 'ok'"
                        decoration-danger="rev_interpretacion == 'fail'"
-                       readonly="1" optional="show"/>
+                       readonly="1" optional="show" column_invisible="es_carpeta_equipos"/>
                 <button name="action_marcar_interpretacion" type="object"
                         string="📝" title="Marcar Interpretación"
-                        invisible="revision_cerrada or (rev_interpretacion != 'fail' and
+                        invisible="es_carpeta_equipos or revision_cerrada or (rev_interpretacion != 'fail' and
                                    (rev_materiales == 'fail' or rev_volumenes == 'fail' or rev_tiempos == 'fail' or rev_adicional == 'fail') and
                                    not observaciones)"
                         class="btn-link btn-sm p-0"
@@ -133,7 +134,7 @@
                 <button name="action_marcar_interpretacion" type="object"
                         string="📝" title="Marcar Interpretación"
                         confirm="Esta revisión ya fue cerrada. ¿Deseas modificar el criterio Interpretación?"
-                        invisible="not revision_cerrada"
+                        invisible="es_carpeta_equipos or not revision_cerrada"
                         class="btn-link btn-sm p-0"
                         groups="amunet_documentacion_compartida.group_doc_revisor,amunet_documentacion_compartida.group_doc_validacion"/>
 
@@ -208,13 +209,14 @@
                 </header>
                 <sheet>
                     <!-- Auxiliares -->
-                    <field name="obs_requeridas"    invisible="1"/>
-                    <field name="es_responsable"    invisible="1"/>
-                    <field name="es_calidad"        invisible="1"/>
-                    <field name="pdf_descargable"   invisible="1"/>
-                    <field name="revision_completa" invisible="1"/>
+                    <field name="obs_requeridas"     invisible="1"/>
+                    <field name="es_responsable"     invisible="1"/>
+                    <field name="es_calidad"         invisible="1"/>
+                    <field name="pdf_descargable"    invisible="1"/>
+                    <field name="revision_completa"  invisible="1"/>
                     <field name="soy_revisor_activo" invisible="1"/>
-                    <field name="historial_count"   invisible="1"/>
+                    <field name="historial_count"    invisible="1"/>
+                    <field name="es_carpeta_equipos" invisible="1"/>
 
                     <!-- Smart buttons -->
                     <div class="oe_button_box" name="button_box">
@@ -300,11 +302,11 @@
                     <group string="Revisión Calidad">
                         <group>
                             <field name="rev_materiales" string="Precauciones" widget="radio"
-                                   readonly="1"/>
+                                   readonly="1" invisible="es_carpeta_equipos"/>
                             <field name="rev_volumenes" widget="radio"
-                                   readonly="1"/>
+                                   readonly="1" invisible="es_carpeta_equipos"/>
                             <field name="rev_tiempos" widget="radio"
-                                   readonly="1"/>
+                                   readonly="1" invisible="es_carpeta_equipos"/>
                             <field name="rev_adicional" widget="radio"
                                    readonly="1"/>
                         </group>
