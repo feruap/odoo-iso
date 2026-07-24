@@ -1039,11 +1039,20 @@ class AmunetQualityTestLineDetail(models.Model):
             }
 
     def _evaluate_text_pattern(self):
-        """Evalúa texto con patrón (VAMA-112)"""
+        """Evalúa texto con patrón (VAMA-112).
+        Si no hay patrón ni regex configurados, funciona como campo de texto libre:
+        cualquier valor ingresado se acepta como 'pendiente de revisión manual'."""
         pattern_input = (self.result_text_pattern or '').upper()
 
         if not pattern_input:
-            return {'verdict': 'pending', 'message': 'Ingrese el patrón'}
+            return {'verdict': 'pending', 'message': 'Ingrese el valor'}
+
+        # Sin patrón ni regex → campo de texto libre; registra el valor sin validar rango
+        if not self.text_pattern_expected and not self.text_pattern_regex:
+            return {
+                'verdict': 'pass',
+                'message': pattern_input,
+            }
 
         # Validar formato con regex
         if self.text_pattern_regex:
