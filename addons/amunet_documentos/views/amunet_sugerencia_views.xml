@@ -10,7 +10,7 @@
                   decoration-muted="state == 'rechazada'">
                 <field name="fecha_creacion"/>
                 <field name="documento_codigo"/>
-                <field name="secciones_ids" widget="many2many_tags"/>
+                <field name="secciones_resumen"/>
                 <field name="creado_por_id"/>
                 <field name="motivo"/>
                 <field name="state" widget="badge"/>

@@ -127,6 +127,9 @@ class AmunetDocumentoSugerencia(models.Model):
         'sugerencia_id', 'seccion_id',
         string='Secciones afectadas',
         tracking=True)
+    secciones_resumen = fields.Char(
+        string='Secciones afectadas',
+        compute='_compute_secciones_resumen')
     cambios_ids = fields.One2many(
         'amunet.sugerencia.linea', 'sugerencia_id',
         string='Detalle de cambios')
@@ -170,6 +173,22 @@ class AmunetDocumentoSugerencia(models.Model):
         'amunet.sugerencia.comite', 'sugerencia_id', string='Comité técnico')
     comite_users_ids = fields.Many2many(
         'res.users', compute='_compute_comite_users_ids')
+
+    @api.depends('secciones_ids')
+    def _compute_secciones_resumen(self):
+        total = self.env['amunet.seccion.documento'].search_count([])
+        for r in self:
+            n = len(r.secciones_ids)
+            if n == 0:
+                r.secciones_resumen = '—'
+            elif n >= total:
+                r.secciones_resumen = 'Todas las secciones'
+            elif n <= 2:
+                r.secciones_resumen = ', '.join(r.secciones_ids.mapped('name'))
+            else:
+                nombres = r.secciones_ids.mapped('name')
+                r.secciones_resumen = '%s, %s y %d más' % (
+                    nombres[0], nombres[1], n - 2)
 
     @api.depends('secciones_ids', 'documento_id')
     def _compute_referencia_html(self):
