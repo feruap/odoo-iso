@@ -98,14 +98,26 @@ class DocCompartida(models.Model):
     revision_cerrada = fields.Boolean(
         compute='_compute_revision_cerrada', store=False)
 
+    # ── Carpeta EQUIPOS: solo requiere criterio Adicional ──
+    es_carpeta_equipos = fields.Boolean(
+        compute='_compute_es_carpeta_equipos', store=False)
+
     # ────────────────────────────────────────────────────────────────
     # Computes
     # ────────────────────────────────────────────────────────────────
 
-    @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_interpretacion', 'rev_adicional', 'revisor_activo_id')
+    @api.depends('carpeta_id')
+    def _compute_es_carpeta_equipos(self):
+        for rec in self:
+            rec.es_carpeta_equipos = rec.carpeta_id.name == 'EQUIPOS'
+
+    @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_interpretacion', 'rev_adicional', 'revisor_activo_id', 'carpeta_id')
     def _compute_revision_cerrada(self):
         for rec in self:
-            todos_llenos = all(getattr(rec, f) for f in _CAMPOS_REV)
+            if rec.carpeta_id.name == 'EQUIPOS':
+                todos_llenos = bool(rec.rev_adicional)
+            else:
+                todos_llenos = all(getattr(rec, f) for f in _CAMPOS_REV)
             rec.revision_cerrada = todos_llenos and not rec.revisor_activo_id
 
     @api.depends('historial_ids')
@@ -158,10 +170,13 @@ class DocCompartida(models.Model):
             else:
                 rec.revisado_display = ''
 
-    @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_interpretacion', 'rev_adicional')
+    @api.depends('rev_materiales', 'rev_volumenes', 'rev_tiempos', 'rev_interpretacion', 'rev_adicional', 'carpeta_id')
     def _compute_estado(self):
         for rec in self:
-            reviews = [rec.rev_materiales, rec.rev_volumenes, rec.rev_tiempos, rec.rev_interpretacion, rec.rev_adicional]
+            if rec.carpeta_id.name == 'EQUIPOS':
+                reviews = ['ok', 'ok', 'ok', 'ok', rec.rev_adicional]
+            else:
+                reviews = [rec.rev_materiales, rec.rev_volumenes, rec.rev_tiempos, rec.rev_interpretacion, rec.rev_adicional]
             rec.revision_completa = all(r == 'ok' for r in reviews)
             rec.obs_requeridas = any(r == 'fail' for r in reviews)
 
