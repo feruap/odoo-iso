@@ -233,7 +233,13 @@ class DocCompartida(models.Model):
                 for campo in criterios_cambiados:
                     antes = valores_antes[rec.id][campo]
                     despues = getattr(rec, campo)
-                    if antes != despues:
+                    motivo_actual = (
+                        self.env.context.get('motivo_campo')
+                        or vals.get('observaciones')
+                    ) if despues == 'fail' else False
+                    valor_cambio = antes != despues
+                    nota_nueva = despues == 'fail' and motivo_actual
+                    if valor_cambio or nota_nueva:
                         self.env['amunet.doc.revision.historial'].sudo().create({
                             'doc_id': rec.id,
                             'usuario_id': self.env.user.id,
@@ -241,7 +247,7 @@ class DocCompartida(models.Model):
                             'campo': campo,
                             'valor_anterior': antes or False,
                             'valor_nuevo': despues or False,
-                            'motivo': vals.get('observaciones') if despues == 'fail' else False,
+                            'motivo': motivo_actual or False,
                         })
                 # Estado: la revisión completa deja el manual LISTO PARA APROBAR
                 # (la aprobación real la da la firma). Si deja de estar completa,
@@ -309,6 +315,7 @@ class DocCompartida(models.Model):
             'firmante_id': self.env.user.id,
             'fecha_firma': fields.Datetime.now(),
             'revisor_activo_id': False,
+            'pdf_disponible': True,
         })
         self.env['amunet.doc.revision.historial'].sudo().create({
             'doc_id': self.id,
