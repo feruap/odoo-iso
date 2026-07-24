@@ -63,7 +63,7 @@
                        widget="badge"
                        decoration-success="rev_materiales == 'ok'"
                        decoration-danger="rev_materiales == 'fail'"
-                       readonly="1" optional="show" column_invisible="es_carpeta_equipos"/>
+                       readonly="1" optional="show" column_invisible="context.get('hide_equipos_cols')"/>
                 <button name="action_marcar_materiales" type="object"
                         string="📝" title="Marcar Precauciones"
                         invisible="es_carpeta_equipos or revision_cerrada or (rev_materiales != 'fail' and
@@ -83,7 +83,7 @@
                        widget="badge"
                        decoration-success="rev_volumenes == 'ok'"
                        decoration-danger="rev_volumenes == 'fail'"
-                       readonly="1" optional="show" column_invisible="es_carpeta_equipos"/>
+                       readonly="1" optional="show" column_invisible="context.get('hide_equipos_cols')"/>
                 <button name="action_marcar_volumenes" type="object"
                         string="📝" title="Marcar Vol. de reactivos"
                         invisible="es_carpeta_equipos or revision_cerrada or (rev_volumenes != 'fail' and
@@ -103,7 +103,7 @@
                        widget="badge"
                        decoration-success="rev_tiempos == 'ok'"
                        decoration-danger="rev_tiempos == 'fail'"
-                       readonly="1" optional="show" column_invisible="es_carpeta_equipos"/>
+                       readonly="1" optional="show" column_invisible="context.get('hide_equipos_cols')"/>
                 <button name="action_marcar_tiempos" type="object"
                         string="📝" title="Marcar Tiempos"
                         invisible="es_carpeta_equipos or revision_cerrada or (rev_tiempos != 'fail' and
@@ -123,7 +123,7 @@
                        widget="badge"
                        decoration-success="rev_interpretacion == 'ok'"
                        decoration-danger="rev_interpretacion == 'fail'"
-                       readonly="1" optional="show" column_invisible="es_carpeta_equipos"/>
+                       readonly="1" optional="show" column_invisible="context.get('hide_equipos_cols')"/>
                 <button name="action_marcar_interpretacion" type="object"
                         string="📝" title="Marcar Interpretación"
                         invisible="es_carpeta_equipos or revision_cerrada or (rev_interpretacion != 'fail' and
@@ -143,7 +143,7 @@
                        widget="badge"
                        decoration-success="rev_adicional == 'ok'"
                        decoration-danger="rev_adicional == 'fail'"
-                       readonly="1" optional="show"/>
+                       readonly="1" optional="show" class="text-center"/>
                 <button name="action_marcar_adicional" type="object"
                         string="📝" title="Marcar Adicional"
                         invisible="revision_cerrada or (rev_adicional != 'fail' and
