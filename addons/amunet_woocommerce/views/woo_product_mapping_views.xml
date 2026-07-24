@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_woo_product_mapping_search" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.search</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="arch" type="xml">
+            <search string="Mapeos WooCommerce">
+                <field name="woo_sku"/>
+                <field name="product_id"/>
+                <field name="woo_name"/>
+                <filter name="filter_enabled" string="Sincronizables"
+                        domain="[('sync_enabled', '=', True)]"/>
+                <filter name="filter_disabled" string="Excluidos"
+                        domain="[('sync_enabled', '=', False)]"/>
+                <filter name="group_backend" string="Tienda"
+                        context="{'group_by': 'backend_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_woo_product_mapping_list" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.list</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="arch" type="xml">
+            <list string="Mapeos WooCommerce" editable="bottom">
+                <field name="backend_id"/>
+                <field name="product_id"/>
+                <field name="default_code"/>
+                <field name="woo_sku"/>
+                <field name="woo_name"/>
+                <field name="woo_product_id"/>
+                <field name="woo_parent_id" optional="hide"/>
+                <field name="woo_type" optional="hide"/>
+                <field name="qty_to_push"/>
+                <field name="last_pushed_qty"/>
+                <field name="last_sync_date"/>
+                <field name="sync_enabled" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_woo_product_mapping" model="ir.actions.act_window">
+        <field name="name">Mapeos de productos</field>
+        <field name="res_model">amunet.woo.product.mapping</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sin mapeos todavia</p>
+            <p>Usa "Importar catalogo Woo" en la tienda para emparejar productos por SKU.</p>
+        </field>
+    </record>
+</odoo>

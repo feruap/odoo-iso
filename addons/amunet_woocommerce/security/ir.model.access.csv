@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_woo_backend_user,amunet.woo.backend user,model_amunet_woo_backend,amunet_woocommerce.group_woo_user,1,0,0,0
+access_woo_backend_manager,amunet.woo.backend manager,model_amunet_woo_backend,amunet_woocommerce.group_woo_manager,1,1,1,1
+access_woo_product_mapping_user,amunet.woo.product.mapping user,model_amunet_woo_product_mapping,amunet_woocommerce.group_woo_user,1,0,0,0
+access_woo_product_mapping_manager,amunet.woo.product.mapping manager,model_amunet_woo_product_mapping,amunet_woocommerce.group_woo_manager,1,1,1,1
+access_woo_sync_log_user,amunet.woo.sync.log user,model_amunet_woo_sync_log,amunet_woocommerce.group_woo_user,1,0,0,0
+access_woo_sync_log_manager,amunet.woo.sync.log manager,model_amunet_woo_sync_log,amunet_woocommerce.group_woo_manager,1,1,1,1

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_woo_sync_log_list" model="ir.ui.view">
+        <field name="name">amunet.woo.sync.log.list</field>
+        <field name="model">amunet.woo.sync.log</field>
+        <field name="arch" type="xml">
+            <list string="Bitacora WooCommerce" create="false" edit="false">
+                <field name="date_start"/>
+                <field name="backend_id"/>
+                <field name="operation"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'success'"
+                       decoration-warning="state == 'partial'"
+                       decoration-danger="state == 'error'"/>
+                <field name="total_count"/>
+                <field name="done_count"/>
+                <field name="failed_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_woo_sync_log_form" model="ir.ui.view">
+        <field name="name">amunet.woo.sync.log.form</field>
+        <field name="model">amunet.woo.sync.log</field>
+        <field name="arch" type="xml">
+            <form string="Bitacora WooCommerce" create="false" edit="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="backend_id"/>
+                            <field name="operation"/>
+                            <field name="state"/>
+                        </group>
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="total_count"/>
+                            <field name="done_count"/>
+                            <field name="failed_count"/>
+                        </group>
+                    </group>
+                    <group string="Detalle">
+                        <field name="message" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_woo_sync_log" model="ir.actions.act_window">
+        <field name="name">Bitacora de sincronizacion</field>
+        <field name="res_model">amunet.woo.sync.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
