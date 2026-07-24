@@ -309,11 +309,11 @@
 
 
         <!-- ======================================================== -->
-        <!-- VAMA-004: Partículas en solución                         -->
+        <!-- MAVI-13: Bloqueo de la luz por partículas (antes VAMA-004) -->
         <!-- ======================================================== -->
         <record id="param_vama_004" model="amunet.quality.check.parameter">
-            <field name="code">VAMA-004</field>
-            <field name="name">Partículas en solución</field>
+            <field name="code">MAVI-13</field>
+            <field name="name">Bloqueo de la luz por partículas</field>
         </record>
 
         <record id="spec_vama_004_particulas" model="amunet.quality.check.parameter.specification">
@@ -482,11 +482,11 @@
 
 
         <!-- ======================================================== -->
-        <!-- VAMA-057: Gotas obtenidas                                -->
+        <!-- MAVI-17: Determinación de volumen (antes VAMA-057)       -->
         <!-- ======================================================== -->
         <record id="param_vama_057" model="amunet.quality.check.parameter">
-            <field name="code">VAMA-057</field>
-            <field name="name">Gotas obtenidas</field>
+            <field name="code">MAVI-17</field>
+            <field name="name">Determinación de volumen</field>
         </record>
 
         <record id="spec_vama_057_gotas" model="amunet.quality.check.parameter.specification">
@@ -1081,10 +1081,10 @@
         </record>
             
         <!-- ======================================================== -->
-        <!-- VAMA-068: Conductividad -->
+        <!-- MGA-0196: Conductividad (antes VAMA-068) -->
         <!-- ======================================================== -->
         <record id="param_vama_068" model="amunet.quality.check.parameter">
-            <field name="code">VAMA-068</field>
+            <field name="code">MGA-0196</field>
             <field name="name">Conductividad</field>
         </record>
 
@@ -1097,11 +1097,11 @@
         </record>
             
         <!-- ======================================================== -->
-        <!-- VAMA-069: Agentes biológicos -->
+        <!-- MGA-0571: Límites microbianos (antes VAMA-069) -->
         <!-- ======================================================== -->
         <record id="param_vama_069" model="amunet.quality.check.parameter">
-            <field name="code">VAMA-069</field>
-            <field name="name">Agentes biológicos</field>
+            <field name="code">MGA-0571</field>
+            <field name="name">Límites microbianos</field>
         </record>
 
         <record id="spec_vama_069_auto" model="amunet.quality.check.parameter.specification">

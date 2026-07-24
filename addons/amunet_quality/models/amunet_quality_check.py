@@ -1805,6 +1805,18 @@ class AmunetQualityCheck(models.Model):
                 'anexo_col5_header': '',
                 'anexo_col6_header': '',
             })
+        elif code in ('MPABI01', 'MPADE01', 'MPATR01'):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'REGISTRO DE DATOS',
+                'anexo_col1_header': 'Partículas',
+                'anexo_col2_header': 'Color',
+                'anexo_col3_header': 'Límites microbianos',
+                'anexo_col4_header': 'Conductividad',
+                'anexo_col5_header': 'pH',
+                'anexo_col6_header': '',
+                'anexo_col7_header': '',
+            })
 
     def _load_product_parameters(self):
         """
