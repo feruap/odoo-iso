@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_woo_odoo_product_catalog" model="ir.actions.act_window">
+        <field name="name">Catálogo de productos Odoo</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('active', '=', True)]</field>
+        <field name="help" type="html">
+            <p>Consulta todos los productos Odoo, sus fotografías y su
+            configuración maestra.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_amunet_woo_root"
+              name="WooCommerce Consulta"
+              sequence="90"
+              groups="amunet_woocommerce.group_woo_consulta"/>
+
+    <menuitem id="menu_woo_product_mapping"
+              name="Mapeos y consulta"
+              parent="menu_amunet_woo_root"
+              action="action_woo_product_mapping"
+              sequence="10"/>
+
+    <menuitem id="menu_woo_odoo_product_catalog"
+              name="Productos Odoo"
+              parent="menu_amunet_woo_root"
+              action="action_woo_odoo_product_catalog"
+              sequence="15"/>
+
+    <menuitem id="menu_woo_long_process"
+              name="Procesos largos (hoja maestra)"
+              parent="menu_amunet_woo_root"
+              action="action_woo_long_process"
+              sequence="20"/>
+
+    <menuitem id="menu_woo_stock_snapshot"
+              name="Snapshots inventario Woo"
+              parent="menu_amunet_woo_root"
+              action="action_woo_stock_snapshot"
+              sequence="30"/>
+
+    <menuitem id="menu_woo_sync_log"
+              name="Bitácora de consultas"
+              parent="menu_amunet_woo_root"
+              action="action_woo_sync_log"
+              sequence="40"/>
+
+    <menuitem id="menu_woo_configuration"
+              name="Configuración"
+              parent="menu_amunet_woo_root"
+              sequence="90"
+              groups="amunet_woocommerce.group_woo_admin"/>
+
+    <menuitem id="menu_woo_backend"
+              name="Tiendas (solo lectura)"
+              parent="menu_woo_configuration"
+              action="action_woo_backend"
+              sequence="10"/>
+
+    <menuitem id="menu_woo_mapping_import"
+              name="Importar mapeo CSV"
+              parent="menu_woo_configuration"
+              action="action_woo_mapping_import_wizard"
+              sequence="20"/>
+</odoo>

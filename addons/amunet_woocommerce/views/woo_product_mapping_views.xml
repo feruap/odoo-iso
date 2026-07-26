@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_woo_product_mapping_search" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.search</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="arch" type="xml">
+            <search string="Mapeos WooCommerce">
+                <field name="woo_sku"/>
+                <field name="product_id"/>
+                <field name="woo_name"/>
+                <field name="default_code"/>
+                <filter name="filter_pending" string="Pendientes"
+                        domain="[('relation_state', '=', 'pending')]"/>
+                <filter name="filter_confirmed" string="Confirmados"
+                        domain="[('relation_state', '=', 'confirmed')]"/>
+                <filter name="filter_rejected" string="Rechazados"
+                        domain="[('relation_state', '=', 'rejected')]"/>
+                <separator/>
+                <filter name="filter_not_calculable" string="No calculables"
+                        domain="[('any_not_calculable', '=', True)]"/>
+                <filter name="filter_alerts" string="Con alertas"
+                        domain="[('has_alerts', '=', True)]"/>
+                <filter name="filter_snapshot_stale" string="Snapshot vencido"
+                        domain="[('snapshot_stale', '=', True)]"/>
+                <filter name="filter_with_bom" string="Con BOM activa"
+                        domain="[('has_active_bom', '=', True)]"/>
+                <filter name="filter_without_bom" string="Sin BOM activa"
+                        domain="[('has_active_bom', '=', False)]"/>
+                <separator/>
+                <filter name="filter_manufactured" string="Fabricados"
+                        domain="[('supply_classification', 'in', ('short_manufacturing', 'long_manufacturing'))]"/>
+                <filter name="filter_purchased" string="Comprados"
+                        domain="[('supply_classification', '=', 'purchased_qc')]"/>
+                <filter name="group_backend" string="Tienda"
+                        context="{'group_by': 'backend_id'}"/>
+                <filter name="group_relation_state" string="Estado de relación"
+                        context="{'group_by': 'relation_state'}"/>
+                <filter name="group_classification" string="Clasificación"
+                        context="{'group_by': 'supply_classification'}"/>
+                <filter name="group_company" string="Compañía"
+                        context="{'group_by': 'company_id'}"
+                        groups="base.group_multi_company"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_woo_product_mapping_list" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.list</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="arch" type="xml">
+            <list string="Mapeos WooCommerce"
+                  decoration-warning="has_alerts"
+                  decoration-muted="relation_state == 'rejected'">
+                <field name="backend_id" optional="hide"/>
+                <field name="woo_sku"/>
+                <field name="woo_name" optional="hide"/>
+                <field name="product_id"/>
+                <field name="default_code"/>
+                <field name="relation_state" widget="badge"
+                       decoration-success="relation_state == 'confirmed'"
+                       decoration-danger="relation_state == 'rejected'"
+                       decoration-warning="relation_state == 'pending'"/>
+                <field name="supply_classification"/>
+                <field name="bom_status_display" optional="show"/>
+                <field name="odoo_free_display" optional="show"/>
+                <field name="woo_available_display" optional="show"/>
+                <field name="short_capacity_display" optional="hide"/>
+                <field name="long_capacity_display" optional="hide"/>
+                <field name="last_snapshot_date" optional="hide"/>
+                <field name="has_alerts" column_invisible="True"/>
+                <field name="company_id" groups="base.group_multi_company"
+                       optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_woo_product_mapping_kanban" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.kanban</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_small">
+                <field name="woo_sku"/>
+                <field name="woo_name"/>
+                <field name="woo_image_url"/>
+                <field name="product_image_128"/>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="relation_state"/>
+                <field name="has_alerts"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click">
+                            <div class="row text-center mb8">
+                                <div class="col-6">
+                                    <img t-if="record.woo_image_url.value"
+                                         t-att-src="record.woo_image_url.value"
+                                         class="oe_kanban_avatar img-fluid"
+                                         style="max-height:80px;"
+                                         alt="Fotografía Woo"/>
+                                    <div><small class="text-muted">Woo</small></div>
+                                </div>
+                                <div class="col-6">
+                                    <field name="product_image_128" widget="image"
+                                           class="oe_kanban_avatar img-fluid"
+                                           style="max-height:80px;"/>
+                                    <div><small class="text-muted">Odoo</small></div>
+                                </div>
+                            </div>
+                            <div>
+                                <strong><field name="woo_sku"/></strong>
+                                <t t-if="record.has_alerts.raw_value">
+                                    <span class="fa fa-exclamation-triangle text-warning"
+                                          title="Con alertas"/>
+                                </t>
+                            </div>
+                            <div class="text-truncate">
+                                <field name="woo_name"/>
+                            </div>
+                            <div class="text-muted">
+                                <field name="default_code"/> · <field name="product_name"/>
+                            </div>
+                            <div class="mt8">
+                                <field name="relation_state" widget="badge"
+                                       decoration-success="relation_state == 'confirmed'"
+                                       decoration-danger="relation_state == 'rejected'"
+                                       decoration-warning="relation_state == 'pending'"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_woo_product_mapping_form" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.form</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="arch" type="xml">
+            <form string="Mapeo Woo - Odoo">
+                <header>
+                    <button name="action_confirm" type="object"
+                            string="Confirmar relación" class="btn-primary"
+                            invisible="relation_state == 'confirmed'"
+                            groups="amunet_woocommerce.group_woo_revisor"/>
+                    <button name="action_reject" type="object"
+                            string="Rechazar"
+                            invisible="relation_state == 'rejected'"
+                            groups="amunet_woocommerce.group_woo_revisor"/>
+                    <button name="action_reset_pending" type="object"
+                            string="Volver a pendiente"
+                            invisible="relation_state == 'pending'"
+                            groups="amunet_woocommerce.group_woo_revisor"/>
+                    <field name="relation_state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not has_alerts">
+                        <field name="alert_text" readonly="1" nolabel="1"/>
+                    </div>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_mos" type="object"
+                                class="oe_stat_button" icon="fa-industry"
+                                invisible="open_mo_count == 0">
+                            <field name="open_mo_count" widget="statinfo"
+                                   string="MO abiertas"/>
+                        </button>
+                        <button name="action_view_packaging_plans" type="object"
+                                class="oe_stat_button" icon="fa-archive"
+                                invisible="packaging_plan_count == 0">
+                            <field name="packaging_plan_count" widget="statinfo"
+                                   string="Planes empaque"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="woo_sku" placeholder="SKU Woo"/></h1>
+                        <h3><field name="woo_name" placeholder="Nombre en Woo"/></h3>
+                    </div>
+                    <group>
+                        <group string="Producto Woo">
+                            <field name="woo_product_id"/>
+                            <field name="woo_parent_id"/>
+                            <field name="woo_status"/>
+                            <field name="woo_type"/>
+                            <field name="woo_image_url" widget="url"/>
+                            <field name="last_snapshot_date"/>
+                            <field name="backend_id"/>
+                        </group>
+                        <group string="Producto Odoo">
+                            <field name="product_id"/>
+                            <field name="default_code"/>
+                            <field name="product_name"/>
+                            <field name="product_image_128" widget="image"
+                                   class="oe_avatar"/>
+                            <field name="supply_classification"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Revisión" name="review">
+                            <group>
+                                <group string="Emparejamiento">
+                                    <field name="confidence"/>
+                                    <field name="match_method"/>
+                                </group>
+                                <group string="Revisión">
+                                    <field name="reviewer_id"/>
+                                    <field name="review_date"/>
+                                </group>
+                            </group>
+                            <group string="Notas / justificación">
+                                <field name="review_notes" nolabel="1"/>
+                            </group>
+                        </page>
+                        <page string="Inventario" name="inventory">
+                            <group>
+                                <group string="Inventario Woo (snapshot)">
+                                    <field name="woo_available_display"/>
+                                    <field name="woo_reserved_display"/>
+                                    <field name="woo_expired_display"/>
+                                    <field name="woo_damaged_display"/>
+                                    <field name="woo_inventory_calculable"/>
+                                    <field name="woo_inventory_reason"
+                                           invisible="woo_inventory_calculable"/>
+                                    <field name="snapshot_stale"/>
+                                </group>
+                                <group string="Inventario Odoo">
+                                    <field name="odoo_onhand_display"/>
+                                    <field name="odoo_free_display"/>
+                                    <field name="odoo_physical_reason"
+                                           invisible="odoo_physical_calculable"/>
+                                    <field name="odoo_lot_released_display"/>
+                                    <field name="odoo_lot_pending_display"/>
+                                    <field name="has_released_lots"
+                                           invisible="not lot_release_calculable"/>
+                                    <field name="odoo_physical_calculable"
+                                           invisible="1"/>
+                                    <field name="lot_release_calculable"/>
+                                    <field name="lot_release_reason"
+                                           invisible="lot_release_calculable"/>
+                                </group>
+                            </group>
+                            <group string="Snapshots de inventario Woo">
+                                <field name="snapshot_ids" nolabel="1">
+                                    <list>
+                                        <field name="date"/>
+                                        <field name="source"/>
+                                        <field name="available_display"/>
+                                        <field name="reserved_display"/>
+                                        <field name="expired_display"/>
+                                        <field name="damaged_display"/>
+                                        <field name="notes"/>
+                                    </list>
+                                </field>
+                            </group>
+                        </page>
+                        <page string="Calidad" name="quality">
+                            <group>
+                                <group string="Configuración">
+                                    <field name="qc_required"
+                                           invisible="not quality_calculable"/>
+                                    <field name="qc_parameter_count"
+                                           invisible="not quality_calculable"/>
+                                </group>
+                                <group string="Resultados">
+                                    <field name="qc_check_count"
+                                           invisible="not quality_calculable"/>
+                                    <field name="has_released_lots"
+                                           invisible="not quality_calculable or not lot_release_calculable"/>
+                                    <field name="quality_calculable"/>
+                                    <field name="quality_reason"
+                                           invisible="quality_calculable"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Planeación" name="planning">
+                            <group>
+                                <group string="BOM activas">
+                                    <field name="bom_status_display"/>
+                                    <field name="bom_summary" nolabel="1"/>
+                                </group>
+                                <group string="Presentación / cajas">
+                                    <field name="presentation_count"/>
+                                    <field name="presentation_summary"
+                                           nolabel="1"/>
+                                    <field name="pieces_per_box_source"
+                                           invisible="not pieces_per_box_calculable"/>
+                                    <field name="pieces_per_box_calculable"/>
+                                    <field name="pieces_per_box_reason"
+                                           invisible="pieces_per_box_calculable"/>
+                                </group>
+                                <group string="Capacidad fabricación corta"
+                                       invisible="supply_classification != 'short_manufacturing'">
+                                    <field name="short_capacity_display"/>
+                                    <field name="short_capacity_calculable"/>
+                                    <field name="short_capacity_reason"
+                                           invisible="short_capacity_calculable"/>
+                                </group>
+                            </group>
+                            <group string="Proceso de empaque (planeación)">
+                                <div class="alert alert-info" role="alert">
+                                    Esta cifra proviene de planes de empaque
+                                    abiertos; no representa inventario físico
+                                    terminado.
+                                </div>
+                                <field name="packaging_display"/>
+                                <field name="packaging_plan_count"/>
+                                <field name="packaging_summary" nolabel="1"/>
+                                <field name="packaging_reason"
+                                       invisible="packaging_calculable"/>
+                                <field name="packaging_calculable" invisible="1"/>
+                            </group>
+                            <group string="Fabricación larga"
+                                   invisible="supply_classification != 'long_manufacturing'">
+                                <field name="long_process_id"/>
+                                <field name="long_capacity_display"/>
+                                <field name="long_capacity_calculable"/>
+                                <field name="long_capacity_reason"
+                                       invisible="long_capacity_calculable"/>
+                            </group>
+                            <group string="Órdenes de fabricación abiertas">
+                                <field name="open_mo_qty_display"/>
+                                <field name="open_mo_summary" nolabel="1"/>
+                                <field name="mrp_reason"
+                                       invisible="mrp_calculable"/>
+                                <field name="mrp_calculable" invisible="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_woo_product_mapping" model="ir.actions.act_window">
+        <field name="name">Mapeos y consulta de productos</field>
+        <field name="res_model">amunet.woo.product.mapping</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_woo_product_mapping_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sin mapeos todavía</p>
+            <p>Importa el CSV de mapeo de SKU o lee el catálogo Woo (GET)
+            desde una tienda configurada.</p>
+        </field>
+    </record>
+</odoo>

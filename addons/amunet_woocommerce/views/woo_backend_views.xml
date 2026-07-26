@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_woo_backend_list" model="ir.ui.view">
+        <field name="name">amunet.woo.backend.list</field>
+        <field name="model">amunet.woo.backend</field>
+        <field name="arch" type="xml">
+            <list string="Tiendas WooCommerce (solo lectura)">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="store_url"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'connected'"
+                       decoration-danger="state == 'error'"/>
+                <field name="last_read_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_woo_backend_form" model="ir.ui.view">
+        <field name="name">amunet.woo.backend.form</field>
+        <field name="model">amunet.woo.backend</field>
+        <field name="arch" type="xml">
+            <form string="Tienda WooCommerce (solo lectura)">
+                <header>
+                    <button name="action_test_connection" type="object"
+                            string="Probar conexión (GET)" class="btn-primary"
+                            groups="amunet_woocommerce.group_woo_admin"/>
+                    <button name="action_import_catalog" type="object"
+                            string="Leer catálogo Woo (GET)"
+                            invisible="state != 'connected'"
+                            groups="amunet_woocommerce.group_woo_admin"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_mappings" type="object"
+                                class="oe_stat_button" icon="fa-exchange">
+                            <field name="mapping_count" widget="statinfo" string="Mapeos"/>
+                        </button>
+                        <button name="action_view_logs" type="object"
+                                class="oe_stat_button" icon="fa-history">
+                            <field name="log_count" widget="statinfo" string="Bitácora"/>
+                        </button>
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        Este backend es de <b>solo lectura</b>: únicamente realiza
+                        llamadas GET a la API de WooCommerce. Nunca escribe en la
+                        tienda ni modifica existencias.
+                    </div>
+                    <group>
+                        <group string="Tienda">
+                            <field name="name"/>
+                            <field name="store_url" placeholder="https://tst.amunet.com.mx"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Credenciales API REST (solo lectura)"
+                               groups="amunet_woocommerce.group_woo_admin">
+                            <field name="consumer_key" password="True"/>
+                            <field name="consumer_secret" password="True"/>
+                            <field name="connection_message"/>
+                            <field name="last_read_date"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_woo_backend" model="ir.actions.act_window">
+        <field name="name">Tiendas WooCommerce</field>
+        <field name="res_model">amunet.woo.backend</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Configura una tienda WooCommerce de solo lectura</p>
+            <p>Captura la URL y las llaves de la API REST con permiso de
+            <b>solo Lectura</b> (Ajustes &gt; Avanzado &gt; API REST en WooCommerce).</p>
+        </field>
+    </record>
+</odoo>

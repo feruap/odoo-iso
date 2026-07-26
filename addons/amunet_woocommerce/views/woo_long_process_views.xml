@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_woo_long_process_list" model="ir.ui.view">
+        <field name="name">amunet.woo.long.process.list</field>
+        <field name="model">amunet.woo.long.process</field>
+        <field name="arch" type="xml">
+            <list string="Perfiles de proceso largo">
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="master_product_id"/>
+                <field name="equivalence_type"/>
+                <field name="master_physical_display"/>
+                <field name="master_released_display"/>
+                <field name="potential_sheets_display" optional="hide"/>
+                <field name="pieces_total_display"/>
+                <field name="pieces_total_calculable" widget="boolean_toggle"
+                       readonly="1" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company"
+                       optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_woo_long_process_form" model="ir.ui.view">
+        <field name="name">amunet.woo.long.process.form</field>
+        <field name="model">amunet.woo.long.process</field>
+        <field name="arch" type="xml">
+            <form string="Perfil de proceso largo">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Ej. Proceso largo STXXX01"/></h1>
+                    </div>
+                    <group>
+                        <group string="Vínculo">
+                            <field name="product_id"/>
+                            <field name="master_product_id"/>
+                            <field name="master_uom_id"/>
+                            <field name="bom_id"
+                                   domain="['|', ('product_id', '=', master_product_id), ('product_tmpl_id', '=', master_product_id.product_tmpl_id)]"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Configuración">
+                            <field name="quality_release_required"/>
+                            <field name="source_location_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Equivalencia">
+                            <field name="equivalence_type"/>
+                            <field name="pieces_per_sheet"
+                                   invisible="equivalence_type != 'pieces'"/>
+                            <field name="usable_cm_per_sheet"
+                                   invisible="equivalence_type != 'cm'"/>
+                            <field name="pieces_per_cm"
+                                   invisible="equivalence_type != 'cm'"/>
+                        </group>
+                        <group string="Rendimiento">
+                            <field name="yield_percent"/>
+                            <field name="scrap_percent"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Hoja maestra (inventario existente)" name="master">
+                            <group>
+                                <group string="Existencias">
+                                    <field name="master_physical_display"/>
+                                    <field name="master_released_display"/>
+                                </group>
+                                <group string="Calculabilidad">
+                                    <field name="master_physical_calculable"/>
+                                    <field name="master_physical_reason"
+                                           invisible="master_physical_calculable"/>
+                                    <field name="master_released_calculable"/>
+                                    <field name="master_released_reason"
+                                           invisible="master_released_calculable"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Capacidad potencial" name="potential">
+                            <group>
+                                <group string="Hojas potenciales (BOM larga)">
+                                    <field name="potential_sheets_display"/>
+                                    <field name="potential_sheets_calculable"/>
+                                    <field name="potential_sheets_reason"
+                                           invisible="potential_sheets_calculable"/>
+                                </group>
+                                <group string="Piezas potenciales">
+                                    <field name="pieces_from_physical_display"/>
+                                    <field name="pieces_from_physical_reason"
+                                           invisible="pieces_from_physical_calculable"/>
+                                    <field name="pieces_from_released_display"/>
+                                    <field name="pieces_from_released_reason"
+                                           invisible="pieces_from_released_calculable"/>
+                                    <field name="pieces_from_bom_display"/>
+                                    <field name="pieces_from_bom_reason"
+                                           invisible="pieces_from_bom_calculable"/>
+                                    <field name="pieces_total_display"/>
+                                    <field name="pieces_total_calculable"/>
+                                    <field name="pieces_total_reason"
+                                           invisible="pieces_total_calculable"/>
+                                    <field name="pieces_from_physical_calculable"
+                                           invisible="1"/>
+                                    <field name="pieces_from_released_calculable"
+                                           invisible="1"/>
+                                    <field name="pieces_from_bom_calculable"
+                                           invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notas" name="notes">
+                            <field name="notes" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_woo_long_process" model="ir.actions.act_window">
+        <field name="name">Perfiles de proceso largo</field>
+        <field name="res_model">amunet.woo.long.process</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
