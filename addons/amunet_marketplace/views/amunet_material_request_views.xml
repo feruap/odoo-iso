@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_amunet_material_request_form_marketplace_inherit" model="ir.ui.view">
+        <field name="name">amunet.material.request.form.inherit.marketplace</field>
+        <field name="model">amunet.material.request</field>
+        <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[group/field[@name='requester_id']]" position="inside">
+                <group>
+                    <field name="request_type" readonly="state != 'draft'"/>
+                    <field name="mrp_production_id"
+                           readonly="state != 'draft'"
+                           domain="[('state', 'not in', ('done', 'cancel'))]"
+                           invisible="request_type != 'production'"/>
+                    <field name="marketplace_source_product_tmpl_id" readonly="1" invisible="not marketplace_source_product_tmpl_id"/>
+                    <field name="product_proposal_id" readonly="1" invisible="not product_proposal_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_amunet_material_request_list_marketplace_inherit" model="ir.ui.view">
+        <field name="name">amunet.material.request.list.inherit.marketplace</field>
+        <field name="model">amunet.material.request</field>
+        <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='warehouse_id']" position="after">
+                <field name="request_type"/>
+                <field name="mrp_production_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_amunet_material_request_search_marketplace_inherit" model="ir.ui.view">
+        <field name="name">amunet.material.request.search.inherit.marketplace</field>
+        <field name="model">amunet.material.request</field>
+        <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='warehouse_id']" position="after">
+                <field name="request_type"/>
+                <field name="mrp_production_id"/>
+            </xpath>
+            <xpath expr="//separator[last()]" position="before">
+                <filter name="request_type_general" string="Generales" domain="[('request_type','=','general')]"/>
+                <filter name="request_type_production" string="Produccion" domain="[('request_type','=','production')]"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

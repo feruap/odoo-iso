@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_product_template_kanban_marketplace" model="ir.ui.view">
+        <field name="name">product.template.kanban.amunet.marketplace</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="image_128"/>
+                <field name="categ_id"/>
+                <field name="marketplace_flow"/>
+                <field name="marketplace_reference_price"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_image">
+                            <field name="image_128" widget="image" alt="Producto"/>
+                        </div>
+                        <div class="oe_kanban_details">
+                            <strong><field name="name"/></strong>
+                            <div><field name="categ_id"/></div>
+                            <div>
+                                <field name="marketplace_flow" widget="badge"/>
+                            </div>
+                            <div t-if="record.marketplace_reference_price.raw_value">
+                                Precio ref.: <field name="marketplace_reference_price"/>
+                            </div>
+                            <div class="mt8">
+                                <button type="object" name="action_open_marketplace_request" class="btn btn-primary btn-sm">
+                                    Solicitar
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_product_template_tree_marketplace" model="ir.ui.view">
+        <field name="name">product.template.tree.amunet.marketplace</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Catalogo marketplace">
+                <field name="name"/>
+                <field name="categ_id"/>
+                <field name="marketplace_flow"/>
+                <field name="marketplace_reference_price"/>
+                <field name="marketplace_enabled"/>
+                <field name="purchase_ok"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_product_template_form_marketplace_inherit" model="ir.ui.view">
+        <field name="name">product.template.form.inherit.amunet.marketplace</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Marketplace Interno">
+                    <group>
+                        <group>
+                            <field name="marketplace_enabled"/>
+                            <field name="marketplace_flow" readonly="not marketplace_enabled"/>
+                            <field name="marketplace_reference_price" readonly="not marketplace_enabled"/>
+                            <field name="marketplace_sequence" readonly="not marketplace_enabled"/>
+                        </group>
+                        <group>
+                            <field name="marketplace_purchase_url" widget="url" readonly="not marketplace_enabled"/>
+                            <field name="marketplace_requires_approval" readonly="not marketplace_enabled"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="marketplace_request_note" readonly="not marketplace_enabled"/>
+                    </group>
+                    <div class="mt16">
+                        <button type="object" name="action_open_marketplace_request" class="btn btn-primary" invisible="not marketplace_enabled">
+                            Solicitar desde marketplace
+                        </button>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_marketplace_catalog" model="ir.actions.act_window">
+        <field name="name">Catalogo interno</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('marketplace_enabled', '=', True)]</field>
+        <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_product_template_kanban_marketplace')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_product_template_tree_marketplace')})
+        ]"/>
+    </record>
+
+</odoo>

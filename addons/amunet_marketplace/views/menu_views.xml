@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_amunet_marketplace_root"
+              name="Marketplace Interno"
+              sequence="81"
+              groups="amunet_material_request.group_material_requester,amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+
+    <menuitem id="menu_amunet_marketplace_catalog"
+              name="Catalogo"
+              parent="menu_amunet_marketplace_root"
+              action="action_marketplace_catalog"
+              sequence="10"/>
+
+    <menuitem id="menu_amunet_marketplace_requests"
+              name="Solicitudes"
+              parent="menu_amunet_marketplace_root"
+              action="amunet_material_request.action_amunet_material_request"
+              sequence="20"/>
+
+    <menuitem id="menu_amunet_marketplace_proposals"
+              name="Propuestas de producto"
+              parent="menu_amunet_marketplace_root"
+              action="action_marketplace_product_proposal"
+              sequence="30"/>
+
+</odoo>

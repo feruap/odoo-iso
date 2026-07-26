@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_marketplace_product_proposal_list" model="ir.ui.view">
+        <field name="name">amunet.marketplace.product.proposal.list</field>
+        <field name="model">amunet.marketplace.product.proposal</field>
+        <field name="arch" type="xml">
+            <list string="Propuestas de producto">
+                <field name="name"/>
+                <field name="requester_id"/>
+                <field name="department_id"/>
+                <field name="request_type"/>
+                <field name="category_id"/>
+                <field name="state" widget="badge"/>
+                <field name="product_tmpl_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_marketplace_product_proposal_form" model="ir.ui.view">
+        <field name="name">amunet.marketplace.product.proposal.form</field>
+        <field name="model">amunet.marketplace.product.proposal</field>
+        <field name="arch" type="xml">
+            <form string="Propuesta de producto">
+                <header>
+                    <button name="action_submit" string="Enviar a revision" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Aprobar" type="object" class="oe_highlight" invisible="state != 'submitted'" groups="amunet_material_request.group_material_manager"/>
+                    <button name="action_create_product" string="Crear producto" type="object" class="oe_highlight" invisible="state not in ('approved','submitted')" groups="amunet_material_request.group_material_manager"/>
+                    <button name="action_reject" string="Rechazar" type="object" invisible="state not in ('submitted','approved')" groups="amunet_material_request.group_material_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,converted,rejected"/>
+                </header>
+                <sheet>
+                    <field name="is_material_manager_for_user" invisible="1"/>
+                    <group>
+                        <group>
+                            <field name="name" readonly="state != 'draft'"/>
+                            <field name="requester_id" readonly="1"/>
+                            <field name="department_id" readonly="state != 'draft'"/>
+                            <field name="request_type" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="category_id" readonly="state not in ('draft','submitted')"/>
+                            <field name="purchase_url" widget="url" readonly="state not in ('draft','submitted')"/>
+                            <field name="product_tmpl_id" readonly="1" invisible="not product_tmpl_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="image_1920" widget="image" class="oe_avatar" readonly="state not in ('draft','submitted')"/>
+                    </group>
+                    <group>
+                        <field name="justification" readonly="state != 'draft'"/>
+                        <field name="manager_notes" readonly="not is_material_manager_for_user"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_marketplace_product_proposal_search" model="ir.ui.view">
+        <field name="name">amunet.marketplace.product.proposal.search</field>
+        <field name="model">amunet.marketplace.product.proposal</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="requester_id"/>
+                <field name="department_id"/>
+                <field name="state"/>
+                <filter name="my_proposals" string="Mis propuestas" domain="[('requester_id','=',uid)]"/>
+                <filter name="submitted" string="En revision" domain="[('state','=','submitted')]"/>
+                <filter name="approved" string="Aprobadas" domain="[('state','=','approved')]"/>
+                <filter name="converted" string="Convertidas" domain="[('state','=','converted')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_marketplace_product_proposal" model="ir.actions.act_window">
+        <field name="name">Propuestas de productos</field>
+        <field name="res_model">amunet.marketplace.product.proposal</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_marketplace_product_proposal_search"/>
+    </record>
+
+</odoo>
