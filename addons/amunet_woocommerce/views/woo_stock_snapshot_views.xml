@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_woo_stock_snapshot_list" model="ir.ui.view">
+        <field name="name">amunet.woo.stock.snapshot.list</field>
+        <field name="model">amunet.woo.stock.snapshot</field>
+        <field name="arch" type="xml">
+            <list string="Snapshots de inventario Woo">
+                <field name="date"/>
+                <field name="mapping_id"/>
+                <field name="source" widget="badge"
+                       decoration-info="source == 'api'"/>
+                <field name="available_display"/>
+                <field name="reserved_display"/>
+                <field name="expired_display"/>
+                <field name="damaged_display"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_woo_stock_snapshot_form" model="ir.ui.view">
+        <field name="name">amunet.woo.stock.snapshot.form</field>
+        <field name="model">amunet.woo.stock.snapshot</field>
+        <field name="arch" type="xml">
+            <form string="Snapshot de inventario Woo">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="mapping_id"/>
+                            <field name="date"/>
+                            <field name="source"/>
+                        </group>
+                        <group>
+                            <label for="available_known" string="Disponible"/>
+                            <div>
+                                <field name="available_known"/>
+                                <field name="qty_available"
+                                       invisible="not available_known"/>
+                            </div>
+                            <label for="reserved_known" string="Reservado"/>
+                            <div>
+                                <field name="reserved_known"/>
+                                <field name="qty_reserved"
+                                       invisible="not reserved_known"/>
+                            </div>
+                            <label for="expired_known" string="Caducado"/>
+                            <div>
+                                <field name="expired_known"/>
+                                <field name="qty_expired"
+                                       invisible="not expired_known"/>
+                            </div>
+                            <label for="damaged_known" string="Dañado"/>
+                            <div>
+                                <field name="damaged_known"/>
+                                <field name="qty_damaged"
+                                       invisible="not damaged_known"/>
+                            </div>
+                        </group>
+                    </group>
+                    <group string="Notas">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_woo_stock_snapshot" model="ir.actions.act_window">
+        <field name="name">Snapshots de inventario Woo</field>
+        <field name="res_model">amunet.woo.stock.snapshot</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

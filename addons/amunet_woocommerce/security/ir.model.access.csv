@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_woo_backend_consulta,amunet.woo.backend consulta,model_amunet_woo_backend,amunet_woocommerce.group_woo_consulta,1,0,0,0
+access_woo_backend_admin,amunet.woo.backend admin,model_amunet_woo_backend,amunet_woocommerce.group_woo_admin,1,1,1,0
+access_woo_product_mapping_consulta,amunet.woo.product.mapping consulta,model_amunet_woo_product_mapping,amunet_woocommerce.group_woo_consulta,1,0,0,0
+access_woo_product_mapping_revisor,amunet.woo.product.mapping revisor,model_amunet_woo_product_mapping,amunet_woocommerce.group_woo_revisor,1,1,0,0
+access_woo_product_mapping_admin,amunet.woo.product.mapping admin,model_amunet_woo_product_mapping,amunet_woocommerce.group_woo_admin,1,1,1,0
+access_woo_stock_snapshot_consulta,amunet.woo.stock.snapshot consulta,model_amunet_woo_stock_snapshot,amunet_woocommerce.group_woo_consulta,1,0,0,0
+access_woo_stock_snapshot_admin,amunet.woo.stock.snapshot admin,model_amunet_woo_stock_snapshot,amunet_woocommerce.group_woo_admin,1,1,1,0
+access_woo_long_process_consulta,amunet.woo.long.process consulta,model_amunet_woo_long_process,amunet_woocommerce.group_woo_consulta,1,0,0,0
+access_woo_long_process_admin,amunet.woo.long.process admin,model_amunet_woo_long_process,amunet_woocommerce.group_woo_admin,1,1,1,0
+access_woo_sync_log_consulta,amunet.woo.sync.log consulta,model_amunet_woo_sync_log,amunet_woocommerce.group_woo_consulta,1,0,0,0
+access_woo_sync_log_admin,amunet.woo.sync.log admin,model_amunet_woo_sync_log,amunet_woocommerce.group_woo_admin,1,0,1,0
+access_woo_mapping_import_wizard_admin,amunet.woo.mapping.import.wizard admin,model_amunet_woo_mapping_import_wizard,amunet_woocommerce.group_woo_admin,1,1,1,1
