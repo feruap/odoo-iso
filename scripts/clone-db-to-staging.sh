@@ -1,5 +1,5 @@
 #!/bin/bash
-# clone-db-to-staging.sh - Copia exacta de produccion a staging (ambas BDs)
+# clone-db-to-staging.sh - Copia produccion a la base activa de staging
 set -e
 
 PROD_CONTAINER="odoo-production-db"
@@ -76,7 +76,7 @@ echo "[1/4] Deteniendo Odoo staging..."
 docker stop odoo-staging
 
 echo "[1.5/4] Limpiando bases de datos huerfanas en staging..."
-ORPHANS=$(docker exec "$STAGING_CONTAINER" psql -U odoo postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('amunet_prod', 'Amunet_testing', 'postgres') AND datname NOT LIKE 'template%';")
+ORPHANS=$(docker exec "$STAGING_CONTAINER" psql -U odoo postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('Amunet_testing', 'postgres') AND datname NOT LIKE 'template%';")
 for db in $ORPHANS; do
   db=$(echo $db | tr -d ' ' | tr -d '\r')
   if [ -n "$db" ]; then
@@ -87,8 +87,7 @@ for db in $ORPHANS; do
   fi
 done
 
-echo "[2/4] Clonando bases de datos..."
-clone_db "amunet_prod"    "amunet_prod"
+echo "[2/4] Clonando la base activa de staging..."
 clone_db "amunet_prod" "Amunet_testing"
 
 echo "[3/4] Arrancando Odoo staging..."
@@ -103,9 +102,7 @@ for i in $(seq 1 24); do
   sleep 5
 done
 
-echo "[4/4] Actualizando modulos en ambas BDs..."
-docker exec odoo-staging bash -c \
-  'odoo -c /etc/odoo/odoo.conf -d amunet_prod -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
+echo "[4/4] Actualizando modulos en Amunet_testing..."
 docker exec odoo-staging bash -c \
   'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u all --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD'
 
