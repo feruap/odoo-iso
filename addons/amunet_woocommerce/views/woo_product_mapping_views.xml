@@ -150,6 +150,15 @@
                             string="Volver a pendiente"
                             invisible="relation_state == 'pending'"
                             groups="amunet_woocommerce.group_woo_revisor"/>
+                    <button name="action_confirm_selected_product" type="object"
+                            string="Confirmar producto seleccionado" class="btn-primary"
+                            invisible="not product_id or relation_state == 'confirmed'"
+                            groups="amunet_woocommerce.group_woo_revisor"/>
+                    <button name="action_exclude_from_mapping" type="object"
+                            string="Excluir de mapeo (ATUM)"
+                            confirm="¿Excluir este artículo del mapeo activo? Se conservará su historial."
+                            invisible="relation_state == 'confirmed'"
+                            groups="amunet_woocommerce.group_woo_revisor"/>
                     <field name="relation_state" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -212,14 +221,16 @@
                                 </group>
                             </group>
                             <group>
-                                <group string="Fotografía Woo / propuesta">
-                                    <field name="woo_image" widget="image" class="oe_avatar"/>
+                                <group string="Fotografía Woo (vista previa / propuesta)">
+                                    <field name="woo_image_url" widget="url"/>
+                                    <field name="woo_image" widget="image" class="oe_avatar"
+                                           string="Copia local de vista previa"/>
                                     <button name="action_download_woo_image" type="object"
-                                            string="Descargar desde Woo"
+                                            string="Actualizar vista previa desde Woo"
                                             class="btn-secondary"
                                             groups="amunet_woocommerce.group_woo_revisor"/>
                                     <button name="action_copy_woo_image_to_odoo" type="object"
-                                            string="Copiar foto Woo a Odoo"
+                                            string="Transferir foto Woo a Odoo"
                                             class="btn-primary"
                                             groups="amunet_woocommerce.group_woo_revisor"/>
                                 </group>

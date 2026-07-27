@@ -499,12 +499,40 @@ class AmunetWooProductMapping(models.Model):
         self._set_review_state('confirmed')
         return True
 
+    def action_confirm_selected_product(self):
+        """Confirma explícitamente el producto elegido por el revisor."""
+        self.ensure_one()
+        self._require_reviewer()
+        if not self.product_id:
+            raise UserError(_('Selecciona primero el producto Odoo correcto.'))
+        self._set_review_state('confirmed')
+        return True
+
     def action_reject(self):
         self._set_review_state('rejected')
         return True
 
     def action_reset_pending(self):
         self._set_review_state('pending')
+        return True
+
+    def action_exclude_from_mapping(self):
+        """Oculta un artículo no comercial sin destruir el registro auditable."""
+        self.ensure_one()
+        self._require_reviewer()
+        note = (self.review_notes or '').strip()
+        reason = _('Excluido del mapeo comercial por el revisor.')
+        self.write({
+            'relation_state': 'rejected',
+            'review_notes': '%s%s' % (note + '\n' if note else '', reason),
+        })
+        # Archivar es una acción deliberada del flujo, no un permiso de
+        # edición genérico para revisores. Así no pueden desactivar filas por
+        # edición directa, pero el botón conserva el historial completo.
+        self.sudo().with_context(skip_review_stamp=True).write({'active': False})
+        self.message_post(body=_(
+            'Artículo excluido del mapeo activo por %(user)s; el historial se conserva.',
+            user=self.env.user.display_name))
         return True
 
     # --------------------------------------------------------------
