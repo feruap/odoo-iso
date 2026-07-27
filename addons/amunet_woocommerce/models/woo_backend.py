@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
+import hmac
+import json
 import logging
+import time
 
 import requests
 
@@ -66,6 +70,12 @@ class AmunetWooBackend(models.Model):
         string='Application Password WordPress',
         groups='amunet_woocommerce.group_woo_admin',
         help='Contraseña de aplicación, no la contraseña normal de WordPress.')
+    bridge_secret = fields.Char(
+        string='Secreto puente Odoo - Woo',
+        groups='amunet_woocommerce.group_woo_admin',
+        copy=False,
+        help='Secreto HMAC configurado por el administrador técnico en ambos '
+             'servidores. Permite las acciones manuales de nombre y fotografía.')
     state = fields.Selection([
         ('draft', 'Sin probar'),
         ('connected', 'Conectada'),
@@ -211,6 +221,48 @@ class AmunetWooBackend(models.Model):
             raise UserError(_('WordPress no devolvió la URL de la fotografía subida.'))
         return source_url
 
+    def _bridge_request(self, method, endpoint, payload=None):
+        """Llama al puente instalado en WordPress para edición manual.
+
+        El puente evita depender de un usuario WordPress, de una contraseña
+        personal o de una API key Woo de escritura. Cada petición lleva una
+        firma HMAC y solo realiza la acción solicitada desde un mapeo.
+        """
+        self.ensure_one()
+        if not self.bridge_secret:
+            raise UserError(_(
+                'El puente Odoo - Woo no está configurado para esta tienda.'))
+        raw = json.dumps(payload or {}, separators=(',', ':')).encode('utf-8')
+        timestamp = str(int(time.time()))
+        message = timestamp.encode('utf-8') + b'.' + raw
+        signature = hmac.new(
+            self.bridge_secret.encode('utf-8'), message, hashlib.sha256
+        ).hexdigest()
+        url = '%s/wp-json/amunet-odoo/v1/%s' % (
+            (self.store_url or '').rstrip('/'), endpoint.lstrip('/'))
+        try:
+            response = requests.request(
+                method, url, data=raw,
+                headers={
+                    'Content-Type': 'application/json',
+                    'X-Amunet-Timestamp': timestamp,
+                    'X-Amunet-Signature': signature,
+                }, timeout=WOO_TIMEOUT, verify=True,
+            )
+        except requests.RequestException as exc:
+            raise UserError(_('No se pudo comunicar con el puente Woo: %s') % exc)
+        if response.status_code >= 400:
+            try:
+                detail = response.json().get('message') or response.text[:300]
+            except ValueError:
+                detail = response.text[:300]
+            raise UserError(_('El puente Woo rechazó la operación (%(code)s): %(detail)s') % {
+                'code': response.status_code, 'detail': detail})
+        try:
+            return response.json()
+        except ValueError:
+            raise UserError(_('El puente Woo no devolvió una respuesta válida.'))
+
     def _bounded_total_pages(self, response):
         """Normaliza la paginación de Woo sin propagar encabezados inválidos."""
         raw_value = response.headers.get('X-WP-TotalPages') or 1
@@ -279,32 +331,19 @@ class AmunetWooBackend(models.Model):
                 if not data:
                     break
                 for woo_product in data:
-                    if woo_product.get('type') == 'variable':
-                        variations = self._fetch_variations(woo_product['id'])
-                        for variation in variations:
-                            result = Mapping._upsert_from_woo(
-                                self, variation, parent=woo_product)
-                            created += result in ('created', 'unmatched_created')
-                            updated += result in ('updated', 'unmatched_updated')
-                            if result.startswith('unmatched'):
-                                unmatched += 1
-                                messages.append(_(
-                                    'Pendiente sin producto Odoo para SKU '
-                                    '"%(sku)s" (%(name)s, variación %(vid)s)',
-                                    sku=variation.get('sku') or '',
-                                    name=woo_product.get('name') or '',
-                                    vid=variation.get('id')))
-                    else:
-                        result = Mapping._upsert_from_woo(self, woo_product)
-                        created += result in ('created', 'unmatched_created')
-                        updated += result in ('updated', 'unmatched_updated')
-                        if result.startswith('unmatched'):
-                            unmatched += 1
-                            messages.append(_(
-                                'Pendiente sin producto Odoo para SKU "%(sku)s" '
-                                '(%(name)s)',
-                                sku=woo_product.get('sku') or '',
-                                name=woo_product.get('name') or ''))
+                    # La relación comercial es siempre el producto simple o
+                    # el padre variable. Las variaciones son presentaciones,
+                    # no productos Odoo independientes.
+                    result = Mapping._upsert_from_woo(self, woo_product)
+                    created += result in ('created', 'unmatched_created')
+                    updated += result in ('updated', 'unmatched_updated')
+                    if result.startswith('unmatched'):
+                        unmatched += 1
+                        messages.append(_(
+                            'Pendiente sin producto Odoo para SKU "%(sku)s" '
+                            '(%(name)s)',
+                            sku=woo_product.get('sku') or '',
+                            name=woo_product.get('name') or ''))
                 total_pages = self._bounded_total_pages(response)
                 if page >= total_pages:
                     break
