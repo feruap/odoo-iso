@@ -229,8 +229,18 @@
                                             string="Publicar foto Odoo en Woo"
                                             class="btn-primary"
                                             groups="amunet_woocommerce.group_woo_revisor"/>
+                                    <button name="action_delete_odoo_image" type="object"
+                                            string="Eliminar foto de Odoo"
+                                            confirm="¿Eliminar la fotografía del producto Odoo?"
+                                            class="btn-secondary"
+                                            groups="amunet_woocommerce.group_woo_revisor"/>
+                                    <button name="action_delete_woo_image" type="object"
+                                            string="Eliminar foto de Woo"
+                                            confirm="¿Eliminar la fotografía del producto WooCommerce?"
+                                            class="btn-secondary"
+                                            groups="amunet_woocommerce.group_woo_revisor"/>
                                     <div class="text-muted">
-                                        Para publicar en Woo se requiere activar escritura manual y configurar Application Password de WordPress en la tienda.
+                                        Las transferencias se autentican directamente entre los dos servidores.
                                     </div>
                                 </group>
                             </group>
