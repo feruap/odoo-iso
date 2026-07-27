@@ -16,11 +16,12 @@ WOO_MAX_PAGES = 50
 
 
 class AmunetWooBackend(models.Model):
-    """Conexión de solo lectura a una tienda WooCommerce.
+    """Conexión con WooCommerce.
 
-    El backend únicamente realiza llamadas GET (prueba de conexión y lectura
-    del catálogo). No existe ninguna operación de escritura hacia WooCommerce
-    ni cron de publicación de existencias.
+    La lectura del catálogo siempre usa la API REST de WooCommerce. La
+    escritura es deliberadamente puntual y manual: únicamente nombres e
+    imágenes iniciados desde un mapeo revisado. Nunca publica existencias ni
+    altera pedidos.
     """
 
     _name = 'amunet.woo.backend'
@@ -50,6 +51,21 @@ class AmunetWooBackend(models.Model):
         string='Consumer secret',
         groups='amunet_woocommerce.group_woo_admin',
     )
+    allow_manual_writes = fields.Boolean(
+        string='Permitir actualizar nombres e imágenes en Woo',
+        default=False,
+        groups='amunet_woocommerce.group_woo_admin',
+        help='Requiere una API key WooCommerce con permiso Lectura/Escritura. '
+             'No habilita sincronización automática de inventario.')
+    wp_media_user = fields.Char(
+        string='Usuario WordPress para medios',
+        groups='amunet_woocommerce.group_woo_admin',
+        help='Usuario de WordPress con Application Password para subir una '
+             'fotografía desde Odoo hacia WooCommerce.')
+    wp_media_app_password = fields.Char(
+        string='Application Password WordPress',
+        groups='amunet_woocommerce.group_woo_admin',
+        help='Contraseña de aplicación, no la contraseña normal de WordPress.')
     state = fields.Selection([
         ('draft', 'Sin probar'),
         ('connected', 'Conectada'),
@@ -127,6 +143,73 @@ class AmunetWooBackend(models.Model):
             return response.json(), response
         except ValueError:
             raise UserError(_('WooCommerce regresó una respuesta no válida (no es JSON).'))
+
+    def _wc_put(self, endpoint, payload):
+        """Actualización manual y auditada de un producto/variación Woo."""
+        self.ensure_one()
+        if not self.allow_manual_writes:
+            raise UserError(_(
+                'La tienda no está autorizada para escritura manual. Un '
+                'administrador debe activar "Permitir actualizar nombres e '
+                'imágenes en Woo" y configurar una API key Lectura/Escritura.'))
+        if not self.consumer_key or not self.consumer_secret:
+            raise UserError(_('La tienda no tiene credenciales de API configuradas.'))
+        try:
+            response = requests.put(
+                self._wc_url(endpoint), json=payload,
+                auth=(self.consumer_key, self.consumer_secret),
+                timeout=WOO_TIMEOUT, verify=True,
+            )
+        except requests.RequestException as exc:
+            raise UserError(_('No se pudo actualizar WooCommerce: %s') % exc)
+        if response.status_code >= 400:
+            try:
+                detail = response.json().get('message') or response.text[:200]
+            except ValueError:
+                detail = response.text[:200]
+            raise UserError(_('WooCommerce rechazó la actualización (%(code)s): %(detail)s') % {
+                'code': response.status_code, 'detail': detail})
+        try:
+            return response.json()
+        except ValueError:
+            raise UserError(_('WooCommerce no regresó JSON al actualizar el producto.'))
+
+    def _wp_upload_media(self, image_bytes, filename):
+        """Sube un binario a la biblioteca WordPress y devuelve su URL pública."""
+        self.ensure_one()
+        if not self.allow_manual_writes:
+            raise UserError(_('La escritura manual hacia WooCommerce no está habilitada.'))
+        if not self.wp_media_user or not self.wp_media_app_password:
+            raise UserError(_(
+                'Para transferir una foto de Odoo a Woo configura el usuario '
+                'WordPress y su Application Password en la tienda.'))
+        url = '%s/wp-json/wp/v2/media' % (self.store_url or '').rstrip('/')
+        try:
+            response = requests.post(
+                url, data=image_bytes,
+                headers={
+                    'Content-Disposition': 'attachment; filename="%s"' % filename,
+                    'Content-Type': 'image/png',
+                },
+                auth=(self.wp_media_user, self.wp_media_app_password),
+                timeout=WOO_TIMEOUT, verify=True,
+            )
+        except requests.RequestException as exc:
+            raise UserError(_('No se pudo subir la foto a WordPress: %s') % exc)
+        if response.status_code >= 400:
+            try:
+                detail = response.json().get('message') or response.text[:200]
+            except ValueError:
+                detail = response.text[:200]
+            raise UserError(_('WordPress rechazó la fotografía (%(code)s): %(detail)s') % {
+                'code': response.status_code, 'detail': detail})
+        try:
+            source_url = response.json().get('source_url')
+        except ValueError:
+            source_url = False
+        if not source_url:
+            raise UserError(_('WordPress no devolvió la URL de la fotografía subida.'))
+        return source_url
 
     def _bounded_total_pages(self, response):
         """Normaliza la paginación de Woo sin propagar encabezados inválidos."""
