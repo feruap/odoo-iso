@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import base64
+
+import requests
+
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 from odoo.tools.float_utils import float_round
@@ -8,7 +12,8 @@ from odoo.tools.float_utils import float_round
 # Todo lo demás del mapeo solo lo escribe el Administrador (importación/sistema).
 REVIEWER_ALLOWED_FIELDS = {
     'product_id', 'relation_state', 'confidence', 'match_method',
-    'review_notes', 'supply_classification',
+    'review_notes', 'supply_classification', 'woo_name', 'woo_image',
+    'odoo_name_edit',
 }
 
 SNAPSHOT_MAX_AGE_PARAM = 'amunet_woocommerce.snapshot_max_age_days'
@@ -50,6 +55,9 @@ class AmunetWooProductMapping(models.Model):
     woo_type = fields.Char(string='Tipo Woo')
     woo_status = fields.Char(string='Estado Woo', default='unknown')
     woo_image_url = fields.Char(string='URL fotografía Woo')
+    woo_image = fields.Image(
+        string='Fotografía Woo / fotografía propuesta',
+        help='Descárgala desde Woo o súbela aquí para transferirla a Odoo o Woo.')
     snapshot_ids = fields.One2many(
         'amunet.woo.stock.snapshot', 'mapping_id', string='Snapshots Woo')
 
@@ -65,6 +73,11 @@ class AmunetWooProductMapping(models.Model):
         string='Nombre Odoo', related='product_id.name', store=False)
     product_image_128 = fields.Image(
         string='Fotografía Odoo', related='product_id.image_128')
+    odoo_name_edit = fields.Char(
+        string='Nombre Odoo', compute='_compute_odoo_name_edit',
+        inverse='_inverse_odoo_name_edit',
+        help='Editar aquí cambia el nombre del producto Odoo vinculado y deja '
+             'registro en la bitácora del mapeo.')
 
     # --------------------------------------------------------------
     # Estado de la relación (auditable, editable por Revisor)
@@ -339,6 +352,108 @@ class AmunetWooProductMapping(models.Model):
                     if rec.product_id else _('Sin vincular'),
                 ))
         return result
+
+    @api.depends('product_id.name')
+    def _compute_odoo_name_edit(self):
+        for rec in self:
+            rec.odoo_name_edit = rec.product_id.name if rec.product_id else False
+
+    def _inverse_odoo_name_edit(self):
+        for rec in self:
+            if not rec.odoo_name_edit:
+                raise UserError(_('El nombre Odoo no puede quedar vacío.'))
+            if not rec.product_id:
+                raise UserError(_('Primero selecciona un producto Odoo para editar su nombre.'))
+            previous_name = rec.product_id.name
+            if previous_name != rec.odoo_name_edit:
+                rec.product_id.sudo().write({'name': rec.odoo_name_edit})
+                rec.message_post(body=_(
+                    'Nombre del producto Odoo actualizado por %(user)s: '
+                    '"%(old)s" → "%(new)s".',
+                    user=self.env.user.display_name,
+                    old=previous_name, new=rec.odoo_name_edit))
+
+    def _require_reviewer(self):
+        if not self.env.user.has_group('amunet_woocommerce.group_woo_revisor') \
+                and not self.env.user.has_group('amunet_woocommerce.group_woo_admin'):
+            raise AccessError(_('Solo un revisor o administrador puede transferir datos.'))
+
+    def _woo_endpoint(self):
+        self.ensure_one()
+        if self.woo_parent_id:
+            return 'products/%s/variations/%s' % (self.woo_parent_id, self.woo_product_id)
+        return 'products/%s' % self.woo_product_id
+
+    def action_download_woo_image(self):
+        """Descarga la foto registrada en Woo sin escribir fuera de Odoo."""
+        self.ensure_one()
+        self._require_reviewer()
+        if not self.woo_image_url:
+            raise UserError(_('Este producto Woo no tiene una URL de fotografía.'))
+        try:
+            response = requests.get(self.woo_image_url, timeout=30, verify=True)
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            raise UserError(_('No se pudo descargar la fotografía Woo: %s') % exc)
+        content_type = response.headers.get('Content-Type', '')
+        if not content_type.startswith('image/'):
+            raise UserError(_('La URL Woo no devolvió una imagen válida.'))
+        if len(response.content) > 10 * 1024 * 1024:
+            raise UserError(_('La fotografía Woo excede el límite de 10 MB.'))
+        self.write({'woo_image': base64.b64encode(response.content)})
+        self.message_post(body=_(
+            'Fotografía descargada desde Woo por %(user)s; queda lista para revisión o transferencia.',
+            user=self.env.user.display_name))
+        return True
+
+    def action_copy_woo_image_to_odoo(self):
+        self.ensure_one()
+        self._require_reviewer()
+        if not self.product_id:
+            raise UserError(_('Primero selecciona el producto Odoo destino.'))
+        if not self.woo_image:
+            self.action_download_woo_image()
+        self.product_id.sudo().write({'image_1920': self.woo_image})
+        self.message_post(body=_(
+            'Fotografía Woo transferida al producto Odoo por %(user)s.',
+            user=self.env.user.display_name))
+        return True
+
+    def action_push_woo_name(self):
+        self.ensure_one()
+        self._require_reviewer()
+        if not self.woo_name:
+            raise UserError(_('El nombre Woo no puede quedar vacío.'))
+        self.backend_id._wc_put(self._woo_endpoint(), {'name': self.woo_name})
+        self.message_post(body=_(
+            'Nombre publicado en WooCommerce por %(user)s: "%(name)s".',
+            user=self.env.user.display_name, name=self.woo_name))
+        return True
+
+    def action_push_odoo_image_to_woo(self):
+        self.ensure_one()
+        self._require_reviewer()
+        image = self.woo_image or (self.product_id and self.product_id.image_1920)
+        if not image:
+            raise UserError(_('No hay fotografía cargada en el mapeo ni en el producto Odoo.'))
+        try:
+            image_bytes = base64.b64decode(image)
+        except (TypeError, ValueError) as exc:
+            raise UserError(_('La fotografía Odoo no es válida: %s') % exc)
+        filename = '%s-odoo.png' % (self.woo_sku or self.woo_product_id)
+        media_url = self.backend_id._wp_upload_media(image_bytes, filename)
+        result = self.backend_id._wc_put(self._woo_endpoint(), {
+            'images': [{'src': media_url}],
+        })
+        image_url = ((result.get('images') or [{}])[0].get('src') or media_url)
+        self.sudo().with_context(skip_review_stamp=True).write({
+            'woo_image_url': image_url,
+            'woo_image': image,
+        })
+        self.message_post(body=_(
+            'Fotografía Odoo publicada en WooCommerce por %(user)s.',
+            user=self.env.user.display_name))
+        return True
 
     # --------------------------------------------------------------
     # Acciones de revisión (auditables)

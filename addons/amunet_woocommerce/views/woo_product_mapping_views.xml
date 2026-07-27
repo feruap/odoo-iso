@@ -181,6 +181,7 @@
                             <field name="woo_parent_id"/>
                             <field name="woo_status"/>
                             <field name="woo_type"/>
+                            <field name="woo_name"/>
                             <field name="woo_image_url" widget="url"/>
                             <field name="last_snapshot_date"/>
                             <field name="backend_id"/>
@@ -188,7 +189,7 @@
                         <group string="Producto Odoo">
                             <field name="product_id"/>
                             <field name="default_code"/>
-                            <field name="product_name"/>
+                            <field name="odoo_name_edit"/>
                             <field name="product_image_128" widget="image"
                                    class="oe_avatar"/>
                             <field name="supply_classification"/>
@@ -197,6 +198,43 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Nombres y fotografías" name="media">
+                            <group>
+                                <group string="Nombre WooCommerce">
+                                    <field name="woo_name"/>
+                                    <button name="action_push_woo_name" type="object"
+                                            string="Publicar nombre en Woo"
+                                            class="btn-secondary"
+                                            groups="amunet_woocommerce.group_woo_revisor"/>
+                                </group>
+                                <group string="Nombre Odoo">
+                                    <field name="odoo_name_edit"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Fotografía Woo / propuesta">
+                                    <field name="woo_image" widget="image" class="oe_avatar"/>
+                                    <button name="action_download_woo_image" type="object"
+                                            string="Descargar desde Woo"
+                                            class="btn-secondary"
+                                            groups="amunet_woocommerce.group_woo_revisor"/>
+                                    <button name="action_copy_woo_image_to_odoo" type="object"
+                                            string="Copiar foto Woo a Odoo"
+                                            class="btn-primary"
+                                            groups="amunet_woocommerce.group_woo_revisor"/>
+                                </group>
+                                <group string="Fotografía Odoo">
+                                    <field name="product_image_128" widget="image" class="oe_avatar"/>
+                                    <button name="action_push_odoo_image_to_woo" type="object"
+                                            string="Publicar foto Odoo en Woo"
+                                            class="btn-primary"
+                                            groups="amunet_woocommerce.group_woo_revisor"/>
+                                    <div class="text-muted">
+                                        Para publicar en Woo se requiere activar escritura manual y configurar Application Password de WordPress en la tienda.
+                                    </div>
+                                </group>
+                            </group>
+                        </page>
                         <page string="Revisión" name="review">
                             <group>
                                 <group string="Emparejamiento">
