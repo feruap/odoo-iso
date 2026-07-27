@@ -2,11 +2,13 @@
 
 {
     'name': 'Amunet - Consulta y planeación WooCommerce',
-    'summary': 'Consulta, validación y planeación WooCommerce ↔ Odoo (solo lectura hacia Woo)',
+    'summary': 'Consulta, validación y planeación WooCommerce ↔ Odoo',
     'description': """Aplicación de consulta y planeación entre WooCommerce y Odoo.
 
-Solo lectura hacia WooCommerce (GET) y carga manual de snapshots: la aplicación
-nunca escribe en la tienda ni modifica inventarios, lotes, órdenes de
+Lectura del catálogo y carga manual de snapshots. Los revisores pueden editar
+nombres y transferir fotografías de forma manual y auditada; cualquier
+escritura hacia Woo requiere habilitación explícita y credenciales separadas.
+La aplicación nunca sincroniza inventarios ni modifica lotes, órdenes de
 fabricación, controles de calidad, BOM ni presentaciones de Odoo.
 
 - Mapeo auditable Woo ↔ Odoo con revisión manual (pendiente/confirmado/rechazado).
@@ -18,7 +20,7 @@ fabricación, controles de calidad, BOM ni presentaciones de Odoo.
 - Tres grupos: Consulta, Revisor y Administrador, con reglas multiempresa.""",
     'author': 'Amunet',
     'category': 'Inventory',
-    'version': '19.0.3.0.0',
+    'version': '19.0.4.0.0',
     'depends': [
         'mail',
         'stock',
