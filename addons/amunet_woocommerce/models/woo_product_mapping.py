@@ -70,7 +70,7 @@ class AmunetWooProductMapping(models.Model):
     default_code = fields.Char(
         string='SKU Odoo', related='product_id.default_code', store=True)
     product_name = fields.Char(
-        string='Nombre Odoo', related='product_id.name', store=False)
+        string='Nombre Odoo (consulta)', related='product_id.name', store=False)
     product_image_128 = fields.Image(
         string='Fotografía Odoo', related='product_id.image_128')
     odoo_name_edit = fields.Char(
@@ -424,7 +424,9 @@ class AmunetWooProductMapping(models.Model):
         self._require_reviewer()
         if not self.woo_name:
             raise UserError(_('El nombre Woo no puede quedar vacío.'))
-        self.backend_id._wc_put(self._woo_endpoint(), {'name': self.woo_name})
+        self.backend_id._bridge_request(
+            'POST', 'product/%s/name' % self.woo_product_id,
+            {'name': self.woo_name})
         self.message_post(body=_(
             'Nombre publicado en WooCommerce por %(user)s: "%(name)s".',
             user=self.env.user.display_name, name=self.woo_name))
@@ -441,17 +443,45 @@ class AmunetWooProductMapping(models.Model):
         except (TypeError, ValueError) as exc:
             raise UserError(_('La fotografía Odoo no es válida: %s') % exc)
         filename = '%s-odoo.png' % (self.woo_sku or self.woo_product_id)
-        media_url = self.backend_id._wp_upload_media(image_bytes, filename)
-        result = self.backend_id._wc_put(self._woo_endpoint(), {
-            'images': [{'src': media_url}],
-        })
-        image_url = ((result.get('images') or [{}])[0].get('src') or media_url)
+        result = self.backend_id._bridge_request(
+            'POST', 'product/%s/image' % self.woo_product_id, {
+                'filename': filename,
+                'image_base64': base64.b64encode(image_bytes).decode('ascii'),
+            })
+        image_url = result.get('image_url')
+        if not image_url:
+            raise UserError(_('El puente Woo no devolvió la URL de la fotografía.'))
         self.sudo().with_context(skip_review_stamp=True).write({
             'woo_image_url': image_url,
             'woo_image': image,
         })
         self.message_post(body=_(
             'Fotografía Odoo publicada en WooCommerce por %(user)s.',
+            user=self.env.user.display_name))
+        return True
+
+    def action_delete_woo_image(self):
+        self.ensure_one()
+        self._require_reviewer()
+        self.backend_id._bridge_request(
+            'DELETE', 'product/%s/image' % self.woo_product_id)
+        self.sudo().with_context(skip_review_stamp=True).write({
+            'woo_image_url': False,
+            'woo_image': False,
+        })
+        self.message_post(body=_(
+            'Fotografía eliminada de WooCommerce por %(user)s.',
+            user=self.env.user.display_name))
+        return True
+
+    def action_delete_odoo_image(self):
+        self.ensure_one()
+        self._require_reviewer()
+        if not self.product_id:
+            raise UserError(_('Este mapeo no tiene un producto Odoo vinculado.'))
+        self.product_id.sudo().write({'image_1920': False})
+        self.message_post(body=_(
+            'Fotografía eliminada del producto Odoo por %(user)s.',
             user=self.env.user.display_name))
         return True
 
