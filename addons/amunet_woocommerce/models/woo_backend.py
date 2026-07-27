@@ -331,9 +331,13 @@ class AmunetWooBackend(models.Model):
                 if not data:
                     break
                 for woo_product in data:
-                    # La relación comercial es siempre el producto simple o
-                    # el padre variable. Las variaciones son presentaciones,
-                    # no productos Odoo independientes.
+                    # El tablero comercial solo admite productos Woo
+                    # simples y padres variables. Tipos agregados por
+                    # plugins ajenos (p. ej. el legado ATUM) no forman parte
+                    # de este proceso y jamás se importan como pendientes.
+                    if (woo_product.get('type') or '').lower() not in (
+                            'simple', 'variable'):
+                        continue
                     result = Mapping._upsert_from_woo(self, woo_product)
                     created += result in ('created', 'unmatched_created')
                     updated += result in ('updated', 'unmatched_updated')
