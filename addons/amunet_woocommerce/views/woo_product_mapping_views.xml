@@ -154,11 +154,6 @@
                             string="Confirmar producto seleccionado" class="btn-primary"
                             invisible="not product_id or relation_state == 'confirmed'"
                             groups="amunet_woocommerce.group_woo_revisor"/>
-                    <button name="action_exclude_from_mapping" type="object"
-                            string="Excluir de mapeo (ATUM)"
-                            confirm="¿Excluir este artículo del mapeo activo? Se conservará su historial."
-                            invisible="relation_state == 'confirmed'"
-                            groups="amunet_woocommerce.group_woo_revisor"/>
                     <field name="relation_state" widget="statusbar"/>
                 </header>
                 <sheet>
