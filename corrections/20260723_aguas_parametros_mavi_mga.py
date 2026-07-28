@@ -92,16 +92,14 @@ for code, cfg in aguas.items():
             print(f"{code} Conductividad: {len(specs)} spec(s) → {cfg['cond_text']}")
 
         elif param_code == 'MGA-0571':
-            # Un solo campo de texto libre — sin D.O. separado
+            # Binario con notas: analista selecciona Cumple/No cumple y escribe el valor medido
             specs = SpecCfg.search([('product_parameter_rel_id', '=', rel.id)])
-            specs.write({'evaluation_type': 'text_pattern',
+            specs.write({'evaluation_type': 'binary_with_notes',
                          'specification_name': 'Límites microbianos',
                          'acceptance_criteria': '≤100 UFC/10 mL o D.O. ≤0.6',
                          'min_value': None,
-                         'max_value': None,
-                         'text_pattern_expected': None,
-                         'text_pattern_regex': None})
-            print(f"{code} Límites microbianos: {len(specs)} spec(s) → text_pattern")
+                         'max_value': None})
+            print(f"{code} Límites microbianos: {len(specs)} spec(s) → binary_with_notes")
 
 # ── 4. Checks existentes: actualizar código en amunet_quality_test_line ──────
 
@@ -121,21 +119,20 @@ for old_code, new_code, new_name in [
 
 env.cr.execute("""
     UPDATE amunet_quality_test_line_detail tld
-    SET evaluation_type        = 'text_pattern',
-        name                   = 'Límites microbianos',
-        acceptance_criteria    = '≤100 UFC/10 mL o D.O. ≤0.6',
-        min_value              = NULL,
-        max_value              = NULL,
-        text_pattern_expected  = NULL,
-        text_pattern_regex     = NULL,
-        write_date             = NOW()
+    SET evaluation_type     = 'binary_with_notes',
+        name                = 'Límites microbianos',
+        acceptance_criteria = '≤100 UFC/10 mL o D.O. ≤0.6',
+        min_value           = NULL,
+        max_value           = NULL,
+        write_date          = NOW()
     FROM amunet_quality_test_line tl
-    JOIN product_product pp ON pp.id = tl.product_id
+    JOIN amunet_quality_check qc ON qc.id = tl.check_id
+    JOIN product_product pp ON pp.id = qc.product_id
     WHERE tld.test_line_id = tl.id
       AND pp.default_code IN ('MPABI01','MPADE01','MPATR01')
       AND tl.code = 'MGA-0571'
 """)
-print(f"test_line_detail MGA-0571 aguas → text_pattern: {env.cr.rowcount} fila(s)")
+print(f"test_line_detail MGA-0571 aguas → binary_with_notes: {env.cr.rowcount} fila(s)")
 
 # ── 6. Checks existentes: activar anexo y poner encabezados correctos ────────
 # Actualiza TODOS los análisis ya creados de las 3 aguas para que muestren
