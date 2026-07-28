@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import re
+import base64
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -415,6 +418,53 @@ class AmunetPackagingPlan(models.Model):
                 'desde el wizard de firma electronica.'
             ))
         return super().write(vals)
+
+    def action_generar_etiquetas_caja(self):
+        """Genera UN PPTX con las etiquetas de CAJA de ESTE plan (una etiqueta
+        por caja, tileadas 3x6 en hoja tabloide 11x17) y lo descarga. Usa el
+        motor de amunet_label que vive en la orden de fabricacion."""
+        self.ensure_one()
+        mo = self.production_id
+        if not mo:
+            raise UserError(_('El plan no tiene orden de fabricacion.'))
+        lineas = [
+            (ln.package_qty, ln.approved_box_qty)
+            for ln in self.line_ids.filtered(lambda l: l.approved_box_qty > 0)
+        ]
+        if not lineas:
+            raise UserError(_('El plan no tiene cajas aprobadas para etiquetar.'))
+        subtipo, lot_name, datos = mo._etiqueta_datos()
+        contenido = mo._etiqueta_construir_pptx(subtipo, datos, lineas)
+
+        total = sum(c for _n, c in lineas)
+        safe = re.sub(r'[/\\:*?"<>|]', '-', lot_name or self.name)
+        ref = mo.product_id.default_code or 'SREF'
+        Attachment = self.env['ir.attachment']
+        # Reemplaza el archivo previo de este plan para no acumular.
+        Attachment.search([
+            ('res_model', '=', 'amunet.packaging.plan'),
+            ('res_id', '=', self.id),
+            ('name', '=like', 'Etiquetas_%.pptx'),
+        ]).unlink()
+        nombre = 'Etiquetas_%s_%s_%setiq.pptx' % (ref, safe, total)
+        att = Attachment.create({
+            'name': nombre,
+            'type': 'binary',
+            'datas': base64.b64encode(contenido),
+            'mimetype': ('application/vnd.openxmlformats-officedocument'
+                         '.presentationml.presentation'),
+            'res_model': 'amunet.packaging.plan',
+            'res_id': self.id,
+        })
+        resumen = ', '.join('%s cajas de %s pzas' % (c, n) for n, c in lineas)
+        self.message_post(body=_(
+            'Etiquetas de caja generadas: %(cant)s en un archivo (%(resumen)s).',
+            cant=total, resumen=resumen))
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/content/%s?download=true' % att.id,
+            'target': 'self',
+        }
 
     def action_open_label_wizard(self):
         self.ensure_one()

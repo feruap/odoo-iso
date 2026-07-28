@@ -7,6 +7,9 @@ USER root
 COPY fonts/cambria/ /usr/share/fonts/truetype/cambria/
 RUN fc-cache -f
 
+# python-pptx para el generador de etiquetas de caja (amunet_label / plan de empaque)
+RUN pip install --no-cache-dir --break-system-packages python-pptx
+
 # Copiar addons y configuracion para evitar errores de montaje de volumenes de Git en Portainer
 COPY addons/ /opt/amunet-addons/
 COPY odoo_server.conf /etc/odoo/odoo.conf

@@ -33,6 +33,29 @@ class ProductTemplate(models.Model):
              'producto (campo name).',
     )
 
+    # ── Datos del catalogo de etiquetas (migrados desde Catalogo_final.xlsx) ──
+    # Definen que plantilla PPTX usar y que datos extra lleva segun el subtipo.
+    etiqueta_subtipo = fields.Selection(
+        selection=[('S', 'S'), ('H', 'H'), ('P', 'P'), ('M', 'M')],
+        string='Subtipo de etiqueta',
+        help='Determina la plantilla PPTX (PLANTILLA_S/H/P/M) de la etiqueta de '
+             'caja. H = lleva contenedor + accesorio; P = lleva registro sanitario.',
+    )
+    etiqueta_contenedor = fields.Char(
+        string='Contenedor (etiqueta subtipo H)',
+        help='Texto del contenedor en la etiqueta (solo subtipo H). '
+             'Ej: "tubos de extraccion c/buffer".',
+    )
+    etiqueta_accesorio = fields.Char(
+        string='Accesorio (etiqueta subtipo H)',
+        help='Texto del accesorio en la etiqueta (solo subtipo H). Ej: "hisopos".',
+    )
+    registro_sanitario = fields.Char(
+        string='Registro Sanitario',
+        help='Numero de registro sanitario Cofepris; va en la etiqueta (subtipo P). '
+             'Ej: "1820R2025 SSA".',
+    )
+
     # Helper para condiciones de vista: True si el usuario actual es
     # Admin del modulo Etiquetas. Permite mostrar el campo en solo
     # lectura al Usuario y editable al Admin sin tener que llamar
