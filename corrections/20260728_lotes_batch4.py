@@ -43,7 +43,7 @@ lotes = [
     ('MPREC89', 'REC89032501', '108750-13-6',    '2030-03-03 00:00:00',   10),  # Calceína
     ('MPREC66', 'REC66032502', '215902',          '2030-03-03 00:00:00',   25),  # Acetato de plomo (2do lote)
     ('MPREC74', 'REC74032501', '05507JD',         '2030-03-03 00:00:00',   90),  # Ácido nitriloacético
-    ('MPREC17', 'REC17032502', '6697.102119A',    '2030-03-03 00:00:00',   15),  # Azul brillante (2do lote)
+    ('MPREC17', 'REC17032501', '6697.102119A',    '2030-03-03 00:00:00',   15),  # Azul brillante G-250 (único lote en prod)
     ('MPREC31', 'REC31032501', 'RA102301',        '2029-02-01 00:00:00',    5),  # Fosfato sodio dibásico
     ('MPREC79', 'REC79032501', '300523',          '2028-05-02 00:00:00',  250),  # Hidróxido de amonio
     ('MPREC80', 'REC80032501', 'SIN-LOTE',        '2030-03-03 00:00:00',  696),  # SDS (sin lote proveedor)

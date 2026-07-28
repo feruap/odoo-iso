@@ -59,7 +59,7 @@ lotes_b3 = [
     ('MPREC67', 'REC67032501', 'N10G017',      '2030-03-03 00:00:00',  400),  # Peptona de caseína
     ('MPREC63', 'REC63032501', '1B70102',      '2030-03-03 00:00:00',  100),  # N,N-Metilenbis(Acrilamida)
     ('MPREC70', 'REC70032501', '090223',       '2028-01-01 00:00:00', 1000),  # Ácido sulfúrico
-    ('MPREC17', 'REC17032501', 'MKBS9408V',    '2027-07-06 00:00:00',    5),  # Azul brillante Coomassie
+    ('MPREC82', 'REC82032501', 'MKBS9408V',    '2027-07-06 00:00:00',    5),  # Azul Brillante R (MPREC82, separado de G-250)
     ('MPREC32', 'REC32032502', 'S186',         '2030-03-03 00:00:00', 2000),  # Fosfato sodio monobásico 2
     ('MPREC73', 'REC73032501', '131903',       '2030-03-03 00:00:00',   25),  # Ortosilicato de tetraetilo
 ]
