@@ -137,5 +137,66 @@ env.cr.execute("""
 """)
 print(f"test_line_detail MGA-0571 aguas → text_pattern: {env.cr.rowcount} fila(s)")
 
+# ── 6. Checks existentes: activar anexo y poner encabezados correctos ────────
+# Actualiza TODOS los análisis ya creados de las 3 aguas para que muestren
+# el anexo "REGISTRO DE DATOS" con las columnas correctas.
+
+env.cr.execute("""
+    UPDATE amunet_quality_check qc
+    SET tiene_anexos       = true,
+        anexo_titulo       = 'REGISTRO DE DATOS',
+        anexo_col1_header  = 'Partículas',
+        anexo_col2_header  = 'Color',
+        anexo_col3_header  = 'Límites microbianos',
+        anexo_col4_header  = 'Conductividad',
+        anexo_col5_header  = 'pH',
+        anexo_col6_header  = '',
+        anexo_col7_header  = '',
+        write_date         = NOW()
+    FROM product_product pp
+    WHERE pp.id = qc.product_id
+      AND pp.default_code IN ('MPABI01','MPADE01','MPATR01')
+""")
+print(f"Checks aguas: anexo activado en {env.cr.rowcount} análisis existentes")
+
+# ── 7. Checks existentes: actualizar rangos en test_line_detail ───────────────
+# Conductividad y pH: corrige los valores en análisis ya creados.
+
+conductividad = {
+    'MPABI01': (0, 3.0,  '≤3 µs/cm'),
+    'MPADE01': (0, 4.0,  '≤4 µs/cm'),
+    'MPATR01': (0, 1.5,  '≤1.5 µs/cm'),
+}
+for prod_code, (min_v, max_v, criteria) in conductividad.items():
+    env.cr.execute("""
+        UPDATE amunet_quality_test_line_detail tld
+        SET min_value           = %s,
+            max_value           = %s,
+            acceptance_criteria = %s,
+            name                = 'Conductividad',
+            write_date          = NOW()
+        FROM amunet_quality_test_line tl
+        JOIN product_product pp ON pp.id = tl.product_id
+        WHERE tld.test_line_id = tl.id
+          AND pp.default_code  = %s
+          AND tl.code          = 'MGA-0196'
+    """, (min_v, max_v, criteria, prod_code))
+    print(f"{prod_code} Conductividad en checks existentes: {env.cr.rowcount} fila(s) → {criteria}")
+
+env.cr.execute("""
+    UPDATE amunet_quality_test_line_detail tld
+    SET min_value           = 5.0,
+        max_value           = 8.0,
+        acceptance_criteria = '5.0 – 8.0',
+        name                = 'pH',
+        write_date          = NOW()
+    FROM amunet_quality_test_line tl
+    JOIN product_product pp ON pp.id = tl.product_id
+    WHERE tld.test_line_id = tl.id
+      AND pp.default_code IN ('MPABI01','MPADE01','MPATR01')
+      AND tl.code = 'MGA 0701'
+""")
+print(f"pH en checks existentes aguas: {env.cr.rowcount} fila(s) → 5.0–8.0")
+
 env.cr.commit()
-print("LISTO — parámetros de aguas actualizados.")
+print("LISTO — parámetros, rangos y anexos de aguas actualizados en nuevos y existentes.")
