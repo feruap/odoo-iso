@@ -176,7 +176,8 @@ for prod_code, (min_v, max_v, criteria) in conductividad.items():
             name                = 'Conductividad',
             write_date          = NOW()
         FROM amunet_quality_test_line tl
-        JOIN product_product pp ON pp.id = tl.product_id
+        JOIN amunet_quality_check qc ON qc.id = tl.check_id
+        JOIN product_product pp ON pp.id = qc.product_id
         WHERE tld.test_line_id = tl.id
           AND pp.default_code  = %s
           AND tl.code          = 'MGA-0196'
@@ -191,7 +192,8 @@ env.cr.execute("""
         name                = 'pH',
         write_date          = NOW()
     FROM amunet_quality_test_line tl
-    JOIN product_product pp ON pp.id = tl.product_id
+    JOIN amunet_quality_check qc ON qc.id = tl.check_id
+    JOIN product_product pp ON pp.id = qc.product_id
     WHERE tld.test_line_id = tl.id
       AND pp.default_code IN ('MPABI01','MPADE01','MPATR01')
       AND tl.code = 'MGA 0701'
