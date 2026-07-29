@@ -419,24 +419,51 @@ class AmunetPackagingPlan(models.Model):
             ))
         return super().write(vals)
 
+    # Cajas genericas: llevan la etiqueta GRANDE (S/H/P/M). Cualquier otra caja
+    # caple (especifica de un producto) ya viene pre-impresa -> etiqueta chica
+    # (Plantilla A). MICAJ15 es generica pero pendiente de su etiqueta chica
+    # propia; por ahora se trata como grande.
+    _CAJAS_GENERICAS = ('MICAJ01', 'MICAJ15')
+
+    def _caja_micaj_de_presentacion(self, pres):
+        """Devuelve el default_code de la caja MICAJ de la presentacion (de sus
+        componentes o box_component_id), o '' si no tiene."""
+        for comp in pres.component_ids:
+            code = comp.product_id.default_code or ''
+            if code.startswith('MICAJ'):
+                return code
+        bc = pres.box_component_id
+        if bc and (bc.default_code or '').startswith('MICAJ'):
+            return bc.default_code
+        return ''
+
     def action_generar_etiquetas_caja(self):
-        """Genera UN PPTX con las etiquetas de CAJA de ESTE plan (una etiqueta
-        por caja, tileadas 3x6 en hoja tabloide 11x17) y lo descarga. Usa el
-        motor de amunet_label que vive en la orden de fabricacion."""
+        """Genera UN PPTX con las etiquetas de CAJA de ESTE plan y lo descarga.
+        Por cada linea decide la etiqueta segun la caja de la presentacion:
+        caja generica -> etiqueta grande S/H/P/M; caja especifica (pre-impresa)
+        -> etiqueta chica (Plantilla A). Usa el motor de amunet_label."""
         self.ensure_one()
         mo = self.production_id
         if not mo:
             raise UserError(_('El plan no tiene orden de fabricacion.'))
-        lineas = [
-            (ln.package_qty, ln.approved_box_qty)
-            for ln in self.line_ids.filtered(lambda l: l.approved_box_qty > 0)
-        ]
-        if not lineas:
+        plan_lineas = self.line_ids.filtered(lambda l: l.approved_box_qty > 0)
+        if not plan_lineas:
             raise UserError(_('El plan no tiene cajas aprobadas para etiquetar.'))
-        subtipo, lot_name, datos = mo._etiqueta_datos()
-        contenido = mo._etiqueta_construir_pptx(subtipo, datos, lineas)
 
-        total = sum(c for _n, c in lineas)
+        bloques = []
+        for ln in plan_lineas:
+            caja = self._caja_micaj_de_presentacion(ln.presentation_id)
+            tipo = 'A' if (caja and caja not in self._CAJAS_GENERICAS) else 'grande'
+            bloques.append({
+                'tipo': tipo,
+                'n': ln.package_qty,
+                'cajas': ln.approved_box_qty,
+            })
+
+        subtipo, lot_name, datos = mo._etiqueta_datos()
+        contenido = mo._etiqueta_construir_pptx(subtipo, datos, bloques)
+
+        total = sum(b['cajas'] for b in bloques)
         safe = re.sub(r'[/\\:*?"<>|]', '-', lot_name or self.name)
         ref = mo.product_id.default_code or 'SREF'
         Attachment = self.env['ir.attachment']
@@ -456,7 +483,11 @@ class AmunetPackagingPlan(models.Model):
             'res_model': 'amunet.packaging.plan',
             'res_id': self.id,
         })
-        resumen = ', '.join('%s cajas de %s pzas' % (c, n) for n, c in lineas)
+        resumen = ', '.join(
+            '%s cajas de %s pzas (%s)' % (
+                b['cajas'], b['n'],
+                'chica' if b['tipo'] == 'A' else 'grande')
+            for b in bloques)
         self.message_post(body=_(
             'Etiquetas de caja generadas: %(cant)s en un archivo (%(resumen)s).',
             cant=total, resumen=resumen))
