@@ -33,7 +33,7 @@
 
     <template id="report_purchasequotation_document_hide" inherit_id="purchase.report_purchasequotation_document">
         <xpath expr="//table" position="attributes">
-            <attribute name="t-if">user_has_group('amunet_price_visibility.group_price_viewer') or not any(line.price_unit for line in o.order_line)</attribute>
+            <attribute name="t-if">env.user.has_group('amunet_price_visibility.group_price_viewer') or not any(line.price_unit for line in o.order_line)</attribute>
         </xpath>
     </template>
 </odoo>
