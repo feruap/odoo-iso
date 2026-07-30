@@ -212,10 +212,6 @@
                                    readonly="state not in ('aceptado',)"
                                    placeholder="Ej. Versión 2.0"/>
                         </group>
-                        <group>
-                            <field name="firma_cierre_id"    readonly="1" invisible="not firma_cierre_id"/>
-                            <field name="fecha_cierre_firma" readonly="1" invisible="not fecha_cierre_firma"/>
-                        </group>
                     </group>
                     <label for="resultados_verificacion"
                            invisible="state not in ('aceptado', 'cerrado')"/>
@@ -228,6 +224,44 @@
                     <field name="evidencia_anexa"
                            invisible="state not in ('aceptado', 'cerrado')"
                            readonly="state not in ('aceptado',)"/>
+
+                    <!-- ── Firmas de cierre ──────────────────────── -->
+                    <separator string="Firmas de cierre"
+                               invisible="state not in ('aceptado', 'cerrado')"/>
+                    <group invisible="state not in ('aceptado', 'cerrado')">
+                        <group string="Realizó el control de cambios">
+                            <field name="cierre_realizo_id"
+                                   readonly="firma_cierre_realizo_id or state not in ('aceptado',)"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_cierre_realizo_id" readonly="1" invisible="not firma_cierre_realizo_id"/>
+                            <field name="fecha_cierre_realizo"    readonly="1" invisible="not fecha_cierre_realizo"/>
+                            <button name="action_firmar_cierre_realizo" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o" class="btn-primary"
+                                    invisible="not cierre_realizo_id or firma_cierre_realizo_id or state not in ('aceptado',)"/>
+                        </group>
+                        <group string="Revisó la aplicación">
+                            <field name="cierre_reviso_id"
+                                   readonly="firma_cierre_reviso_id or state not in ('aceptado',)"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_cierre_reviso_id" readonly="1" invisible="not firma_cierre_reviso_id"/>
+                            <field name="fecha_cierre_reviso"    readonly="1" invisible="not fecha_cierre_reviso"/>
+                            <button name="action_firmar_cierre_reviso" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o" class="btn-primary"
+                                    invisible="not cierre_reviso_id or firma_cierre_reviso_id or state not in ('aceptado',)"/>
+                        </group>
+                    </group>
+                    <group invisible="state not in ('aceptado', 'cerrado')">
+                        <group string="Aprobó la aplicación del cambio">
+                            <field name="cierre_aprobo_id"
+                                   readonly="firma_cierre_aprobo_id or state not in ('aceptado',)"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_cierre_aprobo_id" readonly="1" invisible="not firma_cierre_aprobo_id"/>
+                            <field name="fecha_cierre_aprobo"    readonly="1" invisible="not fecha_cierre_aprobo"/>
+                            <button name="action_firmar_cierre_aprobo" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o" class="btn-primary"
+                                    invisible="not cierre_aprobo_id or firma_cierre_aprobo_id or state not in ('aceptado',)"/>
+                        </group>
+                    </group>
                 </sheet>
                 <chatter/>
             </form>

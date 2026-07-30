@@ -187,9 +187,22 @@ class AmunetCCGeneral(models.Model):
     resultados_verificacion = fields.Text(string='Resultados de la verificación')
     evidencia_anexa         = fields.Html(string='Evidencia anexa')
     nueva_version           = fields.Char(string='Nueva versión del documento (si aplica)')
-    firma_cierre_id         = fields.Many2one('res.users', string='Firma de cierre (Calidad)',
+    firma_cierre_id         = fields.Many2one('res.users', string='Firma de cierre',
                                                readonly=True)
     fecha_cierre_firma      = fields.Datetime(string='Fecha firma de cierre', readonly=True)
+
+    # Firmas de cierre (tres bloques)
+    cierre_realizo_id       = fields.Many2one('res.users', string='Realizó el control de cambios')
+    firma_cierre_realizo_id = fields.Many2one('res.users', string='Firma', readonly=True)
+    fecha_cierre_realizo    = fields.Datetime(string='Fecha', readonly=True)
+
+    cierre_reviso_id        = fields.Many2one('res.users', string='Revisó la aplicación')
+    firma_cierre_reviso_id  = fields.Many2one('res.users', string='Firma', readonly=True)
+    fecha_cierre_reviso     = fields.Datetime(string='Fecha', readonly=True)
+
+    cierre_aprobo_id        = fields.Many2one('res.users', string='Aprobó la aplicación del cambio')
+    firma_cierre_aprobo_id  = fields.Many2one('res.users', string='Firma', readonly=True)
+    fecha_cierre_aprobo     = fields.Datetime(string='Fecha', readonly=True)
 
     adjunto_ids = fields.Many2many('ir.attachment', string='Archivos adjuntos')
 
@@ -255,9 +268,12 @@ class AmunetCCGeneral(models.Model):
     # ── Firmas con PIN ───────────────────────────────────────────
     def _amunet_signature_allowed_methods(self):
         return {
-            '_signature_elaboro': _('Firma de quien elaboró'),
-            '_signature_reviso':  _('Firma de quien revisó'),
-            '_signature_cierre':  _('Firma de cierre'),
+            '_signature_elaboro':        _('Firma de quien elaboró'),
+            '_signature_reviso':         _('Firma de quien revisó'),
+            '_signature_cierre':         _('Firma de cierre'),
+            '_signature_cierre_realizo': _('Realizó el control de cambios'),
+            '_signature_cierre_reviso':  _('Revisó la aplicación'),
+            '_signature_cierre_aprobo':  _('Aprobó la aplicación del cambio'),
         }
 
     def _abrir_firma(self, method_name, label):
@@ -306,6 +322,48 @@ class AmunetCCGeneral(models.Model):
         self.write({'firma_cierre_id': self.env.user.id,
                     'fecha_cierre_firma': fields.Datetime.now()})
         self._message_log(body=_('<p><b>%s</b> firmó el cierre.</p>') % self.env.user.name)
+
+    def action_firmar_cierre_realizo(self):
+        self.ensure_one()
+        if self.firma_cierre_realizo_id:
+            raise UserError(_('Ya se registró esta firma.'))
+        if self.cierre_realizo_id and self.cierre_realizo_id != self.env.user:
+            raise UserError(_('Solo %s puede firmar en este espacio.') % self.cierre_realizo_id.name)
+        return self._abrir_firma('_signature_cierre_realizo', _('Realizó el control de cambios'))
+
+    def _signature_cierre_realizo(self):
+        self.ensure_one()
+        self.write({'firma_cierre_realizo_id': self.env.user.id,
+                    'fecha_cierre_realizo': fields.Datetime.now()})
+        self._message_log(body=_('<p><b>%s</b> firmó como Realizó el control de cambios.</p>') % self.env.user.name)
+
+    def action_firmar_cierre_reviso(self):
+        self.ensure_one()
+        if self.firma_cierre_reviso_id:
+            raise UserError(_('Ya se registró esta firma.'))
+        if self.cierre_reviso_id and self.cierre_reviso_id != self.env.user:
+            raise UserError(_('Solo %s puede firmar en este espacio.') % self.cierre_reviso_id.name)
+        return self._abrir_firma('_signature_cierre_reviso', _('Revisó la aplicación'))
+
+    def _signature_cierre_reviso(self):
+        self.ensure_one()
+        self.write({'firma_cierre_reviso_id': self.env.user.id,
+                    'fecha_cierre_reviso': fields.Datetime.now()})
+        self._message_log(body=_('<p><b>%s</b> firmó como Revisó la aplicación.</p>') % self.env.user.name)
+
+    def action_firmar_cierre_aprobo(self):
+        self.ensure_one()
+        if self.firma_cierre_aprobo_id:
+            raise UserError(_('Ya se registró esta firma.'))
+        if self.cierre_aprobo_id and self.cierre_aprobo_id != self.env.user:
+            raise UserError(_('Solo %s puede firmar en este espacio.') % self.cierre_aprobo_id.name)
+        return self._abrir_firma('_signature_cierre_aprobo', _('Aprobó la aplicación del cambio'))
+
+    def _signature_cierre_aprobo(self):
+        self.ensure_one()
+        self.write({'firma_cierre_aprobo_id': self.env.user.id,
+                    'fecha_cierre_aprobo': fields.Datetime.now()})
+        self._message_log(body=_('<p><b>%s</b> firmó como Aprobó la aplicación del cambio.</p>') % self.env.user.name)
 
     def action_descartar(self):
         for r in self:
