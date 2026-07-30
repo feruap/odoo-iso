@@ -223,7 +223,8 @@
                            invisible="state not in ('aceptado', 'cerrado')"/>
                     <field name="evidencia_anexa"
                            invisible="state not in ('aceptado', 'cerrado')"
-                           readonly="state not in ('aceptado',)"/>
+                           readonly="state not in ('aceptado',)"
+                           placeholder="Aquí listas qué documentos o registros adjuntas como prueba de que la verificación sí se hizo: registro de capacitación firmado, acta de retiro de documentos obsoletos, fotografía del área, correo de confirmación del responsable, etc."/>
 
                     <!-- ── Firmas de cierre ──────────────────────── -->
                     <separator string="Firmas de cierre"
