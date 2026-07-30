@@ -7,7 +7,8 @@
     <!-- ── Nivel 1: ítems directos ── -->
     <menuitem id="menu_amunet_lista_maestra_root" name="Lista maestra"
               parent="menu_amunet_documentos_root"
-              sequence="20"/>
+              sequence="20"
+              groups="amunet_documentos.group_documentos_manager"/>
 
     <menuitem id="menu_amunet_documentos_lista_maestra" name="PNOs vigentes"
               parent="menu_amunet_lista_maestra_root"

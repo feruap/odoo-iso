@@ -33,10 +33,11 @@
                             <field name="caducidad_autorizada" string="Caducidad autorizada"/>
                         </group>
                         <group>
-                            <field name="muestra"     string="Muestra"/>
-                            <field name="descripcion" string="Descripción (Denominación genérica)"/>
+                            <field name="muestra" string="Muestra"/>
                         </group>
                     </group>
+                    <label for="descripcion"/>
+                    <field name="descripcion" string="Descripción (Denominación genérica)" rows="3"/>
                 </sheet>
             </form>
         </field>
