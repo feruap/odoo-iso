@@ -204,9 +204,25 @@ class StockPicking(models.Model):
                 ) % '\n\n'.join(partes))
 
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
+    def _amunet_es_recepcion_equipo(self):
+        """True si la recepcion es de un equipo de uso interno (producto
+        generico EQUIPO-USO-INTERNO). Estos NO llevan datos/caducidad ni
+        cuarentena de MP: van al flujo de Validacion. SI conservan el PIN."""
+        self.ensure_one()
+        moves = self.move_ids.filtered(
+            lambda m: m.state != 'cancel' and m.product_uom_qty > 0)
+        return bool(moves) and all(
+            m.product_id.default_code == 'EQUIPO-USO-INTERNO' for m in moves)
+
     def button_validate(self):
-        self._amunet_check_duplicate_supplier_lots()
-        self._amunet_check_expiration_captured()
+        # Recepcion de equipo de uso interno: exenta de los candados de MP,
+        # pero conserva el PIN de Almacen. La solicitud de ingreso la genera
+        # despues el modulo de Validacion.
+        es_equipo = bool(self) and all(
+            p._amunet_es_recepcion_equipo() for p in self)
+        if not es_equipo:
+            self._amunet_check_duplicate_supplier_lots()
+            self._amunet_check_expiration_captured()
         if self.env.context.get('_skip_pin_wizard'):
             res = super().button_validate()
             for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
