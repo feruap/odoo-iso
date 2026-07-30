@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ── Vista lista ─────────────────────────────────────────── -->
+    <record id="view_cc_general_list" model="ir.ui.view">
+        <field name="name">amunet.cc.general.list</field>
+        <field name="model">amunet.cc.general</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'borrador'"
+                  decoration-warning="state == 'pendiente'"
+                  decoration-success="state in ('aceptado', 'cerrado')"
+                  decoration-muted="state == 'rechazado'">
+                <field name="name"/>
+                <field name="fecha_solicitud"/>
+                <field name="solicitante_id"/>
+                <field name="departamento"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'borrador'"
+                       decoration-warning="state == 'pendiente'"
+                       decoration-success="state in ('aceptado', 'cerrado')"
+                       decoration-danger="state == 'rechazado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Vista formulario ────────────────────────────────────── -->
+    <record id="view_cc_general_form" model="ir.ui.view">
+        <field name="name">amunet.cc.general.form</field>
+        <field name="model">amunet.cc.general</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_enviar" string="Enviar para autorización"
+                            type="object" class="btn-primary" icon="fa-paper-plane"
+                            invisible="state != 'borrador'"
+                            confirm="¿El registro está completo y listo para enviarse?"/>
+                    <button name="action_descartar" string="Eliminar borrador"
+                            type="object" class="btn-danger" icon="fa-trash"
+                            invisible="state != 'borrador'"
+                            confirm="¿Segura que quieres eliminar este borrador?"/>
+                    <button name="action_aceptar" string="Autorizar"
+                            type="object" class="btn-success" icon="fa-check"
+                            invisible="state != 'pendiente'"
+                            groups="amunet_cc_general.group_cc_general_manager"
+                            confirm="¿Confirmas que autorizas este control de cambios?"/>
+                    <button name="action_rechazar" string="Rechazar"
+                            type="object" class="btn-danger" icon="fa-times"
+                            invisible="state != 'pendiente'"
+                            groups="amunet_cc_general.group_cc_general_manager"/>
+                    <button name="action_cerrar" string="Cerrar"
+                            type="object" class="btn-secondary" icon="fa-flag-checkered"
+                            invisible="state != 'aceptado'"
+                            groups="amunet_cc_general.group_cc_general_manager"
+                            confirm="¿Confirmas que la implementación está completa y deseas cerrar este control de cambios?"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,pendiente,aceptado,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Folio" invisible="not id"/>
+                        <h1 invisible="not id"><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <!-- Encabezado -->
+                    <group>
+                        <group>
+                            <field name="fecha_solicitud"
+                                   readonly="state not in ('borrador',)"/>
+                            <field name="solicitante_id"
+                                   readonly="state not in ('borrador',)"
+                                   options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="departamento"
+                                   readonly="state not in ('borrador',)"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Sección 1: Tipo y descripción ────────── -->
+                    <separator string="1. Tipo y descripción del cambio"/>
+                    <group string="Tipo de cambio (selecciona los que apliquen)">
+                        <group>
+                            <field name="tipo_procedimiento" string="Instrucciones" readonly="state not in ('borrador',)"/>
+                            <field name="tipo_formula"       readonly="state not in ('borrador',)"/>
+                            <field name="tipo_proveedor"     readonly="state not in ('borrador',)"/>
+                            <field name="tipo_instalacion"   readonly="state not in ('borrador',)"/>
+                        </group>
+                        <group>
+                            <field name="tipo_equipo"    readonly="state not in ('borrador',)"/>
+                            <field name="tipo_manual"    readonly="state not in ('borrador',)"/>
+                            <field name="tipo_formato"   readonly="state not in ('borrador',)"/>
+                            <field name="tipo_otro"      readonly="state not in ('borrador',)"/>
+                            <field name="tipo_otro_desc" readonly="state not in ('borrador',)"
+                                   invisible="not tipo_otro"
+                                   placeholder="Especifica..."/>
+                        </group>
+                    </group>
+                    <separator string=""/>
+                    <field name="estado_actual"    readonly="state not in ('borrador',)"
+                           placeholder="Describe la situación actual del documento, área o proceso..."
+                           rows="4"/>
+                    <field name="estado_propuesto" readonly="state not in ('borrador',)"
+                           placeholder="Describe la nueva situación que se propone..."
+                           rows="4"/>
+                    <field name="justificacion"    readonly="state not in ('borrador',)"
+                           placeholder="¿Por qué se propone este cambio?"
+                           rows="6"/>
+
+                    <!-- ── Sección 2: Autorización del cambio ────── -->
+                    <separator string="2. Autorización del cambio"/>
+                    <group>
+                        <group string="Elaboró">
+                            <field name="elaboro_id"
+                                   readonly="firma_elaboro_id or state not in ('borrador', 'pendiente')"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_elaboro_id" readonly="1" invisible="not firma_elaboro_id"/>
+                            <field name="fecha_elaboro"    readonly="1" invisible="not fecha_elaboro"/>
+                            <button name="action_firmar_elaboro" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o" class="btn-primary"
+                                    invisible="not elaboro_id or firma_elaboro_id or state != 'pendiente'"/>
+                        </group>
+                        <group string="Revisó (Aseguramiento de Calidad)">
+                            <field name="reviso_id"
+                                   readonly="firma_reviso_id or state not in ('borrador', 'pendiente')"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_reviso_id" readonly="1" invisible="not firma_reviso_id"/>
+                            <field name="fecha_reviso"    readonly="1" invisible="not fecha_reviso"/>
+                            <field name="vb_reviso"       readonly="1" invisible="not vb_reviso"/>
+                            <button name="action_firmar_reviso" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o" class="btn-primary"
+                                    invisible="not reviso_id or firma_reviso_id or state != 'pendiente'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Aprobó (Gerencia / Dirección)">
+                            <field name="aprobo_id"
+                                   readonly="firma_aprobo_id or state not in ('borrador', 'pendiente')"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_aprobo_id" readonly="1" invisible="not firma_aprobo_id"/>
+                            <field name="fecha_aprobo"    readonly="1" invisible="not fecha_aprobo"/>
+                            <field name="vb_aprobo"       readonly="1" invisible="not vb_aprobo"/>
+                        </group>
+                        <group string="Motivo del rechazo" invisible="state != 'rechazado'">
+                            <field name="motivo_rechazo" nolabel="1"
+                                   readonly="state != 'pendiente'"
+                                   placeholder="Escribe el motivo antes de rechazar."/>
+                        </group>
+                    </group>
+
+                    <!-- ── Sección 3: Plan de implementación ─────── -->
+                    <separator string="3. Plan de implementación"
+                               invisible="state not in ('aceptado', 'cerrado')"/>
+                    <group invisible="state not in ('aceptado', 'cerrado')">
+                        <group>
+                            <field name="fecha_propuesta"
+                                   readonly="state not in ('aceptado',)"/>
+                            <field name="lote_aplicacion"
+                                   readonly="state not in ('aceptado',)"
+                                   placeholder="Ej. Lote piloto o fecha específica"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Implementación y seguimiento ──────────── -->
+                    <separator string="Implementación y seguimiento"
+                               invisible="state not in ('aceptado', 'cerrado')"/>
+                    <field name="actividades_ids"
+                           invisible="state not in ('aceptado', 'cerrado')"
+                           readonly="state not in ('aceptado',)">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="actividad"      string="Actividad"
+                                   placeholder="Describe la actividad..."/>
+                            <field name="responsable_id" string="Responsable"
+                                   options="{'no_create': True}"/>
+                            <button name="action_firmar_enterado" type="object"
+                                    string="Firmar enterado" icon="fa-check-circle-o"
+                                    invisible="firma_enterado_id or not responsable_id"/>
+                            <field name="recursos" string="Recursos necesarios"
+                                   placeholder="Ej. Materiales, equipo, personal de apoyo..."
+                                   optional="show"/>
+                            <field name="fecha_inicio"   string="Fecha de inicio"/>
+                            <field name="fecha_termino"  string="Fecha de término"/>
+                            <field name="verifico_id" string="Verifica"
+                                   options="{'no_create': True}"/>
+                            <field name="fecha_verificacion" string="Fecha verificación"
+                                   readonly="1" optional="show"/>
+                            <button name="action_firmar_verificacion" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    invisible="firma_verifico_id"/>
+                        </list>
+                    </field>
+
+                    <!-- ── Verificación y cierre ─────────────────── -->
+                    <separator string="4. Verificación y cierre"
+                               invisible="state not in ('aceptado', 'cerrado')"/>
+                    <group invisible="state not in ('aceptado', 'cerrado')">
+                        <group>
+                            <field name="fecha_implementacion"
+                                   readonly="state not in ('aceptado',)"/>
+                            <field name="responsable_cierre_id"
+                                   readonly="state not in ('aceptado',)"
+                                   options="{'no_create': True}"/>
+                            <field name="nueva_version"
+                                   readonly="state not in ('aceptado',)"
+                                   placeholder="Ej. Versión 2.0"/>
+                        </group>
+                        <group>
+                            <field name="firma_cierre_id"    readonly="1" invisible="not firma_cierre_id"/>
+                            <field name="fecha_cierre_firma" readonly="1" invisible="not fecha_cierre_firma"/>
+                            <button name="action_firmar_cierre" type="object"
+                                    string="Firmar cierre" icon="fa-pencil-square-o" class="btn-primary"
+                                    invisible="firma_cierre_id or state not in ('aceptado',)"/>
+                        </group>
+                    </group>
+                    <field name="resultados_verificacion"
+                           invisible="state not in ('aceptado', 'cerrado')"
+                           readonly="state not in ('aceptado',)"
+                           placeholder="Resultados de la verificación..." rows="4"/>
+                    <field name="evidencia_anexa"
+                           invisible="state not in ('aceptado', 'cerrado')"
+                           readonly="state not in ('aceptado',)"
+                           placeholder="Ej. Registros de capacitación, certificados, actas de prueba..." rows="3"/>
+
+                    <!-- ── Archivos adjuntos ──────────────────────── -->
+                    <separator string="Archivos adjuntos"/>
+                    <field name="adjunto_ids" widget="many2many_binary" nolabel="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Acciones ─────────────────────────────────────────────── -->
+    <record id="action_cc_general" model="ir.actions.act_window">
+        <field name="name">Control de cambios general</field>
+        <field name="res_model">amunet.cc.general</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay registros de control de cambios todavía.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_cc_general_mis" model="ir.actions.act_window">
+        <field name="name">Mis controles de cambio</field>
+        <field name="res_model">amunet.cc.general</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('solicitante_id', '=', uid)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aún no has creado ningún control de cambios.
+            </p>
+        </field>
+    </record>
+</odoo>

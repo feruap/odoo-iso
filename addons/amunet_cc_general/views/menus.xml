@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_cc_general_root"
+              name="Control de Cambios"
+              sequence="90"
+              />
+
+    <menuitem id="menu_cc_general_mis"
+              name="Mis controles de cambio"
+              parent="menu_cc_general_root"
+              action="action_cc_general_mis"
+              sequence="10"/>
+
+    <menuitem id="menu_cc_general_todos"
+              name="Todos los controles de cambio"
+              parent="menu_cc_general_root"
+              action="action_cc_general"
+              sequence="20"
+              groups="amunet_cc_general.group_cc_general_manager"/>
+</odoo>

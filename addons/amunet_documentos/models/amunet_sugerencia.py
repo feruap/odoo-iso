@@ -117,6 +117,7 @@ class AmunetDocumentoSugerencia(models.Model):
     _order = 'fecha_creacion desc'
 
     name = fields.Char(string='Resumen', compute='_compute_name', store=True)
+    folio = fields.Char(string='Folio', readonly=True, copy=False, default='Nuevo')
     documento_id = fields.Many2one(
         'amunet.documento', ondelete='cascade', tracking=True)
     documento_codigo = fields.Char(related='documento_id.codigo',
@@ -425,6 +426,9 @@ class AmunetDocumentoSugerencia(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('folio', 'Nuevo') == 'Nuevo':
+                vals['folio'] = self.env['ir.sequence'].next_by_code('amunet.solicitud.cambio') or 'Nuevo'
         return super().create(vals_list)
 
     def action_enviar(self):

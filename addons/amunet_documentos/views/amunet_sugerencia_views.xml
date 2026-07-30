@@ -8,6 +8,7 @@
                   decoration-warning="state == 'pendiente'"
                   decoration-success="state == 'aceptada'"
                   decoration-muted="state == 'rechazada'">
+                <field name="folio"/>
                 <field name="fecha_creacion"/>
                 <field name="documento_codigo"/>
                 <field name="secciones_resumen"/>
@@ -56,6 +57,8 @@
                 </header>
                 <sheet>
                     <div class="oe_title">
+                        <label for="folio" string="Folio" invisible="not id"/>
+                        <h2 invisible="not id"><field name="folio" readonly="1"/></h2>
                         <h1>
                             <field name="documento_id" readonly="not (state == 'borrador' or (state == 'rechazada' and creado_por_id == uid))"
                                    options="{'no_create': True}"/>
