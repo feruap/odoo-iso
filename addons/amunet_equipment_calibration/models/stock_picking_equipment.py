@@ -24,27 +24,25 @@ class StockPicking(models.Model):
             [('default_code', '=', CODIGO_PRODUCTO_EQUIPO)], limit=1)
         if not generic:
             return
-        lineas = self.move_line_ids.filtered(
-            lambda l: l.product_id == generic and l.quantity > 0)
-        if not lineas:
+        moves = self.move_ids.filtered(
+            lambda m: m.product_id == generic and m.state == 'done'
+            and (m.quantity or 0) > 0)
+        if not moves:
             return
         Req = self.env['amunet.equipment.request'].sudo()
-        for ml in lineas:
-            lot = ml.lot_id
+        for mv in moves:
+            # La serie del equipo se captura en "Serie / Lote proveedor".
+            serie = mv.amunet_supplier_lot or ''
             # Evitar duplicar si ya existe solicitud para esta recepción+serie.
-            dominio = [('picking_id', '=', self.id)]
-            if lot:
-                dominio.append(('lot_id', '=', lot.id))
-            else:
-                dominio.append(('serie_recibida', '=', ml.lot_name or ''))
-            if Req.search_count(dominio):
+            if Req.search_count([('picking_id', '=', self.id),
+                                 ('serie_recibida', '=', serie)]):
                 continue
+            dest = (mv.move_line_ids[:1].location_dest_id or mv.location_dest_id)
             Req.create({
                 'picking_id': self.id,
                 'product_id': generic.id,
-                'lot_id': lot.id if lot else False,
-                'serie_recibida': lot.name if lot else (ml.lot_name or ''),
+                'serie_recibida': serie,
                 'fecha_recepcion': self.date_done or self.scheduled_date,
                 'partner_id': self.partner_id.id if self.partner_id else False,
-                'location_id': ml.location_dest_id.id,
+                'location_id': dest.id,
             })

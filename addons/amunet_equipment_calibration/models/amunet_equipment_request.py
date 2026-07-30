@@ -89,26 +89,31 @@ class AmunetEquipmentRequest(models.Model):
         return True
 
     def _amunet_salida_inventario(self):
-        """Mueve la serie de AMP/Entrada a la ubicación virtual de equipos
-        ingresados, para que deje de contar como stock de almacén."""
+        """Saca la unidad del equipo del inventario de almacén (a la ubicación
+        virtual de equipos ingresados), para que deje de contar como stock."""
         self.ensure_one()
-        if not self.product_id or not self.location_id:
+        if not self.product_id:
             return
         dest = self.env.ref(
             'amunet_equipment_calibration.stock_location_equipos_ingresados',
             raise_if_not_found=False)
         if not dest:
             return
-        # Ubicación real actual del serial (por si un putaway lo movió).
-        src = self.location_id
-        if self.lot_id:
-            quant = self.env['stock.quant'].sudo().search([
-                ('lot_id', '=', self.lot_id.id),
+        Quant = self.env['stock.quant'].sudo()
+        # Prefiere la ubicación de la solicitud si ahí hay existencia; si no,
+        # cualquier ubicación interna con existencia del producto.
+        src = False
+        if self.location_id and Quant.search_count([
+                ('product_id', '=', self.product_id.id),
+                ('location_id', '=', self.location_id.id),
+                ('quantity', '>', 0)]):
+            src = self.location_id
+        else:
+            q = Quant.search([
+                ('product_id', '=', self.product_id.id),
                 ('location_id.usage', '=', 'internal'),
-                ('quantity', '>', 0),
-            ], limit=1)
-            if quant:
-                src = quant.location_id
+                ('quantity', '>', 0)], limit=1)
+            src = q.location_id if q else self.location_id
         if not src:
             return
         Move = self.env['stock.move'].sudo()
@@ -118,14 +123,13 @@ class AmunetEquipmentRequest(models.Model):
             'product_uom': self.product_id.uom_id.id,
             'location_id': src.id,
             'location_dest_id': dest.id,
-            'company_id': self.picking_id.company_id.id or self.env.company.id,
+            'company_id': (self.picking_id.company_id.id if self.picking_id
+                           else False) or self.env.company.id,
         })
         move._action_confirm()
         move._action_assign()
         if move.move_line_ids:
             for ml in move.move_line_ids:
-                if self.lot_id:
-                    ml.lot_id = self.lot_id.id
                 ml.quantity = 1.0
         else:
             self.env['stock.move.line'].sudo().create({
@@ -134,7 +138,6 @@ class AmunetEquipmentRequest(models.Model):
                 'product_uom_id': self.product_id.uom_id.id,
                 'location_id': src.id,
                 'location_dest_id': dest.id,
-                'lot_id': self.lot_id.id if self.lot_id else False,
                 'quantity': 1.0,
             })
         move.picked = True
