@@ -250,23 +250,49 @@ class StockPicking(models.Model):
                 ) % '\n'.join(faltantes))
 
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
+    amunet_es_recepcion_equipo = fields.Boolean(
+        string='Recepción de equipo de uso interno',
+        compute='_compute_amunet_es_recepcion_equipo', store=True)
+
+    @api.depends('move_ids.product_id', 'move_ids.product_uom_qty', 'move_ids.state')
+    def _compute_amunet_es_recepcion_equipo(self):
+        for p in self:
+            moves = p.move_ids.filtered(
+                lambda m: m.state != 'cancel' and m.product_uom_qty > 0)
+            p.amunet_es_recepcion_equipo = bool(moves) and all(
+                m.product_id.default_code == 'EQUIPO-USO-INTERNO' for m in moves)
+
     def _amunet_es_recepcion_equipo(self):
         """True si la recepcion es de un equipo de uso interno (producto
         generico EQUIPO-USO-INTERNO). Estos NO llevan lote de proveedor,
         caducidad, inspeccion ni cuarentena de MP: van al flujo de Validacion.
         SI conservan el PIN de Almacen al validar."""
         self.ensure_one()
-        moves = self.move_ids.filtered(
-            lambda m: m.state != 'cancel' and m.product_uom_qty > 0)
-        return bool(moves) and all(
-            m.product_id.default_code == 'EQUIPO-USO-INTERNO' for m in moves)
+        return self.amunet_es_recepcion_equipo
+
+    def _amunet_realinear_destino_equipo(self):
+        """El equipo se queda en AMP/Entrada (no pasa a Existencias): alinea el
+        destino de los movimientos al del encabezado de la recepcion."""
+        self.ensure_one()
+        dest = self.location_dest_id
+        if not dest:
+            return
+        moves = self.move_ids.filtered(lambda m: m.state not in ('done', 'cancel'))
+        if moves:
+            moves.write({'location_dest_id': dest.id})
+        if self.move_line_ids:
+            self.move_line_ids.write({'location_dest_id': dest.id})
 
     def button_validate(self):
         # Recepcion de equipo de uso interno: exenta de los datos/caducidad/
         # inspeccion/cuarentena de MP, PERO conserva el PIN de Almacen. La
         # solicitud de ingreso la genera despues el modulo de Validacion.
         es_equipo = bool(self) and all(
-            p._amunet_es_recepcion_equipo() for p in self)
+            p.amunet_es_recepcion_equipo for p in self)
+        if es_equipo:
+            # El equipo se queda en AMP/Entrada, no en Existencias.
+            for p in self.filtered(lambda x: x.state not in ('done', 'cancel')):
+                p._amunet_realinear_destino_equipo()
         if not es_equipo:
             self._amunet_check_duplicate_supplier_lots()
             self._amunet_check_datos_recepcion()

@@ -7,6 +7,11 @@
         <field name="priority">110</field>
         <field name="arch" type="xml">
 
+            <!-- Campo auxiliar para ocultar columnas de MP en recepciones de equipo -->
+            <xpath expr="//field[@name='picking_type_id']" position="after">
+                <field name="amunet_es_recepcion_equipo" invisible="1"/>
+            </xpath>
+
             <!-- Lote Amunet: sobreescribir las condiciones de Odoo que lo ocultan en draft -->
             <xpath expr="//page[@name='operations']/field[@name='move_ids']//field[@name='lot_ids']" position="attributes">
                 <attribute name="string">Lote Amunet</attribute>
@@ -26,22 +31,22 @@
             <xpath expr="//page[@name='operations']/field[@name='move_ids']//field[@name='lot_ids']" position="after">
                 <field name="amunet_supplier_lot"
                        string="Lote proveedor"
-                       column_invisible="parent.picking_type_code != 'incoming'"
+                       column_invisible="parent.picking_type_code != 'incoming' or parent.amunet_es_recepcion_equipo"
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_mfg_date"
                        string="Fecha fabricación"
                        placeholder="DD/MM/AAAA o NA"
-                       column_invisible="parent.picking_type_code != 'incoming'"
+                       column_invisible="parent.picking_type_code != 'incoming' or parent.amunet_es_recepcion_equipo"
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_exp_date"
                        string="Fecha caducidad"
                        placeholder="DD/MM/AAAA o vigente"
-                       column_invisible="parent.picking_type_code != 'incoming'"
+                       column_invisible="parent.picking_type_code != 'incoming' or parent.amunet_es_recepcion_equipo"
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_removal_date"
                        string="Fecha remoción"
                        readonly="1"
-                       column_invisible="parent.picking_type_code != 'incoming'"/>
+                       column_invisible="parent.picking_type_code != 'incoming' or parent.amunet_es_recepcion_equipo"/>
                 <field name="location_dest_id"
                        string="Destino"
                        readonly="1"
