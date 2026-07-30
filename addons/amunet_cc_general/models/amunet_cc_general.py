@@ -134,10 +134,24 @@ class AmunetCCGeneral(models.Model):
     # ── Encabezado ──────────────────────────────────────────────
     fecha_solicitud = fields.Date(string='Fecha de solicitud',
                                   default=fields.Date.today, tracking=True)
-    solicitante_id  = fields.Many2one('res.users', string='Solicitante',
-                                      default=lambda self: self.env.user,
-                                      tracking=True)
-    departamento    = fields.Char(string='Departamento / Área', tracking=True)
+    solicitante_id      = fields.Many2one('res.users', string='Solicitante',
+                                          default=lambda self: self.env.user,
+                                          tracking=True)
+    firma_solicitante_id = fields.Many2one('res.users', string='Firma (Solicitante)', readonly=True)
+    fecha_solicitante    = fields.Datetime(string='Fecha firma (Solicitante)', readonly=True)
+
+    departamento    = fields.Selection([
+        ('produccion',    'Producción'),
+        ('calidad',       'Control de Calidad'),
+        ('almacen',       'Almacén'),
+        ('rrhh',          'Recursos Humanos'),
+        ('documentacion', 'Documentación'),
+        ('ensayo',        'Ensayo / Laboratorio'),
+        ('mantenimiento', 'Mantenimiento'),
+        ('desarrollo',    'Desarrollo'),
+        ('direccion',     'Dirección / Gerencia'),
+        ('validacion',    'Validación'),
+    ], string='Departamento / Área', tracking=True)
 
     # ── Sección 1: Tipo y descripción ────────────────────────────
     tipo_procedimiento = fields.Boolean(string='Instrucciones')
@@ -155,10 +169,6 @@ class AmunetCCGeneral(models.Model):
     justificacion    = fields.Text(string='Justificación del cambio')
 
     # ── Sección 2: Firmas de autorización ────────────────────────
-    elaboro_id       = fields.Many2one('res.users', string='Elaboró')
-    firma_elaboro_id = fields.Many2one('res.users', string='Firma (Elaboró)', readonly=True)
-    fecha_elaboro    = fields.Datetime(string='Fecha firma (Elaboró)', readonly=True)
-
     reviso_id        = fields.Many2one('res.users', string='Revisó')
     firma_reviso_id  = fields.Many2one('res.users', string='Firma (Revisó)', readonly=True)
     fecha_reviso     = fields.Datetime(string='Fecha firma (Revisó)', readonly=True)
@@ -263,12 +273,26 @@ class AmunetCCGeneral(models.Model):
         for r in self:
             if r.state != 'aceptado':
                 raise UserError(_('Solo puedes cerrar un registro autorizado.'))
+            sin_enterado = r.actividades_ids.filtered(
+                lambda a: a.responsable_id and not a.firma_enterado_id)
+            if sin_enterado:
+                nombres = ', '.join(sin_enterado.mapped('responsable_id.name'))
+                raise UserError(_(
+                    'No se puede cerrar: las siguientes personas aún no han firmado de enterado: %s'
+                ) % nombres)
+            sin_verificar = r.actividades_ids.filtered(
+                lambda a: a.verifico_id and not a.firma_verifico_id)
+            if sin_verificar:
+                actividades = ', '.join(sin_verificar.mapped('actividad') or ['(sin nombre)'])
+                raise UserError(_(
+                    'No se puede cerrar: las siguientes actividades aún no han sido verificadas: %s'
+                ) % actividades)
             r.state = 'cerrado'
 
     # ── Firmas con PIN ───────────────────────────────────────────
     def _amunet_signature_allowed_methods(self):
         return {
-            '_signature_elaboro':        _('Firma de quien elaboró'),
+            '_signature_solicitante':    _('Firma del solicitante'),
             '_signature_reviso':         _('Firma de quien revisó'),
             '_signature_cierre':         _('Firma de cierre'),
             '_signature_cierre_realizo': _('Realizó el control de cambios'),
@@ -282,19 +306,19 @@ class AmunetCCGeneral(models.Model):
             self, method_name, label,
             _('Control de cambios: %s') % (self.name or ''))
 
-    def action_firmar_elaboro(self):
+    def action_firmar_solicitante(self):
         self.ensure_one()
-        if self.firma_elaboro_id:
-            raise UserError(_('Ya se registró esta firma.'))
-        if self.elaboro_id and self.elaboro_id != self.env.user:
-            raise UserError(_('Solo %s puede firmar en este espacio.') % self.elaboro_id.name)
-        return self._abrir_firma('_signature_elaboro', _('Firma de quien elaboró'))
+        if self.firma_solicitante_id:
+            raise UserError(_('Ya se registró la firma del solicitante.'))
+        if self.solicitante_id and self.solicitante_id != self.env.user:
+            raise UserError(_('Solo %s puede firmar como solicitante.') % self.solicitante_id.name)
+        return self._abrir_firma('_signature_solicitante', _('Firma del solicitante'))
 
-    def _signature_elaboro(self):
+    def _signature_solicitante(self):
         self.ensure_one()
-        self.write({'firma_elaboro_id': self.env.user.id,
-                    'fecha_elaboro': fields.Datetime.now()})
-        self._message_log(body=_('<p><b>%s</b> firmó como Elaboró.</p>') % self.env.user.name)
+        self.write({'firma_solicitante_id': self.env.user.id,
+                    'fecha_solicitante': fields.Datetime.now()})
+        self._message_log(body=_('<p><b>%s</b> firmó como Solicitante.</p>') % self.env.user.name)
 
     def action_firmar_reviso(self):
         self.ensure_one()

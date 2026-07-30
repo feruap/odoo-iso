@@ -66,8 +66,15 @@
                             <field name="fecha_solicitud"
                                    readonly="state not in ('borrador',)"/>
                             <field name="solicitante_id"
-                                   readonly="state not in ('borrador',)"
+                                   readonly="firma_solicitante_id or state not in ('borrador',)"
                                    options="{'no_create': True}"/>
+                            <field name="firma_solicitante_id" readonly="1"
+                                   invisible="not firma_solicitante_id"/>
+                            <field name="fecha_solicitante" readonly="1"
+                                   invisible="not fecha_solicitante"/>
+                            <button name="action_firmar_solicitante" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o" class="btn-primary"
+                                    invisible="not solicitante_id or firma_solicitante_id or state not in ('borrador',)"/>
                         </group>
                         <group>
                             <field name="departamento"
@@ -111,16 +118,6 @@
                     <!-- ── Sección 2: Autorización del cambio ────── -->
                     <separator string="2. Autorización del cambio"/>
                     <group>
-                        <group string="Elaboró">
-                            <field name="elaboro_id"
-                                   readonly="firma_elaboro_id or state not in ('borrador', 'pendiente')"
-                                   options="{'no_create': True}"/>
-                            <field name="firma_elaboro_id" readonly="1" invisible="not firma_elaboro_id"/>
-                            <field name="fecha_elaboro"    readonly="1" invisible="not fecha_elaboro"/>
-                            <button name="action_firmar_elaboro" type="object"
-                                    string="Firmar" icon="fa-pencil-square-o" class="btn-primary"
-                                    invisible="not elaboro_id or firma_elaboro_id or state != 'pendiente'"/>
-                        </group>
                         <group string="Revisó (Aseguramiento de Calidad)">
                             <field name="reviso_id"
                                    readonly="firma_reviso_id or state not in ('borrador', 'pendiente')"
@@ -223,8 +220,7 @@
                            invisible="state not in ('aceptado', 'cerrado')"/>
                     <field name="evidencia_anexa"
                            invisible="state not in ('aceptado', 'cerrado')"
-                           readonly="state not in ('aceptado',)"
-                           placeholder="Aquí listas qué documentos o registros adjuntas como prueba de que la verificación sí se hizo: registro de capacitación firmado, acta de retiro de documentos obsoletos, fotografía del área, correo de confirmación del responsable, etc."/>
+                           readonly="state not in ('aceptado',)"/>
 
                     <!-- ── Firmas de cierre ──────────────────────── -->
                     <separator string="Firmas de cierre"
