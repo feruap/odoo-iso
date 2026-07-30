@@ -95,12 +95,15 @@
                         </group>
                     </group>
                     <separator string=""/>
+                    <label for="estado_actual"/>
                     <field name="estado_actual"    readonly="state not in ('borrador',)"
                            placeholder="Describe la situación actual del documento, área o proceso..."
                            rows="4"/>
+                    <label for="estado_propuesto"/>
                     <field name="estado_propuesto" readonly="state not in ('borrador',)"
                            placeholder="Describe la nueva situación que se propone..."
                            rows="4"/>
+                    <label for="justificacion"/>
                     <field name="justificacion"    readonly="state not in ('borrador',)"
                            placeholder="¿Por qué se propone este cambio?"
                            rows="6"/>
@@ -153,6 +156,8 @@
                         <group>
                             <field name="fecha_propuesta"
                                    readonly="state not in ('aceptado',)"/>
+                        </group>
+                        <group>
                             <field name="lote_aplicacion"
                                    readonly="state not in ('aceptado',)"
                                    placeholder="Ej. Lote piloto o fecha específica"/>
@@ -171,6 +176,10 @@
                                    placeholder="Describe la actividad..."/>
                             <field name="responsable_id" string="Responsable"
                                    options="{'no_create': True}"/>
+                            <field name="estado_enterado" widget="badge" readonly="1"
+                                   decoration-success="estado_enterado == 'enterado'"
+                                   decoration-danger="estado_enterado == 'pendiente'"
+                                   invisible="not responsable_id"/>
                             <button name="action_firmar_enterado" type="object"
                                     string="Firmar enterado" icon="fa-check-circle-o"
                                     invisible="firma_enterado_id or not responsable_id"/>
@@ -181,11 +190,11 @@
                             <field name="fecha_termino"  string="Fecha de término"/>
                             <field name="verifico_id" string="Verifica"
                                    options="{'no_create': True}"/>
+                            <button name="action_firmar_verificacion" type="object"
+                                    string="Verificar" icon="fa-pencil-square-o"
+                                    invisible="firma_verifico_id"/>
                             <field name="fecha_verificacion" string="Fecha verificación"
                                    readonly="1" optional="show"/>
-                            <button name="action_firmar_verificacion" type="object"
-                                    string="Firmar" icon="fa-pencil-square-o"
-                                    invisible="firma_verifico_id"/>
                         </list>
                     </field>
 

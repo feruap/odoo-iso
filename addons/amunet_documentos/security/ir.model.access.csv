@@ -22,6 +22,8 @@ access_amunet_documento_formato_solicitud_user,amunet.documento.formato.solicitu
 access_amunet_documento_formato_solicitud_manager,amunet.documento.formato.solicitud.manager,model_amunet_documento_formato_solicitud,group_documentos_manager,1,1,1,1
 access_amunet_catalogo_firma_manager,amunet.catalogo.firma.manager,model_amunet_catalogo_firma,group_documentos_manager,1,0,0,0
 access_amunet_sugerencia_comite_all,amunet.sugerencia.comite.all,model_amunet_sugerencia_comite,base.group_user,1,1,1,1
+access_amunet_prueba_rapida_user,amunet.prueba.rapida.user,model_amunet_prueba_rapida,group_documentos_user,1,0,0,0
+access_amunet_prueba_rapida_manager,amunet.prueba.rapida.manager,model_amunet_prueba_rapida,group_documentos_manager,1,1,1,1
 access_amunet_sugerencia_comite_user,amunet.sugerencia.comite.user,model_amunet_sugerencia_comite,group_documentos_user,1,1,1,1
 access_amunet_sugerencia_comite_manager,amunet.sugerencia.comite.manager,model_amunet_sugerencia_comite,group_documentos_manager,1,1,1,1
 access_amunet_seccion_documento_all,amunet.seccion.documento.all,model_amunet_seccion_documento,base.group_user,1,0,0,0

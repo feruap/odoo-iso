@@ -22,6 +22,16 @@ class AmunetCCGeneralActividad(models.Model):
     firma_verifico_id  = fields.Many2one('res.users', string='Firmó verificación', readonly=True)
     fecha_verificacion = fields.Datetime(string='Fecha de verificación', readonly=True)
 
+    estado_enterado = fields.Selection([
+        ('enterado',  'Enterado'),
+        ('pendiente', 'Pendiente'),
+    ], string='Enterado', compute='_compute_estado_enterado')
+
+    @api.depends('firma_enterado_id')
+    def _compute_estado_enterado(self):
+        for r in self:
+            r.estado_enterado = 'enterado' if r.firma_enterado_id else 'pendiente'
+
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
@@ -89,6 +99,8 @@ class AmunetCCGeneralActividad(models.Model):
         self.ensure_one()
         if self.firma_verifico_id:
             raise UserError(_('Esta actividad ya fue verificada.'))
+        if self.responsable_id and self.responsable_id == self.env.user:
+            raise UserError(_('El responsable de realizar la actividad no puede firmar su propia verificación.'))
         if self.verifico_id and self.verifico_id != self.env.user:
             raise UserError(_('Solo %s puede verificar esta actividad.') % self.verifico_id.name)
         return self.env['amunet.generic.signature.wizard'].open_for(

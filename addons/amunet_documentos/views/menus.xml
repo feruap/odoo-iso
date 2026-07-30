@@ -5,10 +5,6 @@
               sequence="90"/>
 
     <!-- ── Nivel 1: ítems directos ── -->
-    <menuitem id="menu_amunet_documentos_docs" name="Documentos controlados"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_documento" sequence="10"/>
-
     <menuitem id="menu_amunet_lista_maestra_root" name="Lista maestra"
               parent="menu_amunet_documentos_root"
               sequence="20"/>
@@ -24,6 +20,10 @@
     <menuitem id="menu_amunet_documentos_obsoletos" name="Documentos obsoletos"
               parent="menu_amunet_lista_maestra_root"
               action="action_amunet_documento_obsoletos" sequence="30"/>
+
+    <menuitem id="menu_amunet_prueba_rapida" name="Datos de pruebas rápidas"
+              parent="menu_amunet_lista_maestra_root"
+              action="action_amunet_prueba_rapida" sequence="40"/>
 
     <!-- ── Submenú: Mis pendientes ── -->
     <menuitem id="menu_amunet_mis_pendientes" name="Mis pendientes"

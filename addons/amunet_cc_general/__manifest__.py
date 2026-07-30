@@ -14,6 +14,11 @@
         'views/amunet_cc_general_views.xml',
         'views/menus.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'amunet_cc_general/static/src/css/cc_general.css',
+        ],
+    },
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
