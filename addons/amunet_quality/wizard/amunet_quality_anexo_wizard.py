@@ -57,6 +57,7 @@ class AmunetQualityAnexoWizard(models.TransientModel):
 
         existing = check.anexo_line_ids.sorted(lambda l: (l.sequence, l.id))
         wizard_lines = self.line_ids.sorted(lambda l: (l.sequence, l.id))
+        es_correccion = bool(existing)  # Si ya había datos, es una corrección
 
         for i, wl in enumerate(wizard_lines):
             vals = {
@@ -74,5 +75,14 @@ class AmunetQualityAnexoWizard(models.TransientModel):
         # Eliminar sólo las líneas que el usuario quitó del wizard
         for j in range(len(wizard_lines), len(existing)):
             existing[j].unlink()
+
+        # Registrar en el historial del análisis quién capturó/modificó el anexo
+        titulo = check.anexo_titulo or 'Anexo'
+        usuario = self.env.user.name
+        if es_correccion:
+            msg = f'<b>Corrección de {titulo}</b> realizada por {usuario}.'
+        else:
+            msg = f'<b>Captura de {titulo}</b> realizada por {usuario}.'
+        check.sudo().message_post(body=msg, message_type='comment', subtype_xmlid='mail.mt_note')
 
         return {'type': 'ir.actions.act_window_close'}
