@@ -281,7 +281,7 @@
         <field name="name">Mis controles de cambio</field>
         <field name="res_model">amunet.cc.general</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('solicitante_id', '=', uid)]</field>
+        <field name="domain">[('solicitante_id', '=', uid), ('state', '!=', 'cerrado')]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Aún no has creado ningún control de cambios.

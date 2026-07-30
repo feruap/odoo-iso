@@ -94,6 +94,7 @@ class AmunetCCGeneralActividad(models.Model):
             'firma_enterado_id': self.env.user.id,
             'fecha_enterado': fields.Datetime.now(),
         })
+        self.cc_id._verificar_implementacion_completa()
 
     def action_firmar_verificacion(self):
         self.ensure_one()
@@ -113,6 +114,7 @@ class AmunetCCGeneralActividad(models.Model):
             'firma_verifico_id': self.env.user.id,
             'fecha_verificacion': fields.Datetime.now(),
         })
+        self.cc_id._verificar_implementacion_completa()
 
 
 class AmunetCCGeneral(models.Model):
@@ -192,6 +194,9 @@ class AmunetCCGeneral(models.Model):
                                        string='Actividades')
 
     # ── Sección 4: Verificación y cierre ─────────────────────────
+    implementacion_notificada = fields.Boolean(default=False)
+    cierre_notificado         = fields.Boolean(default=False)
+
     fecha_implementacion    = fields.Date(string='Fecha de implementación real')
     responsable_cierre_id   = fields.Many2one('res.users', string='Responsable del cierre')
     resultados_verificacion = fields.Text(string='Resultados de la verificación')
@@ -224,6 +229,87 @@ class AmunetCCGeneral(models.Model):
                 vals['name'] = (self.env['ir.sequence']
                                 .next_by_code('amunet.solicitud.cambio') or 'Nuevo')
         return super().create(vals_list)
+
+    def write(self, vals):
+        campos_cierre = {
+            'cierre_realizo_id': _('Realizó el control de cambios'),
+            'cierre_reviso_id':  _('Revisó la aplicación'),
+            'cierre_aprobo_id':  _('Aprobó la aplicación del cambio'),
+        }
+        old = {r.id: {f: r[f].id for f in campos_cierre} for r in self}
+        result = super().write(vals)
+        for campo, etiqueta in campos_cierre.items():
+            if campo in vals:
+                for r in self:
+                    nuevo_id = r[campo].id
+                    if nuevo_id and nuevo_id != old[r.id].get(campo):
+                        r._notificar_firmante_cierre(r[campo], etiqueta)
+        return result
+
+    def _verificar_implementacion_completa(self):
+        self.ensure_one()
+        if self.implementacion_notificada or self.state != 'aceptado':
+            return
+        actividades = self.actividades_ids
+        if not actividades:
+            return
+        sin_enterado = actividades.filtered(lambda a: a.responsable_id and not a.firma_enterado_id)
+        sin_verificar = actividades.filtered(lambda a: a.verifico_id and not a.firma_verifico_id)
+        if sin_enterado or sin_verificar:
+            return
+        grupo = self.env.ref('amunet_cc_general.group_cc_general_manager')
+        managers = grupo.users
+        if not managers:
+            return
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        url = '%s/odoo/control-de-cambios/%s' % (base_url, self.id)
+        self.message_post(
+            body=_(
+                'Todas las actividades del control de cambios <b>%s</b> han sido firmadas de enterado y verificadas.<br/>'
+                'Ya puedes documentar los resultados de la verificación y gestionar el cierre: '
+                '<a href="%s">%s</a>'
+            ) % (self.name, url, url),
+            partner_ids=managers.mapped('partner_id').ids,
+            subtype_xmlid='mail.mt_comment',
+        )
+        self.implementacion_notificada = True
+
+    def _verificar_cierre_completo(self):
+        self.ensure_one()
+        if self.cierre_notificado or self.state != 'aceptado':
+            return
+        if not (self.firma_cierre_realizo_id and self.firma_cierre_reviso_id and self.firma_cierre_aprobo_id):
+            return
+        grupo = self.env.ref('amunet_cc_general.group_cc_general_manager')
+        managers = grupo.users
+        if not managers:
+            return
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        url = '%s/odoo/control-de-cambios/%s' % (base_url, self.id)
+        self.message_post(
+            body=_(
+                'Las tres firmas de cierre del control de cambios <b>%s</b> están completas.<br/>'
+                'Ya puedes cerrarlo: <a href="%s">%s</a>'
+            ) % (self.name, url, url),
+            partner_ids=managers.mapped('partner_id').ids,
+            subtype_xmlid='mail.mt_comment',
+        )
+        self.cierre_notificado = True
+
+    def _notificar_firmante_cierre(self, usuario, rol):
+        self.ensure_one()
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        url = '%s/odoo/control-de-cambios/%s' % (base_url, self.id)
+        self.message_post(
+            body=_(
+                'Hola <b>%s</b>, se te ha asignado como <b>"%s"</b> en el cierre del '
+                'control de cambios <b>%s</b>.<br/>'
+                'Por favor ingresa al sistema y firma cuando corresponda: '
+                '<a href="%s">%s</a>'
+            ) % (usuario.name, rol, self.name, url, url),
+            partner_ids=[usuario.partner_id.id],
+            subtype_xmlid='mail.mt_comment',
+        )
 
     # ── Acciones de flujo ────────────────────────────────────────
     def action_enviar(self):
@@ -360,6 +446,7 @@ class AmunetCCGeneral(models.Model):
         self.write({'firma_cierre_realizo_id': self.env.user.id,
                     'fecha_cierre_realizo': fields.Datetime.now()})
         self._message_log(body=_('<p><b>%s</b> firmó como Realizó el control de cambios.</p>') % self.env.user.name)
+        self._verificar_cierre_completo()
 
     def action_firmar_cierre_reviso(self):
         self.ensure_one()
@@ -374,6 +461,7 @@ class AmunetCCGeneral(models.Model):
         self.write({'firma_cierre_reviso_id': self.env.user.id,
                     'fecha_cierre_reviso': fields.Datetime.now()})
         self._message_log(body=_('<p><b>%s</b> firmó como Revisó la aplicación.</p>') % self.env.user.name)
+        self._verificar_cierre_completo()
 
     def action_firmar_cierre_aprobo(self):
         self.ensure_one()
@@ -388,6 +476,7 @@ class AmunetCCGeneral(models.Model):
         self.write({'firma_cierre_aprobo_id': self.env.user.id,
                     'fecha_cierre_aprobo': fields.Datetime.now()})
         self._message_log(body=_('<p><b>%s</b> firmó como Aprobó la aplicación del cambio.</p>') % self.env.user.name)
+        self._verificar_cierre_completo()
 
     def action_descartar(self):
         for r in self:
