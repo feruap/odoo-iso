@@ -25,7 +25,7 @@ class AmunetCCGeneralActividad(models.Model):
     estado_enterado = fields.Selection([
         ('enterado',  'Enterado'),
         ('pendiente', 'Pendiente'),
-    ], string='Enterado', compute='_compute_estado_enterado')
+    ], string='Estado enterado', compute='_compute_estado_enterado')
 
     @api.depends('firma_enterado_id')
     def _compute_estado_enterado(self):
@@ -185,7 +185,7 @@ class AmunetCCGeneral(models.Model):
     fecha_implementacion    = fields.Date(string='Fecha de implementación real')
     responsable_cierre_id   = fields.Many2one('res.users', string='Responsable del cierre')
     resultados_verificacion = fields.Text(string='Resultados de la verificación')
-    evidencia_anexa         = fields.Text(string='Evidencia anexa')
+    evidencia_anexa         = fields.Html(string='Evidencia anexa')
     nueva_version           = fields.Char(string='Nueva versión del documento (si aplica)')
     firma_cierre_id         = fields.Many2one('res.users', string='Firma de cierre (Calidad)',
                                                readonly=True)

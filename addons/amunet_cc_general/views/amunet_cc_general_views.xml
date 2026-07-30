@@ -215,23 +215,19 @@
                         <group>
                             <field name="firma_cierre_id"    readonly="1" invisible="not firma_cierre_id"/>
                             <field name="fecha_cierre_firma" readonly="1" invisible="not fecha_cierre_firma"/>
-                            <button name="action_firmar_cierre" type="object"
-                                    string="Firmar cierre" icon="fa-pencil-square-o" class="btn-primary"
-                                    invisible="firma_cierre_id or state not in ('aceptado',)"/>
                         </group>
                     </group>
+                    <label for="resultados_verificacion"
+                           invisible="state not in ('aceptado', 'cerrado')"/>
                     <field name="resultados_verificacion"
                            invisible="state not in ('aceptado', 'cerrado')"
                            readonly="state not in ('aceptado',)"
-                           placeholder="Resultados de la verificación..." rows="4"/>
+                           placeholder="Ej. Se revisó el procedimiento actualizado a la nueva versión. El personal confirmó que recibió capacitación. Se verificó que los formatos anteriores fueron reemplazados en los puntos de uso." rows="4"/>
+                    <label for="evidencia_anexa"
+                           invisible="state not in ('aceptado', 'cerrado')"/>
                     <field name="evidencia_anexa"
                            invisible="state not in ('aceptado', 'cerrado')"
-                           readonly="state not in ('aceptado',)"
-                           placeholder="Ej. Registros de capacitación, certificados, actas de prueba..." rows="3"/>
-
-                    <!-- ── Archivos adjuntos ──────────────────────── -->
-                    <separator string="Archivos adjuntos"/>
-                    <field name="adjunto_ids" widget="many2many_binary" nolabel="1"/>
+                           readonly="state not in ('aceptado',)"/>
                 </sheet>
                 <chatter/>
             </form>
