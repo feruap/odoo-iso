@@ -4,52 +4,26 @@
         <field name="name">amunet.production.analysis.wizard.form</field>
         <field name="model">amunet.production.analysis.wizard</field>
         <field name="arch" type="xml">
-            <form string="Confirmar solicitud a Control de Calidad">
-                <alert message="Estás a punto de enviar esta orden a Control de Calidad para liberación final." type="warning"/>
-                
+            <form string="Solicitar análisis de producto terminado">
+                <alert message="Vas a solicitar el análisis del producto terminado. Indica con cuántas piezas fabricadas lo solicitas; esa cantidad es la que se produce al cerrar la orden." type="info"/>
+
                 <sheet>
                     <group>
                         <group>
                             <field name="production_id" invisible="1"/>
                             <field name="product_id"/>
+                            <field name="lote_producido"/>
                             <field name="product_qty"/>
                             <field name="amunet_expiration_text"/>
-                            <field name="solution_expiration_date"/>
-                            <field name="solution_lot_id"/>
-                        </group>
-                        <group invisible="not quality_ph_initial and not quality_ph_final">
-                            <label for="quality_ph_initial" string="Lecturas de pH"/>
-                            <div class="o_row">
-                                <span>Inicial: </span><field name="quality_ph_initial"/>
-                                <span> | Final: </span><field name="quality_ph_final"/>
-                            </div>
-                        </group>
-                    </group>
-
-                    <group string="Muestreo para liberación final">
-                        <group>
-                            <field name="sampling_plan_id" readonly="1" options="{'no_open': True}"/>
-                            <field name="suggested_qty_sampling" readonly="1"/>
                         </group>
                         <group>
-                            <field name="sampling_plan_summary" readonly="1" nolabel="1"/>
+                            <field name="qty_fabricada"/>
                         </group>
                     </group>
-                    
-                    <separator string="Materiales utilizados y validados"/>
-                    <field name="move_raw_ids" readonly="1">
-                        <list>
-                            <field name="product_id"/>
-                            <field name="product_uom_qty" string="Esperado"/>
-                            <field name="quantity" string="Utilizado"/>
-                            <field name="product_uom" string="UdM"/>
-                            <field name="amunet_is_valid" string="Válido" widget="boolean"/>
-                        </list>
-                    </field>
                 </sheet>
-                
+
                 <footer>
-                    <button string="Enviar a Calidad" name="action_confirm_analysis" type="object" class="btn-success"/>
+                    <button string="Solicitar análisis" name="action_confirm_analysis" type="object" class="btn-success"/>
                     <button string="Cancelar / Regresar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -57,7 +31,7 @@
     </record>
 
     <record id="action_amunet_analysis_wizard" model="ir.actions.act_window">
-        <field name="name">Confirmar solicitud a Control de Calidad</field>
+        <field name="name">Solicitar análisis de producto terminado</field>
         <field name="res_model">amunet.production.analysis.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

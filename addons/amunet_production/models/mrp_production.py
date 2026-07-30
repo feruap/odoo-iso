@@ -97,6 +97,17 @@ class MrpProduction(models.Model):
         ('rejected', 'Rechazado')
     ], string='Integración de Calidad', default='none', tracking=True, compute='_compute_quality_params', store=True, readonly=False)
 
+    # Piezas realmente fabricadas con las que se solicitó el análisis de PT.
+    # Se captura en el wizard de solicitud y es la cantidad que se produce al
+    # cerrar la orden. Sirve para que Calidad sepa cuántas piezas cubre el
+    # análisis que aprueba o rechaza.
+    amunet_pt_qty_solicitada = fields.Float(
+        string='Piezas fabricadas (análisis)', readonly=True, copy=False, tracking=True)
+    amunet_pt_qc_por_id = fields.Many2one(
+        'res.users', string='Análisis PT resuelto por', readonly=True, copy=False)
+    amunet_pt_qc_fecha = fields.Datetime(
+        string='Fecha resolución análisis PT', readonly=True, copy=False)
+
     # ── Supervisión de elaboración (soluciones) ─────────────────────────────
     # Al terminar de elaborar la solucion, el fabricante la envia a supervision
     # de su JEFE DIRECTO (manager de RRHH), que firma con PIN. Sin esa firma no
@@ -307,7 +318,20 @@ class MrpProduction(models.Model):
                         (m.amunet_qty_supplied or 0) > 0
                         for m in mo.move_raw_ids.filtered(lambda m: m.state != 'cancel')
                     )
-                    if has_supply and mo.reconciliation_state != 'completed':
+                    if mo.amunet_sys_req_qc and not mo.amunet_es_desarrollo and mo.quality_analysis_status != 'approved':
+                        # El analisis de calidad va ANTES de la conciliacion de
+                        # materiales (decision Fernando 2026-07-30).
+                        if mo.quality_analysis_status in ('to_request', 'rejected'):
+                            priority = 'ready'
+                            owner = 'supervisor'
+                            next_step = _('Solicitar analisis a Calidad')
+                        else:
+                            priority = 'waiting'
+                            owner = 'quality'
+                            next_step = _('Esperar aprobacion de Calidad')
+                        blocker = _('Calidad: %s') % quality_labels.get(
+                            mo.quality_analysis_status, mo.quality_analysis_status)
+                    elif has_supply and mo.reconciliation_state != 'completed':
                         if mo.reconciliation_state == 'pending':
                             priority = 'ready'
                             owner = 'production'
@@ -322,17 +346,6 @@ class MrpProduction(models.Model):
                             next_step = _('Confirmar devolucion recibida')
                         blocker = _('Conciliacion: %s') % reconciliation_labels.get(
                             mo.reconciliation_state, mo.reconciliation_state)
-                    elif mo.amunet_sys_req_qc and not mo.amunet_es_desarrollo and mo.quality_analysis_status != 'approved':
-                        if mo.quality_analysis_status in ('to_request', 'rejected'):
-                            priority = 'ready'
-                            owner = 'supervisor'
-                            next_step = _('Solicitar analisis a Calidad')
-                        else:
-                            priority = 'waiting'
-                            owner = 'quality'
-                            next_step = _('Esperar aprobacion de Calidad')
-                        blocker = _('Calidad: %s') % quality_labels.get(
-                            mo.quality_analysis_status, mo.quality_analysis_status)
                     elif mo.amunet_can_produce:
                         priority = 'ready'
                         owner = 'supervisor'
@@ -1577,7 +1590,11 @@ class MrpProduction(models.Model):
         return True
 
     def _amunet_signature_allowed_methods(self):
-        return {'_signature_amunet_supervision': _('Supervisión de elaboración')}
+        return {
+            '_signature_amunet_supervision': _('Supervisión de elaboración'),
+            '_amunet_qc_firma_aprobar': _('Aprobación de análisis de PT'),
+            '_amunet_qc_firma_rechazar': _('Rechazo de análisis de PT'),
+        }
 
     def _amunet_signature_required_procedures(self):
         # La supervision de elaboracion no exige capacitacion en SOPs al jefe.
@@ -1634,7 +1651,51 @@ class MrpProduction(models.Model):
                 'default_production_id': self.id,
             }
         }
-    
+
+    # ── Aprobación / rechazo SIMPLE del análisis de PT (Calidad, con PIN) ────
+    # Flujo simple mientras se valida: Calidad (Diana) aprueba o rechaza el
+    # análisis de producto terminado con su PIN, sin pasar por toda la lógica
+    # del módulo de calidad. El enganche al módulo se hará después.
+    def action_amunet_qc_aprobar(self):
+        self.ensure_one()
+        if self.quality_analysis_status != 'requested':
+            raise UserError(_('Solo se puede aprobar un análisis que esté en estado "Análisis Solicitado".'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_amunet_qc_firma_aprobar',
+            _('Aprobación de análisis de PT'),
+            _('Firma de Calidad que APRUEBA el análisis del producto terminado de %s.') % self.name)
+
+    def action_amunet_qc_rechazar(self):
+        self.ensure_one()
+        if self.quality_analysis_status != 'requested':
+            raise UserError(_('Solo se puede rechazar un análisis que esté en estado "Análisis Solicitado".'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_amunet_qc_firma_rechazar',
+            _('Rechazo de análisis de PT'),
+            _('Firma de Calidad que RECHAZA el análisis del producto terminado de %s.') % self.name)
+
+    def _amunet_qc_firma_aprobar(self):
+        self.ensure_one()
+        self.sudo().write({
+            'quality_analysis_status': 'approved',
+            'amunet_pt_qc_por_id': self.env.user.id,
+            'amunet_pt_qc_fecha': fields.Datetime.now(),
+        })
+        self.sudo().message_post(body=_(
+            'Análisis de producto terminado <b>APROBADO</b> por <b>%s</b>.') % self.env.user.name)
+        return True
+
+    def _amunet_qc_firma_rechazar(self):
+        self.ensure_one()
+        self.sudo().write({
+            'quality_analysis_status': 'rejected',
+            'amunet_pt_qc_por_id': self.env.user.id,
+            'amunet_pt_qc_fecha': fields.Datetime.now(),
+        })
+        self.sudo().message_post(body=_(
+            'Análisis de producto terminado <b>RECHAZADO</b> por <b>%s</b>.') % self.env.user.name)
+        return True
+
     def button_mark_done(self):
         """Bloqueo del flujo nativo de la orden de producción"""
         for record in self:
