@@ -17,7 +17,7 @@
                   name="Solicitudes"
                   parent="menu_validation_root"
                   action="action_amunet_equipment_request"
-                  sequence="5"
+                  sequence="90"
                   groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
 
         <!-- =================================================================
