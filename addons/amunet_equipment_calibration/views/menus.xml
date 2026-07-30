@@ -11,6 +11,16 @@
                   groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
 
         <!-- =================================================================
+             SECCIÓN 0: SOLICITUDES (ingreso de equipos de uso interno)
+             ================================================================= -->
+        <menuitem id="menu_amunet_equipment_request"
+                  name="Solicitudes"
+                  parent="menu_validation_root"
+                  action="action_amunet_equipment_request"
+                  sequence="5"
+                  groups="amunet_equipment_calibration.group_equipment_manager,amunet_equipment_calibration.group_maintenance_technician"/>
+
+        <!-- =================================================================
              SECCIÓN 1: EQUIPOS
              ================================================================= -->
         <menuitem id="menu_amunet_equipment_root"

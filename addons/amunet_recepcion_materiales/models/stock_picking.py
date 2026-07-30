@@ -250,24 +250,42 @@ class StockPicking(models.Model):
                 ) % '\n'.join(faltantes))
 
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
+    def _amunet_es_recepcion_equipo(self):
+        """True si la recepcion es de un equipo de uso interno (producto
+        generico EQUIPO-USO-INTERNO). Estos NO llevan lote de proveedor,
+        caducidad, inspeccion ni cuarentena de MP: van al flujo de Validacion.
+        SI conservan el PIN de Almacen al validar."""
+        self.ensure_one()
+        moves = self.move_ids.filtered(
+            lambda m: m.state != 'cancel' and m.product_uom_qty > 0)
+        return bool(moves) and all(
+            m.product_id.default_code == 'EQUIPO-USO-INTERNO' for m in moves)
+
     def button_validate(self):
-        self._amunet_check_duplicate_supplier_lots()
-        self._amunet_check_datos_recepcion()
-        self._amunet_check_expiration_captured()
-        self._amunet_check_inspeccion_entrada()
+        # Recepcion de equipo de uso interno: exenta de los datos/caducidad/
+        # inspeccion/cuarentena de MP, PERO conserva el PIN de Almacen. La
+        # solicitud de ingreso la genera despues el modulo de Validacion.
+        es_equipo = bool(self) and all(
+            p._amunet_es_recepcion_equipo() for p in self)
+        if not es_equipo:
+            self._amunet_check_duplicate_supplier_lots()
+            self._amunet_check_datos_recepcion()
+            self._amunet_check_expiration_captured()
+            self._amunet_check_inspeccion_entrada()
         if self.env.context.get('_skip_pin_wizard'):
             res = super().button_validate()
-            for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
-                                   and p.state == 'done'):
-                if not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
-                            p.amunet_crit4, p.amunet_crit5]):
-                    p._amunet_notify_quality_pending()
-                # Lotes de productos sin cuarentena → liberar automáticamente
-                for line in p.move_line_ids:
-                    if (line.lot_id
-                            and not line.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
-                            and line.lot_id.amunet_lot_release_state != 'released'):
-                        line.lot_id.sudo().write({'amunet_lot_release_state': 'released'})
+            if not es_equipo:
+                for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
+                                       and p.state == 'done'):
+                    if not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
+                                p.amunet_crit4, p.amunet_crit5]):
+                        p._amunet_notify_quality_pending()
+                    # Lotes de productos sin cuarentena → liberar automáticamente
+                    for line in p.move_line_ids:
+                        if (line.lot_id
+                                and not line.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
+                                and line.lot_id.amunet_lot_release_state != 'released'):
+                            line.lot_id.sudo().write({'amunet_lot_release_state': 'released'})
             return res
         incoming = self.filtered(lambda p: p.picking_type_code == 'incoming'
                                  and p.state not in ('done', 'cancel'))

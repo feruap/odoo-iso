@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Secuencia de folio para las solicitudes -->
+    <record id="seq_amunet_equipment_request" model="ir.sequence">
+        <field name="name">Solicitud de ingreso de equipo</field>
+        <field name="code">amunet.equipment.request</field>
+        <field name="prefix">SOL-EQ-</field>
+        <field name="padding">4</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+
+    <!-- Ubicación virtual: destino al que sale la serie cuando se da de alta -->
+    <record id="stock_location_equipos_ingresados" model="stock.location">
+        <field name="name">Equipos ingresados a validación</field>
+        <field name="usage">inventory</field>
+    </record>
+
+    <!-- Lista -->
+    <record id="view_amunet_equipment_request_list" model="ir.ui.view">
+        <field name="name">amunet.equipment.request.list</field>
+        <field name="model">amunet.equipment.request</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'por_validar'" decoration-success="state == 'validada'">
+                <field name="name"/>
+                <field name="fecha_recepcion"/>
+                <field name="serie_recibida"/>
+                <field name="partner_id"/>
+                <field name="equipo_nombre"/>
+                <field name="codigo_equipo"/>
+                <field name="department"/>
+                <field name="state" widget="badge" decoration-info="state == 'por_validar'" decoration-success="state == 'validada'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Formulario -->
+    <record id="view_amunet_equipment_request_form" model="ir.ui.view">
+        <field name="name">amunet.equipment.request.form</field>
+        <field name="model">amunet.equipment.request</field>
+        <field name="arch" type="xml">
+            <form string="Solicitud de ingreso de equipo">
+                <header>
+                    <button name="action_validar_datos" string="Validar datos" type="object"
+                            class="btn-success" invisible="state != 'por_validar'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="por_validar,validada"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Recepción (Almacén)">
+                            <field name="serie_recibida"/>
+                            <field name="fecha_recepcion"/>
+                            <field name="partner_id"/>
+                            <field name="picking_id" readonly="1"/>
+                            <field name="location_id" readonly="1"/>
+                            <field name="product_id" invisible="1"/>
+                            <field name="lot_id" invisible="1"/>
+                        </group>
+                        <group string="Alta del equipo (Validación)">
+                            <field name="equipo_nombre" readonly="state == 'validada'"/>
+                            <field name="codigo_equipo" readonly="state == 'validada'"/>
+                            <field name="department" readonly="state == 'validada'"/>
+                            <field name="funcion" readonly="state == 'validada'"/>
+                            <field name="brand" readonly="state == 'validada'"/>
+                            <field name="model_name" readonly="state == 'validada'"/>
+                            <field name="requiere_calibracion" readonly="state == 'validada'"/>
+                            <field name="responsable_id" readonly="state == 'validada'"/>
+                            <field name="equipment_id" readonly="1" invisible="state != 'validada'"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amunet_equipment_request" model="ir.actions.act_window">
+        <field name="name">Solicitudes</field>
+        <field name="res_model">amunet.equipment.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_por_validar': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No hay solicitudes de ingreso de equipo</p>
+            <p>Las solicitudes se generan solas cuando Almacén valida la recepción de un equipo de uso interno.</p>
+        </field>
+    </record>
+
+    <record id="view_amunet_equipment_request_search" model="ir.ui.view">
+        <field name="name">amunet.equipment.request.search</field>
+        <field name="model">amunet.equipment.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="serie_recibida"/>
+                <field name="equipo_nombre"/>
+                <filter name="por_validar" string="Por validar" domain="[('state','=','por_validar')]"/>
+                <filter name="validada" string="Validadas" domain="[('state','=','validada')]"/>
+            </search>
+        </field>
+    </record>
+</odoo>

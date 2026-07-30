@@ -12,3 +12,5 @@ from . import product_template
 from . import stock_lot
 from . import amunet_equipment_expediente
 from . import amunet_equipment_area
+from . import amunet_equipment_request
+from . import stock_picking_equipment
