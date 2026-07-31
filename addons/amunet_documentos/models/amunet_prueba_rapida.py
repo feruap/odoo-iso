@@ -12,7 +12,7 @@ class AmunetPruebaRapida(models.Model):
     descripcion = fields.Text(string='Descripción (Denominación genérica)')
     codigo      = fields.Char(string='Código')
     referencia  = fields.Char(string='Referencia')
-    caducidad_autorizada  = fields.Char(string='Caducidad autorizada')
+    caducidad_autorizada  = fields.Char(string='Caducidad de la prueba')
     registro_sanitario    = fields.Char(string='Registro sanitario')
     fecha_emision_rs      = fields.Date(string='Fecha de emisión RS')
     fecha_vencimiento_rs  = fields.Date(string='Fecha de vencimiento RS')

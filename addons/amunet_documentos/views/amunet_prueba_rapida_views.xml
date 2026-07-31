@@ -11,7 +11,7 @@
                 <field name="descripcion" string="Descripción (Denominación genérica)"/>
                 <field name="muestra"     string="Muestra"/>
                 <field name="referencia"  string="Referencia"/>
-                <field name="caducidad_autorizada"  string="Caducidad autorizada"/>
+                <field name="caducidad_autorizada"  string="Caducidad de la prueba"/>
                 <field name="registro_sanitario"    string="Registro sanitario"/>
                 <field name="fecha_emision_rs"      string="Emisión RS" optional="hide"/>
                 <field name="fecha_vencimiento_rs"  string="Vencimiento RS" optional="hide"/>
@@ -33,7 +33,7 @@
                         <group>
                             <field name="codigo"     string="Código (Catálogo)"/>
                             <field name="referencia" string="Referencia"/>
-                            <field name="caducidad_autorizada" string="Caducidad autorizada"/>
+                            <field name="caducidad_autorizada" string="Caducidad de la prueba"/>
                         </group>
                         <group>
                             <field name="muestra" string="Muestra"/>
