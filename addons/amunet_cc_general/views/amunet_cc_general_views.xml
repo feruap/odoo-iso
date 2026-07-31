@@ -102,18 +102,18 @@
                         </group>
                     </group>
                     <separator string=""/>
-                    <label for="estado_actual"/>
+                    <label for="estado_actual" string="Estado actual (¿cómo está ahora?)"/>
                     <field name="estado_actual"    readonly="state not in ('borrador',)"
-                           placeholder="Describe la situación actual del documento, área o proceso..."
+                           placeholder="Describe la situación actual del documento, área o proceso. Ej. El procedimiento PNODC-003 versión 1.0 no incluye el paso de verificación de vigencia antes de imprimir."
                            rows="4"/>
-                    <label for="estado_propuesto"/>
+                    <label for="estado_propuesto" string="Descripción del cambio (¿qué se va a modificar exactamente?)"/>
                     <field name="estado_propuesto" readonly="state not in ('borrador',)"
-                           placeholder="Describe la nueva situación que se propone..."
+                           placeholder="Describe qué quedará diferente tras el cambio. Ej. El procedimiento PNODC-003 versión 2.0 incluirá un paso de verificación de vigencia antes de cualquier impresión."
                            rows="4"/>
-                    <label for="justificacion"/>
+                    <label for="justificacion" string="Justificación (¿qué lo origina? Regulación, auditoría, incidente, mejora...)"/>
                     <field name="justificacion"    readonly="state not in ('borrador',)"
-                           placeholder="¿Por qué se propone este cambio?"
-                           rows="6"/>
+                           placeholder="Explica la razón o el origen del cambio. Ej. En la auditoría interna de junio 2026 se detectó que personal imprimía documentos sin verificar vigencia, generando riesgo de uso de versiones obsoletas."
+                           rows="5"/>
 
                     <!-- ── Sección 2: Autorización del cambio ────── -->
                     <separator string="2. Autorización del cambio"/>

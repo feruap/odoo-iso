@@ -166,9 +166,9 @@ class AmunetCCGeneral(models.Model):
     tipo_otro          = fields.Boolean(string='Otro')
     tipo_otro_desc     = fields.Char(string='Especifica (Otro)')
 
-    estado_actual    = fields.Text(string='Estado actual (¿Cómo está ahora?)')
-    estado_propuesto = fields.Text(string='Estado propuesto (¿Cómo debe quedar?)')
-    justificacion    = fields.Text(string='Justificación del cambio')
+    estado_actual    = fields.Text(string='Estado actual')
+    estado_propuesto = fields.Text(string='Descripción del cambio')
+    justificacion    = fields.Text(string='Justificación')
 
     # ── Sección 2: Firmas de autorización ────────────────────────
     reviso_id        = fields.Many2one('res.users', string='Revisó')
