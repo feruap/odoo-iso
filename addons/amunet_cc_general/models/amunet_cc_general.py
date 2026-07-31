@@ -352,6 +352,17 @@ class AmunetCCGeneral(models.Model):
                     'fecha_aprobo': fields.Datetime.now(),
                     'vb_aprobo': 'si'})
         self._message_log(body=_('<p><b>%s</b> autorizó el control de cambios.</p>') % self.env.user.name)
+        if self.solicitante_id and self.solicitante_id.partner_id:
+            self.message_post(
+                body=_(
+                    '<p>Hola <b>%s</b>,</p>'
+                    '<p>Tu control de cambios <b>%s</b> ha sido <b>autorizado</b> por %s.</p>'
+                    '<p>Ya puedes ingresar el plan de implementación y registrar '
+                    'las actividades correspondientes.</p>'
+                ) % (self.solicitante_id.name, self.name, self.env.user.name),
+                partner_ids=self.solicitante_id.partner_id.ids,
+                subtype_xmlid='mail.mt_comment',
+            )
 
     def action_rechazar(self):
         self.ensure_one()
