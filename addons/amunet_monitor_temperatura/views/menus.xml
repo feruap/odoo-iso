@@ -9,7 +9,7 @@
 
     <menuitem id="menu_temp_cierre" name="Cierre diario" parent="menu_temp_root"
               action="action_amunet_temp_supervisor_srv" sequence="20"
-              groups="group_temp_signoff"/>
+              groups="group_temp_signoff,group_temp_viewer"/>
 
     <menuitem id="menu_temp_historico" name="Historico y grafica de control" parent="menu_temp_root"
               action="action_amunet_temp_historico_srv" sequence="30"/>

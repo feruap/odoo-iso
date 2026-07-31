@@ -124,8 +124,9 @@
                        decoration-success="state == 'signed'" decoration-warning="state == 'pending'"/>
                 <field name="signed_by"/>
                 <field name="signed_at"/>
+                <field name="amunet_can_sign" column_invisible="1"/>
                 <button name="action_open_sign" type="object" string="Firmar"
-                        class="btn-link" invisible="state == 'signed'"/>
+                        class="btn-link" invisible="state == 'signed' or not amunet_can_sign"/>
             </list>
         </field>
     </record>
