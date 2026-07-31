@@ -54,29 +54,10 @@ class DocRevisionWizard(models.TransientModel):
                     'El motivo es obligatorio cuando se marca ✗ Incorrecto.')
 
     def action_confirmar(self):
-        # Construir observaciones combinadas ANTES de escribir, usando historial
-        # para los otros campos en fail + el motivo actual para este campo.
-        obs_parts = []
-        for campo, label in CAMPOS.items():
-            if campo == self.campo:
-                if self.nuevo_valor == 'fail' and self.observacion:
-                    obs_parts.append(f'{label}: {self.observacion}')
-            elif getattr(self.doc_id, campo) == 'fail':
-                ultimo = self.env['amunet.doc.revision.historial'].sudo().search([
-                    ('doc_id', '=', self.doc_id.id),
-                    ('campo', '=', campo),
-                    ('motivo', '!=', False),
-                ], order='fecha desc', limit=1)
-                if ultimo:
-                    obs_parts.append(f'{label}: {ultimo.motivo}')
-
         vals = {self.campo: self.nuevo_valor}
-        if obs_parts:
-            vals['observaciones'] = '\n'.join(obs_parts)
-
-        # motivo_campo en contexto para que el historial guarde solo el motivo
-        # de esta columna, no el texto combinado.
-        self.doc_id.sudo().with_context(
-            motivo_campo=self.observacion if self.nuevo_valor == 'fail' else False
-        ).write(vals)
+        if self.nuevo_valor == 'fail':
+            vals['observaciones'] = self.observacion
+        # sudo() necesario: el analista tiene perm_write=0 en el modelo principal;
+        # la validación de negocio ya ocurrió en el override write() con el uid real.
+        self.doc_id.sudo().write(vals)
         return {'type': 'ir.actions.act_window_close'}

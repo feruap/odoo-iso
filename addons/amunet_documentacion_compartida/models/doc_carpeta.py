@@ -40,8 +40,5 @@ class DocCarpeta(models.Model):
             'res_model': 'amunet.doc.compartida',
             'view_mode': 'list,form',
             'domain': [('carpeta_id', '=', self.id)],
-            'context': {
-                'default_carpeta_id': self.id,
-                'hide_equipos_cols': self.name == 'EQUIPOS',
-            },
+            'context': {'default_carpeta_id': self.id},
         }
