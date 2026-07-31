@@ -32,11 +32,36 @@ class AmunetEquipmentRequest(models.Model):
     funcion = fields.Text(string='Función')
     brand = fields.Char(string='Marca')
     model_name = fields.Char(string='Modelo')
+
+    # Tipo de control (lo determina Ensayo/Calibración, no Almacén):
+    #  - independiente: tiene su propia calibración y/o calificación.
+    #  - complemento: cuelga de otro equipo ya registrado (equipo padre).
+    #  - no_aplica: sin control formal.
+    tipo_control = fields.Selection([
+        ('independiente', 'Independiente'),
+        ('complemento', 'Complemento'),
+        ('no_aplica', 'No aplica'),
+    ], string='Tipo de control', default='independiente', tracking=True)
     requiere_calibracion = fields.Boolean(string='Requiere calibración')
+    requiere_calificacion = fields.Boolean(string='Requiere calificación')
+    equipo_padre_id = fields.Many2one(
+        'amunet.equipment', string='Equipo padre',
+        help='Equipo ya registrado del que depende este complemento.')
     responsable_id = fields.Many2one('res.users', string='Responsable del área')
 
     equipment_id = fields.Many2one(
         'amunet.equipment', string='Equipo dado de alta', readonly=True, copy=False)
+
+    # Solo Ensayo/Calibración (Gestor de Equipos) edita tipo de control, código,
+    # área y responsable. El resto los ve pero no los modifica.
+    puede_editar_validacion = fields.Boolean(
+        compute='_compute_puede_editar_validacion')
+
+    def _compute_puede_editar_validacion(self):
+        es_gestor = self.env.user.has_group(
+            'amunet_equipment_calibration.group_equipment_manager')
+        for rec in self:
+            rec.puede_editar_validacion = es_gestor
 
     def _department_selection(self):
         # Reusa la lista de áreas/departamentos del propio equipo.
@@ -67,15 +92,26 @@ class AmunetEquipmentRequest(models.Model):
         # 1. Dar de alta el equipo en la lista de validación. Nace INACTIVO
         # (registrado, pendiente de calificación): Metrología lo activa cuando
         # complete su expediente de calificación y calibración.
-        eq = self.env['amunet.equipment'].sudo().create({
+        eq_vals = {
             'name': self.equipo_nombre,
             'serial_number': self.codigo_equipo,
             'brand': self.brand or False,
             'model_name': self.model_name or False,
             'department': self.department,
             'state': 'out_of_service',
-            'calibration_required': self.requiere_calibracion,
-        })
+        }
+        # Mapear el tipo de control al equipo
+        if self.tipo_control == 'independiente':
+            eq_vals['calibration_required'] = self.requiere_calibracion
+            eq_vals['qualification_required'] = self.requiere_calificacion
+        elif self.tipo_control == 'complemento':
+            eq_vals['parent_equipment_id'] = self.equipo_padre_id.id or False
+            eq_vals['calibration_required'] = False
+            eq_vals['qualification_required'] = False
+        else:  # no_aplica
+            eq_vals['calibration_required'] = False
+            eq_vals['qualification_required'] = False
+        eq = self.env['amunet.equipment'].sudo().create(eq_vals)
 
         # 2. Sacar la serie del inventario (deja de ser material de almacén)
         self._amunet_salida_inventario()

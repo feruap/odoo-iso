@@ -119,6 +119,14 @@ class AmunetEquipment(models.Model):
              'fuera de servicio.'
     )
 
+    qualification_required = fields.Boolean(
+        string='Requiere Calificación',
+        default=False,
+        tracking=True,
+        help='El equipo requiere calificación (además de o en vez de calibración). '
+             'Lo determina Ensayo/Calibración al ingresar el equipo.'
+    )
+
     calibration_program_line_ids = fields.One2many(
         'amunet.calibration.program.line',
         'equipment_id',

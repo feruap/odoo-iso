@@ -60,14 +60,25 @@
                             <field name="lot_id" invisible="1"/>
                         </group>
                         <group string="Alta del equipo (Validación)">
+                            <field name="puede_editar_validacion" invisible="1"/>
                             <field name="equipo_nombre" readonly="state == 'validada'"/>
-                            <field name="codigo_equipo" readonly="state == 'validada'"/>
-                            <field name="department" readonly="state == 'validada'"/>
+                            <field name="codigo_equipo" readonly="state == 'validada' or not puede_editar_validacion"/>
+                            <field name="department" readonly="state == 'validada' or not puede_editar_validacion"/>
                             <field name="funcion" readonly="state == 'validada'"/>
                             <field name="brand" readonly="state == 'validada'"/>
                             <field name="model_name" readonly="state == 'validada'"/>
-                            <field name="requiere_calibracion" readonly="state == 'validada'"/>
-                            <field name="responsable_id" readonly="state == 'validada'"/>
+                            <field name="tipo_control" readonly="state == 'validada' or not puede_editar_validacion"/>
+                            <field name="requiere_calibracion"
+                                   invisible="tipo_control != 'independiente'"
+                                   readonly="state == 'validada' or not puede_editar_validacion"/>
+                            <field name="requiere_calificacion"
+                                   invisible="tipo_control != 'independiente'"
+                                   readonly="state == 'validada' or not puede_editar_validacion"/>
+                            <field name="equipo_padre_id"
+                                   invisible="tipo_control != 'complemento'"
+                                   readonly="state == 'validada' or not puede_editar_validacion"
+                                   options="{'no_create': True}"/>
+                            <field name="responsable_id" readonly="state == 'validada' or not puede_editar_validacion"/>
                             <field name="equipment_id" readonly="1" invisible="state != 'validada'"/>
                         </group>
                     </group>
