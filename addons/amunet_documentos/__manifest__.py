@@ -32,6 +32,8 @@ de firmas configurables.""",
     'assets': {
         'web.assets_backend': [
             'amunet_documentos/static/src/css/sugerencia.css',
+            'amunet_documentos/static/src/js/lista_maestra_hub.js',
+            'amunet_documentos/static/src/xml/lista_maestra_hub.xml',
         ],
     },
     'installable': True,

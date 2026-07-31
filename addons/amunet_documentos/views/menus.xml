@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Acción cliente: panel de bienvenida de Lista maestra -->
+    <record id="action_lista_maestra_hub" model="ir.actions.client">
+        <field name="name">Lista maestra</field>
+        <field name="tag">amunet_documentos.lista_maestra_hub</field>
+    </record>
+
     <!-- ── Raíz ── -->
     <menuitem id="menu_amunet_documentos_root" name="Control de Documentos"
               sequence="90"/>
@@ -7,6 +13,7 @@
     <!-- ── Nivel 1: ítems directos ── -->
     <menuitem id="menu_amunet_lista_maestra_root" name="Lista maestra"
               parent="menu_amunet_documentos_root"
+              action="action_lista_maestra_hub"
               sequence="20"
               groups="amunet_documentos.group_documentos_manager"/>
 
