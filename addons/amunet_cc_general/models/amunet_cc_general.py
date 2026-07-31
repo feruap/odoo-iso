@@ -158,6 +158,7 @@ class AmunetCCGeneral(models.Model):
     ], string='Departamento / Área', tracking=True)
 
     # ── Sección 1: Tipo y descripción ────────────────────────────
+    nombre_documento   = fields.Char(string='Documento / área afectada')
     tipo_procedimiento = fields.Boolean(string='Instrucciones')
     tipo_formula       = fields.Boolean(string='Fórmula / Insumo')
     tipo_proveedor     = fields.Boolean(string='Proveedor')
@@ -222,6 +223,31 @@ class AmunetCCGeneral(models.Model):
     fecha_cierre_aprobo     = fields.Datetime(string='Fecha', readonly=True)
 
     adjunto_ids = fields.Many2many('ir.attachment', string='Archivos adjuntos')
+
+    tipo_display = fields.Char(
+        string='Tipo de cambio',
+        compute='_compute_tipo_display',
+    )
+
+    @api.depends('tipo_procedimiento', 'tipo_formula', 'tipo_proveedor', 'tipo_instalacion',
+                 'tipo_equipo', 'tipo_manual', 'tipo_formato', 'tipo_otro', 'tipo_otro_desc')
+    def _compute_tipo_display(self):
+        tipos = [
+            ('tipo_procedimiento', 'Instrucciones'),
+            ('tipo_formula',       'Fórmula / Insumo'),
+            ('tipo_proveedor',     'Proveedor'),
+            ('tipo_instalacion',   'Instalación / Área'),
+            ('tipo_equipo',        'Equipo'),
+            ('tipo_manual',        'Manual'),
+            ('tipo_formato',       'Formato'),
+            ('tipo_otro',          'Otro'),
+        ]
+        for rec in self:
+            seleccionados = [label for campo, label in tipos if rec[campo]]
+            if rec.tipo_otro and rec.tipo_otro_desc:
+                seleccionados = [s if s != 'Otro' else 'Otro: ' + rec.tipo_otro_desc
+                                 for s in seleccionados]
+            rec.tipo_display = ', '.join(seleccionados) if seleccionados else ''
 
     # ── Rol del usuario actual ───────────────────────────────────
     is_manager = fields.Boolean(

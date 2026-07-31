@@ -1,5 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- ── Vista lista (Mis controles de cambio) ────────────────── -->
+    <record id="view_cc_general_mis_list" model="ir.ui.view">
+        <field name="name">amunet.cc.general.mis.list</field>
+        <field name="model">amunet.cc.general</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'borrador'"
+                  decoration-warning="state == 'pendiente'"
+                  decoration-success="state in ('aceptado', 'cerrado')"
+                  decoration-muted="state == 'rechazado'">
+                <field name="name" string="Folio"/>
+                <field name="fecha_solicitud"/>
+                <field name="nombre_documento" string="Documento / área afectada"/>
+                <field name="tipo_display" string="Tipo de cambio"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'borrador'"
+                       decoration-warning="state == 'pendiente'"
+                       decoration-success="state in ('aceptado', 'cerrado')"
+                       decoration-danger="state == 'rechazado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Vista formulario resumen (Mis controles de cambio) ────── -->
+    <record id="view_cc_general_mis_form" model="ir.ui.view">
+        <field name="name">amunet.cc.general.mis.form</field>
+        <field name="model">amunet.cc.general</field>
+        <field name="arch" type="xml">
+            <form string="Mi control de cambios">
+                <header>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,pendiente,aceptado,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Folio"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fecha_solicitud" readonly="1"/>
+                            <field name="solicitante_id" readonly="1"/>
+                            <field name="departamento" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="nombre_documento" readonly="1"/>
+                            <field name="tipo_display" string="Tipo de cambio" readonly="1"/>
+                        </group>
+                    </group>
+                    <separator string="Descripción del cambio"/>
+                    <field name="estado_actual" readonly="1" string="Estado actual"/>
+                    <field name="estado_propuesto" readonly="1" string="Cambio propuesto"/>
+                    <field name="justificacion" readonly="1"/>
+                    <separator string="Autorización"/>
+                    <group>
+                        <group>
+                            <field name="reviso_id" readonly="1"/>
+                            <field name="firma_reviso_id" readonly="1" invisible="not firma_reviso_id"/>
+                        </group>
+                        <group>
+                            <field name="aprobo_id" readonly="1"/>
+                            <field name="firma_aprobo_id" readonly="1" invisible="not firma_aprobo_id"/>
+                            <field name="motivo_rechazo" readonly="1" invisible="state != 'rechazado'"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
     <!-- ── Vista lista (Pendientes de mi firma) ─────────────────── -->
     <record id="view_cc_general_por_firmar_list" model="ir.ui.view">
         <field name="name">amunet.cc.general.por.firmar.list</field>
@@ -99,6 +169,10 @@
 
                     <!-- ── Sección 1: Tipo y descripción ────────── -->
                     <separator string="1. Tipo y descripción del cambio"/>
+                    <group>
+                        <field name="nombre_documento" readonly="state not in ('borrador',)"
+                               placeholder="Ej. PNODC-003, Cámara de refrigeración #2..."/>
+                    </group>
                     <group string="Tipo de cambio (selecciona los que apliquen)">
                         <group>
                             <field name="tipo_procedimiento" string="Instrucciones" readonly="state not in ('borrador',)"/>
@@ -295,7 +369,8 @@
         <field name="name">Mis controles de cambio</field>
         <field name="res_model">amunet.cc.general</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('solicitante_id', '=', uid), ('state', '!=', 'cerrado')]</field>
+        <field name="views" eval="[(ref('view_cc_general_mis_list'), 'list'), (ref('view_cc_general_mis_form'), 'form')]"/>
+        <field name="domain">[('solicitante_id', '=', uid)]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Aún no has creado ningún control de cambios.
