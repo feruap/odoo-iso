@@ -222,6 +222,18 @@ class AmunetCCGeneral(models.Model):
 
     adjunto_ids = fields.Many2many('ir.attachment', string='Archivos adjuntos')
 
+    # ── Rol del usuario actual ───────────────────────────────────
+    is_manager = fields.Boolean(
+        compute='_compute_is_manager',
+        compute_sudo=False,
+    )
+
+    @api.depends_context('uid')
+    def _compute_is_manager(self):
+        is_mgr = self.env.user.has_group('amunet_cc_general.group_cc_general_manager')
+        for rec in self:
+            rec.is_manager = is_mgr
+
     # ── Acción pendiente del usuario actual ──────────────────────
     accion_pendiente_usuario = fields.Char(
         string='Tu acción',
@@ -336,7 +348,7 @@ class AmunetCCGeneral(models.Model):
         if sin_enterado or sin_verificar:
             return
         grupo = self.env.ref('amunet_cc_general.group_cc_general_manager')
-        managers = grupo.users
+        managers = grupo.user_ids
         if not managers:
             return
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
@@ -359,7 +371,7 @@ class AmunetCCGeneral(models.Model):
         if not (self.firma_cierre_realizo_id and self.firma_cierre_reviso_id and self.firma_cierre_aprobo_id):
             return
         grupo = self.env.ref('amunet_cc_general.group_cc_general_manager')
-        managers = grupo.users
+        managers = grupo.user_ids
         if not managers:
             return
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
