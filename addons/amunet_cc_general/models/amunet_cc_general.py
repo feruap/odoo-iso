@@ -158,7 +158,7 @@ class AmunetCCGeneral(models.Model):
     ], string='Departamento / Área', tracking=True)
 
     # ── Sección 1: Tipo y descripción ────────────────────────────
-    nombre_documento   = fields.Char(string='Documento / área afectada')
+    nombre_documento   = fields.Char(string='Asunto')
     tipo_procedimiento = fields.Boolean(string='Instrucciones')
     tipo_formula       = fields.Boolean(string='Fórmula / Insumo')
     tipo_proveedor     = fields.Boolean(string='Proveedor')
@@ -431,13 +431,33 @@ class AmunetCCGeneral(models.Model):
 
     # ── Acciones de flujo ────────────────────────────────────────
     def action_enviar(self):
+        TIPOS = [
+            'tipo_procedimiento', 'tipo_formula', 'tipo_proveedor', 'tipo_instalacion',
+            'tipo_equipo', 'tipo_manual', 'tipo_formato', 'tipo_otro',
+        ]
         for r in self:
             if r.state != 'borrador':
                 raise UserError(_('Solo puedes enviar un registro en borrador.'))
-            if not r.estado_actual or not r.estado_propuesto or not r.justificacion:
-                raise UserError(_('Completa al menos: Estado actual, Estado propuesto y Justificación.'))
+            faltantes = []
+            if not r.nombre_documento:
+                faltantes.append('• Asunto')
+            if not any(r[t] for t in TIPOS):
+                faltantes.append('• Tipo de cambio (selecciona al menos uno)')
+            if not r.estado_actual:
+                faltantes.append('• Estado actual (¿cómo está ahora?)')
+            if not r.estado_propuesto:
+                faltantes.append('• Descripción del cambio (¿qué se va a modificar?)')
+            if not r.justificacion:
+                faltantes.append('• Justificación')
+            if not r.reviso_id:
+                faltantes.append('• Revisó (Aseguramiento de Calidad)')
             if not r.aprobo_id:
-                raise UserError(_('Indica quién debe autorizar este control de cambios antes de enviarlo.'))
+                faltantes.append('• Aprobó (Gerencia / Dirección)')
+            if faltantes:
+                raise UserError(
+                    _('Antes de enviar completa los siguientes campos en la sección 1:\n\n%s')
+                    % '\n'.join(faltantes)
+                )
             r.state = 'pendiente'
             base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
             url = '%s/odoo/control-de-cambios/%s' % (base_url, r.id)

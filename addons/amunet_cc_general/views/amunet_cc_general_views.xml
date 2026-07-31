@@ -11,7 +11,7 @@
                   decoration-muted="state == 'rechazado'">
                 <field name="name" string="Folio"/>
                 <field name="fecha_solicitud"/>
-                <field name="nombre_documento" string="Documento / área afectada"/>
+                <field name="nombre_documento" string="Asunto"/>
                 <field name="tipo_display" string="Tipo de cambio"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'borrador'"
@@ -369,7 +369,7 @@
         <field name="name">Mis controles de cambio</field>
         <field name="res_model">amunet.cc.general</field>
         <field name="view_mode">list,form</field>
-        <field name="views" eval="[(ref('view_cc_general_mis_list'), 'list'), (ref('view_cc_general_mis_form'), 'form')]"/>
+        <field name="view_id" ref="view_cc_general_mis_list"/>
         <field name="domain">[('solicitante_id', '=', uid)]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
