@@ -11,6 +11,7 @@
         'security/amunet_cc_general_security.xml',
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
+        'wizard/amunet_cc_rechazo_wizard_views.xml',
         'views/amunet_cc_general_views.xml',
         'views/menus.xml',
     ],

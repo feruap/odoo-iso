@@ -3,3 +3,4 @@ access_cc_general_user,CC General Usuario,model_amunet_cc_general,group_cc_gener
 access_cc_general_manager,CC General Responsable,model_amunet_cc_general,group_cc_general_manager,1,1,1,1
 access_cc_general_actividad_user,CC General Actividad Usuario,model_amunet_cc_general_actividad,group_cc_general_user,1,1,1,0
 access_cc_general_actividad_manager,CC General Actividad Responsable,model_amunet_cc_general_actividad,group_cc_general_manager,1,1,1,1
+access_cc_rechazo_wizard_manager,CC Rechazo Wizard,model_amunet_cc_rechazo_wizard,group_cc_general_manager,1,1,1,1

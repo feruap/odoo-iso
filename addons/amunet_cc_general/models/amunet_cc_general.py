@@ -336,24 +336,35 @@ class AmunetCCGeneral(models.Model):
             )
 
     def action_aceptar(self):
-        for r in self:
-            if r.state != 'pendiente':
-                raise UserError(_('Solo puedes autorizar registros en revisión.'))
-            r.write({'state': 'aceptado',
-                     'firma_aprobo_id': self.env.user.id,
-                     'fecha_aprobo': fields.Datetime.now(),
-                     'vb_aprobo': 'si'})
+        self.ensure_one()
+        if self.state != 'pendiente':
+            raise UserError(_('Solo puedes autorizar registros en revisión.'))
+        if self.reviso_id and not self.firma_reviso_id:
+            raise UserError(_(
+                'No se puede autorizar: %s aún no ha firmado la revisión.'
+            ) % self.reviso_id.name)
+        return self._abrir_firma('_signature_aprobo', _('Autorización del cambio'))
+
+    def _signature_aprobo(self):
+        self.ensure_one()
+        self.write({'state': 'aceptado',
+                    'firma_aprobo_id': self.env.user.id,
+                    'fecha_aprobo': fields.Datetime.now(),
+                    'vb_aprobo': 'si'})
+        self._message_log(body=_('<p><b>%s</b> autorizó el control de cambios.</p>') % self.env.user.name)
 
     def action_rechazar(self):
-        for r in self:
-            if r.state != 'pendiente':
-                raise UserError(_('Solo puedes rechazar registros en revisión.'))
-            if not r.motivo_rechazo:
-                raise UserError(_('Escribe el motivo del rechazo antes de rechazar.'))
-            r.write({'state': 'rechazado',
-                     'firma_aprobo_id': self.env.user.id,
-                     'fecha_aprobo': fields.Datetime.now(),
-                     'vb_aprobo': 'no'})
+        self.ensure_one()
+        if self.state != 'pendiente':
+            raise UserError(_('Solo puedes rechazar registros en revisión.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Rechazar control de cambios'),
+            'res_model': 'amunet.cc.rechazo.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_cc_id': self.id},
+        }
 
     def action_cerrar(self):
         for r in self:
@@ -380,6 +391,7 @@ class AmunetCCGeneral(models.Model):
         return {
             '_signature_solicitante':    _('Firma del solicitante'),
             '_signature_reviso':         _('Firma de quien revisó'),
+            '_signature_aprobo':         _('Autorización del cambio'),
             '_signature_cierre':         _('Firma de cierre'),
             '_signature_cierre_realizo': _('Realizó el control de cambios'),
             '_signature_cierre_reviso':  _('Revisó la aplicación'),
