@@ -396,6 +396,7 @@ class AmunetTempDaySignoff(models.Model):
     reading_ids = fields.Many2many('amunet.temp.reading', compute='_compute_readings')
     n_pending = fields.Integer(compute='_compute_readings')
     n_deviation_open = fields.Integer(compute='_compute_readings')
+    amunet_can_sign = fields.Boolean(compute='_compute_amunet_can_sign')
 
     _sql_constraints = [
         ('area_date_uniq', 'unique(area_id, date)',
@@ -424,6 +425,14 @@ class AmunetTempDaySignoff(models.Model):
             r.reading_ids = reads
             r.n_pending = len(reads.filtered(lambda x: x.state == 'pending'))
             r.n_deviation_open = len(reads.filtered(lambda x: x.deviation_state == 'open'))
+
+    def _compute_amunet_can_sign(self):
+        # Solo el supervisor del area puede firmar (mismo candado que
+        # action_open_sign). Los de solo-lectura veran el dia pero sin boton.
+        for r in self:
+            r.amunet_can_sign = bool(
+                r.state != 'signed' and r.area_id
+                and r.area_id.amunet_user_is_supervisor())
 
     def action_open_sign(self):
         self.ensure_one()

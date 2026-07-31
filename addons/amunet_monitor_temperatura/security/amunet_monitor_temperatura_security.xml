@@ -17,6 +17,12 @@
         <field name="comment">Solo supervisores de area (mas Alma y Mery): ven y firman el Cierre diario. Membresia explicita (no se hereda de manager/system).</field>
     </record>
 
+    <record id="group_temp_viewer" model="res.groups">
+        <field name="name">Monitor Temperatura / Cierre diario (solo lectura)</field>
+        <field name="implied_ids" eval="[(4, ref('group_temp_user'))]"/>
+        <field name="comment">Ve el Cierre diario de TODAS las areas pero NO puede firmar (ej. Documentacion, supervision documental).</field>
+    </record>
+
     <!-- El acceso al monitor NO es automatico para todos los internos: es
          EXPLICITO por usuario (group_temp_user). Asi, personal sin capacitar
          (ej. practicantes) no lo ve hasta que se le otorgue el grupo. La

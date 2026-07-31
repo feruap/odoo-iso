@@ -34,7 +34,10 @@ class ResUsers(models.Model):
         Sin asignacion manual, se deriva por puesto Supervisor."""
         self.ensure_one()
         areas = self.env['amunet.temp.area'].sudo().search([('active', '=', True)])
-        if self.has_group('amunet_monitor_temperatura.group_temp_manager'):
+        if (self.has_group('amunet_monitor_temperatura.group_temp_manager')
+                or self.has_group('amunet_monitor_temperatura.group_temp_viewer')):
+            # Configuracion y solo-lectura ven TODAS las areas. El viewer NO
+            # puede firmar (el candado de firma exige ser supervisor del area).
             return areas
         if self.amunet_temp_only_area_ids:
             if self.has_group('amunet_monitor_temperatura.group_temp_signoff'):
