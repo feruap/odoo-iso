@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Categoría de conceptos de Finiquito ────────────────────────── -->
+    <record id="cat_finiquito" model="hr.salary.rule.category">
+        <field name="name">Finiquito</field>
+        <field name="code">FINIQ</field>
+    </record>
+
+    <!-- ── Regla 1: Aguinaldo proporcional ───────────────────────────── -->
+    <!-- Fórmula: (días trabajados en el año / 365) × 15 × salario diario -->
+    <record id="rule_agui_prop" model="hr.salary.rule">
+        <field name="name">Aguinaldo proporcional</field>
+        <field name="code">AGUI_PROP</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="cat_finiquito"/>
+        <field name="appears_on_payslip">True</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+sal  = inputs.SAL_DIARIO.amount
+dias = inputs.DIAS_ANIO.amount
+result = round(dias / 365.0 * 15.0 * sal, 2)
+        </field>
+    </record>
+
+    <!-- Inputs compartidos por todas las reglas (se definen una sola vez) -->
+    <record id="input_sal_diario" model="hr.rule.input">
+        <field name="name">Salario diario</field>
+        <field name="code">SAL_DIARIO</field>
+        <field name="input_id" ref="rule_agui_prop"/>
+    </record>
+    <record id="input_dias_anio" model="hr.rule.input">
+        <field name="name">Días trabajados en el año</field>
+        <field name="code">DIAS_ANIO</field>
+        <field name="input_id" ref="rule_agui_prop"/>
+    </record>
+
+    <!-- ── Regla 2: Vacaciones proporcionales ────────────────────────── -->
+    <!-- Tabla LFT art. 76: días de vacaciones según años de antigüedad   -->
+    <record id="rule_vac_prop" model="hr.salary.rule">
+        <field name="name">Vacaciones proporcionales</field>
+        <field name="code">VAC_PROP</field>
+        <field name="sequence">20</field>
+        <field name="category_id" ref="cat_finiquito"/>
+        <field name="appears_on_payslip">True</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+anios = int(inputs.ANIOS_ANT.amount)
+dias  = inputs.DIAS_ANIO.amount
+sal   = inputs.SAL_DIARIO.amount
+if anios &lt;= 1:    dias_vac = 12
+elif anios == 2:   dias_vac = 14
+elif anios == 3:   dias_vac = 16
+elif anios == 4:   dias_vac = 18
+elif anios &lt;= 9:  dias_vac = 20
+elif anios &lt;= 14: dias_vac = 22
+elif anios &lt;= 19: dias_vac = 24
+elif anios &lt;= 24: dias_vac = 26
+else:              dias_vac = 28
+result = round(dias / 365.0 * dias_vac * sal, 2)
+        </field>
+    </record>
+
+    <record id="input_anios_ant" model="hr.rule.input">
+        <field name="name">Años de antigüedad</field>
+        <field name="code">ANIOS_ANT</field>
+        <field name="input_id" ref="rule_vac_prop"/>
+    </record>
+
+    <!-- ── Regla 3: Prima vacacional (25% de vacaciones prop.) ────────── -->
+    <record id="rule_prim_vac" model="hr.salary.rule">
+        <field name="name">Prima vacacional proporcional</field>
+        <field name="code">PRIM_VAC</field>
+        <field name="sequence">30</field>
+        <field name="category_id" ref="cat_finiquito"/>
+        <field name="appears_on_payslip">True</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+result = round(result_rules.VAC_PROP.total * 0.25, 2)
+        </field>
+    </record>
+
+    <!-- ── Regla 4: Prima de antigüedad ──────────────────────────────── -->
+    <!-- Solo aplica si el empleado tiene 15 o más años (renuncia voluntaria) -->
+    <record id="rule_prim_ant" model="hr.salary.rule">
+        <field name="name">Prima de antigüedad</field>
+        <field name="code">PRIM_ANT</field>
+        <field name="sequence">40</field>
+        <field name="category_id" ref="cat_finiquito"/>
+        <field name="appears_on_payslip">True</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+anios = inputs.ANIOS_ANT.amount
+sal   = inputs.SAL_DIARIO.amount
+result = round(12.0 * anios * sal, 2) if anios &gt;= 15 else 0.0
+        </field>
+    </record>
+
+    <!-- ── Regla 5: Total Finiquito (neto = bruto, sin retenciones) ───── -->
+    <record id="rule_net_finiq" model="hr.salary.rule">
+        <field name="name">Total Finiquito</field>
+        <field name="code">NET</field>
+        <field name="sequence">100</field>
+        <field name="category_id" ref="cat_finiquito"/>
+        <field name="appears_on_payslip">True</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">
+result = round(
+    result_rules.AGUI_PROP.total +
+    result_rules.VAC_PROP.total +
+    result_rules.PRIM_VAC.total +
+    result_rules.PRIM_ANT.total,
+    2
+)
+        </field>
+    </record>
+
+    <!-- ── Estructura de salario: Finiquito ──────────────────────────── -->
+    <record id="structure_finiquito" model="hr.payroll.structure">
+        <field name="name">Finiquito</field>
+        <field name="code">FINIQUITO</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="rule_ids" eval="[(6, 0, [
+            ref('rule_agui_prop'),
+            ref('rule_vac_prop'),
+            ref('rule_prim_vac'),
+            ref('rule_prim_ant'),
+            ref('rule_net_finiq'),
+        ])]"/>
+    </record>
+
+</odoo>

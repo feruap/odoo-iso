@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Producción autorizada para crear avisos: solo Alondra (72) y Alma (71) -->
+        <record id="group_aviso_produccion_user" model="res.groups">
+            <field name="name">Aviso - Produccion autorizada</field>
+        </record>
+        <!-- Secuencia para avisos de produccion -->
+        <record id="seq_amunet_aviso_produccion" model="ir.sequence">
+            <field name="name">Aviso de produccion</field>
+            <field name="code">amunet.aviso.produccion</field>
+            <field name="prefix">AVS/%(year)s/</field>
+            <field name="padding">3</field>
+        </record>
+        <!-- Seed de usuarios (se ejecuta en cada -u) -->
+        <function model="amunet.aviso.setup" name="seed_produccion_users"/>
+    </data>
+</odoo>
