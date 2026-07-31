@@ -11,7 +11,10 @@
                 <field name="descripcion" string="Descripción (Denominación genérica)"/>
                 <field name="muestra"     string="Muestra"/>
                 <field name="referencia"  string="Referencia"/>
-                <field name="caducidad_autorizada" string="Caducidad autorizada"/>
+                <field name="caducidad_autorizada"  string="Caducidad autorizada"/>
+                <field name="registro_sanitario"    string="Registro sanitario"/>
+                <field name="fecha_emision_rs"      string="Emisión RS" optional="hide"/>
+                <field name="fecha_vencimiento_rs"  string="Vencimiento RS" optional="hide"/>
             </list>
         </field>
     </record>
@@ -38,6 +41,16 @@
                     </group>
                     <label for="descripcion"/>
                     <field name="descripcion" string="Descripción (Denominación genérica)" rows="3"/>
+                    <separator string="Registro sanitario Cofepris"/>
+                    <group>
+                        <group>
+                            <field name="registro_sanitario"   string="Número de registro"/>
+                            <field name="fecha_emision_rs"     string="Fecha de emisión"/>
+                        </group>
+                        <group>
+                            <field name="fecha_vencimiento_rs" string="Fecha de vencimiento"/>
+                        </group>
+                    </group>
                 </sheet>
             </form>
         </field>
