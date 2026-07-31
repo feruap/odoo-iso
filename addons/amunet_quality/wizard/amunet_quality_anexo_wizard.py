@@ -50,14 +50,39 @@ class AmunetQualityAnexoWizard(models.TransientModel):
         }) for line in check.anexo_line_ids]
 
     def action_guardar_cerrar(self):
-        """Escribe las líneas del wizard al QC y cierra."""
+        """Escribe las líneas del wizard al QC sin borrar datos del reporte."""
         self.ensure_one()
-        nuevas_lineas = [(5, 0, 0)] + [(0, 0, {
-            'sequence': l.sequence,
-            'muestra':  l.muestra,
-            'col1': l.col1, 'col2': l.col2, 'col3': l.col3,
-            'col4': l.col4, 'col5': l.col5, 'col6': l.col6,
-            'col7': l.col7,
-        }) for l in self.line_ids]
-        self.check_id.write({'anexo_line_ids': nuevas_lineas})
+        check = self.check_id
+        AnexoLine = self.env['amunet.quality.anexo.line']
+
+        existing = check.anexo_line_ids.sorted(lambda l: (l.sequence, l.id))
+        wizard_lines = self.line_ids.sorted(lambda l: (l.sequence, l.id))
+        es_correccion = bool(existing)  # Si ya había datos, es una corrección
+
+        for i, wl in enumerate(wizard_lines):
+            vals = {
+                'sequence': wl.sequence,
+                'muestra':  wl.muestra,
+                'col1': wl.col1, 'col2': wl.col2, 'col3': wl.col3,
+                'col4': wl.col4, 'col5': wl.col5, 'col6': wl.col6,
+                'col7': wl.col7,
+            }
+            if i < len(existing):
+                existing[i].write(vals)
+            else:
+                AnexoLine.create({'check_id': check.id, **vals})
+
+        # Eliminar sólo las líneas que el usuario quitó del wizard
+        for j in range(len(wizard_lines), len(existing)):
+            existing[j].unlink()
+
+        # Registrar en el historial del análisis quién capturó/modificó el anexo
+        titulo = check.anexo_titulo or 'Anexo'
+        usuario = self.env.user.name
+        if es_correccion:
+            msg = f'<b>Corrección de {titulo}</b> realizada por {usuario}.'
+        else:
+            msg = f'<b>Captura de {titulo}</b> realizada por {usuario}.'
+        check.sudo().message_post(body=msg, message_type='comment', subtype_xmlid='mail.mt_note')
+
         return {'type': 'ir.actions.act_window_close'}

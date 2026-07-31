@@ -112,7 +112,7 @@
 
                     <button name="action_sign_authorized" string="Firmar: Autorizó" type="object" class="btn-primary"
                             invisible="not user_verified_id or user_authorized_id or state == 'done'"
-                            groups="amunet_quality.group_quality_sanitary"
+                            groups="amunet_quality.group_quality_sanitary,amunet_quality.group_quality_supervisor"
                             confirm="¿Confirmar Autorización?"/>
 
                     <field name="state" widget="statusbar"
@@ -455,8 +455,9 @@
                     <!-- Contenido: siempre visible para material_con_anexo; o si tiene_anexos está activado -->
                     <group invisible="not (tiene_anexos or is_material_con_anexo) or not sampling_confirmed" colspan="4" col="1">
 
-                        <!-- Botón principal de captura -->
-                        <div style="padding: 8px 0 12px 0;" invisible="state == 'done'">
+                        <!-- Botón principal de captura — solo visible al área de calidad; permite correcciones en cualquier estado -->
+                        <div style="padding: 8px 0 12px 0;"
+                             groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary,amunet_quality.group_quality_manager">
                             <button string="✎  Capturar / Editar Datos del Anexo"
                                     type="object"
                                     name="action_open_anexo_wizard"
@@ -519,6 +520,7 @@
                             <field name="is_termometro_varilla" invisible="1"/>
                             <field name="is_agitador" invisible="1"/>
                             <field name="is_esterilizador" invisible="1"/>
+                            <field name="is_balanza" invisible="1"/>
                             <field name="equipment_unit_ids" nolabel="1"
                                    readonly="state == 'done'">
                                 <list editable="bottom">
@@ -526,11 +528,16 @@
                                     <field name="serial_number" string="No. de serie"/>
                                     <!-- Columnas genéricas (Vórtex, Soporte, Microscopio y otros) -->
                                     <field name="result_apariencia" string="Apariencia"
-                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_agitador or parent.is_esterilizador"/>
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_agitador or parent.is_esterilizador or parent.is_balanza"/>
                                     <field name="result_funcionalidad" string="Funcionalidad"
-                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_agitador or parent.is_esterilizador"/>
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_agitador or parent.is_esterilizador or parent.is_balanza"/>
                                     <field name="result_dimensiones" string="Dimensiones"
-                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_agitador or parent.is_esterilizador" optional="show"/>
+                                           column_invisible="parent.is_termobloque or parent.is_termometro_varilla or parent.is_agitador or parent.is_esterilizador or parent.is_balanza" optional="show"/>
+                                    <!-- Columnas Balanza digital (EQBAD01) -->
+                                    <field name="result_apariencia" string="Apariencia"
+                                           column_invisible="not parent.is_balanza"/>
+                                    <field name="result_funcionalidad" string="Exactitud (±2d)"
+                                           column_invisible="not parent.is_balanza"/>
                                     <!-- Columnas Agitador magnético con placa calefactora (EQAMC01) -->
                                     <field name="result_apariencia" string="Apariencia"
                                            column_invisible="not parent.is_agitador"/>

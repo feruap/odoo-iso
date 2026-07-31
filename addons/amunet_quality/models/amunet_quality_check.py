@@ -87,6 +87,7 @@ class AmunetQualityCheck(models.Model):
             rec.is_termometro_varilla = code.upper().startswith('EQTRV')
             rec.is_agitador = code.upper().startswith('EQAMC')
             rec.is_esterilizador = code.upper().startswith('EQEPV')
+            rec.is_balanza = code.upper().startswith('EQBAD')
 
     _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO')
 
@@ -848,6 +849,12 @@ class AmunetQualityCheck(models.Model):
 
     is_esterilizador = fields.Boolean(
         string='Es esterilizador/autoclave',
+        compute='_compute_is_equipment',
+        store=True,
+    )
+
+    is_balanza = fields.Boolean(
+        string='Es balanza digital',
         compute='_compute_is_equipment',
         store=True,
     )
@@ -2496,8 +2503,9 @@ class AmunetQualityCheck(models.Model):
     def action_sign_authorized(self):
         """Abre wizard para firmar como Autorizó (Sanitario)"""
         self.ensure_one()
-        if not self.env.user.has_group('amunet_quality.group_quality_sanitary'):
-            raise AccessDenied("Solo el Responsable Sanitario puede firmar como Autorizó.")
+        if not (self.env.user.has_group('amunet_quality.group_quality_sanitary') or
+                self.env.user.has_group('amunet_quality.group_quality_supervisor')):
+            raise AccessDenied("No tiene permisos de Responsable Sanitario o Supervisor.")
 
         if self.global_result == 'pending':
              raise ValidationError("No se puede firmar si el análisis no está completo (Dictamen: Pendiente).")
