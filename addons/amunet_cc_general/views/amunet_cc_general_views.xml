@@ -40,8 +40,7 @@
                     <button name="action_aceptar" string="Autorizar"
                             type="object" class="btn-success" icon="fa-check"
                             invisible="state != 'pendiente'"
-                            groups="amunet_cc_general.group_cc_general_manager"
-                            confirm="¿Confirmas que autorizas este control de cambios?"/>
+                            groups="amunet_cc_general.group_cc_general_manager"/>
                     <button name="action_rechazar" string="Rechazar"
                             type="object" class="btn-danger" icon="fa-times"
                             invisible="state != 'pendiente'"
@@ -140,9 +139,7 @@
                             <field name="vb_aprobo"       readonly="1" invisible="not vb_aprobo"/>
                         </group>
                         <group string="Motivo del rechazo" invisible="state != 'rechazado'">
-                            <field name="motivo_rechazo" nolabel="1"
-                                   readonly="state != 'pendiente'"
-                                   placeholder="Escribe el motivo antes de rechazar."/>
+                            <field name="motivo_rechazo" nolabel="1" readonly="1"/>
                         </group>
                     </group>
 
@@ -285,6 +282,27 @@
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Aún no has creado ningún control de cambios.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_cc_general_por_firmar" model="ir.actions.act_window">
+        <field name="name">Pendientes de mi firma</field>
+        <field name="res_model">amunet.cc.general</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[
+            ('state', 'not in', ['borrador', 'cerrado', 'rechazado']),
+            '|', '|', '|', '|', '|',
+            '&amp;', ('reviso_id', '=', uid), ('firma_reviso_id', '=', False),
+            '&amp;', ('cierre_realizo_id', '=', uid), ('firma_cierre_realizo_id', '=', False),
+            '&amp;', ('cierre_reviso_id', '=', uid), ('firma_cierre_reviso_id', '=', False),
+            '&amp;', ('cierre_aprobo_id', '=', uid), ('firma_cierre_aprobo_id', '=', False),
+            ('actividades_ids', 'any', [('responsable_id', '=', uid), ('firma_enterado_id', '=', False)]),
+            ('actividades_ids', 'any', [('verifico_id', '=', uid), ('firma_verifico_id', '=', False)])
+        ]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No tienes controles de cambio pendientes de tu firma.
             </p>
         </field>
     </record>

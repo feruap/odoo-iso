@@ -11,6 +11,12 @@
               action="action_cc_general_mis"
               sequence="10"/>
 
+    <menuitem id="menu_cc_general_por_firmar"
+              name="Pendientes de mi firma"
+              parent="menu_cc_general_root"
+              action="action_cc_general_por_firmar"
+              sequence="15"/>
+
     <menuitem id="menu_cc_general_todos"
               name="Todos los controles de cambio"
               parent="menu_cc_general_root"
@@ -30,6 +36,12 @@
               parent="menu_cc_general_bajo_docs"
               action="action_cc_general_mis"
               sequence="10"/>
+
+    <menuitem id="menu_cc_general_por_firmar_bajo_docs"
+              name="Pendientes de mi firma"
+              parent="menu_cc_general_bajo_docs"
+              action="action_cc_general_por_firmar"
+              sequence="15"/>
 
     <menuitem id="menu_cc_general_todos_bajo_docs"
               name="Todos los controles de cambio"
