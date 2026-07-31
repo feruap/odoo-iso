@@ -233,7 +233,8 @@
                            invisible="state not in ('aceptado', 'cerrado')"/>
                     <field name="evidencia_anexa"
                            invisible="state not in ('aceptado', 'cerrado')"
-                           readonly="not is_manager or state not in ('aceptado',)"/>
+                           readonly="not is_manager or state not in ('aceptado',)"
+                           placeholder="Ej. Captura de pantalla, enlace al registro actualizado en Odoo, o descripción de lo verificado."/>
 
                     <!-- ── Firmas de cierre ──────────────────────── -->
                     <separator string="Firmas de cierre"
