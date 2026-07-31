@@ -780,36 +780,49 @@ class AmunetMaterialRequest(models.Model):
         consumption_loc = self._get_consumption_location()
         ptype = self._get_internal_picking_type()
         src_loc = ptype.default_location_src_id or self.warehouse_id.lot_stock_id
+        # Agrupar las lineas por producto: varias lineas del mismo producto
+        # (distintos lotes) comparten UN move fusionado por Odoo. Hay que crear
+        # un move_line por lote SIN pisar los anteriores. Bug historico: al
+        # hacer unlink() por cada linea, la ultima borraba el lote de la previa
+        # y solo se descontaba UN lote (fantasma de inventario en el otro).
+        lines_by_product = {}
         for line in self.line_ids:
+            lines_by_product.setdefault(
+                line.product_id.id, self.env['amunet.material.request.line'])
+            lines_by_product[line.product_id.id] |= line
+        for product_id, plines in lines_by_product.items():
+            first = plines[0]
             moves = self.picking_id.move_ids.filtered(
-                lambda m, prod=line.product_id: m.product_id.id == prod.id
+                lambda m, pid=product_id: m.product_id.id == pid
             )
             if not moves:
                 new_move = self.env['stock.move'].sudo().create({
                     'picking_id': self.picking_id.id,
-                    'product_id': line.product_id.id,
-                    'product_uom_qty': line.qty_requested,
-                    'product_uom': line.uom_id.id,
+                    'product_id': first.product_id.id,
+                    'product_uom_qty': sum(plines.mapped('qty_requested')),
+                    'product_uom': first.uom_id.id,
                     'location_id': src_loc.id,
                     'location_dest_id': self._amunet_dest_for_product(
-                        line.product_id, consumption_loc).id,
+                        first.product_id, consumption_loc).id,
                     'company_id': self.warehouse_id.company_id.id,
                 })
                 new_move._action_confirm()
                 new_move._action_assign()
                 moves = new_move
             move = moves[0]
+            # Limpiar UNA sola vez; luego un move_line por cada lote surtido.
             move.move_line_ids.unlink()
-            self.env['stock.move.line'].create({
-                'move_id': move.id,
-                'product_id': line.product_id.id,
-                'product_uom_id': line.uom_id.id,
-                'location_id': move.location_id.id,
-                'location_dest_id': move.location_dest_id.id,
-                'lot_id': line.lot_id.id or False,
-                'quantity': line.qty_supplied,
-                'picking_id': self.picking_id.id,
-            })
+            for line in plines:
+                self.env['stock.move.line'].create({
+                    'move_id': move.id,
+                    'product_id': line.product_id.id,
+                    'product_uom_id': line.uom_id.id,
+                    'location_id': move.location_id.id,
+                    'location_dest_id': move.location_dest_id.id,
+                    'lot_id': line.lot_id.id or False,
+                    'quantity': line.qty_supplied,
+                    'picking_id': self.picking_id.id,
+                })
         res = self.picking_id.with_context(
             skip_backorder=True,
             picking_ids_not_to_backorder=self.picking_id.ids,
