@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- ── Vista lista (Pendientes de mi firma) ─────────────────── -->
+    <record id="view_cc_general_por_firmar_list" model="ir.ui.view">
+        <field name="name">amunet.cc.general.por.firmar.list</field>
+        <field name="model">amunet.cc.general</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="fecha_solicitud"/>
+                <field name="solicitante_id"/>
+                <field name="accion_pendiente_usuario" string="Lo que debes hacer"
+                       decoration-danger="accion_pendiente_usuario"/>
+            </list>
+        </field>
+    </record>
+
     <!-- ── Vista lista ─────────────────────────────────────────── -->
     <record id="view_cc_general_list" model="ir.ui.view">
         <field name="name">amunet.cc.general.list</field>
@@ -290,16 +305,8 @@
         <field name="name">Pendientes de mi firma</field>
         <field name="res_model">amunet.cc.general</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[
-            ('state', 'not in', ['borrador', 'cerrado', 'rechazado']),
-            '|', '|', '|', '|', '|',
-            '&amp;', ('reviso_id', '=', uid), ('firma_reviso_id', '=', False),
-            '&amp;', ('cierre_realizo_id', '=', uid), ('firma_cierre_realizo_id', '=', False),
-            '&amp;', ('cierre_reviso_id', '=', uid), ('firma_cierre_reviso_id', '=', False),
-            '&amp;', ('cierre_aprobo_id', '=', uid), ('firma_cierre_aprobo_id', '=', False),
-            ('actividades_ids', 'any', [('responsable_id', '=', uid), ('firma_enterado_id', '=', False)]),
-            ('actividades_ids', 'any', [('verifico_id', '=', uid), ('firma_verifico_id', '=', False)])
-        ]</field>
+        <field name="view_id" ref="view_cc_general_por_firmar_list"/>
+        <field name="domain">[('pendientes_para_ids', 'in', [uid])]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No tienes controles de cambio pendientes de tu firma.

@@ -1,29 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Menú raíz independiente (se conserva durante la transición) -->
-    <menuitem id="menu_cc_general_root"
-              name="Control de Cambios"
-              sequence="90"/>
-
-    <menuitem id="menu_cc_general_mis"
-              name="Mis controles de cambio"
-              parent="menu_cc_general_root"
-              action="action_cc_general_mis"
-              sequence="10"/>
-
-    <menuitem id="menu_cc_general_por_firmar"
-              name="Pendientes de mi firma"
-              parent="menu_cc_general_root"
-              action="action_cc_general_por_firmar"
-              sequence="15"/>
-
-    <menuitem id="menu_cc_general_todos"
-              name="Todos los controles de cambio"
-              parent="menu_cc_general_root"
-              action="action_cc_general"
-              sequence="20"
-              groups="amunet_cc_general.group_cc_general_manager"/>
-
     <!-- Integración bajo Control de Documentos -->
     <menuitem id="menu_cc_general_bajo_docs"
               name="Control de cambios"

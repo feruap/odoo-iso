@@ -58,15 +58,16 @@ class AmunetCCGeneralActividad(models.Model):
         url = '%s/odoo/control-de-cambios/%s' % (base_url, self.cc_id.id)
         self.cc_id.message_post(
             body=_(
-                'Hola <b>%s</b>, se te ha asignado la responsabilidad de la actividad '
-                '<b>"%s"</b> en el control de cambios <b>%s</b>.<br/>'
-                'Por favor ingresa al sistema y firma de enterado: '
-                '<a href="%s">%s</a>'
+                'Hola <b>%s</b>,<br/><br/>'
+                'Se te asignó la actividad <b>"%s"</b> en el control de cambios <b>%s</b>.<br/><br/>'
+                'Para registrar tu conformidad, abre el control de cambios, localiza tu actividad '
+                'y haz clic en el botón <b>"Firmar enterado"</b>.<br/><br/>'
+                '<a href="%s">Abrir control de cambios %s</a>'
             ) % (
                 self.responsable_id.name,
                 self.actividad or 'Sin nombre',
                 self.cc_id.name,
-                url, url,
+                url, self.cc_id.name,
             ),
             partner_ids=[self.responsable_id.partner_id.id],
             subtype_xmlid='mail.mt_comment',
@@ -221,6 +222,83 @@ class AmunetCCGeneral(models.Model):
 
     adjunto_ids = fields.Many2many('ir.attachment', string='Archivos adjuntos')
 
+    # ── Acción pendiente del usuario actual ──────────────────────
+    accion_pendiente_usuario = fields.Char(
+        string='Tu acción',
+        compute='_compute_accion_pendiente_usuario',
+        compute_sudo=False,
+    )
+
+    pendientes_para_ids = fields.Many2many(
+        'res.users',
+        'amunet_cc_pendientes_para_rel',
+        'cc_id', 'user_id',
+        string='Usuarios con firma pendiente',
+        compute='_compute_pendientes_para',
+        store=True,
+    )
+
+    @api.depends(
+        'state',
+        'reviso_id', 'firma_reviso_id',
+        'cierre_realizo_id', 'firma_cierre_realizo_id',
+        'cierre_reviso_id',  'firma_cierre_reviso_id',
+        'cierre_aprobo_id',  'firma_cierre_aprobo_id',
+        'actividades_ids.responsable_id', 'actividades_ids.firma_enterado_id',
+        'actividades_ids.verifico_id',    'actividades_ids.firma_verifico_id',
+    )
+    def _compute_pendientes_para(self):
+        for rec in self:
+            if rec.state in ('borrador', 'cerrado', 'rechazado'):
+                rec.pendientes_para_ids = [(5,)]
+                continue
+            user_ids = set()
+            if rec.reviso_id and not rec.firma_reviso_id:
+                user_ids.add(rec.reviso_id.id)
+            for act in rec.actividades_ids:
+                if act.responsable_id and not act.firma_enterado_id:
+                    user_ids.add(act.responsable_id.id)
+                if act.verifico_id and not act.firma_verifico_id:
+                    user_ids.add(act.verifico_id.id)
+            for campo, firma in [
+                ('cierre_realizo_id', 'firma_cierre_realizo_id'),
+                ('cierre_reviso_id',  'firma_cierre_reviso_id'),
+                ('cierre_aprobo_id',  'firma_cierre_aprobo_id'),
+            ]:
+                user = rec[campo]
+                if user and not rec[firma]:
+                    user_ids.add(user.id)
+            rec.pendientes_para_ids = [(6, 0, list(user_ids))]
+
+    @api.depends('reviso_id', 'firma_reviso_id',
+                 'actividades_ids.responsable_id', 'actividades_ids.firma_enterado_id',
+                 'actividades_ids.verifico_id', 'actividades_ids.firma_verifico_id',
+                 'cierre_realizo_id', 'firma_cierre_realizo_id',
+                 'cierre_reviso_id', 'firma_cierre_reviso_id',
+                 'cierre_aprobo_id', 'firma_cierre_aprobo_id')
+    @api.depends_context('uid')
+    def _compute_accion_pendiente_usuario(self):
+        uid = self.env.uid
+        for rec in self:
+            acciones = []
+            if rec.reviso_id.id == uid and not rec.firma_reviso_id:
+                acciones.append(_('Firmar la revisión (sección 2)'))
+            for act in rec.actividades_ids:
+                if act.responsable_id.id == uid and not act.firma_enterado_id:
+                    acciones.append(_('Firmar de enterado en tu actividad: "%s"') % (act.actividad or 'sin nombre'))
+                    break
+            for act in rec.actividades_ids:
+                if act.verifico_id.id == uid and not act.firma_verifico_id:
+                    acciones.append(_('Verificar la actividad: "%s"') % (act.actividad or 'sin nombre'))
+                    break
+            if rec.cierre_realizo_id.id == uid and not rec.firma_cierre_realizo_id:
+                acciones.append(_('Firmar cierre — como "Realizó el control de cambios"'))
+            if rec.cierre_reviso_id.id == uid and not rec.firma_cierre_reviso_id:
+                acciones.append(_('Firmar cierre — como "Revisó la aplicación"'))
+            if rec.cierre_aprobo_id.id == uid and not rec.firma_cierre_aprobo_id:
+                acciones.append(_('Firmar cierre — como "Aprobó la aplicación del cambio"'))
+            rec.accion_pendiente_usuario = ' / '.join(acciones) if acciones else ''
+
     # ── Secuencia ────────────────────────────────────────────────
     @api.model_create_multi
     def create(self, vals_list):
@@ -302,11 +380,12 @@ class AmunetCCGeneral(models.Model):
         url = '%s/odoo/control-de-cambios/%s' % (base_url, self.id)
         self.message_post(
             body=_(
-                'Hola <b>%s</b>, se te ha asignado como <b>"%s"</b> en el cierre del '
-                'control de cambios <b>%s</b>.<br/>'
-                'Por favor ingresa al sistema y firma cuando corresponda: '
-                '<a href="%s">%s</a>'
-            ) % (usuario.name, rol, self.name, url, url),
+                'Hola <b>%s</b>,<br/><br/>'
+                'Se te asignó como <b>"%s"</b> en el cierre del control de cambios <b>%s</b>.<br/><br/>'
+                'Cuando estés listo/a, abre el control de cambios, ve a la sección '
+                '"Firmas de cierre" y haz clic en el botón <b>"Firmar"</b> de tu bloque.<br/><br/>'
+                '<a href="%s">Abrir control de cambios %s</a>'
+            ) % (usuario.name, rol, self.name, url, self.name),
             partner_ids=[usuario.partner_id.id],
             subtype_xmlid='mail.mt_comment',
         )
@@ -323,15 +402,27 @@ class AmunetCCGeneral(models.Model):
             r.state = 'pendiente'
             base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
             url = '%s/odoo/control-de-cambios/%s' % (base_url, r.id)
-            partners = r.aprobo_id.partner_id
             if r.reviso_id:
-                partners |= r.reviso_id.partner_id
+                r.message_post(
+                    body=_(
+                        'Hola <b>%s</b>,<br/><br/>'
+                        'El control de cambios <b>%s</b> requiere tu revisión.<br/><br/>'
+                        'Abre el control de cambios y haz clic en el botón <b>"Firmar"</b> '
+                        'de la sección "Revisó (Aseguramiento de Calidad)".<br/><br/>'
+                        '<a href="%s">Abrir control de cambios %s</a>'
+                    ) % (r.reviso_id.name, r.name, url, r.name),
+                    partner_ids=[r.reviso_id.partner_id.id],
+                    subtype_xmlid='mail.mt_comment',
+                )
             r.message_post(
                 body=_(
-                    'El control de cambios <b>%s</b> requiere tu autorización.<br/>'
-                    '<a href="%s">Haz clic aquí para revisarlo.</a>'
-                ) % (r.name, url),
-                partner_ids=partners.ids,
+                    'Hola <b>%s</b>,<br/><br/>'
+                    'El control de cambios <b>%s</b> requiere tu autorización.<br/><br/>'
+                    'Abre el control de cambios y haz clic en el botón <b>"Autorizar"</b> '
+                    '(disponible cuando la revisión de calidad esté firmada).<br/><br/>'
+                    '<a href="%s">Abrir control de cambios %s</a>'
+                ) % (r.aprobo_id.name, r.name, url, r.name),
+                partner_ids=[r.aprobo_id.partner_id.id],
                 subtype_xmlid='mail.mt_comment',
             )
 
@@ -353,13 +444,17 @@ class AmunetCCGeneral(models.Model):
                     'vb_aprobo': 'si'})
         self._message_log(body=_('<p><b>%s</b> autorizó el control de cambios.</p>') % self.env.user.name)
         if self.solicitante_id and self.solicitante_id.partner_id:
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            url = '%s/odoo/control-de-cambios/%s' % (base_url, self.id)
             self.message_post(
                 body=_(
-                    '<p>Hola <b>%s</b>,</p>'
-                    '<p>Tu control de cambios <b>%s</b> ha sido <b>autorizado</b> por %s.</p>'
-                    '<p>Ya puedes ingresar el plan de implementación y registrar '
-                    'las actividades correspondientes.</p>'
-                ) % (self.solicitante_id.name, self.name, self.env.user.name),
+                    'Hola <b>%s</b>,<br/><br/>'
+                    'Tu control de cambios <b>%s</b> ha sido <b>autorizado</b> por %s.<br/><br/>'
+                    'Ya puedes ingresar el plan de implementación: abre el control de cambios, '
+                    've a la sección "Implementación y seguimiento" y agrega las actividades '
+                    'con sus responsables.<br/><br/>'
+                    '<a href="%s">Abrir control de cambios %s</a>'
+                ) % (self.solicitante_id.name, self.name, self.env.user.name, url, self.name),
                 partner_ids=self.solicitante_id.partner_id.ids,
                 subtype_xmlid='mail.mt_comment',
             )
