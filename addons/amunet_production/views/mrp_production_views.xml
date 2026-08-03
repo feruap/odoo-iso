@@ -66,7 +66,7 @@
                     <button name="action_initiate_reconciliation"
                             string="Iniciar conciliación"
                             type="object" class="oe_highlight"
-                            invisible="reconciliation_state != 'pending' or not amunet_has_supplied_moves or state not in ('confirmed','progress','to_close','done') or not amunet_all_workorders_done"
+                            invisible="reconciliation_state != 'pending' or not amunet_has_supplied_moves or state not in ('confirmed','progress','to_close','done') or not amunet_all_workorders_done or (amunet_sys_req_qc and not amunet_es_desarrollo and quality_analysis_status not in ('requested','approved','rejected'))"
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor"/>
                     <button name="action_validate_reconciliation"
                             string="Validar conciliación"

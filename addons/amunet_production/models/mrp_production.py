@@ -494,6 +494,15 @@ class MrpProduction(models.Model):
             raise UserError(_('Solo se puede iniciar conciliación cuando la orden está en progreso.'))
         if self.reconciliation_state != 'pending':
             raise UserError(_('La conciliación ya fue iniciada.'))
+        # Candado: la conciliacion NO puede iniciarse antes de que se haya
+        # solicitado el analisis de producto terminado. Solo aplica a ordenes
+        # que requieren analisis de calidad (no a desarrollo).
+        if self.amunet_sys_req_qc and not self.amunet_es_desarrollo \
+                and self.quality_analysis_status not in ('requested', 'approved', 'rejected'):
+            raise UserError(_(
+                'No se puede iniciar la conciliación antes de solicitar el '
+                'análisis de producto terminado. Primero usa "Solicitar '
+                'análisis".'))
         # Precargar qty_used = qty_supplied como punto de partida
         for move in self.move_raw_ids.filtered(
             lambda m: m.state != 'cancel' and (m.amunet_qty_supplied or 0) > 0
