@@ -51,6 +51,14 @@ class ProductTemplate(models.Model):
              'prefijo "PLANTILLA_BUFFER_" ni ".pptx". Ej: STBPR01, HECES, CR. '
              'Solo aplica a viales de solucion de corrimiento / buffer.',
     )
+    etiqueta_buffer_modo = fields.Selection(
+        selection=[('por_vial', 'Por vial (1 por vial surtido)'),
+                   ('por_caja', 'Por caja (1 por caja del plan)')],
+        string='Conteo de etiqueta de buffer', default='por_vial',
+        help='por_vial: una etiqueta por cada vial surtido (BPR). por_caja: una '
+             'etiqueta por caja del plan, aunque la caja lleve varios viales '
+             '(ej. combo respiratorio).',
+    )
     etiqueta_contenedor = fields.Char(
         string='Contenedor (etiqueta subtipo H)',
         help='Texto del contenedor en la etiqueta (solo subtipo H). '

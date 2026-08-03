@@ -282,7 +282,7 @@ class MrpProduction(models.Model):
     # configurada. NAME = nombre del producto; LOT/CADUCIDAD = del lote del
     # buffer surtido (caducidad en año-mes).
     # ==================================================================
-    def _etiqueta_buffers_de_orden(self):
+    def _etiqueta_buffers_de_orden(self, num_cajas=0):
         """Devuelve {plantilla: [valores,...]} con una entrada por vial a
         etiquetar. Un valor = dict de placeholders {{NAME}}/{{LOT}}/{{CADUCIDAD}}."""
         self.ensure_one()
@@ -292,28 +292,40 @@ class MrpProduction(models.Model):
             return {}
         nombre = (self.product_id.product_tmpl_id.nombre_etiqueta or '').strip() \
             or self.product_id.name
+
+        def _vals(lot, lot_name=''):
+            cad = lot.expiration_date.strftime('%Y-%m') \
+                if (lot and lot.expiration_date) else ''
+            return {
+                '{{NAME}}': nombre,
+                '{{LOT}}': (lot.name if lot else lot_name) or '',
+                '{{CADUCIDAD}}': cad,
+            }
+
         specs = {}
         moves = self.move_raw_ids.filtered(
             lambda m: m.state != 'cancel'
             and m.product_id.categ_id == cat
             and m.product_id.product_tmpl_id.etiqueta_buffer_plantilla)
         for m in moves:
-            plantilla = m.product_id.product_tmpl_id.etiqueta_buffer_plantilla
-            for ml in m.move_line_ids:
-                qty = int(round(ml.quantity or 0))
-                if qty <= 0:
-                    continue
-                lot = ml.lot_id
-                cad = ''
-                if lot and lot.expiration_date:
-                    cad = lot.expiration_date.strftime('%Y-%m')
-                vals = {
-                    '{{NAME}}': nombre,
-                    '{{LOT}}': (lot.name if lot else (ml.lot_name or '')) or '',
-                    '{{CADUCIDAD}}': cad,
-                }
-                specs.setdefault(plantilla, [])
-                specs[plantilla].extend([dict(vals) for _ in range(qty)])
+            tmpl = m.product_id.product_tmpl_id
+            plantilla = tmpl.etiqueta_buffer_plantilla
+            modo = tmpl.etiqueta_buffer_modo or 'por_vial'
+            mls = m.move_line_ids.filtered(lambda l: (l.quantity or 0) > 0)
+            if not mls:
+                continue
+            specs.setdefault(plantilla, [])
+            if modo == 'por_caja':
+                # 1 etiqueta por caja del plan (aunque la caja lleve varios
+                # viales, ej. combo). Usa el lote surtido (primer move_line).
+                vals = _vals(mls[0].lot_id, mls[0].lot_name or '')
+                n = int(num_cajas) or int(round(sum(mls.mapped('quantity'))))
+                specs[plantilla].extend([dict(vals) for _ in range(n)])
+            else:  # por_vial: 1 por cada vial surtido
+                for ml in mls:
+                    qty = int(round(ml.quantity or 0))
+                    vals = _vals(ml.lot_id, ml.lot_name or '')
+                    specs[plantilla].extend([dict(vals) for _ in range(qty)])
         return specs
 
     def _etiqueta_construir_buffer_pptx(self, plantilla, valores):

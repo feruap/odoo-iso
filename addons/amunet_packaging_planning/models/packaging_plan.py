@@ -490,7 +490,7 @@ class AmunetPackagingPlan(models.Model):
             ('name', '=like', 'Etiquetas_Buffer_%.pptx'),
         ]).unlink()
         buffer_msgs = []
-        for plantilla, valores in mo._etiqueta_buffers_de_orden().items():
+        for plantilla, valores in mo._etiqueta_buffers_de_orden(num_cajas=total).items():
             if not valores:
                 continue
             contenido_b = mo._etiqueta_construir_buffer_pptx(plantilla, valores)
