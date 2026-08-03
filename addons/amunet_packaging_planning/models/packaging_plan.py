@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import re
+import base64
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -415,6 +418,111 @@ class AmunetPackagingPlan(models.Model):
                 'desde el wizard de firma electronica.'
             ))
         return super().write(vals)
+
+    # Cajas genericas: llevan la etiqueta GRANDE (S/H/P/M). Cualquier otra caja
+    # caple (especifica de un producto) ya viene pre-impresa -> etiqueta chica
+    # (Plantilla A). MICAJ15 es generica pero pendiente de su etiqueta chica
+    # propia; por ahora se trata como grande.
+    _CAJAS_GENERICAS = ('MICAJ01', 'MICAJ15')
+
+    def _caja_micaj_de_presentacion(self, pres):
+        """Devuelve el default_code de la caja MICAJ de la presentacion (de sus
+        componentes o box_component_id), o '' si no tiene."""
+        for comp in pres.component_ids:
+            code = comp.product_id.default_code or ''
+            if code.startswith('MICAJ'):
+                return code
+        bc = pres.box_component_id
+        if bc and (bc.default_code or '').startswith('MICAJ'):
+            return bc.default_code
+        return ''
+
+    def action_generar_etiquetas_caja(self):
+        """Genera UN PPTX con las etiquetas de CAJA de ESTE plan y lo descarga.
+        Por cada linea decide la etiqueta segun la caja de la presentacion:
+        caja generica -> etiqueta grande S/H/P/M; caja especifica (pre-impresa)
+        -> etiqueta chica (Plantilla A). Usa el motor de amunet_label."""
+        self.ensure_one()
+        mo = self.production_id
+        if not mo:
+            raise UserError(_('El plan no tiene orden de fabricacion.'))
+        plan_lineas = self.line_ids.filtered(lambda l: l.approved_box_qty > 0)
+        if not plan_lineas:
+            raise UserError(_('El plan no tiene cajas aprobadas para etiquetar.'))
+
+        bloques = []
+        for ln in plan_lineas:
+            caja = self._caja_micaj_de_presentacion(ln.presentation_id)
+            tipo = 'A' if (caja and caja not in self._CAJAS_GENERICAS) else 'grande'
+            bloques.append({
+                'tipo': tipo,
+                'n': ln.package_qty,
+                'cajas': ln.approved_box_qty,
+            })
+
+        subtipo, lot_name, datos = mo._etiqueta_datos()
+        contenido = mo._etiqueta_construir_pptx(subtipo, datos, bloques)
+
+        total = sum(b['cajas'] for b in bloques)
+        safe = re.sub(r'[/\\:*?"<>|]', '-', lot_name or self.name)
+        ref = mo.product_id.default_code or 'SREF'
+        Attachment = self.env['ir.attachment']
+        # Reemplaza el archivo previo de este plan para no acumular.
+        Attachment.search([
+            ('res_model', '=', 'amunet.packaging.plan'),
+            ('res_id', '=', self.id),
+            ('name', '=like', 'Etiquetas_%.pptx'),
+        ]).unlink()
+        nombre = 'Etiquetas_%s_%s_%setiq.pptx' % (ref, safe, total)
+        att = Attachment.create({
+            'name': nombre,
+            'type': 'binary',
+            'datas': base64.b64encode(contenido),
+            'mimetype': ('application/vnd.openxmlformats-officedocument'
+                         '.presentationml.presentation'),
+            'res_model': 'amunet.packaging.plan',
+            'res_id': self.id,
+        })
+        # --- Etiquetas de BUFFER: se anexan al MISMO plan (misma lista) ---
+        Attachment.search([
+            ('res_model', '=', 'amunet.packaging.plan'),
+            ('res_id', '=', self.id),
+            ('name', '=like', 'Etiquetas_Buffer_%.pptx'),
+        ]).unlink()
+        buffer_msgs = []
+        for plantilla, valores in mo._etiqueta_buffers_de_orden().items():
+            if not valores:
+                continue
+            contenido_b = mo._etiqueta_construir_buffer_pptx(plantilla, valores)
+            nombre_b = 'Etiquetas_Buffer_%s_%s_%setiq.pptx' % (
+                plantilla, safe, len(valores))
+            Attachment.create({
+                'name': nombre_b,
+                'type': 'binary',
+                'datas': base64.b64encode(contenido_b),
+                'mimetype': ('application/vnd.openxmlformats-officedocument'
+                             '.presentationml.presentation'),
+                'res_model': 'amunet.packaging.plan',
+                'res_id': self.id,
+            })
+            buffer_msgs.append('%s (%s etiq)' % (plantilla, len(valores)))
+
+        resumen = ', '.join(
+            '%s cajas de %s pzas (%s)' % (
+                b['cajas'], b['n'],
+                'chica' if b['tipo'] == 'A' else 'grande')
+            for b in bloques)
+        cuerpo = _(
+            'Etiquetas de caja generadas: %(cant)s en un archivo (%(resumen)s).',
+            cant=total, resumen=resumen)
+        if buffer_msgs:
+            cuerpo += _(' Etiquetas de buffer anexas: %s.') % ', '.join(buffer_msgs)
+        self.message_post(body=cuerpo)
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/content/%s?download=true' % att.id,
+            'target': 'self',
+        }
 
     def action_open_label_wizard(self):
         self.ensure_one()
