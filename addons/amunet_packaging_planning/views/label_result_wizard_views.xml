@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_packaging_label_result_form" model="ir.ui.view">
+        <field name="name">amunet.packaging.label.result.form</field>
+        <field name="model">amunet.packaging.label.result</field>
+        <field name="arch" type="xml">
+            <form string="Etiquetas generadas">
+                <div class="alert alert-info" role="alert">
+                    Etiquetas generadas para la orden
+                    <field name="orden" readonly="1" nolabel="1" class="oe_inline"/>.
+                    Descarga cada archivo con el boton de la columna "Descargar".
+                </div>
+                <div class="mb-2">
+                    <button name="action_descargar_todas" type="object"
+                            string="Descargar todas juntas (PPTX)"
+                            icon="fa-file-powerpoint-o" class="btn-primary"/>
+                </div>
+                <field name="archivo_todas_filename" invisible="1"/>
+                <field name="line_ids" nolabel="1">
+                    <list create="false" delete="false" editable="bottom">
+                        <field name="tipo" readonly="1"/>
+                        <field name="name" readonly="1"/>
+                        <field name="archivo_filename" column_invisible="1"/>
+                        <button name="action_descargar" type="object"
+                                string="Descargar" icon="fa-download"
+                                class="btn-link"/>
+                    </list>
+                </field>
+                <footer>
+                    <button string="Cerrar" class="btn-primary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

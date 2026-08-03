@@ -274,3 +274,179 @@ class MrpProduction(models.Model):
         buf = io.BytesIO()
         prs.save(buf)
         return buf.getvalue()
+
+    # ==================================================================
+    # ETIQUETAS DE BUFFER / SOLUCION DE CORRIMIENTO
+    # Se generan junto a las de caja (mismo plan). El buffer es un move de
+    # material de la orden con categoria "Semiterminado / Buffer" y plantilla
+    # configurada. NAME = nombre del producto; LOT/CADUCIDAD = del lote del
+    # buffer surtido (caducidad en año-mes).
+    # ==================================================================
+    def _etiqueta_buffers_de_orden(self, num_cajas=0):
+        """Devuelve {plantilla: [valores,...]} con una entrada por vial a
+        etiquetar. Un valor = dict de placeholders {{NAME}}/{{LOT}}/{{CADUCIDAD}}."""
+        self.ensure_one()
+        cat = self.env['product.category'].search(
+            [('complete_name', '=', 'Semiterminado / Buffer')], limit=1)
+        if not cat:
+            return {}
+        nombre = (self.product_id.product_tmpl_id.nombre_etiqueta or '').strip() \
+            or self.product_id.name
+
+        def _vals(lot, lot_name=''):
+            cad = lot.expiration_date.strftime('%Y-%m') \
+                if (lot and lot.expiration_date) else ''
+            return {
+                '{{NAME}}': nombre,
+                '{{LOT}}': (lot.name if lot else lot_name) or '',
+                '{{CADUCIDAD}}': cad,
+            }
+
+        specs = {}
+        moves = self.move_raw_ids.filtered(
+            lambda m: m.state != 'cancel'
+            and m.product_id.categ_id == cat
+            and m.product_id.product_tmpl_id.etiqueta_buffer_plantilla)
+        for m in moves:
+            tmpl = m.product_id.product_tmpl_id
+            plantilla = tmpl.etiqueta_buffer_plantilla
+            modo = tmpl.etiqueta_buffer_modo or 'por_vial'
+            mls = m.move_line_ids.filtered(lambda l: (l.quantity or 0) > 0)
+            if not mls:
+                continue
+            specs.setdefault(plantilla, [])
+            if modo == 'por_caja':
+                # 1 etiqueta por caja del plan (aunque la caja lleve varios
+                # viales, ej. combo). Usa el lote surtido (primer move_line).
+                vals = _vals(mls[0].lot_id, mls[0].lot_name or '')
+                n = int(num_cajas) or int(round(sum(mls.mapped('quantity'))))
+                specs[plantilla].extend([dict(vals) for _ in range(n)])
+            else:  # por_vial: 1 por cada vial surtido
+                for ml in mls:
+                    qty = int(round(ml.quantity or 0))
+                    vals = _vals(ml.lot_id, ml.lot_name or '')
+                    specs[plantilla].extend([dict(vals) for _ in range(qty)])
+        return specs
+
+    def _etiqueta_construir_buffer_pptx(self, plantilla, valores):
+        """Arma un PPTX de etiquetas de buffer con UNA plantilla, mosaico segun
+        el tamaño de su etiqueta sobre la hoja 11x17."""
+        import copy
+        import math
+        from pptx import Presentation
+        tdir = os.path.join(os.path.dirname(__file__), '..', 'static', 'templates')
+        ruta = os.path.join(tdir, 'PLANTILLA_BUFFER_%s.pptx' % plantilla)
+        if not os.path.exists(ruta):
+            raise UserError(_(
+                'No existe la plantilla PLANTILLA_BUFFER_%s.pptx en el modulo.')
+                % plantilla)
+        prs = Presentation(ruta)
+        base = prs.slides[0]
+        grupo = next((sh for sh in base.shapes if sh.shape_type == 6), None)
+        if grupo is None:
+            raise UserError(_(
+                'La plantilla PLANTILLA_BUFFER_%s.pptx no tiene la etiqueta '
+                'como grupo.') % plantilla)
+        lw, lh = int(grupo.width), int(grupo.height)
+        x0, y0 = int(grupo.left), int(grupo.top)
+        unidad = copy.deepcopy(grupo._element)
+        grupo._element.getparent().remove(grupo._element)
+        base_part = base.part
+        sw, sh = int(prs.slide_width), int(prs.slide_height)
+        # Rejilla: cuantas caben desde (x0,y0) con paso = tamaño de la etiqueta.
+        cols = max(1, (sw - x0) // lw)
+        rows = max(1, (sh - y0) // lh)
+        posiciones = [(x0 + c * lw, y0 + r * lh)
+                      for r in range(rows) for c in range(cols)]
+        n_hojas = max(1, math.ceil(len(valores) / len(posiciones)))
+        hojas = [base]
+        for _h in range(1, n_hojas):
+            hojas.append(self._etiqueta_clonar_slide(prs, base))
+        self._etiqueta_tile(prs, base, base_part, unidad, posiciones,
+                            hojas, 0, valores)
+        buf = io.BytesIO()
+        prs.save(buf)
+        return buf.getvalue()
+
+    def _etiqueta_construir_combinado_pptx(self, subtipo, datos, bloques,
+                                           buffer_specs):
+        """UN pptx con TODAS las etiquetas JUNTAS en las mismas hojas: primero
+        las de CAJA (etiqueta grande, rejilla de 3 columnas) y, en el ESPACIO
+        LIBRE que queda debajo, las de BUFFER (rejilla de 6 columnas). Si no
+        caben, agrega las hojas tabloide necesarias, aprovechando el espacio.
+
+        buffer_specs = lista de (plantilla, valores). Reusa el deck de caja
+        (que ya deja libre la parte de abajo de la ultima hoja) y le agrega los
+        buffers fluyendo hacia abajo desde la ultima etiqueta de caja."""
+        import copy
+        import io
+        import os
+        from pptx import Presentation
+        from pptx.util import Inches
+
+        # 1) Deck de caja (reusa el builder existente).
+        caja_bytes = self._etiqueta_construir_pptx(subtipo, datos, bloques)
+        prs = Presentation(io.BytesIO(caja_bytes))
+        sheet_h = int(prs.slide_height)
+        sheet_w = int(prs.slide_width)
+        x0 = int(Inches(0.19))
+        y0 = int(Inches(0.25))
+        gap = int(Inches(0.08))
+        tdir = os.path.join(os.path.dirname(__file__), '..', 'static', 'templates')
+
+        def _hoja_en_blanco():
+            # Clona la ultima hoja (conserva marco/fondo) y le quita las
+            # etiquetas, para una hoja nueva solo con el marco tabloide.
+            base = prs.slides[-1]
+            nueva = self._etiqueta_clonar_slide(prs, base)
+            for sh in list(nueva.shapes):
+                if sh.shape_type == 6:
+                    sh._element.getparent().remove(sh._element)
+            return nueva
+
+        # Punto de inicio de los buffers = justo debajo de la ultima etiqueta
+        # de caja de la ultima hoja.
+        cur = prs.slides[-1]
+        grupos = [sh for sh in cur.shapes if sh.shape_type == 6]
+        cur_y = (max(int(g.top) + int(g.height) for g in grupos) + gap) if grupos else y0
+
+        for plantilla, valores in buffer_specs:
+            if not valores:
+                continue
+            ruta = os.path.join(tdir, 'PLANTILLA_BUFFER_%s.pptx' % plantilla)
+            if not os.path.exists(ruta):
+                raise UserError(_(
+                    'No existe la plantilla PLANTILLA_BUFFER_%s.pptx.') % plantilla)
+            tmpl = Presentation(ruta)
+            bslide = tmpl.slides[0]
+            bgrupo = next((sh for sh in bslide.shapes if sh.shape_type == 6), None)
+            if bgrupo is None:
+                raise UserError(_(
+                    'PLANTILLA_BUFFER_%s.pptx no tiene la etiqueta como grupo.')
+                    % plantilla)
+            lw, lh = int(bgrupo.width), int(bgrupo.height)
+            unidad = copy.deepcopy(bgrupo._element)
+            media = self._etiqueta_importar_medias(prs, bslide.part, bgrupo._element)
+            cols = max(1, (sheet_w - x0) // lw)
+            col_x = [x0 + c * lw for c in range(cols)]
+            i = 0
+            n = len(valores)
+            while i < n:
+                if cur_y + lh > sheet_h:
+                    cur = _hoja_en_blanco()
+                    cur_y = y0
+                for c in range(cols):
+                    if i >= n:
+                        break
+                    nuevo = copy.deepcopy(unidad)
+                    self._etiqueta_mover_grupo(nuevo, col_x[c], cur_y)
+                    self._etiqueta_llenar_element(nuevo, valores[i])
+                    cur.shapes._spTree.append(nuevo)
+                    if media:
+                        self._etiqueta_remap_medias(nuevo, media, cur.part)
+                    i += 1
+                cur_y += lh
+
+        out = io.BytesIO()
+        prs.save(out)
+        return out.getvalue()

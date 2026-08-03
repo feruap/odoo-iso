@@ -466,35 +466,73 @@ class AmunetPackagingPlan(models.Model):
         total = sum(b['cajas'] for b in bloques)
         safe = re.sub(r'[/\\:*?"<>|]', '-', lot_name or self.name)
         ref = mo.product_id.default_code or 'SREF'
-        Attachment = self.env['ir.attachment']
-        # Reemplaza el archivo previo de este plan para no acumular.
-        Attachment.search([
-            ('res_model', '=', 'amunet.packaging.plan'),
-            ('res_id', '=', self.id),
-            ('name', '=like', 'Etiquetas_%.pptx'),
-        ]).unlink()
-        nombre = 'Etiquetas_%s_%s_%setiq.pptx' % (ref, safe, total)
-        att = Attachment.create({
-            'name': nombre,
-            'type': 'binary',
-            'datas': base64.b64encode(contenido),
-            'mimetype': ('application/vnd.openxmlformats-officedocument'
-                         '.presentationml.presentation'),
-            'res_model': 'amunet.packaging.plan',
-            'res_id': self.id,
-        })
+
+        # Los archivos NO se cuelgan del chatter: se entregan en un dialogo
+        # con la lista descargable (caja + buffer), accionable desde el boton.
+        nombre_caja = 'Etiquetas_%s_%s_%setiq.pptx' % (ref, safe, total)
+        blobs = [contenido]  # bytes crudos, para el combinado
+        lineas_res = [{
+            'sequence': 0,
+            'tipo': _('Caja'),
+            'name': nombre_caja,
+            'archivo_filename': nombre_caja,
+            'archivo': base64.b64encode(contenido),
+        }]
+        buffer_msgs = []
+        seq = 10
+        for plantilla, valores in mo._etiqueta_buffers_de_orden(num_cajas=total).items():
+            if not valores:
+                continue
+            contenido_b = mo._etiqueta_construir_buffer_pptx(plantilla, valores)
+            blobs.append(contenido_b)
+            nombre_b = 'Etiquetas_Buffer_%s_%s_%setiq.pptx' % (
+                plantilla, safe, len(valores))
+            lineas_res.append({
+                'sequence': seq,
+                'tipo': _('Buffer'),
+                'name': nombre_b,
+                'archivo_filename': nombre_b,
+                'archivo': base64.b64encode(contenido_b),
+            })
+            buffer_msgs.append('%s (%s etiq)' % (plantilla, len(valores)))
+            seq += 10
+
+        # Deja constancia en el chatter (solo texto, sin archivos) de que se
+        # generaron etiquetas, para trazabilidad de quien/cuando.
         resumen = ', '.join(
             '%s cajas de %s pzas (%s)' % (
                 b['cajas'], b['n'],
                 'chica' if b['tipo'] == 'A' else 'grande')
             for b in bloques)
-        self.message_post(body=_(
-            'Etiquetas de caja generadas: %(cant)s en un archivo (%(resumen)s).',
-            cant=total, resumen=resumen))
+        cuerpo = _(
+            'Etiquetas de caja generadas: %(cant)s (%(resumen)s).',
+            cant=total, resumen=resumen)
+        if buffer_msgs:
+            cuerpo += _(' Etiquetas de buffer: %s.') % ', '.join(buffer_msgs)
+        self.message_post(body=cuerpo)
+
+        # Combinado: UN solo PPTX con TODAS las etiquetas juntas en las mismas
+        # hojas -> primero las de caja y, en el espacio libre de abajo, las de
+        # buffer (6 columnas). Para el boton 'Descargar todas'.
+        buffer_specs = list(mo._etiqueta_buffers_de_orden(num_cajas=total).items())
+        todas_bytes = mo._etiqueta_construir_combinado_pptx(
+            subtipo, datos, bloques, buffer_specs)
+        nombre_todas = 'Etiquetas_TODAS_%s_%s.pptx' % (ref, safe)
+
+        result = self.env['amunet.packaging.label.result'].create({
+            'plan_id': self.id,
+            'orden': mo.name,
+            'archivo_todas': base64.b64encode(todas_bytes),
+            'archivo_todas_filename': nombre_todas,
+            'line_ids': [(0, 0, ln) for ln in lineas_res],
+        })
         return {
-            'type': 'ir.actions.act_url',
-            'url': '/web/content/%s?download=true' % att.id,
-            'target': 'self',
+            'type': 'ir.actions.act_window',
+            'name': _('Etiquetas generadas'),
+            'res_model': 'amunet.packaging.label.result',
+            'res_id': result.id,
+            'view_mode': 'form',
+            'target': 'new',
         }
 
     def action_open_label_wizard(self):

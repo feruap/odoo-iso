@@ -41,6 +41,24 @@ class ProductTemplate(models.Model):
         help='Determina la plantilla PPTX (PLANTILLA_S/H/P/M) de la etiqueta de '
              'caja. H = lleva contenedor + accesorio; P = lleva registro sanitario.',
     )
+    # Etiqueta de BUFFER (para viales "Semiterminado / Buffer"). Si el producto
+    # es un buffer y tiene plantilla, al generar las etiquetas de la orden se
+    # imprime tambien su etiqueta de vial (junto a las de caja, mismo PPTX).
+    # El valor apunta a la plantilla PLANTILLA_BUFFER_<X>.pptx del modulo.
+    etiqueta_buffer_plantilla = fields.Char(
+        string='Plantilla de etiqueta de buffer',
+        help='Nombre de la plantilla PPTX de la etiqueta de este buffer, sin el '
+             'prefijo "PLANTILLA_BUFFER_" ni ".pptx". Ej: STBPR01, HECES, CR. '
+             'Solo aplica a viales de solucion de corrimiento / buffer.',
+    )
+    etiqueta_buffer_modo = fields.Selection(
+        selection=[('por_vial', 'Por vial (1 por vial surtido)'),
+                   ('por_caja', 'Por caja (1 por caja del plan)')],
+        string='Conteo de etiqueta de buffer', default='por_vial',
+        help='por_vial: una etiqueta por cada vial surtido (BPR). por_caja: una '
+             'etiqueta por caja del plan, aunque la caja lleve varios viales '
+             '(ej. combo respiratorio).',
+    )
     etiqueta_contenedor = fields.Char(
         string='Contenedor (etiqueta subtipo H)',
         help='Texto del contenedor en la etiqueta (solo subtipo H). '
