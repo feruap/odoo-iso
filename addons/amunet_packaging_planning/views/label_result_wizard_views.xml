@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Vista previa de UNA etiqueta en grande (dialogo). -->
+    <record id="view_label_result_line_preview_form" model="ir.ui.view">
+        <field name="name">amunet.packaging.label.result.line.preview.form</field>
+        <field name="model">amunet.packaging.label.result.line</field>
+        <field name="arch" type="xml">
+            <form string="Vista previa de etiqueta">
+                <div class="text-center">
+                    <field name="name" readonly="1" nolabel="1" class="h5 d-block mb-2"/>
+                    <field name="preview" widget="image" nolabel="1"
+                           options="{'size': [900, 600]}"/>
+                </div>
+                <footer>
+                    <button string="Cerrar" special="cancel" class="btn-primary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
     <record id="view_amunet_packaging_label_result_form" model="ir.ui.view">
         <field name="name">amunet.packaging.label.result.form</field>
         <field name="model">amunet.packaging.label.result</field>
@@ -20,7 +38,12 @@
                     <list create="false" delete="false" editable="bottom">
                         <field name="tipo" readonly="1"/>
                         <field name="name" readonly="1"/>
+                        <field name="preview" column_invisible="1"/>
                         <field name="archivo_filename" column_invisible="1"/>
+                        <button name="action_ver_preview" type="object"
+                                string="Ver etiqueta" icon="fa-search-plus"
+                                class="btn-secondary"
+                                invisible="not preview"/>
                         <button name="action_descargar" type="object"
                                 string="Descargar" icon="fa-download"
                                 class="btn-link"/>
