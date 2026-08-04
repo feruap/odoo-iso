@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_amunet_combo_component_user,amunet.combo.component user,model_amunet_combo_component,base.group_user,1,0,0,0
+access_amunet_combo_component_stock,amunet.combo.component stock,model_amunet_combo_component,stock.group_stock_user,1,1,1,1
