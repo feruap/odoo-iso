@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 <data noupdate="0">
+    <record id="cron_amunet_scrap_hojas_por_vencer" model="ir.cron">
+        <field name="name">Almacén MP: descartar hojas maestras por vencer (6 meses)</field>
+        <field name="cron_name">Almacén MP: descartar hojas maestras por vencer (6 meses)</field>
+        <field name="user_id" ref="base.user_admin"/>
+        <field name="model_id" ref="stock.model_stock_lot"/>
+        <field name="state">code</field>
+        <field name="code">model._amunet_scrap_hojas_por_vencer()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 08:00:00')"/>
+    </record>
+
     <record id="cron_amunet_notify_minimos" model="ir.cron">
         <field name="name">Almacén MP: notificar productos bajo mínimo</field>
         <field name="cron_name">Almacén MP: notificar productos bajo mínimo</field>

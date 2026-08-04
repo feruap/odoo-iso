@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
 from odoo import api, models, fields, _
 from odoo.exceptions import UserError
 from .stock_move import _parse_date
+
+_logger = logging.getLogger(__name__)
 
 CRITERIO_SEL = [('ok', 'Cumple'), ('nok', 'No cumple')]
 CRITERIO_SEL_NA = [('ok', 'Cumple'), ('nok', 'No cumple'), ('na', 'N/A')]
@@ -357,8 +360,87 @@ class StockPicking(models.Model):
             'context': {'default_picking_id': self.id},
         }
 
+    def _amunet_crear_traslado_distribucion(self):
+        """Cuando una liberación de QC se valida y el producto es de categoría
+        Distribución/*, crea automáticamente un traslado a APT/Existencias_Distribución
+        para que Almacén lo confirme físicamente."""
+        self.ensure_one()
+
+        cat_raiz = self.env['product.category'].search(
+            [('name', '=', 'Distribución')], limit=1)
+        if not cat_raiz:
+            return
+        cat_ids = self.env['product.category'].search(
+            [('id', 'child_of', cat_raiz.id)]).ids
+
+        lines = self.move_line_ids.filtered(
+            lambda l: l.product_id.categ_id.id in cat_ids and (l.quantity or 0) > 0
+        )
+        if not lines:
+            return
+
+        loc_apt = self.env['stock.location'].search([
+            ('name', '=', 'Existencias_Distribución'),
+            ('usage', '=', 'internal'),
+        ], limit=1)
+        if not loc_apt:
+            _logger.warning(
+                'amunet_recepcion: no se encontró Existencias_Distribución; '
+                'traslado automático no creado para picking %s', self.name)
+            return
+
+        wh = self.picking_type_id.warehouse_id
+        pt = wh.int_type_id if wh else False
+        if not pt:
+            _logger.warning(
+                'amunet_recepcion: no se encontró tipo operación interno '
+                'para almacén %s', wh.name if wh else '(sin almacén)')
+            return
+
+        loc_src = lines[0].location_dest_id  # AMP/Existencias
+
+        move_vals = [(0, 0, {
+            'product_id': l.product_id.id,
+            'product_uom_qty': l.quantity,
+            'product_uom': l.product_id.uom_id.id,
+            'location_id': loc_src.id,
+            'location_dest_id': loc_apt.id,
+        }) for l in lines]
+
+        traslado = self.env['stock.picking'].sudo().create({
+            'picking_type_id': pt.id,
+            'location_id': loc_src.id,
+            'location_dest_id': loc_apt.id,
+            'origin': 'Auto-Distribución: ' + self.name,
+            'move_ids': move_vals,
+        })
+        traslado.action_confirm()
+        traslado.action_assign()
+
+        # Asignar lotes en las líneas de detalle del traslado
+        for line in lines:
+            if not line.lot_id:
+                continue
+            ml = traslado.move_line_ids.filtered(
+                lambda ml, p=line.product_id: ml.product_id == p
+            )[:1]
+            if ml:
+                ml.write({'lot_id': line.lot_id.id, 'quantity': line.quantity})
+
+        self.message_post(
+            body=f'Traslado automático a APT/Distribución creado: <b>{traslado.name}</b>',
+            message_type='notification',
+            subtype_xmlid='mail.mt_note',
+        )
+
     def _action_done(self):
         res = super()._action_done()
+        # Liberaciones de QC con productos de categoría Distribución/* →
+        # crear traslado automático a APT/Existencias_Distribución
+        for picking in self.filtered(
+            lambda p: p.state == 'done' and p.amunet_disposition_qc_id
+        ):
+            picking._amunet_crear_traslado_distribucion()
         for picking in self.filtered(
             lambda p: p.picking_type_code == 'incoming' and p.amunet_con_observaciones
         ):
