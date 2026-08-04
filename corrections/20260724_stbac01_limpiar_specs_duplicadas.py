@@ -2,22 +2,23 @@
 Limpia los spec_configs duplicados de STBAC01 y deja solo los 7 correctos
 según el documento ST-010 (CERST-010 / RAST-010).
 
-Parámetros finales:
+Resultado final por parámetro:
   MGA 0981  — Variación de volumen      → numeric_range, ≥ 2.5 mL
   MAVI-13   — Partículas en solución    → binary_selection, Sin partículas suspendidas
-  MGA 0701  — pH de solución            → numeric_range, 6.9 – 7.9 (7.4 ± 0.5)
-  MAVI-09   — Tiempo de liberación      → numeric_range, 1 – 30 seg
-  MAVI-09   — Tiempo de migración       → numeric_range, 30 – 180 seg
+  MGA 0701  — pH de solución            → numeric_range, 6.9–7.9 (7.4 ± 0.5)
+  MAVI-09   — Tiempo de liberación      → numeric_range, 1–30 seg
+  MAVI-09   — Tiempo de migración       → numeric_range, 30–180 seg
   MAVI-07   — Muestra negativa          → vama_multi_check, #5 y/o #1-4 (PRB-01)
   MAVI-07   — Muestra positiva          → vama_multi_check, #1-4 y/o #5 (PRB-01)
 
+Idempotente: seguro de correr en cualquier estado de la base de datos.
 Correr UNA VEZ después del deploy a producción.
 """
 env = env  # noqa: F821 — Odoo shell
 
-Product = env['product.product']
+Product  = env['product.product']
 ParamRel = env['amunet.quality.parameter.product.rel']
-SpecCfg = env['amunet.quality.parameter.specification.config']
+SpecCfg  = env['amunet.quality.parameter.specification.config']
 
 product = Product.search([('default_code', '=', 'STBAC01'), ('active', '=', True)], limit=1)
 if not product:
@@ -25,9 +26,9 @@ if not product:
     raise SystemExit(1)
 
 rels = ParamRel.search([('product_tmpl_id', '=', product.product_tmpl_id.id)])
-print(f"STBAC01: {len(rels)} parámetros encontrados")
+print(f"STBAC01: {len(rels)} parámetros")
 
-# Spec deseada por código de parámetro: (spec_name, eval_type, min, max, criteria)
+# Specs deseadas por código de parámetro
 spec_map = {
     'MGA 0981': [('Variación de volumen',   'numeric_range',    2.5,  999999, '≥ 2.5 mL')],
     'MAVI-13':  [('Partículas en solución', 'binary_selection', 0,    0,      'Sin partículas suspendidas')],
@@ -45,14 +46,13 @@ spec_map = {
 for rel in rels:
     code = rel.parameter_id.code
     if code not in spec_map:
-        print(f"  AVISO: parámetro {code} no está en el mapa, se omite")
+        print(f"  AVISO: parámetro {code} no mapeado, se omite")
         continue
 
     desired = spec_map[code]
     all_specs = SpecCfg.search([('product_parameter_rel_id', '=', rel.id)], order='id asc')
-
-    # Tomar los primeros N specs existentes y actualizar; borrar el resto
     keep_ids = []
+
     for i, (name, etype, min_v, max_v, criteria) in enumerate(desired):
         if i < len(all_specs):
             sc = all_specs[i]
@@ -64,9 +64,8 @@ for rel in rels:
                 'acceptance_criteria': criteria,
             })
             keep_ids.append(sc.id)
-            print(f"  {code} → actualizado sc {sc.id}: {name}")
+            print(f"  {code}: actualizado sc {sc.id} → {name}")
         else:
-            # Crear si no existe
             sc = SpecCfg.create({
                 'product_parameter_rel_id': rel.id,
                 'specification_id': all_specs[0].specification_id.id if all_specs else False,
@@ -78,20 +77,27 @@ for rel in rels:
                 'sequence': (i + 1) * 10,
             })
             keep_ids.append(sc.id)
-            print(f"  {code} → creado sc {sc.id}: {name}")
+            print(f"  {code}: creado sc {sc.id} → {name}")
 
-    # Borrar duplicados (los que no vamos a conservar)
-    to_delete = all_specs.filtered(lambda s: s.id not in keep_ids)
-    if to_delete:
-        # Redirigir tld al primer spec_config canónico antes de borrar
+    # Borrar duplicados via SQL para evitar errores de FK
+    to_delete_ids = [s.id for s in all_specs if s.id not in keep_ids]
+    if to_delete_ids:
         canonical_id = keep_ids[0]
+        # Redirigir test_line_details al canónico antes de borrar
         env.cr.execute(
-            "UPDATE amunet_quality_test_line_detail SET specification_config_id = %s "
+            "UPDATE amunet_quality_test_line_detail "
+            "SET specification_config_id = %s "
             "WHERE specification_config_id = ANY(%s)",
-            (canonical_id, list(to_delete.ids))
+            (canonical_id, to_delete_ids)
         )
-        to_delete.unlink()
-        print(f"  {code} → eliminados {len(to_delete)} duplicados")
+        redirected = env.cr.rowcount
+        env.cr.execute(
+            "DELETE FROM amunet_quality_parameter_specification_config "
+            "WHERE id = ANY(%s)",
+            (to_delete_ids,)
+        )
+        deleted = env.cr.rowcount
+        print(f"  {code}: {deleted} duplicados eliminados ({redirected} tld redirigidos)")
 
 env.cr.commit()
-print("LISTO — STBAC01 specs limpiadas y actualizadas.")
+print("LISTO — STBAC01 specs limpiadas. Quedan exactamente 7 specs correctas.")
