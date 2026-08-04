@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Integración bajo Control de Documentos -->
+    <menuitem id="menu_cc_general_bajo_docs"
+              name="Control de cambios"
+              parent="amunet_documentos.menu_amunet_documentos_root"
+              sequence="25"
+              groups="amunet_cc_general.group_cc_general_user"/>
+
+    <menuitem id="menu_cc_general_mis_bajo_docs"
+              name="Mis controles de cambio"
+              parent="menu_cc_general_bajo_docs"
+              action="action_cc_general_mis"
+              sequence="10"/>
+
+    <menuitem id="menu_cc_general_por_firmar_bajo_docs"
+              name="Pendientes de mi firma"
+              parent="menu_cc_general_bajo_docs"
+              action="action_cc_general_por_firmar"
+              sequence="15"/>
+
+    <menuitem id="menu_cc_general_todos_bajo_docs"
+              name="Todos los controles de cambio"
+              parent="menu_cc_general_bajo_docs"
+              action="action_cc_general"
+              sequence="20"
+              groups="amunet_cc_general.group_cc_general_manager"/>
+</odoo>

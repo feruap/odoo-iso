@@ -1,0 +1,5 @@
+.o_horizontal_separator,
+.o_form_sheet > label.o_form_label {
+    color: #000000 !important;
+    font-weight: 600;
+}
