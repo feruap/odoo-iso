@@ -337,8 +337,10 @@
                     </group>
                     <group invisible="state not in ('aceptado', 'cerrado')">
                         <group string="Aprobó la aplicación del cambio">
+                            <field name="cierre_aprobo_domain_ids" invisible="1"/>
                             <field name="cierre_aprobo_id"
                                    readonly="not is_manager or firma_cierre_aprobo_id or state not in ('aceptado',)"
+                                   domain="[('id', 'in', cierre_aprobo_domain_ids)]"
                                    options="{'no_create': True}"/>
                             <field name="firma_cierre_aprobo_id" readonly="1" invisible="not firma_cierre_aprobo_id"/>
                             <field name="fecha_cierre_aprobo"    readonly="1" invisible="not fecha_cierre_aprobo"/>

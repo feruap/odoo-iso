@@ -222,6 +222,17 @@ class AmunetCCGeneral(models.Model):
     firma_cierre_aprobo_id  = fields.Many2one('res.users', string='Firma', readonly=True)
     fecha_cierre_aprobo     = fields.Datetime(string='Fecha', readonly=True)
 
+    cierre_aprobo_domain_ids = fields.Many2many(
+        'res.users', 'amunet_cc_cierre_aprobo_domain_rel', 'cc_id', 'user_id',
+        string='Usuarios que pueden aprobar', compute='_compute_cierre_aprobo_domain_ids',
+    )
+
+    def _compute_cierre_aprobo_domain_ids(self):
+        grupo = self.env.ref('amunet_documentos.group_responsable_sanitario', raise_if_not_found=False)
+        usuarios = grupo.user_ids if grupo else self.env['res.users']
+        for rec in self:
+            rec.cierre_aprobo_domain_ids = usuarios
+
     adjunto_ids = fields.Many2many('ir.attachment', string='Archivos adjuntos')
 
     tipo_display = fields.Char(
