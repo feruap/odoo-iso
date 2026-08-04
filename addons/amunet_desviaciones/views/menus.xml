@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_desviaciones_bajo_docs"
+              name="Desviaciones / NC"
+              parent="amunet_documentos.menu_amunet_documentos_root"
+              sequence="30"
+              groups="amunet_desviaciones.group_desviaciones_user"/>
+
+    <menuitem id="menu_desviaciones_mis"
+              name="Mis desviaciones"
+              parent="menu_desviaciones_bajo_docs"
+              action="action_desviacion_mis"
+              sequence="10"/>
+
+    <menuitem id="menu_desviaciones_todas"
+              name="Todas las desviaciones"
+              parent="menu_desviaciones_bajo_docs"
+              action="action_desviacion"
+              sequence="20"
+              groups="amunet_desviaciones.group_desviaciones_manager"/>
+</odoo>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_desviaciones_user" model="res.groups">
+        <field name="name">Desviaciones / NC: Usuario</field>
+    </record>
+    <record id="group_desviaciones_manager" model="res.groups">
+        <field name="name">Desviaciones / NC: Responsable</field>
+        <field name="implied_ids" eval="[(4, ref('group_desviaciones_user'))]"/>
+    </record>
+</odoo>

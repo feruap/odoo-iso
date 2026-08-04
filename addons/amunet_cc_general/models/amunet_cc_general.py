@@ -351,6 +351,13 @@ class AmunetCCGeneral(models.Model):
 
     # ── Secuencia ────────────────────────────────────────────────
     @api.model_create_multi
+    def _compute_display_name(self):
+        for rec in self:
+            display = rec.name or 'Nuevo'
+            if rec.nombre_documento:
+                display = '%s — %s' % (display, rec.nombre_documento)
+            rec.display_name = display
+
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
