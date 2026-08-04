@@ -2,6 +2,7 @@
 
 import logging
 import base64
+import secrets
 
 from odoo import models, fields, api, _ # Force update
 from odoo.exceptions import ValidationError, AccessDenied, UserError
@@ -49,6 +50,14 @@ class AmunetQualityCheck(models.Model):
         copy=False,
         tracking=True,
         help='Folio legal generado al finalizar. Formato: AN-CCCDDMMAA-NN'
+    )
+
+    public_verify_token = fields.Char(
+        string='Token público de verificación',
+        readonly=True,
+        copy=False,
+        default=lambda self: secrets.token_urlsafe(32),
+        help='Token aleatorio incluido en el QR público del certificado.'
     )
 
     lot_amunet = fields.Char(
@@ -3786,9 +3795,11 @@ class AmunetQualityCheck(models.Model):
     def action_generate_report_qr(self):
         """Genera el contenido para el código QR del reporte"""
         self.ensure_one()
+        if not self.public_verify_token:
+            self.sudo().write({'public_verify_token': secrets.token_urlsafe(32)})
         # Formato simple: URL o datos clave
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        qr_data = f"{base_url}/qc/{self.id}/{self.analysis_number or 'draft'}"
+        qr_data = f"{base_url}/qc/{self.id}/{self.public_verify_token}"
         return qr_data
     
     def get_pdf_filename(self):
