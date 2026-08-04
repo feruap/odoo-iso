@@ -3,15 +3,16 @@ import io
 from odoo import models
 from odoo.exceptions import UserError
 
-GRUPO1 = {
-    'Alma Delia Bueno Garista',
-    'Alondra Guadalupe S\xe1nchez Mart\xednez',
-    'Diana Flores Vera',
-    'Edgar Michel Salamanca Aguilar',
-    'Patricia Garc\xeda Soto',
-    'Stacy Abigail Palma Ramos',
-    'Ver\xf3nica Natalia Perez Ruiz',
-    'Ver\xf3nica Ortiz Moncada',
+# IDs de empleados que van en la lista de Nómina (más robusto que comparar nombres)
+GRUPO1_IDS = {
+    193,  # Stacy Abigail Palma Ramos
+    195,  # Verónica Ortiz Moncada
+    196,  # Alma Delia Bueno Garista
+    197,  # Alondra Guadalupe Sánchez Martínez
+    200,  # Verónica Natalia Perez Ruiz
+    202,  # Patricia García Soto
+    203,  # Diana Flores Vera
+    209,  # Edgar Michel Salamanca Aguilar
 }
 
 
@@ -39,7 +40,7 @@ class HrPayslipRun(models.Model):
             banco = bank.bank_id.name if bank and bank.bank_id else ''
 
             row = (emp.name, banco, clabe, float(neto))
-            if emp.name in GRUPO1:
+            if emp.id in GRUPO1_IDS:
                 grupo1.append(row)
             else:
                 grupo2.append(row)
