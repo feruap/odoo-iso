@@ -471,12 +471,19 @@ class AmunetPackagingPlan(models.Model):
         # con la lista descargable (caja + buffer), accionable desde el boton.
         nombre_caja = 'Etiquetas_%s_%s_%setiq.pptx' % (ref, safe, total)
         blobs = [contenido]  # bytes crudos, para el combinado
+        # Vista previa de UNA etiqueta de caja (render real via LibreOffice).
+        prev_caja = b''
+        if bloques:
+            una_caja = mo._etiqueta_construir_pptx(
+                subtipo, datos, [dict(bloques[0], cajas=1)])
+            prev_caja = mo._etiqueta_render_preview(una_caja)
         lineas_res = [{
             'sequence': 0,
             'tipo': _('Caja'),
             'name': nombre_caja,
             'archivo_filename': nombre_caja,
             'archivo': base64.b64encode(contenido),
+            'preview': base64.b64encode(prev_caja) if prev_caja else False,
         }]
         buffer_msgs = []
         seq = 10
@@ -485,6 +492,9 @@ class AmunetPackagingPlan(models.Model):
                 continue
             contenido_b = mo._etiqueta_construir_buffer_pptx(plantilla, valores)
             blobs.append(contenido_b)
+            # Vista previa de UNA etiqueta de buffer.
+            una_buf = mo._etiqueta_construir_buffer_pptx(plantilla, valores[:1])
+            prev_buf = mo._etiqueta_render_preview(una_buf)
             nombre_b = 'Etiquetas_Buffer_%s_%s_%setiq.pptx' % (
                 plantilla, safe, len(valores))
             lineas_res.append({
@@ -493,6 +503,7 @@ class AmunetPackagingPlan(models.Model):
                 'name': nombre_b,
                 'archivo_filename': nombre_b,
                 'archivo': base64.b64encode(contenido_b),
+                'preview': base64.b64encode(prev_buf) if prev_buf else False,
             })
             buffer_msgs.append('%s (%s etiq)' % (plantilla, len(valores)))
             seq += 10

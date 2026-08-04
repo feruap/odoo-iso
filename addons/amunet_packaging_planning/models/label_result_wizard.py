@@ -43,6 +43,9 @@ class AmunetPackagingLabelResultLine(models.TransientModel):
     name = fields.Char(string='Archivo')
     archivo = fields.Binary(string='Descargar')
     archivo_filename = fields.Char(string='Nombre de archivo')
+    preview = fields.Binary(string='Vista previa', attachment=False,
+                            help='Imagen de UNA etiqueta para revisarla antes '
+                                 'de descargar el archivo completo.')
 
     def action_descargar(self):
         """Descarga directa del archivo de la fila, sin abrir formulario."""
@@ -53,4 +56,18 @@ class AmunetPackagingLabelResultLine(models.TransientModel):
                     '&id=%s&field=archivo&filename_field=archivo_filename'
                     '&download=true') % self.id,
             'target': 'self',
+        }
+
+    def action_ver_preview(self):
+        """Abre la vista previa de la etiqueta EN GRANDE, en un dialogo."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.name or 'Vista previa de etiqueta',
+            'res_model': 'amunet.packaging.label.result.line',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'view_id': self.env.ref(
+                'amunet_packaging_planning.view_label_result_line_preview_form').id,
+            'target': 'new',
         }

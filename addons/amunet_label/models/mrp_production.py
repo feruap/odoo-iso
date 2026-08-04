@@ -450,3 +450,125 @@ class MrpProduction(models.Model):
         out = io.BytesIO()
         prs.save(out)
         return out.getvalue()
+
+    def _etiqueta_render_preview(self, pptx_bytes):
+        """Renderiza un PPTX de UNA etiqueta a PNG (LibreOffice headless) y lo
+        recorta al area de la etiqueta. Devuelve bytes PNG (o b'' si falla).
+        Se usa para la vista previa de una sola etiqueta en el dialogo."""
+        import io
+        import os
+        import shutil
+        import subprocess
+        import tempfile
+        try:
+            from PIL import Image
+            from pptx import Presentation
+        except Exception:
+            return b''
+        if not pptx_bytes:
+            return b''
+        # Bbox de la etiqueta = el (primer) grupo de la hoja.
+        prs = Presentation(io.BytesIO(pptx_bytes))
+        s = prs.slides[0]
+        grupo = next((sh for sh in s.shapes if sh.shape_type == 6), None)
+        if grupo is None:
+            return b''
+        sw, sh_ = float(prs.slide_width), float(prs.slide_height)
+        gl, gt = float(grupo.left), float(grupo.top)
+        gw, gh = float(grupo.width), float(grupo.height)
+        # Pre-proceso SOLO para el render: a los cuadros cuyo texto es un unico
+        # token (LOT, REF, caducidad, etiquetas cortas) se les quita el ajuste
+        # de linea. Asi LibreOffice no parte "0726/01/TIF" en la diagonal. Los
+        # cuadros con varias palabras (lista "Contiene") NO se tocan.
+        from pptx.enum.text import MSO_AUTO_SIZE, MSO_ANCHOR, PP_ALIGN
+
+        def _no_wrap(shapes):
+            for sh in shapes:
+                if sh.shape_type == 6:
+                    _no_wrap(sh.shapes)
+                    continue
+                if sh.has_text_frame:
+                    t = (sh.text_frame.text or '').strip()
+                    if t and not any(c.isspace() for c in t):
+                        try:
+                            sh.text_frame.auto_size = MSO_AUTO_SIZE.NONE
+                        except Exception:
+                            pass
+                        try:
+                            if t.upper() in ('LOT', 'REF'):
+                                # Labels con recuadro. El cuadro es muy angosto y
+                                # LibreOffice partiria "LOT"; se ENSANCHA el
+                                # cuadro (centrado en su mismo centro) para que
+                                # quepa en una linea y, con parrafo centrado,
+                                # quede centrado sobre el recuadro. Wrap activo.
+                                cx = int(sh.left) + int(sh.width) // 2
+                                neww = int(sh.width) * 3
+                                sh.width = neww
+                                sh.left = cx - neww // 2
+                                sh.text_frame.word_wrap = True
+                                sh.text_frame.margin_left = 0
+                                sh.text_frame.margin_right = 0
+                                sh.text_frame.margin_top = 0
+                                sh.text_frame.margin_bottom = 0
+                                sh.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+                                # Forzar centrado horizontal del parrafo (por si
+                                # el algn del template no sobrevive el proceso).
+                                for _p in sh.text_frame.paragraphs:
+                                    _p.alignment = PP_ALIGN.CENTER
+                            else:
+                                # Valores (lote/caducidad/ref): NO cortar el token
+                                # y anclar al fondo para quedar al mismo nivel.
+                                sh.text_frame.word_wrap = False
+                                if 'ontien' not in t.lower():
+                                    sh.text_frame.vertical_anchor = MSO_ANCHOR.BOTTOM
+                        except Exception:
+                            pass
+        _no_wrap(s.shapes)
+        tmpd = tempfile.mkdtemp(prefix='lblprev_')
+        try:
+            pptx_path = os.path.join(tmpd, 'l.pptx')
+            prs.save(pptx_path)
+            prof = 'file://' + os.path.join(tmpd, 'prof')
+            # Render a alta resolucion (200 DPI) para que la etiqueta salga
+            # nitida, no pixelada. PixelWidth/Height segun el tamano de la hoja.
+            dpi = 200
+            pxw = int(sw / 914400.0 * dpi)
+            pxh = int(sh_ / 914400.0 * dpi)
+            flt = ('png:impress_png_Export:{"PixelWidth":{"type":"long",'
+                   '"value":%d},"PixelHeight":{"type":"long","value":%d}}'
+                   % (pxw, pxh))
+            subprocess.run(
+                ['soffice', '--headless', '-env:UserInstallation=' + prof,
+                 '--convert-to', flt, '--outdir', tmpd, pptx_path],
+                capture_output=True, timeout=120)
+            png_path = os.path.join(tmpd, 'l.png')
+            if not os.path.exists(png_path):
+                return b''
+            im = Image.open(png_path)
+            W, H = im.size
+            mx, my = 0.02 * gw, 0.02 * gh
+            box = (max(0, int((gl - mx) / sw * W)),
+                   max(0, int((gt - my) / sh_ * H)),
+                   min(W, int((gl + gw + mx) / sw * W)),
+                   min(H, int((gt + gh + my) / sh_ * H)))
+            crop = im.crop(box)
+            # Letterbox a proporcion FIJA (3:2): se ESCALA la etiqueta (hacia
+            # arriba o abajo) para llenar el lienzo respetando su proporcion, y
+            # se centra en blanco. Asi el widget la muestra grande y sin deformar.
+            CW, CH = 900, 600
+            scale = min(CW / crop.width, CH / crop.height)
+            new = crop.resize((max(1, int(crop.width * scale)),
+                               max(1, int(crop.height * scale))), Image.LANCZOS)
+            canvas = Image.new('RGB', (CW, CH), (255, 255, 255))
+            ox, oy = (CW - new.width) // 2, (CH - new.height) // 2
+            if new.mode == 'RGBA':
+                canvas.paste(new, (ox, oy), new)
+            else:
+                canvas.paste(new.convert('RGB'), (ox, oy))
+            buf = io.BytesIO()
+            canvas.save(buf, format='PNG')
+            return buf.getvalue()
+        except Exception:
+            return b''
+        finally:
+            shutil.rmtree(tmpd, ignore_errors=True)

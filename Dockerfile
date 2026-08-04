@@ -3,12 +3,21 @@ FROM odoo:19.0
 
 USER root
 
-# Instalar fuente Cambria (necesaria para generar PDFs con la misma tipografía que los documentos Word)
+# Fuentes de las etiquetas (Cambria + Kollektif + Now). Kollektif/Now las usan
+# las plantillas de etiquetas; sin ellas LibreOffice sustituye y el texto se
+# desborda en la vista previa.
 COPY fonts/cambria/ /usr/share/fonts/truetype/cambria/
+COPY fonts/kollektif/ /usr/share/fonts/truetype/kollektif/
+COPY fonts/now/ /usr/share/fonts/truetype/now/
 RUN fc-cache -f
 
 # python-pptx para el generador de etiquetas de caja (amunet_label / plan de empaque)
 RUN pip install --no-cache-dir --break-system-packages python-pptx
+
+# LibreOffice Impress (headless) para la vista previa de etiquetas (PPTX -> PNG).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libreoffice-impress libreoffice-core \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copiar addons y configuracion para evitar errores de montaje de volumenes de Git en Portainer
 COPY addons/ /opt/amunet-addons/
