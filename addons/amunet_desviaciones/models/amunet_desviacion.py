@@ -208,6 +208,8 @@ class AmunetDesviacion(models.Model):
             rec.state = 'investigacion'
 
     def action_cerrar(self):
+        if not self.env.user.has_group('amunet_documentos.group_responsable_sanitario'):
+            raise UserError(_('Solo el Responsable Sanitario puede cerrar una desviación.'))
         for rec in self:
             if rec.state != 'investigacion':
                 raise UserError(_('Solo puedes cerrar desde "En investigación".'))

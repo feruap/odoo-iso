@@ -42,7 +42,7 @@
                             string="Cerrar desviación"
                             type="object" class="btn-primary"
                             invisible="state != 'investigacion'"
-                            groups="amunet_desviaciones.group_desviaciones_manager"/>
+                            groups="amunet_documentos.group_responsable_sanitario"/>
                     <button name="action_reabrir"
                             string="Reabrir"
                             type="object"
@@ -282,9 +282,9 @@
                     <!-- ══ CIERRE ═════════════════════════════════════════ -->
                     <separator string="Cierre de la desviación / NC"
                                invisible="state not in ('investigacion', 'cerrado')"
-                               groups="amunet_desviaciones.group_desviaciones_manager"/>
+                               groups="amunet_documentos.group_responsable_sanitario"/>
                     <group invisible="state not in ('investigacion', 'cerrado')"
-                           groups="amunet_desviaciones.group_desviaciones_manager">
+                           groups="amunet_documentos.group_responsable_sanitario">
                         <group>
                             <field name="fecha_cierre" readonly="state != 'investigacion'"/>
                             <field name="cerro_id" readonly="1" invisible="not cerro_id"/>

@@ -349,8 +349,6 @@ class AmunetCCGeneral(models.Model):
                 acciones.append(_('Firmar cierre — como "Aprobó la aplicación del cambio"'))
             rec.accion_pendiente_usuario = ' / '.join(acciones) if acciones else ''
 
-    # ── Secuencia ────────────────────────────────────────────────
-    @api.model_create_multi
     def _compute_display_name(self):
         for rec in self:
             display = rec.name or 'Nuevo'
@@ -358,6 +356,8 @@ class AmunetCCGeneral(models.Model):
                 display = '%s — %s' % (display, rec.nombre_documento)
             rec.display_name = display
 
+    # ── Secuencia ────────────────────────────────────────────────
+    @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
