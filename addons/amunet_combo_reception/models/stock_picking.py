@@ -95,13 +95,18 @@ class StockPicking(models.Model):
                     'El combo %s no tiene componentes configurados para '
                     'convertir. Configúralos en la ficha del producto, '
                     'pestaña "Combo de compra".') % cm.product_id.display_name)
-            # por cada lote recibido del combo (hereda su lote/fechas)
+            # por cada linea recibida del combo (hereda datos de proveedor)
             for ml in cm.move_line_ids.filtered(lambda l: l.quantity > 0):
-                combo_lot = ml.lot_id
+                combo_lot = ml.lot_id  # puede NO existir: el combo no lleva lote
                 qty = ml.quantity
-                factory = combo_lot.factory_lot_id.id if combo_lot else False
-                fab = combo_lot.manufacturing_date if combo_lot else False
-                exp = combo_lot.expiration_date if combo_lot else False
+                # Los datos del proveedor (lote de proveedor + fechas) viven en la
+                # LINEA de recepcion (factory_lot_id/manufacturing_date/
+                # expiration_date), poblados por amunet_recepcion_materiales exista
+                # o no un lote Amunet. El combo NO debe llevar lote Amunet; el lote
+                # nace en la hoja individual al convertir.
+                factory = ml.factory_lot_id.id if ml.factory_lot_id else False
+                fab = ml.manufacturing_date
+                exp = ml.expiration_date
                 # 1) consumir el combo: Existencias -> virtual
                 out = Move.create({
                     'product_id': cm.product_id.id,
