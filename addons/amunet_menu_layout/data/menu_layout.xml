@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Consolidacion de menus de Produccion (aprobado por Mery 2026-08-05).
+         Solo reorganiza/oculta menus; no cambia ninguna logica. -->
+
+    <!-- 1) Ocultar la app "Produccion Amunet" del lanzador (no se usa). El
+            modulo amunet_production sigue activo; solo se esconde su menu raiz. -->
+    <record id="amunet_production.menu_amunet_production_root" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- 2) Empaque -> barra superior de "Produccion" (base). -->
+    <record id="amunet_packaging_planning.menu_packaging_planning_root" model="ir.ui.menu">
+        <field name="parent_id" ref="mrp.menu_mrp_root"/>
+    </record>
+
+    <!-- 3) Almacen de reactivos en uso -> barra superior de "Produccion". -->
+    <record id="amunet_process_inspection.menu_aru_root" model="ir.ui.menu">
+        <field name="parent_id" ref="mrp.menu_mrp_root"/>
+    </record>
+
+    <!-- 4) Preflight, No conformidad y Supervisiones -> dentro de "Operaciones". -->
+    <record id="amunet_pilot_preflight.menu_amunet_pilot_preflight_production" model="ir.ui.menu">
+        <field name="parent_id" ref="mrp.menu_mrp_manufacturing"/>
+    </record>
+    <record id="amunet_rework_control.menu_amunet_rework_production" model="ir.ui.menu">
+        <field name="parent_id" ref="mrp.menu_mrp_manufacturing"/>
+    </record>
+    <record id="amunet_process_inspection.menu_amunet_process_inspection_root" model="ir.ui.menu">
+        <field name="parent_id" ref="mrp.menu_mrp_manufacturing"/>
+    </record>
+</odoo>
