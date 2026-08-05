@@ -17,8 +17,7 @@
                        widget="many2many_tags"
                        string="Cuentas bancarias (CLABE)"
                        context="{'default_partner_id': work_contact_id}"
-                       options="{'no_quick_create': True}"
-                       readonly="not id"/>
+                       readonly="not id or bank_account_ids"/>
             </xpath>
         </field>
     </record>
