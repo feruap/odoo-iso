@@ -177,8 +177,11 @@ class StockPicking(models.Model):
                     hoja = comp.product_id
                     hqty = qty * (comp.qty or 1.0)
                     tmpl = hoja.product_tmpl_id
-                    lot_name = tmpl.lot_sequence_id.next_by_id() \
-                        if tmpl.lot_sequence_id else False
+                    # Usar el numerador oficial de Amunet (gap-free, filtra por
+                    # el prefijo del MES actual) en vez de next_by_id() (contador
+                    # global que no reinicia por mes: daba 02 en el 1er lote del
+                    # mes en vez de 01).
+                    lot_name = hoja._amunet_next_lot_names(1)[0]
                     # Hoja que requiere QC -> a Control de calidad; el lote nace
                     # 'pending' (Calidad lo libera). Si no requiere -> Existencias.
                     requires_qc = tmpl._amunet_effective_requires_quarantine()
