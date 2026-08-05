@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_template_form_combo" model="ir.ui.view">
+        <field name="name">product.template.form.combo</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
+                <page name="combo_compra" string="Combo de compra"
+                      invisible="not es_combo_compra and type not in ('consu','product')">
+                    <group>
+                        <field name="es_combo_compra"/>
+                    </group>
+                    <group string="Al recibir el combo se convierte en:"
+                           invisible="not es_combo_compra">
+                        <field name="combo_component_ids" nolabel="1">
+                            <list editable="bottom">
+                                <field name="sequence" widget="handle"/>
+                                <field name="product_id"/>
+                                <field name="qty"/>
+                                <field name="product_uom_id"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
