@@ -81,6 +81,7 @@ class StockLotAlert(models.Model):
                     'lot_id': lote.id,
                     'scrap_qty': quant.quantity,
                     'location_id': quant.location_id.id,
+                    'amunet_motivo_descarte': 'Próximo a vencer',
                 })
                 exp_str = lote.expiration_date.strftime('%d/%m/%Y') if lote.expiration_date else '?'
                 creados.append({
