@@ -367,8 +367,8 @@ class StockPicking(models.Model):
 
     def _amunet_crear_traslado_distribucion(self):
         """Cuando una liberación de QC se valida y el producto es de categoría
-        Distribución/*, crea automáticamente un traslado a APT/Existencias_Distribución
-        para que Almacén lo confirme físicamente."""
+        Distribución/*, crea una recepción en APT para que Luis confirme físicamente
+        que recibió el equipo o material."""
         self.ensure_one()
 
         cat_raiz = self.env['product.category'].search(
@@ -394,12 +394,16 @@ class StockPicking(models.Model):
                 'traslado automático no creado para picking %s', self.name)
             return
 
-        wh = self.picking_type_id.warehouse_id
-        pt = wh.int_type_id if wh else False
+        # Usar el tipo Traslados internos de APT (no Recepciones) para evitar
+        # que la ruta multi-paso de APT desvíe el material a QC intermedio.
+        # El material ya pasó QC en AMP; va directo a Existencias_Distribución.
+        wh_apt = self.env['stock.warehouse'].search(
+            [('code', '=', 'APT')], limit=1)
+        pt = wh_apt.int_type_id if wh_apt else False
         if not pt:
             _logger.warning(
-                'amunet_recepcion: no se encontró tipo operación interno '
-                'para almacén %s', wh.name if wh else '(sin almacén)')
+                'amunet_recepcion: no se encontró almacén APT o su tipo interno; '
+                'traslado automático no creado para picking %s', self.name)
             return
 
         loc_src = lines[0].location_dest_id  # AMP/Existencias
@@ -416,13 +420,18 @@ class StockPicking(models.Model):
             'picking_type_id': pt.id,
             'location_id': loc_src.id,
             'location_dest_id': loc_apt.id,
-            'origin': 'Auto-Distribución: ' + self.name,
+            'origin': 'Distribución desde QC: ' + self.name,
             'move_ids': move_vals,
         })
         traslado.action_confirm()
+        # Forzar destino directo a Existencias_Distribución en todos los movimientos,
+        # evitando que la ruta multi-paso de APT desvíe a QC intermedio.
+        traslado.move_ids.write({'location_dest_id': loc_apt.id})
         traslado.action_assign()
 
-        # Asignar lotes en las líneas de detalle del traslado
+        # Asignar lote y datos de proveedor en las líneas del traslado
+        # y construir resumen para la nota de Luis
+        resumen_lineas = []
         for line in lines:
             if not line.lot_id:
                 continue
@@ -430,10 +439,55 @@ class StockPicking(models.Model):
                 lambda ml, p=line.product_id: ml.product_id == p
             )[:1]
             if ml:
-                ml.write({'lot_id': line.lot_id.id, 'quantity': line.quantity})
+                ml.write({
+                    'lot_id': line.lot_id.id,
+                    'quantity': line.quantity,
+                    'factory_lot_id': line.factory_lot_id.id if line.factory_lot_id else False,
+                    'manufacturing_date': line.manufacturing_date,
+                    'expiration_date': line.expiration_date,
+                })
+                num_serie = line.factory_lot_id.name if line.factory_lot_id else 'sin número'
+                resumen_lineas.append(
+                    f'<li>{line.product_id.display_name} — '
+                    f'Lote Amunet: <b>{line.lot_id.name}</b> | '
+                    f'No. serie/lote proveedor: <b>{num_serie}</b> | '
+                    f'Cantidad: <b>{int(line.quantity)}</b></li>'
+                )
+
+        detalle = '<ul>' + ''.join(resumen_lineas) + '</ul>' if resumen_lineas else ''
+
+        # Poner el resumen también en la nota interna del traslado para que
+        # Luis lo vea al abrir el picking sin necesidad de entrar al lote
+        traslado.sudo().write({'note': (
+            f'Material liberado por Calidad (origen: {self.name}).\n'
+            f'Verifica físicamente cada artículo antes de validar.\n\n'
+            + '\n'.join(
+                f'- {line.product_id.display_name}: '
+                f'Lote {line.lot_id.name} | Serie proveedor: {line.factory_lot_id.name if line.factory_lot_id else "sin número"} | Cant: {int(line.quantity)}'
+                for line in lines if line.lot_id
+            )
+        )})
+
+        # Notificar a Luis con una actividad para que confirme recepción física
+        luis = self.env['res.users'].search(
+            [('login', '=', 'almacen2@amunet.com.mx')], limit=1)
+        if luis:
+            traslado.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                user_id=luis.id,
+                summary='Confirmar recepción de equipo/cristalería',
+                note=(
+                    f'Calidad liberó material de Distribución desde <b>{self.name}</b>.<br/>'
+                    f'Verifica físicamente cada artículo y valida la recepción:<br/>'
+                    f'{detalle}'
+                ),
+            )
 
         self.message_post(
-            body=f'Traslado automático a APT/Distribución creado: <b>{traslado.name}</b>',
+            body=(
+                f'Recepción en APT/Distribución generada: <b>{traslado.name}</b>. '
+                f'Luis (APT) recibirá aviso para confirmar.'
+            ),
             message_type='notification',
             subtype_xmlid='mail.mt_note',
         )
