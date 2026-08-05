@@ -1817,6 +1817,32 @@ class AmunetQualityCheck(models.Model):
                 'anexo_col6_header': '',
                 'anexo_col7_header': '',
             })
+        elif code == 'STBTR02':
+            # Vial individual tracto respiratorio: sin lib/mig/desempeño, tiene color/pH/gotas
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'REGISTRO DE DATOS',
+                'anexo_col1_header': 'Volumen',
+                'anexo_col2_header': 'Partículas',
+                'anexo_col3_header': 'Color',
+                'anexo_col4_header': 'pH',
+                'anexo_col5_header': 'Gotas',
+                'anexo_col6_header': '',
+                'anexo_col7_header': '',
+            })
+        elif code.startswith('STB'):
+            # Resto de soluciones de corrimiento: vol, partículas, lib, mig, desempeño (MAVI-07)
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'REGISTRO DE DATOS',
+                'anexo_col1_header': 'Volumen',
+                'anexo_col2_header': 'Partículas',
+                'anexo_col3_header': 'Liberación',
+                'anexo_col4_header': 'Migración',
+                'anexo_col5_header': 'Desempeño',
+                'anexo_col6_header': '',
+                'anexo_col7_header': '',
+            })
 
     def _load_product_parameters(self):
         """
