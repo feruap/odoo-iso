@@ -19,13 +19,19 @@ class StockPicking(models.Model):
     @api.model
     def _amunet_combo_virtual_location(self):
         """Ubicacion virtual de conversion (por donde pasa el combo al
-        convertirse en sus hojas). Uso 'inventory' para no afectar valuacion."""
+        convertirse en sus hojas). Uso 'inventory' para no afectar valuacion.
+        Cuelga de la ENTRADA del almacen para quedar dentro del arbol de AMP
+        (trazable y visible para usuarios restringidos al almacen)."""
         Loc = self.env['stock.location']
+        input_loc = self._amunet_combo_input_location()
         loc = Loc.search([('name', '=', 'Conversión de combos'),
                           ('usage', '=', 'inventory')], limit=1)
         if not loc:
             loc = Loc.create({
-                'name': 'Conversión de combos', 'usage': 'inventory'})
+                'name': 'Conversión de combos', 'usage': 'inventory',
+                'location_id': input_loc.id if input_loc else False})
+        elif input_loc and loc.location_id != input_loc:
+            loc.location_id = input_loc.id
         return loc
 
     @api.model
@@ -67,11 +73,21 @@ class StockPicking(models.Model):
                     lambda p: p.picking_type_code == 'incoming'):
                 combo_moves = picking.move_ids.filtered(
                     lambda m: m.state not in ('done', 'cancel')
-                    and m.product_id.product_tmpl_id.es_combo_compra
-                    and m.location_dest_id != input_loc)
+                    and m.product_id.product_tmpl_id.es_combo_compra)
                 for m in combo_moves:
-                    m.location_dest_id = input_loc.id
-                    m.move_line_ids.write({'location_dest_id': input_loc.id})
+                    # el combo se queda en la ENTRADA del almacen
+                    if m.location_dest_id != input_loc:
+                        m.location_dest_id = input_loc.id
+                        m.move_line_ids.write(
+                            {'location_dest_id': input_loc.id})
+                    # cortar la cadena aguas abajo (Entrada->QC->Existencias de
+                    # la recepcion 3 pasos): el combo NO va a cuarentena, se
+                    # queda en Entrada y de ahi lo consume la conversion. Son
+                    # las HOJAS individuales las que iran a Control de calidad.
+                    downstream = m.move_dest_ids.filtered(
+                        lambda d: d.state not in ('done', 'cancel'))
+                    if downstream:
+                        downstream._action_cancel()
         return res
 
     # ── Al llegar el combo a ENTRADA, generar el 2o ingreso (conversion) ────
@@ -148,7 +164,8 @@ class StockPicking(models.Model):
                 })
                 out._action_confirm()
                 out.move_line_ids.unlink()
-                mlvals = {'move_id': out.id, 'product_id': cm.product_id.id,
+                mlvals = {'move_id': out.id, 'picking_id': conv.id,
+                          'product_id': cm.product_id.id,
                           'product_uom_id': cm.product_uom.id,
                           'location_id': combo_loc.id,
                           'location_dest_id': loc_virtual.id, 'quantity': qty}
@@ -185,7 +202,8 @@ class StockPicking(models.Model):
                     inm._action_confirm()
                     inm.move_line_ids.unlink()
                     env['stock.move.line'].create({
-                        'move_id': inm.id, 'product_id': hoja.id,
+                        'move_id': inm.id, 'picking_id': conv.id,
+                        'product_id': hoja.id,
                         'product_uom_id': hoja.uom_id.id,
                         'location_id': loc_virtual.id,
                         'location_dest_id': dest_loc.id,
@@ -194,7 +212,19 @@ class StockPicking(models.Model):
                         'manufacturing_date': fab,
                         'expiration_date': exp,
                     })
+        # Reservar para dejar los movimientos en 'assigned' (validables en
+        # pantalla). Ya NO hay competidor por el combo (la cadena Entrada->QC
+        # se cancelo en action_confirm), asi que la reserva es limpia. Las
+        # lineas de hoja ya satisfacen su demanda con su lote, action_assign
+        # las respeta. Tras reservar, forzamos picking_id en TODAS las lineas
+        # (en Odoo 19 move_line.picking_id es un campo normal, no related: al
+        # crear/reservar puede quedar nulo y ocultar las lineas del encabezado).
         conv.action_assign()
+        conv.move_ids.move_line_ids.write({'picking_id': conv.id})
+        # marcar como surtido: la conversion es automatica y determinista, no
+        # requiere que Almacen recapture cantidades. Asi el boton Validar
+        # completa en un solo clic (sin dialogo de transferencia inmediata).
+        conv.move_ids.picked = True
         conv.message_post(body=_(
             'Segundo ingreso (conversión de combo) generado desde %s. '
             'Valídalo para que ingresen las hojas individuales con su '
