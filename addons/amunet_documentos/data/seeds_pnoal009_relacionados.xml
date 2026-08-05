@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="seed_pnoal009_actividad_612" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">10</field>
+            <field name="actividad">Identificar la necesidad</field>
+            <field name="descripcion">Identificar, con base en la orden de producción, los insumos que requieren pretratamiento y/o corte.</field>
+            <field name="responsable">Personal de almacén</field>
+            <field name="registro">F-AL-008/004
+Temperatura y humedad</field>
+        </record>
+        <record id="seed_pnoal009_actividad_613" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">20</field>
+            <field name="actividad">Elaborar la solicitud</field>
+            <field name="descripcion">Llenar el formato F-AL-008/005 “Solicitud de pretratamiento y corte de insumos” especificando: tipo de insumo, cantidad, lote, tratamiento solicitado y dimensiones de corte (si aplica).</field>
+            <field name="responsable">Personal de almacén</field>
+            <field name="registro">F-AL-008/005 “Solicitud de pretratamiento y corte de insumos”</field>
+        </record>
+        <record id="seed_pnoal009_actividad_614" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">30</field>
+            <field name="actividad">Registrar la salida de insumos</field>
+            <field name="descripcion">Registrar la salida de los insumos del almacén en el formato F-AL-002/001 “Entrada, salida y conciliación de insumos”.</field>
+            <field name="responsable">Supervisor de almacén</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_actividad_615" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">40</field>
+            <field name="actividad">Entregar insumos a producción</field>
+            <field name="descripcion">Entregar los insumos junto con el formato F-AL-008/005 “Solicitud de pretratamiento y corte de insumos” al personal de producción.</field>
+            <field name="responsable">Almacén</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_actividad_616" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">50</field>
+            <field name="actividad">Verificar las condiciones ambientales</field>
+            <field name="descripcion">Verificar que el área de trabajo cumpla con las condiciones ambientales requeridas para el proceso (temperatura y humedad).</field>
+            <field name="responsable">Producción</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_actividad_617" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">60</field>
+            <field name="actividad">Ejecutar el pretratamiento (si aplica)</field>
+            <field name="descripcion">Impregnar las almohadillas con la solución amortiguadora indicada en la especificación, siguiendo la instrucción de trabajo correspondiente. Registrar el tiempo de secado y las condiciones del proceso.</field>
+            <field name="responsable">Producción</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_actividad_618" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">70</field>
+            <field name="actividad">Ejecutar el corte (si aplica)</field>
+            <field name="descripcion">Cortar las almohadillas a las dimensiones especificadas, utilizando el equipo asignado y verificando las dimensiones con instrumento calibrado.</field>
+            <field name="responsable">Producción</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_actividad_619" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">80</field>
+            <field name="actividad">Identificar el lote procesado</field>
+            <field name="descripcion">Etiquetar los insumos procesados con: nombre, lote original, fecha de proceso, tipo de tratamiento, dimensiones, responsable y estatus “Cuarentena”.</field>
+            <field name="responsable">Producción</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_actividad_620" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">90</field>
+            <field name="actividad">Entregar insumos procesados a almacén</field>
+            <field name="descripcion">Entregar los insumos procesados al almacén, junto con el formato F-AL-008/005 “Solicitud de pretratamiento y corte de insumos” debidamente requisitado (incluyendo fechas y firma de quien ejecutó el proceso).</field>
+            <field name="responsable">Producción</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_actividad_621" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">100</field>
+            <field name="actividad">Recepcionar y poner en cuarentena</field>
+            <field name="descripcion">Recepcionar los insumos procesados, registrar la entrada en el formato F-AL-002/001 “Entrada, salida y conciliación de insumos” y colocarlos en el área de producto en cuarentena a la espera de liberación por Control de Calidad.</field>
+            <field name="responsable">Almacén</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_actividad_622" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">110</field>
+            <field name="actividad">Solicitar análisis de calidad</field>
+            <field name="descripcion">Continuar con el flujo descrito en el PNOAL-002 para la solicitud de análisis de calidad de los insumos procesados.</field>
+            <field name="responsable">Almacén / Control de calidas</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_actividad_623" model="amunet.documento.actividad">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">120</field>
+            <field name="actividad">Liberar o rechazar el lote</field>
+            <field name="descripcion">Analizar los insumos procesados. Si cumplen con las especificaciones, liberarlos para su uso; si no, rechazarlos y etiquetarlos como “NO CONFORME”.</field>
+            <field name="responsable">Control de calidad</field>
+            <field name="registro">No aplica</field>
+        </record>
+        <record id="seed_pnoal009_formato_85" model="amunet.documento.formato">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="sequence">10</field>
+            <field name="codigo">F-AL-008/005</field>
+            <field name="nombre">Solicitud de pretratamiento y corte de insumos</field>
+            <field name="doc_area">AL</field>
+            <field name="requiere_aprobacion" eval="False"/>
+            <field name="solo_visualizacion" eval="False"/>
+        </record>
+        <record id="seed_pnoal009_version_228" model="amunet.documento.version">
+            <field name="documento_id" ref="seed_amunet_documento_73"/>
+            <field name="version">01</field>
+            <field name="fecha">2023-01-01</field>
+            <field name="fecha_emision">2023-01-01</field>
+            <field name="descripcion_cambio">Elaboración del documento</field>
+            <field name="justificacion">Creación del documento</field>
+            <field name="cambios">Elaboración inicial del procedimiento</field>
+            <field name="state_historico">obsoleto</field>
+        </record>
+    </data>
+</odoo>

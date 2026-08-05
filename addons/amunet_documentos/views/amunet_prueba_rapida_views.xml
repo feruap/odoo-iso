@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ── Vista lista ─────────────────────────────────────────── -->
+    <record id="view_amunet_prueba_rapida_list" model="ir.ui.view">
+        <field name="name">amunet.prueba.rapida.list</field>
+        <field name="model">amunet.prueba.rapida</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="codigo"      string="Código (Catálogo)"/>
+                <field name="nombre"      string="Nombre de la prueba (Denominación distintiva)"/>
+                <field name="descripcion" string="Descripción (Denominación genérica)"/>
+                <field name="muestra"     string="Muestra"/>
+                <field name="referencia"  string="Referencia"/>
+                <field name="caducidad_autorizada"  string="Caducidad de la prueba"/>
+                <field name="registro_sanitario"    string="Registro sanitario"/>
+                <field name="fecha_emision_rs"      string="Emisión RS" optional="hide"/>
+                <field name="fecha_vencimiento_rs"  string="Vencimiento RS" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Vista formulario ────────────────────────────────────── -->
+    <record id="view_amunet_prueba_rapida_form" model="ir.ui.view">
+        <field name="name">amunet.prueba.rapida.form</field>
+        <field name="model">amunet.prueba.rapida</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="nombre" placeholder="Nombre de la prueba..."/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="codigo"     string="Código (Catálogo)"/>
+                            <field name="referencia" string="Referencia"/>
+                            <field name="caducidad_autorizada" string="Caducidad de la prueba"/>
+                        </group>
+                        <group>
+                            <field name="muestra" string="Muestra"/>
+                        </group>
+                    </group>
+                    <label for="descripcion"/>
+                    <field name="descripcion" string="Descripción (Denominación genérica)" rows="3"/>
+                    <separator string="Registro sanitario Cofepris"/>
+                    <group>
+                        <group>
+                            <field name="registro_sanitario"   string="Número de registro"/>
+                            <field name="fecha_emision_rs"     string="Fecha de emisión"/>
+                        </group>
+                        <group>
+                            <field name="fecha_vencimiento_rs" string="Fecha de vencimiento"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Acción ──────────────────────────────────────────────── -->
+    <record id="action_amunet_prueba_rapida" model="ir.actions.act_window">
+        <field name="name">Datos de pruebas rápidas</field>
+        <field name="res_model">amunet.prueba.rapida</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Agrega el primer registro de prueba rápida.
+            </p>
+        </field>
+    </record>
+</odoo>

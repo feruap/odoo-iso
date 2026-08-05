@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Actividades del Desarrollo del proceso de PNOGE-009 Gestión de Riesgos (ver02) -->
+    <!-- Reemplazan las 4 actividades incorrectas que tenía cargadas (metodologías de condiciones generales) -->
+
+    <record id="pnoge009_act_01" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">10</field>
+        <field name="actividad">1</field>
+        <field name="descripcion"><![CDATA[<p>Una vez definido el proceso objeto de Gestión de Riesgos el cual se define como: técnica o proceso científico y analítico que tiene como proceso identificar, evaluar y controlar los posibles riesgos que puedan surgir de la toma de decisiones o en un proceso que puede afectar a la continuidad de un negocio, avisar al Área de Calidad para la conformación del Comité Técnico.</p>]]></field>
+        <field name="responsable">Documentación</field>
+        <field name="registro">No aplica</field>
+    </record>
+    <record id="pnoge009_act_02" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">20</field>
+        <field name="actividad">2</field>
+        <field name="descripcion"><![CDATA[<p>Convocar a los supervisores de las áreas correspondientes, así como al personal con conocimientos en los procesos de gestión de riesgos, por ejemplo: Riesgo en sistemas críticos: Validación, Sistemas críticos, Mantenimiento, ingeniería, regulatorios, etc. / Riesgo en cadena de suministro: Almacén, Operaciones, Validación, ventas, regulatorios, etc. Una vez integrado el Comité Técnico realizar un memorándum donde se indique a los integrantes de Comité Técnico de Amunet S.A. de C.V. y difundir en las áreas correspondientes.</p>]]></field>
+        <field name="responsable">Documentación / Responsable Sanitario o Aux. de Responsable Sanitario</field>
+        <field name="registro">No aplica</field>
+    </record>
+    <record id="pnoge009_act_03" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">30</field>
+        <field name="actividad">3</field>
+        <field name="descripcion"><![CDATA[<p>Solicitar de forma impresa y/o electrónica los formatos correspondientes para realizar la Gestión de Riesgos correspondiente al Área de Calidad.</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">No aplica</field>
+    </record>
+    <record id="pnoge009_act_04" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">40</field>
+        <field name="actividad">4</field>
+        <field name="descripcion"><![CDATA[<p>Entregar de forma impresa y/o electrónica los siguientes formatos en su versión vigente: F-GE-009/001 "Matriz de Gestión de Riesgos Análisis de Modo y Efectos de Fallas (A.M.E.F.)" e F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F.", al personal solicitante.</p>]]></field>
+        <field name="responsable">Documentación</field>
+        <field name="registro">F-GE-009/001 "Matriz de Gestión de Riesgos A.M.E.F" / F-GE-009/002 "Informe de Análisis de Riesgos (A.M.E.F)"</field>
+    </record>
+    <record id="pnoge009_act_05" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">50</field>
+        <field name="actividad">5</field>
+        <field name="descripcion"><![CDATA[<p>Colocar la siguiente información en la Sección I. Datos Generales del formato F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente: Área, Nombre del Responsable (Personal que elabora Análisis de Riesgo), Fecha, Proceso (Identificar con claridad los procesos, funciones, sistemas, equipos, instalaciones, que requieren o sobre los que se realiza la Matriz de Gestión de Riesgos).</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">F-GE-009/002 "Informe de Análisis de Riesgos (A.M.E.F)" versión vigente</field>
+    </record>
+    <record id="pnoge009_act_06" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">60</field>
+        <field name="actividad">6</field>
+        <field name="descripcion"><![CDATA[<p>Solicitar el Folio AR (folio de análisis de riesgo) al Área de Documentación.</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">No aplica</field>
+    </record>
+    <record id="pnoge009_act_07" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">70</field>
+        <field name="actividad">7</field>
+        <field name="descripcion"><![CDATA[<p>Asignar y registrar el número de Folio AR (folio de análisis de riesgo) correspondiente al consecutivo en la bitácora electrónica formato F-GE-009/003 "Reporte de Análisis de Riesgos" versión vigente, de la siguiente manera: Análisis de Riesgo (AR) seguido de un guion (-), el año en curso a dos cifras (00) y el consecutivo que sigue en la bitácora mencionada a tres dígitos (000). Folio AR (ejemplo): AR-23-001.</p>]]></field>
+        <field name="responsable">Documentación</field>
+        <field name="registro">F-GE-009/003 "Reporte de Análisis de Riesgos" versión vigente</field>
+    </record>
+    <record id="pnoge009_act_08" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">80</field>
+        <field name="actividad">8</field>
+        <field name="descripcion"><![CDATA[<p>Colocar el Folio AR (folio de análisis de riesgo) asignado en la Sección I. Datos Generales del formato F-GE-009/003 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente.</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">F-GE-009/003 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_09" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">90</field>
+        <field name="actividad">9</field>
+        <field name="descripcion"><![CDATA[<p>Realizar el diagrama de Ishikawa (también llamado Diagrama de Causa y Efecto, Diagrama de Espina de Pescado o Diagrama de los 6Ms — Ver Anexo 2) del proceso objeto de la Gestión de Riesgos en la Sección II. Diagrama causa y efecto del formato F-GR-009/003 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente. Es una herramienta que ayuda a identificar las causas raíz de un problema, analizando los factores involucrados en la ejecución de este.</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">F-GR-009/003 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_10" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">100</field>
+        <field name="actividad">10</field>
+        <field name="descripcion"><![CDATA[<p>Realizar el formato F-GE-009/001 "Matriz de Gestión de Riesgos Análisis de Modo y Efecto de Fallas A.M.E.F." versión vigente del proceso, equipo, sistema etc. en la Sección III. Análisis de Riesgos del formato F-GE-009/003 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente. Campos: Proceso, Función, Modo de la Falla, Efecto de la Falla, Causa de la Falla, Control Actual, Severidad (escala 1-5), Ocurrencia (escala 1-5), Detectabilidad (escala 1-5), NPR = S×O×D (rango 1-125), Acciones Recomendadas (Ver Anexo 3 y 4).</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">F-GE-009/001 "Matriz de Gestión de Riesgos A.M.E.F." / F-GE-009/003 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_11" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">110</field>
+        <field name="actividad">11</field>
+        <field name="descripcion"><![CDATA[<p>Realizar el análisis de los valores de NPR de mayor a menor en la Sección VI. Análisis de NPR y plan de mitigación de riesgos: referencial al control de cambios/CAPAs del formato F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente.</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_12" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">120</field>
+        <field name="actividad">12</field>
+        <field name="descripcion"><![CDATA[<p>Solicitar la aprobación del Comité Técnico, los cuales deben revisar junto con el elaborador el análisis y el plan de mitigación de riesgo, exponiendo argumentos técnicos a favor o en contra de la efectividad del análisis, requisitos adicionales y resultado del análisis; registrando fecha, nombre, firma y observaciones en la Sección V. Aprobación del Comité Técnico del formato F-GE-009/002 versión vigente.</p>]]></field>
+        <field name="responsable">Personal solicitante / Comité técnico</field>
+        <field name="registro">F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_13" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">130</field>
+        <field name="actividad">13</field>
+        <field name="descripcion"><![CDATA[<p>Evaluar las Acciones Recomendadas en el formato F-GE-009/001 A.M.E.F., estimar los nuevos valores (Nueva Severidad S, Nueva Ocurrencia O, Nueva Detección D) y calcular el Nuevo Número de Prioridad de Riesgo (NNPR) en la Sección VI. Re-Análisis de Riesgo del formato F-GE-009/002 versión vigente.</p>]]></field>
+        <field name="responsable">Personal solicitante / Comité técnico</field>
+        <field name="registro">F-GE-009/001 Matriz de Gestión de Riesgos A.M.E.F. / F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_14" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">140</field>
+        <field name="actividad">14</field>
+        <field name="descripcion"><![CDATA[<p>Realizar un análisis técnico del nivel de riesgo inicial contra el nuevo nivel probable de riesgo, evaluando si el NNPR es aceptable; si no, proponer e implantar nuevas acciones de mitigación hasta que el NNPR sea menor al NPR y aceptable para el Comité Técnico, en la Sección VII. Análisis de Riesgo NPR vs NNPR del formato F-GE-009/002 versión vigente.</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_15" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">150</field>
+        <field name="actividad">15</field>
+        <field name="descripcion"><![CDATA[<p>Indicar las referencias de los documentos modificados, implementados, capacitaciones, distribuciones, comunicados y evidencias en la Sección VIII. Referencias Documentales de las Acciones del formato F-GE-009/002 versión vigente.</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_16" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">160</field>
+        <field name="actividad">16</field>
+        <field name="descripcion"><![CDATA[<p>Solicitar una junta con la Dirección de la empresa, Área de Documentación y Comité Técnico para revisar el Informe de Análisis de Riesgo A.M.E.F. correspondiente: análisis, plan de mitigación ejecutado, evidencias y evaluación del nuevo impacto.</p>]]></field>
+        <field name="responsable">Dirección general / Documentación / Comité técnico</field>
+        <field name="registro">No aplica</field>
+    </record>
+    <record id="pnoge009_act_17" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">170</field>
+        <field name="actividad">17</field>
+        <field name="descripcion"><![CDATA[<p>Si es requerido, establecer acciones y recursos para completar las tareas establecidas del Informe de Análisis de Riesgo A.M.E.F. correspondiente.</p>]]></field>
+        <field name="responsable">Dirección general / Documentación / Comité técnico</field>
+        <field name="registro">No aplica</field>
+    </record>
+    <record id="pnoge009_act_18" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">180</field>
+        <field name="actividad">18</field>
+        <field name="descripcion"><![CDATA[<p>El Comité Técnico, de estar en cumplimiento, firman la Sección IX. Autorización y Cierre del formato F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente.</p>]]></field>
+        <field name="responsable">Comité técnico</field>
+        <field name="registro">F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_19" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">190</field>
+        <field name="actividad">19</field>
+        <field name="descripcion"><![CDATA[<p>Entregar el F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente junto con su evidencia al Área de Calidad.</p>]]></field>
+        <field name="responsable">Personal solicitante</field>
+        <field name="registro">F-GE-009/002 "Informe de Análisis de Riesgos: A.M.E.F." versión vigente</field>
+    </record>
+    <record id="pnoge009_act_20" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">200</field>
+        <field name="actividad">20</field>
+        <field name="descripcion"><![CDATA[<p>Verificar la correcta integración de la evidencia, la congruencia de la información, el efecto esperado y que todas las actividades han sido completadas correctamente.</p>]]></field>
+        <field name="responsable">Documentación</field>
+        <field name="registro">No aplica</field>
+    </record>
+    <record id="pnoge009_act_21" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">210</field>
+        <field name="actividad">21</field>
+        <field name="descripcion"><![CDATA[<p>Una vez cerrado el análisis de riesgos, actualizar la bitácora electrónica conforme al formato F-GE-009/004 "Registro de Análisis de Riesgos" versión vigente: identificar el Folio AR y registrar en la fila correspondiente el No. de control de cambios generado y/o el folio de las CAPAs.</p>]]></field>
+        <field name="responsable">Documentación</field>
+        <field name="registro">F-GE-009/004 "Registro de Análisis de Riesgos" versión vigente</field>
+    </record>
+    <record id="pnoge009_act_22" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">220</field>
+        <field name="actividad">22</field>
+        <field name="descripcion"><![CDATA[<p>Seguimiento al Sistema de Gestión de Riesgos de Calidad: registrar en el formato F-GE-009/004 "Seguimiento al Sistema de Gestión de Riesgos" versión vigente los campos: Fecha (seguimiento 3 meses a partir de la última tarea asignada), Folio AR, Área, Fecha Programada, Fecha Reprogramada (si aplica), Efectividad y Fecha de Cierre.</p>]]></field>
+        <field name="responsable">Documentación / Dirección general</field>
+        <field name="registro">F-GE-009/004 "Seguimiento al Sistema de Gestión de Riesgos" versión vigente</field>
+    </record>
+    <record id="pnoge009_act_23" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">230</field>
+        <field name="actividad">23</field>
+        <field name="descripcion"><![CDATA[<p>Archivar la documentación generada en este procedimiento en la carpeta correspondiente.</p>]]></field>
+        <field name="responsable">Documentación</field>
+        <field name="registro">No aplica</field>
+    </record>
+    <record id="pnoge009_act_24" model="amunet.documento.actividad">
+        <field name="documento_id" ref="amunet_documentos.seed_pnoge009"/>
+        <field name="sequence">240</field>
+        <field name="actividad">24</field>
+        <field name="descripcion"><![CDATA[<p>FIN DE LA ACTIVIDAD</p>]]></field>
+        <field name="responsable">No aplica</field>
+        <field name="registro">No aplica</field>
+    </record>
+</odoo>

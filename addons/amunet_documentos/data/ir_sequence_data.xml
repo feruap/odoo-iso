@@ -70,4 +70,13 @@
         <field name="number_next">100</field>
         <field name="company_id" eval="False"/>
     </record>
+
+    <record id="seq_amunet_solicitud_cambio" model="ir.sequence">
+        <field name="name">Solicitud de Cambio (universal)</field>
+        <field name="code">amunet.solicitud.cambio</field>
+        <field name="prefix">SC-%(month)s%(year)s-</field>
+        <field name="padding">3</field>
+        <field name="number_next">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
 </odoo>

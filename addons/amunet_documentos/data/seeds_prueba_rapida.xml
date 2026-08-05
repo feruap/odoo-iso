@@ -1,0 +1,713 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="prueba_rapida_143" model="amunet.prueba.rapida">
+        <field name="nombre">AFP</field>
+        <field name="muestra">Sangre total o capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de alfa-fetoproteína (AFP) en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">AFP</field>
+        <field name="referencia">DMAFP01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_144" model="amunet.prueba.rapida">
+        <field name="nombre">ALBUMINA CUALITATIVA</field>
+        <field name="muestra">Orina</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de albúmina en muestras de orina.</field>
+        <field name="codigo">MAC</field>
+        <field name="referencia">DRAM-002</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_145" model="amunet.prueba.rapida">
+        <field name="nombre">ALBUMINA SEMIANTITATIVA</field>
+        <field name="muestra">Orina</field>
+        <field name="descripcion">Prueba rápida para la detección semicuantitativa de albumina en muestras de orina</field>
+        <field name="codigo">MAS</field>
+        <field name="referencia">DRAM-001</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_146" model="amunet.prueba.rapida">
+        <field name="nombre">ALCOHOL EN SALIVA</field>
+        <field name="muestra">Saliva</field>
+        <field name="descripcion">Prueba rápida para la detección semicuantitativa de alcohol en saliva</field>
+        <field name="codigo">ALC</field>
+        <field name="referencia">DMALC01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_147" model="amunet.prueba.rapida">
+        <field name="nombre">AMH</field>
+        <field name="muestra">Sangre, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección semicuantitativa de la hormona antimülleriana en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">AMH</field>
+        <field name="referencia">DMAMH01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_148" model="amunet.prueba.rapida">
+        <field name="nombre">ANTIDOPIG-NET</field>
+        <field name="muestra">Orina, Sangre</field>
+        <field name="descripcion">Prueba rápida en cartucho para detección cualitativa y diferencial de drogas: marihuana (THC), anfetamina (AMP), cocaína (COC), opiáceos (OPI), y metanfetamina(MET).</field>
+        <field name="codigo">DO5</field>
+        <field name="referencia">DMADO01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">1401R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-05-14</field>
+        <field name="fecha_vencimiento_rs">2029-05-14</field>
+    </record>
+    <record id="prueba_rapida_149" model="amunet.prueba.rapida">
+        <field name="nombre">ANTIDOPIG-NET</field>
+        <field name="muestra">Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida en cartucho para detección cualitativa y diferencial de drogas: marihuana (THC), anfetamina (AMP), cocaína (COC), opiáceos (OPI), y metanfetamina(MET).</field>
+        <field name="codigo">DSSP5/DS5</field>
+        <field name="referencia">DMADS01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">1401R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-05-14</field>
+        <field name="fecha_vencimiento_rs">2029-05-14</field>
+    </record>
+    <record id="prueba_rapida_150" model="amunet.prueba.rapida">
+        <field name="nombre">ANTIDOPING ORINA 5P (tira)</field>
+        <field name="muestra">Orina</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa y diferencial de marihuana (THC), anfetamina (AMP), cocaína (COC), opiáceos (OPI) y metanfetamina (MET) en muestras de orina.</field>
+        <field name="codigo">DO5</field>
+        <field name="referencia">DMADO02</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_151" model="amunet.prueba.rapida">
+        <field name="nombre">ANTIDOPING SALIVA 5P</field>
+        <field name="muestra">Saliva</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa y diferencial de marihuana (THC), anfetamina (AMP), cocaína (COC), opiáceos (OPI) y metanfetamina (MET) en muestras de saliva.</field>
+        <field name="codigo">S5P</field>
+        <field name="referencia">DMADB01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_152" model="amunet.prueba.rapida">
+        <field name="nombre">BIONET MULTI</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de analitos (anticuerpos, proteínas o amplificaciones genómicas) marcados simultáneamente con fluorescencia (FITC/FAM) y biotina.</field>
+        <field name="codigo">BFL</field>
+        <field name="referencia">DLBIO01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">0037R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-01-08</field>
+        <field name="fecha_vencimiento_rs">2029-01-08</field>
+    </record>
+    <record id="prueba_rapida_153" model="amunet.prueba.rapida">
+        <field name="nombre">CA 15-3</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa del antígeno CA 15-3 en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">CA3</field>
+        <field name="referencia">DMCAM01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_154" model="amunet.prueba.rapida">
+        <field name="nombre">CA 19-9</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa del antígeno CA 19-9 en muestras de sangre total / capilar, suero plasma</field>
+        <field name="codigo">CA9</field>
+        <field name="referencia">DMCAP01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_155" model="amunet.prueba.rapida">
+        <field name="nombre">CA125</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígeno CA 125 en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">CA125</field>
+        <field name="referencia">DMCAO01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_156" model="amunet.prueba.rapida">
+        <field name="nombre">CALPROTECTINA</field>
+        <field name="muestra">Heces</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de calprotectina en muestras de heces humanas.</field>
+        <field name="codigo">CPH</field>
+        <field name="referencia">DMCAL01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_157" model="amunet.prueba.rapida">
+        <field name="nombre">CAMPYLOBACTER</field>
+        <field name="muestra">Heces</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de Campylobacter en muestras de heces humanas.</field>
+        <field name="codigo">CAM</field>
+        <field name="referencia">DMCBR01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_158" model="amunet.prueba.rapida">
+        <field name="nombre">Candida albicans</field>
+        <field name="muestra">Exudado vaginal</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígeno de Candida albicans en muestras de exudado vaginal.</field>
+        <field name="codigo">CAN</field>
+        <field name="referencia">DMCAN01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_159" model="amunet.prueba.rapida">
+        <field name="nombre">CARDIAC COMBO</field>
+        <field name="muestra">Sangre total o capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa y diferencial de las proteínas mioglobina, CK-Mb y Troponina cardiaca I(cTnl).</field>
+        <field name="codigo">CMA</field>
+        <field name="referencia">DMMCT01</field>
+        <field name="caducidad_autorizada">15 meses</field>
+        <field name="registro_sanitario">1151R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-04-22</field>
+        <field name="fecha_vencimiento_rs">2029-04-22</field>
+    </record>
+    <record id="prueba_rapida_160" model="amunet.prueba.rapida">
+        <field name="nombre">CHAGAS IgG</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpo IgG anti-Trypanosoma cruzi en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">CHA</field>
+        <field name="referencia">DMCHA01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_161" model="amunet.prueba.rapida">
+        <field name="nombre">CHIKUNGUNYA IgG e IgM</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos IgG e IgM contra el virus de chikungunya en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">CHG</field>
+        <field name="referencia">DMCHI01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_162" model="amunet.prueba.rapida">
+        <field name="nombre">CLAMIDIANET</field>
+        <field name="muestra">Exudado cervical, uretrales, orina masculina</field>
+        <field name="descripcion">Prueba rápida en cartucho para la detección cualitativa del antígeno de Chlamydia trachomatis en muestras de exudado cervical/uretral u orina masculina.</field>
+        <field name="codigo">CLA</field>
+        <field name="referencia">DMCLAM0C1</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">1685R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-06-11</field>
+        <field name="fecha_vencimiento_rs">2029-06-11</field>
+    </record>
+    <record id="prueba_rapida_163" model="amunet.prueba.rapida">
+        <field name="nombre">Combo entamoeba histolytica + Giardia lamblia</field>
+        <field name="muestra">Heces humanas</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígenos de Entamoeba histolystica y Giardia lamblia en muestras de heces humanas.</field>
+        <field name="codigo">KEG</field>
+        <field name="referencia">DMENG01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_164" model="amunet.prueba.rapida">
+        <field name="nombre">Combo Entamoeba histolytica + Salmonella typhi</field>
+        <field name="muestra">Heces humanas</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígenos de Entamoeba histolytica y Salmonella typhi en muestras de heces humanas.</field>
+        <field name="codigo">HIT</field>
+        <field name="referencia">DMESC01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_165" model="amunet.prueba.rapida">
+        <field name="nombre">COMBO MOSQUITO</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa y diferencial de anticuerpos IgG e IgM contra los virus del dengue (DENV), Chikunguña (CHIKV) y zika (ZIKV) en muestras de sangre (total o capilar), suero o plasma.</field>
+        <field name="codigo">DCZ</field>
+        <field name="referencia">DMDCZ01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">0948R2026 SSA</field>
+        <field name="fecha_emision_rs">2026-05-29</field>
+        <field name="fecha_vencimiento_rs">2031-05-29</field>
+    </record>
+    <record id="prueba_rapida_166" model="amunet.prueba.rapida">
+        <field name="nombre">COMBO RESPIRATORIO INFLUENZA A Y B SARS-COV-2 + RSV</field>
+        <field name="muestra">Nasofaríngea</field>
+        <field name="descripcion">Prueba rápida en cartucho para la detección cualitativa y diferencial de los antígenos de influenza A Y b, SARS-CoV-2 Y RSV (virus sincitial respiratorio) en muestras nasofaríngeas.</field>
+        <field name="codigo">CRD</field>
+        <field name="referencia">DMCRD01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">1820R2025 SSA</field>
+        <field name="fecha_emision_rs">2025-09-26</field>
+        <field name="fecha_vencimiento_rs">2030-09-26</field>
+    </record>
+    <record id="prueba_rapida_167" model="amunet.prueba.rapida">
+        <field name="nombre">COMBO SÍFILIS + VIH 1.2</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos contra Treponema pallidum y VIH tipo 1 y 2 en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">CTV</field>
+        <field name="referencia">DMSVI01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_168" model="amunet.prueba.rapida">
+        <field name="nombre">COVFLU-NET</field>
+        <field name="muestra">Nasofaríngea</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de los antígenos del SARS-CoV-2 e Influenza A y B en muestras nasofaríngeas.</field>
+        <field name="codigo">CCF</field>
+        <field name="referencia">DIAM-024</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_169" model="amunet.prueba.rapida">
+        <field name="nombre">COVID 19 IgG/IgM</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos IgG e IgM contra la proteína N y S del SARS-CoV-2.</field>
+        <field name="codigo">CAB</field>
+        <field name="referencia">DIAM-023</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_170" model="amunet.prueba.rapida">
+        <field name="nombre">COVINET</field>
+        <field name="muestra">Nasofaríngea</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de la nucleoproteína N del virus SARS.CoV en muestras nasofaríngeas y de saliva.</field>
+        <field name="codigo">CON</field>
+        <field name="referencia">DIAM-029</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">2625R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-09-18</field>
+        <field name="fecha_vencimiento_rs">2029-09-18</field>
+    </record>
+    <record id="prueba_rapida_171" model="amunet.prueba.rapida">
+        <field name="nombre">COVINET</field>
+        <field name="muestra">Saliva</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de la nucleoproteína N del virus SARS.CoV en muestras nasofaríngeas y de saliva.</field>
+        <field name="codigo">AgCO/S</field>
+        <field name="referencia">DIAM-025</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">2625R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-09-18</field>
+        <field name="fecha_vencimiento_rs">2029-09-18</field>
+    </record>
+    <record id="prueba_rapida_172" model="amunet.prueba.rapida">
+        <field name="nombre">DENGUE IgG / IgM</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos IgG e IgM anti-Dengue en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">DGM</field>
+        <field name="referencia">DMDEN02</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_173" model="amunet.prueba.rapida">
+        <field name="nombre">DENGUE NET</field>
+        <field name="muestra">Sangre total o capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa del antígeno NS1 y anticuerpos IgG e IgM del virus de dengue en sangre, suero y plasma.</field>
+        <field name="codigo">DNC</field>
+        <field name="referencia">DMDEN01</field>
+        <field name="caducidad_autorizada">12meses</field>
+        <field name="registro_sanitario">1003R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-04-10</field>
+        <field name="fecha_vencimiento_rs">2029-04-10</field>
+    </record>
+    <record id="prueba_rapida_174" model="amunet.prueba.rapida">
+        <field name="nombre">DROGS NET</field>
+        <field name="muestra">Saliva</field>
+        <field name="descripcion">Prueba rápida en cartucho para detección cualitativa y diferencial de drogas: marihuana (THC), anfetamina (AMP), cocaína (COC), opiáceos (OPI), metanfetamina(MET), y alcohol  (ALC) en muestra de saliva.</field>
+        <field name="codigo">DRS</field>
+        <field name="referencia">DMDRO01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">1400R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-05-15</field>
+        <field name="fecha_vencimiento_rs">2029-05-15</field>
+    </record>
+    <record id="prueba_rapida_175" model="amunet.prueba.rapida">
+        <field name="nombre">DÍMERO-D</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de Dímero – D en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">DMD</field>
+        <field name="referencia">DMDMD01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_176" model="amunet.prueba.rapida">
+        <field name="nombre">EMBARAZO (hCG) ORINA</field>
+        <field name="muestra">Orina</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de hormona gonadotropina coriónica en muestras de orina humana.</field>
+        <field name="codigo">HTO</field>
+        <field name="referencia">DMHCG03</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_177" model="amunet.prueba.rapida">
+        <field name="nombre">EMBARAZO (Hcg) SSP</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de la hormona gonadotropina coriónica en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">HCG</field>
+        <field name="referencia">DMHCG01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_178" model="amunet.prueba.rapida">
+        <field name="nombre">Entamoeba histolytica</field>
+        <field name="muestra">Heces humanas</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígenos de Entamoeba histolytica en muestreas de heces humanas.</field>
+        <field name="codigo">ENH</field>
+        <field name="referencia">DMENT01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_179" model="amunet.prueba.rapida">
+        <field name="nombre">Estreptococo A o STREP A</field>
+        <field name="muestra">Orofaríngeo</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígeno de Streptococcus pyogenes en muestras orofaríngeas.</field>
+        <field name="codigo">SAR</field>
+        <field name="referencia">DMSPN02</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_180" model="amunet.prueba.rapida">
+        <field name="nombre">Estreptococo B</field>
+        <field name="muestra">Hisopado</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígeno de Streptococcus del grupo B (EGB) en muestras de hisopado vaginal o rectal en mujeres embarazadas o hisopo general en recién nacidos.</field>
+        <field name="codigo">ESB</field>
+        <field name="referencia">DMSPN01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_181" model="amunet.prueba.rapida">
+        <field name="nombre">FENTANILO</field>
+        <field name="muestra">Orina</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de fentanilo en muestras de orina.</field>
+        <field name="codigo">FTO</field>
+        <field name="referencia">DMFEN01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_182" model="amunet.prueba.rapida">
+        <field name="nombre">FERRINET</field>
+        <field name="muestra">Sangre total o capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección semicuantitativa de ferritina en muestras de sangre (total/capilar), suero y plasma.</field>
+        <field name="codigo">FRS</field>
+        <field name="referencia">DMFRT02</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">0183R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-01-19</field>
+        <field name="fecha_vencimiento_rs">2029-01-19</field>
+    </record>
+    <record id="prueba_rapida_183" model="amunet.prueba.rapida">
+        <field name="nombre">Fibronectina fetal</field>
+        <field name="muestra">Hisopado cervicovaginal</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de Fibronectina fetal (fFN) en muestras de cervicovaginales durante el embarazo.</field>
+        <field name="codigo">FFN</field>
+        <field name="referencia">DMFFN01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_184" model="amunet.prueba.rapida">
+        <field name="nombre">FLUNET</field>
+        <field name="muestra">Exudado nasofaríngeo, exudado faríngeo, aspirado nasal</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa y diferencial, y además, diferenciación del virus de la influenza tipo A y B.</field>
+        <field name="codigo">IAB</field>
+        <field name="referencia">DMIAB01</field>
+        <field name="caducidad_autorizada">15 meses</field>
+        <field name="registro_sanitario">1094R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-04-17</field>
+        <field name="fecha_vencimiento_rs">2029-04-17</field>
+    </record>
+    <record id="prueba_rapida_185" model="amunet.prueba.rapida">
+        <field name="nombre">Giardia lamblia</field>
+        <field name="muestra">Heces humanas</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa del antígeno de Giardia lamblia en muestras de heces humanas.</field>
+        <field name="codigo">GIL</field>
+        <field name="referencia">DMGIA01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_186" model="amunet.prueba.rapida">
+        <field name="nombre">H. pylori</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos contra Helicobacter pylori en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">HPY</field>
+        <field name="referencia">DMHYP01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_187" model="amunet.prueba.rapida">
+        <field name="nombre">H. pylori (Ag)</field>
+        <field name="muestra">Heces humanas</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígenos de Helicobacter pylori en muestras de heces humanas.</field>
+        <field name="codigo">HPA</field>
+        <field name="referencia">DMHPY02</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_188" model="amunet.prueba.rapida">
+        <field name="nombre">HCG NET</field>
+        <field name="muestra">SUERO, PLASMA, ORINA</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa del antígeno prostático especifico (PSA) en muestras de suero, plasma u orina.</field>
+        <field name="codigo">GHC</field>
+        <field name="referencia">DMHCG02</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">0131R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-01-17</field>
+        <field name="fecha_vencimiento_rs">2029-01-17</field>
+    </record>
+    <record id="prueba_rapida_189" model="amunet.prueba.rapida">
+        <field name="nombre">HEMOGLINET</field>
+        <field name="muestra">Sangre total o capilar</field>
+        <field name="descripcion">Prueba rápida en cartucho para la detección semicuantitativa de hemoglobina glicada en sangre total.</field>
+        <field name="codigo">HEG</field>
+        <field name="referencia">DEMAM-001</field>
+        <field name="caducidad_autorizada">12 meses</field>
+        <field name="registro_sanitario">0171R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-01-18</field>
+        <field name="fecha_vencimiento_rs">2029-01-18</field>
+    </record>
+    <record id="prueba_rapida_190" model="amunet.prueba.rapida">
+        <field name="nombre">HEMOGLOBINA CUALITATIVA</field>
+        <field name="muestra">Sangre total / capilar</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de hemoglobina glicada (HbA1c) en muestras de sangre total / capilar</field>
+        <field name="codigo">HBC</field>
+        <field name="referencia">DMHBA01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_191" model="amunet.prueba.rapida">
+        <field name="nombre">IgE</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos IgE en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">IGE</field>
+        <field name="referencia">DMIGE01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_192" model="amunet.prueba.rapida">
+        <field name="nombre">INFECCIONES DE VÍAS URINARIAS</field>
+        <field name="muestra">Orina</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de sangre, proteínas, nitritos y leucocitos en muestras de orina.</field>
+        <field name="codigo">IVU</field>
+        <field name="referencia">DMIVU01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_193" model="amunet.prueba.rapida">
+        <field name="nombre">MONONUCLEOSIS</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos heterófilos (IgM) contra mononucleosis infecciosa en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">MON</field>
+        <field name="referencia">DMMON01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_194" model="amunet.prueba.rapida">
+        <field name="nombre">NT-proBNP</field>
+        <field name="muestra">Sangre tota / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígeno de NT-proBNP en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">ICN</field>
+        <field name="referencia">DMPRO01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_195" model="amunet.prueba.rapida">
+        <field name="nombre">pH VAGINAL</field>
+        <field name="muestra">Hisopado vaginal</field>
+        <field name="descripcion">Prueba rápida para la detección semicuantitativa de pH vaginal en muestras de hisopado vaginal.</field>
+        <field name="codigo">PHV</field>
+        <field name="referencia">DMPHV01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_196" model="amunet.prueba.rapida">
+        <field name="nombre">PROSTATINET</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa del antígeno prostático específico (PSA) en muestras de sangre, suero o plasma.</field>
+        <field name="codigo">PSC</field>
+        <field name="referencia">DMPSA02</field>
+        <field name="caducidad_autorizada">12 meses</field>
+        <field name="registro_sanitario">2364R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-08-14</field>
+        <field name="fecha_vencimiento_rs">2029-08-14</field>
+    </record>
+    <record id="prueba_rapida_197" model="amunet.prueba.rapida">
+        <field name="nombre">PSA SEMICUANTITATIVA</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección semicuantitativa del antígeno prostático específico en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">PSS</field>
+        <field name="referencia">DMPSA01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_198" model="amunet.prueba.rapida">
+        <field name="nombre">PYLORINET-ADN</field>
+        <field name="muestra">Saliva</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de ADN bacteriano de Helicobacter pylori en muestras de saliva.</field>
+        <field name="codigo">HPL</field>
+        <field name="referencia">DLHPY01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">1429R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-05-16</field>
+        <field name="fecha_vencimiento_rs">2029-05-16</field>
+    </record>
+    <record id="prueba_rapida_199" model="amunet.prueba.rapida">
+        <field name="nombre">ROTADENET</field>
+        <field name="muestra">Heces</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa y diferencial de los antígenos de rotavirus y adenovirus en muestras de heces.</field>
+        <field name="codigo">RA</field>
+        <field name="referencia">DMRAV01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">2789R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-10-10</field>
+        <field name="fecha_vencimiento_rs">2029-10-10</field>
+    </record>
+    <record id="prueba_rapida_200" model="amunet.prueba.rapida">
+        <field name="nombre">RSV NET</field>
+        <field name="muestra">Exudado nasofaríngeo, aspirado e hisopado nasal</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de los antígenos del virus sincitial respiratorio (RSV).</field>
+        <field name="codigo">RSV</field>
+        <field name="referencia">DMVSR01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">2110R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-07-24</field>
+        <field name="fecha_vencimiento_rs">2029-07-24</field>
+    </record>
+    <record id="prueba_rapida_201" model="amunet.prueba.rapida">
+        <field name="nombre">Salmonella typhi</field>
+        <field name="muestra">Heces humanas</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígenos de Salmonella typhi en muestras de heces humanas.</field>
+        <field name="codigo">AST</field>
+        <field name="referencia">DMSAT</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_202" model="amunet.prueba.rapida">
+        <field name="nombre">Shigella flexneri</field>
+        <field name="muestra">Heces humanas</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígenos de Shigella flexneri en muestras de heces humanas.</field>
+        <field name="codigo">SFA</field>
+        <field name="referencia">DMSGF01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_203" model="amunet.prueba.rapida">
+        <field name="nombre">SIFILINET</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos Anti-Treponema pallidum en muestras de sangre, suero y plasma humano.</field>
+        <field name="codigo">TPS</field>
+        <field name="referencia">DIAM-002</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">1596R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-05-30</field>
+        <field name="fecha_vencimiento_rs">2029-05-30</field>
+    </record>
+    <record id="prueba_rapida_204" model="amunet.prueba.rapida">
+        <field name="nombre">Streptococcus pneumoniae</field>
+        <field name="muestra">Orina</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígenos de Streptococcus pneumoniae en muestras de orina humana.</field>
+        <field name="codigo">SPN</field>
+        <field name="referencia">SMSPO01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_205" model="amunet.prueba.rapida">
+        <field name="nombre">TIFOIDEA IgG/IgM</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos tipo IgG e IgM contra Salmonella typhi en muestras de total / capilar, suero o plasma.</field>
+        <field name="codigo">TIF</field>
+        <field name="referencia">DMTIF01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_206" model="amunet.prueba.rapida">
+        <field name="nombre">ToRCH IgG/IgM</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos IgG/IgM contra Toxoplasma gondii, Virus de la rubeola, y virus del herpes simple 1 y/o 2 en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">TGM</field>
+        <field name="referencia">DMTOR01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_207" model="amunet.prueba.rapida">
+        <field name="nombre">TRANSFERRINA / FOB</field>
+        <field name="muestra">Heces humanas</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de transferrina y hemoglobina en muestras de heces humanas</field>
+        <field name="codigo">TFB</field>
+        <field name="referencia">DMTRF01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_208" model="amunet.prueba.rapida">
+        <field name="nombre">TSH CUALITATIVA</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de la hormona estimulante de la tiroides en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">TSH</field>
+        <field name="referencia">DMTSH01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_209" model="amunet.prueba.rapida">
+        <field name="nombre">TSH SEMICUANTITATIVA</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección semicuantitativa de la hormona estimulante de la tiroides en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">TSS</field>
+        <field name="referencia">DMTSH02</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_210" model="amunet.prueba.rapida">
+        <field name="nombre">TUBERCULOSIS</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">La prueba rápida para la detección cualitativa de anticuerpos anti-TB (isotipos de IgG e IgA) en muestras de sangre total en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">TUB</field>
+        <field name="referencia">DMATB01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_211" model="amunet.prueba.rapida">
+        <field name="nombre">TÉTANOS</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos contra la toxina del tétanos en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">TET</field>
+        <field name="referencia">DMTET01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_212" model="amunet.prueba.rapida">
+        <field name="nombre">VIH 1.2</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos contra el virus de inmunodeficiencia humana tipo 1 y 2 en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">VIH</field>
+        <field name="referencia">DMVIH01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_213" model="amunet.prueba.rapida">
+        <field name="nombre">VIH 4ta GENERACIÓN (1.2 y p24)</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de anticuerpos contra VIH tipo 1, tipo 2 y el antígeno p24 del VIH-1 en muestras de sangre total / capilar, suero o plasma</field>
+        <field name="codigo">VPC</field>
+        <field name="referencia">DMVIH02</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_214" model="amunet.prueba.rapida">
+        <field name="nombre">VITAMINET D</field>
+        <field name="muestra">Sangre total o capilar</field>
+        <field name="descripcion">Prueba rápida en cartucho para la detección semicuantitativa de la 25 hidroxivitamina D (25(OH)D).</field>
+        <field name="codigo">VID</field>
+        <field name="referencia">DMVID01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">0252R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-01-25</field>
+        <field name="fecha_vencimiento_rs">2029-01-25</field>
+    </record>
+    <record id="prueba_rapida_215" model="amunet.prueba.rapida">
+        <field name="nombre">VPH NET</field>
+        <field name="muestra">Vaginal</field>
+        <field name="descripcion">Prueba rápida en cartucho para la detección cualitativa de ADN del virus del papiloma humano (VPH).</field>
+        <field name="codigo">VPPL</field>
+        <field name="referencia">DLVPH01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">2328R2024 SSA</field>
+        <field name="fecha_emision_rs">2024-08-12</field>
+        <field name="fecha_vencimiento_rs">2029-08-12</field>
+    </record>
+    <record id="prueba_rapida_216" model="amunet.prueba.rapida">
+        <field name="nombre">ZIKA COMBO</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa del antígeno NS1 del virus del zika del virus del zika y anticuerpos IgG e IgM anti zika en muestras de sangre total / capilar, suero o plasma.</field>
+        <field name="codigo">ZKC</field>
+        <field name="referencia">DMZIK01</field>
+        <field name="caducidad_autorizada">24 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+</odoo>

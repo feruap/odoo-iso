@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Acción cliente: panel de bienvenida de Lista maestra -->
+    <record id="action_lista_maestra_hub" model="ir.actions.client">
+        <field name="name">Lista maestra</field>
+        <field name="tag">amunet_documentos.lista_maestra_hub</field>
+    </record>
+
     <!-- ── Raíz ── -->
     <menuitem id="menu_amunet_documentos_root" name="Control de Documentos"
               sequence="90"/>
 
     <!-- ── Nivel 1: ítems directos ── -->
-    <menuitem id="menu_amunet_documentos_docs" name="Documentos controlados"
+    <menuitem id="menu_amunet_lista_maestra_root" name="Lista maestra"
               parent="menu_amunet_documentos_root"
-              action="action_amunet_documento" sequence="10"/>
+              action="action_lista_maestra_hub"
+              sequence="20"
+              groups="amunet_documentos.group_documentos_manager"/>
 
-    <menuitem id="menu_amunet_documentos_lista_maestra" name="Lista maestra (vigentes)"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_documento_lista_maestra" sequence="20"/>
+    <menuitem id="menu_amunet_documentos_lista_maestra" name="PNOs vigentes"
+              parent="menu_amunet_lista_maestra_root"
+              action="action_amunet_documento_lista_maestra" sequence="10"/>
 
     <menuitem id="menu_amunet_documentos_formatos" name="Formatos"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_documento_formato" sequence="21"/>
+              parent="menu_amunet_lista_maestra_root"
+              action="action_amunet_documento_formato" sequence="20"/>
 
     <menuitem id="menu_amunet_documentos_obsoletos" name="Documentos obsoletos"
-              parent="menu_amunet_documentos_root"
-              action="action_amunet_documento_obsoletos" sequence="22"/>
+              parent="menu_amunet_lista_maestra_root"
+              action="action_amunet_documento_obsoletos" sequence="30"/>
+
+    <menuitem id="menu_amunet_prueba_rapida" name="Datos de pruebas rápidas"
+              parent="menu_amunet_lista_maestra_root"
+              action="action_amunet_prueba_rapida" sequence="40"/>
 
     <!-- ── Submenú: Mis pendientes ── -->
     <menuitem id="menu_amunet_mis_pendientes" name="Mis pendientes"
@@ -38,17 +50,9 @@
               parent="menu_amunet_mis_pendientes"
               action="action_amunet_documento_por_autorizar" sequence="30"/>
 
-    <menuitem id="menu_amunet_documentos_sugerencias_mias" name="Control de cambios por decidir"
-              parent="menu_amunet_mis_pendientes"
-              action="action_amunet_sugerencia_mis_pendientes" sequence="40"/>
-
     <menuitem id="menu_amunet_formato_mis_solicitudes" name="Mis solicitudes de impresión"
               parent="menu_amunet_mis_pendientes"
               action="action_amunet_formato_mis_solicitudes" sequence="50"/>
-
-    <menuitem id="menu_amunet_mis_ccs" name="Mis controles de cambio"
-              parent="menu_amunet_mis_pendientes"
-              action="action_amunet_mis_ccs" sequence="45"/>
 
     <menuitem id="menu_amunet_distribucion_mis_docs" name="Mis documentos por acusar"
               parent="menu_amunet_mis_pendientes"
@@ -59,11 +63,6 @@
               parent="menu_amunet_documentos_root"
               sequence="40"
               groups="amunet_documentos.group_documentos_manager,amunet_documentos.group_responsable_sanitario,amunet_documentos.group_supervisor_documentacion"/>
-
-    <menuitem id="menu_amunet_sugerencia_registro" name="Registro de controles de cambio"
-              parent="menu_amunet_gestion"
-              action="action_amunet_sugerencia_registro" sequence="5"
-              groups="amunet_documentos.group_documentos_manager,amunet_documentos.group_responsable_sanitario"/>
 
     <menuitem id="menu_amunet_formato_permisos" name="Permisos de formatos"
               parent="menu_amunet_gestion"
