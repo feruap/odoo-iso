@@ -96,8 +96,11 @@ class StockPicking(models.Model):
 
     def _amunet_create_combo_conversion(self, combo_moves, combo_loc):
         self.ensure_one()
-        Move = self.env['stock.move']
-        Lot = self.env['stock.lot']
+        # Operación interna automática: usar sudo para no depender de los
+        # permisos del usuario que validó la recepción.
+        env = self.env.sudo()
+        Move = env['stock.move']
+        Lot = env['stock.lot']
         loc_virtual = self._amunet_combo_virtual_location()
         pt = self._amunet_combo_conversion_type()
         wh = self._amunet_combo_warehouse()
@@ -108,7 +111,7 @@ class StockPicking(models.Model):
 
         # el encabezado debe tener origen != destino (constraint amunet_lot);
         # los movimientos individuales llevan sus ubicaciones reales.
-        conv = self.env['stock.picking'].create({
+        conv = env['stock.picking'].create({
             'picking_type_id': pt.id,
             'location_id': combo_loc.id,
             'location_dest_id': loc_virtual.id,
@@ -151,7 +154,7 @@ class StockPicking(models.Model):
                           'location_dest_id': loc_virtual.id, 'quantity': qty}
                 if combo_lot:
                     mlvals['lot_id'] = combo_lot.id
-                self.env['stock.move.line'].create(mlvals)
+                env['stock.move.line'].create(mlvals)
                 # 2) producir cada hoja: virtual -> Existencias, lote Amunet
                 for comp in components:
                     hoja = comp.product_id
@@ -181,7 +184,7 @@ class StockPicking(models.Model):
                     })
                     inm._action_confirm()
                     inm.move_line_ids.unlink()
-                    self.env['stock.move.line'].create({
+                    env['stock.move.line'].create({
                         'move_id': inm.id, 'product_id': hoja.id,
                         'product_uom_id': hoja.uom_id.id,
                         'location_id': loc_virtual.id,
