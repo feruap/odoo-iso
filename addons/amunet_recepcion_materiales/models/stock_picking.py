@@ -300,7 +300,12 @@ class StockPicking(models.Model):
             self._amunet_check_duplicate_supplier_lots()
             self._amunet_check_datos_recepcion()
             self._amunet_check_expiration_captured()
-            self._amunet_check_inspeccion_entrada()
+            # La inspeccion de entrada NO bloquea la recepcion (alineado a
+            # produccion, criterio de Fernando): el control de aceptacion va en
+            # la LIBERACION de Calidad, no al recibir. Si faltan los criterios,
+            # se agenda actividad a Calidad (ver rama _skip_pin_wizard abajo).
+            # Se conserva _amunet_check_datos_recepcion (lote proveedor + fechas)
+            # por trazabilidad.
         if self.env.context.get('_skip_pin_wizard'):
             res = super().button_validate()
             if not es_equipo:
