@@ -84,6 +84,14 @@
                 <attribute name="readonly">parent.state == 'done' or (parent.picking_type_code == 'internal' and not parent.transfer_approved)</attribute>
             </xpath>
 
+            <!-- Números de serie del lote (equipo/cristalería): visible en traslados internos -->
+            <xpath expr="//field[@name='move_line_ids']//field[@name='product_uom_id']" position="before">
+                <field name="amunet_serial_list"
+                       string="Números de serie"
+                       optional="show"
+                       readonly="1"/>
+            </xpath>
+
             <!-- Estado en Calidad: visible en move_line_ids (vista de recepción hecha) -->
             <xpath expr="//field[@name='move_line_ids']//field[@name='product_uom_id']" position="after">
                 <field name="amunet_calidad_estado"

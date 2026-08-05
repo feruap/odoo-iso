@@ -31,3 +31,13 @@ class StockLotSerialSplit(models.Model):
             'target': 'new',
             'context': {'default_lot_id': self.id},
         }
+
+
+class StockMoveLineSerials(models.Model):
+    _inherit = 'stock.move.line'
+
+    amunet_serial_list = fields.Char(
+        related='lot_id.amunet_serial_list',
+        string='Números de serie',
+        store=False,
+    )
