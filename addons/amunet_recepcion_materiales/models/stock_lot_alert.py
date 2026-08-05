@@ -31,6 +31,14 @@ class StockLotAlert(models.Model):
             else:
                 lot.amunet_alert_level = 'ok'
 
+    def _amunet_get_tag_proximo_vencer(self):
+        tag = self.env['stock.scrap.reason.tag'].search(
+            [('name', '=', 'Próximo a vencer')], limit=1)
+        if not tag:
+            tag = self.env['stock.scrap.reason.tag'].sudo().create(
+                {'name': 'Próximo a vencer'})
+        return tag
+
     def _amunet_scrap_hojas_por_vencer(self):
         """Cron diario: detecta lotes de Hojas Maestras con caducidad dentro de
         los próximos 6 meses y crea órdenes de descarte en borrador para que
@@ -54,6 +62,7 @@ class StockLotAlert(models.Model):
             ('expiration_date', '<=', fields.Datetime.to_string(limite_dt)),
         ])
 
+        tag_vencer = self._amunet_get_tag_proximo_vencer()
         creados = []
         for lote in lotes:
             # No crear un segundo descarte si ya hay uno pendiente
@@ -81,7 +90,7 @@ class StockLotAlert(models.Model):
                     'lot_id': lote.id,
                     'scrap_qty': quant.quantity,
                     'location_id': quant.location_id.id,
-                    'amunet_motivo_descarte': 'Próximo a vencer',
+                    'scrap_reason_tag_ids': [(4, tag_vencer.id)],
                 })
                 exp_str = lote.expiration_date.strftime('%d/%m/%Y') if lote.expiration_date else '?'
                 creados.append({
