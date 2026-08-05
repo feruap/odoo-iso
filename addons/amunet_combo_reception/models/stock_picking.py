@@ -98,7 +98,7 @@ class StockPicking(models.Model):
         self.ensure_one()
         # Operación interna automática: usar sudo para no depender de los
         # permisos del usuario que validó la recepción.
-        env = self.env.sudo()
+        env = self.env(su=True)
         Move = env['stock.move']
         Lot = env['stock.lot']
         loc_virtual = self._amunet_combo_virtual_location()
