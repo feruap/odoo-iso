@@ -34,6 +34,7 @@ y todos los empleados internos veran la app de Empleados nuevamente.
         'data/work_schedule.xml',
         'data/cron_attendance.xml',
         'views/hr_employee_bank_views.xml',
+        'views/clabe_wizard_views.xml',
         'views/hr_payslip_input_views.xml',
         'views/hr_payslip_run_views.xml',
         'views/dispersion_wizard_views.xml',

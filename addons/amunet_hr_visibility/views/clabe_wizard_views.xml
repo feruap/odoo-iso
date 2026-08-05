@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_clabe_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.clabe.wizard.form</field>
+        <field name="model">amunet.clabe.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Capturar CLABE">
+                <group>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="clabe" placeholder="18 dígitos, p.ej. 012345678901234567"/>
+                </group>
+                <footer>
+                    <button name="action_guardar" string="Guardar CLABE" type="object" class="btn-primary"/>
+                    <button string="Cancelar" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_clabe_wizard" model="ir.actions.act_window">
+        <field name="name">Capturar CLABE</field>
+        <field name="res_model">amunet.clabe.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_employee_id': active_id}</field>
+    </record>
+
+    <!-- Botón en la ficha del empleado: solo visible cuando no tiene cuenta y ya está guardado -->
+    <record id="hr_employee_view_form_clabe_btn" model="ir.ui.view">
+        <field name="name">hr.employee.form.clabe.btn</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='bank_account_ids']" position="after">
+                <button name="%(action_clabe_wizard)d"
+                        string="Capturar CLABE"
+                        type="action"
+                        class="btn-secondary"
+                        invisible="not id or bank_account_ids"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
