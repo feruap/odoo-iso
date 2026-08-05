@@ -21,6 +21,7 @@
         'views/stock_lot_alert_views.xml',
         'views/stock_lot_views.xml',
         'views/stock_lot_inspeccion_equipos_views.xml',
+        'views/stock_scrap_views.xml',
     ],
     'installable': True,
     'application': False,

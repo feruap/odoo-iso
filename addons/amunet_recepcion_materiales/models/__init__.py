@@ -5,3 +5,4 @@ from . import stock_picking
 from . import product_template
 from . import product_category
 from . import stock_reorder_notify
+from . import stock_scrap

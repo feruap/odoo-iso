@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 <data>
-    <record id="view_stock_scrap_form_amunet_motivo" model="ir.ui.view">
-        <field name="name">stock.scrap.form.amunet.motivo</field>
+    <record id="view_stock_scrap_form_amunet_caducidad" model="ir.ui.view">
+        <field name="name">stock.scrap.form.amunet.caducidad</field>
         <field name="model">stock.scrap</field>
         <field name="inherit_id" ref="stock.stock_scrap_form_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='origin']" position="before">
-                <field name="amunet_motivo_descarte"
-                       string="Motivo de descarte"
-                       readonly="state == 'done'"/>
+            <xpath expr="//field[@name='lot_id']" position="after">
+                <field name="amunet_fecha_caducidad"
+                       string="Fecha de caducidad"
+                       readonly="1"
+                       invisible="not lot_id"/>
             </xpath>
         </field>
     </record>
 
-    <record id="view_stock_scrap_list_amunet_motivo" model="ir.ui.view">
-        <field name="name">stock.scrap.list.amunet.motivo</field>
+    <record id="view_stock_scrap_list_amunet_caducidad" model="ir.ui.view">
+        <field name="name">stock.scrap.list.amunet.caducidad</field>
         <field name="model">stock.scrap</field>
         <field name="inherit_id" ref="stock.stock_scrap_tree_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='state']" position="before">
-                <field name="amunet_motivo_descarte" string="Motivo" optional="show"/>
+                <field name="amunet_fecha_caducidad" string="Caducidad" optional="show"/>
             </xpath>
         </field>
     </record>
