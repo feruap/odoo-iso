@@ -249,6 +249,15 @@
                             <field name="motivo_rechazo" nolabel="1" readonly="1"/>
                         </group>
                     </group>
+                    <div class="d-flex align-items-start gap-2 px-3 pb-3 small text-muted"
+                         invisible="state != 'borrador'">
+                        <i class="fa fa-info-circle mt-1 text-info"/>
+                        <span>
+                            Una vez que hayas seleccionado al personal de revisión y aprobación,
+                            presiona el botón <strong>Enviar para autorización</strong> (arriba del formulario)
+                            para que les llegue la notificación y puedan firmar.
+                        </span>
+                    </div>
 
                     <!-- ── Sección 3: Plan de implementación ─────── -->
                     <separator string="3. Plan de implementación"

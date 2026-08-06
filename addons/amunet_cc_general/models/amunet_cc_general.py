@@ -460,6 +460,8 @@ class AmunetCCGeneral(models.Model):
                 faltantes.append('• Descripción del cambio (¿qué se va a modificar?)')
             if not r.justificacion:
                 faltantes.append('• Justificación')
+            if not r.firma_solicitante_id:
+                faltantes.append('• Firma del solicitante (el solicitante debe firmar antes de enviar)')
             if not r.reviso_id:
                 faltantes.append('• Revisó (Aseguramiento de Calidad)')
             if not r.aprobo_id:
