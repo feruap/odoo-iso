@@ -30,7 +30,7 @@
             <!-- Todas grises (readonly) en draft; editables después de "Marcar por realizar" -->
             <xpath expr="//page[@name='operations']/field[@name='move_ids']//field[@name='lot_ids']" position="after">
                 <field name="amunet_supplier_lot"
-                       string="Serie / Lote proveedor"
+                       string="Lote proveedor"
                        column_invisible="parent.picking_type_code != 'incoming'"
                        readonly="parent.state == 'draft'"/>
                 <field name="amunet_mfg_date"

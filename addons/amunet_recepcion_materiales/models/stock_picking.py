@@ -167,9 +167,12 @@ class StockPicking(models.Model):
 
     def _amunet_check_datos_recepcion(self):
         """Bloquea la validación si falta lote de proveedor, fecha de fabricación
-        o fecha de caducidad en cualquier línea de la recepción."""
+        o fecha de caducidad en cualquier línea de la recepción.
+        Los pickings de liberación de QC (amunet_disposition_qc_id) se excluyen:
+        sus datos ya fueron validados en la recepción original."""
         for p in self.filtered(lambda x: x.picking_type_code == 'incoming'
-                               and x.state not in ('done', 'cancel')):
+                               and x.state not in ('done', 'cancel')
+                               and not x.amunet_disposition_qc_id):
             faltan = []
             for move in p.move_ids.filtered(lambda m: m.state not in ('done', 'cancel')
                                             and m.product_uom_qty > 0):
@@ -408,9 +411,19 @@ class StockPicking(models.Model):
 
         loc_src = lines[0].location_dest_id  # AMP/Existencias
 
+        # Usar el stock real del lote en loc_src: si hubo un split de lote antes
+        # de la liberación, la cantidad real puede ser menor que la del picking de QC.
+        def _qty_real(line):
+            quant = self.env['stock.quant'].search([
+                ('product_id', '=', line.product_id.id),
+                ('lot_id', '=', line.lot_id.id),
+                ('location_id', '=', loc_src.id),
+            ], limit=1)
+            return quant.quantity if quant and quant.quantity > 0 else line.quantity
+
         move_vals = [(0, 0, {
             'product_id': l.product_id.id,
-            'product_uom_qty': l.quantity,
+            'product_uom_qty': _qty_real(l),
             'product_uom': l.product_id.uom_id.id,
             'location_id': loc_src.id,
             'location_dest_id': loc_apt.id,
@@ -430,7 +443,15 @@ class StockPicking(models.Model):
         traslado.action_assign()
 
         # Asignar lote y datos de proveedor en las líneas del traslado
-        # y construir resumen para la nota de Luis
+        # y construir resumen para la nota de Luis.
+        # Si la liberación de QC no tiene los datos del proveedor (factory_lot,
+        # fechas), los buscamos en la recepción original como respaldo.
+        qc = self.amunet_disposition_qc_id
+        orig_ml_map = {}
+        if qc and qc.picking_id:
+            for oml in qc.picking_id.move_line_ids:
+                orig_ml_map[oml.product_id.id] = oml
+
         resumen_lineas = []
         for line in lines:
             if not line.lot_id:
@@ -439,14 +460,18 @@ class StockPicking(models.Model):
                 lambda ml, p=line.product_id: ml.product_id == p
             )[:1]
             if ml:
+                orig = orig_ml_map.get(line.product_id.id)
+                factory_lot = line.factory_lot_id or (orig.factory_lot_id if orig else False)
+                mfg_date = line.manufacturing_date or (orig.manufacturing_date if orig else False)
+                exp_date = line.expiration_date or (orig.expiration_date if orig else False)
                 ml.write({
                     'lot_id': line.lot_id.id,
                     'quantity': line.quantity,
-                    'factory_lot_id': line.factory_lot_id.id if line.factory_lot_id else False,
-                    'manufacturing_date': line.manufacturing_date,
-                    'expiration_date': line.expiration_date,
+                    'factory_lot_id': factory_lot.id if factory_lot else False,
+                    'manufacturing_date': mfg_date,
+                    'expiration_date': exp_date,
                 })
-                num_serie = line.factory_lot_id.name if line.factory_lot_id else 'sin número'
+                num_serie = factory_lot.name if factory_lot else 'sin número'
                 resumen_lineas.append(
                     f'<li>{line.product_id.display_name} — '
                     f'Lote Amunet: <b>{line.lot_id.name}</b> | '
