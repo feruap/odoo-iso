@@ -228,6 +228,15 @@ class StockPicking(models.Model):
         # requiere que Almacen recapture cantidades. Asi el boton Validar
         # completa en un solo clic (sin dialogo de transferencia inmediata).
         conv.move_ids.picked = True
+        # El combo lleva use_expiration_date=True (para heredar la caducidad a
+        # las hojas), pero NO tiene lote ni caducidad propia; product_expiry le
+        # pone removal_date=hoy en su linea de consumo, lo que dispara el aviso
+        # de caducidad al validar (falso positivo: no es la caducidad de las
+        # hojas). Se limpia en las lineas del combo; las hojas conservan su
+        # removal_date real (futuro).
+        conv.move_ids.move_line_ids.filtered(
+            lambda l: l.product_id.product_tmpl_id.es_combo_compra
+        ).write({'removal_date': False})
         conv.message_post(body=_(
             'Segundo ingreso (conversión de combo) generado desde %s. '
             'Valídalo para que ingresen las hojas individuales con su '
