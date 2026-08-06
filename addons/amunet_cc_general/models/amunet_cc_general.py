@@ -159,15 +159,18 @@ class AmunetCCGeneral(models.Model):
 
     # ── Sección 1: Tipo y descripción ────────────────────────────
     nombre_documento   = fields.Char(string='Asunto')
-    tipo_procedimiento = fields.Boolean(string='Instrucciones')
-    tipo_formula       = fields.Boolean(string='Fórmula / Insumo')
-    tipo_proveedor     = fields.Boolean(string='Proveedor')
-    tipo_instalacion   = fields.Boolean(string='Instalación / Área')
-    tipo_equipo        = fields.Boolean(string='Equipo')
-    tipo_manual        = fields.Boolean(string='Manual')
-    tipo_formato       = fields.Boolean(string='Formato')
-    tipo_otro          = fields.Boolean(string='Otro')
-    tipo_otro_desc     = fields.Char(string='Especifica (Otro)')
+    tipo_elemento = fields.Selection([
+        ('instrucciones', 'Instrucciones'),
+        ('pno',           'PNO'),
+        ('formula',       'Fórmula / Insumo'),
+        ('proveedor',     'Proveedor'),
+        ('instalacion',   'Instalación / Área'),
+        ('equipo',        'Equipo'),
+        ('manual',        'Manual'),
+        ('formato',       'Formato'),
+        ('otro',          'Otro'),
+    ], string='Elemento afectado')
+    tipo_otro_desc = fields.Char(string='Especifica (Otro)')
 
     estado_actual    = fields.Text(string='Estado actual')
     estado_propuesto = fields.Text(string='Descripción del cambio')
@@ -236,29 +239,19 @@ class AmunetCCGeneral(models.Model):
     adjunto_ids = fields.Many2many('ir.attachment', string='Archivos adjuntos')
 
     tipo_display = fields.Char(
-        string='Tipo de cambio',
+        string='Elemento afectado',
         compute='_compute_tipo_display',
     )
 
-    @api.depends('tipo_procedimiento', 'tipo_formula', 'tipo_proveedor', 'tipo_instalacion',
-                 'tipo_equipo', 'tipo_manual', 'tipo_formato', 'tipo_otro', 'tipo_otro_desc')
+    @api.depends('tipo_elemento', 'tipo_otro_desc')
     def _compute_tipo_display(self):
-        tipos = [
-            ('tipo_procedimiento', 'Instrucciones'),
-            ('tipo_formula',       'Fórmula / Insumo'),
-            ('tipo_proveedor',     'Proveedor'),
-            ('tipo_instalacion',   'Instalación / Área'),
-            ('tipo_equipo',        'Equipo'),
-            ('tipo_manual',        'Manual'),
-            ('tipo_formato',       'Formato'),
-            ('tipo_otro',          'Otro'),
-        ]
         for rec in self:
-            seleccionados = [label for campo, label in tipos if rec[campo]]
-            if rec.tipo_otro and rec.tipo_otro_desc:
-                seleccionados = [s if s != 'Otro' else 'Otro: ' + rec.tipo_otro_desc
-                                 for s in seleccionados]
-            rec.tipo_display = ', '.join(seleccionados) if seleccionados else ''
+            if not rec.tipo_elemento:
+                rec.tipo_display = ''
+            elif rec.tipo_elemento == 'otro' and rec.tipo_otro_desc:
+                rec.tipo_display = 'Otro: ' + rec.tipo_otro_desc
+            else:
+                rec.tipo_display = dict(rec._fields['tipo_elemento'].selection).get(rec.tipo_elemento, '')
 
     # ── Rol del usuario actual ───────────────────────────────────
     is_manager = fields.Boolean(
@@ -449,18 +442,14 @@ class AmunetCCGeneral(models.Model):
 
     # ── Acciones de flujo ────────────────────────────────────────
     def action_enviar(self):
-        TIPOS = [
-            'tipo_procedimiento', 'tipo_formula', 'tipo_proveedor', 'tipo_instalacion',
-            'tipo_equipo', 'tipo_manual', 'tipo_formato', 'tipo_otro',
-        ]
         for r in self:
             if r.state != 'borrador':
                 raise UserError(_('Solo puedes enviar un registro en borrador.'))
             faltantes = []
             if not r.nombre_documento:
                 faltantes.append('• Asunto')
-            if not any(r[t] for t in TIPOS):
-                faltantes.append('• Tipo de cambio (selecciona al menos uno)')
+            if not r.tipo_elemento:
+                faltantes.append('• Elemento afectado (selecciona al menos uno)')
             if not r.estado_actual:
                 faltantes.append('• Estado actual (¿cómo está ahora?)')
             if not r.estado_propuesto:

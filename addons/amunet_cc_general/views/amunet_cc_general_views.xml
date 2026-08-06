@@ -12,7 +12,7 @@
                 <field name="name" string="Folio"/>
                 <field name="fecha_solicitud"/>
                 <field name="nombre_documento" string="Asunto"/>
-                <field name="tipo_display" string="Tipo de cambio"/>
+                <field name="tipo_display" string="Elemento afectado"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'borrador'"
                        decoration-warning="state == 'pendiente'"
@@ -45,7 +45,7 @@
                         </group>
                         <group>
                             <field name="nombre_documento" readonly="1"/>
-                            <field name="tipo_display" string="Tipo de cambio" readonly="1"/>
+                            <field name="tipo_display" string="Elemento afectado" readonly="1"/>
                         </group>
                     </group>
                     <separator string="Descripción del cambio"/>
@@ -173,23 +173,15 @@
                         <field name="nombre_documento" readonly="state not in ('borrador',)"
                                placeholder="Ej. PNODC-003, Cámara de refrigeración #2..."/>
                     </group>
-                    <group string="Tipo de cambio (selecciona los que apliquen)">
-                        <group>
-                            <field name="tipo_procedimiento" string="Instrucciones" readonly="state not in ('borrador',)"/>
-                            <field name="tipo_formula"       readonly="state not in ('borrador',)"/>
-                            <field name="tipo_proveedor"     readonly="state not in ('borrador',)"/>
-                            <field name="tipo_instalacion"   readonly="state not in ('borrador',)"/>
-                        </group>
-                        <group>
-                            <field name="tipo_equipo"    readonly="state not in ('borrador',)"/>
-                            <field name="tipo_manual"    readonly="state not in ('borrador',)"/>
-                            <field name="tipo_formato"   readonly="state not in ('borrador',)"/>
-                            <field name="tipo_otro"      readonly="state not in ('borrador',)"/>
-                            <field name="tipo_otro_desc" readonly="state not in ('borrador',)"
-                                   invisible="not tipo_otro"
-                                   placeholder="Especifica..."/>
-                        </group>
-                    </group>
+                    <div class="o_cc_tipo_radio mb-2">
+                        <span class="o_form_label fw-bold">Elemento afectado</span>
+                        <field name="tipo_elemento" widget="radio"
+                               readonly="state not in ('borrador',)"
+                               nolabel="1"/>
+                        <field name="tipo_otro_desc" readonly="state not in ('borrador',)"
+                               invisible="tipo_elemento != 'otro'"
+                               placeholder="Especifica..."/>
+                    </div>
                     <separator string=""/>
                     <label for="estado_actual" string="Estado actual (¿cómo está ahora?)"/>
                     <field name="estado_actual"    readonly="state not in ('borrador',)"

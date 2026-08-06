@@ -1,5 +1,19 @@
-.o_horizontal_separator,
-.o_form_sheet > label.o_form_label {
-    color: #000000 !important;
-    font-weight: 600;
+/* Elemento afectado — bloque fuera del <group> para ancho completo */
+.o_cc_tipo_radio {
+    width: 100%;
+    padding: 0 12px;
+    margin-bottom: 8px;
+}
+
+.o_cc_tipo_radio .o_field_radio {
+    width: 100% !important;
+    display: block !important;
+}
+
+/* El div del widget radio con role="radiogroup": convertir en grid de 3 columnas */
+.o_cc_tipo_radio [role="radiogroup"] {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px 16px;
+    width: 100% !important;
 }
