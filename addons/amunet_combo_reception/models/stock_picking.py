@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, api, _
+from odoo import models, api, fields, _
 from odoo.exceptions import UserError
 
 
@@ -112,6 +112,8 @@ class StockPicking(models.Model):
 
     def _amunet_create_combo_conversion(self, combo_moves, combo_loc):
         self.ensure_one()
+        # usuario que valida la recepcion (para trazabilidad del pre-aprobado)
+        op_user = self.env.user
         # Operación interna automática: usar sudo para no depender de los
         # permisos del usuario que validó la recepción.
         env = self.env(su=True)
@@ -237,6 +239,22 @@ class StockPicking(models.Model):
         conv.move_ids.move_line_ids.filtered(
             lambda l: l.product_id.product_tmpl_id.es_combo_compra
         ).write({'removal_date': False})
+        # Un solo clic para Almacen (como un ingreso normal): la conversion es
+        # automatica y deterministica, no requiere la aprobacion + realizacion
+        # previas del flujo de traslados internos de amunet_lot. Se dejan hechas
+        # (atribuidas a quien valido la recepcion) para que a Almacen solo le
+        # quede el paso final "Verificar e ingresar al inventario" (un clic ->
+        # Verificado). No altera el control de doble verificacion de los demas
+        # traslados internos reales.
+        now = fields.Datetime.now()
+        conv.write({
+            'transfer_approved': True,
+            'transfer_approved_by': op_user.id,
+            'transfer_approved_date': now,
+            'transfer_done_by_operator': True,
+            'transfer_done_by': op_user.id,
+            'transfer_done_date': now,
+        })
         conv.message_post(body=_(
             'Segundo ingreso (conversión de combo) generado desde %s. '
             'Valídalo para que ingresen las hojas individuales con su '
