@@ -158,6 +158,10 @@ class AmunetCCGeneral(models.Model):
     ], string='Departamento / Área', tracking=True)
 
     # ── Sección 1: Tipo y descripción ────────────────────────────
+    tipo_cambio = fields.Selection([
+        ('planeado',    'Planeado'),
+        ('no_planeado', 'No planeado'),
+    ], string='Tipo de cambio', tracking=True)
     nombre_documento   = fields.Char(string='Asunto')
     tipo_elemento = fields.Selection([
         ('instrucciones', 'Instrucciones'),

@@ -170,6 +170,31 @@
                     <!-- ── Sección 1: Tipo y descripción ────────── -->
                     <separator string="1. Tipo y descripción del cambio"/>
                     <group>
+                        <field name="tipo_cambio" widget="radio"
+                               options="{'horizontal': true}"
+                               readonly="state not in ('borrador',)"/>
+                    </group>
+                    <div class="d-flex gap-3 px-3 pb-3 small">
+                        <div class="border rounded p-2 flex-fill bg-100">
+                            <div class="fw-semibold text-success mb-1">✔ Planeado</div>
+                            <div class="text-muted">Tú decides el cambio con anticipación:</div>
+                            <ul class="text-muted mb-0 ps-3">
+                                <li>PNO con vigencia vencida</li>
+                                <li>Mejora de formato o instructivo</li>
+                                <li>Cambio de proveedor por mejor opción</li>
+                            </ul>
+                        </div>
+                        <div class="border rounded p-2 flex-fill bg-100">
+                            <div class="fw-semibold text-warning mb-1">⚠ No planeado</div>
+                            <div class="text-muted">Una situación imprevista lo exige:</div>
+                            <ul class="text-muted mb-0 ps-3">
+                                <li>Proveedor deja de surtir un insumo</li>
+                                <li>CAPA o no conformidad obliga la corrección</li>
+                                <li>Observación de Cofepris o auditoría</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <group>
                         <field name="nombre_documento" readonly="state not in ('borrador',)"
                                placeholder="Ej. PNODC-003, Cámara de refrigeración #2..."/>
                     </group>
