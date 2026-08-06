@@ -196,7 +196,11 @@
                     </div>
                     <group>
                         <field name="nombre_documento" readonly="state not in ('borrador',)"
-                               placeholder="Ej. PNODC-003, Cámara de refrigeración #2..."/>
+                               placeholder="Se llena del documento vinculado, o escribe el asunto manualmente..."/>
+                        <field name="documento_afectado_id" readonly="state not in ('borrador',)"
+                               options="{'no_create': True}"
+                               placeholder="Busca el documento en Odoo..."
+                               invisible="tipo_elemento not in ('pno', 'formato', 'instrucciones')"/>
                     </group>
                     <div class="o_cc_tipo_radio mb-2">
                         <span class="o_form_label fw-bold">Elemento afectado</span>
@@ -310,8 +314,39 @@
 
                     <!-- ── Verificación y cierre ─────────────────── -->
                     <separator string="4. Verificación y cierre"
-                               invisible="state not in ('aceptado', 'cerrado')"/>
-                    <group invisible="state not in ('aceptado', 'cerrado')">
+                               invisible="state not in ('aceptado', 'cerrado') or not is_manager"/>
+
+                    <!-- Panel de verificación del documento vinculado -->
+                    <div class="d-flex align-items-stretch gap-3 px-3 pb-3"
+                         invisible="state not in ('aceptado', 'cerrado') or not is_manager or not documento_afectado_id">
+                        <div class="border rounded p-3 flex-fill">
+                            <div class="fw-semibold mb-2">
+                                <i class="fa fa-file-text-o me-1 text-primary"/>
+                                Documento vinculado
+                            </div>
+                            <field name="documento_afectado_id" readonly="1" nolabel="1"/>
+                        </div>
+                        <div class="border rounded p-3 text-center" style="min-width:130px;">
+                            <div class="text-muted small mb-1">Versión al iniciar</div>
+                            <div class="fw-bold fs-4">
+                                <field name="documento_version_inicio" readonly="1" nolabel="1"/>
+                            </div>
+                        </div>
+                        <div class="border rounded p-3 text-center" style="min-width:130px;">
+                            <div class="text-muted small mb-1">Versión actual</div>
+                            <div class="fw-bold fs-4">
+                                <field name="documento_version_actual" readonly="1" nolabel="1"/>
+                            </div>
+                            <field name="documento_state" readonly="1" nolabel="1"
+                                   widget="badge"
+                                   decoration-success="documento_state == 'vigente'"
+                                   decoration-warning="documento_state == 'en_revision'"
+                                   decoration-danger="documento_state == 'obsoleto'"
+                                   decoration-secondary="documento_state == 'borrador'"/>
+                        </div>
+                    </div>
+
+                    <group invisible="state not in ('aceptado', 'cerrado') or not is_manager">
                         <group>
                             <field name="fecha_implementacion"
                                    readonly="not is_manager or state not in ('aceptado',)"/>
@@ -324,22 +359,22 @@
                         </group>
                     </group>
                     <label for="resultados_verificacion"
-                           invisible="state not in ('aceptado', 'cerrado')"/>
+                           invisible="state not in ('aceptado', 'cerrado') or not is_manager"/>
                     <field name="resultados_verificacion"
-                           invisible="state not in ('aceptado', 'cerrado')"
+                           invisible="state not in ('aceptado', 'cerrado') or not is_manager"
                            readonly="not is_manager or state not in ('aceptado',)"
                            placeholder="Ej. Se revisó el procedimiento actualizado a la nueva versión. El personal confirmó que recibió capacitación. Se verificó que los formatos anteriores fueron reemplazados en los puntos de uso." rows="4"/>
                     <label for="evidencia_anexa"
-                           invisible="state not in ('aceptado', 'cerrado')"/>
+                           invisible="state not in ('aceptado', 'cerrado') or not is_manager"/>
                     <field name="evidencia_anexa"
-                           invisible="state not in ('aceptado', 'cerrado')"
+                           invisible="state not in ('aceptado', 'cerrado') or not is_manager"
                            readonly="not is_manager or state not in ('aceptado',)"
                            placeholder="Ej. Captura de pantalla, enlace al registro actualizado en Odoo, o descripción de lo verificado."/>
 
                     <!-- ── Firmas de cierre ──────────────────────── -->
                     <separator string="Firmas de cierre"
-                               invisible="state not in ('aceptado', 'cerrado')"/>
-                    <group invisible="state not in ('aceptado', 'cerrado')">
+                               invisible="state not in ('aceptado', 'cerrado') or not is_manager"/>
+                    <group invisible="state not in ('aceptado', 'cerrado') or not is_manager">
                         <group string="Realizó el control de cambios">
                             <field name="cierre_realizo_id"
                                    readonly="not is_manager or firma_cierre_realizo_id or state not in ('aceptado',)"
@@ -361,7 +396,7 @@
                                     invisible="not cierre_reviso_id or firma_cierre_reviso_id or state not in ('aceptado',)"/>
                         </group>
                     </group>
-                    <group invisible="state not in ('aceptado', 'cerrado')">
+                    <group invisible="state not in ('aceptado', 'cerrado') or not is_manager">
                         <group string="Aprobó la aplicación del cambio">
                             <field name="cierre_aprobo_domain_ids" invisible="1"/>
                             <field name="cierre_aprobo_id"

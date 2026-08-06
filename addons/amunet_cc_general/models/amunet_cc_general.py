@@ -175,6 +175,23 @@ class AmunetCCGeneral(models.Model):
         ('otro',          'Otro'),
     ], string='Elemento afectado')
     tipo_otro_desc = fields.Char(string='Especifica (Otro)')
+    documento_afectado_id = fields.Many2one(
+        'amunet.documento', string='Documento en Odoo',
+        tracking=True,
+        help='Vincula el documento de Odoo que se modificará con este cambio.',
+    )
+    documento_version_inicio = fields.Char(
+        string='Versión al iniciar', readonly=True,
+        help='Versión del documento cuando se envió para autorización.',
+    )
+    documento_version_actual = fields.Char(
+        related='documento_afectado_id.version_actual',
+        string='Versión actual', readonly=True,
+    )
+    documento_state = fields.Selection(
+        related='documento_afectado_id.state',
+        string='Estado del documento', readonly=True,
+    )
 
     estado_actual    = fields.Text(string='Estado actual')
     estado_propuesto = fields.Text(string='Descripción del cambio')
@@ -262,6 +279,17 @@ class AmunetCCGeneral(models.Model):
         compute='_compute_is_manager',
         compute_sudo=False,
     )
+
+    @api.onchange('tipo_elemento')
+    def _onchange_tipo_elemento(self):
+        if self.tipo_elemento not in ('pno', 'formato', 'instrucciones'):
+            self.documento_afectado_id = False
+
+    @api.onchange('documento_afectado_id')
+    def _onchange_documento_afectado(self):
+        if self.documento_afectado_id and not self.nombre_documento:
+            doc = self.documento_afectado_id
+            self.nombre_documento = '%s — %s' % (doc.codigo, doc.name) if doc.codigo and doc.codigo != 'Nuevo' else doc.name
 
     @api.depends_context('uid')
     def _compute_is_manager(self):
@@ -472,6 +500,8 @@ class AmunetCCGeneral(models.Model):
                     % '\n'.join(faltantes)
                 )
             r.state = 'pendiente'
+            if r.documento_afectado_id and not r.documento_version_inicio:
+                r.documento_version_inicio = r.documento_afectado_id.version_actual
             base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
             url = '%s/odoo/control-de-cambios/%s' % (base_url, r.id)
             if r.reviso_id:
