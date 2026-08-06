@@ -4,7 +4,7 @@
     'summary': 'Recibir un combo de proveedor (1 SKU) y convertirlo a sus '
                'hojas/insumos individuales, cada uno con su lote Amunet, '
                'heredando el lote de proveedor y fechas capturados 1 sola vez.',
-    'version': '19.0.1.6.0',
+    'version': '19.0.1.7.0',
     'author': 'Amunet',
     'category': 'Inventory/Purchase',
     'depends': ['stock', 'purchase', 'amunet_lot',
