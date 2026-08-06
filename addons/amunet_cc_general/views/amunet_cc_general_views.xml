@@ -200,7 +200,7 @@
                         <field name="documento_afectado_id" readonly="state not in ('borrador',)"
                                options="{'no_create': True}"
                                placeholder="Busca el documento en Odoo..."
-                               invisible="tipo_elemento not in ('pno', 'formato', 'instrucciones')"/>
+                               invisible="tipo_elemento not in ('pno', 'instrucciones')"/>
                     </group>
                     <div class="o_cc_tipo_radio mb-2">
                         <span class="o_form_label fw-bold">Elemento afectado</span>

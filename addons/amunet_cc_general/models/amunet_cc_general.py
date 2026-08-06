@@ -282,7 +282,7 @@ class AmunetCCGeneral(models.Model):
 
     @api.onchange('tipo_elemento')
     def _onchange_tipo_elemento(self):
-        if self.tipo_elemento not in ('pno', 'formato', 'instrucciones'):
+        if self.tipo_elemento not in ('pno', 'instrucciones'):
             self.documento_afectado_id = False
 
     @api.onchange('documento_afectado_id')
