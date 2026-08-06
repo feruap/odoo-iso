@@ -225,46 +225,8 @@
                            placeholder="Explica la razón o el origen del cambio. Ej. En la auditoría interna de junio 2026 se detectó que personal imprimía documentos sin verificar vigencia, generando riesgo de uso de versiones obsoletas."
                            rows="5"/>
 
-                    <!-- ── Sección 2: Autorización del cambio ────── -->
-                    <separator string="2. Autorización del cambio"/>
-                    <group>
-                        <group string="Revisó (Aseguramiento de Calidad)">
-                            <field name="reviso_id"
-                                   readonly="firma_reviso_id or state not in ('borrador', 'pendiente')"
-                                   options="{'no_create': True}"/>
-                            <field name="firma_reviso_id" readonly="1" invisible="not firma_reviso_id"/>
-                            <field name="fecha_reviso"    readonly="1" invisible="not fecha_reviso"/>
-                            <field name="vb_reviso"       readonly="1" invisible="not vb_reviso"/>
-                            <button name="action_firmar_reviso" type="object"
-                                    string="Firmar" icon="fa-pencil-square-o" class="btn-primary"
-                                    invisible="not reviso_id or firma_reviso_id or state != 'pendiente'"/>
-                        </group>
-                    </group>
-                    <group>
-                        <group string="Aprobó (Gerencia / Dirección)">
-                            <field name="aprobo_id"
-                                   readonly="firma_aprobo_id or state not in ('borrador', 'pendiente')"
-                                   options="{'no_create': True}"/>
-                            <field name="firma_aprobo_id" readonly="1" invisible="not firma_aprobo_id"/>
-                            <field name="fecha_aprobo"    readonly="1" invisible="not fecha_aprobo"/>
-                            <field name="vb_aprobo"       readonly="1" invisible="not vb_aprobo"/>
-                        </group>
-                        <group string="Motivo del rechazo" invisible="state != 'rechazado'">
-                            <field name="motivo_rechazo" nolabel="1" readonly="1"/>
-                        </group>
-                    </group>
-                    <div class="d-flex align-items-start gap-2 px-3 pb-3 small text-muted"
-                         invisible="state != 'borrador'">
-                        <i class="fa fa-info-circle mt-1 text-info"/>
-                        <span>
-                            Una vez que hayas seleccionado al personal de revisión y aprobación,
-                            presiona el botón <strong>Enviar para autorización</strong> (arriba del formulario)
-                            para que les llegue la notificación y puedan firmar.
-                        </span>
-                    </div>
-
-                    <!-- ── Sección 3: Plan de implementación ─────── -->
-                    <separator string="3. Plan de implementación"
+                    <!-- ── Sección 2: Plan de implementación ─────── -->
+                    <separator string="2. Plan de implementación"
                                invisible="state not in ('aceptado', 'cerrado')"/>
                     <group invisible="state not in ('aceptado', 'cerrado')">
                         <group>
@@ -311,6 +273,54 @@
                                    readonly="1" optional="show"/>
                         </list>
                     </field>
+
+                    <!-- Botón generar nueva versión del PNO -->
+                    <div class="text-center py-3"
+                         invisible="state != 'aceptado' or tipo_elemento != 'pno' or not documento_afectado_id">
+                        <button name="action_generar_nueva_version_pno" type="object"
+                                string="Generar nueva versión del PNO"
+                                icon="fa-file-text-o"
+                                class="btn-primary btn-lg"
+                                confirm="Se generará una nueva versión en borrador del PNO vinculado, con la descripción del cambio y justificación tomadas de este CC. ¿Continuar?"/>
+                    </div>
+
+                    <!-- ── Sección 3: Autorización del cambio ────── -->
+                    <separator string="3. Autorización del cambio"/>
+                    <group>
+                        <group string="Revisó (Aseguramiento de Calidad)">
+                            <field name="reviso_id"
+                                   readonly="firma_reviso_id or state not in ('borrador', 'pendiente')"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_reviso_id" readonly="1" invisible="not firma_reviso_id"/>
+                            <field name="fecha_reviso"    readonly="1" invisible="not fecha_reviso"/>
+                            <field name="vb_reviso"       readonly="1" invisible="not vb_reviso"/>
+                            <button name="action_firmar_reviso" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o" class="btn-primary"
+                                    invisible="not reviso_id or firma_reviso_id or state != 'pendiente'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Aprobó (Gerencia / Dirección)">
+                            <field name="aprobo_id"
+                                   readonly="firma_aprobo_id or state not in ('borrador', 'pendiente')"
+                                   options="{'no_create': True}"/>
+                            <field name="firma_aprobo_id" readonly="1" invisible="not firma_aprobo_id"/>
+                            <field name="fecha_aprobo"    readonly="1" invisible="not fecha_aprobo"/>
+                            <field name="vb_aprobo"       readonly="1" invisible="not vb_aprobo"/>
+                        </group>
+                        <group string="Motivo del rechazo" invisible="state != 'rechazado'">
+                            <field name="motivo_rechazo" nolabel="1" readonly="1"/>
+                        </group>
+                    </group>
+                    <div class="d-flex align-items-start gap-2 px-3 pb-3 small text-muted"
+                         invisible="state != 'borrador'">
+                        <i class="fa fa-info-circle mt-1 text-info"/>
+                        <span>
+                            Una vez que hayas seleccionado al personal de revisión y aprobación,
+                            presiona el botón <strong>Enviar para autorización</strong> (arriba del formulario)
+                            para que les llegue la notificación y puedan firmar.
+                        </span>
+                    </div>
 
                     <!-- ── Verificación y cierre ─────────────────── -->
                     <separator string="4. Verificación y cierre"

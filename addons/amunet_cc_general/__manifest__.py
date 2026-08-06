@@ -13,6 +13,7 @@
         'data/ir_sequence_data.xml',
         'wizard/amunet_cc_rechazo_wizard_views.xml',
         'views/amunet_cc_general_views.xml',
+        'views/amunet_documento_ext_views.xml',
         'views/menus.xml',
     ],
     'assets': {

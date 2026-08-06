@@ -47,6 +47,11 @@
                             type="object" class="btn-danger"
                             invisible="state != 'borrador'"
                             confirm="¿Seguro que quieres eliminar este documento? Esta acción no se puede deshacer."/>
+                    <button name="action_nueva_version"
+                            string="Generar nueva versión" type="object"
+                            class="btn-primary"
+                            invisible="state != 'vigente'"
+                            confirm="Se creará una nueva versión en borrador con el contenido actual. ¿Continuar?"/>
                     <button name="action_open_sugerencia_wizard"
                             string="Control de cambios" type="object"
                             invisible="state != 'vigente'"
@@ -359,6 +364,20 @@
                             <group string="Firmas snapshot (migracion inicial)"
                                    invisible="not firmas_snapshot">
                                 <field name="firmas_snapshot" nolabel="1" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Nueva versión" name="nueva_version"
+                              invisible="state != 'vigente'">
+                            <div class="alert alert-info mb-3" role="alert">
+                                <i class="fa fa-info-circle me-1"/>
+                                Antes de generar una nueva versión, describe qué cambia y por qué.
+                                Esto quedará registrado en el historial del documento.
+                            </div>
+                            <group>
+                                <field name="descripcion_cambio_pendiente"
+                                       placeholder="¿Qué se modifica en esta nueva versión? Ej. Se agrega el paso de verificación de vigencia antes de imprimir..."/>
+                                <field name="justificacion_pendiente"
+                                       placeholder="¿Por qué se hace el cambio? Ej. Control de cambios SC-0826-001 aprobado el 06/08/2026..."/>
                             </group>
                         </page>
                         <page string="Historial de versiones">

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Restringe "Generar nueva versión" a documentos con CC aprobado -->
+    <record id="view_documento_form_cc_ext" model="ir.ui.view">
+        <field name="name">amunet.documento.form.cc.ext</field>
+        <field name="model">amunet.documento</field>
+        <field name="inherit_id" ref="amunet_documentos.view_amunet_documento_form"/>
+        <field name="arch" type="xml">
+
+            <!-- El botón solo aparece si hay CC aprobado para este documento -->
+            <button name="action_nueva_version" position="attributes">
+                <attribute name="invisible">state != 'vigente' or not tiene_cc_aprobado</attribute>
+            </button>
+
+            <!-- Aviso informativo cuando vigente pero sin CC aprobado (sin botón que permita saltarlo) -->
+            <button name="action_nueva_version" position="after">
+                <span class="text-muted small ms-2"
+                      invisible="state != 'vigente' or tiene_cc_aprobado">
+                    <i class="fa fa-lock me-1"/>
+                    Para generar una nueva versión, crea primero un
+                    <strong>Control de Cambios</strong> y espera a que sea autorizado.
+                </span>
+            </button>
+
+        </field>
+    </record>
+</odoo>

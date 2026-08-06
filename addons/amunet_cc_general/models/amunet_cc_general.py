@@ -545,9 +545,9 @@ class AmunetCCGeneral(models.Model):
                     'fecha_aprobo': fields.Datetime.now(),
                     'vb_aprobo': 'si'})
         self._message_log(body=_('<p><b>%s</b> autorizó el control de cambios.</p>') % self.env.user.name)
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        url_cc = '%s/odoo/control-de-cambios/%s' % (base_url, self.id)
         if self.solicitante_id and self.solicitante_id.partner_id:
-            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            url = '%s/odoo/control-de-cambios/%s' % (base_url, self.id)
             self.message_post(
                 body=_(
                     'Hola <b>%s</b>,<br/><br/>'
@@ -556,8 +556,30 @@ class AmunetCCGeneral(models.Model):
                     've a la sección "Implementación y seguimiento" y agrega las actividades '
                     'con sus responsables.<br/><br/>'
                     '<a href="%s">Abrir control de cambios %s</a>'
-                ) % (self.solicitante_id.name, self.name, self.env.user.name, url, self.name),
+                ) % (self.solicitante_id.name, self.name, self.env.user.name, url_cc, self.name),
                 partner_ids=self.solicitante_id.partner_id.ids,
+                subtype_xmlid='mail.mt_comment',
+            )
+        # Notificar al responsable del documento vinculado
+        doc = self.documento_afectado_id
+        if doc and doc.responsable_id and doc.responsable_id.partner_id:
+            url_doc = '%s/odoo/documentos/%s' % (base_url, doc.id)
+            self.message_post(
+                body=_(
+                    'Hola <b>%s</b>,<br/><br/>'
+                    'El control de cambios <b>%s</b> acaba de ser <b>autorizado</b>.<br/><br/>'
+                    'Como responsable del documento <b>%s — %s</b>, ya puedes generar '
+                    'una nueva versión en Odoo e incorporar los cambios aprobados.<br/><br/>'
+                    'Cuando la nueva versión quede <b>Vigente</b>, el control de cambios '
+                    'registrará automáticamente la fecha de aplicación.<br/><br/>'
+                    '<a href="%s">Abrir documento</a> &nbsp;·&nbsp; '
+                    '<a href="%s">Ver control de cambios</a>'
+                ) % (
+                    doc.responsable_id.name, self.name,
+                    doc.codigo, doc.name,
+                    url_doc, url_cc,
+                ),
+                partner_ids=doc.responsable_id.partner_id.ids,
                 subtype_xmlid='mail.mt_comment',
             )
 
@@ -604,6 +626,29 @@ class AmunetCCGeneral(models.Model):
             '_signature_cierre_realizo': _('Realizó el control de cambios'),
             '_signature_cierre_reviso':  _('Revisó la aplicación'),
             '_signature_cierre_aprobo':  _('Aprobó la aplicación del cambio'),
+        }
+
+    def action_generar_nueva_version_pno(self):
+        self.ensure_one()
+        doc = self.documento_afectado_id
+        if not doc:
+            raise UserError(_('Este CC no tiene un documento vinculado.'))
+        if doc.state != 'vigente':
+            raise UserError(_('El documento "%s" no está en estado Vigente.') % doc.codigo)
+        descripcion = self.estado_propuesto or ''
+        justificacion = 'Control de cambios %s aprobado. %s' % (self.name, self.justificacion or '')
+        doc.with_context(amunet_documento_workflow_write=True).write({
+            'descripcion_cambio_pendiente': descripcion,
+            'justificacion_pendiente':      justificacion,
+        })
+        doc.action_nueva_version()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Nueva versión: %s') % doc.codigo,
+            'res_model': 'amunet.documento',
+            'res_id': doc.id,
+            'view_mode': 'form',
+            'target': 'current',
         }
 
     def _abrir_firma(self, method_name, label):
