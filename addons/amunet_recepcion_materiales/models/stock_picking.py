@@ -109,7 +109,13 @@ class StockPicking(models.Model):
     def _amunet_sync_liberacion_from_original(self):
         """Copia datos del proveedor desde la recepción original al picking de
         liberación de QC (amunet_disposition_qc_id). Así Karla ve los datos
-        completos al confirmar el ingreso sin tener que re-capturarlos."""
+        completos al confirmar el ingreso sin tener que re-capturarlos.
+
+        Para recepciones normales: copia los campos de texto (amunet_supplier_lot,
+        amunet_mfg_date, amunet_exp_date) del move original.
+        Para combos (CONV): el move interno no tiene esos campos de texto, así que
+        cae al plan B: toma factory_lot_id/fechas de la move_line y los convierte
+        a texto para que aparezcan visibles en la pestaña de operaciones."""
         self.ensure_one()
         qc = self.amunet_disposition_qc_id
         if not qc or not qc.picking_id:
@@ -120,18 +126,30 @@ class StockPicking(models.Model):
                 lambda m: m.product_id == move.product_id)[:1]
             if not orig_move:
                 continue
-            vals = {}
-            if not move.amunet_supplier_lot and orig_move.amunet_supplier_lot:
-                vals['amunet_supplier_lot'] = orig_move.amunet_supplier_lot
-            if not move.amunet_mfg_date and orig_move.amunet_mfg_date:
-                vals['amunet_mfg_date'] = orig_move.amunet_mfg_date
-            if not move.amunet_exp_date and orig_move.amunet_exp_date:
-                vals['amunet_exp_date'] = orig_move.amunet_exp_date
-            if vals:
-                move.sudo().write(vals)
-            # Copiar también a las move_lines (factory_lot_id, fechas estructuradas)
             orig_ml = orig_pick.move_line_ids.filtered(
                 lambda l: l.product_id == move.product_id)[:1]
+
+            vals = {}
+            if not move.amunet_supplier_lot:
+                if orig_move.amunet_supplier_lot:
+                    vals['amunet_supplier_lot'] = orig_move.amunet_supplier_lot
+                elif orig_ml and orig_ml.factory_lot_id:
+                    # Plan B combo: nombre del lote de fábrica como texto
+                    vals['amunet_supplier_lot'] = orig_ml.factory_lot_id.name
+            if not move.amunet_mfg_date:
+                if orig_move.amunet_mfg_date:
+                    vals['amunet_mfg_date'] = orig_move.amunet_mfg_date
+                elif orig_ml and orig_ml.manufacturing_date:
+                    vals['amunet_mfg_date'] = orig_ml.manufacturing_date.strftime('%d/%m/%Y')
+            if not move.amunet_exp_date:
+                if orig_move.amunet_exp_date:
+                    vals['amunet_exp_date'] = orig_move.amunet_exp_date
+                elif orig_ml and orig_ml.expiration_date:
+                    vals['amunet_exp_date'] = orig_ml.expiration_date.strftime('%d/%m/%Y')
+            if vals:
+                move.sudo().write(vals)
+
+            # Copiar también a las move_lines (factory_lot_id, fechas estructuradas)
             if orig_ml:
                 for ml in move.move_line_ids:
                     ml_vals = {}
