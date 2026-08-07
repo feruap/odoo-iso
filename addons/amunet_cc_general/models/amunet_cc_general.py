@@ -197,7 +197,7 @@ class AmunetCCGeneral(models.Model):
     estado_propuesto = fields.Text(string='Descripción del cambio')
     justificacion    = fields.Text(string='Justificación')
 
-    # ── Sección 2: Firmas de autorización ────────────────────────
+    # ── Sección 3: Firmas de autorización ────────────────────────
     reviso_id        = fields.Many2one('res.users', string='Revisó')
     firma_reviso_id  = fields.Many2one('res.users', string='Firma (Revisó)', readonly=True)
     fecha_reviso     = fields.Datetime(string='Fecha firma (Revisó)', readonly=True)
@@ -211,7 +211,7 @@ class AmunetCCGeneral(models.Model):
                                          string='¿Se autoriza?', readonly=True)
     motivo_rechazo   = fields.Text(string='Motivo del rechazo')
 
-    # ── Sección 3: Plan de implementación ────────────────────────
+    # ── Sección 2: Plan de implementación ────────────────────────
     fecha_propuesta  = fields.Date(string='Fecha propuesta para el cambio')
     lote_aplicacion  = fields.Char(string='Lote / Fecha a partir de la cual aplica')
     acciones_previas = fields.Text(string='Acciones previas necesarias')
@@ -357,7 +357,7 @@ class AmunetCCGeneral(models.Model):
         for rec in self:
             acciones = []
             if rec.reviso_id.id == uid and not rec.firma_reviso_id:
-                acciones.append(_('Firmar la revisión (sección 2)'))
+                acciones.append(_('Firmar la revisión (sección 3)'))
             for act in rec.actividades_ids:
                 if act.responsable_id.id == uid and not act.firma_enterado_id:
                     acciones.append(_('Firmar de enterado en tu actividad: "%s"') % (act.actividad or 'sin nombre'))
@@ -490,13 +490,17 @@ class AmunetCCGeneral(models.Model):
                 faltantes.append('• Justificación')
             if not r.firma_solicitante_id:
                 faltantes.append('• Firma del solicitante (el solicitante debe firmar antes de enviar)')
+            if not r.fecha_propuesta:
+                faltantes.append('• Fecha propuesta para el cambio (sección 2)')
+            if not r.actividades_ids or not any(a.responsable_id for a in r.actividades_ids):
+                faltantes.append('• Al menos una actividad con responsable asignado (sección 2)')
             if not r.reviso_id:
-                faltantes.append('• Revisó (Aseguramiento de Calidad)')
+                faltantes.append('• Revisó (Aseguramiento de Calidad) (sección 3)')
             if not r.aprobo_id:
-                faltantes.append('• Aprobó (Gerencia / Dirección)')
+                faltantes.append('• Aprobó (Gerencia / Dirección) (sección 3)')
             if faltantes:
                 raise UserError(
-                    _('Antes de enviar completa los siguientes campos en la sección 1:\n\n%s')
+                    _('Antes de enviar completa los siguientes campos:\n\n%s')
                     % '\n'.join(faltantes)
                 )
             r.state = 'pendiente'
@@ -536,6 +540,15 @@ class AmunetCCGeneral(models.Model):
             raise UserError(_(
                 'No se puede autorizar: %s aún no ha firmado la revisión.'
             ) % self.reviso_id.name)
+        sin_enterado = self.actividades_ids.filtered(
+            lambda a: a.responsable_id and not a.firma_enterado_id
+        )
+        if sin_enterado:
+            nombres = ', '.join(sin_enterado.mapped('responsable_id.name'))
+            raise UserError(_(
+                'No se puede autorizar: las siguientes personas aún no han firmado '
+                'de enterado su actividad:\n\n%s\n\nPide que firmen antes de autorizar.'
+            ) % nombres)
         return self._abrir_firma('_signature_aprobo', _('Autorización del cambio'))
 
     def _signature_aprobo(self):
@@ -548,15 +561,40 @@ class AmunetCCGeneral(models.Model):
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         url_cc = '%s/odoo/control-de-cambios/%s' % (base_url, self.id)
         if self.solicitante_id and self.solicitante_id.partner_id:
-            self.message_post(
-                body=_(
+            es_pno_vinculado = (
+                self.tipo_elemento == 'pno'
+                and self.documento_afectado_id
+            )
+            if es_pno_vinculado:
+                doc = self.documento_afectado_id
+                cuerpo_solicitante = _(
+                    'Hola <b>%s</b>,<br/><br/>'
+                    'Tu control de cambios <b>%s</b> ha sido <b>autorizado</b> por %s.<br/><br/>'
+                    'Ya puedes generar la nueva versión del PNO vinculado '
+                    '(<b>%s — %s</b>):<br/>'
+                    '<ol>'
+                    '<li>Abre el control de cambios usando el enlace de abajo.</li>'
+                    '<li>Ve a la sección <b>"2. Plan de implementación"</b> y agrega las actividades.</li>'
+                    '<li>Una vez capturadas las actividades, presiona el botón '
+                    '<b>"Generar nueva versión del PNO"</b> que aparece al final del formulario.</li>'
+                    '</ol>'
+                    '<a href="%s">Abrir control de cambios %s</a>'
+                ) % (
+                    self.solicitante_id.name, self.name, self.env.user.name,
+                    doc.codigo, doc.name,
+                    url_cc, self.name,
+                )
+            else:
+                cuerpo_solicitante = _(
                     'Hola <b>%s</b>,<br/><br/>'
                     'Tu control de cambios <b>%s</b> ha sido <b>autorizado</b> por %s.<br/><br/>'
                     'Ya puedes ingresar el plan de implementación: abre el control de cambios, '
                     've a la sección "Implementación y seguimiento" y agrega las actividades '
                     'con sus responsables.<br/><br/>'
                     '<a href="%s">Abrir control de cambios %s</a>'
-                ) % (self.solicitante_id.name, self.name, self.env.user.name, url_cc, self.name),
+                ) % (self.solicitante_id.name, self.name, self.env.user.name, url_cc, self.name)
+            self.message_post(
+                body=cuerpo_solicitante,
                 partner_ids=self.solicitante_id.partner_id.ids,
                 subtype_xmlid='mail.mt_comment',
             )

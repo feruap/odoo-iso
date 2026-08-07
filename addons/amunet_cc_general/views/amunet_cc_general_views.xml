@@ -226,26 +226,24 @@
                            rows="5"/>
 
                     <!-- ── Sección 2: Plan de implementación ─────── -->
-                    <separator string="2. Plan de implementación"
-                               invisible="state not in ('aceptado', 'cerrado')"/>
-                    <group invisible="state not in ('aceptado', 'cerrado')">
+                    <separator string="2. Plan de implementación"/>
+                    <group>
                         <group>
                             <field name="fecha_propuesta"
-                                   readonly="state not in ('aceptado',)"/>
+                                   readonly="state not in ('borrador', 'aceptado')"/>
                         </group>
                         <group>
                             <field name="lote_aplicacion"
                                    readonly="state not in ('aceptado',)"
+                                   invisible="state == 'borrador'"
                                    placeholder="Ej. Lote piloto o fecha específica"/>
                         </group>
                     </group>
 
                     <!-- ── Implementación y seguimiento ──────────── -->
-                    <separator string="Implementación y seguimiento"
-                               invisible="state not in ('aceptado', 'cerrado')"/>
+                    <separator string="Implementación y seguimiento"/>
                     <field name="actividades_ids"
-                           invisible="state not in ('aceptado', 'cerrado')"
-                           readonly="state not in ('aceptado',)">
+                           readonly="state not in ('borrador', 'aceptado')">
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="actividad"      string="Actividad"
@@ -273,16 +271,6 @@
                                    readonly="1" optional="show"/>
                         </list>
                     </field>
-
-                    <!-- Botón generar nueva versión del PNO -->
-                    <div class="text-center py-3"
-                         invisible="state != 'aceptado' or tipo_elemento != 'pno' or not documento_afectado_id">
-                        <button name="action_generar_nueva_version_pno" type="object"
-                                string="Generar nueva versión del PNO"
-                                icon="fa-file-text-o"
-                                class="btn-primary btn-lg"
-                                confirm="Se generará una nueva versión en borrador del PNO vinculado, con la descripción del cambio y justificación tomadas de este CC. ¿Continuar?"/>
-                    </div>
 
                     <!-- ── Sección 3: Autorización del cambio ────── -->
                     <separator string="3. Autorización del cambio"/>
@@ -320,6 +308,16 @@
                             presiona el botón <strong>Enviar para autorización</strong> (arriba del formulario)
                             para que les llegue la notificación y puedan firmar.
                         </span>
+                    </div>
+
+                    <!-- Botón generar nueva versión del PNO -->
+                    <div class="text-center py-3"
+                         invisible="state != 'aceptado' or tipo_elemento != 'pno' or not documento_afectado_id">
+                        <button name="action_generar_nueva_version_pno" type="object"
+                                string="Generar nueva versión del PNO"
+                                icon="fa-file-text-o"
+                                class="btn-primary btn-lg"
+                                confirm="Se generará una nueva versión en borrador del PNO vinculado, con la descripción del cambio y justificación tomadas de este CC. ¿Continuar?"/>
                     </div>
 
                     <!-- ── Verificación y cierre ─────────────────── -->
