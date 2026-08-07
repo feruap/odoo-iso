@@ -147,11 +147,28 @@ class MrpProduction(models.Model):
                 nuevo = nuevo.replace(k, v)
             t.text = nuevo
 
-    def _etiqueta_mover_grupo(self, grp_el, x_emu, y_emu):
-        """Mueve un grupo (p:grpSp) fijando su offset absoluto en la hoja."""
+    def _etiqueta_mover_grupo(self, grp_el, x_emu, y_emu, ref_el=None):
+        """Mueve un grupo (p:grpSp) fijando su offset absoluto en la hoja.
+        Blindaje: si el grupo copiado no trae su transform (a:xfrm) o su offset
+        (a:off) — caso raro observado en generaciones grandes — se reconstruye
+        desde `ref_el` (el grupo original de la plantilla, que siempre lo trae)
+        para no romper la generacion de la etiqueta."""
+        import copy as _copy
         from pptx.oxml.ns import qn
         xfrm = grp_el.find('%s/%s' % (qn('p:grpSpPr'), qn('a:xfrm')))
+        if (xfrm is None or xfrm.find(qn('a:off')) is None) and ref_el is not None:
+            ref_xfrm = ref_el.find('%s/%s' % (qn('p:grpSpPr'), qn('a:xfrm')))
+            grp_sppr = grp_el.find(qn('p:grpSpPr'))
+            if ref_xfrm is not None and grp_sppr is not None:
+                if xfrm is not None:
+                    grp_sppr.remove(xfrm)
+                xfrm = _copy.deepcopy(ref_xfrm)
+                grp_sppr.insert(0, xfrm)
+        if xfrm is None:
+            return
         off = xfrm.find(qn('a:off'))
+        if off is None:
+            return
         off.set('x', str(int(x_emu)))
         off.set('y', str(int(y_emu)))
 
@@ -181,7 +198,7 @@ class MrpProduction(models.Model):
             hoja = hojas[hoja0 + idx // por_hoja]
             x_emu, y_emu = posiciones[idx % por_hoja]
             nuevo = copy.deepcopy(unidad_xml)
-            self._etiqueta_mover_grupo(nuevo, x_emu, y_emu)
+            self._etiqueta_mover_grupo(nuevo, x_emu, y_emu, ref_el=unidad_xml)
             self._etiqueta_llenar_element(nuevo, vals)
             hoja.shapes._spTree.append(nuevo)
             if media_a is not None:
