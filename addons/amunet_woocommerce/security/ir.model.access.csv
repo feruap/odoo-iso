@@ -11,3 +11,5 @@ access_woo_long_process_admin,amunet.woo.long.process admin,model_amunet_woo_lon
 access_woo_sync_log_consulta,amunet.woo.sync.log consulta,model_amunet_woo_sync_log,amunet_woocommerce.group_woo_consulta,1,0,0,0
 access_woo_sync_log_admin,amunet.woo.sync.log admin,model_amunet_woo_sync_log,amunet_woocommerce.group_woo_admin,1,0,1,0
 access_woo_mapping_import_wizard_admin,amunet.woo.mapping.import.wizard admin,model_amunet_woo_mapping_import_wizard,amunet_woocommerce.group_woo_admin,1,1,1,1
+access_woo_stock_delivery_consulta,amunet.woo.stock.delivery consulta,model_amunet_woo_stock_delivery,amunet_woocommerce.group_woo_consulta,1,0,0,0
+access_woo_stock_delivery_admin,amunet.woo.stock.delivery admin,model_amunet_woo_stock_delivery,amunet_woocommerce.group_woo_admin,1,0,1,0

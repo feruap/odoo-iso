@@ -26,6 +26,7 @@ class AmunetWooSyncLog(models.Model):
     operation = fields.Selection([
         ('catalog_get', 'Lectura GET de catálogo'),
         ('csv_import', 'Importación CSV de mapeos'),
+        ('stock_publish', 'Publicación de existencias a la tienda'),
     ], string='Operación', required=True)
     state = fields.Selection([
         ('success', 'Correcto'),

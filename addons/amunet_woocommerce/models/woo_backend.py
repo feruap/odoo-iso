@@ -76,6 +76,34 @@ class AmunetWooBackend(models.Model):
         copy=False,
         help='Secreto HMAC configurado por el administrador técnico en ambos '
              'servidores. Permite las acciones manuales de nombre y fotografía.')
+    # --- Publicación de existencias APT -> tienda de PRUEBAS (FASE 1) ---
+    allow_stock_publish = fields.Boolean(
+        string='Permitir publicar existencias a la tienda',
+        default=False,
+        groups='amunet_woocommerce.group_woo_admin',
+        help='Candado independiente del de nombres/imágenes. Al activarlo se '
+             'permite PUBLICAR existencias de producto terminado (APT, por '
+             'pieza, solo lotes liberados) hacia la tienda. Debe usarse solo '
+             'contra la tienda de pruebas (tst.amunet.com.mx).')
+    apt_pieces_location_id = fields.Many2one(
+        'stock.location',
+        string='Ubicación APT de piezas',
+        groups='amunet_woocommerce.group_woo_admin',
+        help='Ubicación de existencias en piezas a publicar '
+             '(APT/Existencias_Presentación 1 pieza). Si se deja vacía, se '
+             'busca por nombre dentro de la compañía.')
+    apt_wp_user = fields.Char(
+        string='Usuario WordPress para publicar existencias',
+        groups='amunet_woocommerce.group_woo_admin',
+        help='Usuario de WordPress con rol acotado y Application Password '
+             'dedicado para el endpoint apt/v1/inventory/deliver. Lo crea '
+             'Fernando cuando se vaya a probar; nunca la contraseña normal.')
+    apt_wp_app_password = fields.Char(
+        string='Application Password (publicar existencias)',
+        groups='amunet_woocommerce.group_woo_admin',
+        copy=False,
+        help='Contraseña de aplicación dedicada para publicar existencias. '
+             'No es la contraseña normal de WordPress.')
     state = fields.Selection([
         ('draft', 'Sin probar'),
         ('connected', 'Conectada'),
@@ -278,8 +306,300 @@ class AmunetWooBackend(models.Model):
         return min(max(total_pages, 1), WOO_MAX_PAGES)
 
     # ------------------------------------------------------------------
+    # Publicación de existencias APT -> tienda (FASE 1, tras candado)
+    # ------------------------------------------------------------------
+
+    def _apt_pieces_location(self):
+        """Ubicación de existencias en piezas de APT para esta tienda.
+
+        Usa la configurada explícitamente; si no hay, la busca por nombre
+        dentro de la compañía. Devuelve un recordset (vacío si no se halla).
+        """
+        self.ensure_one()
+        if self.apt_pieces_location_id:
+            return self.apt_pieces_location_id
+        return self.env['stock.location'].search([
+            ('complete_name', 'ilike', 'APT/Existencias_Presentación 1 pieza'),
+            ('company_id', 'in', (self.company_id.id, False)),
+        ], limit=1)
+
+    def _read_released_piece_stock(self, mapping):
+        """Existencias en piezas por lote LIBERADO para un mapeo.
+
+        Devuelve una lista de dicts por lote:
+        ``{lot, lot_number, quantity, expiration_month, expiration_year}``.
+        Solo lotes con ``amunet_lot_release_state == 'released'`` y con
+        cantidad disponible (libre) > 0. Nunca incluye lotes pendientes o
+        retenidos por calidad.
+        """
+        self.ensure_one()
+        Lot = self.env['stock.lot']
+        if 'amunet_lot_release_state' not in Lot._fields:
+            return []
+        location = self._apt_pieces_location()
+        if not mapping.product_id or not location:
+            return []
+        quants = self.env['stock.quant'].search([
+            ('product_id', '=', mapping.product_id.id),
+            ('location_id', 'child_of', location.id),
+            ('company_id', '=', self.company_id.id),
+        ])
+        by_lot = {}
+        for quant in quants:
+            lot = quant.lot_id
+            if not lot or lot.amunet_lot_release_state != 'released':
+                continue
+            reserved = getattr(quant, 'reserved_quantity', 0.0)
+            free = quant.quantity - reserved
+            if free <= 0:
+                continue
+            by_lot.setdefault(lot, 0.0)
+            by_lot[lot] += free
+        results = []
+        for lot, qty in by_lot.items():
+            month = year = False
+            if lot.expiration_date:
+                month = lot.expiration_date.month
+                year = lot.expiration_date.year
+            results.append({
+                'lot': lot,
+                'lot_number': lot.name,
+                'quantity': qty,
+                'expiration_month': month,
+                'expiration_year': year,
+            })
+        return results
+
+    def _apt_deliver(self, payload):
+        """POST autenticado al endpoint de existencias del plugin AlmacenPT.
+
+        Endpoint: ``POST {store}/wp-json/apt/v1/inventory/deliver`` (crea/agrega
+        existencias por pieza). Va tras el candado ``allow_stock_publish`` y se
+        autentica con el Application Password dedicado de la tienda. La bitácora
+        nunca registra credenciales.
+
+        NOTA (a confirmar con Fernando al aprovisionar credenciales): AlmacenPT
+        usa Application Password; si se decide enrutar por el puente HMAC
+        (amunet-odoo/v1), aquí se cambia el mecanismo de autenticación.
+        """
+        self.ensure_one()
+        if not self.allow_stock_publish:
+            raise UserError(_(
+                'La publicación de existencias no está habilitada para esta '
+                'tienda. Un administrador debe activar "Permitir publicar '
+                'existencias a la tienda" (solo contra la tienda de pruebas).'))
+        if not self.apt_wp_user or not self.apt_wp_app_password:
+            raise UserError(_(
+                'Falta el usuario WordPress y su Application Password dedicado '
+                'para publicar existencias (los provee Fernando).'))
+        url = '%s/wp-json/apt/v1/inventory/deliver' % (
+            (self.store_url or '').strip().rstrip('/'))
+        try:
+            response = requests.post(
+                url, json=payload,
+                auth=(self.apt_wp_user, self.apt_wp_app_password),
+                timeout=WOO_TIMEOUT, verify=True,
+            )
+        except requests.RequestException as exc:
+            raise UserError(_('No se pudo publicar en la tienda: %s') % exc)
+        if response.status_code >= 400:
+            try:
+                detail = response.json().get('message') or response.text[:300]
+            except ValueError:
+                detail = response.text[:300]
+            raise UserError(_(
+                'La tienda rechazó la publicación (%(code)s): %(detail)s') % {
+                'code': response.status_code, 'detail': detail})
+        try:
+            return response.json()
+        except ValueError:
+            return {}
+
+    def action_publish_stock(self):
+        """Publica a la tienda las existencias liberadas de los mapeos confirmados.
+
+        Idempotente: un lote ya publicado no se reenvía (ledger
+        ``amunet.woo.stock.delivery``). Deja bitácora en ``woo_sync_log``.
+        """
+        self.ensure_one()
+        if not self.allow_stock_publish:
+            raise UserError(_(
+                'La publicación de existencias no está habilitada para esta '
+                'tienda.'))
+        Delivery = self.env['amunet.woo.stock.delivery']
+        mappings = self.env['amunet.woo.product.mapping'].search([
+            ('backend_id', '=', self.id),
+            ('relation_state', '=', 'confirmed'),
+            ('product_id', '!=', False),
+        ])
+        published = skipped = failed = 0
+        messages = []
+        for mapping in mappings:
+            woo_pid = mapping.woo_product_id
+            for lot_data in self._read_released_piece_stock(mapping):
+                lot_number = lot_data['lot_number']
+                if Delivery._already_published(self.id, woo_pid, lot_number):
+                    skipped += 1
+                    continue
+                payload = {
+                    'product_id': woo_pid,
+                    'quantity': lot_data['quantity'],
+                    'expiration_month': lot_data['expiration_month'],
+                    'expiration_year': lot_data['expiration_year'],
+                    'lot_number': lot_number,
+                    'notes': 'Publicado desde Odoo APT (mapeo %s)' % mapping.id,
+                }
+                digest = Delivery._build_hash(self.id, woo_pid, lot_number)
+                try:
+                    result = self._apt_deliver(payload)
+                except UserError as exc:
+                    failed += 1
+                    messages.append(_('Lote %(lot)s (%(sku)s): %(err)s', lot=lot_number,
+                                      sku=mapping.woo_sku or '', err=str(exc)))
+                    Delivery.create({
+                        'backend_id': self.id,
+                        'company_id': self.company_id.id,
+                        'mapping_id': mapping.id,
+                        'product_id': mapping.product_id.id,
+                        'woo_product_id': woo_pid,
+                        'lot_id': lot_data['lot'].id,
+                        'lot_number': lot_number,
+                        'quantity': lot_data['quantity'],
+                        'expiration_month': lot_data['expiration_month'] or 0,
+                        'expiration_year': lot_data['expiration_year'] or 0,
+                        'delivery_hash': '%s-failed-%s' % (digest, mapping.id),
+                        'state': 'failed',
+                        'response_message': str(exc)[:200],
+                    })
+                    continue
+                Delivery.create({
+                    'backend_id': self.id,
+                    'company_id': self.company_id.id,
+                    'mapping_id': mapping.id,
+                    'product_id': mapping.product_id.id,
+                    'woo_product_id': woo_pid,
+                    'lot_id': lot_data['lot'].id,
+                    'lot_number': lot_number,
+                    'quantity': lot_data['quantity'],
+                    'expiration_month': lot_data['expiration_month'] or 0,
+                    'expiration_year': lot_data['expiration_year'] or 0,
+                    'delivery_hash': digest,
+                    'state': 'published',
+                    'response_message': (result or {}).get('message') if isinstance(result, dict) else False,
+                })
+                published += 1
+        state = 'success' if not failed else ('partial' if published else 'error')
+        log = self.env['amunet.woo.sync.log'].create({
+            'backend_id': self.id,
+            'company_id': self.company_id.id,
+            'operation': 'stock_publish',
+            'state': state,
+            'date_end': fields.Datetime.now(),
+            'total_count': published + skipped + failed,
+            'done_count': published,
+            'failed_count': failed,
+            'message': '\n'.join(messages) or _(
+                'Publicados %(pub)s lotes, %(skip)s ya estaban publicados.',
+                pub=published, skip=skipped),
+        })
+        self.message_post(body=_(
+            'Publicación de existencias APT -> tienda: %(pub)s nuevos, '
+            '%(skip)s idempotentes, %(fail)s con error.',
+            pub=published, skip=skipped, fail=failed))
+        return log._action_open()
+
+    # ------------------------------------------------------------------
     # Acciones
     # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # Publicacion automatica (disparada por produccion / liberacion de lote)
+    # ------------------------------------------------------------------
+
+    @api.model
+    def _auto_publish_product_lots(self, product, lot=None):
+        """Publica (idempotente) los lotes LIBERADOS de un producto a la(s)
+        tienda(s) con publicacion habilitada.
+
+        Seguro por diseno: NUNCA lanza excepcion, para no bloquear el cierre
+        de una orden de fabricacion ni la liberacion de un lote por Calidad.
+        Solo actua si la tienda tiene ``allow_stock_publish`` (candado que en
+        produccion permanece apagado hasta que Fernando lo habilite). Devuelve
+        el numero de lotes publicados.
+        """
+        if not product:
+            return 0
+        published = 0
+        backends = self.sudo().search([
+            ("allow_stock_publish", "=", True),
+            ("active", "=", True),
+        ])
+        for backend in backends:
+            try:
+                with self.env.cr.savepoint():
+                    published += backend._publish_product_now(product, lot=lot)
+            except Exception as exc:  # noqa: BLE001 - jamas debe propagar
+                _logger.exception(
+                    "Auto-publicacion a Woo fallo para %s en tienda %s: %s",
+                    product.display_name, backend.name, exc)
+        return published
+
+    def _publish_product_now(self, product, lot=None):
+        """Publica los lotes liberados de ``product`` para esta tienda.
+
+        Reutiliza ``_read_released_piece_stock`` (solo lotes liberados con
+        existencia libre en la ubicacion de piezas) y el ledger de idempotencia
+        ``amunet.woo.stock.delivery``. Si se pasa ``lot`` solo publica ese lote.
+        """
+        self.ensure_one()
+        if not self.allow_stock_publish:
+            return 0
+        if not self.apt_wp_user or not self.apt_wp_app_password:
+            return 0
+        Delivery = self.env["amunet.woo.stock.delivery"]
+        mappings = self.env["amunet.woo.product.mapping"].search([
+            ("backend_id", "=", self.id),
+            ("relation_state", "=", "confirmed"),
+            ("product_id", "=", product.id),
+        ])
+        published = 0
+        for mapping in mappings:
+            woo_pid = mapping.woo_product_id
+            for lot_data in self._read_released_piece_stock(mapping):
+                if lot and lot_data["lot"].id != lot.id:
+                    continue
+                lot_number = lot_data["lot_number"]
+                if Delivery._already_published(self.id, woo_pid, lot_number):
+                    continue
+                payload = {
+                    "product_id": woo_pid,
+                    "quantity": lot_data["quantity"],
+                    "expiration_month": lot_data["expiration_month"],
+                    "expiration_year": lot_data["expiration_year"],
+                    "lot_number": lot_number,
+                    "notes": "Publicado automaticamente desde Odoo APT "
+                             "(mapeo %s)" % mapping.id,
+                }
+                digest = Delivery._build_hash(self.id, woo_pid, lot_number)
+                result = self._apt_deliver(payload)
+                Delivery.create({
+                    "backend_id": self.id,
+                    "company_id": self.company_id.id,
+                    "mapping_id": mapping.id,
+                    "product_id": mapping.product_id.id,
+                    "woo_product_id": woo_pid,
+                    "lot_id": lot_data["lot"].id,
+                    "lot_number": lot_number,
+                    "quantity": lot_data["quantity"],
+                    "expiration_month": lot_data["expiration_month"] or 0,
+                    "expiration_year": lot_data["expiration_year"] or 0,
+                    "delivery_hash": digest,
+                    "state": "published",
+                    "response_message": (result or {}).get("message")
+                    if isinstance(result, dict) else False,
+                })
+                published += 1
+        return published
 
     def action_test_connection(self):
         self.ensure_one()
