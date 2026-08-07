@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
 from odoo import api, models, fields, _
 from odoo.exceptions import UserError
 from .stock_move import _parse_date
+
+_logger = logging.getLogger(__name__)
 
 CRITERIO_SEL = [('ok', 'Cumple'), ('nok', 'No cumple')]
 CRITERIO_SEL_NA = [('ok', 'Cumple'), ('nok', 'No cumple'), ('na', 'N/A')]
@@ -88,6 +91,77 @@ class StockPicking(models.Model):
             self.amunet_con_observaciones = True
 
     # ── action_confirm: asignar destino automático + corregir lote ──────────
+    @api.model_create_multi
+    def create(self, vals_list):
+        pickings = super().create(vals_list)
+        for picking in pickings.filtered(lambda p: p.amunet_disposition_qc_id):
+            picking._amunet_sync_liberacion_from_original()
+        return pickings
+
+    def action_assign(self):
+        res = super().action_assign()
+        for picking in self.filtered(
+            lambda p: p.amunet_disposition_qc_id and p.state == 'assigned'
+        ):
+            picking._amunet_sync_liberacion_from_original()
+        return res
+
+    def _amunet_sync_liberacion_from_original(self):
+        """Copia datos del proveedor desde la recepción original al picking de
+        liberación de QC (amunet_disposition_qc_id). Así Karla ve los datos
+        completos al confirmar el ingreso sin tener que re-capturarlos.
+
+        Para recepciones normales: copia los campos de texto (amunet_supplier_lot,
+        amunet_mfg_date, amunet_exp_date) del move original.
+        Para combos (CONV): el move interno no tiene esos campos de texto, así que
+        cae al plan B: toma factory_lot_id/fechas de la move_line y los convierte
+        a texto para que aparezcan visibles en la pestaña de operaciones."""
+        self.ensure_one()
+        qc = self.amunet_disposition_qc_id
+        if not qc or not qc.picking_id:
+            return
+        orig_pick = qc.picking_id
+        for move in self.move_ids:
+            orig_move = orig_pick.move_ids.filtered(
+                lambda m: m.product_id == move.product_id)[:1]
+            if not orig_move:
+                continue
+            orig_ml = orig_pick.move_line_ids.filtered(
+                lambda l: l.product_id == move.product_id)[:1]
+
+            vals = {}
+            if not move.amunet_supplier_lot:
+                if orig_move.amunet_supplier_lot:
+                    vals['amunet_supplier_lot'] = orig_move.amunet_supplier_lot
+                elif orig_ml and orig_ml.factory_lot_id:
+                    # Plan B combo: nombre del lote de fábrica como texto
+                    vals['amunet_supplier_lot'] = orig_ml.factory_lot_id.name
+            if not move.amunet_mfg_date:
+                if orig_move.amunet_mfg_date:
+                    vals['amunet_mfg_date'] = orig_move.amunet_mfg_date
+                elif orig_ml and orig_ml.manufacturing_date:
+                    vals['amunet_mfg_date'] = orig_ml.manufacturing_date.strftime('%d/%m/%Y')
+            if not move.amunet_exp_date:
+                if orig_move.amunet_exp_date:
+                    vals['amunet_exp_date'] = orig_move.amunet_exp_date
+                elif orig_ml and orig_ml.expiration_date:
+                    vals['amunet_exp_date'] = orig_ml.expiration_date.strftime('%d/%m/%Y')
+            if vals:
+                move.sudo().write(vals)
+
+            # Copiar también a las move_lines (factory_lot_id, fechas estructuradas)
+            if orig_ml:
+                for ml in move.move_line_ids:
+                    ml_vals = {}
+                    if not ml.factory_lot_id and orig_ml.factory_lot_id:
+                        ml_vals['factory_lot_id'] = orig_ml.factory_lot_id.id
+                    if not ml.manufacturing_date and orig_ml.manufacturing_date:
+                        ml_vals['manufacturing_date'] = orig_ml.manufacturing_date
+                    if not ml.expiration_date and orig_ml.expiration_date:
+                        ml_vals['expiration_date'] = orig_ml.expiration_date
+                    if ml_vals:
+                        ml.sudo().write(ml_vals)
+
     def action_confirm(self):
         for picking in self.filtered(
             lambda p: p.picking_type_code == 'incoming'
@@ -162,6 +236,30 @@ class StockPicking(models.Model):
                     'proveedor distintos. Corrige y vuelve a validar.'
                 ) % '\n'.join(lineas))
 
+    def _amunet_check_datos_recepcion(self):
+        """Bloquea la validación si falta lote de proveedor, fecha de fabricación
+        o fecha de caducidad en cualquier línea de la recepción.
+        Los pickings de liberación de QC (amunet_disposition_qc_id) se excluyen:
+        sus datos ya fueron validados en la recepción original."""
+        for p in self.filtered(lambda x: x.picking_type_code == 'incoming'
+                               and x.state not in ('done', 'cancel')
+                               and not x.amunet_disposition_qc_id):
+            faltan = []
+            for move in p.move_ids.filtered(lambda m: m.state not in ('done', 'cancel')
+                                            and m.product_uom_qty > 0):
+                prod = move.product_id.display_name
+                if not move.amunet_supplier_lot:
+                    faltan.append(f'  • {prod}: falta Lote de proveedor')
+                if not move.amunet_mfg_date:
+                    faltan.append(f'  • {prod}: falta Fecha de fabricación')
+                if not move.amunet_exp_date:
+                    faltan.append(f'  • {prod}: falta Fecha de caducidad')
+            if faltan:
+                raise UserError(_(
+                    'Completa los datos de recepción antes de validar.\n\n%s\n\n'
+                    'Encuéntralos en las columnas de la tabla de operaciones.'
+                ) % '\n'.join(faltan))
+
     def _amunet_check_expiration_captured(self):
         """Aviso al validar una recepcion: los productos que usan caducidad DEBEN
         tener la caducidad real capturada. Bloquea si esta vacia o si quedo en la
@@ -181,6 +279,8 @@ class StockPicking(models.Model):
                 # propago a la linea, considerarla para no bloquear en falso.
                 mv = line.move_id
                 if mv and mv.amunet_exp_date:
+                    if mv.amunet_exp_date.strip().upper() == 'VIGENTE':
+                        continue  # "vigente" es explícitamente válido
                     parsed = _parse_date(mv.amunet_exp_date)
                     if parsed:
                         exp = parsed
@@ -203,6 +303,29 @@ class StockPicking(models.Model):
                     'AVISO — captura la CADUCIDAD real antes de validar.\n\n%s'
                 ) % '\n\n'.join(partes))
 
+    def _amunet_check_inspeccion_entrada(self):
+        """Bloquea la validación si la inspección de entrada no está completa.
+        ISO 13485 §7.4.3: obligatoria para TODA recepción entrante sin excepción."""
+        for p in self.filtered(lambda x: x.picking_type_code == 'incoming'
+                               and x.state not in ('done', 'cancel')):
+            faltantes = []
+            if not p.amunet_crit1:
+                faltantes.append('• Empaque íntegro, sin perforaciones ni daños externos')
+            if not p.amunet_crit2:
+                faltantes.append('• Etiqueta legible con información correcta')
+            if not p.amunet_crit3:
+                faltantes.append('• Sin daños visibles en el material')
+            if not p.amunet_crit4:
+                faltantes.append('• Certificado de análisis (si no aplica, selecciona N/A)')
+            if not p.amunet_crit5:
+                faltantes.append('• Cantidad recibida coincide con lo solicitado')
+            if faltantes:
+                raise UserError(_(
+                    'Completa la Inspección de entrada antes de validar.\n\n'
+                    'Faltan los siguientes criterios:\n%s\n\n'
+                    'Encuéntralos en la pestaña "Inspección de entrada".'
+                ) % '\n'.join(faltantes))
+
     # ── button_validate: pedir PIN antes de validar ──────────────────────────
     amunet_es_recepcion_equipo = fields.Boolean(
         string='Recepción de equipo de uso interno',
@@ -218,8 +341,9 @@ class StockPicking(models.Model):
 
     def _amunet_es_recepcion_equipo(self):
         """True si la recepcion es de un equipo de uso interno (producto
-        generico EQUIPO-USO-INTERNO). Estos NO llevan datos/caducidad ni
-        cuarentena de MP: van al flujo de Validacion. SI conservan el PIN."""
+        generico EQUIPO-USO-INTERNO). Estos NO llevan lote de proveedor,
+        caducidad, inspeccion ni cuarentena de MP: van al flujo de Validacion.
+        SI conservan el PIN de Almacen al validar."""
         self.ensure_one()
         return self.amunet_es_recepcion_equipo
 
@@ -237,9 +361,9 @@ class StockPicking(models.Model):
             self.move_line_ids.write({'location_dest_id': dest.id})
 
     def button_validate(self):
-        # Recepcion de equipo de uso interno: exenta de los candados de MP,
-        # pero conserva el PIN de Almacen. La solicitud de ingreso la genera
-        # despues el modulo de Validacion.
+        # Recepcion de equipo de uso interno: exenta de los datos/caducidad/
+        # inspeccion/cuarentena de MP, PERO conserva el PIN de Almacen. La
+        # solicitud de ingreso la genera despues el modulo de Validacion.
         es_equipo = bool(self) and all(
             p.amunet_es_recepcion_equipo for p in self)
         if es_equipo:
@@ -248,33 +372,33 @@ class StockPicking(models.Model):
                 p._amunet_realinear_destino_equipo()
         if not es_equipo:
             self._amunet_check_duplicate_supplier_lots()
+            self._amunet_check_datos_recepcion()
             self._amunet_check_expiration_captured()
+            # La inspeccion de entrada NO bloquea la recepcion (alineado a
+            # produccion, criterio de Fernando): el control de aceptacion va en
+            # la LIBERACION de Calidad, no al recibir. Si faltan los criterios,
+            # se agenda actividad a Calidad (ver rama _skip_pin_wizard abajo).
+            # Se conserva _amunet_check_datos_recepcion (lote proveedor + fechas)
+            # por trazabilidad.
         if self.env.context.get('_skip_pin_wizard'):
             res = super().button_validate()
-            for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
-                                   and p.state == 'done'):
-                requiere_inspeccion = any(
-                    m.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
-                    for m in p.move_ids
-                )
-                if requiere_inspeccion and not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
-                            p.amunet_crit4, p.amunet_crit5]):
-                    p._amunet_notify_quality_pending()
-                # Lotes de productos sin cuarentena → liberar automáticamente
-                for line in p.move_line_ids:
-                    if (line.lot_id
-                            and not line.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
-                            and line.lot_id.amunet_lot_release_state != 'released'):
-                        line.lot_id.sudo().write({'amunet_lot_release_state': 'released'})
+            if not es_equipo:
+                for p in self.filtered(lambda p: p.picking_type_code == 'incoming'
+                                       and p.state == 'done'):
+                    if not all([p.amunet_crit1, p.amunet_crit2, p.amunet_crit3,
+                                p.amunet_crit4, p.amunet_crit5]):
+                        p._amunet_notify_quality_pending()
+                    # Lotes de productos sin cuarentena → liberar automáticamente
+                    for line in p.move_line_ids:
+                        if (line.lot_id
+                                and not line.product_id.product_tmpl_id._amunet_effective_requires_quarantine()
+                                and line.lot_id.amunet_lot_release_state != 'released'):
+                            line.lot_id.sudo().write({'amunet_lot_release_state': 'released'})
             return res
         incoming = self.filtered(lambda p: p.picking_type_code == 'incoming'
                                  and p.state not in ('done', 'cancel'))
         if not incoming:
             return super().button_validate()
-        # La recepcion se permite aunque falten criterios de aceptacion: el
-        # material marcado requiere cuarentena entra a Control de calidad y se
-        # notifica a Calidad para asignar criterios e inspeccionar antes de
-        # liberar. El candado regulatorio esta en la liberacion, no en recibir.
         return {
             'type': 'ir.actions.act_window',
             'name': 'Confirmar recepcion',
@@ -315,8 +439,168 @@ class StockPicking(models.Model):
             'context': {'default_picking_id': self.id},
         }
 
+    def _amunet_crear_traslado_distribucion(self):
+        """Cuando una liberación de QC se valida y el producto es de categoría
+        Distribución/*, crea una recepción en APT para que Luis confirme físicamente
+        que recibió el equipo o material."""
+        self.ensure_one()
+
+        cat_raiz = self.env['product.category'].search(
+            [('name', '=', 'Distribución')], limit=1)
+        if not cat_raiz:
+            return
+        cat_ids = self.env['product.category'].search(
+            [('id', 'child_of', cat_raiz.id)]).ids
+
+        lines = self.move_line_ids.filtered(
+            lambda l: l.product_id.categ_id.id in cat_ids and (l.quantity or 0) > 0
+        )
+        if not lines:
+            return
+
+        loc_apt = self.env['stock.location'].search([
+            ('name', '=', 'Existencias_Distribución'),
+            ('usage', '=', 'internal'),
+        ], limit=1)
+        if not loc_apt:
+            _logger.warning(
+                'amunet_recepcion: no se encontró Existencias_Distribución; '
+                'traslado automático no creado para picking %s', self.name)
+            return
+
+        # Usar el tipo Traslados internos de APT (no Recepciones) para evitar
+        # que la ruta multi-paso de APT desvíe el material a QC intermedio.
+        # El material ya pasó QC en AMP; va directo a Existencias_Distribución.
+        wh_apt = self.env['stock.warehouse'].search(
+            [('code', '=', 'APT')], limit=1)
+        pt = wh_apt.int_type_id if wh_apt else False
+        if not pt:
+            _logger.warning(
+                'amunet_recepcion: no se encontró almacén APT o su tipo interno; '
+                'traslado automático no creado para picking %s', self.name)
+            return
+
+        loc_src = lines[0].location_dest_id  # AMP/Existencias
+
+        # Cantidad real aprobada: suma de quants en ubicaciones internas.
+        # Si hubo split antes de la liberación, el picking de QC mueve la cantidad
+        # original (ej. 5) pero solo existían 3 en QC → queda +5 en Existencias
+        # y -2 en QC. La suma interna 5 + (-2) = 3, que es la cantidad correcta.
+        def _qty_real(line):
+            if not line.lot_id:
+                return line.quantity
+            quants = self.env['stock.quant'].search([
+                ('product_id', '=', line.product_id.id),
+                ('lot_id', '=', line.lot_id.id),
+                ('location_id.usage', '=', 'internal'),
+            ])
+            total = sum(quants.mapped('quantity'))
+            return total if total > 0 else line.quantity
+
+        move_vals = [(0, 0, {
+            'product_id': l.product_id.id,
+            'product_uom_qty': _qty_real(l),
+            'product_uom': l.product_id.uom_id.id,
+            'location_id': loc_src.id,
+            'location_dest_id': loc_apt.id,
+        }) for l in lines]
+
+        traslado = self.env['stock.picking'].sudo().create({
+            'picking_type_id': pt.id,
+            'location_id': loc_src.id,
+            'location_dest_id': loc_apt.id,
+            'origin': 'Distribución desde QC: ' + self.name,
+            'move_ids': move_vals,
+        })
+        traslado.action_confirm()
+        # Forzar destino directo a Existencias_Distribución en todos los movimientos,
+        # evitando que la ruta multi-paso de APT desvíe a QC intermedio.
+        traslado.move_ids.write({'location_dest_id': loc_apt.id})
+        traslado.action_assign()
+
+        # Asignar lote y datos de proveedor en las líneas del traslado
+        # y construir resumen para la nota de Luis.
+        # Si la liberación de QC no tiene los datos del proveedor (factory_lot,
+        # fechas), los buscamos en la recepción original como respaldo.
+        qc = self.amunet_disposition_qc_id
+        orig_ml_map = {}
+        if qc and qc.picking_id:
+            for oml in qc.picking_id.move_line_ids:
+                orig_ml_map[oml.product_id.id] = oml
+
+        resumen_lineas = []
+        for line in lines:
+            if not line.lot_id:
+                continue
+            ml = traslado.move_line_ids.filtered(
+                lambda ml, p=line.product_id: ml.product_id == p
+            )[:1]
+            if ml:
+                orig = orig_ml_map.get(line.product_id.id)
+                factory_lot = line.factory_lot_id or (orig.factory_lot_id if orig else False)
+                mfg_date = line.manufacturing_date or (orig.manufacturing_date if orig else False)
+                exp_date = line.expiration_date or (orig.expiration_date if orig else False)
+                ml.write({
+                    'lot_id': line.lot_id.id,
+                    'quantity': line.quantity,
+                    'factory_lot_id': factory_lot.id if factory_lot else False,
+                    'manufacturing_date': mfg_date,
+                    'expiration_date': exp_date,
+                })
+                num_serie = factory_lot.name if factory_lot else 'sin número'
+                resumen_lineas.append(
+                    f'<li>{line.product_id.display_name} — '
+                    f'Lote Amunet: <b>{line.lot_id.name}</b> | '
+                    f'No. serie/lote proveedor: <b>{num_serie}</b> | '
+                    f'Cantidad: <b>{int(line.quantity)}</b></li>'
+                )
+
+        detalle = '<ul>' + ''.join(resumen_lineas) + '</ul>' if resumen_lineas else ''
+
+        # Poner el resumen también en la nota interna del traslado para que
+        # Luis lo vea al abrir el picking sin necesidad de entrar al lote
+        traslado.sudo().write({'note': (
+            f'Material liberado por Calidad (origen: {self.name}).\n'
+            f'Verifica físicamente cada artículo antes de validar.\n\n'
+            + '\n'.join(
+                f'- {line.product_id.display_name}: '
+                f'Lote {line.lot_id.name} | Serie proveedor: {line.factory_lot_id.name if line.factory_lot_id else "sin número"} | Cant: {int(line.quantity)}'
+                for line in lines if line.lot_id
+            )
+        )})
+
+        # Notificar a Luis con una actividad para que confirme recepción física
+        luis = self.env['res.users'].search(
+            [('login', '=', 'almacen2@amunet.com.mx')], limit=1)
+        if luis:
+            traslado.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                user_id=luis.id,
+                summary='Confirmar recepción de equipo/cristalería',
+                note=(
+                    f'Calidad liberó material de Distribución desde <b>{self.name}</b>.<br/>'
+                    f'Verifica físicamente cada artículo y valida la recepción:<br/>'
+                    f'{detalle}'
+                ),
+            )
+
+        self.message_post(
+            body=(
+                f'Recepción en APT/Distribución generada: <b>{traslado.name}</b>. '
+                f'Luis (APT) recibirá aviso para confirmar.'
+            ),
+            message_type='notification',
+            subtype_xmlid='mail.mt_note',
+        )
+
     def _action_done(self):
         res = super()._action_done()
+        # Liberaciones de QC con productos de categoría Distribución/* →
+        # crear traslado automático a APT/Existencias_Distribución
+        for picking in self.filtered(
+            lambda p: p.state == 'done' and p.amunet_disposition_qc_id
+        ):
+            picking._amunet_crear_traslado_distribucion()
         for picking in self.filtered(
             lambda p: p.picking_type_code == 'incoming' and p.amunet_con_observaciones
         ):
