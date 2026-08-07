@@ -91,6 +91,59 @@ class StockPicking(models.Model):
             self.amunet_con_observaciones = True
 
     # ── action_confirm: asignar destino automático + corregir lote ──────────
+    @api.model_create_multi
+    def create(self, vals_list):
+        pickings = super().create(vals_list)
+        for picking in pickings.filtered(lambda p: p.amunet_disposition_qc_id):
+            picking._amunet_sync_liberacion_from_original()
+        return pickings
+
+    def action_assign(self):
+        res = super().action_assign()
+        for picking in self.filtered(
+            lambda p: p.amunet_disposition_qc_id and p.state == 'assigned'
+        ):
+            picking._amunet_sync_liberacion_from_original()
+        return res
+
+    def _amunet_sync_liberacion_from_original(self):
+        """Copia datos del proveedor desde la recepción original al picking de
+        liberación de QC (amunet_disposition_qc_id). Así Karla ve los datos
+        completos al confirmar el ingreso sin tener que re-capturarlos."""
+        self.ensure_one()
+        qc = self.amunet_disposition_qc_id
+        if not qc or not qc.picking_id:
+            return
+        orig_pick = qc.picking_id
+        for move in self.move_ids:
+            orig_move = orig_pick.move_ids.filtered(
+                lambda m: m.product_id == move.product_id)[:1]
+            if not orig_move:
+                continue
+            vals = {}
+            if not move.amunet_supplier_lot and orig_move.amunet_supplier_lot:
+                vals['amunet_supplier_lot'] = orig_move.amunet_supplier_lot
+            if not move.amunet_mfg_date and orig_move.amunet_mfg_date:
+                vals['amunet_mfg_date'] = orig_move.amunet_mfg_date
+            if not move.amunet_exp_date and orig_move.amunet_exp_date:
+                vals['amunet_exp_date'] = orig_move.amunet_exp_date
+            if vals:
+                move.sudo().write(vals)
+            # Copiar también a las move_lines (factory_lot_id, fechas estructuradas)
+            orig_ml = orig_pick.move_line_ids.filtered(
+                lambda l: l.product_id == move.product_id)[:1]
+            if orig_ml:
+                for ml in move.move_line_ids:
+                    ml_vals = {}
+                    if not ml.factory_lot_id and orig_ml.factory_lot_id:
+                        ml_vals['factory_lot_id'] = orig_ml.factory_lot_id.id
+                    if not ml.manufacturing_date and orig_ml.manufacturing_date:
+                        ml_vals['manufacturing_date'] = orig_ml.manufacturing_date
+                    if not ml.expiration_date and orig_ml.expiration_date:
+                        ml_vals['expiration_date'] = orig_ml.expiration_date
+                    if ml_vals:
+                        ml.sudo().write(ml_vals)
+
     def action_confirm(self):
         for picking in self.filtered(
             lambda p: p.picking_type_code == 'incoming'
@@ -411,15 +464,20 @@ class StockPicking(models.Model):
 
         loc_src = lines[0].location_dest_id  # AMP/Existencias
 
-        # Usar el stock real del lote en loc_src: si hubo un split de lote antes
-        # de la liberación, la cantidad real puede ser menor que la del picking de QC.
+        # Cantidad real aprobada: suma de quants en ubicaciones internas.
+        # Si hubo split antes de la liberación, el picking de QC mueve la cantidad
+        # original (ej. 5) pero solo existían 3 en QC → queda +5 en Existencias
+        # y -2 en QC. La suma interna 5 + (-2) = 3, que es la cantidad correcta.
         def _qty_real(line):
-            quant = self.env['stock.quant'].search([
+            if not line.lot_id:
+                return line.quantity
+            quants = self.env['stock.quant'].search([
                 ('product_id', '=', line.product_id.id),
                 ('lot_id', '=', line.lot_id.id),
-                ('location_id', '=', loc_src.id),
-            ], limit=1)
-            return quant.quantity if quant and quant.quantity > 0 else line.quantity
+                ('location_id.usage', '=', 'internal'),
+            ])
+            total = sum(quants.mapped('quantity'))
+            return total if total > 0 else line.quantity
 
         move_vals = [(0, 0, {
             'product_id': l.product_id.id,
