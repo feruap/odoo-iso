@@ -680,6 +680,10 @@ class AmunetCCGeneral(models.Model):
             'justificacion_pendiente':      justificacion,
         })
         doc.action_nueva_version()
+        if self.solicitante_id:
+            doc.with_context(amunet_documento_workflow_write=True).write({
+                'elabora_id': self.solicitante_id.id,
+            })
         return {
             'type': 'ir.actions.act_window',
             'name': _('Nueva versión: %s') % doc.codigo,
