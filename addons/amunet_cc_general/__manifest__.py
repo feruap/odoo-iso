@@ -11,6 +11,7 @@
         'security/amunet_cc_general_security.xml',
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
+        'data/lang_week_start.xml',
         'wizard/amunet_cc_rechazo_wizard_views.xml',
         'views/amunet_cc_general_views.xml',
         'views/amunet_documento_ext_views.xml',
@@ -19,6 +20,7 @@
     'assets': {
         'web.assets_backend': [
             'amunet_cc_general/static/src/css/cc_general.css',
+            'amunet_cc_general/static/src/js/weekend_datepicker.js',
         ],
     },
     'installable': True,

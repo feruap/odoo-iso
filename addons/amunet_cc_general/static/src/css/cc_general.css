@@ -17,3 +17,11 @@
     gap: 6px 16px;
     width: 100% !important;
 }
+
+/* Fines de semana en rojo en el selector de fechas */
+.o_amunet_weekend {
+    color: #dc3545 !important;
+}
+.o_amunet_weekend.o_selected {
+    color: #fff !important;
+}

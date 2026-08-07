@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Semana inicia el lunes (1) para los idiomas activos en Amunet -->
+        <record id="base.lang_en" model="res.lang">
+            <field name="week_start">1</field>
+        </record>
+        <record id="base.lang_es_MX" model="res.lang">
+            <field name="week_start">1</field>
+        </record>
+    </data>
+</odoo>
