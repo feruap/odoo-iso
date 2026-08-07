@@ -35,6 +35,7 @@ fabricacion) para que el lote y la cantidad se tomen automaticamente.
     'depends': [
         'base',
         'product',
+        'mrp',
     ],
     'data': [
         'security/security.xml',
