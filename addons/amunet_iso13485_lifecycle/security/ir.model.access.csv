@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_amunet_quality_complaint_user,quality complaint user,model_amunet_quality_complaint,amunet_quality.group_quality_user,1,1,1,0
+access_amunet_quality_complaint_manager,quality complaint manager,model_amunet_quality_complaint,amunet_quality.group_quality_manager,1,1,1,1
+access_amunet_design_project_user,design project user,model_amunet_design_project,amunet_quality.group_quality_user,1,1,1,0
+access_amunet_design_project_manager,design project manager,model_amunet_design_project,amunet_quality.group_quality_manager,1,1,1,1
+access_amunet_design_input_user,design input user,model_amunet_design_input,amunet_quality.group_quality_user,1,1,1,0
+access_amunet_design_output_user,design output user,model_amunet_design_output,amunet_quality.group_quality_user,1,1,1,0
+access_amunet_design_verification_user,design verification user,model_amunet_design_verification,amunet_quality.group_quality_user,1,1,1,0
+access_amunet_risk_analysis_user,risk analysis user,model_amunet_risk_analysis,amunet_quality.group_quality_user,1,1,1,0
+access_amunet_risk_analysis_manager,risk analysis manager,model_amunet_risk_analysis,amunet_quality.group_quality_manager,1,1,1,1
+access_amunet_risk_item_user,risk item user,model_amunet_risk_item,amunet_quality.group_quality_user,1,1,1,0

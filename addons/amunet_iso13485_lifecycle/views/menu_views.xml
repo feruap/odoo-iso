@@ -1,0 +1,6 @@
+<odoo>
+ <menuitem id="menu_amunet_iso13485_lifecycle_root" name="Ciclo de vida ISO" parent="amunet_quality.menu_quality_regulatory" sequence="85" groups="amunet_quality.group_quality_user"/>
+ <menuitem id="menu_amunet_quality_complaint" name="Quejas y retroalimentación" parent="menu_amunet_iso13485_lifecycle_root" action="action_amunet_quality_complaint" sequence="10"/>
+ <menuitem id="menu_amunet_design_project" name="Diseño y desarrollo" parent="menu_amunet_iso13485_lifecycle_root" action="action_amunet_design_project" sequence="20"/>
+ <menuitem id="menu_amunet_risk_analysis" name="Gestión de riesgos" parent="menu_amunet_iso13485_lifecycle_root" action="action_amunet_risk_analysis" sequence="30"/>
+</odoo>

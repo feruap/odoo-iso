@@ -1,0 +1,14 @@
+<odoo>
+    <record id="seq_amunet_quality_complaint" model="ir.sequence">
+        <field name="name">Queja ISO 13485</field><field name="code">amunet.quality.complaint</field>
+        <field name="prefix">QUE-%(year)s-</field><field name="padding">5</field>
+    </record>
+    <record id="seq_amunet_design_project" model="ir.sequence">
+        <field name="name">Expediente de diseño</field><field name="code">amunet.design.project</field>
+        <field name="prefix">DIS-%(year)s-</field><field name="padding">4</field>
+    </record>
+    <record id="seq_amunet_risk_analysis" model="ir.sequence">
+        <field name="name">Análisis de riesgos</field><field name="code">amunet.risk.analysis</field>
+        <field name="prefix">RISK-%(year)s-</field><field name="padding">4</field>
+    </record>
+</odoo>
