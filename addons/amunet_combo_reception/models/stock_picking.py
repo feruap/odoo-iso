@@ -20,18 +20,26 @@ class StockPicking(models.Model):
     def _amunet_combo_virtual_location(self):
         """Ubicacion virtual de conversion (por donde pasa el combo al
         convertirse en sus hojas). Uso 'inventory' para no afectar valuacion.
-        Cuelga de la ENTRADA del almacen para quedar dentro del arbol de AMP
-        (trazable y visible para usuarios restringidos al almacen)."""
+
+        DEBE colgar a NIVEL RAIZ (fuera del arbol del almacen), como 'Desechos'
+        o 'Ajuste de inventario'. Si se anida bajo AMP/Entrada, su saldo
+        residual se cuenta en qty_available y bloquea produccion con un stock
+        fantasma: la conversion mueve el combo a esta ubicacion y saca las hojas
+        de ella, pero combo y hojas son productos DISTINTOS, asi que no se
+        anulan entre si (queda +combo consumido y -hoja producida). Colgando a
+        raiz ese residuo es un contrapeso de inventario que no afecta el stock
+        disponible, igual que un ajuste o un desecho."""
         Loc = self.env['stock.location']
-        input_loc = self._amunet_combo_input_location()
         loc = Loc.search([('name', '=', 'Conversión de combos'),
                           ('usage', '=', 'inventory')], limit=1)
         if not loc:
             loc = Loc.create({
                 'name': 'Conversión de combos', 'usage': 'inventory',
-                'location_id': input_loc.id if input_loc else False})
-        elif input_loc and loc.location_id != input_loc:
-            loc.location_id = input_loc.id
+                'location_id': False})
+        elif loc.location_id:
+            # Migrar ubicaciones creadas por la version anterior (anidadas bajo
+            # AMP/Entrada) a nivel raiz, para dejar de contaminar qty_available.
+            loc.location_id = False
         return loc
 
     @api.model
