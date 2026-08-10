@@ -250,22 +250,21 @@
                                    placeholder="Describe la actividad..."/>
                             <field name="responsable_id" string="Responsable"
                                    options="{'no_create': True}"/>
+                            <field name="fecha_inicio"   string="Fecha de inicio"/>
+                            <field name="fecha_termino"  string="Fecha de término"/>
                             <field name="estado_enterado" widget="badge" readonly="1"
                                    decoration-success="estado_enterado == 'enterado'"
                                    decoration-danger="estado_enterado == 'pendiente'"
                                    invisible="not responsable_id"/>
                             <button name="action_firmar_enterado" type="object"
-                                    string="Firmar enterado" icon="fa-check-circle-o"
+                                    string="" icon="fa-check-circle-o"
+                                    title="Firmar enterado"
                                     invisible="firma_enterado_id or not responsable_id"/>
-                            <field name="recursos" string="Recursos necesarios"
-                                   placeholder="Ej. Materiales, equipo, personal de apoyo..."
-                                   optional="show"/>
-                            <field name="fecha_inicio"   string="Fecha de inicio"/>
-                            <field name="fecha_termino"  string="Fecha de término"/>
                             <field name="verifico_id" string="Verifica"
                                    options="{'no_create': True}"/>
                             <button name="action_firmar_verificacion" type="object"
-                                    string="Verificar" icon="fa-pencil-square-o"
+                                    string="" icon="fa-pencil-square-o"
+                                    title="Verificar"
                                     invisible="firma_verifico_id"/>
                             <field name="fecha_verificacion" string="Fecha verificación"
                                    readonly="1" optional="show"/>
