@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Capacitaciones HR (SGC)',
-    'version': '19.0.2.0.1',
+    'version': '19.0.2.0.2',
     'category': 'Human Resources',
     'summary': 'Programacion y control de capacitaciones bajo SGC con doble '
                'aprobacion (ponente + RH), invitaciones automaticas y alertas.',

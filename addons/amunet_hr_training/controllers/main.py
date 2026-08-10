@@ -7,6 +7,7 @@ loguearse primero (Authelia + login Odoo). Despues, esta vista busca
 el `hr.employee` vinculado a su usuario, marca su linea de asistencia
 y calcula puntualidad.
 """
+import hmac
 import logging
 
 from odoo import http, fields, _
@@ -25,21 +26,27 @@ class TrainingAttendController(http.Controller):
     def attend(self, course_id, **kwargs):
         env = request.env
         course = env['hr.training.course'].sudo().browse(course_id)
-        if not course.exists():
+        token = kwargs.get('token')
+        # Puerta de acceso: el QR legitimo siempre trae el token aleatorio del
+        # curso. Sin un token valido no se revela NINGUN dato del curso, para
+        # que un usuario logueado no pueda enumerar IDs y filtrar nombres de
+        # capacitaciones. La comparacion es en tiempo constante.
+        expected = course.exists() and (course.sudo().qr_access_token or '')
+        if not course.exists() or not token or not expected or \
+                not hmac.compare_digest(str(token), str(expected)):
             return request.render(
                 'amunet_hr_training.training_attend_error',
                 {
-                    'title': _('Capacitacion no encontrada'),
+                    'title': _('Codigo QR no valido'),
                     'message': _(
-                        'La capacitacion solicitada no existe o fue '
-                        'eliminada. Verifica el codigo QR con tu '
-                        'ponente.'),
+                        'Este enlace de asistencia no es valido o fue '
+                        'regenerado. Escanea el codigo QR actual que proyecta '
+                        'tu ponente.'),
                     'course': False,
                 },
             )
 
         employee = env.user.employee_id
-        token = kwargs.get('token')
         try:
             success, message, on_time = course.sudo().register_qr_attendance(
                 employee, token=token)

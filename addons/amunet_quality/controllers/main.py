@@ -8,8 +8,10 @@ Controlador HTTP para endpoints RPC de sistema de bloqueo.
 
 import logging
 import traceback
+import hmac
 from odoo import http
 from odoo.http import request
+from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
 
@@ -26,10 +28,15 @@ class AmunetQualityController(http.Controller):
         """
         try:
             _logger.info(f"[PDF] download_quality_certificate - ID: {check_id}")
-            check = request.env['amunet.quality.check'].sudo().browse(check_id)
+            check = request.env['amunet.quality.check'].browse(check_id)
             
             if not check.exists():
                 _logger.error(f"[PDF] Registro amunet.quality.check({check_id}) no existe")
+                return request.not_found()
+            try:
+                check.check_access_rights('read')
+                check.check_access_rule('read')
+            except AccessError:
                 return request.not_found()
             
             # Generar PDF
@@ -68,7 +75,7 @@ class AmunetQualityController(http.Controller):
             
         except Exception as e:
             _logger.error(f"[PDF ERROR] Error descargando certificado: {str(e)}", exc_info=True)
-            return request.make_response(f"Error Interno (descarga): {str(e)}", status=500)
+            return request.make_response("Error interno al generar el certificado.", status=500)
 
     @http.route('/amunet_quality/download_solicitud_report/<int:check_id>', type='http', auth='user')
     def download_solicitud_report(self, check_id, **kwargs):
@@ -77,10 +84,15 @@ class AmunetQualityController(http.Controller):
         """
         try:
             _logger.info(f"[PDF] download_solicitud_report - ID: {check_id}")
-            check = request.env['amunet.quality.check'].sudo().browse(check_id)
+            check = request.env['amunet.quality.check'].browse(check_id)
             
             if not check.exists():
                 _logger.error(f"[PDF] Registro amunet.quality.check({check_id}) no existe")
+                return request.not_found()
+            try:
+                check.check_access_rights('read')
+                check.check_access_rule('read')
+            except AccessError:
                 return request.not_found()
             
             # Generar PDF
@@ -130,7 +142,7 @@ class AmunetQualityController(http.Controller):
             
         except Exception as e:
             _logger.error(f"[PDF ERROR] Error descargando solicitud: {str(e)}", exc_info=True)
-            return request.make_response(f"Error Interno (solicitud): {str(e)}", status=500)
+            return request.make_response("Error interno al generar el reporte.", status=500)
 
     @http.route('/amunet_quality/download_certificado_interno/<int:check_id>', type='http', auth='user')
     def download_certificado_interno(self, check_id, **kwargs):
@@ -139,9 +151,14 @@ class AmunetQualityController(http.Controller):
         """
         try:
             _logger.info(f"[PDF] download_certificado_interno - ID: {check_id}")
-            check = request.env['amunet.quality.check'].sudo().browse(check_id)
+            check = request.env['amunet.quality.check'].browse(check_id)
             
             if not check.exists():
+                return request.not_found()
+            try:
+                check.check_access_rights('read')
+                check.check_access_rule('read')
+            except AccessError:
                 return request.not_found()
             
             # Incrementar solo el contador de impresiones
@@ -151,6 +168,8 @@ class AmunetQualityController(http.Controller):
             from odoo.fields import Date
             today = Date.today()
             if not check.internal_certificate_seq or check.internal_certificate_seq_date != today:
+                # Serializa la asignación diaria para impedir secuencias duplicadas.
+                request.env.cr.execute("SELECT pg_advisory_xact_lock(%s)", [913485217])
                 # Contar cuántos QC ya tienen secuencia asignada hoy
                 existing = request.env['amunet.quality.check'].sudo().search_count([
                     ('internal_certificate_seq_date', '=', today),
@@ -189,7 +208,7 @@ class AmunetQualityController(http.Controller):
             
         except Exception as e:
             _logger.error(f"[PDF ERROR] Error descargando certificado interno: {str(e)}", exc_info=True)
-            return request.make_response(f"Error Interno: {str(e)}", status=500)
+            return request.make_response("Error interno al generar el certificado.", status=500)
 
     @http.route('/qc/<int:check_id>/<string:check_number>', type='http', auth='public')
     def verify_quality_certificate(self, check_id, check_number, **kwargs):
@@ -207,10 +226,12 @@ class AmunetQualityController(http.Controller):
                 _logger.warning(f"Verification failed: Check {check_id} not found.")
                 return request.not_found()
                 
-            # Validación de Seguridad
-            expected_number = check.analysis_number or check.name or 'draft'
-            if check_number != expected_number and check_number != 'draft':
-                 _logger.warning(f"Verification failed: Token mismatch for QC {check_id}. Received: {check_number}, Expected: {expected_number}")
+            # El QR es un enlace público: debe usar una capacidad aleatoria, no
+            # un folio ni un ID predecibles. Los QR antiguos deben regenerarse.
+            if not check.public_verify_token or not hmac.compare_digest(
+                check_number, check.public_verify_token
+            ):
+                 _logger.warning("Verification failed: invalid token for QC %s", check_id)
                  return request.not_found()
 
             # Generar PDF
@@ -246,7 +267,7 @@ class AmunetQualityController(http.Controller):
             
         except Exception as e:
             _logger.error(f"[PDF ERROR] Error verificando certificado: {str(e)}", exc_info=True)
-            return request.make_response(f"Error Interno (verificación): {str(e)}", status=500)
+            return request.make_response("Error interno al verificar el certificado.", status=500)
 
     @http.route('/amunet_quality/check_qc_lock', type='jsonrpc', auth='user')
     def check_qc_lock(self, check_id):
