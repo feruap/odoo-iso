@@ -524,6 +524,81 @@ class AmunetPackagingPlan(models.Model):
             'target': 'self',
         }
 
+    def action_generar_etiquetas_muestra(self):
+        """Genera UNA etiqueta por diseno (no N copias) e indica cuantas veces
+        imprimir. Para lotes grandes: archivo chico e instantaneo; el usuario
+        pone las copias en la impresora. Mismas etiquetas que la generacion
+        completa, pero sin repetir cada caja 730 veces."""
+        self.ensure_one()
+        mo = self.production_id
+        if not mo:
+            raise UserError(_('El plan no tiene orden de fabricacion.'))
+        plan_lineas = self.line_ids.filtered(lambda l: l.approved_box_qty > 0)
+        if not plan_lineas:
+            raise UserError(_('El plan no tiene cajas aprobadas para etiquetar.'))
+
+        bloques = []
+        cant_msgs = []
+        for ln in plan_lineas:
+            caja = self._caja_micaj_de_presentacion(ln.presentation_id)
+            tipo = 'A' if (caja and caja not in self._CAJAS_GENERICAS) else 'grande'
+            bloques.append({'tipo': tipo, 'n': ln.package_qty, 'cajas': 1})
+            cant_msgs.append('%s pzas: imprimir %s veces' % (
+                ln.package_qty, ln.approved_box_qty))
+
+        subtipo, lot_name, datos = mo._etiqueta_datos()
+        contenido = mo._etiqueta_construir_pptx(subtipo, datos, bloques)
+
+        safe = re.sub(r'[/\\:*?"<>|]', '-', lot_name or self.name)
+        ref = mo.product_id.default_code or 'SREF'
+        Attachment = self.env['ir.attachment']
+        Attachment.search([
+            ('res_model', '=', 'amunet.packaging.plan'),
+            ('res_id', '=', self.id),
+            ('name', '=like', 'EtiquetaMuestra_%.pptx'),
+        ]).unlink()
+        att = Attachment.create({
+            'name': 'EtiquetaMuestra_%s_%s.pptx' % (ref, safe),
+            'type': 'binary',
+            'datas': base64.b64encode(contenido),
+            'mimetype': ('application/vnd.openxmlformats-officedocument'
+                         '.presentationml.presentation'),
+            'res_model': 'amunet.packaging.plan',
+            'res_id': self.id,
+        })
+        # Buffer: 1 etiqueta por tipo (misma logica de 1 por diseno).
+        Attachment.search([
+            ('res_model', '=', 'amunet.packaging.plan'),
+            ('res_id', '=', self.id),
+            ('name', '=like', 'EtiquetaMuestra_Buffer_%.pptx'),
+        ]).unlink()
+        buf_msgs = []
+        for plantilla, valores in mo._etiqueta_buffers_de_orden(num_cajas=1).items():
+            if not valores:
+                continue
+            contenido_b = mo._etiqueta_construir_buffer_pptx(plantilla, valores[:1])
+            Attachment.create({
+                'name': 'EtiquetaMuestra_Buffer_%s_%s.pptx' % (plantilla, safe),
+                'type': 'binary',
+                'datas': base64.b64encode(contenido_b),
+                'mimetype': ('application/vnd.openxmlformats-officedocument'
+                             '.presentationml.presentation'),
+                'res_model': 'amunet.packaging.plan',
+                'res_id': self.id,
+            })
+            buf_msgs.append(plantilla)
+        cuerpo = _(
+            '1 etiqueta por diseno generada. Imprime en la impresora las copias '
+            'que indica cada una: %(cant)s.', cant='; '.join(cant_msgs))
+        if buf_msgs:
+            cuerpo += _(' Buffer (1 por tipo): %s.') % ', '.join(buf_msgs)
+        self.message_post(body=cuerpo)
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/content/%s?download=true' % att.id,
+            'target': 'self',
+        }
+
     def action_open_label_wizard(self):
         self.ensure_one()
         first_line = self.line_ids.filtered(lambda line: line.approved_box_qty > 0)[:1]

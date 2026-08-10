@@ -267,7 +267,8 @@ class HrTrainingCourse(models.Model):
         self.sudo().write({
             'speaker_confirmed': True,
             'speaker_confirmed_date': fields.Datetime.now(),
-            'speaker_confirm_token': False,
+            # Se conserva el token para que el ponente pueda regresar
+            # al mismo enlace del correo y ver el QR durante el curso.
         })
         self.sudo().message_post(body=_(
             'Ponente confirmo su participacion por enlace de correo.'))

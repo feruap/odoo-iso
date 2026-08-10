@@ -47,6 +47,9 @@
                             groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
                     <button name="action_open_label_wizard" string="Imprimir etiquetas" type="object"
                             invisible="state not in ('approved', 'done')"/>
+                    <button name="action_generar_etiquetas_muestra" string="Etiquetas (1 por diseño)" type="object"
+                            invisible="state not in ('approved', 'done')"
+                            help="Genera 1 etiqueta de cada diseño e indica cuántas imprimir. Para lotes grandes: rápido y sin trabar."/>
                     <button name="action_close" string="Cerrar" type="object"
                             invisible="state != 'approved'"
                             groups="amunet_packaging_planning.group_packaging_manager,amunet_production.group_production_supervisor"/>

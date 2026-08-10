@@ -106,7 +106,7 @@
             <div class="icon icon-ok">&#10004;</div>
             <t t-if="already">
                 <h1>!Ya estabas confirmado!</h1>
-                <p>Tu participacion como ponente en este curso ya estaba registrada anteriormente.</p>
+                <p>Tu participacion como ponente en este curso ya estaba registrada.</p>
             </t>
             <t t-else="">
                 <h1>!Confirmacion registrada!</h1>
@@ -115,6 +115,26 @@
             </t>
             <div class="course-name" t-esc="course.name"/>
             <p class="meta">Ponente: <span t-esc="course.speaker_id.name"/></p>
+
+            <!-- QR de asistencia para proyectar durante el curso -->
+            <t t-set="qr" t-value="course.qr_code"/>
+            <t t-if="qr">
+                <hr style="margin:24px 0; border:none; border-top:1px solid #eee;"/>
+                <p style="font-weight:600; font-size:15px; color:#333; margin-bottom:8px;">
+                    QR de asistencia para el curso
+                </p>
+                <p style="font-size:13px; color:#666; margin-bottom:16px;">
+                    Proyecta este codigo durante el curso para que los participantes
+                    registren su asistencia desde su celular.
+                    Puedes regresar a esta pagina en cualquier momento usando
+                    el mismo enlace del correo.
+                </p>
+                <img t-attf-src="data:image/png;base64,{{qr}}"
+                     style="max-width:260px; width:100%; display:block; margin:0 auto; border:1px solid #ddd; border-radius:8px;"/>
+                <p style="font-size:11px; color:#aaa; margin-top:12px; word-break:break-all;">
+                    <t t-esc="course.qr_attendance_url"/>
+                </p>
+            </t>
         </t>
     </template>
 
