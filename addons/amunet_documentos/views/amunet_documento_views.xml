@@ -150,8 +150,8 @@
                         <group>
                             <field name="area" readonly="state == 'vigente'"/>
                             <field name="tipo" readonly="state == 'vigente'"/>
-                            <field name="version_actual" readonly="state == 'vigente'"/>
-                            <field name="sustituye_version"/>
+                            <field name="version_actual" readonly="1"/>
+                            <field name="sustituye_version" readonly="1"/>
                             <field name="responsable_id"/>
                         </group>
                         <group>
