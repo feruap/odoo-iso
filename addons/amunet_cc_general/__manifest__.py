@@ -15,12 +15,15 @@
         'wizard/amunet_cc_rechazo_wizard_views.xml',
         'views/amunet_cc_general_views.xml',
         'views/amunet_documento_ext_views.xml',
+        'views/mis_pendientes_dashboard_action.xml',
         'views/menus.xml',
     ],
     'assets': {
         'web.assets_backend': [
             'amunet_cc_general/static/src/css/cc_general.css',
             'amunet_cc_general/static/src/js/weekend_datepicker.js',
+            'amunet_cc_general/static/src/js/mis_pendientes_dashboard.js',
+            'amunet_cc_general/static/src/xml/mis_pendientes_dashboard.xml',
         ],
     },
     'installable': True,

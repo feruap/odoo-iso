@@ -27,10 +27,20 @@ class AmunetCCGeneralActividad(models.Model):
         ('pendiente', 'Pendiente'),
     ], string='Estado enterado', compute='_compute_estado_enterado')
 
+    estado_verificacion = fields.Selection([
+        ('verificado', 'Verificado'),
+        ('pendiente',  'Pendiente'),
+    ], string='Estado verificación', compute='_compute_estado_verificacion')
+
     @api.depends('firma_enterado_id')
     def _compute_estado_enterado(self):
         for r in self:
             r.estado_enterado = 'enterado' if r.firma_enterado_id else 'pendiente'
+
+    @api.depends('firma_verifico_id')
+    def _compute_estado_verificacion(self):
+        for r in self:
+            r.estado_verificacion = 'verificado' if r.firma_verifico_id else 'pendiente'
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -316,6 +326,7 @@ class AmunetCCGeneral(models.Model):
     @api.depends(
         'state',
         'reviso_id', 'firma_reviso_id',
+        'aprobo_id', 'firma_aprobo_id',
         'cierre_realizo_id', 'firma_cierre_realizo_id',
         'cierre_reviso_id',  'firma_cierre_reviso_id',
         'cierre_aprobo_id',  'firma_cierre_aprobo_id',
@@ -330,6 +341,8 @@ class AmunetCCGeneral(models.Model):
             user_ids = set()
             if rec.reviso_id and not rec.firma_reviso_id:
                 user_ids.add(rec.reviso_id.id)
+            if rec.aprobo_id and not rec.firma_aprobo_id:
+                user_ids.add(rec.aprobo_id.id)
             for act in rec.actividades_ids:
                 if act.responsable_id and not act.firma_enterado_id:
                     user_ids.add(act.responsable_id.id)

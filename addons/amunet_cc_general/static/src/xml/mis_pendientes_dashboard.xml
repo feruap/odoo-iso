@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="amunet_cc_general.MisPendientesDashboard">
+    <div class="o_action o_amunet_mis_pendientes">
+
+        <div class="o_amunet_dash_header">
+            <i class="fa fa-clock-o me-2"/>
+            <span>Mis pendientes</span>
+        </div>
+
+        <t t-if="state.loading">
+            <div class="o_amunet_dash_loading">
+                <i class="fa fa-spinner fa-spin me-2"/>Cargando...
+            </div>
+        </t>
+
+        <t t-else="">
+            <!-- Sección Documentos -->
+            <div class="o_amunet_dash_section_title">Documentos</div>
+            <div class="o_amunet_dash_cards">
+
+                <div t-attf-class="o_amunet_dash_card {{ state.corregir > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => abrirAccion(969)">
+                    <div class="o_amunet_dash_icon">
+                        <i class="fa fa-pencil"/>
+                    </div>
+                    <div class="o_amunet_dash_info">
+                        <div class="o_amunet_dash_count"><t t-esc="state.corregir"/></div>
+                        <div class="o_amunet_dash_label">A corregir / borrador</div>
+                        <div class="o_amunet_dash_sublabel">Documentos en borrador asignados a ti</div>
+                    </div>
+                </div>
+
+                <div t-attf-class="o_amunet_dash_card {{ state.revisar > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => abrirAccion(967)">
+                    <div class="o_amunet_dash_icon">
+                        <i class="fa fa-search"/>
+                    </div>
+                    <div class="o_amunet_dash_info">
+                        <div class="o_amunet_dash_count"><t t-esc="state.revisar"/></div>
+                        <div class="o_amunet_dash_label">Por revisar</div>
+                        <div class="o_amunet_dash_sublabel">Documentos en revisión esperando tu firma</div>
+                    </div>
+                </div>
+
+                <div t-attf-class="o_amunet_dash_card {{ state.autorizar > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => abrirAccion(968)">
+                    <div class="o_amunet_dash_icon">
+                        <i class="fa fa-check-circle"/>
+                    </div>
+                    <div class="o_amunet_dash_info">
+                        <div class="o_amunet_dash_count"><t t-esc="state.autorizar"/></div>
+                        <div class="o_amunet_dash_label">Por autorizar</div>
+                        <div class="o_amunet_dash_sublabel">Documentos revisados esperando tu autorización</div>
+                    </div>
+                </div>
+
+                <div t-attf-class="o_amunet_dash_card {{ state.acusar > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => abrirAccion(1104)">
+                    <div class="o_amunet_dash_icon">
+                        <i class="fa fa-envelope-o"/>
+                    </div>
+                    <div class="o_amunet_dash_info">
+                        <div class="o_amunet_dash_count"><t t-esc="state.acusar"/></div>
+                        <div class="o_amunet_dash_label">Por acusar recibo</div>
+                        <div class="o_amunet_dash_sublabel">Documentos distribuidos pendientes de acuse</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sección Control de Cambios -->
+            <div class="o_amunet_dash_section_title">Control de cambios</div>
+            <div class="o_amunet_dash_cards">
+
+                <div t-attf-class="o_amunet_dash_card {{ state.cc_firma > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => abrirAccion(1127)">
+                    <div class="o_amunet_dash_icon">
+                        <i class="fa fa-file-text-o"/>
+                    </div>
+                    <div class="o_amunet_dash_info">
+                        <div class="o_amunet_dash_count"><t t-esc="state.cc_firma"/></div>
+                        <div class="o_amunet_dash_label">Pendientes de mi firma</div>
+                        <div class="o_amunet_dash_sublabel">Controles de cambio donde debes firmar</div>
+                    </div>
+                </div>
+
+            </div>
+        </t>
+
+    </div>
+</t>
+</templates>

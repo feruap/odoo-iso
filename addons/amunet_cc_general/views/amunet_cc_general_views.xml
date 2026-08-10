@@ -242,30 +242,37 @@
 
                     <!-- ── Implementación y seguimiento ──────────── -->
                     <separator string="Implementación y seguimiento"/>
-                    <field name="actividades_ids"
-                           readonly="state not in ('borrador', 'aceptado')">
+                    <field name="actividades_ids">
                         <list editable="bottom">
-                            <field name="sequence" widget="handle"/>
-                            <field name="actividad"      string="Actividad"
+                            <field name="sequence" widget="handle"
+                                   readonly="parent.state not in ('borrador', 'aceptado')"/>
+                            <field name="actividad" string="Actividad"
+                                   readonly="parent.state not in ('borrador', 'aceptado')"
                                    placeholder="Describe la actividad..."/>
                             <field name="responsable_id" string="Responsable"
+                                   readonly="parent.state not in ('borrador', 'aceptado')"
                                    options="{'no_create': True}"/>
-                            <field name="fecha_inicio"   string="Fecha de inicio"/>
-                            <field name="fecha_termino"  string="Fecha de término"/>
+                            <field name="fecha_inicio" string="Fecha de inicio"
+                                   readonly="parent.state not in ('borrador', 'aceptado')"/>
+                            <field name="fecha_termino" string="Fecha de término"
+                                   readonly="parent.state not in ('borrador', 'aceptado')"/>
+                            <button name="action_firmar_enterado" type="object"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    class="btn-warning btn-sm"
+                                    invisible="firma_enterado_id or not responsable_id"/>
                             <field name="estado_enterado" widget="badge" readonly="1"
                                    decoration-success="estado_enterado == 'enterado'"
-                                   decoration-danger="estado_enterado == 'pendiente'"
-                                   invisible="not responsable_id"/>
-                            <button name="action_firmar_enterado" type="object"
-                                    string="" icon="fa-check-circle-o"
-                                    title="Firmar enterado"
-                                    invisible="firma_enterado_id or not responsable_id"/>
+                                   invisible="not firma_enterado_id or not responsable_id"/>
                             <field name="verifico_id" string="Verifica"
+                                   readonly="parent.state not in ('aceptado',)"
                                    options="{'no_create': True}"/>
                             <button name="action_firmar_verificacion" type="object"
-                                    string="" icon="fa-pencil-square-o"
-                                    title="Verificar"
-                                    invisible="firma_verifico_id"/>
+                                    string="Verificar" icon="fa-pencil-square-o"
+                                    class="btn-warning btn-sm"
+                                    invisible="firma_verifico_id or not verifico_id"/>
+                            <field name="estado_verificacion" widget="badge" readonly="1"
+                                   decoration-success="estado_verificacion == 'verificado'"
+                                   invisible="not firma_verifico_id or not verifico_id"/>
                             <field name="fecha_verificacion" string="Fecha verificación"
                                    readonly="1" optional="show"/>
                         </list>

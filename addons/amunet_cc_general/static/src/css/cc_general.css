@@ -18,6 +18,112 @@
     width: 100% !important;
 }
 
+/* ── Tablero Mis Pendientes ─────────────────────────────────── */
+.o_amunet_mis_pendientes {
+    padding: 24px;
+    background: #f8f9fa;
+    min-height: 100%;
+}
+
+.o_amunet_dash_header {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 24px;
+}
+
+.o_amunet_dash_loading {
+    color: #6b7280;
+    padding: 40px;
+    text-align: center;
+}
+
+.o_amunet_dash_section_title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    margin: 24px 0 12px;
+}
+
+.o_amunet_dash_cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.o_amunet_dash_card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+    padding: 20px 24px;
+    min-width: 260px;
+    flex: 1;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.o_amunet_dash_card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+}
+
+.o_amunet_dash_card.has-pending {
+    border-color: #f59e0b;
+}
+
+.o_amunet_dash_card.has-pending .o_amunet_dash_icon {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.o_amunet_dash_card.has-pending .o_amunet_dash_count {
+    color: #d97706;
+}
+
+.o_amunet_dash_card.empty .o_amunet_dash_icon {
+    background: #f3f4f6;
+    color: #9ca3af;
+}
+
+.o_amunet_dash_card.empty .o_amunet_dash_count {
+    color: #9ca3af;
+}
+
+.o_amunet_dash_icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.o_amunet_dash_count {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.o_amunet_dash_label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 2px;
+}
+
+.o_amunet_dash_sublabel {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
 /* Fines de semana en rojo en el selector de fechas */
 .o_amunet_weekend {
     color: #dc3545 !important;
