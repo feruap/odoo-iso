@@ -187,8 +187,33 @@ class AmunetWooProductMapping(models.Model):
         string='Razón liberación', compute='_compute_odoo_inventory')
 
     # --------------------------------------------------------------
+    # Existencias por etapa de producción (suma en todas las ubicaciones
+    # internas cuyo nombre corresponde a esa etapa: APT, AMP, AMPB, ARU...)
+    # --------------------------------------------------------------
+    stock_preproduccion = fields.Float(
+        string='Preproducción', compute='_compute_stage_stock')
+    stock_posproduccion = fields.Float(
+        string='Posproducción', compute='_compute_stage_stock')
+    stock_existencias = fields.Float(
+        string='Existencias', compute='_compute_stage_stock')
+    stock_control_calidad = fields.Float(
+        string='Control de calidad', compute='_compute_stage_stock')
+    stock_entrada = fields.Float(
+        string='Entrada', compute='_compute_stage_stock')
+    stock_salida = fields.Float(
+        string='Salida', compute='_compute_stage_stock')
+    stock_empaquetado = fields.Float(
+        string='Zona de empaquetado', compute='_compute_stage_stock')
+
+    # --------------------------------------------------------------
     # Configuración de calidad
     # --------------------------------------------------------------
+    has_quality_manual = fields.Boolean(
+        string='Tiene manual de calidad',
+        compute='_compute_has_quality_manual',
+        help='El producto tiene al menos un parámetro/especificación de '
+             'calidad configurado (amunet_quality). Si lo tiene, ya es '
+             'evaluable para volverse vendible.')
     qc_required = fields.Boolean(
         string='Requiere QC', compute='_compute_quality')
     qc_parameter_count = fields.Integer(
@@ -228,6 +253,12 @@ class AmunetWooProductMapping(models.Model):
         string='Estado de BOM', compute='_compute_bom_info')
     bom_summary = fields.Text(
         string='Detalle de BOM activas', compute='_compute_bom_info')
+    bom_required = fields.Boolean(
+        string='Requiere BOM', compute='_compute_bom_info',
+        search='_search_bom_required',
+        help='Solo los productos que se manufacturan (categoria "Producto '
+             'terminado") requieren BOM. Consumibles, equipos y semiterminados '
+             'son de compra-venta y no llevan BOM.')
     packaging_plan_count = fields.Integer(
         string='Planes de empaque activos', compute='_compute_packaging_phase')
     packaging_planned_qty = fields.Float(
@@ -579,6 +610,49 @@ class AmunetWooProductMapping(models.Model):
             rec.snapshot_stale = bool(
                 snapshot.date and (now - snapshot.date).days > max_age)
 
+    _STAGE_PATTERNS = [
+        ('stock_preproduccion', ('Preproducción', 'Pre-Production')),
+        ('stock_posproduccion', ('Posproducción', 'Post-Production')),
+        ('stock_existencias', ('Existencias',)),
+        ('stock_control_calidad', ('Control de calidad',)),
+        ('stock_entrada', ('Entrada',)),
+        ('stock_salida', ('Salida',)),
+        ('stock_empaquetado', ('Zona de empaquetado',)),
+    ]
+
+    def _compute_stage_stock(self):
+        """Existencias del producto por etapa de producción.
+
+        Suma la cantidad de stock.quant en todas las ubicaciones internas de
+        la compañía, agrupando por la etapa que indica el nombre de la
+        ubicación (Preproducción, Posproducción, Existencias, Control de
+        calidad, Entrada, Salida, Zona de empaquetado)."""
+        Quant = self.env['stock.quant']
+        for rec in self:
+            for fname, _pats in self._STAGE_PATTERNS:
+                rec[fname] = 0.0
+            if not rec.product_id:
+                continue
+            try:
+                quants = Quant.search([
+                    ('product_id', '=', rec.product_id.id),
+                    ('location_id.usage', '=', 'internal'),
+                    ('company_id', '=', rec.company_id.id),
+                ])
+            except AccessError:
+                continue
+            for quant in quants:
+                cname = quant.location_id.complete_name or ''
+                for fname, pats in self._STAGE_PATTERNS:
+                    if any(p in cname for p in pats):
+                        rec[fname] += quant.quantity
+                        break
+
+    @api.depends('qc_parameter_count')
+    def _compute_has_quality_manual(self):
+        for rec in self:
+            rec.has_quality_manual = rec.qc_parameter_count > 0
+
     def _compute_odoo_inventory(self):
         Quant = self.env['stock.quant']
         Lot = self.env['stock.lot']
@@ -715,10 +789,16 @@ class AmunetWooProductMapping(models.Model):
         for rec in self:
             rec.active_bom_count = 0
             rec.has_active_bom = False
+            rec.bom_required = False
             rec.bom_status_display = _('No calculable')
             rec.bom_summary = False
             if not rec.product_id:
                 continue
+            # Solo los productos que se MANUFACTURAN (categoria "Producto
+            # terminado") requieren BOM. Consumibles, equipos y semiterminados
+            # son de compra-venta y NO llevan BOM: no deben marcarse "Sin BOM".
+            categ = rec.product_id.categ_id.complete_name or ''
+            rec.bom_required = categ.startswith('Producto terminado')
             boms = Bom.search([
                 ('active', '=', True),
                 ('type', '=', 'normal'),
@@ -732,9 +812,12 @@ class AmunetWooProductMapping(models.Model):
             ], order='sequence, id')
             rec.active_bom_count = len(boms)
             rec.has_active_bom = bool(boms)
-            rec.bom_status_display = (
-                _('%s BOM activa(s)') % len(boms)
-                if boms else _('Sin BOM activa'))
+            if boms:
+                rec.bom_status_display = _('%s BOM activa(s)') % len(boms)
+            elif not rec.bom_required:
+                rec.bom_status_display = _('No aplica (compra-venta)')
+            else:
+                rec.bom_status_display = _('Sin BOM activa')
             rec.bom_summary = '\n'.join(
                 '%s · %g %s' % (
                     bom.display_name,
@@ -1063,6 +1146,9 @@ class AmunetWooProductMapping(models.Model):
 
     def _search_has_active_bom(self, operator, value):
         return self._search_ids_by('has_active_bom', operator, value)
+
+    def _search_bom_required(self, operator, value):
+        return self._search_ids_by('bom_required', operator, value)
 
     # --------------------------------------------------------------
     # Acciones de navegación

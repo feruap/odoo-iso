@@ -25,7 +25,9 @@
                 <filter name="filter_with_bom" string="Con BOM activa"
                         domain="[('has_active_bom', '=', True)]"/>
                 <filter name="filter_without_bom" string="Sin BOM activa"
-                        domain="[('has_active_bom', '=', False)]"/>
+                        domain="['&amp;', ('has_active_bom', '=', False), ('bom_required', '=', True)]"/>
+                <filter name="filter_bom_not_required" string="No requiere BOM (compra-venta)"
+                        domain="[('bom_required', '=', False)]"/>
                 <separator/>
                 <filter name="filter_manufactured" string="Fabricados"
                         domain="[('supply_classification', 'in', ('short_manufacturing', 'long_manufacturing'))]"/>
@@ -67,6 +69,18 @@
                 <field name="short_capacity_display" optional="hide"/>
                 <field name="long_capacity_display" optional="hide"/>
                 <field name="last_snapshot_date" optional="hide"/>
+                <!-- Manual de calidad (parámetros/especificaciones amunet_quality) -->
+                <field name="has_quality_manual" widget="boolean_toggle"
+                       optional="show" readonly="1"/>
+                <field name="qc_parameter_count" optional="show"/>
+                <!-- Existencias por etapa de producción (todas las ubicaciones) -->
+                <field name="stock_preproduccion" optional="show"/>
+                <field name="stock_posproduccion" optional="show"/>
+                <field name="stock_existencias" optional="show"/>
+                <field name="stock_control_calidad" optional="show"/>
+                <field name="stock_entrada" optional="hide"/>
+                <field name="stock_salida" optional="hide"/>
+                <field name="stock_empaquetado" optional="hide"/>
                 <field name="has_alerts" column_invisible="True"/>
                 <field name="company_id" groups="base.group_multi_company"
                        optional="hide"/>
