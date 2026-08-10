@@ -3,41 +3,49 @@
     <!--
         Secuencias para Control de Calidad
         Epic-029: Sistema de Control de Calidad
+
+        noupdate="1": las secuencias se crean UNA vez; los -u posteriores NO
+        reinician number_next. Sin esto, cada actualizacion del modulo las
+        reseteaba a 1 y los folios (QC/EQI/EXT) se reusaban entre recepciones
+        distintas (ej. QC/2026/00007 aparecia en 4 recepciones de jun-ago).
     -->
+    <data noupdate="1">
 
-    <!-- Secuencia para nombre interno de QC -->
-    <record id="sequence_quality_check" model="ir.sequence">
-        <field name="name">Control de Calidad Amunet</field>
-        <field name="code">amunet.quality.check</field>
-        <field name="prefix">QC/%(year)s/</field>
-        <field name="padding">5</field>
-        <field name="number_next">1</field>
-        <field name="number_increment">1</field>
-        <field name="company_id" eval="False"/>
-    </record>
+        <!-- Secuencia para nombre interno de QC -->
+        <record id="sequence_quality_check" model="ir.sequence">
+            <field name="name">Control de Calidad Amunet</field>
+            <field name="code">amunet.quality.check</field>
+            <field name="prefix">QC/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
 
 
-    <!-- Secuencia para inspección de equipos -->
-    <record id="sequence_equipment_inspection" model="ir.sequence">
-        <field name="name">Inspección de Equipos Amunet</field>
-        <field name="code">amunet.equipment.inspection</field>
-        <field name="prefix">EQI/%(year)s/</field>
-        <field name="padding">5</field>
-        <field name="number_next">1</field>
-        <field name="number_increment">1</field>
-        <field name="company_id" eval="False"/>
-    </record>
+        <!-- Secuencia para inspección de equipos -->
+        <record id="sequence_equipment_inspection" model="ir.sequence">
+            <field name="name">Inspección de Equipos Amunet</field>
+            <field name="code">amunet.equipment.inspection</field>
+            <field name="prefix">EQI/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
 
-    <!-- Secuencia para extensiones de caducidad -->
-    <record id="sequence_lot_extension" model="ir.sequence">
-        <field name="name">Extensión de caducidad por reanálisis</field>
-        <field name="code">amunet.lot.extension</field>
-        <field name="prefix">EXT/%(year)s/</field>
-        <field name="padding">4</field>
-        <field name="number_next">1</field>
-        <field name="number_increment">1</field>
-        <field name="company_id" eval="False"/>
-    </record>
+        <!-- Secuencia para extensiones de caducidad -->
+        <record id="sequence_lot_extension" model="ir.sequence">
+            <field name="name">Extensión de caducidad por reanálisis</field>
+            <field name="code">amunet.lot.extension</field>
+            <field name="prefix">EXT/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+    </data>
 
 </odoo>
 
