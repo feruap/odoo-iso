@@ -451,7 +451,6 @@ class AmunetDocumento(models.Model):
                 ('seccion_responsabilidades', 'Responsabilidades'),
                 ('seccion_terminos_definiciones', 'Terminos y definiciones'),
                 ('seccion_condiciones_generales', 'Condiciones generales'),
-                ('seccion_formatos_derivados', 'Formatos derivados'),
                 ('seccion_referencias', 'Referencias bibliograficas'),
             ]
         elif self.tipo == 'manual':
@@ -468,7 +467,6 @@ class AmunetDocumento(models.Model):
                 ('seccion_alcance', 'Alcance'),
                 ('seccion_responsabilidades', 'Responsabilidades'),
                 ('seccion_terminos_definiciones', 'Terminos y definiciones'),
-                ('seccion_formatos_derivados', 'Formatos derivados'),
                 ('seccion_referencias', 'Referencias bibliograficas'),
             ]
         else:

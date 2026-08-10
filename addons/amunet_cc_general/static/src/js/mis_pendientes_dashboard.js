@@ -2,6 +2,7 @@
 import { Component, onWillStart, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { user } from "@web/core/user";
 
 class MisPendientesDashboard extends Component {
     static template = "amunet_cc_general.MisPendientesDashboard";
@@ -10,7 +11,6 @@ class MisPendientesDashboard extends Component {
     setup() {
         this.actionService = useService("action");
         this.orm = useService("orm");
-        this.user = useService("user");
 
         this.state = useState({
             loading: true,
@@ -25,31 +25,40 @@ class MisPendientesDashboard extends Component {
     }
 
     async _cargarConteos() {
-        const uid = this.user.userId;
-        const [corregir, revisar, autorizar, acusar, cc_firma] = await Promise.all([
-            this.orm.searchCount("amunet.documento", [
-                ["state", "=", "borrador"], ["elabora_id", "=", uid],
-            ]),
-            this.orm.searchCount("amunet.documento", [
-                ["state", "=", "en_revision"], ["revisor_id", "=", uid],
-                ["firma_revisa_id", "=", false],
-            ]),
-            this.orm.searchCount("amunet.documento", [
-                ["state", "=", "en_revision"], ["autorizador_id", "=", uid],
-                ["firma_revisa_id", "!=", false], ["firma_aprueba_id", "=", false],
-            ]),
-            this.orm.searchCount("amunet.documento.distribucion", [
-                ["usuario_id", "=", uid], ["acuse", "=", false],
-            ]),
-            this.orm.searchCount("amunet.cc.general", [
-                ["pendientes_para_ids", "in", [uid]],
-            ]),
-        ]);
-        Object.assign(this.state, { corregir, revisar, autorizar, acusar, cc_firma, loading: false });
+        const uid = user.userId;
+        try {
+            const [corregir, revisar, autorizar, acusar, cc_firma] = await Promise.all([
+                this.orm.searchCount("amunet.documento", [
+                    ["state", "=", "borrador"], ["elabora_id", "=", uid],
+                ]),
+                this.orm.searchCount("amunet.documento", [
+                    ["state", "=", "en_revision"], ["revisor_id", "=", uid],
+                    ["firma_revisa_id", "=", false],
+                ]),
+                this.orm.searchCount("amunet.documento", [
+                    ["state", "=", "en_revision"], ["autorizador_id", "=", uid],
+                    ["firma_revisa_id", "!=", false], ["firma_aprueba_id", "=", false],
+                ]),
+                this.orm.searchCount("amunet.documento.distribucion", [
+                    ["usuario_id", "=", uid], ["acuse", "=", false],
+                ]),
+                this.orm.searchCount("amunet.cc.general", [
+                    ["pendientes_para_ids", "in", [uid]],
+                ]),
+            ]);
+            Object.assign(this.state, { corregir, revisar, autorizar, acusar, cc_firma, loading: false });
+        } catch (e) {
+            console.error("Error al cargar pendientes:", e);
+            Object.assign(this.state, { loading: false });
+        }
     }
 
     abrirAccion(actionId) {
         this.actionService.doAction(actionId);
+    }
+
+    abrirAccionXml(xmlId) {
+        this.actionService.doAction(xmlId);
     }
 }
 
