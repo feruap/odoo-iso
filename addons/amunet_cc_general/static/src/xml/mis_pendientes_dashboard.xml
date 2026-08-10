@@ -7,32 +7,32 @@
         <div class="o_amunet_dash_section_title">Accesos rápidos</div>
         <div class="o_amunet_dash_cards o_amunet_dash_cards_hub">
 
-            <div class="o_amunet_hub_card" t-on-click="() => abrirAccionXml('amunet_documentos.action_amunet_documento_lista_maestra')">
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_documento_lista_maestra')">
                 <i class="fa fa-file-text-o fa-2x text-primary mb-2"/>
                 <span class="o_amunet_hub_label">PNOs vigentes</span>
             </div>
 
-            <div class="o_amunet_hub_card" t-on-click="() => abrirAccionXml('amunet_documentos.action_amunet_documento_formato')">
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_documento_formato')">
                 <i class="fa fa-wpforms fa-2x text-success mb-2"/>
                 <span class="o_amunet_hub_label">Formatos</span>
             </div>
 
-            <div class="o_amunet_hub_card" t-on-click="() => abrirAccionXml('amunet_documentos.action_amunet_documento_obsoletos')">
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_documento_obsoletos')">
                 <i class="fa fa-archive fa-2x text-warning mb-2"/>
                 <span class="o_amunet_hub_label">Obsoletos</span>
             </div>
 
-            <div class="o_amunet_hub_card" t-on-click="() => abrirAccionXml('amunet_documentos.action_amunet_prueba_rapida')">
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_prueba_rapida')">
                 <i class="fa fa-flask fa-2x text-info mb-2"/>
                 <span class="o_amunet_hub_label">Pruebas rápidas</span>
             </div>
 
-            <div class="o_amunet_hub_card" t-on-click="() => abrirAccionXml('amunet_cc_general.action_cc_general')">
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_cc_general.action_cc_general')">
                 <i class="fa fa-exchange fa-2x mb-2" style="color:#6f42c1"/>
                 <span class="o_amunet_hub_label">Control de cambios</span>
             </div>
 
-            <div class="o_amunet_hub_card" t-on-click="() => abrirAccionXml('amunet_desviaciones.action_desviacion')">
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_desviaciones.action_desviacion')">
                 <i class="fa fa-exclamation-triangle fa-2x text-danger mb-2"/>
                 <span class="o_amunet_hub_label">Desviaciones / NC</span>
             </div>
@@ -52,31 +52,31 @@
             <div class="o_amunet_pendientes_row">
 
                 <div t-attf-class="o_amunet_mini_card {{ state.corregir > 0 ? 'has-pending' : 'empty' }}"
-                     t-on-click="() => abrirAccion(969)">
+                     t-on-click="() => this.abrirAccion(969)">
                     <div class="o_amunet_mini_count"><t t-esc="state.corregir"/></div>
                     <div class="o_amunet_mini_label">A corregir</div>
                 </div>
 
                 <div t-attf-class="o_amunet_mini_card {{ state.revisar > 0 ? 'has-pending' : 'empty' }}"
-                     t-on-click="() => abrirAccion(967)">
+                     t-on-click="() => this.abrirAccion(967)">
                     <div class="o_amunet_mini_count"><t t-esc="state.revisar"/></div>
                     <div class="o_amunet_mini_label">Por revisar</div>
                 </div>
 
                 <div t-attf-class="o_amunet_mini_card {{ state.autorizar > 0 ? 'has-pending' : 'empty' }}"
-                     t-on-click="() => abrirAccion(968)">
+                     t-on-click="() => this.abrirAccion(968)">
                     <div class="o_amunet_mini_count"><t t-esc="state.autorizar"/></div>
                     <div class="o_amunet_mini_label">Por autorizar</div>
                 </div>
 
                 <div t-attf-class="o_amunet_mini_card {{ state.acusar > 0 ? 'has-pending' : 'empty' }}"
-                     t-on-click="() => abrirAccion(1104)">
+                     t-on-click="() => this.abrirAccion(1104)">
                     <div class="o_amunet_mini_count"><t t-esc="state.acusar"/></div>
                     <div class="o_amunet_mini_label">Acuse recibo</div>
                 </div>
 
                 <div t-attf-class="o_amunet_mini_card {{ state.cc_firma > 0 ? 'has-pending' : 'empty' }}"
-                     t-on-click="() => abrirAccion(1127)">
+                     t-on-click="() => this.abrirAccion(1127)">
                     <div class="o_amunet_mini_count"><t t-esc="state.cc_firma"/></div>
                     <div class="o_amunet_mini_label">CC por firmar</div>
                 </div>
