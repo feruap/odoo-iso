@@ -19,6 +19,12 @@
               action="action_cc_general_por_firmar"
               sequence="15"/>
 
+    <menuitem id="menu_cc_general_en_implementacion"
+              name="En implementación"
+              parent="menu_cc_general_bajo_docs"
+              action="action_cc_general_en_implementacion"
+              sequence="18"/>
+
     <menuitem id="menu_cc_general_todos_bajo_docs"
               name="Todos los controles de cambio"
               parent="menu_cc_general_bajo_docs"

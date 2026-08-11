@@ -467,4 +467,18 @@
             </p>
         </field>
     </record>
+
+    <!-- CCs en implementación (aceptados, listos para cierre) -->
+    <record id="action_cc_general_en_implementacion" model="ir.actions.act_window">
+        <field name="name">En implementación</field>
+        <field name="res_model">amunet.cc.general</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_cc_general_mis_list"/>
+        <field name="domain">[('state', '=', 'aceptado')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay controles de cambio en implementación en este momento.
+            </p>
+        </field>
+    </record>
 </odoo>
