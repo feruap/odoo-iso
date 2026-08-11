@@ -253,6 +253,15 @@ class AmunetDesviacion(models.Model):
             rec.state = 'investigacion'
 
     # ── Firmas con wizard genérico ────────────────────────────────────
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_emisor':      _('Firma del emisor'),
+            '_signature_supervisor':  _('Firma del supervisor de área'),
+            '_signature_responsable': _('Firma del responsable'),
+            '_signature_verifico':    _('Firma de quien verificó'),
+            '_signature_cierre':      _('Firma de cierre'),
+        }
+
     def _abrir_firma(self, method_name, label):
         self.ensure_one()
         return self.env['amunet.generic.signature.wizard'].open_for(

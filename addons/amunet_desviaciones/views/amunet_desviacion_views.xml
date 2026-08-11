@@ -128,8 +128,15 @@
                            placeholder="Describe qué pasó, cuándo, dónde, cuántas veces y qué desviación se observó respecto al estándar..."
                            readonly="state != 'borrador'"/>
                     <label for="evidencia" string="Descripción de la evidencia objetiva"/>
+                    <p class="text-muted ms-0 mb-1" style="font-size:0.9em">
+                        Escribe con palabras qué prueba encontraste, cuándo y dónde está
+                        (por ejemplo: "captura de pantalla del sistema tomada el 11/ago/2026",
+                        "correo recibido de Producción el 10/ago", "registro de lote impreso sin firma").
+                        Las capturas de pantalla, fotos y archivos los subes en el campo
+                        <b>Evidencia objetiva adjunta</b> que aparece justo debajo.
+                    </p>
                     <field name="evidencia"
-                           placeholder="Ej. Foto de la banda de control, registro de lote, certificado de análisis..."
+                           placeholder="Ej. Captura de pantalla del documento en estado Borrador tomada el 11/ago/2026, correo del área de Producción donde se envió sin pasar por aprobación, foto del formato impreso sin marca de copia controlada..."
                            readonly="state != 'borrador'"/>
                     <label for="evidencia_adjunta_ids" string="Evidencia objetiva adjunta (archivos)"/>
                     <field name="evidencia_adjunta_ids" widget="many2many_binary"
@@ -185,15 +192,37 @@
                     <!-- Ishikawa -->
                     <group invisible="not herramienta_ishikawa or state == 'borrador'"
                            string="Diagrama de Ishikawa (6M)">
+                        <p class="text-muted ms-0 mb-2" style="font-size:0.9em" colspan="2">
+                            Escribe en cada M la posible causa relacionada con esa categoría.
+                            Si alguna no aplica a tu desviación, déjala en blanco.
+                        </p>
                         <group>
-                            <field name="ishikawa_mano_obra"     placeholder="Ej. Falta de capacitación del operador" readonly="state != 'investigacion'"/>
-                            <field name="ishikawa_maquina"       placeholder="Ej. Equipo fuera de calibración"        readonly="state != 'investigacion'"/>
-                            <field name="ishikawa_metodo"        placeholder="Ej. Procedimiento ambiguo o incompleto" readonly="state != 'investigacion'"/>
+                            <field name="ishikawa_mano_obra"
+                                   placeholder="¿La causa tiene que ver con las personas? Ej. El personal no conocía el flujo de aprobación, no había recibido capacitación en el sistema"
+                                   readonly="state != 'investigacion'"
+                                   help="Personas: errores humanos, falta de capacitación, responsabilidades no claras, desconocimiento del procedimiento."/>
+                            <field name="ishikawa_maquina"
+                                   placeholder="¿La causa tiene que ver con el sistema o herramientas? Ej. El sistema no estaba disponible, el usuario no tenía acceso al módulo"
+                                   readonly="state != 'investigacion'"
+                                   help="Máquina / Sistema: fallas técnicas, acceso limitado, el sistema no permite hacer algo que se necesita."/>
+                            <field name="ishikawa_metodo"
+                                   placeholder="¿La causa tiene que ver con el procedimiento? Ej. El PNO no indica claramente quién debe aprobar, el flujo no estaba definido"
+                                   readonly="state != 'investigacion'"
+                                   help="Método: instrucciones poco claras, flujo mal definido, ausencia de un procedimiento, pasos ambiguos."/>
                         </group>
                         <group>
-                            <field name="ishikawa_material"      placeholder="Ej. Insumo fuera de especificación"    readonly="state != 'investigacion'"/>
-                            <field name="ishikawa_medicion"      placeholder="Ej. Instrumento sin verificación"      readonly="state != 'investigacion'"/>
-                            <field name="ishikawa_medio_ambiente" placeholder="Ej. Temperatura o humedad fuera de rango" readonly="state != 'investigacion'"/>
+                            <field name="ishikawa_material"
+                                   placeholder="¿La causa tiene que ver con documentos o formatos? Ej. Se usó una plantilla obsoleta que no había sido retirada de circulación"
+                                   readonly="state != 'investigacion'"
+                                   help="Material / Insumo: documentos desactualizados, formatos confusos, plantillas incorrectas en circulación."/>
+                            <field name="ishikawa_medicion"
+                                   placeholder="¿La causa tiene que ver con falta de control o verificación? Ej. No existe un mecanismo que confirme que el personal usa la versión vigente"
+                                   readonly="state != 'investigacion'"
+                                   help="Medición: falta de indicadores, sin revisiones periódicas, sin alertas de vencimiento, criterios subjetivos."/>
+                            <field name="ishikawa_medio_ambiente"
+                                   placeholder="¿La causa tiene que ver con el entorno o cultura? Ej. Alta carga de trabajo llevó a omitir el flujo de aprobación para entregar a tiempo"
+                                   readonly="state != 'investigacion'"
+                                   help="Medio ambiente: carga excesiva de trabajo, presión de tiempo, resistencia al cambio, cultura organizacional."/>
                         </group>
                     </group>
 
