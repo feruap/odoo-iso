@@ -633,9 +633,50 @@ class AmunetDocumento(models.Model):
                 'fecha_vigencia': fecha_emision + relativedelta(years=2),
             })
             r._auto_distribuir_signatarios(today)
+            r._notificar_nueva_version()
             r.activity_feedback(
                 ['mail.mail_activity_data_todo'],
                 feedback=_('Autorizado por %s') % self.env.user.name)
+
+    def _notificar_nueva_version(self):
+        """Envía correo a todos los destinatarios de distribución al publicar."""
+        for r in self:
+            destinatarios = r.distribucion_ids.mapped('usuario_id').filtered(
+                lambda u: u.partner_id and u.partner_id.email
+            )
+            if not destinatarios:
+                continue
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            enlace = '%s/odoo/documentos/%d' % (base_url, r.id)
+            subject = 'Documento publicado: %s v%s — %s' % (
+                r.codigo or '', r.version_actual or '', r.name or '')
+            body = '''
+                <p>Hola,</p>
+                <p>Se ha publicado una nueva versión del siguiente documento controlado:</p>
+                <table style="border-collapse:collapse;margin:12px 0">
+                    <tr><td style="padding:4px 12px 4px 0;color:#555">Código</td>
+                        <td><b>%s</b></td></tr>
+                    <tr><td style="padding:4px 12px 4px 0;color:#555">Nombre</td>
+                        <td><b>%s</b></td></tr>
+                    <tr><td style="padding:4px 12px 4px 0;color:#555">Versión</td>
+                        <td><b>%s</b></td></tr>
+                    <tr><td style="padding:4px 12px 4px 0;color:#555">Válido hasta</td>
+                        <td><b>%s</b></td></tr>
+                </table>
+                <p>Entra al sistema para revisar el documento y registrar tu acuse de lectura:</p>
+                <p><a href="%s" style="background:#017e84;color:#fff;padding:8px 18px;
+                   border-radius:4px;text-decoration:none">Ver documento</a></p>
+                <p style="color:#888;font-size:12px;margin-top:16px">
+                    Este aviso es automático — no respondas a este correo.</p>
+            ''' % (r.codigo or '', r.name or '', r.version_actual or '',
+                   r.fecha_vigencia.strftime('%d/%m/%Y') if r.fecha_vigencia else '',
+                   enlace)
+            self.env['mail.mail'].sudo().create({
+                'subject': subject,
+                'body_html': body,
+                'email_from': 'odoobot@amunet.com.mx',
+                'recipient_ids': [(4, u.partner_id.id) for u in destinatarios],
+            }).send()
 
     def _auto_distribuir_signatarios(self, today=None):
         """Al publicar, registra acuse automatico para elaboro/reviso/autorizo."""

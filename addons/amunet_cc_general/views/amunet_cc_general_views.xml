@@ -360,6 +360,40 @@
                         </div>
                     </div>
 
+                    <!-- Aviso de estado del documento vinculado -->
+                    <div invisible="state not in ('aceptado', 'cerrado') or not is_manager or not documento_afectado_id"
+                         class="px-3 pb-2">
+
+                        <!-- Documento vigente y versión cambió → todo bien -->
+                        <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-1"
+                             invisible="documento_state != 'vigente' or documento_version_actual == documento_version_inicio">
+                            <i class="fa fa-check-circle fa-lg"/>
+                            <span>El documento fue revisado, autorizado y está vigente en su nueva versión. Puedes proceder al cierre.</span>
+                        </div>
+
+                        <!-- Documento vigente pero misma versión → no se actualizó -->
+                        <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-1"
+                             invisible="documento_state != 'vigente' or documento_version_actual != documento_version_inicio">
+                            <i class="fa fa-exclamation-triangle fa-lg"/>
+                            <span>El documento está vigente pero la versión no cambió. Verifica si el cambio solicitado fue aplicado correctamente.</span>
+                        </div>
+
+                        <!-- Documento en revisión → todavía en proceso -->
+                        <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-1"
+                             invisible="documento_state != 'en_revision'">
+                            <i class="fa fa-clock-o fa-lg"/>
+                            <span>El documento está en revisión — aún no ha sido autorizado. Espera a que se complete el flujo de aprobación.</span>
+                        </div>
+
+                        <!-- Documento en borrador → no se ha empezado a actualizar -->
+                        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-1"
+                             invisible="documento_state != 'borrador'">
+                            <i class="fa fa-times-circle fa-lg"/>
+                            <span>El documento sigue en borrador. Aún no se ha iniciado la actualización solicitada por este CC.</span>
+                        </div>
+
+                    </div>
+
                     <group invisible="state not in ('aceptado', 'cerrado') or not is_manager">
                         <group>
                             <field name="fecha_implementacion"
