@@ -1,0 +1,151 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="seed_product_template_2762" model="product.template">
+            <field name="name">Cuaderno Francés</field>
+            <field name="sequence">1</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_107"/>
+            <field name="list_price">1.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_1"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="default_code">COPAP40</field>
+            <field name="taxes_id" eval="[(6,0,[12])]"/>
+            <field name="supplier_taxes_id" eval="[(6,0,[22])]"/>
+            <field name="is_storable" eval="True"/>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">none</field>
+            <field name="lot_sequence_id" ref="seed_ir_sequence_15"/>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="purchase_method">receive</field>
+            <field name="etiqueta_buffer_modo">por_vial</field>
+            <field name="amunet_lot_reset_monthly" eval="True"/>
+            <field name="marketplace_flow">general</field>
+            <field name="marketplace_sequence">10</field>
+            <field name="marketplace_reference_price">0.0</field>
+            <field name="qc_test_destructiveness">non_destructive</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_req_history_log" eval="True"/>
+            <field name="amunet_req_calculations" eval="True"/>
+            <field name="amunet_weighing_range_text">± 0.0007</field>
+            <field name="amunet_req_dilution" eval="True"/>
+            <field name="amunet_ph_adj_range_text">± 0.05</field>
+            <field name="amunet_req_aforar" eval="True"/>
+            <field name="amunet_req_quality_control" eval="True"/>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_2763" model="product.template">
+            <field name="name">Cuaderno profesional</field>
+            <field name="sequence">1</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_107"/>
+            <field name="list_price">1.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_1"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="default_code">COPAP41</field>
+            <field name="taxes_id" eval="[(6,0,[12])]"/>
+            <field name="supplier_taxes_id" eval="[(6,0,[22])]"/>
+            <field name="is_storable" eval="True"/>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">none</field>
+            <field name="lot_sequence_id" ref="seed_ir_sequence_15"/>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="purchase_method">receive</field>
+            <field name="etiqueta_buffer_modo">por_vial</field>
+            <field name="amunet_lot_reset_monthly" eval="True"/>
+            <field name="marketplace_flow">general</field>
+            <field name="marketplace_sequence">10</field>
+            <field name="marketplace_reference_price">0.0</field>
+            <field name="qc_test_destructiveness">non_destructive</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_req_history_log" eval="True"/>
+            <field name="amunet_req_calculations" eval="True"/>
+            <field name="amunet_weighing_range_text">± 0.0007</field>
+            <field name="amunet_req_dilution" eval="True"/>
+            <field name="amunet_ph_adj_range_text">± 0.05</field>
+            <field name="amunet_req_aforar" eval="True"/>
+            <field name="amunet_req_quality_control" eval="True"/>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_2764" model="product.template">
+            <field name="name">Hoja tamaño carta</field>
+            <field name="sequence">1</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_107"/>
+            <field name="list_price">1.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_1"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="default_code">COPAP42</field>
+            <field name="taxes_id" eval="[(6,0,[12])]"/>
+            <field name="supplier_taxes_id" eval="[(6,0,[22])]"/>
+            <field name="is_storable" eval="True"/>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">none</field>
+            <field name="lot_sequence_id" ref="seed_ir_sequence_15"/>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="purchase_method">receive</field>
+            <field name="etiqueta_buffer_modo">por_vial</field>
+            <field name="amunet_lot_reset_monthly" eval="True"/>
+            <field name="marketplace_flow">general</field>
+            <field name="marketplace_sequence">10</field>
+            <field name="marketplace_reference_price">0.0</field>
+            <field name="qc_test_destructiveness">non_destructive</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_req_history_log" eval="True"/>
+            <field name="amunet_req_calculations" eval="True"/>
+            <field name="amunet_weighing_range_text">± 0.0007</field>
+            <field name="amunet_req_dilution" eval="True"/>
+            <field name="amunet_ph_adj_range_text">± 0.05</field>
+            <field name="amunet_req_aforar" eval="True"/>
+            <field name="amunet_req_quality_control" eval="True"/>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+    </data>
+</odoo>
