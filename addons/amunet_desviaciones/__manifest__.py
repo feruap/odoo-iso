@@ -5,7 +5,7 @@
     'summary': 'Registro y seguimiento de desviaciones y no conformidades (ISO 13485)',
     'author': 'Amunet',
     'license': 'LGPL-3',
-    'depends': ['base', 'mail', 'amunet_documentos', 'amunet_quality', 'amunet_cc_general'],
+    'depends': ['base', 'mail', 'hr', 'amunet_documentos', 'amunet_quality', 'amunet_cc_general'],
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',

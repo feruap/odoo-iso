@@ -22,6 +22,10 @@ class AmunetDesviacion(models.Model):
     fecha_reporte  = fields.Date(string='Fecha de reporte', default=fields.Date.today, required=True)
     clasif_interna = fields.Boolean(string='Interna')
     clasif_externa = fields.Boolean(string='Externa (auditoría, queja)')
+    tipo_incidencia = fields.Selection([
+        ('producto', 'Producto'),
+        ('proceso',  'Proceso'),
+    ], string='Tipo de incidencia', required=True, default='proceso', tracking=True)
     producto       = fields.Char(string='Producto / Proceso')
     lote           = fields.Char(string='No. Lote')
     area_afectada  = fields.Char(string='Área afectada')
@@ -59,8 +63,11 @@ class AmunetDesviacion(models.Model):
         ('si', 'Sí'),
         ('no', 'No'),
     ], string='¿Afecta a otras áreas?')
-    areas_impactadas      = fields.Char(string='Áreas impactadas',
-                                        placeholder='Ej. Producción, Almacén')
+    areas_impactadas_ids  = fields.Many2many(
+        'hr.department',
+        'amunet_desviacion_department_rel',
+        'desviacion_id', 'department_id',
+        string='Áreas impactadas')
 
     # ── Sección 2: Investigación y valoración ─────────────────────────
     criterio              = fields.Text(string='Criterio de referencia (procedimiento, norma, especificación)')
