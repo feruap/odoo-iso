@@ -726,11 +726,17 @@ class AmunetWooProductMapping(models.Model):
             rec.bom_summary = False
             if not rec.product_id:
                 continue
-            # Solo los productos que se MANUFACTURAN (categoria "Producto
-            # terminado") requieren BOM. Consumibles, equipos y semiterminados
-            # son de compra-venta y NO llevan BOM: no deben marcarse "Sin BOM".
+            # Solo los productos que se MANUFACTURAN (pruebas/reactivos
+            # terminados) requieren BOM. Consumibles, equipos, instrumentos,
+            # soportes, semiterminados = compra-venta y NO llevan BOM, aunque
+            # su categoria cuelgue de "Producto terminado".
             categ = rec.product_id.categ_id.complete_name or ''
-            rec.bom_required = categ.startswith('Producto terminado')
+            _no_bom = ('equipo', 'consumible', 'instrumento', 'soporte',
+                       'punta', 'hisopo', 'semiterminado', 'accesorio',
+                       'distribuci')
+            rec.bom_required = (
+                categ.startswith('Producto terminado')
+                and not any(k in categ.lower() for k in _no_bom))
             boms = Bom.search([
                 ('active', '=', True),
                 ('type', '=', 'normal'),
