@@ -50,9 +50,6 @@
               parent="menu_amunet_mis_pendientes"
               action="action_amunet_documento_por_autorizar" sequence="30"/>
 
-    <menuitem id="menu_amunet_formato_mis_solicitudes" name="Mis solicitudes de impresión"
-              parent="menu_amunet_mis_pendientes"
-              action="action_amunet_formato_mis_solicitudes" sequence="50"/>
 
     <menuitem id="menu_amunet_distribucion_mis_docs" name="Mis documentos por acusar"
               parent="menu_amunet_mis_pendientes"

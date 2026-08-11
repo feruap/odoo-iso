@@ -264,7 +264,7 @@
                                    decoration-success="estado_enterado == 'enterado'"
                                    invisible="not firma_enterado_id or not responsable_id"/>
                             <field name="verifico_id" string="Verifica"
-                                   readonly="parent.state not in ('aceptado',)"
+                                   readonly="parent.state not in ('borrador', 'aceptado')"
                                    options="{'no_create': True}"/>
                             <button name="action_firmar_verificacion" type="object"
                                     string="Verificar" icon="fa-pencil-square-o"
