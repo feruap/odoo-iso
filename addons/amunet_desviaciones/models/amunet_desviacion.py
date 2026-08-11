@@ -2,6 +2,14 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 
+class AmunetArea(models.Model):
+    _name = 'amunet.desviacion.area'
+    _description = 'Área de Amunet (catálogo para desviaciones)'
+    _order = 'name'
+
+    name = fields.Char(string='Área', required=True)
+
+
 class AmunetDesviacion(models.Model):
     _name = 'amunet.desviacion'
     _description = 'Desviación / No Conformidad'
@@ -64,9 +72,9 @@ class AmunetDesviacion(models.Model):
         ('no', 'No'),
     ], string='¿Afecta a otras áreas?')
     areas_impactadas_ids  = fields.Many2many(
-        'hr.department',
-        'amunet_desviacion_department_rel',
-        'desviacion_id', 'department_id',
+        'amunet.desviacion.area',
+        'amunet_desviacion_area_rel',
+        'desviacion_id', 'area_id',
         string='Áreas impactadas')
 
     # ── Sección 2: Investigación y valoración ─────────────────────────
