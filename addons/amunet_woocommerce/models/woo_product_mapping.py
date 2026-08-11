@@ -228,6 +228,12 @@ class AmunetWooProductMapping(models.Model):
         string='Estado de BOM', compute='_compute_bom_info')
     bom_summary = fields.Text(
         string='Detalle de BOM activas', compute='_compute_bom_info')
+    bom_required = fields.Boolean(
+        string='Requiere BOM', compute='_compute_bom_info',
+        search='_search_bom_required',
+        help='Solo los productos que se manufacturan (categoria "Producto '
+             'terminado") requieren BOM. Consumibles, equipos y semiterminados '
+             'son de compra-venta y no llevan BOM.')
     packaging_plan_count = fields.Integer(
         string='Planes de empaque activos', compute='_compute_packaging_phase')
     packaging_planned_qty = fields.Float(
@@ -715,10 +721,16 @@ class AmunetWooProductMapping(models.Model):
         for rec in self:
             rec.active_bom_count = 0
             rec.has_active_bom = False
+            rec.bom_required = False
             rec.bom_status_display = _('No calculable')
             rec.bom_summary = False
             if not rec.product_id:
                 continue
+            # Solo los productos que se MANUFACTURAN (categoria "Producto
+            # terminado") requieren BOM. Consumibles, equipos y semiterminados
+            # son de compra-venta y NO llevan BOM: no deben marcarse "Sin BOM".
+            categ = rec.product_id.categ_id.complete_name or ''
+            rec.bom_required = categ.startswith('Producto terminado')
             boms = Bom.search([
                 ('active', '=', True),
                 ('type', '=', 'normal'),
@@ -732,9 +744,12 @@ class AmunetWooProductMapping(models.Model):
             ], order='sequence, id')
             rec.active_bom_count = len(boms)
             rec.has_active_bom = bool(boms)
-            rec.bom_status_display = (
-                _('%s BOM activa(s)') % len(boms)
-                if boms else _('Sin BOM activa'))
+            if boms:
+                rec.bom_status_display = _('%s BOM activa(s)') % len(boms)
+            elif not rec.bom_required:
+                rec.bom_status_display = _('No aplica (compra-venta)')
+            else:
+                rec.bom_status_display = _('Sin BOM activa')
             rec.bom_summary = '\n'.join(
                 '%s · %g %s' % (
                     bom.display_name,
@@ -1063,6 +1078,9 @@ class AmunetWooProductMapping(models.Model):
 
     def _search_has_active_bom(self, operator, value):
         return self._search_ids_by('has_active_bom', operator, value)
+
+    def _search_bom_required(self, operator, value):
+        return self._search_ids_by('bom_required', operator, value)
 
     # --------------------------------------------------------------
     # Acciones de navegación

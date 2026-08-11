@@ -25,7 +25,9 @@
                 <filter name="filter_with_bom" string="Con BOM activa"
                         domain="[('has_active_bom', '=', True)]"/>
                 <filter name="filter_without_bom" string="Sin BOM activa"
-                        domain="[('has_active_bom', '=', False)]"/>
+                        domain="['&amp;', ('has_active_bom', '=', False), ('bom_required', '=', True)]"/>
+                <filter name="filter_bom_not_required" string="No requiere BOM (compra-venta)"
+                        domain="[('bom_required', '=', False)]"/>
                 <separator/>
                 <filter name="filter_manufactured" string="Fabricados"
                         domain="[('supply_classification', 'in', ('short_manufacturing', 'long_manufacturing'))]"/>
