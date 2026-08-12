@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Vista búsqueda ────────────────────────────────────────────── -->
+    <record id="view_bitacora_limpieza_search" model="ir.ui.view">
+        <field name="name">amunet.bitacora.limpieza.search</field>
+        <field name="model">amunet.bitacora.limpieza</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Folio"/>
+                <field name="area_id" string="Área"/>
+                <filter name="f_borrador"    string="Borrador"    domain="[('state','=','borrador')]"/>
+                <filter name="f_en_revision" string="En revisión" domain="[('state','=','en_revision')]"/>
+                <filter name="f_cerrado"     string="Cerrado"     domain="[('state','=','cerrado')]"/>
+                <separator/>
+                <filter name="g_area"  string="Área"   context="{'group_by':'area_id'}"/>
+                <filter name="g_state" string="Estado" context="{'group_by':'state'}"/>
+                <filter name="g_mes"   string="Mes"    context="{'group_by':'mes'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Vista kanban ──────────────────────────────────────────────── -->
+    <record id="view_bitacora_limpieza_kanban" model="ir.ui.view">
+        <field name="name">amunet.bitacora.limpieza.kanban</field>
+        <field name="model">amunet.bitacora.limpieza</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_mobile">
+                <field name="state"/>
+                <field name="area_id"/>
+                <field name="mes"/>
+                <field name="anio"/>
+                <field name="n_equipos"/>
+                <field name="revisor_id"/>
+                <field name="firma_revisor_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click p-2">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <strong class="text-truncate" style="max-width:65%">
+                                    <field name="area_id"/>
+                                </strong>
+                                <span t-if="record.state.raw_value == 'cerrado'"
+                                      class="badge text-bg-success">Cerrado</span>
+                                <span t-elif="record.state.raw_value == 'en_revision'"
+                                      class="badge text-bg-warning">En revisión</span>
+                                <span t-else=""
+                                      class="badge text-bg-info">Borrador</span>
+                            </div>
+                            <div class="text-muted small">
+                                <field name="mes"/> · <field name="anio"/>
+                            </div>
+                            <div class="small mt-1">
+                                <i class="fa fa-wrench me-1"/>
+                                <field name="n_equipos"/> equipo(s)
+                            </div>
+                            <div class="small mt-1" t-if="record.revisor_id.raw_value">
+                                <i class="fa fa-user-check me-1"/>
+                                <field name="revisor_id"/>
+                                <t t-if="record.firma_revisor_id.raw_value">
+                                    <span class="text-success ms-1"><i class="fa fa-check-circle"/></span>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ── Vista lista ────────────────────────────────────────────── -->
+    <record id="view_bitacora_limpieza_list" model="ir.ui.view">
+        <field name="name">amunet.bitacora.limpieza.list</field>
+        <field name="model">amunet.bitacora.limpieza</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'borrador'"
+                  decoration-warning="state == 'en_revision'"
+                  decoration-success="state == 'cerrado'">
+                <field name="name" string="Folio"/>
+                <field name="area_id" string="Área"/>
+                <field name="mes"/>
+                <field name="anio" string="Año"/>
+                <field name="n_equipos" string="Equipos"/>
+                <field name="revisor_id" string="Revisó"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'borrador'"
+                       decoration-warning="state == 'en_revision'"
+                       decoration-success="state == 'cerrado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Vista formulario ───────────────────────────────────────── -->
+    <record id="view_bitacora_limpieza_form" model="ir.ui.view">
+        <field name="name">amunet.bitacora.limpieza.form</field>
+        <field name="model">amunet.bitacora.limpieza</field>
+        <field name="arch" type="xml">
+            <form string="Bitácora de Limpieza">
+                <header>
+                    <button name="action_enviar_revision"
+                            string="Enviar a revisión"
+                            type="object" class="btn-primary"
+                            invisible="state != 'borrador'"/>
+                    <button name="action_cerrar"
+                            string="Cerrar bitácora"
+                            type="object" class="btn-primary"
+                            invisible="state != 'en_revision'"/>
+                    <button name="action_reabrir"
+                            string="Reabrir"
+                            type="object"
+                            invisible="state != 'cerrado'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,en_revision,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Folio" invisible="not id"/>
+                        <h1 invisible="not id"><field name="name" readonly="1"/></h1>
+                        <h1 invisible="id"><span>Nueva bitácora de limpieza</span></h1>
+                    </div>
+
+                    <!-- ══ ENCABEZADO ════════════════════════════════ -->
+                    <group>
+                        <group>
+                            <field name="area_id"
+                                   readonly="state != 'borrador'"
+                                   options="{'no_create': True}"/>
+                            <field name="mes" readonly="state != 'borrador'"/>
+                            <field name="anio" readonly="state != 'borrador'"/>
+                        </group>
+                        <group>
+                            <field name="n_equipos" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- ══ INSTRUCCIONES ═════════════════════════════ -->
+                    <div class="alert alert-info mx-0" role="alert" style="font-size:0.9em;">
+                        <strong>Instrucciones de llenado:</strong>
+                        <ul class="mb-0 mt-1">
+                            <li>Usa <strong>✓</strong> cuando se realizó, <strong>X</strong> si no se realizó, <strong>NA</strong> si no aplica ese día.</li>
+                            <li>En limpiezas semanales o mensuales puedes agregar <strong>(E)</strong> = Exhaustiva o <strong>(G)</strong> = General.</li>
+                            <li>Anota desviaciones y solución de limpieza utilizada en la columna <em>Observaciones</em>.</li>
+                        </ul>
+                    </div>
+
+                    <!-- ══ LÍNEAS DE EQUIPO ══════════════════════════ -->
+                    <separator string="Registro de limpieza"/>
+                    <field name="linea_ids" widget="one2many_list"
+                           readonly="state == 'cerrado'">
+                        <list editable="bottom" string="Equipos / Áreas">
+                            <field name="sequence" widget="handle"/>
+                            <field name="equipo" string="Equipo / Área" style="min-width:130px"/>
+                            <field name="frecuencia" style="min-width:90px"/>
+                            <field name="dia_01"  string="1"  style="width:28px;text-align:center"/>
+                            <field name="dia_02"  string="2"  style="width:28px;text-align:center"/>
+                            <field name="dia_03"  string="3"  style="width:28px;text-align:center"/>
+                            <field name="dia_04"  string="4"  style="width:28px;text-align:center"/>
+                            <field name="dia_05"  string="5"  style="width:28px;text-align:center"/>
+                            <field name="dia_06"  string="6"  style="width:28px;text-align:center"/>
+                            <field name="dia_07"  string="7"  style="width:28px;text-align:center"/>
+                            <field name="dia_08"  string="8"  style="width:28px;text-align:center"/>
+                            <field name="dia_09"  string="9"  style="width:28px;text-align:center"/>
+                            <field name="dia_10"  string="10" style="width:28px;text-align:center"/>
+                            <field name="dia_11"  string="11" style="width:28px;text-align:center"/>
+                            <field name="dia_12"  string="12" style="width:28px;text-align:center"/>
+                            <field name="dia_13"  string="13" style="width:28px;text-align:center"/>
+                            <field name="dia_14"  string="14" style="width:28px;text-align:center"/>
+                            <field name="dia_15"  string="15" style="width:28px;text-align:center"/>
+                            <field name="dia_16"  string="16" style="width:28px;text-align:center"/>
+                            <field name="dia_17"  string="17" style="width:28px;text-align:center"/>
+                            <field name="dia_18"  string="18" style="width:28px;text-align:center"/>
+                            <field name="dia_19"  string="19" style="width:28px;text-align:center"/>
+                            <field name="dia_20"  string="20" style="width:28px;text-align:center"/>
+                            <field name="dia_21"  string="21" style="width:28px;text-align:center"/>
+                            <field name="dia_22"  string="22" style="width:28px;text-align:center"/>
+                            <field name="dia_23"  string="23" style="width:28px;text-align:center"/>
+                            <field name="dia_24"  string="24" style="width:28px;text-align:center"/>
+                            <field name="dia_25"  string="25" style="width:28px;text-align:center"/>
+                            <field name="dia_26"  string="26" style="width:28px;text-align:center"/>
+                            <field name="dia_27"  string="27" style="width:28px;text-align:center"/>
+                            <field name="dia_28"  string="28" style="width:28px;text-align:center"/>
+                            <field name="dia_29"  string="29" style="width:28px;text-align:center"/>
+                            <field name="dia_30"  string="30" style="width:28px;text-align:center"/>
+                            <field name="dia_31"  string="31" style="width:28px;text-align:center"/>
+                            <field name="responsable_id" string="Responsable" style="min-width:120px"/>
+                            <field name="observaciones"  style="min-width:140px"/>
+                        </list>
+                    </field>
+
+                    <!-- ══ VALIDACIÓN Y FIRMA ════════════════════════ -->
+                    <separator string="Validación y firma"/>
+                    <group>
+                        <group string="Revisor (QA / Supervisor)">
+                            <field name="revisor_id"       readonly="state == 'cerrado'"/>
+                            <field name="firma_revisor_id" readonly="1"
+                                   invisible="not firma_revisor_id"/>
+                            <field name="fecha_firma_revisor" readonly="1"
+                                   invisible="not fecha_firma_revisor"/>
+                            <button name="action_firmar_revisor"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    type="object" class="btn-primary"
+                                    invisible="firma_revisor_id or state == 'borrador'"/>
+                        </group>
+                    </group>
+                    <label for="comentarios"
+                           string="Comentarios de auditoría / Observaciones adicionales"/>
+                    <field name="comentarios"
+                           placeholder="Espacio para notas de auditoría, hallazgos, mejoras..."
+                           readonly="state == 'cerrado'"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Acción ─────────────────────────────────────────────────── -->
+    <record id="action_bitacora_limpieza" model="ir.actions.act_window">
+        <field name="name">Bitácoras de limpieza</field>
+        <field name="res_model">amunet.bitacora.limpieza</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_bitacora_limpieza_search"/>
+    </record>
+
+</odoo>

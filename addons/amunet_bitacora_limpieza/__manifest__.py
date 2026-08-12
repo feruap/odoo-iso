@@ -1,0 +1,20 @@
+{
+    'name': 'Bitácora de Limpieza',
+    'version': '19.0.2.0.0',
+    'summary': 'Registro mensual de limpieza por área y equipo',
+    'author': 'Amunet',
+    'category': 'Quality',
+    'depends': ['base', 'mail', 'amunet_documentos', 'amunet_quality'],
+    'data': [
+        'security/ir.model.access.csv',
+        'data/ir_sequence_data.xml',
+        'data/ir_cron_data.xml',
+        'data/limpieza_areas_delete.xml',
+        'data/limpieza_areas_seed.xml',
+        'views/amunet_limpieza_area_views.xml',
+        'views/amunet_bitacora_limpieza_views.xml',
+        'views/menus.xml',
+    ],
+    'installable': True,
+    'application': True,
+}

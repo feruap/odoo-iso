@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menú raíz propio -->
+    <menuitem id="menu_bitacora_limpieza_root"
+              name="Bitácoras de Limpieza"
+              sequence="55"
+              web_icon="amunet_bitacora_limpieza,static/description/icon.png"/>
+
+    <!-- Bitácoras -->
+    <menuitem id="menu_bitacora_limpieza"
+              name="Bitácoras"
+              parent="menu_bitacora_limpieza_root"
+              action="action_bitacora_limpieza"
+              sequence="10"/>
+
+    <!-- Configuración -->
+    <menuitem id="menu_limpieza_area"
+              name="Áreas"
+              parent="menu_bitacora_limpieza_root"
+              action="action_limpieza_area"
+              sequence="20"/>
+
+    <menuitem id="menu_limpieza_equipo"
+              name="Equipos"
+              parent="menu_bitacora_limpieza_root"
+              action="action_limpieza_equipo"
+              sequence="30"/>
+</odoo>

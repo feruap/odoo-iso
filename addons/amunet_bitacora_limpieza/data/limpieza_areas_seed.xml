@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Área: Inyección - Laminado -->
+    <record id="area_inyeccion_laminado" model="amunet.limpieza.area">
+        <field name="name">Inyección - Laminado</field>
+        <field name="code">INY-LAM</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="equipo_dispensador_hm3235" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Dispensador HM3235</field>
+        <field name="frecuencia">mensual</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="equipo_horno_ecoshel" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Horno ECOSHEL</field>
+        <field name="frecuencia">mensual</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="equipo_dispensador_biodot" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Dispensador BIODOT</field>
+        <field name="frecuencia">mensual</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="equipo_cortadora_tiras" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Cortadora de tiras</field>
+        <field name="frecuencia">mensual</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="equipo_cortadora_hojas" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Cortadora de hojas</field>
+        <field name="frecuencia">mensual</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="equipo_horno_luzeren" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Horno LUZEREN</field>
+        <field name="frecuencia">mensual</field>
+        <field name="sequence">60</field>
+    </record>
+    <record id="equipo_mesas_entrepanios" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Mesas y entrepaños</field>
+        <field name="frecuencia">mensual</field>
+        <field name="sequence">70</field>
+    </record>
+    <record id="equipo_organizar_cajones" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Organizar cajones</field>
+        <field name="frecuencia">semanal</field>
+        <field name="sequence">80</field>
+    </record>
+    <record id="equipo_organizar_mesas" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Organizar mesas</field>
+        <field name="frecuencia">semanal</field>
+        <field name="sequence">90</field>
+    </record>
+    <record id="equipo_deshumificadores" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Deshumificadores</field>
+        <field name="frecuencia">mensual</field>
+        <field name="sequence">100</field>
+    </record>
+    <record id="equipo_aire_acondicionado" model="amunet.limpieza.equipo">
+        <field name="area_id" ref="area_inyeccion_laminado"/>
+        <field name="name">Aire acondicionado</field>
+        <field name="frecuencia">semanal</field>
+        <field name="sequence">110</field>
+    </record>
+
+
+    <!-- Áreas sin equipos — se configuran desde Configuración → Áreas de limpieza -->
+    <record id="area_acondicionado1" model="amunet.limpieza.area">
+        <field name="name">Acondicionado 1</field>
+        <field name="code">ACOND-1</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="area_acondicionado2" model="amunet.limpieza.area">
+        <field name="name">Acondicionado 2</field>
+        <field name="code">ACOND-2</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="area_almacen_mp" model="amunet.limpieza.area">
+        <field name="name">Almacén Materia Prima</field>
+        <field name="code">ALM-MP</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="area_almacen_pt" model="amunet.limpieza.area">
+        <field name="name">Almacén de Producto Terminado</field>
+        <field name="code">ALM-PT</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="area_almacen_temp" model="amunet.limpieza.area">
+        <field name="name">Almacén Temporal de Producto Terminado</field>
+        <field name="code">ALM-TMP</field>
+        <field name="sequence">60</field>
+    </record>
+    <record id="area_calidad" model="amunet.limpieza.area">
+        <field name="name">Control de Calidad</field>
+        <field name="code">CC</field>
+        <field name="sequence">70</field>
+    </record>
+    <record id="area_encartuchado" model="amunet.limpieza.area">
+        <field name="name">Encartuchado</field>
+        <field name="code">ENCAR</field>
+        <field name="sequence">80</field>
+    </record>
+    <record id="area_estabilidad" model="amunet.limpieza.area">
+        <field name="name">Estabilidad</field>
+        <field name="code">ESTAB</field>
+        <field name="sequence">90</field>
+    </record>
+    <record id="area_laminado" model="amunet.limpieza.area">
+        <field name="name">Laminado, Secado y Corte</field>
+        <field name="code">LAM</field>
+        <field name="sequence">100</field>
+    </record>
+    <record id="area_lectura" model="amunet.limpieza.area">
+        <field name="name">Lectura y Secado</field>
+        <field name="code">LEC</field>
+        <field name="sequence">110</field>
+    </record>
+
+    <record id="area_produccion_dm" model="amunet.limpieza.area">
+        <field name="name">Producción de Desarrollo Molecular</field>
+        <field name="code">PROD-DM</field>
+        <field name="sequence">130</field>
+    </record>
+    <record id="area_soluciones" model="amunet.limpieza.area">
+        <field name="name">Soluciones</field>
+        <field name="code">SOL</field>
+        <field name="sequence">140</field>
+    </record>
+
+</odoo>

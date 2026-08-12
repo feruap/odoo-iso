@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_bitacora_limpieza_user,bitacora.limpieza.user,model_amunet_bitacora_limpieza,,1,1,1,0
+access_bitacora_limpieza_linea_user,bitacora.limpieza.linea.user,model_amunet_bitacora_limpieza_linea,,1,1,1,0
+access_limpieza_area_user,limpieza.area.user,model_amunet_limpieza_area,,1,1,1,1
+access_limpieza_equipo_user,limpieza.equipo.user,model_amunet_limpieza_equipo,,1,1,1,1

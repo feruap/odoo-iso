@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Lista de áreas ────────────────────────────────────────── -->
+    <record id="view_limpieza_area_list" model="ir.ui.view">
+        <field name="name">amunet.limpieza.area.list</field>
+        <field name="model">amunet.limpieza.area</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="code" string="Código"/>
+                <field name="name" string="Área / Laboratorio"/>
+                <field name="equipo_ids" string="Equipos"
+                       widget="many2many_tags" readonly="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Formulario de área ────────────────────────────────────── -->
+    <record id="view_limpieza_area_form" model="ir.ui.view">
+        <field name="name">amunet.limpieza.area.form</field>
+        <field name="model">amunet.limpieza.area</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Nombre del área o laboratorio"/></h1>
+                    </div>
+                    <group>
+                        <field name="code" placeholder="Ej. INY-LAM"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_limpieza_area" model="ir.actions.act_window">
+        <field name="name">Áreas de limpieza</field>
+        <field name="res_model">amunet.limpieza.area</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ── Equipos de limpieza (catálogo independiente) ──────────── -->
+    <record id="view_limpieza_equipo_list" model="ir.ui.view">
+        <field name="name">amunet.limpieza.equipo.list</field>
+        <field name="model">amunet.limpieza.equipo</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" create="1" delete="1">
+                <field name="area_id" string="Área"/>
+                <field name="name" string="Equipo / Zona"/>
+                <field name="frecuencia"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_limpieza_equipo" model="ir.actions.act_window">
+        <field name="name">Equipos de limpieza</field>
+        <field name="res_model">amunet.limpieza.equipo</field>
+        <field name="view_mode">list</field>
+    </record>
+
+</odoo>
