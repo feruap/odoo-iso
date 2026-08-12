@@ -6,6 +6,7 @@
     'author': 'Amunet',
     'depends': ['amunet_lot', 'stock', 'amunet_quality', 'product', 'amunet_equipment_calibration'],
     'data': [
+        'data/seeds_20260812_165819.xml',
         'security/ir.model.access.csv',
         'data/cron_reorder_notify.xml',
         'data/seeds_20260709_suministros.xml',
