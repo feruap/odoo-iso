@@ -3,3 +3,5 @@ access_desviacion_user,Desviacion Usuario,model_amunet_desviacion,group_desviaci
 access_desviacion_manager,Desviacion Responsable,model_amunet_desviacion,group_desviaciones_manager,1,1,1,1
 access_area_user,Area Catalogo Usuario,model_amunet_desviacion_area,group_desviaciones_user,1,0,0,0
 access_area_manager,Area Catalogo Responsable,model_amunet_desviacion_area,group_desviaciones_manager,1,1,1,1
+access_accion_user,Accion Usuario,model_amunet_desviacion_accion,group_desviaciones_user,1,1,1,0
+access_accion_manager,Accion Responsable,model_amunet_desviacion_accion,group_desviaciones_manager,1,1,1,1

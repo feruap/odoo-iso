@@ -271,8 +271,45 @@
                         </group>
                     </group>
 
-                    <!-- ══ 5. FIRMAS DE ÁREAS INVOLUCRADAS ════════════════ -->
-                    <separator string="5. Firmas de áreas involucradas" invisible="state == 'borrador'"/>
+                    <!-- ══ 5. PLAN DE ACCIONES ═══════════════════════════ -->
+                    <separator string="5. Plan de acciones correctivas y preventivas" invisible="state == 'borrador'"/>
+                    <p class="text-muted ms-0 mb-2" style="font-size:0.9em" invisible="state == 'borrador'">
+                        Registra aquí las acciones que se tomarán para corregir la causa raíz
+                        (correctivas) y para evitar que vuelva a ocurrir (preventivas).
+                        Puedes actualizar el estado de cada acción conforme se vayan completando,
+                        incluso después de cerrada la desviación.
+                    </p>
+                    <field name="accion_ids" invisible="state == 'borrador'" nolabel="1">
+                        <list editable="bottom"
+                              decoration-success="state == 'verificada'"
+                              decoration-warning="state == 'realizada'"
+                              decoration-muted="state == 'pendiente'">
+                            <field name="tipo"/>
+                            <field name="descripcion" string="Descripción de la acción"/>
+                            <field name="responsable_id" string="Responsable"
+                                   options="{'no_create': True}"/>
+                            <field name="fecha_limite" string="Fecha límite"/>
+                            <field name="state" widget="badge"
+                                   decoration-danger="state == 'pendiente'"
+                                   decoration-warning="state == 'realizada'"
+                                   decoration-success="state == 'verificada'"/>
+                            <field name="fecha_cierre" string="Fecha de cierre"
+                                   optional="show"/>
+                            <field name="evidencia_cierre" string="Evidencia"
+                                   optional="show"/>
+                        </list>
+                    </field>
+
+                    <label for="adjunto_acciones_ids"
+                           string="Anexos de evidencia (sube aquí todos los archivos que respaldan las acciones)"
+                           invisible="state == 'borrador'"/>
+                    <field name="adjunto_acciones_ids"
+                           widget="many2many_binary"
+                           nolabel="1"
+                           invisible="state == 'borrador'"/>
+
+                    <!-- ══ 6. FIRMAS DE ÁREAS INVOLUCRADAS ════════════════ -->
+                    <separator string="6. Firmas de áreas involucradas" invisible="state == 'borrador'"/>
                     <group invisible="state == 'borrador'">
                         <group string="Emisor (quien reporta)">
                             <field name="emisor_id" readonly="state != 'investigacion'"/>

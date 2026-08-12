@@ -10,6 +10,28 @@ class AmunetArea(models.Model):
     name = fields.Char(string='Área', required=True)
 
 
+class AmunetDesviacionAccion(models.Model):
+    _name = 'amunet.desviacion.accion'
+    _description = 'Acción correctiva / preventiva de desviación'
+    _order = 'tipo, id'
+
+    desviacion_id  = fields.Many2one('amunet.desviacion', required=True, ondelete='cascade')
+    tipo           = fields.Selection([
+        ('correctiva', 'Correctiva'),
+        ('preventiva', 'Preventiva'),
+    ], string='Tipo', required=True, default='correctiva')
+    descripcion    = fields.Text(string='Descripción de la acción', required=True)
+    responsable_id = fields.Many2one('res.users', string='Responsable')
+    fecha_limite   = fields.Date(string='Fecha límite')
+    state          = fields.Selection([
+        ('pendiente',  'Pendiente'),
+        ('realizada',  'Realizada'),
+        ('verificada', 'Verificada'),
+    ], string='Estado', default='pendiente', required=True)
+    fecha_cierre        = fields.Date(string='Fecha de cierre')
+    evidencia_cierre    = fields.Text(string='Evidencia del cumplimiento')
+
+
 class AmunetDesviacion(models.Model):
     _name = 'amunet.desviacion'
     _description = 'Desviación / No Conformidad'
@@ -146,6 +168,16 @@ class AmunetDesviacion(models.Model):
     verifico_id             = fields.Many2one('res.users', string='Verificó (Calidad / Gerencia)')
     firma_verifico_id       = fields.Many2one('res.users', string='Firma verificó', readonly=True)
     fecha_firma_verifico    = fields.Datetime(string='Fecha firma verificó', readonly=True)
+
+    # ── Plan de acciones correctivas / preventivas ────────────────────
+    accion_ids = fields.One2many(
+        'amunet.desviacion.accion', 'desviacion_id',
+        string='Plan de acciones')
+    adjunto_acciones_ids = fields.Many2many(
+        'ir.attachment',
+        'amunet_desviacion_evidencia_adjunto_rel',
+        'desviacion_id', 'attachment_id',
+        string='Anexos de evidencia del plan de acciones')
 
     # ── Cierre ────────────────────────────────────────────────────────
     fecha_cierre       = fields.Date(string='Fecha de cierre')
