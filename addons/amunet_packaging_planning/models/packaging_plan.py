@@ -122,10 +122,25 @@ class AmunetPackagingPlan(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
-                vals['name'] = self.env['ir.sequence'].next_by_code(
-                    'amunet.packaging.plan'
-                ) or 'PE/Nuevo'
+                vals['name'] = self._amunet_next_pe_folio()
         return super().create(vals_list)
+
+    @api.model
+    def _amunet_next_pe_folio(self):
+        """Folio PE con reinicio mensual y a prueba de -u: PE/MMYY/##### donde
+        ##### = (maximo existente para ese mes) + 1. NO usa ir.sequence (que se
+        reiniciaba a 1 con cada actualizacion del modulo -> folios duplicados).
+        Como el prefijo lleva el mes+anio (%m%y), el consecutivo reinicia solo a
+        00001 al empezar un mes nuevo. Patron identico al numerador de lotes."""
+        today = fields.Date.context_today(self)
+        prefix = 'PE/%s%s/' % (today.strftime('%m'), today.strftime('%y'))
+        plen = len(prefix)
+        maxn = 0
+        for nm in self.sudo().search([('name', '=like', prefix + '%')]).mapped('name'):
+            core = (nm or '')[plen:]
+            if core.isdigit():
+                maxn = max(maxn, int(core))
+        return '%s%05d' % (prefix, maxn + 1)
 
     @api.depends('production_id.solution_lot_id', 'production_id.lot_producing_ids', 'production_id.amunet_expiration_text')
     def _compute_lot_name(self):
