@@ -365,9 +365,14 @@
                                groups="amunet_documentos.group_responsable_sanitario,amunet_desviaciones.group_desviaciones_manager"/>
                     <group invisible="state not in ('investigacion', 'cerrado')"
                            groups="amunet_documentos.group_responsable_sanitario,amunet_desviaciones.group_desviaciones_manager">
+                        <label for="conclusion_cierre" string="Conclusión de cierre"/>
+                        <field name="conclusion_cierre"
+                               placeholder="Ej. Todas las acciones implementadas, desviación cerrada."
+                               nolabel="1"
+                               readonly="state != 'investigacion'"/>
                         <group>
-                            <field name="fecha_cierre" readonly="state != 'investigacion'"/>
                             <field name="cerro_id" readonly="1" invisible="not cerro_id"/>
+                            <field name="fecha_cierre" readonly="1" invisible="not fecha_cierre"/>
                         </group>
                         <group>
                             <field name="firma_cerro_id" readonly="1" invisible="not firma_cerro_id"/>
@@ -377,11 +382,6 @@
                                     type="object" class="btn-primary"
                                     invisible="firma_cerro_id or state != 'investigacion'"/>
                         </group>
-                        <label for="conclusion_cierre" string="Conclusión de cierre"/>
-                        <field name="conclusion_cierre"
-                               placeholder="Ej. Todas las acciones implementadas, desviación cerrada."
-                               nolabel="1"
-                               readonly="state != 'investigacion'"/>
                     </group>
                 </sheet>
                 <chatter/>
