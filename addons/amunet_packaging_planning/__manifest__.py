@@ -8,7 +8,7 @@ tendencia historica de WooCommerce. Controla presentaciones autorizadas y
 reacondicionamientos entre cajas autorizadas.""",
     'author': 'Amunet',
     'category': 'Manufacturing',
-    'version': '19.0.1.2.1',
+    'version': '19.0.1.2.2',
     'depends': [
         'mail',
         'mrp',

@@ -78,10 +78,24 @@ class AmunetPackagingRework(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
-                vals['name'] = self.env['ir.sequence'].next_by_code(
-                    'amunet.packaging.rework'
-                ) or 'RA/Nuevo'
+                vals['name'] = self._amunet_next_ra_folio()
         return super().create(vals_list)
+
+    @api.model
+    def _amunet_next_ra_folio(self):
+        """Folio RA con reinicio anual y a prueba de -u: RA/YYYY/##### donde
+        ##### = (maximo existente para ese anio) + 1. NO usa ir.sequence (que se
+        reiniciaba a 1 con cada actualizacion del modulo -> folios duplicados).
+        Reinicia solo al cambiar de anio. Mismo patron que el folio PE."""
+        today = fields.Date.context_today(self)
+        prefix = 'RA/%s/' % today.strftime('%Y')
+        plen = len(prefix)
+        maxn = 0
+        for nm in self.sudo().search([('name', '=like', prefix + '%')]).mapped('name'):
+            core = (nm or '')[plen:]
+            if core.isdigit():
+                maxn = max(maxn, int(core))
+        return '%s%05d' % (prefix, maxn + 1)
 
     @api.onchange('source_presentation_id')
     def _onchange_source_presentation(self):
