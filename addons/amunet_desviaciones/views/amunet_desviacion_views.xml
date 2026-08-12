@@ -289,12 +289,20 @@
                             <field name="responsable_id" string="Responsable"
                                    options="{'no_create': True}"/>
                             <field name="fecha_limite" string="Fecha límite"/>
-                            <field name="state" widget="badge"
+                            <field name="state" readonly="1" widget="badge"
                                    decoration-danger="state == 'pendiente'"
                                    decoration-warning="state == 'realizada'"
                                    decoration-success="state == 'verificada'"/>
+                            <button name="action_marcar_realizada" type="object"
+                                    string="Marcar realizada" icon="fa-check"
+                                    class="btn-sm btn-warning"
+                                    invisible="state != 'pendiente'"/>
+                            <button name="action_verificar" type="object"
+                                    string="Verificar" icon="fa-check-circle"
+                                    class="btn-sm btn-success"
+                                    invisible="state != 'realizada'"/>
                             <field name="fecha_cierre" string="Fecha de cierre"
-                                   optional="show"/>
+                                   readonly="1" optional="show"/>
                             <field name="evidencia_cierre" string="Evidencia"
                                    optional="show"/>
                         </list>
@@ -354,9 +362,9 @@
                     <!-- ══ CIERRE ═════════════════════════════════════════ -->
                     <separator string="Cierre de la desviación / NC"
                                invisible="state not in ('investigacion', 'cerrado')"
-                               groups="amunet_documentos.group_responsable_sanitario"/>
+                               groups="amunet_documentos.group_responsable_sanitario,amunet_desviaciones.group_desviaciones_manager"/>
                     <group invisible="state not in ('investigacion', 'cerrado')"
-                           groups="amunet_documentos.group_responsable_sanitario">
+                           groups="amunet_documentos.group_responsable_sanitario,amunet_desviaciones.group_desviaciones_manager">
                         <group>
                             <field name="fecha_cierre" readonly="state != 'investigacion'"/>
                             <field name="cerro_id" readonly="1" invisible="not cerro_id"/>

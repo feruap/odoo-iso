@@ -31,6 +31,71 @@ class AmunetDesviacionAccion(models.Model):
     fecha_cierre        = fields.Date(string='Fecha de cierre')
     evidencia_cierre    = fields.Text(string='Evidencia del cumplimiento')
 
+    def _notificar_responsable(self):
+        for accion in self.filtered(lambda a: a.responsable_id and a.desviacion_id):
+            desviacion = accion.desviacion_id
+            responsable = accion.responsable_id
+            tipo_label = dict(accion._fields['tipo'].selection).get(accion.tipo, accion.tipo)
+            desviacion.activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Acción %s asignada — %s') % (tipo_label, desviacion.name),
+                note=_(
+                    '<p>Se te asignó una acción <b>%s</b> en la desviación <b>%s</b>.</p>'
+                    '<p><b>Acción:</b> %s</p>'
+                    '<p><b>Fecha límite:</b> %s</p>'
+                    '<p>Ingresa a la desviación, completa la acción y actualiza su estado a <b>Realizada</b>.</p>'
+                ) % (
+                    tipo_label,
+                    desviacion.name,
+                    accion.descripcion or '',
+                    accion.fecha_limite or _('No definida'),
+                ),
+                user_id=responsable.id,
+                date_deadline=accion.fecha_limite,
+            )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._notificar_responsable()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'responsable_id' in vals:
+            self._notificar_responsable()
+        return res
+
+    def action_marcar_realizada(self):
+        for accion in self:
+            if accion.responsable_id and accion.responsable_id != self.env.user:
+                raise UserError(_(
+                    'Solo %s puede marcar esta acción como Realizada.'
+                ) % accion.responsable_id.name)
+            accion.write({
+                'state': 'realizada',
+                'fecha_cierre': fields.Date.today(),
+            })
+            accion.desviacion_id._message_log(
+                body=_('<p><b>%s</b> marcó como <b>Realizada</b> la acción: %s</p>') % (
+                    self.env.user.name, accion.descripcion or ''))
+
+    def action_verificar(self):
+        puede = (
+            self.env.user.has_group('amunet_documentos.group_responsable_sanitario') or
+            self.env.user.has_group('amunet_desviaciones.group_desviaciones_manager')
+        )
+        if not puede:
+            raise UserError(_(
+                'Solo el Responsable Sanitario o el Responsable de Desviaciones puede verificar acciones.'))
+        for accion in self:
+            if accion.state != 'realizada':
+                raise UserError(_('Solo puedes verificar una acción que ya fue marcada como Realizada.'))
+            accion.write({'state': 'verificada'})
+            accion.desviacion_id._message_log(
+                body=_('<p><b>%s</b> verificó la acción: %s</p>') % (
+                    self.env.user.name, accion.descripcion or ''))
+
 
 class AmunetDesviacion(models.Model):
     _name = 'amunet.desviacion'
@@ -255,13 +320,24 @@ class AmunetDesviacion(models.Model):
             rec.state = 'investigacion'
 
     def action_cerrar(self):
-        if not self.env.user.has_group('amunet_documentos.group_responsable_sanitario'):
-            raise UserError(_('Solo el Responsable Sanitario puede cerrar una desviación.'))
+        puede_cerrar = (
+            self.env.user.has_group('amunet_documentos.group_responsable_sanitario') or
+            self.env.user.has_group('amunet_desviaciones.group_desviaciones_manager')
+        )
+        if not puede_cerrar:
+            raise UserError(_('Solo el Responsable Sanitario o el Responsable de Desviaciones puede cerrar una desviación.'))
         for rec in self:
             if rec.state != 'investigacion':
                 raise UserError(_('Solo puedes cerrar desde "En investigación".'))
             if not rec.conclusion_cierre:
                 raise UserError(_('Escribe la conclusión de cierre antes de cerrar.'))
+            pendientes = rec.accion_ids.filtered(lambda a: a.state == 'pendiente')
+            if pendientes:
+                descripciones = '\n'.join('• ' + (a.descripcion or '(sin descripción)') for a in pendientes)
+                raise UserError(_(
+                    'No puedes cerrar la desviación mientras haya acciones pendientes:\n\n%s\n\n'
+                    'Marca cada acción como Realizada o Verificada antes de cerrar.'
+                ) % descripciones)
             rec.write({
                 'state':      'cerrado',
                 'cerro_id':   self.env.uid,
