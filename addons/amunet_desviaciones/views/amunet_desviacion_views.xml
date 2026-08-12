@@ -43,11 +43,6 @@
                             type="object" class="btn-primary"
                             invisible="state != 'investigacion'"
                             groups="amunet_documentos.group_responsable_sanitario,amunet_desviaciones.group_desviaciones_manager"/>
-                    <button name="action_reabrir"
-                            string="Reabrir"
-                            type="object"
-                            invisible="state not in ('cerrado', 'no_procede')"
-                            groups="amunet_desviaciones.group_desviaciones_manager"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="borrador,investigacion,cerrado"/>
                 </header>

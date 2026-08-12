@@ -353,12 +353,7 @@ class AmunetDesviacion(models.Model):
             rec.state = 'no_procede'
 
     def action_reabrir(self):
-        for rec in self:
-            if rec.state not in ('cerrado', 'no_procede'):
-                raise UserError(_('Solo puedes reabrir un registro cerrado o no procedente.'))
-            if not self.env.user.has_group('amunet_desviaciones.group_desviaciones_manager'):
-                raise UserError(_('Solo los responsables pueden reabrir una desviación.'))
-            rec.state = 'investigacion'
+        raise UserError(_('Una desviación cerrada no puede reabrirse. Si el problema volvió a ocurrir, abre una nueva desviación.'))
 
     # ── Firmas con wizard genérico ────────────────────────────────────
     def _amunet_signature_allowed_methods(self):
