@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     ENTREGA DE INDUMENTARIA — F-GE-007/001
+════════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_entrega_vest_list" model="ir.ui.view">
+        <field name="name">amunet.reg.entrega.vest.list</field>
+        <field name="model">amunet.reg.entrega.vest</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'cerrado'"
+                  decoration-info="state == 'borrador'">
+                <field name="name" string="Folio"/>
+                <field name="fecha"/>
+                <field name="responsable_id" string="Entregó"/>
+                <field name="total_personas" string="Personas"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'cerrado'"
+                       decoration-info="state == 'borrador'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_entrega_vest_form" model="ir.ui.view">
+        <field name="name">amunet.reg.entrega.vest.form</field>
+        <field name="model">amunet.reg.entrega.vest</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_cerrar" string="Cerrar acta"
+                            type="object" class="btn-primary"
+                            invisible="state != 'borrador'"/>
+                    <button name="action_reabrir" string="Reabrir"
+                            type="object"
+                            invisible="state != 'cerrado'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h4>Entrega de Indumentaria — F-GE-007/001</h4>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fecha" readonly="state == 'cerrado'"/>
+                            <field name="responsable_id" readonly="state == 'cerrado'"/>
+                        </group>
+                        <group>
+                            <field name="total_personas" string="Total de personas"/>
+                        </group>
+                    </group>
+                    <field name="observaciones" placeholder="Observaciones generales (opcional)"
+                           readonly="state == 'cerrado'"/>
+
+                    <!-- Tabla principal -->
+                    <notebook>
+                        <page string="Registros de entrega">
+                            <field name="linea_ids" readonly="state == 'cerrado'"
+                                   widget="one2many">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="empleado_nombre" string="Nombre"/>
+                                    <!-- Bata -->
+                                    <field name="bata_color" string="Color bata" optional="show"/>
+                                    <field name="bata_talla" string="Talla bata" optional="show"/>
+                                    <field name="bata_cantidad" string="Batas" optional="show"/>
+                                    <field name="bata_fecha" string="Fecha bata" optional="show"/>
+                                    <!-- Zapatos -->
+                                    <field name="zapatos_color" string="Color zapatos" optional="show"/>
+                                    <field name="zapatos_talla" string="Talla zapatos" optional="show"/>
+                                    <field name="zapatos_cantidad" string="Pares" optional="show"/>
+                                    <field name="zapatos_fecha" string="Fecha zapatos" optional="show"/>
+                                    <field name="notas" string="Notas" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+
+                    <!-- Bloque de firma -->
+                    <group string="Firma del responsable" invisible="state == 'borrador'">
+                        <group>
+                            <field name="firma_id" string="Firmó" readonly="1"/>
+                            <field name="fecha_firma" readonly="1"/>
+                        </group>
+                        <group>
+                            <button name="action_firmar_responsable"
+                                    string="Firmar con PIN"
+                                    type="object"
+                                    class="btn-success"
+                                    invisible="firma_id != False"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_entrega_vest" model="ir.actions.act_window">
+        <field name="name">Entrega de Indumentaria</field>
+        <field name="res_model">amunet.reg.entrega.vest</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra la primera entrega de indumentaria.
+            </p>
+        </field>
+    </record>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     REVISIÓN DE INDUMENTARIA — F-GE-007/002
+════════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_revision_vest_list" model="ir.ui.view">
+        <field name="name">amunet.reg.revision.vest.list</field>
+        <field name="model">amunet.reg.revision.vest</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'cerrado'"
+                  decoration-info="state == 'borrador'"
+                  decoration-danger="total_no_cumple > 0 and state == 'cerrado'">
+                <field name="name" string="Folio"/>
+                <field name="fecha"/>
+                <field name="turno"/>
+                <field name="responsable_id" string="Revisó"/>
+                <field name="total_revisados" string="Revisados"/>
+                <field name="total_no_cumple" string="Con incidencia"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'cerrado'"
+                       decoration-info="state == 'borrador'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_revision_vest_form" model="ir.ui.view">
+        <field name="name">amunet.reg.revision.vest.form</field>
+        <field name="model">amunet.reg.revision.vest</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_cerrar" string="Cerrar revisión"
+                            type="object" class="btn-primary"
+                            invisible="state != 'borrador'"/>
+                    <button name="action_reabrir" string="Reabrir"
+                            type="object"
+                            invisible="state != 'cerrado'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h4>Revisión de Indumentaria — F-GE-007/002</h4>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fecha" readonly="state == 'cerrado'"/>
+                            <field name="turno" readonly="state == 'cerrado'"/>
+                            <field name="responsable_id" readonly="state == 'cerrado'"/>
+                        </group>
+                        <group>
+                            <field name="total_revisados" string="Personas revisadas"/>
+                            <field name="total_no_cumple" string="Con incidencia"
+                                   decoration-danger="total_no_cumple > 0"/>
+                        </group>
+                    </group>
+
+                    <!-- Tabla de revisión -->
+                    <notebook>
+                        <page string="Revisión por persona">
+                            <field name="linea_ids" readonly="state == 'cerrado'">
+                                <list editable="bottom"
+                                      decoration-danger="tiene_incidencia">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="empleado_nombre" string="Nombre"/>
+                                    <field name="gafete"/>
+                                    <field name="filipina_bata" string="Filipina / Bata"/>
+                                    <field name="zapato" string="Zapato"/>
+                                    <field name="unas" string="Uñas"/>
+                                    <field name="maquillaje" string="Maquillaje"/>
+                                    <field name="accesorios" string="Accesorios"/>
+                                    <field name="observaciones" string="Observaciones"/>
+                                    <field name="tiene_incidencia" invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+
+                    <!-- Bloque de firma -->
+                    <group string="Firma del revisor" invisible="state == 'borrador'">
+                        <group>
+                            <field name="firma_id" string="Firmó" readonly="1"/>
+                            <field name="fecha_firma" readonly="1"/>
+                        </group>
+                        <group>
+                            <button name="action_firmar_revisor"
+                                    string="Firmar con PIN"
+                                    type="object"
+                                    class="btn-success"
+                                    invisible="firma_id != False"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_revision_vest" model="ir.actions.act_window">
+        <field name="name">Revisión de Indumentaria</field>
+        <field name="res_model">amunet.reg.revision.vest</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra la primera revisión de indumentaria por turno.
+            </p>
+        </field>
+    </record>
+
+</odoo>

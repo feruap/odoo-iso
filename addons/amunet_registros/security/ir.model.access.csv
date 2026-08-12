@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_entrega_vest_user,entrega.vest.user,model_amunet_reg_entrega_vest,amunet_documentos.group_documentos_user,1,0,0,0
+access_entrega_vest_manager,entrega.vest.manager,model_amunet_reg_entrega_vest,amunet_documentos.group_documentos_manager,1,1,1,1
+access_entrega_vest_linea_user,entrega.vest.linea.user,model_amunet_reg_entrega_vest_linea,amunet_documentos.group_documentos_user,1,0,0,0
+access_entrega_vest_linea_manager,entrega.vest.linea.manager,model_amunet_reg_entrega_vest_linea,amunet_documentos.group_documentos_manager,1,1,1,1
+access_revision_vest_user,revision.vest.user,model_amunet_reg_revision_vest,amunet_documentos.group_documentos_user,1,0,0,0
+access_revision_vest_manager,revision.vest.manager,model_amunet_reg_revision_vest,amunet_documentos.group_documentos_manager,1,1,1,1
+access_revision_vest_linea_user,revision.vest.linea.user,model_amunet_reg_revision_vest_linea,amunet_documentos.group_documentos_user,1,0,0,0
+access_revision_vest_linea_manager,revision.vest.linea.manager,model_amunet_reg_revision_vest_linea,amunet_documentos.group_documentos_manager,1,1,1,1
