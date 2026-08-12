@@ -17,6 +17,7 @@
         'views/amunet_documento_ext_views.xml',
         'views/mis_pendientes_dashboard_action.xml',
         'views/menus.xml',
+        'reports/report_cc_anual.xml',
     ],
     'assets': {
         'web.assets_backend': [

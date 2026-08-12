@@ -464,6 +464,37 @@
         </field>
     </record>
 
+    <!-- ── Vista de búsqueda ─────────────────────────────────────── -->
+    <record id="view_cc_general_search" model="ir.ui.view">
+        <field name="name">amunet.cc.general.search</field>
+        <field name="model">amunet.cc.general</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Folio"/>
+                <field name="nombre_documento" string="Asunto"/>
+                <field name="solicitante_id" string="Solicitante"/>
+                <separator/>
+                <filter name="f_borrador" string="Borrador"
+                    domain="[('state','=','borrador')]"/>
+                <filter name="f_pendiente" string="Pendiente de autorización"
+                    domain="[('state','=','pendiente')]"/>
+                <filter name="f_aceptado" string="Autorizado"
+                    domain="[('state','=','aceptado')]"/>
+                <filter name="f_cerrado" string="Cerrado"
+                    domain="[('state','=','cerrado')]"/>
+                <separator/>
+                <filter name="g_estado" string="Estado"
+                    context="{'group_by': 'state'}"/>
+                <filter name="g_mes" string="Mes"
+                    context="{'group_by': 'fecha_solicitud:month'}"/>
+                <filter name="g_anio" string="Año"
+                    context="{'group_by': 'fecha_solicitud:year'}"/>
+                <filter name="g_tipo" string="Tipo de cambio"
+                    context="{'group_by': 'tipo_cambio'}"/>
+            </search>
+        </field>
+    </record>
+
     <!-- ── Acciones ─────────────────────────────────────────────── -->
     <record id="action_cc_general" model="ir.actions.act_window">
         <field name="name">Control de cambios general</field>

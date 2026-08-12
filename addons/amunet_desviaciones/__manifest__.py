@@ -13,6 +13,7 @@
         'data/areas_catalogo.xml',
         'views/amunet_desviacion_views.xml',
         'views/menus.xml',
+        'reports/report_desviaciones_anual.xml',
     ],
     'installable': True,
     'application': False,
