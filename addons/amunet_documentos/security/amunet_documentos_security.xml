@@ -20,6 +20,12 @@
         <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
     </record>
 
+    <!-- Editor exclusivo del catálogo de pruebas rápidas -->
+    <record id="group_prueba_rapida_editor" model="res.groups">
+        <field name="name">Documentos: Editor datos de pruebas rápidas</field>
+        <field name="implied_ids" eval="[(4, ref('group_documentos_user'))]"/>
+    </record>
+
     <!-- Grupos por área para control de visibilidad de documentos -->
     <record id="group_docs_area_al" model="res.groups">
         <field name="name">Documentos: Área Almacén</field>

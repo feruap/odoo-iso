@@ -8,7 +8,7 @@ historial de versiones, firmas, secciones segun PNOGE-001, sugerencias de cambio
 de firmas configurables.""",
     'author': 'Amunet',
     'category': 'Quality',
-    'version': '19.0.5.0.2',
+    'version': '19.0.5.0.3',
     'depends': ['mail', 'amunet_quality'],
     'data': [
         # seeds_20260619_180814.xml, seeds_pnoal005/009_relacionados.xml y
