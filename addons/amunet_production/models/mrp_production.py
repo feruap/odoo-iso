@@ -7,6 +7,41 @@ from markupsafe import Markup
 class MrpProduction(models.Model):
     _inherit = 'mrp.production'
 
+    def _get_consumption_issues(self):
+        """Ajuste amunet: el aviso nativo 'consumio una cantidad diferente' calcula
+        el 'Por consumir' SOLO desde el BoM. Por eso los componentes del PLAN DE
+        EMPAQUE (caja, funda, etc. -> moves sin bom_line) salian con esperado 0 aunque
+        Almacen si los surte y se consumen. Aqui, para esas lineas, se toma la
+        cantidad planificada del propio movimiento (should_consume_qty, que ya
+        contempla el plan de empaque y es lo que muestra la tabla de ingredientes)
+        en vez de 0. Si esa cantidad coincide con lo consumido, la linea deja de avisar.
+        NO cambia cantidades reales ni la conciliacion; solo lo que muestra el aviso.
+        """
+        issues = super()._get_consumption_issues()
+        if not issues:
+            return issues
+        adjusted = []
+        for issue in issues:
+            order, product, consumed, expected = issue
+            # Solo se corrigen las lineas con esperado 0 que correspondan a un
+            # movimiento de empaque (sin linea de BoM). El resto se deja igual.
+            if not product.uom_id.is_zero(expected):
+                adjusted.append(issue)
+                continue
+            pkg_moves = order.move_raw_ids.filtered(
+                lambda m: m.product_id == product and not m.bom_line_id)
+            if not pkg_moves:
+                adjusted.append(issue)
+                continue
+            exp = sum(pkg_moves.mapped('should_consume_qty'))
+            if product.uom_id.is_zero(exp):
+                exp = sum(pkg_moves.mapped('product_uom_qty'))
+            if product.uom_id.compare(exp, consumed) == 0:
+                # El esperado del plan de empaque coincide con lo consumido: sin aviso.
+                continue
+            adjusted.append((order, product, consumed, exp))
+        return adjusted
+
     @api.constrains('product_id', 'state')
     def _amunet_check_no_duplicate_draft(self):
         """Bloquea crear/tener otra orden de produccion del mismo producto
