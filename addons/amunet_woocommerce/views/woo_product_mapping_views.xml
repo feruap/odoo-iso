@@ -72,8 +72,6 @@
                 <field name="long_capacity_display" optional="hide"/>
                 <field name="last_snapshot_date" optional="hide"/>
                 <!-- Manual de calidad (parámetros/especificaciones amunet_quality) -->
-                <field name="has_quality_manual" widget="boolean_toggle"
-                       optional="show" readonly="1"/>
                 <field name="qc_parameter_count" optional="show"/>
                 <!-- Existencias por etapa de producción (todas las ubicaciones) -->
                 <field name="stock_preproduccion" optional="show"/>
