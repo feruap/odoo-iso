@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ANÁLISIS DE RIESGOS (AMEF)
+════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_risk_analysis_list" model="ir.ui.view">
+        <field name="name">amunet.risk.analysis.list</field>
+        <field name="model">amunet.risk.analysis</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'aprobado'"
+                  decoration-info="state == 'borrador'"
+                  decoration-warning="state == 'revision'"
+                  decoration-danger="total_alto > 0 and state == 'aprobado'">
+                <field name="name" string="Folio"/>
+                <field name="titulo"/>
+                <field name="tipo" widget="badge"/>
+                <field name="area_id" optional="show"/>
+                <field name="fecha"/>
+                <field name="responsable_id" string="Responsable"/>
+                <field name="total_lineas" string="Líneas"/>
+                <field name="total_alto" string="Alto" decoration-danger="total_alto > 0"/>
+                <field name="total_medio" string="Medio" decoration-warning="total_medio > 0"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'aprobado'"
+                       decoration-warning="state == 'revision'"
+                       decoration-info="state == 'borrador'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_risk_analysis_form" model="ir.ui.view">
+        <field name="name">amunet.risk.analysis.form</field>
+        <field name="model">amunet.risk.analysis</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_enviar_revision" string="Enviar a revisión"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'borrador'"/>
+                    <button name="action_aprobar" string="Aprobar"
+                            type="object" class="btn-primary"
+                            invisible="state != 'revision'"/>
+                    <button name="action_regresar_borrador" string="Regresar a borrador"
+                            type="object"
+                            invisible="state != 'revision'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,revision,aprobado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h4>Análisis de Riesgos — AMEF</h4>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="titulo" readonly="state == 'aprobado'"/>
+                            <field name="tipo" readonly="state == 'aprobado'"/>
+                            <field name="area_id" readonly="state == 'aprobado'"/>
+                        </group>
+                        <group>
+                            <field name="fecha" readonly="state == 'aprobado'"/>
+                            <field name="responsable_id" readonly="state == 'aprobado'"/>
+                            <field name="total_lineas" string="Total modos de falla"/>
+                        </group>
+                    </group>
+
+                    <!-- Resumen de riesgos -->
+                    <group string="Resumen de riesgos" invisible="total_lineas == 0">
+                        <group>
+                            <field name="total_alto" string="Alto riesgo"/>
+                            <field name="total_medio" string="Riesgo medio"/>
+                            <field name="total_bajo" string="Bajo riesgo"/>
+                        </group>
+                    </group>
+
+                    <field name="alcance" placeholder="Alcance del análisis (opcional)"
+                           readonly="state == 'aprobado'"/>
+
+                    <!-- Tabla de modos de falla -->
+                    <notebook>
+                        <page string="Criterios NPR">
+                            <field name="criteria_ids" readonly="1" nolabel="1">
+                                <list create="0" delete="0" editable="0"
+                                      decoration-danger="nivel == 'alto'"
+                                      decoration-warning="nivel == 'medio'"
+                                      decoration-success="nivel == 'bajo'"
+                                      decoration-muted="nivel == 'ninguno'">
+                                    <field name="name" string="Clasificación"/>
+                                    <field name="nivel" widget="badge"
+                                           decoration-danger="nivel == 'alto'"
+                                           decoration-warning="nivel == 'medio'"
+                                           decoration-success="nivel == 'bajo' or nivel == 'ninguno'"/>
+                                    <field name="npr_min" string="NPR mín."/>
+                                    <field name="npr_max" string="NPR máx."/>
+                                    <field name="descripcion" string="Descripción"/>
+                                    <field name="accion_requerida" string="Acción requerida"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Modos de falla">
+                            <field name="linea_ids" readonly="state == 'aprobado'"
+                                   widget="one2many">
+                                <list editable="bottom"
+                                      decoration-danger="nivel_riesgo == 'alto'"
+                                      decoration-warning="nivel_riesgo == 'medio'">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="elemento" string="Elemento / Función"/>
+                                    <field name="modo_falla" string="Modo de falla" optional="show"/>
+                                    <field name="efecto" string="Efecto" optional="show"/>
+                                    <field name="causa" string="Causa" optional="show"/>
+                                    <field name="controles_actuales" string="Controles actuales" optional="hide"/>
+                                    <field name="severidad" string="S"/>
+                                    <field name="ocurrencia" string="O"/>
+                                    <field name="detectabilidad" string="D"/>
+                                    <field name="npm" string="NPR" readonly="1"/>
+                                    <field name="nivel_riesgo" string="Nivel" widget="badge"
+                                           decoration-danger="nivel_riesgo == 'alto'"
+                                           decoration-warning="nivel_riesgo == 'medio'"
+                                           decoration-success="nivel_riesgo == 'bajo'"
+                                           decoration-muted="nivel_riesgo == 'ninguno'"/>
+                                    <field name="accion" string="Acción recomendada" optional="show"/>
+                                    <field name="responsable_accion_id" string="Responsable" optional="show"/>
+                                    <field name="fecha_compromiso" string="Fecha compromiso" optional="show"/>
+                                    <field name="estado_accion" string="Estado acción" optional="show"
+                                           widget="badge"
+                                           decoration-success="estado_accion == 'completada'"
+                                           decoration-warning="estado_accion == 'en_proceso'"
+                                           decoration-info="estado_accion == 'pendiente'"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+
+                    <field name="observaciones" placeholder="Observaciones generales (opcional)"
+                           readonly="state == 'aprobado'"/>
+
+                    <!-- Bloque de aprobación -->
+                    <group string="Aprobación" invisible="state != 'aprobado'">
+                        <group>
+                            <field name="firma_id" string="Aprobó" readonly="1"/>
+                            <field name="fecha_firma" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_risk_analysis" model="ir.actions.act_window">
+        <field name="name">Análisis AMEF</field>
+        <field name="res_model">amunet.risk.analysis</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea tu primer análisis de riesgos AMEF.
+            </p>
+        </field>
+    </record>
+
+<!-- ══════════════════════════════════════════════════════════════
+     RE-ANÁLISIS
+════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_risk_reanalysis_list" model="ir.ui.view">
+        <field name="name">amunet.risk.reanalysis.list</field>
+        <field name="model">amunet.risk.reanalysis</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'aprobado'"
+                  decoration-danger="total_alto > 0 and state == 'aprobado'">
+                <field name="name" string="Folio"/>
+                <field name="analisis_id" string="Análisis original"/>
+                <field name="fecha"/>
+                <field name="responsable_id" string="Responsable"/>
+                <field name="total_lineas" string="Líneas"/>
+                <field name="total_alto" string="Alto residual" decoration-danger="total_alto > 0"/>
+                <field name="total_medio" string="Medio residual" decoration-warning="total_medio > 0"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'aprobado'"
+                       decoration-info="state == 'borrador'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_risk_reanalysis_form" model="ir.ui.view">
+        <field name="name">amunet.risk.reanalysis.form</field>
+        <field name="model">amunet.risk.reanalysis</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_aprobar" string="Aprobar re-análisis"
+                            type="object" class="btn-primary"
+                            invisible="state != 'borrador'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,aprobado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h4>Re-análisis de Riesgos (post-control)</h4>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="analisis_id" readonly="state == 'aprobado'"/>
+                            <field name="fecha" readonly="state == 'aprobado'"/>
+                            <field name="responsable_id" readonly="state == 'aprobado'"/>
+                        </group>
+                        <group>
+                            <field name="total_lineas" string="Líneas analizadas"/>
+                            <field name="total_alto" string="Alto riesgo residual"/>
+                            <field name="total_medio" string="Riesgo medio residual"/>
+                        </group>
+                    </group>
+                    <field name="acciones_implementadas"
+                           placeholder="Describe las acciones que se implementaron desde el análisis original..."
+                           readonly="state == 'aprobado'"/>
+
+                    <notebook>
+                        <page string="Líneas re-analizadas">
+                            <field name="linea_ids" readonly="state == 'aprobado'"
+                                   widget="one2many">
+                                <list editable="bottom"
+                                      decoration-danger="nivel_riesgo == 'alto'"
+                                      decoration-warning="nivel_riesgo == 'medio'">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="linea_original_id" string="Modo de falla"/>
+                                    <field name="elemento" string="Elemento" optional="show"/>
+                                    <field name="npm_original" string="NPR original" readonly="1"/>
+                                    <field name="nivel_original" string="Nivel original" widget="badge"
+                                           decoration-danger="nivel_original == 'alto'"
+                                           decoration-warning="nivel_original == 'medio'"
+                                           decoration-success="nivel_original == 'bajo'"
+                                           optional="show"/>
+                                    <field name="severidad" string="Nueva S"/>
+                                    <field name="ocurrencia" string="Nueva O"/>
+                                    <field name="detectabilidad" string="Nueva D"/>
+                                    <field name="npm" string="NPR residual" readonly="1"/>
+                                    <field name="nivel_riesgo" string="Nivel residual" widget="badge"
+                                           decoration-danger="nivel_riesgo == 'alto'"
+                                           decoration-warning="nivel_riesgo == 'medio'"
+                                           decoration-success="nivel_riesgo == 'bajo'"
+                                           decoration-muted="nivel_riesgo == 'ninguno'"/>
+                                    <field name="conclusion" string="Conclusión" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+
+                    <field name="conclusion" placeholder="Conclusión general del re-análisis..."
+                           readonly="state == 'aprobado'"/>
+
+                    <group string="Aprobación" invisible="state != 'aprobado'">
+                        <group>
+                            <field name="firma_id" string="Aprobó" readonly="1"/>
+                            <field name="fecha_firma" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_risk_reanalysis" model="ir.actions.act_window">
+        <field name="name">Re-análisis de Riesgos</field>
+        <field name="res_model">amunet.risk.reanalysis</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra un re-análisis después de implementar acciones de control.
+            </p>
+        </field>
+    </record>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SEGUIMIENTO
+════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_risk_seguimiento_list" model="ir.ui.view">
+        <field name="name">amunet.risk.seguimiento.list</field>
+        <field name="model">amunet.risk.seguimiento</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'completado'"
+                  decoration-info="state == 'pendiente'"
+                  decoration-warning="state == 'en_proceso'">
+                <field name="name" string="Folio"/>
+                <field name="analisis_id" string="Análisis AMEF"/>
+                <field name="linea_id" string="Modo de falla" optional="show"/>
+                <field name="fecha" string="Fecha verificación"/>
+                <field name="verifico_id" string="Verificó"/>
+                <field name="actividad" string="Actividad"/>
+                <field name="eficacia" widget="badge"
+                       decoration-success="eficacia == 'eficaz'"
+                       decoration-warning="eficacia == 'parcial'"
+                       decoration-danger="eficacia == 'no_eficaz'"
+                       optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'completado'"
+                       decoration-warning="state == 'en_proceso'"
+                       decoration-info="state == 'pendiente'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_risk_seguimiento_form" model="ir.ui.view">
+        <field name="name">amunet.risk.seguimiento.form</field>
+        <field name="model">amunet.risk.seguimiento</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_cerrar" string="Cerrar seguimiento"
+                            type="object" class="btn-primary"
+                            invisible="state == 'completado'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pendiente,en_proceso,completado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h4>Seguimiento de Acción de Riesgo</h4>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="analisis_id" readonly="state == 'completado'"/>
+                            <field name="linea_id" readonly="state == 'completado'"/>
+                            <field name="actividad" readonly="state == 'completado'"/>
+                        </group>
+                        <group>
+                            <field name="fecha" readonly="state == 'completado'"/>
+                            <field name="verifico_id" readonly="state == 'completado'"/>
+                            <field name="eficacia" readonly="state == 'completado'"/>
+                        </group>
+                    </group>
+                    <field name="resultado" placeholder="Resultado / Observaciones de la verificación..."
+                           readonly="state == 'completado'"/>
+
+                    <group string="Cierre" invisible="state != 'completado'">
+                        <group>
+                            <field name="firma_id" string="Cerró" readonly="1"/>
+                            <field name="fecha_firma" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_risk_seguimiento" model="ir.actions.act_window">
+        <field name="name">Seguimiento de Riesgos</field>
+        <field name="res_model">amunet.risk.seguimiento</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra el seguimiento de las acciones de riesgo identificadas.
+            </p>
+        </field>
+    </record>
+
+</odoo>
