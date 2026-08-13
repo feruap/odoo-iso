@@ -101,15 +101,25 @@ class AmunetWooProductMapping(models.Model):
     review_date = fields.Datetime(string='Fecha de revisión', readonly=True)
 
     # --------------------------------------------------------------
-    # Clasificación de abastecimiento
+    # Tipo de Fabricación (antes "Clasificación de abastecimiento")
+    # Se calcula solo: marcador de línea larga / BoM / compra-venta.
     # --------------------------------------------------------------
     supply_classification = fields.Selection([
         ('short_manufacturing', 'Fabricación corta'),
         ('long_manufacturing', 'Fabricación larga'),
-        ('purchased_qc', 'Comprado / control de calidad'),
+        ('purchased_qc', 'Compra-venta'),
         ('other', 'Otro / no definido'),
-    ], string='Clasificación de abastecimiento', default='other',
-        required=True, tracking=True, index=True)
+    ], string='Tipo de Fabricación',
+        compute='_compute_supply_classification', store=True, index=True)
+    linea_larga = fields.Boolean(
+        string='Línea larga',
+        related='product_id.product_tmpl_id.amunet_linea_larga',
+        readonly=False, store=True,
+        groups='amunet_woocommerce.group_linea_larga_editor',
+        help='Marcador manual de línea larga en el producto. Editable '
+             'aquí para clasificar el Tipo de Fabricación mientras se '
+             'ajustan las rutas de BoM de línea larga. Visible/editable '
+             'solo para el grupo restringido (Mery).')
 
     # --------------------------------------------------------------
     # Inventario Woo (solo desde snapshot conocido)
@@ -783,6 +793,45 @@ class AmunetWooProductMapping(models.Model):
                     '%s (%s): %s' % (mo.name, states.get(mo.state, mo.state),
                                      mo.product_qty)
                     for mo in mos[:5])
+
+    @api.depends('product_id',
+                 'product_id.product_tmpl_id.amunet_linea_larga',
+                 'product_id.purchase_ok',
+                 'product_id.product_tmpl_id.bom_ids',
+                 'product_id.product_tmpl_id.bom_ids.active')
+    def _compute_supply_classification(self):
+        """Tipo de Fabricación, calculado:
+        - Línea larga: marcador amunet_linea_larga (o, a futuro, ruta de BoM
+          de línea larga). El marcador manda mientras se ajustan las rutas.
+        - Fabricación corta: tiene BoM activa y no es larga.
+        - Compra-venta: sin BoM y comprable.
+        - Otro: no calculable.
+        """
+        Bom = self.env['mrp.bom'].sudo()
+        for rec in self:
+            p = rec.product_id
+            if not p:
+                rec.supply_classification = 'other'
+                continue
+            tmpl = p.product_tmpl_id
+            if tmpl.amunet_linea_larga:
+                rec.supply_classification = 'long_manufacturing'
+                continue
+            has_bom = bool(Bom.search_count([
+                ('active', '=', True),
+                ('type', '=', 'normal'),
+                '|',
+                ('product_id', '=', p.id),
+                '&',
+                ('product_id', '=', False),
+                ('product_tmpl_id', '=', tmpl.id),
+            ]))
+            if has_bom:
+                rec.supply_classification = 'short_manufacturing'
+            elif p.purchase_ok:
+                rec.supply_classification = 'purchased_qc'
+            else:
+                rec.supply_classification = 'other'
 
     def _compute_bom_info(self):
         Bom = self.env['mrp.bom'].sudo()

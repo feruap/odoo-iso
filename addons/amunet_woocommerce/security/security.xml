@@ -36,6 +36,17 @@
             </field>
         </record>
 
+        <!-- Grupo restringido: SOLO quien se asigne puede ver/mover el
+             marcador "Línea larga" (Tipo de Fabricación). Por decisión de
+             Mery, la membresía se controla a mano (solo Mery). -->
+        <record id="group_linea_larga_editor" model="res.groups">
+            <field name="name">WooCommerce / Editor Línea larga</field>
+            <field name="comment">
+                Único que puede ver y mover el marcador "Línea larga" que
+                define el Tipo de Fabricación. Membresía restringida (Mery).
+            </field>
+        </record>
+
         <!-- ======================================================== -->
         <!-- Reglas multiempresa (globales)                            -->
         <!-- ======================================================== -->
