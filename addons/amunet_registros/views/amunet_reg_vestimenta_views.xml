@@ -114,7 +114,6 @@
                   decoration-danger="total_no_cumple > 0 and state == 'cerrado'">
                 <field name="name" string="Folio"/>
                 <field name="fecha"/>
-                <field name="turno"/>
                 <field name="responsable_id" string="Revisó"/>
                 <field name="total_revisados" string="Revisados"/>
                 <field name="total_no_cumple" string="Con incidencia"/>
@@ -145,13 +144,11 @@
                     <group>
                         <group>
                             <field name="fecha" readonly="state == 'cerrado'"/>
-                            <field name="turno" readonly="state == 'cerrado'"/>
                             <field name="responsable_id" readonly="state == 'cerrado'"/>
                         </group>
                         <group>
                             <field name="total_revisados" string="Personas revisadas"/>
-                            <field name="total_no_cumple" string="Con incidencia"
-                                   decoration-danger="total_no_cumple > 0"/>
+                            <field name="total_no_cumple" string="Con incidencia"/>
                         </group>
                     </group>
 
@@ -170,7 +167,7 @@
                                     <field name="maquillaje" string="Maquillaje"/>
                                     <field name="accesorios" string="Accesorios"/>
                                     <field name="observaciones" string="Observaciones"/>
-                                    <field name="tiene_incidencia" invisible="1"/>
+                                    <field name="tiene_incidencia" column_invisible="1"/>
                                 </list>
                             </field>
                         </page>

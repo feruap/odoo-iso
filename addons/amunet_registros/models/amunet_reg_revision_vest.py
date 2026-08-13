@@ -12,11 +12,6 @@ class AmunetRegRevisionVest(models.Model):
 
     name = fields.Char(string='Folio', readonly=True, copy=False, default='Nuevo')
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True, tracking=True)
-    turno = fields.Selection([
-        ('matutino', 'Matutino'),
-        ('vespertino', 'Vespertino'),
-        ('nocturno', 'Nocturno'),
-    ], string='Turno', required=True, tracking=True)
     responsable_id = fields.Many2one(
         'res.users', string='Revisó',
         default=lambda self: self.env.user, tracking=True)
@@ -80,7 +75,9 @@ class AmunetRegRevisionVestLinea(models.Model):
 
     gafete = fields.Selection(CUMPLE, string='Gafete')
     filipina_bata = fields.Selection(CUMPLE, string='Filipina / Bata')
-    zapato = fields.Selection(CUMPLE, string='Zapato')
+    zapato = fields.Selection([
+        ('limpio', 'Limpio'), ('sucio', 'Sucio'), ('na', 'N/A'),
+    ], string='Zapato')
     unas = fields.Selection(CUMPLE, string='Uñas')
     maquillaje = fields.Selection(CUMPLE, string='Maquillaje')
     accesorios = fields.Selection(CUMPLE, string='Accesorios')
@@ -90,7 +87,9 @@ class AmunetRegRevisionVestLinea(models.Model):
 
     @api.depends('gafete', 'filipina_bata', 'zapato', 'unas', 'maquillaje', 'accesorios')
     def _compute_incidencia(self):
-        campos = ['gafete', 'filipina_bata', 'zapato', 'unas', 'maquillaje', 'accesorios']
+        otros = ['gafete', 'filipina_bata', 'unas', 'maquillaje', 'accesorios']
         for rec in self:
-            rec.tiene_incidencia = any(
-                getattr(rec, c) == 'no_cumple' for c in campos)
+            rec.tiene_incidencia = (
+                any(getattr(rec, c) == 'no_cumple' for c in otros)
+                or rec.zapato == 'sucio'
+            )
