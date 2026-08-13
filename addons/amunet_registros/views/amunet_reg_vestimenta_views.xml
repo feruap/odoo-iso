@@ -31,9 +31,6 @@
                     <button name="action_cerrar" string="Cerrar acta"
                             type="object" class="btn-primary"
                             invisible="state != 'borrador'"/>
-                    <button name="action_reabrir" string="Reabrir"
-                            type="object"
-                            invisible="state != 'cerrado'"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="borrador,cerrado"/>
                 </header>
@@ -134,9 +131,6 @@
                     <button name="action_cerrar" string="Cerrar revisión"
                             type="object" class="btn-primary"
                             invisible="state != 'borrador'"/>
-                    <button name="action_reabrir" string="Reabrir"
-                            type="object"
-                            invisible="state != 'cerrado'"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="borrador,cerrado"/>
                 </header>
