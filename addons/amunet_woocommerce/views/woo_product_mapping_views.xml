@@ -63,6 +63,8 @@
                        decoration-danger="relation_state == 'rejected'"
                        decoration-warning="relation_state == 'pending'"/>
                 <field name="supply_classification"/>
+                <field name="linea_larga" widget="boolean_toggle" optional="show"
+                       groups="amunet_woocommerce.group_linea_larga_editor"/>
                 <field name="bom_status_display" optional="show"/>
                 <field name="odoo_free_display" optional="show"/>
                 <field name="woo_available_display" optional="show"/>
