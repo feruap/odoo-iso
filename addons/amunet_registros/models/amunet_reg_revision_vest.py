@@ -52,19 +52,17 @@ class AmunetRegRevisionVest(models.Model):
         for rec in self:
             if not rec.linea_ids:
                 raise UserError('Agrega al menos un registro antes de cerrar.')
-            rec.write({'state': 'cerrado'})
+            rec.write({
+                'state': 'cerrado',
+                'firma_id': self.env.user.id,
+                'fecha_firma': fields.Datetime.now(),
+            })
 
     def action_reabrir(self):
-        self.write({'state': 'borrador'})
+        self.write({'state': 'borrador', 'firma_id': False, 'fecha_firma': False})
 
     def _amunet_signature_allowed_methods(self):
-        return {'action_firmar_revisor': 'Firma del revisor'}
-
-    def action_firmar_revisor(self):
-        self.write({
-            'firma_id': self.env.user.id,
-            'fecha_firma': fields.Datetime.now(),
-        })
+        return {'action_cerrar': 'Firma de cierre de la revisión'}
 
 
 class AmunetRegRevisionVestLinea(models.Model):

@@ -83,13 +83,6 @@
                             <field name="firma_id" string="Firmó" readonly="1"/>
                             <field name="fecha_firma" readonly="1"/>
                         </group>
-                        <group>
-                            <button name="action_firmar_responsable"
-                                    string="Firmar con PIN"
-                                    type="object"
-                                    class="btn-success"
-                                    invisible="firma_id != False"/>
-                        </group>
                     </group>
                 </sheet>
                 <chatter/>
@@ -191,13 +184,6 @@
                         <group>
                             <field name="firma_id" string="Firmó" readonly="1"/>
                             <field name="fecha_firma" readonly="1"/>
-                        </group>
-                        <group>
-                            <button name="action_firmar_revisor"
-                                    string="Firmar con PIN"
-                                    type="object"
-                                    class="btn-success"
-                                    invisible="firma_id != False"/>
                         </group>
                     </group>
                 </sheet>
