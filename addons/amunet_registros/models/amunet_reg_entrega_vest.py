@@ -72,11 +72,13 @@ class AmunetRegEntregaVestLinea(models.Model):
         ('mica', 'Mica / Protector'),
         ('ambos', 'Ambos'),
     ], string='Gafete')
+    gafete_fecha = fields.Date(string='Fecha entrega gafete')
 
     bata_color = fields.Char(string='Color')
     bata_talla = fields.Selection([
         ('XS', 'XS'), ('S', 'S'), ('M', 'M'),
         ('L', 'L'), ('XL', 'XL'), ('XXL', 'XXL'),
+        ('na', 'N/A'),
     ], string='Talla')
     bata_cantidad = fields.Integer(string='Prendas', default=1)
     bata_fecha = fields.Date(string='Fecha')
@@ -87,3 +89,15 @@ class AmunetRegEntregaVestLinea(models.Model):
     zapatos_fecha = fields.Date(string='Fecha')
 
     notas = fields.Char(string='Notas')
+
+    @api.onchange('bata_talla')
+    def _onchange_bata_talla(self):
+        if self.bata_talla == 'na':
+            self.bata_fecha = False
+            self.bata_cantidad = 0
+
+    @api.onchange('zapatos_talla')
+    def _onchange_zapatos_talla(self):
+        if (self.zapatos_talla or '').strip().lower() == 'na':
+            self.zapatos_cantidad = 0
+            self.zapatos_fecha = False

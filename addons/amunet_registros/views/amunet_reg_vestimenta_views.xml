@@ -60,14 +60,17 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="empleado_id" string="Nombre"/>
                                     <field name="gafete" string="Gafete" optional="show"/>
+                                    <field name="gafete_fecha" string="Fecha entrega gafete" optional="show"/>
                                     <!-- Bata -->
                                     <field name="bata_talla" string="Talla bata" optional="show"/>
                                     <field name="bata_cantidad" string="Batas" optional="show"/>
-                                    <field name="bata_fecha" string="Fecha entrega bata" optional="show"/>
+                                    <field name="bata_fecha" string="Fecha entrega bata" optional="show"
+                                           readonly="bata_talla == 'na'"/>
                                     <!-- Zapatos -->
                                     <field name="zapatos_talla" string="Talla zapatos" optional="show"/>
                                     <field name="zapatos_cantidad" string="Pares" optional="show"/>
-                                    <field name="zapatos_fecha" string="Fecha entrega zapatos" optional="show"/>
+                                    <field name="zapatos_fecha" string="Fecha entrega zapatos" optional="show"
+                                           readonly="zapatos_talla == 'na'"/>
                                     <field name="notas" string="Notas" optional="show"/>
                                 </list>
                             </field>
