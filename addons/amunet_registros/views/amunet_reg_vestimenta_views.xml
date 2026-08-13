@@ -61,17 +61,16 @@
                                    widget="one2many">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="empleado_nombre" string="Nombre"/>
+                                    <field name="empleado_id" string="Nombre"/>
+                                    <field name="gafete" string="Gafete" optional="show"/>
                                     <!-- Bata -->
-                                    <field name="bata_color" string="Color bata" optional="show"/>
                                     <field name="bata_talla" string="Talla bata" optional="show"/>
                                     <field name="bata_cantidad" string="Batas" optional="show"/>
-                                    <field name="bata_fecha" string="Fecha bata" optional="show"/>
+                                    <field name="bata_fecha" string="Fecha entrega bata" optional="show"/>
                                     <!-- Zapatos -->
-                                    <field name="zapatos_color" string="Color zapatos" optional="show"/>
                                     <field name="zapatos_talla" string="Talla zapatos" optional="show"/>
                                     <field name="zapatos_cantidad" string="Pares" optional="show"/>
-                                    <field name="zapatos_fecha" string="Fecha zapatos" optional="show"/>
+                                    <field name="zapatos_fecha" string="Fecha entrega zapatos" optional="show"/>
                                     <field name="notas" string="Notas" optional="show"/>
                                 </list>
                             </field>
@@ -173,7 +172,7 @@
                                 <list editable="bottom"
                                       decoration-danger="tiene_incidencia">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="empleado_nombre" string="Nombre"/>
+                                    <field name="empleado_id" string="Nombre"/>
                                     <field name="gafete"/>
                                     <field name="filipina_bata" string="Filipina / Bata"/>
                                     <field name="zapato" string="Zapato"/>

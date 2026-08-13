@@ -66,7 +66,14 @@ class AmunetRegEntregaVestLinea(models.Model):
     registro_id = fields.Many2one(
         'amunet.reg.entrega.vest', required=True, ondelete='cascade')
     sequence = fields.Integer(default=10)
-    empleado_nombre = fields.Char(string='Nombre', required=True)
+    empleado_id = fields.Many2one('res.users', string='Nombre', required=True,
+        domain=[('id', 'not in', [67, 112]), ('share', '=', False), ('active', '=', True)])
+
+    gafete = fields.Selection([
+        ('gafete', 'Gafete'),
+        ('mica', 'Mica / Protector'),
+        ('ambos', 'Ambos'),
+    ], string='Gafete')
 
     bata_color = fields.Char(string='Color')
     bata_talla = fields.Selection([

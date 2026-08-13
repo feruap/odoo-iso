@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="action_registros_hub" model="ir.actions.client">
+        <field name="name">Registros de formatos</field>
+        <field name="tag">amunet_registros.registros_hub</field>
+    </record>
+
     <menuitem id="menu_registros_root"
               name="Registros de formatos"
-              sequence="57"
-              web_icon="amunet_registros,static/description/icon.png"
+              parent="amunet_documentos.menu_amunet_documentos_root"
+              action="action_registros_hub"
+              sequence="50"
               groups="amunet_documentos.group_documentos_user"/>
 
     <menuitem id="menu_registros_indumentaria"

@@ -1,10 +1,10 @@
-/** @odoo-module **/ /* v2 */
+/** @odoo-module **/
 import { Component } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
-class ListaMaestraHub extends Component {
-    static template = "amunet_documentos.ListaMaestraHub";
+class RegistrosHub extends Component {
+    static template = "amunet_registros.RegistrosHub";
 
     setup() {
         this.actionService = useService("action");
@@ -15,4 +15,4 @@ class ListaMaestraHub extends Component {
     }
 }
 
-registry.category("actions").add("amunet_documentos.lista_maestra_hub", ListaMaestraHub);
+registry.category("actions").add("amunet_registros.registros_hub", RegistrosHub);
