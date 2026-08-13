@@ -38,6 +38,14 @@ class AmunetRiskReanalysis(models.Model):
     total_alto = fields.Integer(compute='_compute_resumen', store=True, string='Alto riesgo residual')
     total_medio = fields.Integer(compute='_compute_resumen', store=True, string='Riesgo medio residual')
 
+    criteria_ids = fields.Many2many(
+        'amunet.risk.matrix', compute='_compute_criteria', string='Criterios NPR')
+
+    def _compute_criteria(self):
+        criterios = self.env['amunet.risk.matrix'].search([], order='npr_min')
+        for rec in self:
+            rec.criteria_ids = criterios
+
     @api.depends('linea_ids.nivel_riesgo')
     def _compute_resumen(self):
         for rec in self:
@@ -94,9 +102,31 @@ class AmunetRiskReanalysisLinea(models.Model):
     nivel_original = fields.Selection(
         NIVEL_SELECTION, related='linea_original_id.nivel_riesgo', string='Nivel original', readonly=True)
 
-    severidad = fields.Integer(string='Nueva S', default=1)
-    ocurrencia = fields.Integer(string='Nueva O', default=1)
-    detectabilidad = fields.Integer(string='Nueva D', default=1)
+    severidad = fields.Integer(
+        string='Nueva S', default=1,
+        help="Severidad del efecto si el fallo ocurre (1 = mínima, 5 = máxima):\n"
+             "1 — Sin impacto perceptible\n"
+             "2 — Impacto menor, detectable internamente\n"
+             "3 — Efecto moderado, requiere reproceso\n"
+             "4 — Efecto grave, puede afectar la calidad del resultado\n"
+             "5 — Crítico: riesgo para el paciente o incumplimiento regulatorio")
+    ocurrencia = fields.Integer(
+        string='Nueva O', default=1,
+        help="Frecuencia con que ocurre la causa del fallo (1 = muy rara, 5 = muy frecuente):\n"
+             "1 — Muy improbable (nunca ha ocurrido)\n"
+             "2 — Remota (una vez en varios años)\n"
+             "3 — Ocasional (algunas veces al año)\n"
+             "4 — Frecuente (varias veces al mes)\n"
+             "5 — Muy frecuente (ocurre regularmente)")
+    detectabilidad = fields.Integer(
+        string='Nueva D', default=1,
+        help="Probabilidad de NO detectar el fallo antes de que llegue al siguiente paso o al cliente\n"
+             "(1 = casi seguro que se detecta, 5 = prácticamente indetectable):\n"
+             "1 — Detección casi segura (controles robustos, 100% automatizados)\n"
+             "2 — Alta probabilidad de detección\n"
+             "3 — Probabilidad media de detección\n"
+             "4 — Baja probabilidad de detección\n"
+             "5 — Sin control de detección existente")
 
     npm = fields.Integer(string='NPR residual', compute='_compute_npr', store=True)
     nivel_riesgo = fields.Selection(

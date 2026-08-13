@@ -45,15 +45,22 @@ class AmunetRiskAnalysis(models.Model):
     state = fields.Selection([
         ('borrador', 'Borrador'),
         ('revision', 'En revisión'),
+        ('autorizacion', 'En autorización'),
         ('aprobado', 'Aprobado'),
     ], string='Estado', default='borrador', tracking=True)
+
+    revisor_id = fields.Many2one(
+        'res.users', string='Revisor del área',
+        help='Jefe o responsable del área que revisará técnicamente el análisis.')
+    reviso_id = fields.Many2one('res.users', string='Revisó', readonly=True)
+    fecha_revisa = fields.Datetime(string='Fecha de revisión', readonly=True)
 
     linea_ids = fields.One2many(
         'amunet.risk.analysis.linea', 'analisis_id', string='Modos de falla')
     observaciones = fields.Text(string='Observaciones generales')
 
-    firma_id = fields.Many2one('res.users', string='Aprobó', readonly=True)
-    fecha_firma = fields.Datetime(string='Fecha de aprobación', readonly=True)
+    firma_id = fields.Many2one('res.users', string='Autorizó', readonly=True)
+    fecha_firma = fields.Datetime(string='Fecha de autorización', readonly=True)
 
     total_lineas = fields.Integer(compute='_compute_resumen', store=True)
     total_alto = fields.Integer(compute='_compute_resumen', store=True, string='Alto riesgo')
@@ -88,25 +95,88 @@ class AmunetRiskAnalysis(models.Model):
         self.ensure_one()
         if not self.linea_ids:
             raise UserError('Agrega al menos un modo de falla antes de enviar a revisión.')
+        if not self.revisor_id:
+            raise UserError('Selecciona el revisor del área antes de enviar a revisión.')
         self.write({'state': 'revision'})
+        self.message_post(
+            body=(f'El análisis <b>{self.name}</b> — {self.titulo} ha sido enviado a revisión.<br/>'
+                  f'Por favor revísalo y marca como revisado cuando esté listo.'),
+            partner_ids=[self.revisor_id.partner_id.id],
+            message_type='email',
+            subtype_xmlid='mail.mt_comment',
+        )
 
-    def action_aprobar(self):
+    def action_marcar_revisado(self):
         self.ensure_one()
         if self.state != 'revision':
-            raise UserError('El análisis debe estar en revisión antes de aprobarse.')
-        return self.env['amunet.generic.signature.wizard'].open_for(
-            self, '_signature_aprobar', 'Aprobación del análisis de riesgos')
+            raise UserError('El análisis debe estar en revisión.')
+        self.write({
+            'state': 'autorizacion',
+            'reviso_id': self.env.user.id,
+            'fecha_revisa': fields.Datetime.now(),
+        })
+        group = self.env.ref(
+            'amunet_documentos.group_responsable_sanitario', raise_if_not_found=False)
+        if group:
+            autorizadores = self.env['res.users'].search([('group_ids', 'in', [group.id])])
+            partners = autorizadores.mapped('partner_id')
+        else:
+            partners = self.env['res.partner']
+        self.message_post(
+            body=(f'El análisis <b>{self.name}</b> — {self.titulo} ha sido revisado por '
+                  f'{self.reviso_id.name} y está pendiente de autorización.'),
+            partner_ids=partners.ids,
+            message_type='email',
+            subtype_xmlid='mail.mt_comment',
+        )
 
-    def _signature_aprobar(self):
+    def action_autorizar(self):
+        self.ensure_one()
+        if self.state != 'autorizacion':
+            raise UserError('El análisis debe estar en autorización antes de autorizarse.')
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_signature_autorizar', 'Autorización del análisis de riesgos')
+
+    def _signature_autorizar(self):
         self.ensure_one()
         self.write({
             'state': 'aprobado',
             'firma_id': self.env.user.id,
             'fecha_firma': fields.Datetime.now(),
         })
+        # Notificar a elaboró y revisó
+        notificados = (self.responsable_id | self.reviso_id).mapped('partner_id')
+        self.message_post(
+            body=(f'El análisis <b>{self.name}</b> — {self.titulo} ha sido autorizado por '
+                  f'{self.firma_id.name}. Queda vigente.'),
+            partner_ids=notificados.ids,
+            message_type='email',
+            subtype_xmlid='mail.mt_comment',
+        )
+        # Notificar individualmente a cada responsable de acción
+        responsables = self.linea_ids.filtered(
+            lambda l: l.responsable_accion_id and l.accion
+        ).mapped('responsable_accion_id')
+        for usuario in responsables:
+            acciones = self.linea_ids.filtered(
+                lambda l: l.responsable_accion_id == usuario and l.accion)
+            filas = ''.join(
+                f'<li><b>{l.elemento}</b>: {l.accion}'
+                f'{" — Fecha compromiso: <b>" + str(l.fecha_compromiso) + "</b>" if l.fecha_compromiso else ""}'
+                f'</li>'
+                for l in acciones
+            )
+            self.message_post(
+                body=(f'El análisis de riesgos <b>{self.name}</b> — {self.titulo} '
+                      f'ha sido autorizado y tienes acción(es) asignada(s):<ul>{filas}</ul>'
+                      f'Por favor da seguimiento en el sistema.'),
+                partner_ids=[usuario.partner_id.id],
+                message_type='email',
+                subtype_xmlid='mail.mt_comment',
+            )
 
     def _amunet_signature_allowed_methods(self):
-        return {'_signature_aprobar': 'Aprobación del análisis de riesgos'}
+        return {'_signature_autorizar': 'Autorización del análisis de riesgos'}
 
     def action_regresar_borrador(self):
         self.ensure_one()

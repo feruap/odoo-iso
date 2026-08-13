@@ -39,14 +39,17 @@
                     <button name="action_enviar_revision" string="Enviar a revisión"
                             type="object" class="btn-secondary"
                             invisible="state != 'borrador'"/>
-                    <button name="action_aprobar" string="Aprobar"
-                            type="object" class="btn-primary"
+                    <button name="action_marcar_revisado" string="Marcar revisado"
+                            type="object" class="btn-secondary"
                             invisible="state != 'revision'"/>
+                    <button name="action_autorizar" string="Autorizar"
+                            type="object" class="btn-primary"
+                            invisible="state != 'autorizacion'"/>
                     <button name="action_regresar_borrador" string="Regresar a borrador"
                             type="object"
-                            invisible="state != 'revision'"/>
+                            invisible="state not in ('revision', 'autorizacion')"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="borrador,revision,aprobado"/>
+                           statusbar_visible="borrador,revision,autorizacion,aprobado"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -61,7 +64,8 @@
                         </group>
                         <group>
                             <field name="fecha" readonly="state == 'aprobado'"/>
-                            <field name="responsable_id" readonly="state == 'aprobado'"/>
+                            <field name="responsable_id" readonly="state != 'borrador'"/>
+                            <field name="revisor_id" readonly="state != 'borrador'"/>
                             <field name="total_lineas" string="Total modos de falla"/>
                         </group>
                     </group>
@@ -82,7 +86,7 @@
                     <notebook>
                         <page string="Criterios NPR">
                             <field name="criteria_ids" readonly="1" nolabel="1">
-                                <list create="0" delete="0" editable="0"
+                                <list create="0" delete="0"
                                       decoration-danger="nivel == 'alto'"
                                       decoration-warning="nivel == 'medio'"
                                       decoration-success="nivel == 'bajo'"
@@ -136,11 +140,18 @@
                     <field name="observaciones" placeholder="Observaciones generales (opcional)"
                            readonly="state == 'aprobado'"/>
 
-                    <!-- Bloque de aprobación -->
-                    <group string="Aprobación" invisible="state != 'aprobado'">
-                        <group>
-                            <field name="firma_id" string="Aprobó" readonly="1"/>
-                            <field name="fecha_firma" readonly="1"/>
+                    <!-- Bloque de firmas -->
+                    <group string="Firmas" invisible="state == 'borrador'">
+                        <group string="Elaboró">
+                            <field name="responsable_id" string="Elaboró" readonly="1"/>
+                        </group>
+                        <group string="Revisó" invisible="state == 'revision'">
+                            <field name="reviso_id" string="Revisó" readonly="1"/>
+                            <field name="fecha_revisa" string="Fecha de revisión" readonly="1"/>
+                        </group>
+                        <group string="Autorizó" invisible="state != 'aprobado'">
+                            <field name="firma_id" string="Autorizó" readonly="1"/>
+                            <field name="fecha_firma" string="Fecha de autorización" readonly="1"/>
                         </group>
                     </group>
                 </sheet>
@@ -218,6 +229,25 @@
                            readonly="state == 'aprobado'"/>
 
                     <notebook>
+                        <page string="Criterios NPR">
+                            <field name="criteria_ids" readonly="1" nolabel="1">
+                                <list create="0" delete="0"
+                                      decoration-danger="nivel == 'alto'"
+                                      decoration-warning="nivel == 'medio'"
+                                      decoration-success="nivel == 'bajo'"
+                                      decoration-muted="nivel == 'ninguno'">
+                                    <field name="name" string="Clasificación"/>
+                                    <field name="nivel" widget="badge"
+                                           decoration-danger="nivel == 'alto'"
+                                           decoration-warning="nivel == 'medio'"
+                                           decoration-success="nivel == 'bajo' or nivel == 'ninguno'"/>
+                                    <field name="npr_min" string="NPR mín."/>
+                                    <field name="npr_max" string="NPR máx."/>
+                                    <field name="descripcion" string="Descripción"/>
+                                    <field name="accion_requerida" string="Acción requerida"/>
+                                </list>
+                            </field>
+                        </page>
                         <page string="Líneas re-analizadas">
                             <field name="linea_ids" readonly="state == 'aprobado'"
                                    widget="one2many">
@@ -251,10 +281,10 @@
                     <field name="conclusion" placeholder="Conclusión general del re-análisis..."
                            readonly="state == 'aprobado'"/>
 
-                    <group string="Aprobación" invisible="state != 'aprobado'">
-                        <group>
-                            <field name="firma_id" string="Aprobó" readonly="1"/>
-                            <field name="fecha_firma" readonly="1"/>
+                    <group string="Firmas" invisible="state != 'aprobado'">
+                        <group string="Autorizó">
+                            <field name="firma_id" string="Autorizó" readonly="1"/>
+                            <field name="fecha_firma" string="Fecha de autorización" readonly="1"/>
                         </group>
                     </group>
                 </sheet>
