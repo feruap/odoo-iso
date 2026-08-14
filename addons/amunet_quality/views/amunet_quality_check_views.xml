@@ -479,6 +479,7 @@
                                     <field name="col5"    string="Col 5"/>
                                     <field name="col6"    string="Col 6"/>
                                     <field name="col7"    string="Col 7"/>
+                                    <field name="col8"    string="Col 8"/>
                                 </list>
                             </field>
                         </div>

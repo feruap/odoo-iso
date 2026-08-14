@@ -476,7 +476,7 @@ class AmunetQualityParameterSpecificationConfig(models.Model):
             'test_line_id': test_line_id,
             'specification_config_id': self.id,
             'sequence': self.sequence,
-            'name': self.specification_id.name or self.specification_name,
+            'name': self.specification_name or self.specification_id.name,
             'acceptance_criteria': self.acceptance_criteria,
             'evaluation_type': self.evaluation_type,
             

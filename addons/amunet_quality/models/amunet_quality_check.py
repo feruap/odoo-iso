@@ -818,6 +818,7 @@ class AmunetQualityCheck(models.Model):
     anexo_col5_header = fields.Char(string='Encabezado Col 5', default='')
     anexo_col6_header = fields.Char(string='Encabezado Col 6', default='')
     anexo_col7_header = fields.Char(string='Encabezado Col 7', default='')
+    anexo_col8_header = fields.Char(string='Encabezado Col 8', default='')
     # Filas de datos
     anexo_line_ids = fields.One2many(
         'amunet.quality.anexo.line',
@@ -1780,7 +1781,20 @@ class AmunetQualityCheck(models.Model):
         self.ensure_one()
         code = (self.product_id.default_code or '').upper()
 
-        if code.startswith(('MPCAR', 'MPCAC', 'MPCAG')):
+        if code.startswith(('DM', 'DL', 'AM')) and not code.startswith(('DMDCZ', 'DMDRO')):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO PRODUCTO TERMINADO CARTUCHO',
+                'anexo_col1_header': 'Apariencia empaque (Secundario)',
+                'anexo_col2_header': 'Apariencia empaque (Primario)',
+                'anexo_col3_header': 'Hermeticidad',
+                'anexo_col4_header': 'Apariencia (prueba)',
+                'anexo_col5_header': 'Contenido',
+                'anexo_col6_header': 'T. Liberación (s)',
+                'anexo_col7_header': 'T. Migración (s)',
+                'anexo_col8_header': 'Desempeño',
+            })
+        elif code.startswith(('MPCAR', 'MPCAC', 'MPCAG')):
             self.write({
                 'tiene_anexos': True,
                 'anexo_titulo': 'ANEXO CARTUCHO',
