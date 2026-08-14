@@ -197,8 +197,33 @@ class AmunetWooProductMapping(models.Model):
         string='Razón liberación', compute='_compute_odoo_inventory')
 
     # --------------------------------------------------------------
+    # Existencias por etapa de producción (suma en todas las ubicaciones
+    # internas cuyo nombre corresponde a esa etapa: APT, AMP, AMPB, ARU...)
+    # --------------------------------------------------------------
+    stock_preproduccion = fields.Float(
+        string='Preproducción', compute='_compute_stage_stock')
+    stock_posproduccion = fields.Float(
+        string='Posproducción', compute='_compute_stage_stock')
+    stock_existencias = fields.Float(
+        string='Existencias', compute='_compute_stage_stock')
+    stock_control_calidad = fields.Float(
+        string='Control de calidad', compute='_compute_stage_stock')
+    stock_entrada = fields.Float(
+        string='Entrada', compute='_compute_stage_stock')
+    stock_salida = fields.Float(
+        string='Salida', compute='_compute_stage_stock')
+    stock_empaquetado = fields.Float(
+        string='Zona de empaquetado', compute='_compute_stage_stock')
+
+    # --------------------------------------------------------------
     # Configuración de calidad
     # --------------------------------------------------------------
+    has_quality_manual = fields.Boolean(
+        string='Tiene manual de calidad',
+        compute='_compute_has_quality_manual',
+        help='El producto tiene al menos un parámetro/especificación de '
+             'calidad configurado (amunet_quality). Si lo tiene, ya es '
+             'evaluable para volverse vendible.')
     qc_required = fields.Boolean(
         string='Requiere QC', compute='_compute_quality')
     qc_parameter_count = fields.Integer(
@@ -594,6 +619,68 @@ class AmunetWooProductMapping(models.Model):
                 if missing else False)
             rec.snapshot_stale = bool(
                 snapshot.date and (now - snapshot.date).days > max_age)
+
+    _STAGE_PATTERNS = [
+        ('stock_preproduccion', ('Preproducción', 'Pre-Production')),
+        ('stock_posproduccion', ('Posproducción', 'Post-Production')),
+        ('stock_existencias', ('Existencias',)),
+        ('stock_control_calidad', ('Control de calidad',)),
+        ('stock_entrada', ('Entrada',)),
+        ('stock_salida', ('Salida',)),
+        ('stock_empaquetado', ('Zona de empaquetado',)),
+    ]
+
+    def _compute_stage_stock(self):
+        """Existencias del producto por etapa de producción.
+
+        Posproducción = producto terminado LIBERADO del Almacén de Producto
+        Terminado (APT/Existencias_*). Preproducción = TODO lo demás: materia
+        prima e insumos (AMP/AMPB/ARU) MÁS el 'Almacén Temporal PT' (producto
+        fabricado en espera de análisis). El 'Rechazo' NO se contempla en
+        ninguna de las dos. Las demás etapas (Existencias, Control de calidad,
+        Entrada, Salida, Zona de empaquetado) se agrupan por el nombre de la
+        ubicación."""
+        Quant = self.env['stock.quant']
+        apt_wh = self.env['stock.warehouse'].sudo().search(
+            [('code', '=', 'APT')], limit=1)
+        apt_path = apt_wh.view_location_id.parent_path if apt_wh else False
+        for rec in self:
+            for fname, _pats in self._STAGE_PATTERNS:
+                rec[fname] = 0.0
+            if not rec.product_id:
+                continue
+            try:
+                quants = Quant.search([
+                    ('product_id', '=', rec.product_id.id),
+                    ('location_id.usage', '=', 'internal'),
+                    ('company_id', '=', rec.company_id.id),
+                ])
+            except AccessError:
+                continue
+            for quant in quants:
+                loc = quant.location_id
+                cname = loc.complete_name or ''
+                is_apt = bool(apt_path and loc.parent_path
+                              and loc.parent_path.startswith(apt_path))
+                # Rechazo no cuenta; APT liberado (no Temporal) = pos;
+                # todo lo demás (incl. Almacén Temporal PT) = pre.
+                if 'Rechazo' not in cname:
+                    if is_apt and 'Temporal' not in cname:
+                        rec.stock_posproduccion += quant.quantity
+                    else:
+                        rec.stock_preproduccion += quant.quantity
+                # Demás etapas por nombre de ubicación
+                for fname, pats in self._STAGE_PATTERNS:
+                    if fname in ('stock_preproduccion', 'stock_posproduccion'):
+                        continue
+                    if any(p in cname for p in pats):
+                        rec[fname] += quant.quantity
+                        break
+
+    @api.depends('qc_parameter_count')
+    def _compute_has_quality_manual(self):
+        for rec in self:
+            rec.has_quality_manual = rec.qc_parameter_count > 0
 
     def _compute_odoo_inventory(self):
         Quant = self.env['stock.quant']

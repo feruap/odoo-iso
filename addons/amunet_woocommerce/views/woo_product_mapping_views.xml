@@ -71,6 +71,16 @@
                 <field name="short_capacity_display" optional="hide"/>
                 <field name="long_capacity_display" optional="hide"/>
                 <field name="last_snapshot_date" optional="hide"/>
+                <!-- Manual de calidad (parámetros/especificaciones amunet_quality) -->
+                <field name="qc_parameter_count" optional="show"/>
+                <!-- Existencias por etapa de producción (todas las ubicaciones) -->
+                <field name="stock_preproduccion" optional="show"/>
+                <field name="stock_posproduccion" optional="show"/>
+                <field name="stock_existencias" optional="show"/>
+                <field name="stock_control_calidad" optional="show"/>
+                <field name="stock_entrada" optional="hide"/>
+                <field name="stock_salida" optional="hide"/>
+                <field name="stock_empaquetado" optional="hide"/>
                 <field name="has_alerts" column_invisible="True"/>
                 <field name="company_id" groups="base.group_multi_company"
                        optional="hide"/>
