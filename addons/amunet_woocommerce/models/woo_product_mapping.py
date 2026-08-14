@@ -633,11 +633,17 @@ class AmunetWooProductMapping(models.Model):
     def _compute_stage_stock(self):
         """Existencias del producto por etapa de producción.
 
-        Suma la cantidad de stock.quant en todas las ubicaciones internas de
-        la compañía, agrupando por la etapa que indica el nombre de la
-        ubicación (Preproducción, Posproducción, Existencias, Control de
-        calidad, Entrada, Salida, Zona de empaquetado)."""
+        Posproducción = producto terminado LIBERADO del Almacén de Producto
+        Terminado (APT/Existencias_*). Preproducción = TODO lo demás: materia
+        prima e insumos (AMP/AMPB/ARU) MÁS el 'Almacén Temporal PT' (producto
+        fabricado en espera de análisis). El 'Rechazo' NO se contempla en
+        ninguna de las dos. Las demás etapas (Existencias, Control de calidad,
+        Entrada, Salida, Zona de empaquetado) se agrupan por el nombre de la
+        ubicación."""
         Quant = self.env['stock.quant']
+        apt_wh = self.env['stock.warehouse'].sudo().search(
+            [('code', '=', 'APT')], limit=1)
+        apt_path = apt_wh.view_location_id.parent_path if apt_wh else False
         for rec in self:
             for fname, _pats in self._STAGE_PATTERNS:
                 rec[fname] = 0.0
@@ -652,8 +658,21 @@ class AmunetWooProductMapping(models.Model):
             except AccessError:
                 continue
             for quant in quants:
-                cname = quant.location_id.complete_name or ''
+                loc = quant.location_id
+                cname = loc.complete_name or ''
+                is_apt = bool(apt_path and loc.parent_path
+                              and loc.parent_path.startswith(apt_path))
+                # Rechazo no cuenta; APT liberado (no Temporal) = pos;
+                # todo lo demás (incl. Almacén Temporal PT) = pre.
+                if 'Rechazo' not in cname:
+                    if is_apt and 'Temporal' not in cname:
+                        rec.stock_posproduccion += quant.quantity
+                    else:
+                        rec.stock_preproduccion += quant.quantity
+                # Demás etapas por nombre de ubicación
                 for fname, pats in self._STAGE_PATTERNS:
+                    if fname in ('stock_preproduccion', 'stock_posproduccion'):
+                        continue
                     if any(p in cname for p in pats):
                         rec[fname] += quant.quantity
                         break
