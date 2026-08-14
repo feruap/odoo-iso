@@ -642,25 +642,32 @@ class MrpProduction(models.Model):
             rec.amunet_product_categ_id = category
             rec.amunet_is_solution_product = 'solucion' in category_name.lower()
 
+    def _amunet_apt_temporal_location(self):
+        """Ubicacion 'Almacen Temporal PT' del almacen APT: es la cancha de
+        Calidad del producto terminado (esperando analisis). Ahi produce la MO;
+        al aprobar el analisis + validar la entrega, pasa a APT/Existencias."""
+        return self.env['stock.location'].sudo().search([
+            ('usage', '=', 'internal'),
+            ('complete_name', 'like', 'APT/%Temporal%'),
+        ], limit=1)
+
     @api.depends('picking_type_id', 'product_id')
     def _compute_locations(self):
-        """Los PRODUCTOS TERMINADOS (pruebas rapidas + medios de cultivo)
-        se producen hacia el Almacen de Producto Terminado (APT), aunque su
-        MO se fabrique con el tipo de operacion de AMP (de donde consume los
-        insumos). Soluciones y todo lo demas se quedan donde el tipo de
-        operacion los ponga (AMP). Decision de Mery 2026-08-13."""
+        """Los PRODUCTOS TERMINADOS (pruebas rapidas + medios de cultivo) se
+        producen hacia el 'Almacen Temporal PT' del APT (cancha de Calidad,
+        esperando analisis), aunque su MO consuma insumos de AMP. Al aprobar
+        el analisis y validar la entrega, pasan a APT/Existencias. Soluciones
+        y demas se quedan donde el tipo de operacion los ponga (AMP).
+        Decision de Mery 2026-08-13/14."""
         super()._compute_locations()
-        apt_dest = self.env['stock.picking.type'].search([
-            ('code', '=', 'mrp_operation'),
-            ('warehouse_id.code', '=', 'APT'),
-        ], limit=1).default_location_dest_id
-        if not apt_dest:
+        temporal = self._amunet_apt_temporal_location()
+        if not temporal:
             return
         for production in self:
             categ = ((production.product_id.categ_id.complete_name or '')
                      if production.product_id else '')
             if categ.startswith('Producto terminado'):
-                production.location_dest_id = apt_dest.id
+                production.location_dest_id = temporal.id
 
     @api.depends('product_id', 'date_start')
     def _amunet_compute_expiration(self, product, base_date):
@@ -1738,7 +1745,77 @@ class MrpProduction(models.Model):
         })
         self.sudo().message_post(body=_(
             'Análisis de producto terminado <b>APROBADO</b> por <b>%s</b>.') % self.env.user.name)
+        self._amunet_crear_entrega_pt()
         return True
+
+    def _amunet_crear_entrega_pt(self):
+        """Al aprobar el analisis del PT, genera la ENTREGA (traslado interno
+        Almacen Temporal PT -> APT/Existencias) que Almacen validara cuando
+        Produccion entregue fisicamente. Al validarla se libera el lote y
+        pasa a Posproduccion. Opcion (a) de Mery 2026-08-14."""
+        self.ensure_one()
+        categ = (self.product_id.categ_id.complete_name or '')
+        if not categ.startswith('Producto terminado'):
+            return
+        temporal = self._amunet_apt_temporal_location()
+        if not temporal:
+            return
+        ptype = self.env['stock.picking.type'].sudo().search([
+            ('code', '=', 'internal'),
+            ('warehouse_id.code', '=', 'APT'),
+            ('default_location_dest_id.complete_name', 'like', '%Existencias%'),
+        ], limit=1)
+        if not ptype or not ptype.default_location_dest_id:
+            return
+        dest = ptype.default_location_dest_id
+        lots = self.lot_producing_ids
+        if not lots:
+            return
+        Quant = self.env['stock.quant'].sudo()
+        quants = Quant.search([
+            ('location_id', '=', temporal.id),
+            ('lot_id', 'in', lots.ids),
+            ('quantity', '>', 0)])
+        if not quants:
+            return
+        Picking = self.env['stock.picking'].sudo()
+        if Picking.search_count([
+                ('amunet_entrega_mo_id', '=', self.id),
+                ('state', 'not in', ('done', 'cancel'))]):
+            return  # ya hay una entrega abierta para esta MO
+        picking = Picking.create({
+            'picking_type_id': ptype.id,
+            'location_id': temporal.id,
+            'location_dest_id': dest.id,
+            'origin': 'Entrega PT %s' % self.name,
+            'amunet_es_entrega_pt': True,
+            'amunet_entrega_mo_id': self.id,
+        })
+        total = sum(quants.mapped('quantity'))
+        move = self.env['stock.move'].sudo().create({
+            'product_id': self.product_id.id,
+            'product_uom_qty': total,
+            'product_uom': self.product_id.uom_id.id,
+            'location_id': temporal.id,
+            'location_dest_id': dest.id,
+            'picking_id': picking.id,
+        })
+        picking.action_confirm()
+        ML = self.env['stock.move.line'].sudo()
+        for q in quants:
+            ML.create({
+                'move_id': move.id, 'picking_id': picking.id,
+                'product_id': self.product_id.id,
+                'product_uom_id': self.product_id.uom_id.id,
+                'lot_id': q.lot_id.id, 'quantity': q.quantity,
+                'location_id': temporal.id, 'location_dest_id': dest.id,
+            })
+        self.sudo().message_post(body=_(
+            'Generada la <b>entrega de producto terminado</b> (%s): Almacén '
+            'Temporal PT → Existencias. Pendiente que Almacén la valide cuando '
+            'Producción entregue físicamente; al validarla se libera el lote.'
+        ) % picking.name)
+        return picking
 
     def _amunet_qc_firma_rechazar(self):
         self.ensure_one()

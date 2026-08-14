@@ -71,14 +71,15 @@
                 <field name="last_snapshot_date" optional="hide"/>
                 <!-- Manual de calidad (parámetros/especificaciones amunet_quality) -->
                 <field name="qc_parameter_count" optional="show"/>
-                <!-- Pipeline de producción (piezas de producto terminado) -->
+                <!-- Pipeline de producción (piezas de PT):
+                     capacidad → en producción → control de calidad → posproducción -->
                 <field name="stock_preproduccion" optional="show"/>
                 <field name="stock_en_produccion" optional="show"/>
+                <field name="stock_control_calidad" optional="show"/>
                 <field name="stock_posproduccion" optional="show"/>
                 <field name="odoo_free_display" optional="show"/>
                 <field name="woo_available_display" optional="show"/>
                 <field name="stock_existencias" string="Existencia total" optional="show"/>
-                <field name="stock_control_calidad" optional="show"/>
                 <field name="stock_entrada" optional="hide"/>
                 <field name="stock_salida" optional="hide"/>
                 <field name="stock_empaquetado" optional="hide"/>
