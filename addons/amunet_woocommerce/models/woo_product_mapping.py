@@ -211,10 +211,10 @@ class AmunetWooProductMapping(models.Model):
         string='En producción', compute='_compute_produccion_pipeline')
     stock_posproduccion = fields.Float(
         string='Posproducción', compute='_compute_produccion_pipeline')
+    stock_control_calidad = fields.Float(
+        string='Control de calidad', compute='_compute_produccion_pipeline')
     stock_existencias = fields.Float(
         string='Existencias', compute='_compute_stage_stock')
-    stock_control_calidad = fields.Float(
-        string='Control de calidad', compute='_compute_stage_stock')
     stock_entrada = fields.Float(
         string='Entrada', compute='_compute_stage_stock')
     stock_salida = fields.Float(
@@ -629,7 +629,6 @@ class AmunetWooProductMapping(models.Model):
 
     _STAGE_PATTERNS = [
         ('stock_existencias', ('Existencias',)),
-        ('stock_control_calidad', ('Control de calidad',)),
         ('stock_entrada', ('Entrada',)),
         ('stock_salida', ('Salida',)),
         ('stock_empaquetado', ('Zona de empaquetado',)),
@@ -722,6 +721,7 @@ class AmunetWooProductMapping(models.Model):
         apt_path = apt_wh.view_location_id.parent_path if apt_wh else False
         for rec in self:
             rec.stock_preproduccion = 0.0
+            rec.stock_control_calidad = 0.0
             rec.stock_en_produccion = 0.0
             rec.stock_posproduccion = 0.0
             product = rec.product_id
@@ -738,7 +738,8 @@ class AmunetWooProductMapping(models.Model):
                 ])
             except AccessError:
                 pquants = Quant.browse()
-            fabricado_sin_liberar = 0.0
+            en_cc = 0.0           # Control de calidad: Almacen Temporal PT
+            fabricado_pend = 0.0  # fabricado sin liberar fuera de Temporal PT
             liberado = 0.0
             for q in pquants:
                 cname = q.location_id.complete_name or ''
@@ -748,13 +749,13 @@ class AmunetWooProductMapping(models.Model):
                               and q.location_id.parent_path.startswith(apt_path))
                 if not is_apt:
                     continue
-                released = bool(has_release and q.lot_id
-                                and q.lot_id.amunet_lot_release_state == 'released'
-                                and 'Temporal' not in cname)
-                if released:
+                if 'Temporal' in cname:
+                    en_cc += q.quantity
+                elif (has_release and q.lot_id
+                        and q.lot_id.amunet_lot_release_state == 'released'):
                     liberado += q.quantity
                 else:
-                    fabricado_sin_liberar += q.quantity
+                    fabricado_pend += q.quantity
             # WIP: MO surtidas en proceso, no rechazadas -> lo que falta producir
             wip = 0.0
             try:
@@ -775,7 +776,8 @@ class AmunetWooProductMapping(models.Model):
                         and not mo.amunet_has_supplied_moves):
                     continue
                 wip += max((mo.product_qty or 0.0) - (mo.qty_produced or 0.0), 0.0)
-            rec.stock_en_produccion = fabricado_sin_liberar + wip
+            rec.stock_control_calidad = en_cc
+            rec.stock_en_produccion = fabricado_pend + wip
             rec.stock_posproduccion = liberado
 
     @api.depends('qc_parameter_count')
