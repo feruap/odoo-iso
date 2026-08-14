@@ -23,6 +23,7 @@ La generación automática de la clave y el aviso a Almacén se agregan en fases
         'mail',
     ],
     'data': [
+        'data/seeds_20260814_154529.xml',
         'data/seeds_20260812_165812.xml',
         'data/seeds_20260811_164417.xml',
         'data/seeds_20260624_162438.xml',
