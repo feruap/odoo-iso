@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════════ LISTA de convocatorias ════════════════ -->
+    <record id="view_convocatoria_list" model="ir.ui.view">
+        <field name="name">amunet.auditor.convocatoria.list</field>
+        <field name="model">amunet.auditor.convocatoria</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state=='cerrada'" decoration-info="state=='publicada'" decoration-warning="state=='en_proceso'">
+                <field name="name"/>
+                <field name="fecha_emision"/>
+                <field name="fecha_limite"/>
+                <field name="vacantes"/>
+                <field name="candidato_count" string="Candidatos"/>
+                <field name="seleccionados_count" string="Seleccionados"/>
+                <field name="state" widget="badge"
+                    decoration-success="state in ('cerrada','publicada')"
+                    decoration-warning="state == 'en_proceso'"
+                    decoration-danger="state == 'cancelada'"
+                    decoration-muted="state == 'borrador'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ════════════════ FORMULARIO de convocatoria ════════════════ -->
+    <record id="view_convocatoria_form" model="ir.ui.view">
+        <field name="name">amunet.auditor.convocatoria.form</field>
+        <field name="model">amunet.auditor.convocatoria</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_publicar" type="object" string="Publicar"
+                        class="btn-primary"
+                        invisible="state != 'borrador'"/>
+                    <button name="action_iniciar_proceso" type="object" string="Iniciar proceso"
+                        class="btn-primary"
+                        invisible="state != 'publicada'"/>
+                    <button name="action_cerrar" type="object" string="Cerrar convocatoria"
+                        invisible="state not in ('publicada', 'en_proceso')"/>
+                    <button name="action_cancelar" type="object" string="Cancelar"
+                        invisible="state in ('cancelada', 'cerrada')"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="borrador,publicada,en_proceso,cerrada"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Fechas">
+                            <field name="fecha_emision"/>
+                            <field name="fecha_limite"/>
+                            <field name="fecha_entrevista"/>
+                            <field name="lugar_entrevista"/>
+                        </group>
+                        <group string="Datos generales">
+                            <field name="vacantes"/>
+                            <field name="correo_contacto"/>
+                            <field name="fecha_publicacion" readonly="1" invisible="state == 'borrador'"/>
+                            <field name="fecha_cierre" readonly="1" invisible="state not in ('cerrada', 'cancelada')"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Convocatoria" name="texto">
+                            <separator string="Objetivo"/>
+                            <field name="objetivo" nolabel="1" widget="html"/>
+                            <separator string="Formación académica"/>
+                            <field name="formacion_academica" nolabel="1" rows="4"/>
+                            <separator string="Funciones y responsabilidades"/>
+                            <field name="funciones" nolabel="1" rows="6"/>
+                            <separator string="Beneficios"/>
+                            <field name="beneficios" nolabel="1" rows="4"/>
+                        </page>
+
+                        <page string="Candidatos" name="candidatos">
+                            <field name="candidato_ids">
+                                <list editable="bottom"
+                                    decoration-success="estado == 'seleccionado'"
+                                    decoration-danger="estado == 'rechazado'"
+                                    decoration-warning="estado == 'espera'">
+                                    <field name="usuario_id"/>
+                                    <field name="criterios_count" string="Criterios eval."/>
+                                    <field name="puntaje_total"/>
+                                    <field name="porcentaje" string="%" digits="[5,1]"/>
+                                    <field name="tipo_auditor"/>
+                                    <field name="estado" widget="badge"
+                                        decoration-success="estado == 'seleccionado'"
+                                        decoration-danger="estado == 'rechazado'"
+                                        decoration-warning="estado == 'espera'"
+                                        decoration-muted="estado == 'pendiente'"/>
+                                    <field name="es_lider" string="Líder"/>
+                                    <button name="action_seleccionar" type="object" string="Seleccionar" icon="fa-check"
+                                        invisible="estado == 'seleccionado'"/>
+                                    <button name="action_rechazar" type="object" string="Rechazar" icon="fa-times"
+                                        invisible="estado in ('rechazado', 'seleccionado')"/>
+                                    <button name="action_abrir_evaluacion" type="object"
+                                        string="Evaluar" icon="fa-pencil" title="Abrir evaluación"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ════════════════ FORMULARIO independiente de candidato ════════════════ -->
+    <record id="view_candidato_form" model="ir.ui.view">
+        <field name="name">amunet.auditor.candidato.form</field>
+        <field name="model">amunet.auditor.candidato</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="usuario_id" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Datos generales">
+                            <field name="convocatoria_id" readonly="1"/>
+                            <field name="estado"/>
+                            <field name="es_lider"/>
+                            <field name="tipo_auditor" readonly="1"/>
+                        </group>
+                        <group string="Resultado">
+                            <field name="puntaje_total" readonly="1"/>
+                            <field name="porcentaje" readonly="1" string="% obtenido"/>
+                            <field name="criterios_count" readonly="1" string="Criterios evaluados"/>
+                        </group>
+                    </group>
+                    <separator string="Evaluación por criterio"/>
+                    <field name="evaluacion_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="criterio_id"/>
+                            <field name="calificacion"/>
+                            <field name="calificacion_int" column_invisible="1"/>
+                            <field name="evaluador_id"/>
+                            <field name="fecha"/>
+                            <field name="observaciones"/>
+                        </list>
+                    </field>
+                    <separator string="Observaciones / justificación"/>
+                    <field name="observaciones" nolabel="1" rows="3"/>
+                    <field name="justificacion" nolabel="1" rows="3"/>
+                </sheet>
+                <footer>
+                    <button string="Guardar" special="save" class="btn-primary"/>
+                    <button string="Cerrar" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_candidato" model="ir.actions.act_window">
+        <field name="name">Candidato</field>
+        <field name="res_model">amunet.auditor.candidato</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('view_candidato_form')})]"/>
+    </record>
+
+    <!-- ════════════════ LISTA de criterios ════════════════ -->
+    <record id="view_criterio_list" model="ir.ui.view">
+        <field name="name">amunet.auditor.criterio.list</field>
+        <field name="model">amunet.auditor.criterio</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="secuencia" widget="handle"/>
+                <field name="name"/>
+                <field name="categoria"/>
+                <field name="descripcion"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ════════════════ ACCIÓN principal ════════════════ -->
+    <record id="action_convocatoria" model="ir.actions.act_window">
+        <field name="name">Convocatorias de auditores</field>
+        <field name="res_model">amunet.auditor.convocatoria</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea la primera convocatoria para selección de auditores internos
+            </p>
+        </field>
+    </record>
+
+    <record id="action_criterio" model="ir.actions.act_window">
+        <field name="name">Criterios de evaluación</field>
+        <field name="res_model">amunet.auditor.criterio</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

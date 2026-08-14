@@ -4,7 +4,18 @@
         <field name="name">Desviaciones / NC: Usuario</field>
     </record>
     <record id="group_desviaciones_manager" model="res.groups">
-        <field name="name">Desviaciones / NC: Responsable</field>
+        <field name="name">Desviaciones / NC: Control Documental</field>
         <field name="implied_ids" eval="[(4, ref('group_desviaciones_user'))]"/>
+    </record>
+
+    <!-- El usuario master (Fernando Ruiz, uid 67) no ve ni modifica ninguna desviación -->
+    <record id="rule_desviacion_excluir_master" model="ir.rule">
+        <field name="name">Desviaciones: sin acceso para usuario master</field>
+        <field name="model_id" ref="model_amunet_desviacion"/>
+        <field name="domain_force">[('id', 'in', [])] if user.id == 67 else []</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
     </record>
 </odoo>

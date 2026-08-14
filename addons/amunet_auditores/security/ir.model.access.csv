@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_convocatoria_user,Convocatoria Usuario,model_amunet_auditor_convocatoria,base.group_user,1,0,0,0
+access_convocatoria_doc,Convocatoria Documentacion,model_amunet_auditor_convocatoria,amunet_documentos.group_documentos_manager,1,1,1,1
+access_candidato_user,Candidato Usuario,model_amunet_auditor_candidato,base.group_user,1,1,1,0
+access_candidato_doc,Candidato Documentacion,model_amunet_auditor_candidato,amunet_documentos.group_documentos_manager,1,1,1,1
+access_evaluacion_user,Evaluacion Usuario,model_amunet_auditor_evaluacion,base.group_user,1,1,1,0
+access_evaluacion_doc,Evaluacion Documentacion,model_amunet_auditor_evaluacion,amunet_documentos.group_documentos_manager,1,1,1,1
+access_criterio_user,Criterio Usuario,model_amunet_auditor_criterio,base.group_user,1,0,0,0
+access_criterio_doc,Criterio Documentacion,model_amunet_auditor_criterio,amunet_documentos.group_documentos_manager,1,1,1,1

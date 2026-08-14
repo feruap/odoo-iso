@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="seq_convocatoria" model="ir.sequence">
+        <field name="name">Convocatoria Auditores</field>
+        <field name="code">amunet.auditor.convocatoria</field>
+        <field name="prefix">CONV-%(year)s-</field>
+        <field name="padding">3</field>
+        <field name="number_next">1</field>
+    </record>
+
+    <!-- Criterios de evaluación base (PNODC-003) -->
+    <record id="criterio_iso13485" model="amunet.auditor.criterio">
+        <field name="name">Conocimiento de ISO 13485</field>
+        <field name="categoria">conocimiento</field>
+        <field name="secuencia">10</field>
+        <field name="descripcion">Dominio de los requisitos de la norma ISO 13485 y su aplicación en dispositivos médicos de diagnóstico in vitro.</field>
+    </record>
+    <record id="criterio_cofepris" model="amunet.auditor.criterio">
+        <field name="name">Conocimiento de regulaciones Cofepris</field>
+        <field name="categoria">conocimiento</field>
+        <field name="secuencia">20</field>
+        <field name="descripcion">Conocimiento de los requisitos regulatorios aplicables a fabricantes de IVD en México.</field>
+    </record>
+    <record id="criterio_proceso" model="amunet.auditor.criterio">
+        <field name="name">Conocimiento del proceso productivo</field>
+        <field name="categoria">conocimiento</field>
+        <field name="secuencia">30</field>
+        <field name="descripcion">Comprensión del proceso de fabricación de pruebas rápidas de diagnóstico de Amunet.</field>
+    </record>
+    <record id="criterio_comunicacion" model="amunet.auditor.criterio">
+        <field name="name">Comunicación efectiva</field>
+        <field name="categoria">habilidad</field>
+        <field name="secuencia">40</field>
+        <field name="descripcion">Capacidad para expresar hallazgos con claridad, tanto de forma oral como escrita.</field>
+    </record>
+    <record id="criterio_analisis" model="amunet.auditor.criterio">
+        <field name="name">Análisis crítico</field>
+        <field name="categoria">habilidad</field>
+        <field name="secuencia">50</field>
+        <field name="descripcion">Habilidad para identificar no conformidades y evaluar evidencias objetivamente.</field>
+    </record>
+    <record id="criterio_experiencia" model="amunet.auditor.criterio">
+        <field name="name">Experiencia en área de calidad</field>
+        <field name="categoria">experiencia</field>
+        <field name="secuencia">60</field>
+        <field name="descripcion">Tiempo y profundidad de experiencia trabajando en área relacionada con calidad o procesos regulados.</field>
+    </record>
+    <record id="criterio_disponibilidad" model="amunet.auditor.criterio">
+        <field name="name">Disponibilidad para auditar</field>
+        <field name="categoria">disponibilidad</field>
+        <field name="secuencia">70</field>
+        <field name="descripcion">Posibilidad de participar en auditorías internas sin conflicto con sus funciones habituales.</field>
+    </record>
+
+</odoo>

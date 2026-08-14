@@ -4,7 +4,7 @@
               name="Desviaciones / NC"
               parent="amunet_documentos.menu_amunet_documentos_root"
               sequence="30"
-              groups="amunet_desviaciones.group_desviaciones_user"/>
+              groups="base.group_user"/>
 
     <menuitem id="menu_desviaciones_mis"
               name="Mis desviaciones"
