@@ -214,7 +214,9 @@ class AmunetWooProductMapping(models.Model):
     stock_control_calidad = fields.Float(
         string='Control de calidad', compute='_compute_produccion_pipeline')
     stock_existencias = fields.Float(
-        string='Existencias', compute='_compute_stage_stock')
+        string='Existencia total', compute='_compute_produccion_pipeline',
+        help='Total del pipeline = Preproducción + En producción + '
+             'Posproducción.')
     stock_entrada = fields.Float(
         string='Entrada', compute='_compute_stage_stock')
     stock_salida = fields.Float(
@@ -628,7 +630,6 @@ class AmunetWooProductMapping(models.Model):
                 snapshot.date and (now - snapshot.date).days > max_age)
 
     _STAGE_PATTERNS = [
-        ('stock_existencias', ('Existencias',)),
         ('stock_entrada', ('Entrada',)),
         ('stock_salida', ('Salida',)),
         ('stock_empaquetado', ('Zona de empaquetado',)),
@@ -724,6 +725,7 @@ class AmunetWooProductMapping(models.Model):
             rec.stock_control_calidad = 0.0
             rec.stock_en_produccion = 0.0
             rec.stock_posproduccion = 0.0
+            rec.stock_existencias = 0.0
             product = rec.product_id
             if not product:
                 continue
@@ -779,6 +781,10 @@ class AmunetWooProductMapping(models.Model):
             rec.stock_control_calidad = en_cc
             rec.stock_en_produccion = fabricado_pend + wip
             rec.stock_posproduccion = liberado
+            # Existencia total = suma del pipeline (pre + en + pos).
+            rec.stock_existencias = (rec.stock_preproduccion
+                                     + rec.stock_en_produccion
+                                     + rec.stock_posproduccion)
 
     @api.depends('qc_parameter_count')
     def _compute_has_quality_manual(self):
