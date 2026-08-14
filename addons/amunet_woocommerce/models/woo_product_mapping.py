@@ -200,10 +200,17 @@ class AmunetWooProductMapping(models.Model):
     # Existencias por etapa de producción (suma en todas las ubicaciones
     # internas cuyo nombre corresponde a esa etapa: APT, AMP, AMPB, ARU...)
     # --------------------------------------------------------------
+    # Pipeline de produccion (piezas de producto terminado):
+    # Preproduccion = capacidad ("para cuanto me alcanza") por cuello de
+    #   botella del BoM, con stock LIBRE de insumos (incluye Entrada/Calidad).
+    # En produccion = fabricado sin liberar (lote pendiente en APT/Temporal PT)
+    #   + WIP de MO surtidas en proceso. Posproduccion = terminado LIBERADO en APT.
     stock_preproduccion = fields.Float(
-        string='Preproducción', compute='_compute_stage_stock')
+        string='Preproducción (capacidad)', compute='_compute_produccion_pipeline')
+    stock_en_produccion = fields.Float(
+        string='En producción', compute='_compute_produccion_pipeline')
     stock_posproduccion = fields.Float(
-        string='Posproducción', compute='_compute_stage_stock')
+        string='Posproducción', compute='_compute_produccion_pipeline')
     stock_existencias = fields.Float(
         string='Existencias', compute='_compute_stage_stock')
     stock_control_calidad = fields.Float(
@@ -621,8 +628,6 @@ class AmunetWooProductMapping(models.Model):
                 snapshot.date and (now - snapshot.date).days > max_age)
 
     _STAGE_PATTERNS = [
-        ('stock_preproduccion', ('Preproducción', 'Pre-Production')),
-        ('stock_posproduccion', ('Posproducción', 'Post-Production')),
         ('stock_existencias', ('Existencias',)),
         ('stock_control_calidad', ('Control de calidad',)),
         ('stock_entrada', ('Entrada',)),
@@ -631,19 +636,10 @@ class AmunetWooProductMapping(models.Model):
     ]
 
     def _compute_stage_stock(self):
-        """Existencias del producto por etapa de producción.
-
-        Posproducción = producto terminado LIBERADO del Almacén de Producto
-        Terminado (APT/Existencias_*). Preproducción = TODO lo demás: materia
-        prima e insumos (AMP/AMPB/ARU) MÁS el 'Almacén Temporal PT' (producto
-        fabricado en espera de análisis). El 'Rechazo' NO se contempla en
-        ninguna de las dos. Las demás etapas (Existencias, Control de calidad,
-        Entrada, Salida, Zona de empaquetado) se agrupan por el nombre de la
-        ubicación."""
+        """Columnas informativas de existencia por ubicacion (Existencias,
+        Control de calidad, Entrada, Salida, Zona de empaquetado): suma la
+        existencia del producto agrupada por el nombre de la ubicacion."""
         Quant = self.env['stock.quant']
-        apt_wh = self.env['stock.warehouse'].sudo().search(
-            [('code', '=', 'APT')], limit=1)
-        apt_path = apt_wh.view_location_id.parent_path if apt_wh else False
         for rec in self:
             for fname, _pats in self._STAGE_PATTERNS:
                 rec[fname] = 0.0
@@ -658,24 +654,127 @@ class AmunetWooProductMapping(models.Model):
             except AccessError:
                 continue
             for quant in quants:
-                loc = quant.location_id
-                cname = loc.complete_name or ''
-                is_apt = bool(apt_path and loc.parent_path
-                              and loc.parent_path.startswith(apt_path))
-                # Rechazo no cuenta; APT liberado (no Temporal) = pos;
-                # todo lo demás (incl. Almacén Temporal PT) = pre.
-                if 'Rechazo' not in cname:
-                    if is_apt and 'Temporal' not in cname:
-                        rec.stock_posproduccion += quant.quantity
-                    else:
-                        rec.stock_preproduccion += quant.quantity
-                # Demás etapas por nombre de ubicación
+                cname = quant.location_id.complete_name or ''
                 for fname, pats in self._STAGE_PATTERNS:
-                    if fname in ('stock_preproduccion', 'stock_posproduccion'):
-                        continue
                     if any(p in cname for p in pats):
                         rec[fname] += quant.quantity
                         break
+
+    def _amunet_capacidad_preproduccion(self, product, company, apt_path):
+        """Piezas fabricables ('para cuanto me alcanza') por cuello de botella
+        del BoM, con stock LIBRE de cada insumo en el almacen ANTES de producto
+        terminado (todo lo interno que NO es APT: AMP/AMPB/ARU, INCLUYENDO
+        Entrada y Control de calidad; excluye Rechazo). Libre = onhand -
+        reservado (lo ya surtido/reservado no cuenta). Teorico por producto."""
+        bom = self._find_bom(product, company)
+        if not bom or bom.type != 'normal' or not bom.bom_line_ids:
+            return 0.0
+        base = bom.product_qty or 1.0
+        Quant = self.env['stock.quant']
+        cap = None
+        for line in bom.bom_line_ids:
+            comp = line.product_id
+            if not comp or line.product_qty <= 0:
+                continue
+            try:
+                req = line.product_uom_id._compute_quantity(
+                    line.product_qty, comp.uom_id, round=False) / base
+            except UserError:
+                return 0.0
+            if req <= 0:
+                continue
+            try:
+                cquants = Quant.search([
+                    ('product_id', '=', comp.id),
+                    ('location_id.usage', '=', 'internal'),
+                    ('company_id', '=', company.id),
+                ])
+            except AccessError:
+                return 0.0
+            free = 0.0
+            for q in cquants:
+                cn = q.location_id.complete_name or ''
+                if 'Rechazo' in cn:
+                    continue
+                is_apt = bool(apt_path and q.location_id.parent_path
+                              and q.location_id.parent_path.startswith(apt_path))
+                if is_apt:
+                    continue
+                free += max(q.quantity - q.reserved_quantity, 0.0)
+            possible = free / req
+            cap = possible if cap is None else min(cap, possible)
+        return float(int(cap)) if cap is not None else 0.0
+
+    def _compute_produccion_pipeline(self):
+        """Pipeline en piezas de producto terminado:
+        - Preproduccion = CAPACIDAD (cuello de botella del BoM, stock libre de
+          insumos incl. Entrada/Calidad).
+        - En produccion = producto FABRICADO sin liberar (en APT/Temporal PT
+          con lote NO liberado) + WIP de MO surtidas en proceso (lo que falta
+          producir). Sin rechazados.
+        - Posproduccion = producto terminado LIBERADO por Calidad en APT.
+        """
+        Quant = self.env['stock.quant']
+        MO = self.env['mrp.production'].sudo()
+        has_release = 'amunet_lot_release_state' in self.env['stock.lot']._fields
+        apt_wh = self.env['stock.warehouse'].sudo().search(
+            [('code', '=', 'APT')], limit=1)
+        apt_path = apt_wh.view_location_id.parent_path if apt_wh else False
+        for rec in self:
+            rec.stock_preproduccion = 0.0
+            rec.stock_en_produccion = 0.0
+            rec.stock_posproduccion = 0.0
+            product = rec.product_id
+            if not product:
+                continue
+            rec.stock_preproduccion = self._amunet_capacidad_preproduccion(
+                product, rec.company_id, apt_path)
+            # Producto terminado en APT: liberado (pos) vs sin liberar (en prod)
+            try:
+                pquants = Quant.search([
+                    ('product_id', '=', product.id),
+                    ('location_id.usage', '=', 'internal'),
+                    ('company_id', '=', rec.company_id.id),
+                ])
+            except AccessError:
+                pquants = Quant.browse()
+            fabricado_sin_liberar = 0.0
+            liberado = 0.0
+            for q in pquants:
+                cname = q.location_id.complete_name or ''
+                if 'Rechazo' in cname:
+                    continue
+                is_apt = bool(apt_path and q.location_id.parent_path
+                              and q.location_id.parent_path.startswith(apt_path))
+                if not is_apt:
+                    continue
+                released = bool(has_release and q.lot_id
+                                and q.lot_id.amunet_lot_release_state == 'released'
+                                and 'Temporal' not in cname)
+                if released:
+                    liberado += q.quantity
+                else:
+                    fabricado_sin_liberar += q.quantity
+            # WIP: MO surtidas en proceso, no rechazadas -> lo que falta producir
+            wip = 0.0
+            try:
+                mos = MO.search([
+                    ('product_id', '=', product.id),
+                    ('state', 'in', ('confirmed', 'progress', 'to_close')),
+                    ('company_id', '=', rec.company_id.id),
+                ])
+            except AccessError:
+                mos = MO.browse()
+            for mo in mos:
+                if ('quality_analysis_status' in mo._fields
+                        and mo.quality_analysis_status == 'rejected'):
+                    continue
+                if ('amunet_has_surtido_components' in mo._fields
+                        and not mo.amunet_has_surtido_components):
+                    continue
+                wip += max((mo.product_qty or 0.0) - (mo.qty_produced or 0.0), 0.0)
+            rec.stock_en_produccion = fabricado_sin_liberar + wip
+            rec.stock_posproduccion = liberado
 
     @api.depends('qc_parameter_count')
     def _compute_has_quality_manual(self):

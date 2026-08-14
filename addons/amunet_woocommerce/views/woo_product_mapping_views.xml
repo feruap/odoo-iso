@@ -73,8 +73,9 @@
                 <field name="last_snapshot_date" optional="hide"/>
                 <!-- Manual de calidad (parámetros/especificaciones amunet_quality) -->
                 <field name="qc_parameter_count" optional="show"/>
-                <!-- Existencias por etapa de producción (todas las ubicaciones) -->
+                <!-- Pipeline de producción (piezas de producto terminado) -->
                 <field name="stock_preproduccion" optional="show"/>
+                <field name="stock_en_produccion" optional="show"/>
                 <field name="stock_posproduccion" optional="show"/>
                 <field name="stock_existencias" optional="show"/>
                 <field name="stock_control_calidad" optional="show"/>
