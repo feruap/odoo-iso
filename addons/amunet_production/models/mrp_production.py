@@ -642,6 +642,26 @@ class MrpProduction(models.Model):
             rec.amunet_product_categ_id = category
             rec.amunet_is_solution_product = 'solucion' in category_name.lower()
 
+    @api.depends('picking_type_id', 'product_id')
+    def _compute_locations(self):
+        """Los PRODUCTOS TERMINADOS (pruebas rapidas + medios de cultivo)
+        se producen hacia el Almacen de Producto Terminado (APT), aunque su
+        MO se fabrique con el tipo de operacion de AMP (de donde consume los
+        insumos). Soluciones y todo lo demas se quedan donde el tipo de
+        operacion los ponga (AMP). Decision de Mery 2026-08-13."""
+        super()._compute_locations()
+        apt_dest = self.env['stock.picking.type'].search([
+            ('code', '=', 'mrp_operation'),
+            ('warehouse_id.code', '=', 'APT'),
+        ], limit=1).default_location_dest_id
+        if not apt_dest:
+            return
+        for production in self:
+            categ = ((production.product_id.categ_id.complete_name or '')
+                     if production.product_id else '')
+            if categ.startswith('Producto terminado'):
+                production.location_dest_id = apt_dest.id
+
     @api.depends('product_id', 'date_start')
     def _amunet_compute_expiration(self, product, base_date):
         """Caducidad = base_date + duracion del producto RESPETANDO su unidad
