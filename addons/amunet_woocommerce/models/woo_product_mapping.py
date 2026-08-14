@@ -769,8 +769,10 @@ class AmunetWooProductMapping(models.Model):
                 if ('quality_analysis_status' in mo._fields
                         and mo.quality_analysis_status == 'rejected'):
                     continue
-                if ('amunet_has_surtido_components' in mo._fields
-                        and not mo.amunet_has_surtido_components):
+                # "surtido" = ya se surtio material (has_supplied_moves), NO
+                # el flag has_surtido_components que significa "le FALTA surtir".
+                if ('amunet_has_supplied_moves' in mo._fields
+                        and not mo.amunet_has_supplied_moves):
                     continue
                 wip += max((mo.product_qty or 0.0) - (mo.qty_produced or 0.0), 0.0)
             rec.stock_en_produccion = fabricado_sin_liberar + wip
