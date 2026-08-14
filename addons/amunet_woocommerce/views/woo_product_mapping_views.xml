@@ -66,8 +66,6 @@
                 <field name="linea_larga" widget="boolean_toggle" optional="show"
                        groups="amunet_woocommerce.group_linea_larga_editor"/>
                 <field name="bom_status_display" optional="show"/>
-                <field name="odoo_free_display" optional="show"/>
-                <field name="woo_available_display" optional="show"/>
                 <field name="short_capacity_display" optional="hide"/>
                 <field name="long_capacity_display" optional="hide"/>
                 <field name="last_snapshot_date" optional="hide"/>
@@ -77,7 +75,9 @@
                 <field name="stock_preproduccion" optional="show"/>
                 <field name="stock_en_produccion" optional="show"/>
                 <field name="stock_posproduccion" optional="show"/>
-                <field name="stock_existencias" optional="show"/>
+                <field name="odoo_free_display" optional="show"/>
+                <field name="woo_available_display" optional="show"/>
+                <field name="stock_existencias" string="Existencia total" optional="show"/>
                 <field name="stock_control_calidad" optional="show"/>
                 <field name="stock_entrada" optional="hide"/>
                 <field name="stock_salida" optional="hide"/>
