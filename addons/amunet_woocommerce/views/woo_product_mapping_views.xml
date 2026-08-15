@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Acción "Actualizar manuales" en el menú Acción (engrane) de la lista.
+         Baja la lista de manuales aprobados desde la carpeta Nextcloud. -->
+    <record id="action_refresh_manuals_server" model="ir.actions.server">
+        <field name="name">Actualizar manuales (Nextcloud)</field>
+        <field name="model_id" ref="model_amunet_woo_product_mapping"/>
+        <field name="binding_model_id" ref="model_amunet_woo_product_mapping"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = model.action_refresh_manuals()</field>
+    </record>
+
+    <!-- Cron: refresca la lista de manuales desde Nextcloud una vez al día. -->
+    <record id="cron_refresh_manuals" model="ir.cron">
+        <field name="name">WooCommerce: actualizar manuales desde Nextcloud</field>
+        <field name="model_id" ref="model_amunet_woo_product_mapping"/>
+        <field name="state">code</field>
+        <field name="code">model.action_refresh_manuals()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
     <record id="view_woo_product_mapping_search" model="ir.ui.view">
         <field name="name">amunet.woo.product.mapping.search</field>
         <field name="model">amunet.woo.product.mapping</field>
@@ -69,7 +91,11 @@
                 <field name="short_capacity_display" optional="hide"/>
                 <field name="long_capacity_display" optional="hide"/>
                 <field name="last_snapshot_date" optional="hide"/>
-                <!-- Manual de calidad (parámetros/especificaciones amunet_quality) -->
+                <!-- Manual de calidad: PDF aprobado en Nextcloud (Documentación) -->
+                <field name="has_quality_manual" optional="show"/>
+                <field name="manual_pdf_url" widget="url" optional="hide"
+                       string="Abrir manual"/>
+                <!-- Parámetros/especificaciones de calidad (amunet_quality) -->
                 <field name="quality_status_display" optional="show"/>
                 <field name="qc_parameter_count" optional="hide"/>
                 <!-- Pipeline de producción (piezas de PT):

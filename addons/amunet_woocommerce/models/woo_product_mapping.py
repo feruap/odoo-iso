@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import base64
+import json
+import re
+from urllib.parse import unquote, quote
 
 import requests
 
@@ -228,11 +231,16 @@ class AmunetWooProductMapping(models.Model):
     # Configuración de calidad
     # --------------------------------------------------------------
     has_quality_manual = fields.Boolean(
-        string='Tiene manual de calidad',
+        string='Tiene manual',
         compute='_compute_has_quality_manual',
-        help='El producto tiene al menos un parámetro/especificación de '
-             'calidad configurado (amunet_quality). Si lo tiene, ya es '
-             'evaluable para volverse vendible.')
+        help='El producto tiene un manual APROBADO publicado en la carpeta '
+             'de Nextcloud de Documentación (archivo CLAVE_Nombre.pdf cuya '
+             'clave coincide con la clave del producto). Usa el botón '
+             '"Actualizar manuales" para refrescar la lista desde Nextcloud.')
+    manual_pdf_url = fields.Char(
+        string='Manual (PDF)',
+        compute='_compute_has_quality_manual',
+        help='Enlace directo al PDF del manual en Nextcloud, si existe.')
     qc_required = fields.Boolean(
         string='Requiere QC', compute='_compute_quality')
     qc_parameter_count = fields.Integer(
@@ -792,10 +800,85 @@ class AmunetWooProductMapping(models.Model):
                                      + rec.stock_posproduccion
                                      + rec.stock_control_calidad)
 
-    @api.depends('qc_parameter_count')
+    # ------------------------------------------------------------------
+    # Manual de calidad = PDF aprobado en la carpeta Nextcloud de Documentación
+    # ------------------------------------------------------------------
+    MANUAL_WEBDAV_URL_DEFAULT = 'https://next.amunet.com.mx/public.php/webdav/'
+    MANUAL_TOKEN_DEFAULT = '2dB7KWadAnPKZjz'
+    MANUAL_SHARE_URL_DEFAULT = 'https://next.amunet.com.mx/s/2dB7KWadAnPKZjz'
+
+    def _manual_config(self):
+        ICP = self.env['ir.config_parameter'].sudo()
+        return (
+            ICP.get_param('amunet_woocommerce.manual_webdav_url',
+                          self.MANUAL_WEBDAV_URL_DEFAULT),
+            ICP.get_param('amunet_woocommerce.manual_webdav_token',
+                          self.MANUAL_TOKEN_DEFAULT),
+            ICP.get_param('amunet_woocommerce.manual_share_url',
+                          self.MANUAL_SHARE_URL_DEFAULT),
+        )
+
+    def _manual_codes_map(self):
+        """Dict {CLAVE_MAYUS: nombre_archivo.pdf} cacheado en config."""
+        raw = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet_woocommerce.manual_codes_json', '{}')
+        try:
+            return json.loads(raw) or {}
+        except (ValueError, TypeError):
+            return {}
+
+    def action_refresh_manuals(self):
+        """Baja la lista de manuales de la carpeta Nextcloud (WebDAV) y la
+        cachea en config. Actualiza la columna 'Tiene manual'."""
+        url, token, share = self._manual_config()
+        try:
+            resp = requests.request(
+                'PROPFIND', url, auth=(token, ''),
+                headers={'Depth': '1'}, timeout=30)
+            resp.raise_for_status()
+        except Exception as exc:  # noqa: BLE001
+            raise UserError(
+                _('No se pudo conectar con la carpeta de manuales en '
+                  'Nextcloud:\n%s') % exc)
+        codes = {}
+        for m in re.finditer(r'<d:href>(.*?)</d:href>', resp.text):
+            href = m.group(1)
+            if href.lower().endswith('.pdf'):
+                fname = unquote(href.split('/webdav/')[-1])
+                code = fname.split('_')[0].strip().upper()
+                if code:
+                    codes[code] = fname
+        ICP = self.env['ir.config_parameter'].sudo()
+        ICP.set_param('amunet_woocommerce.manual_codes_json',
+                      json.dumps(codes))
+        ICP.set_param('amunet_woocommerce.manual_codes_updated',
+                      fields.Datetime.to_string(fields.Datetime.now()))
+        self.env['amunet.woo.product.mapping'].search([]).invalidate_recordset(
+            ['has_quality_manual', 'manual_pdf_url'])
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Manuales actualizados'),
+                'message': _('%d manuales encontrados en Nextcloud.')
+                % len(codes),
+                'type': 'success',
+                'sticky': False,
+                'next': {'type': 'ir.actions.act_window_close'},
+            },
+        }
+
+    @api.depends('product_id')
     def _compute_has_quality_manual(self):
+        codes = self._manual_codes_map()
+        _, _token, share = self._manual_config()
         for rec in self:
-            rec.has_quality_manual = rec.qc_parameter_count > 0
+            code = (rec.product_id.default_code or '').strip().upper()
+            fname = codes.get(code)
+            rec.has_quality_manual = bool(fname)
+            rec.manual_pdf_url = (
+                '%s/download?path=%%2F&files=%s' % (share, quote(fname))
+                if fname else False)
 
     def _compute_odoo_inventory(self):
         Quant = self.env['stock.quant']
