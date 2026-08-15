@@ -70,7 +70,8 @@
                 <field name="long_capacity_display" optional="hide"/>
                 <field name="last_snapshot_date" optional="hide"/>
                 <!-- Manual de calidad (parámetros/especificaciones amunet_quality) -->
-                <field name="qc_parameter_count" optional="show"/>
+                <field name="quality_status_display" optional="show"/>
+                <field name="qc_parameter_count" optional="hide"/>
                 <!-- Pipeline de producción (piezas de PT):
                      capacidad → en producción → control de calidad → posproducción -->
                 <field name="stock_preproduccion" optional="show"/>

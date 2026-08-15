@@ -216,7 +216,7 @@ class AmunetWooProductMapping(models.Model):
     stock_existencias = fields.Float(
         string='Existencia total', compute='_compute_produccion_pipeline',
         help='Total del pipeline = Preproducción + En producción + '
-             'Posproducción.')
+             'Posproducción + Control de calidad.')
     stock_entrada = fields.Float(
         string='Entrada', compute='_compute_stage_stock')
     stock_salida = fields.Float(
@@ -243,6 +243,11 @@ class AmunetWooProductMapping(models.Model):
         string='Calidad calculable', compute='_compute_quality')
     quality_reason = fields.Char(
         string='Razón calidad', compute='_compute_quality')
+    quality_status_display = fields.Char(
+        string='Parámetros de calidad', compute='_compute_quality',
+        help='"No requiere" = el producto no se analiza por calidad. '
+             '"Falta configurar" = requiere QC pero no tiene parámetros. '
+             'Un número = parámetros de calidad ya configurados.')
 
     # --------------------------------------------------------------
     # Órdenes MRP abiertas
@@ -781,10 +786,11 @@ class AmunetWooProductMapping(models.Model):
             rec.stock_control_calidad = en_cc
             rec.stock_en_produccion = fabricado_pend + wip
             rec.stock_posproduccion = liberado
-            # Existencia total = suma del pipeline (pre + en + pos).
+            # Existencia total = suma del pipeline (pre + en + pos + calidad).
             rec.stock_existencias = (rec.stock_preproduccion
                                      + rec.stock_en_produccion
-                                     + rec.stock_posproduccion)
+                                     + rec.stock_posproduccion
+                                     + rec.stock_control_calidad)
 
     @api.depends('qc_parameter_count')
     def _compute_has_quality_manual(self):
@@ -866,6 +872,7 @@ class AmunetWooProductMapping(models.Model):
             rec.qc_check_count = 0
             rec.quality_calculable = False
             rec.quality_reason = False
+            rec.quality_status_display = False
             if not rec.product_id:
                 rec.quality_reason = _('No hay producto Odoo mapeado.')
                 continue
@@ -888,6 +895,13 @@ class AmunetWooProductMapping(models.Model):
                     rec.quality_calculable = False
                     rec.quality_reason = _(
                         'Sin permiso para consultar controles de calidad.')
+            # Texto de estado de calidad para la lista
+            if not rec.qc_required:
+                rec.quality_status_display = _('No requiere')
+            elif rec.qc_parameter_count > 0:
+                rec.quality_status_display = str(rec.qc_parameter_count)
+            else:
+                rec.quality_status_display = _('Falta configurar')
 
     def _compute_mrp(self):
         Production = self.env['mrp.production']
