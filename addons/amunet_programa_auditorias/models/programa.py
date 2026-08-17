@@ -109,7 +109,66 @@ class AmunetProgramaAuditoria(models.Model):
             'fecha_autorizacion': fields.Date.today(),
             'state': 'vigente',
         })
+        self._notificar_supervisores()
         return {'type': 'ir.actions.act_window_close'}
+
+    def _notificar_supervisores(self):
+        self.ensure_one()
+        MESES = {
+            'ene': 'Enero', 'feb': 'Febrero', 'mar': 'Marzo',
+            'abr': 'Abril', 'may': 'Mayo', 'jun': 'Junio',
+            'jul': 'Julio', 'ago': 'Agosto', 'sep': 'Septiembre',
+            'oct': 'Octubre', 'nov': 'Noviembre', 'dic': 'Diciembre',
+        }
+        area_label = dict(_AREA)
+        # Agrupar líneas por supervisor
+        por_supervisor = {}
+        for linea in self.linea_ids.filtered('supervisor_id'):
+            sup = linea.supervisor_id
+            por_supervisor.setdefault(sup, []).append(linea)
+
+        for supervisor, lineas in por_supervisor.items():
+            if not supervisor.email:
+                continue
+            filas_html = ''
+            for linea in lineas:
+                meses_prog = []
+                for campo, nombre in MESES.items():
+                    val = getattr(linea, campo)
+                    if val:
+                        meses_prog.append('<b>%s</b>: %s' % (nombre, val))
+                resumen = ', '.join(meses_prog) if meses_prog else 'Sin auditorías programadas'
+                filas_html += (
+                    '<tr><td style="padding:6px;border:1px solid #dee2e6;">%s</td>'
+                    '<td style="padding:6px;border:1px solid #dee2e6;">%s</td></tr>'
+                ) % (area_label.get(linea.alcance, linea.alcance), resumen)
+
+            cuerpo = '''
+<p>Hola <b>%s</b>,</p>
+<p>El <b>%s</b> ha sido publicado y autorizado. A continuación el calendario de auditorías
+asignado a tu área:</p>
+<table style="border-collapse:collapse;width:100%%;font-size:14px;">
+  <thead>
+    <tr style="background:#f8f9fa;">
+      <th style="padding:8px;border:1px solid #dee2e6;text-align:left;">Área</th>
+      <th style="padding:8px;border:1px solid #dee2e6;text-align:left;">Meses programados</th>
+    </tr>
+  </thead>
+  <tbody>%s</tbody>
+</table>
+<br/>
+<p style="color:#6c757d;font-size:12px;">
+  P = Programada &nbsp;·&nbsp; NP = No Programada &nbsp;·&nbsp; AR = Reprogramada
+</p>
+<p>Puedes consultar el programa completo en el sistema de calidad.</p>
+''' % (supervisor.name, self.name, filas_html)
+
+            self.env['mail.mail'].sudo().create({
+                'subject': 'Programa Anual de Auditorías %s — Publicado' % self.anio,
+                'email_to': supervisor.email,
+                'body_html': cuerpo,
+                'auto_delete': True,
+            }).send()
 
     # ── Acciones de estado ─────────────────────────────────────────────────
 
