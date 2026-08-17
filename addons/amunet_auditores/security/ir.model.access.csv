@@ -9,3 +9,9 @@ access_criterio_user,Criterio Usuario,model_amunet_auditor_criterio,base.group_u
 access_criterio_doc,Criterio Documentacion,model_amunet_auditor_criterio,amunet_documentos.group_documentos_manager,1,1,1,1
 access_invitacion_user,Invitacion Usuario,model_amunet_auditor_invitacion,base.group_user,1,0,0,0
 access_invitacion_doc,Invitacion Documentacion,model_amunet_auditor_invitacion,amunet_documentos.group_documentos_manager,1,1,1,1
+access_pregunta_user,Pregunta Usuario,model_amunet_auditor_pregunta,base.group_user,1,0,0,0
+access_pregunta_doc,Pregunta Documentacion,model_amunet_auditor_pregunta,amunet_documentos.group_documentos_manager,1,1,1,1
+access_opcion_user,Opcion Usuario,model_amunet_auditor_opcion,base.group_user,1,0,0,0
+access_opcion_doc,Opcion Documentacion,model_amunet_auditor_opcion,amunet_documentos.group_documentos_manager,1,1,1,1
+access_respuesta_eval_user,RespuestaEval Usuario,model_amunet_auditor_respuesta_eval,base.group_user,1,1,1,0
+access_respuesta_eval_doc,RespuestaEval Documentacion,model_amunet_auditor_respuesta_eval,amunet_documentos.group_documentos_manager,1,1,1,1

@@ -9,6 +9,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/criterios_data.xml',
+        'data/preguntas_data.xml',
         'views/convocatoria_views.xml',
         'views/menu_views.xml',
     ],

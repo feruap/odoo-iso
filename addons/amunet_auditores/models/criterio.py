@@ -4,7 +4,7 @@ from odoo import fields, models
 class AmunetAuditorCriterio(models.Model):
     _name = 'amunet.auditor.criterio'
     _description = 'Criterio de evaluación para auditores internos'
-    _order = 'categoria, secuencia, name'
+    _order = 'secuencia, name'
 
     name = fields.Char(string='Criterio', required=True)
     secuencia = fields.Integer(default=10)
@@ -20,3 +20,5 @@ class AmunetAuditorCriterio(models.Model):
         ('abierta', 'Respuesta abierta'),
     ], string='Tipo de evaluación', default='numerica', required=True)
     active = fields.Boolean(default=True)
+    pregunta_ids = fields.One2many(
+        'amunet.auditor.pregunta', 'criterio_id', string='Preguntas de evaluación')
