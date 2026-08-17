@@ -83,11 +83,11 @@ class AmunetProgramaAuditoria(models.Model):
 
     def _signature_elaborar(self):
         self.ensure_one()
-        self.with_context(_skip_signature_check=True).write({
+        self.write({
             'elaboro_id': self.env.user.id,
             'fecha_elaboracion': fields.Date.today(),
         })
-        return True
+        return {'type': 'ir.actions.act_window_close'}
 
     def action_firmar_autorizacion(self):
         self.ensure_one()
@@ -104,12 +104,12 @@ class AmunetProgramaAuditoria(models.Model):
 
     def _signature_autorizar(self):
         self.ensure_one()
-        self.with_context(_skip_signature_check=True).write({
+        self.write({
             'autorizo_id': self.env.user.id,
             'fecha_autorizacion': fields.Date.today(),
             'state': 'vigente',
         })
-        return True
+        return {'type': 'ir.actions.act_window_close'}
 
     # ── Acciones de estado ─────────────────────────────────────────────────
 
