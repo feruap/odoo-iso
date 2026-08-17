@@ -15,4 +15,8 @@ class AmunetAuditorCriterio(models.Model):
         ('disponibilidad', 'Disponibilidad'),
     ], string='Categoría', required=True, default='conocimiento')
     descripcion = fields.Text(string='Descripción')
+    tipo = fields.Selection([
+        ('numerica', 'Calificación 1-5'),
+        ('abierta', 'Respuesta abierta'),
+    ], string='Tipo de evaluación', default='numerica', required=True)
     active = fields.Boolean(default=True)

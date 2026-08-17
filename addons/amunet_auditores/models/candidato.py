@@ -41,12 +41,27 @@ class AmunetAuditorCandidato(models.Model):
     observaciones = fields.Text()
     justificacion = fields.Text(string='Justificación')
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        criterios = self.env['amunet.auditor.criterio'].search(
+            [('active', '=', True)], order='categoria, secuencia, name')
+        for rec in records:
+            if not rec.evaluacion_ids:
+                self.env['amunet.auditor.evaluacion'].create([{
+                    'candidato_id': rec.id,
+                    'criterio_id': c.id,
+                    'evaluador_id': self.env.user.id,
+                } for c in criterios])
+        return records
+
     @api.depends('evaluacion_ids.calificacion_int')
     def _compute_puntaje(self):
         for rec in self:
             evals = rec.evaluacion_ids
-            total = sum(evals.mapped('calificacion_int'))
-            maximo = len(evals) * 5
+            evals_num = evals.filtered(lambda e: e.criterio_id.tipo == 'numerica')
+            total = sum(evals_num.mapped('calificacion_int'))
+            maximo = len(evals_num) * 5
             rec.criterios_count = len(evals)
             rec.puntaje_total = total
             rec.porcentaje = (total / maximo * 100) if maximo else 0.0
@@ -105,6 +120,8 @@ class AmunetAuditorEvaluacion(models.Model):
     criterio_id = fields.Many2one(
         'amunet.auditor.criterio', string='Criterio', required=True,
         domain=[('active', '=', True)])
+    criterio_tipo = fields.Selection(
+        related='criterio_id.tipo', string='Tipo', readonly=True, store=True)
     evaluador_id = fields.Many2one(
         'res.users', string='Evaluador',
         default=lambda self: self.env.user)
@@ -114,8 +131,9 @@ class AmunetAuditorEvaluacion(models.Model):
         ('3', '3 — Medio'),
         ('4', '4 — Alto'),
         ('5', '5 — Muy alto'),
-    ], string='Calificación', required=True, default='3')
-    observaciones = fields.Text()
+    ], string='Calificación')
+    respuesta_abierta = fields.Text(string='Respuesta')
+    observaciones = fields.Text(string='Observaciones')
     fecha = fields.Date(default=fields.Date.today, readonly=True)
 
     @api.depends('calificacion')

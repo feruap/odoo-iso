@@ -44,13 +44,15 @@
         <field name="name">Experiencia en área de calidad</field>
         <field name="categoria">experiencia</field>
         <field name="secuencia">60</field>
-        <field name="descripcion">Tiempo y profundidad de experiencia trabajando en área relacionada con calidad o procesos regulados.</field>
+        <field name="tipo">abierta</field>
+        <field name="descripcion">Describe tu experiencia trabajando en actividades relacionadas con calidad o procesos regulados en Amunet.</field>
     </record>
     <record id="criterio_disponibilidad" model="amunet.auditor.criterio">
         <field name="name">Disponibilidad para auditar</field>
         <field name="categoria">disponibilidad</field>
         <field name="secuencia">70</field>
-        <field name="descripcion">Posibilidad de participar en auditorías internas sin conflicto con sus funciones habituales.</field>
+        <field name="tipo">abierta</field>
+        <field name="descripcion">¿Tienes disponibilidad para participar en auditorías internas? ¿Existe algún impedimento o conflicto de interés con algún área?</field>
     </record>
 
 </odoo>
