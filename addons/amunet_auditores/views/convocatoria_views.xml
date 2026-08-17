@@ -51,6 +51,8 @@
                             <field name="fecha_emision"/>
                             <field name="fecha_limite"/>
                             <field name="fecha_entrevista"/>
+                            <field name="hora_inicio_entrevista"/>
+                            <field name="hora_fin_entrevista"/>
                             <field name="lugar_entrevista"/>
                         </group>
                         <group string="Datos generales">
@@ -71,6 +73,35 @@
                             <field name="funciones" nolabel="1" rows="6"/>
                             <separator string="Beneficios"/>
                             <field name="beneficios" nolabel="1" rows="4"/>
+                        </page>
+
+                        <page string="Destinatarios" name="destinatarios">
+                            <p class="text-muted" style="margin-bottom:12px;">
+                                Selecciona a quiénes les llegará el correo de invitación al publicar la convocatoria.
+                                Si la lista está vacía al publicar, no se enviará ningún correo.
+                            </p>
+                            <field name="destinatario_ids" widget="many2many_tags"
+                                domain="[('share','=',False),('active','=',True)]"
+                                placeholder="Busca un empleado..."/>
+                        </page>
+
+                        <page string="Respuestas" name="invitaciones"
+                              invisible="state == 'borrador'">
+                            <field name="invitacion_ids" readonly="1">
+                                <list decoration-success="respuesta == 'interesado'"
+                                      decoration-muted="respuesta == 'no_interesado'">
+                                    <field name="usuario_id" string="Empleado"/>
+                                    <field name="respuesta" widget="badge"
+                                        decoration-success="respuesta == 'interesado'"
+                                        decoration-muted="respuesta == 'no_interesado'"
+                                        decoration-warning="respuesta == 'pendiente'"/>
+                                    <field name="fecha_respuesta" string="Fecha"/>
+                                    <field name="candidato_id" string="Candidato"/>
+                                    <button name="action_agregar_candidato" type="object"
+                                        string="Agregar a candidatos" icon="fa-user-plus"
+                                        invisible="respuesta != 'interesado' or candidato_id != False"/>
+                                </list>
+                            </field>
                         </page>
 
                         <page string="Candidatos" name="candidatos">

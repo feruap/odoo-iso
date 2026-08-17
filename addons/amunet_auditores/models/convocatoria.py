@@ -14,14 +14,21 @@ class AmunetAuditorConvocatoria(models.Model):
         string='Fecha de emisión', default=fields.Date.today, required=True, tracking=True)
     fecha_limite = fields.Date(
         string='Fecha límite de inscripción', required=True, tracking=True)
-    fecha_entrevista = fields.Datetime(
-        string='Fecha y hora de entrevistas', tracking=True)
+    fecha_entrevista = fields.Date(
+        string='Fecha de entrevistas', tracking=True)
+    _HORAS = [(h, h) for h in [
+        '07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30',
+        '11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30',
+        '15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00',
+    ]]
+    hora_inicio_entrevista = fields.Selection(_HORAS, string='Hora de inicio')
+    hora_fin_entrevista = fields.Selection(_HORAS, string='Hora de fin')
     lugar_entrevista = fields.Char(
         string='Lugar', default='Instalaciones Amunet')
     vacantes = fields.Integer(
         string='Vacantes', default=3, required=True)
     correo_contacto = fields.Char(
-        string='Correo de contacto', default='auditorias@amunet.com.mx')
+        string='Correo de contacto', default='documentacion@amunet.com.mx')
 
     state = fields.Selection([
         ('borrador', 'Borrador'),
@@ -34,8 +41,14 @@ class AmunetAuditorConvocatoria(models.Model):
     fecha_publicacion = fields.Date(string='Fecha de publicación', readonly=True)
     fecha_cierre = fields.Date(string='Fecha de cierre', readonly=True)
 
+    destinatario_ids = fields.Many2many(
+        'res.users', string='Enviar invitación a',
+        domain=[('share', '=', False), ('active', '=', True)],
+        help='Personas que recibirán el correo de convocatoria al publicar.')
     candidato_ids = fields.One2many(
         'amunet.auditor.candidato', 'convocatoria_id', string='Candidatos')
+    invitacion_ids = fields.One2many(
+        'amunet.auditor.invitacion', 'convocatoria_id', string='Invitaciones')
     candidato_count = fields.Integer(
         compute='_compute_conteos', store=True, string='Candidatos')
     seleccionados_count = fields.Integer(
@@ -85,8 +98,49 @@ class AmunetAuditorConvocatoria(models.Model):
         self.ensure_one()
         if self.state != 'borrador':
             raise UserError('Solo se pueden publicar convocatorias en borrador.')
+
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        enviados = 0
+        for usuario in self.destinatario_ids:
+            if not usuario.email:
+                continue
+            inv = self.env['amunet.auditor.invitacion'].create({
+                'convocatoria_id': self.id,
+                'usuario_id': usuario.id,
+            })
+            url_si = '%s/auditores/respuesta/%s/si' % (base_url, inv.token)
+            url_no = '%s/auditores/respuesta/%s/no' % (base_url, inv.token)
+            body_html = """
+<p>Hola <b>%s</b>,</p>
+<p>Amunet lanza una convocatoria para la <b>selección y formación de Auditores Internos</b>
+(%s). Si te interesa participar, haz clic en uno de los botones:</p>
+<p style="margin:24px 0;text-align:center;">
+  <a href="%s" style="background:#28a745;color:#fff;padding:12px 28px;border-radius:6px;
+     text-decoration:none;font-weight:bold;margin-right:12px;">✅ Estoy interesado</a>
+  <a href="%s" style="background:#6c757d;color:#fff;padding:12px 28px;border-radius:6px;
+     text-decoration:none;font-weight:bold;">❌ No me interesa</a>
+</p>
+<p><b>Fecha límite de inscripción:</b> %s</p>
+<p>Si tienes dudas, escríbenos a <a href="mailto:%s">%s</a>.</p>
+<p>Saludos,<br/>Área de Documentación — Amunet</p>
+""" % (usuario.name, self.name, url_si, url_no,
+       self.fecha_limite or 'por confirmar',
+       self.correo_contacto or '', self.correo_contacto or '')
+            self.env['mail.mail'].sudo().create({
+                'subject': 'Convocatoria Auditores Internos — %s' % self.name,
+                'body_html': body_html,
+                'email_to': usuario.email,
+                'auto_delete': True,
+            }).send()
+            enviados += 1
+
         self.write({'state': 'publicada', 'fecha_publicacion': fields.Date.today()})
-        self.message_post(body='Convocatoria publicada. Fecha límite: %s' % self.fecha_limite)
+        self.message_post(
+            body='Convocatoria publicada. %s%s' % (
+                'Invitaciones enviadas a %d persona(s). ' % enviados if enviados else 'Sin destinatarios seleccionados. ',
+                'Fecha límite: %s' % self.fecha_limite,
+            )
+        )
 
     def action_iniciar_proceso(self):
         self.ensure_one()
