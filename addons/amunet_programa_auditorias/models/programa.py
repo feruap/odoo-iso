@@ -183,6 +183,11 @@ asignado a tu área:</p>
             'context': {'default_programa_id': self.id},
         }
 
+    def unlink(self):
+        if not self.env.user.has_group('amunet_documentos.group_documentos_manager'):
+            raise ValidationError(_('Solo el gestor de documentos puede eliminar programas anuales de auditorías.'))
+        return super().unlink()
+
     def action_cerrar(self):
         self.write({'state': 'cerrado'})
 
