@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="cron_recordatorio_calidad" model="ir.cron">
+            <field name="name">Manuales: recordatorio a Calidad cada 2 horas</field>
+            <field name="model_id" ref="amunet_documentacion_compartida.model_amunet_doc_compartida"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_recordatorio_calidad()</field>
+            <field name="interval_number">2</field>
+            <field name="interval_type">hours</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>
