@@ -13,11 +13,4 @@
         action="action_convocatoria"
         sequence="10"/>
 
-    <menuitem id="menu_criterios"
-        name="Criterios de evaluación"
-        parent="menu_auditores_root"
-        action="action_criterio"
-        sequence="20"
-        groups="amunet_documentos.group_documentos_manager"/>
-
 </odoo>

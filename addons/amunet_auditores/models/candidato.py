@@ -148,6 +148,19 @@ class AmunetAuditorEvaluacion(models.Model):
         for rec in self:
             rec.tiene_preguntas = bool(rec.criterio_id.pregunta_ids)
 
+    def write(self, vals):
+        result = super().write(vals)
+        if any(k in vals for k in ('calificacion', 'respuesta_abierta')):
+            self._auto_iniciar_proceso()
+        return result
+
+    def _auto_iniciar_proceso(self):
+        for rec in self:
+            if rec.calificacion_int or rec.calificacion:
+                conv = rec.candidato_id.convocatoria_id
+                if conv.state == 'publicada':
+                    conv.write({'state': 'en_proceso'})
+
     @api.depends('respuesta_ids.puntaje', 'calificacion')
     def _compute_calificacion_int(self):
         for rec in self:

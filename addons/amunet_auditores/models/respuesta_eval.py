@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class AmunetAuditorRespuestaEval(models.Model):
@@ -18,3 +18,9 @@ class AmunetAuditorRespuestaEval(models.Model):
     respuesta_abierta = fields.Text(string='Respuesta')
     puntaje = fields.Integer(
         related='opcion_id.puntaje', string='Puntaje', store=True, readonly=True)
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'opcion_id' in vals:
+            self.mapped('evaluacion_id')._auto_iniciar_proceso()
+        return result

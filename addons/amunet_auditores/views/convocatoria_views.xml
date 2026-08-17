@@ -32,10 +32,7 @@
                     <button name="action_publicar" type="object" string="Publicar"
                         class="btn-primary"
                         invisible="state != 'borrador'"/>
-                    <button name="action_iniciar_proceso" type="object" string="Iniciar proceso"
-                        class="btn-primary"
-                        invisible="state != 'publicada'"/>
-                    <button name="action_cerrar" type="object" string="Cerrar convocatoria"
+<button name="action_cerrar" type="object" string="Cerrar convocatoria"
                         invisible="state not in ('publicada', 'en_proceso')"/>
                     <button name="action_cancelar" type="object" string="Cancelar"
                         invisible="state in ('cancelada', 'cerrada')"/>
@@ -82,7 +79,8 @@
                             </p>
                             <field name="destinatario_ids" widget="many2many_tags"
                                 domain="[('share','=',False),('active','=',True)]"
-                                placeholder="Busca un empleado..."/>
+                                placeholder="Busca un empleado..."
+                                readonly="state in ('cerrada', 'cancelada')"/>
                         </page>
 
                         <page string="Respuestas" name="invitaciones"
@@ -105,7 +103,8 @@
                         </page>
 
                         <page string="Candidatos" name="candidatos">
-                            <field name="candidato_ids">
+                            <field name="candidato_ids"
+                                readonly="state in ('cerrada', 'cancelada')">
                                 <list editable="bottom"
                                     decoration-success="estado == 'seleccionado'"
                                     decoration-danger="estado == 'rechazado'"
