@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ── Lista: reemplazar binary con campo unificado (Odoo o Nextcloud) ── -->
+        <record id="view_doc_compartida_list_nextcloud" model="ir.ui.view">
+            <field name="name">amunet.doc.compartida.list.nextcloud</field>
+            <field name="model">amunet.doc.compartida</field>
+            <field name="inherit_id" ref="amunet_documentacion_compartida.view_doc_compartida_list"/>
+            <field name="arch" type="xml">
+                <!-- Reemplazar la columna binary con el link unificado en la misma posicion -->
+                <xpath expr="//list//field[@name='manual_file']" position="replace">
+                    <field name="url_nextcloud" column_invisible="1"/>
+                    <field name="enlace_pdf" widget="html" string="PDF"
+                           optional="show"
+                           invisible="not enlace_pdf"/>
+                </xpath>
+                <!-- Botón reemplazar: también visible cuando el archivo ya está en Nextcloud -->
+                <xpath expr="//list//button[@name='action_reemplazar_pdf']" position="attributes">
+                    <attribute name="invisible">not (manual_file or url_nextcloud) or not es_responsable</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- ── Formulario: mismo tratamiento ── -->
+        <record id="view_doc_compartida_form_nextcloud" model="ir.ui.view">
+            <field name="name">amunet.doc.compartida.form.nextcloud</field>
+            <field name="model">amunet.doc.compartida</field>
+            <field name="inherit_id" ref="amunet_documentacion_compartida.view_doc_compartida_form"/>
+            <field name="arch" type="xml">
+                <!-- Ocultar binary cuando ya vive en Nextcloud -->
+                <xpath expr="//form//field[@name='manual_file']" position="attributes">
+                    <attribute name="invisible">url_nextcloud or (not es_responsable and (not pdf_descargable or not manual_file))</attribute>
+                </xpath>
+                <!-- Agregar link de Nextcloud después del binary -->
+                <xpath expr="//form//field[@name='manual_filename'][@invisible='1']" position="after">
+                    <field name="url_nextcloud" invisible="1"/>
+                    <field name="enlace_pdf" widget="html" string="PDF"
+                           invisible="not url_nextcloud"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>
