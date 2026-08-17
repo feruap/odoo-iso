@@ -120,22 +120,7 @@
                                 placeholder="Describe los objetivos..."/>
                         </page>
 
-                        <!-- ── Pestaña 2: Información requerida ── -->
-                        <page string="Información requerida" name="info">
-                            <field name="info_ids" nolabel="1">
-                                <list editable="bottom">
-                                    <field name="secuencia" widget="handle"/>
-                                    <field name="concepto" string="Concepto"/>
-                                    <field name="resultado" string="Resultado" widget="badge"
-                                        decoration-success="resultado == 'C'"
-                                        decoration-danger="resultado == 'NC'"
-                                        decoration-muted="resultado == 'na'"/>
-                                    <field name="observaciones" string="Observaciones"/>
-                                </list>
-                            </field>
-                        </page>
-
-                        <!-- ── Pestaña 3: Agenda por días ── -->
+<!-- ── Pestaña 3: Agenda por días ── -->
                         <page string="Agenda" name="agenda">
                             <field name="dia_ids" nolabel="1">
                                 <list>
