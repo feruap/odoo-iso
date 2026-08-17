@@ -27,6 +27,9 @@ class AmunetAuditorConvocatoria(models.Model):
         string='Lugar', default='Instalaciones Amunet')
     vacantes = fields.Integer(
         string='Vacantes', default=3, required=True)
+    area_ids = fields.Many2many(
+        'amunet.area', 'convocatoria_area_rel', 'convocatoria_id', 'area_id',
+        string='Áreas a auditar')
     correo_contacto = fields.Char(
         string='Correo de contacto', default='documentacion@amunet.com.mx')
 

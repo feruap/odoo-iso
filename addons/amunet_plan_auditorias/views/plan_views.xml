@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════ LISTA de planes ════════════ -->
+    <record id="view_plan_list" model="ir.ui.view">
+        <field name="name">amunet.plan.auditoria.list</field>
+        <field name="model">amunet.plan.auditoria</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state=='emitido'" decoration-muted="state=='cerrado'">
+                <field name="clave"/>
+                <field name="tipo" widget="badge"
+                    decoration-success="tipo == 'programada'"
+                    decoration-warning="tipo == 'reprogramada'"
+                    decoration-danger="tipo == 'no_programada'"/>
+                <field name="fecha_inicio" string="Fecha"/>
+                <field name="alcance" string="Alcance"/>
+                <field name="lider_id" string="Auditor líder"/>
+                <field name="state" widget="badge"
+                    decoration-warning="state == 'borrador'"
+                    decoration-success="state == 'emitido'"
+                    decoration-muted="state == 'cerrado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ════════════ FORMULARIO de día (agenda) ════════════ -->
+    <record id="view_dia_form" model="ir.ui.view">
+        <field name="name">amunet.plan.auditoria.dia.form</field>
+        <field name="model">amunet.plan.auditoria.dia</field>
+        <field name="arch" type="xml">
+            <form string="Agenda del día">
+                <sheet>
+                    <group>
+                        <field name="fecha"/>
+                        <field name="sitio"/>
+                        <field name="turno"/>
+                    </group>
+                    <separator string="Actividades"/>
+                    <field name="actividad_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="horario" string="Horario"/>
+                            <field name="auditor_id" string="Auditor"/>
+                            <field name="que_auditar" string="¿Qué se va a auditar?"/>
+                            <field name="requisitos" string="Requisitos"/>
+                            <field name="auditado" string="Auditado"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button string="Guardar" special="save" class="btn-primary"/>
+                    <button string="Cerrar" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ════════════ FORMULARIO de plan ════════════ -->
+    <record id="view_plan_form" model="ir.ui.view">
+        <field name="name">amunet.plan.auditoria.form</field>
+        <field name="model">amunet.plan.auditoria</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_emitir" type="object" string="Emitir"
+                        class="btn-primary" invisible="state != 'borrador'"/>
+                    <button name="action_cerrar" type="object" string="Cerrar plan"
+                        invisible="state != 'emitido'"/>
+                    <button name="action_borrador" type="object" string="Regresar a borrador"
+                        invisible="state != 'emitido'"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="borrador,emitido,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="clave" readonly="1"/></h1>
+                    </div>
+
+                    <notebook>
+                        <!-- ── Pestaña 1: Datos generales ── -->
+                        <page string="Datos generales" name="datos">
+                            <group>
+                                <group string="Datos de la auditoría">
+                                    <field name="tipo"/>
+                                    <field name="fecha_inicio"/>
+                                    <field name="fecha_fin"/>
+                                    <field name="sitio"/>
+                                </group>
+                                <group string="Convocatoria de referencia">
+                                    <field name="convocatoria_id" nolabel="1"/>
+                                    <button name="action_cargar_equipo" type="object"
+                                        string="Cargar equipo desde convocatoria"
+                                        icon="fa-users" class="btn-secondary"
+                                        invisible="not convocatoria_id"/>
+                                </group>
+                            </group>
+
+                            <separator string="Equipo auditor"/>
+                            <group>
+                                <group>
+                                    <field name="lider_id" string="Auditor líder"/>
+                                    <field name="auditor_ids" widget="many2many_tags"
+                                        string="Auditores"/>
+                                </group>
+                                <group>
+                                    <field name="observador_ids" widget="many2many_tags"
+                                        string="Observadores"/>
+                                    <field name="experto_ids" widget="many2many_tags"
+                                        string="Expertos técnicos"/>
+                                </group>
+                            </group>
+
+                            <separator string="Criterios"/>
+                            <field name="criterios" nolabel="1" rows="3"
+                                placeholder="Ej. ISO 13485:2016 cláusulas 4.2, 7.5..."/>
+                            <separator string="Alcance de la auditoría"/>
+                            <field name="alcance" nolabel="1" rows="3"
+                                placeholder="Describe el alcance de esta auditoría..."/>
+                            <separator string="Objetivos de la auditoría"/>
+                            <field name="objetivos" nolabel="1" rows="3"
+                                placeholder="Describe los objetivos..."/>
+                        </page>
+
+                        <!-- ── Pestaña 2: Información requerida ── -->
+                        <page string="Información requerida" name="info">
+                            <field name="info_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="secuencia" widget="handle"/>
+                                    <field name="concepto" string="Concepto"/>
+                                    <field name="resultado" string="Resultado" widget="badge"
+                                        decoration-success="resultado == 'C'"
+                                        decoration-danger="resultado == 'NC'"
+                                        decoration-muted="resultado == 'na'"/>
+                                    <field name="observaciones" string="Observaciones"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ── Pestaña 3: Agenda por días ── -->
+                        <page string="Agenda" name="agenda">
+                            <field name="dia_ids" nolabel="1">
+                                <list>
+                                    <field name="fecha" string="Fecha"/>
+                                    <field name="sitio" string="Sitio"/>
+                                    <field name="turno" string="Turno"/>
+                                    <field name="actividad_count" string="Actividades"/>
+                                    <button name="action_abrir_agenda" type="object"
+                                        string="Ver agenda" icon="fa-calendar"/>
+                                </list>
+                            </field>
+                            <group>
+                                <button name="action_agregar_dia" type="object"
+                                    string="+ Agregar día" class="btn-secondary"/>
+                            </group>
+                        </page>
+
+                        <!-- ── Pestaña 4: Cambios ── -->
+                        <page string="Cambios al plan" name="cambios">
+                            <field name="cambios" nolabel="1" rows="6"
+                                placeholder="En caso de cualquier cambio al plan de auditoría, descríbelo aquí..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_plan_auditoria" model="ir.actions.act_window">
+        <field name="name">Planes de Auditoría</field>
+        <field name="res_model">amunet.plan.auditoria</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea el primer plan de auditoría interna
+            </p>
+        </field>
+    </record>
+
+</odoo>

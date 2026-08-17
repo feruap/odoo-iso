@@ -1,3 +1,4 @@
+from . import area
 from . import criterio
 from . import pregunta
 from . import respuesta_eval

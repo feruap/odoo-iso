@@ -54,6 +54,7 @@
                         </group>
                         <group string="Datos generales">
                             <field name="vacantes"/>
+                            <field name="area_ids" widget="many2many_tags"/>
                             <field name="correo_contacto"/>
                             <field name="fecha_publicacion" readonly="1" invisible="state == 'borrador'"/>
                             <field name="fecha_cierre" readonly="1" invisible="state not in ('cerrada', 'cancelada')"/>
