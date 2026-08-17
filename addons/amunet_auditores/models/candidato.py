@@ -16,8 +16,8 @@ class AmunetAuditorCandidato(models.Model):
     evaluacion_ids = fields.One2many(
         'amunet.auditor.evaluacion', 'candidato_id', string='Evaluaciones')
 
-    puntaje_total = fields.Integer(
-        compute='_compute_puntaje', store=True, string='Puntaje')
+    puntaje_total = fields.Float(
+        compute='_compute_puntaje', store=True, string='Puntaje', digits=(4, 1))
     porcentaje = fields.Float(
         compute='_compute_puntaje', store=True, string='%')
     criterios_count = fields.Integer(
@@ -122,6 +122,8 @@ class AmunetAuditorEvaluacion(models.Model):
         domain=[('active', '=', True)])
     criterio_tipo = fields.Selection(
         related='criterio_id.tipo', string='Tipo', readonly=True, store=True)
+    criterio_descripcion = fields.Text(
+        related='criterio_id.descripcion', string='Preguntas guía', readonly=True)
     evaluador_id = fields.Many2one(
         'res.users', string='Evaluador',
         default=lambda self: self.env.user)
@@ -131,14 +133,60 @@ class AmunetAuditorEvaluacion(models.Model):
         ('3', '3 — Medio'),
         ('4', '4 — Alto'),
         ('5', '5 — Muy alto'),
-    ], string='Calificación')
+    ], string='Calificación manual')
     respuesta_abierta = fields.Text(string='Respuesta')
     observaciones = fields.Text(string='Observaciones')
     fecha = fields.Date(default=fields.Date.today, readonly=True)
+    respuesta_ids = fields.One2many(
+        'amunet.auditor.respuesta.eval', 'evaluacion_id', string='Respuestas')
+    tiene_preguntas = fields.Boolean(
+        compute='_compute_tiene_preguntas', string='Tiene preguntas')
 
-    @api.depends('calificacion')
+    def _compute_tiene_preguntas(self):
+        for rec in self:
+            rec.tiene_preguntas = bool(rec.criterio_id.pregunta_ids)
+
+    @api.depends('respuesta_ids.puntaje', 'calificacion')
     def _compute_calificacion_int(self):
         for rec in self:
-            rec.calificacion_int = int(rec.calificacion) if rec.calificacion else 0
+            scores = rec.respuesta_ids.filtered(lambda r: r.puntaje).mapped('puntaje')
+            if scores:
+                rec.calificacion_int = sum(scores) / len(scores)
+            elif rec.calificacion:
+                rec.calificacion_int = float(rec.calificacion)
+            else:
+                rec.calificacion_int = 0.0
 
-    calificacion_int = fields.Integer(compute='_compute_calificacion_int', store=True)
+    calificacion_int = fields.Float(compute='_compute_calificacion_int', store=True, digits=(4, 1))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for rec in records:
+            preguntas = rec.criterio_id.pregunta_ids.sorted('secuencia')
+            if preguntas:
+                self.env['amunet.auditor.respuesta.eval'].create([{
+                    'evaluacion_id': rec.id,
+                    'pregunta_id': p.id,
+                } for p in preguntas])
+        return records
+
+    def action_abrir_evaluacion_criterio(self):
+        self.ensure_one()
+        # Auto-crear respuestas faltantes para criterios existentes
+        preguntas = self.criterio_id.pregunta_ids.sorted('secuencia')
+        ya_ids = self.respuesta_ids.mapped('pregunta_id').ids
+        faltantes = preguntas.filtered(lambda p: p.id not in ya_ids)
+        if faltantes:
+            self.env['amunet.auditor.respuesta.eval'].create([{
+                'evaluacion_id': self.id,
+                'pregunta_id': p.id,
+            } for p in faltantes])
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'amunet.auditor.evaluacion',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'target': 'new',
+            'context': {'dialog_size': 'medium'},
+        }

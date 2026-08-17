@@ -9,7 +9,10 @@
         'los parametros del sistema (nextcloud.manuales.*).'
     ),
     'depends': ['amunet_documentos'],
-    'data': [],
+    'data': [
+        'data/cron_recordatorio.xml',
+        'views/doc_compartida_views.xml',
+    ],
     'installable': True,
     'auto_install': False,
     'license': 'LGPL-3',

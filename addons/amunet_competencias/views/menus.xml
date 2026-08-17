@@ -111,6 +111,21 @@
         sequence="20"
         groups="base.group_user"/>
 
+    <!-- Mover el menú de Capacitaciones (HR) de Empleados → Mi Capacitación -->
+    <record id="amunet_hr_training.menu_hr_training_root" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_mi_capacitacion_root"/>
+        <field name="sequence">5</field>
+    </record>
+
+    <!-- Menú de autoservicio: eventos donde el empleado participa o es ponente -->
+    <menuitem
+        id="menu_mis_capacitaciones"
+        name="Mis Capacitaciones"
+        parent="menu_mi_capacitacion_root"
+        action="amunet_competencias.action_hr_training_mis_capacitaciones"
+        sequence="15"
+        groups="base.group_user"/>
+
     <record id="menu_hr_root" model="ir.ui.menu">
         <field name="group_ids" eval="[(6, 0, [ref('amunet_competencias.group_competencias_manager')])]"/>
     </record>

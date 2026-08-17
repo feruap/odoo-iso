@@ -14,45 +14,67 @@
         <field name="name">Conocimiento de ISO 13485</field>
         <field name="categoria">conocimiento</field>
         <field name="secuencia">10</field>
-        <field name="descripcion">Dominio de los requisitos de la norma ISO 13485 y su aplicación en dispositivos médicos de diagnóstico in vitro.</field>
+        <field name="descripcion">Preguntas guía:
+• ¿Cuál es el propósito principal de la ISO 13485 y a qué tipo de organizaciones aplica?
+• ¿Qué diferencia hay entre un documento controlado y un registro de calidad?
+• ¿Qué requisitos establece la norma para el control de cambios?
+• ¿Qué es una no conformidad y cómo debe manejarse según la norma?</field>
     </record>
     <record id="criterio_cofepris" model="amunet.auditor.criterio">
         <field name="name">Conocimiento de regulaciones Cofepris</field>
         <field name="categoria">conocimiento</field>
         <field name="secuencia">20</field>
-        <field name="descripcion">Conocimiento de los requisitos regulatorios aplicables a fabricantes de IVD en México.</field>
+        <field name="descripcion">Preguntas guía:
+• ¿Qué es un registro sanitario y por qué es obligatorio para los IVD?
+• ¿Qué información debe contener el etiquetado de una prueba rápida según Cofepris?
+• ¿Qué obligaciones tiene el fabricante ante un evento adverso o retiro del mercado?</field>
     </record>
     <record id="criterio_proceso" model="amunet.auditor.criterio">
         <field name="name">Conocimiento del proceso productivo</field>
         <field name="categoria">conocimiento</field>
         <field name="secuencia">30</field>
-        <field name="descripcion">Comprensión del proceso de fabricación de pruebas rápidas de diagnóstico de Amunet.</field>
+        <field name="descripcion">Preguntas guía:
+• ¿Cuáles son las etapas principales del proceso de fabricación de las pruebas rápidas?
+• ¿Qué controles de calidad se realizan durante la producción?
+• ¿Cómo se asegura la trazabilidad de un lote desde materia prima hasta producto terminado?</field>
     </record>
     <record id="criterio_comunicacion" model="amunet.auditor.criterio">
         <field name="name">Comunicación efectiva</field>
         <field name="categoria">habilidad</field>
         <field name="secuencia">40</field>
-        <field name="descripcion">Capacidad para expresar hallazgos con claridad, tanto de forma oral como escrita.</field>
+        <field name="descripcion">Preguntas guía:
+• Describe cómo explicarías un hallazgo de auditoría a alguien del área auditada.
+• ¿Cómo manejarías una situación en la que el auditado no está de acuerdo con tu hallazgo?
+• ¿Cómo redactarías un hallazgo en el informe de auditoría?</field>
     </record>
     <record id="criterio_analisis" model="amunet.auditor.criterio">
         <field name="name">Análisis crítico</field>
         <field name="categoria">habilidad</field>
         <field name="secuencia">50</field>
-        <field name="descripcion">Habilidad para identificar no conformidades y evaluar evidencias objetivamente.</field>
+        <field name="descripcion">Preguntas guía:
+• Si encuentras un procedimiento que no se sigue en la práctica, ¿cómo lo evalúas?
+• ¿Cómo distingues una observación de una no conformidad?
+• ¿Qué harías si durante la auditoría encuentras evidencia de un problema de mayor alcance?</field>
     </record>
     <record id="criterio_experiencia" model="amunet.auditor.criterio">
         <field name="name">Experiencia en área de calidad</field>
         <field name="categoria">experiencia</field>
         <field name="secuencia">60</field>
         <field name="tipo">abierta</field>
-        <field name="descripcion">Describe tu experiencia trabajando en actividades relacionadas con calidad o procesos regulados en Amunet.</field>
+        <field name="descripcion">Preguntas guía:
+• ¿En qué actividades relacionadas con calidad has participado en Amunet?
+• ¿Has participado en alguna auditoría interna o externa anteriormente? ¿En qué rol?
+• ¿Qué acciones correctivas o mejoras has impulsado en tu área?</field>
     </record>
     <record id="criterio_disponibilidad" model="amunet.auditor.criterio">
         <field name="name">Disponibilidad para auditar</field>
         <field name="categoria">disponibilidad</field>
         <field name="secuencia">70</field>
         <field name="tipo">abierta</field>
-        <field name="descripcion">¿Tienes disponibilidad para participar en auditorías internas? ¿Existe algún impedimento o conflicto de interés con algún área?</field>
+        <field name="descripcion">Preguntas guía:
+• ¿Estarías dispuesto/a a dedicar tiempo fuera de tus actividades habituales para auditar?
+• ¿Tienes algún impedimento para auditar alguna área específica?
+• ¿Con cuántos días de anticipación necesitarías ser notificado para poder participar?</field>
     </record>
 
 </odoo>

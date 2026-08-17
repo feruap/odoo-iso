@@ -20,3 +20,5 @@ class AmunetAuditorCriterio(models.Model):
         ('abierta', 'Respuesta abierta'),
     ], string='Tipo de evaluación', default='numerica', required=True)
     active = fields.Boolean(default=True)
+    pregunta_ids = fields.One2many(
+        'amunet.auditor.pregunta', 'criterio_id', string='Preguntas de evaluación')

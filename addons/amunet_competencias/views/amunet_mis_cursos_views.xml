@@ -70,6 +70,52 @@
         <field name="act_window_id" ref="action_amunet_mis_cursos"/>
     </record>
 
+    <!-- ══════════════════════════════════════════════════════
+         Mis Capacitaciones — eventos de hr.training.course donde el
+         empleado participa o es ponente (autoservicio, solo lectura)
+    ══════════════════════════════════════════════════════ -->
+
+    <record id="view_hr_training_mis_capacitaciones_list" model="ir.ui.view">
+        <field name="name">hr.training.course.mis.list</field>
+        <field name="model">hr.training.course</field>
+        <field name="arch" type="xml">
+            <list string="Mis Capacitaciones" create="false" edit="false"
+                  decoration-success="state == 'done'"
+                  decoration-info="state == 'confirmed'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name" string="Capacitación"/>
+                <field name="date_start" string="Fecha"/>
+                <field name="date_end" string="Fin" optional="hide"/>
+                <field name="speaker_id" string="Ponente"/>
+                <field name="state" string="Estado"
+                       decoration-success="state == 'done'"
+                       decoration-info="state == 'confirmed'"
+                       decoration-warning="state == 'draft'"
+                       decoration-danger="state == 'cancelled'"
+                       widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hr_training_mis_capacitaciones" model="ir.actions.act_window">
+        <field name="name">Mis Capacitaciones</field>
+        <field name="res_model">hr.training.course</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">['|', ('participant_ids.user_id', '=', uid), ('speaker_id.user_id', '=', uid)]</field>
+        <field name="context">{'create': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No tienes capacitaciones registradas</p>
+            <p>Aquí aparecerán los cursos en los que estés inscrito o seas ponente.</p>
+        </field>
+    </record>
+
+    <record id="action_hr_training_mis_capacitaciones_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_hr_training_mis_capacitaciones_list"/>
+        <field name="act_window_id" ref="action_hr_training_mis_capacitaciones"/>
+    </record>
+
     <!-- Acción — Mis Intentos (historial propio del empleado) -->
     <record id="action_amunet_mis_intentos" model="ir.actions.act_window">
         <field name="name">Mis Exámenes</field>
