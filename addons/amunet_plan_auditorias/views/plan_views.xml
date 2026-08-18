@@ -181,19 +181,33 @@
 
                         <!-- ── Pestaña 2: Agenda por días ── -->
                         <page string="Agenda" name="agenda">
-                            <field name="dia_ids" nolabel="1">
+                            <field name="dia_ids" nolabel="1"
+                                readonly="state in ('emitido','cerrado')">
                                 <list>
                                     <field name="fecha" string="Fecha"/>
                                     <field name="sitio" string="Sitio"/>
                                     <field name="actividad_count" string="Actividades"/>
-                                    <button name="action_abrir_agenda" type="object"
-                                        string="Ver agenda" icon="fa-calendar"/>
                                 </list>
+                                <form string="Agenda del día">
+                                    <field name="plan_id" invisible="1"/>
+                                    <group>
+                                        <field name="fecha"/>
+                                        <field name="sitio"/>
+                                    </group>
+                                    <separator string="Actividades"/>
+                                    <field name="actividad_ids" nolabel="1">
+                                        <list editable="bottom">
+                                            <field name="equipo_ids" column_invisible="1"/>
+                                            <field name="hora_inicio" string="Inicio"/>
+                                            <field name="hora_fin" string="Fin"/>
+                                            <field name="auditor_id" string="Auditor"
+                                                domain="[('id', 'in', equipo_ids)]"/>
+                                            <field name="que_auditar" string="¿Qué se va a auditar?"/>
+                                            <field name="auditado_id" string="Auditado"/>
+                                        </list>
+                                    </field>
+                                </form>
                             </field>
-                            <group invisible="state in ('emitido','cerrado')">
-                                <button name="action_agregar_dia" type="object"
-                                    string="+ Agregar día" class="btn-secondary"/>
-                            </group>
                         </page>
 
                         <!-- ── Pestaña 3: Plazos del informe ── -->
