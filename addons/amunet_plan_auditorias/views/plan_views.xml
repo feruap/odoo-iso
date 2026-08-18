@@ -44,7 +44,6 @@
                             <field name="auditor_id" string="Auditor"
                                 domain="[('id', 'in', equipo_ids)]"/>
                             <field name="que_auditar" string="¿Qué se va a auditar?"/>
-                            <field name="requisitos" string="Requisitos"/>
                             <field name="auditado" string="Auditado"/>
                         </list>
                     </field>
