@@ -264,6 +264,14 @@ class AmunetPlanAuditoriaDia(models.Model):
     _order = 'plan_id, fecha, id'
 
     plan_id = fields.Many2one('amunet.plan.auditoria', required=True, ondelete='cascade')
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        default_plan_id = self.env.context.get('default_plan_id')
+        for vals in vals_list:
+            if not vals.get('plan_id') and default_plan_id:
+                vals['plan_id'] = default_plan_id
+        return super().create(vals_list)
     fecha = fields.Date(string='Fecha', required=True)
     sitio = fields.Char(string='Sitio')
     turno = fields.Selection([
