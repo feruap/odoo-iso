@@ -271,7 +271,7 @@ class ProductionPlan(models.Model):
 
             daily = qty_hist / days
             need = daily * (self.horizon_days + self.safety_days)
-            free = product.with_company(self.company_id).free_qty
+            free = self._en_compania(product).free_qty
             # La liberacion por Calidad se lleva por lote. Un producto que no se
             # rastrea por lote nunca tendria existencia liberada y el plan pediria
             # fabricar de nuevo todo lo que ya hay en almacen.
@@ -309,7 +309,7 @@ class ProductionPlan(models.Model):
                 # proveedor. Se sugiere comprar y Calidad tendra que liberarlo.
                 to_buy = suggested
 
-            note = ', '.join(missing.keys()) if missing else ''
+            note = ', '.join(d['name'] for d in missing.values()) if missing else ''
             if error_bom:
                 note = _('No se pudo explotar la lista de materiales: revisala '
                          'antes de confiar en esta linea')
@@ -378,6 +378,12 @@ class ProductionPlan(models.Model):
     def _tracks_release(self):
         return 'amunet_lot_release_state' in self.env['stock.lot']._fields
 
+    def _en_compania(self, records):
+        """with_company() no basta: free_qty se calcula sobre allowed_company_ids,
+        que puede arrastrar otras companias del contexto y sumar stock ajeno."""
+        return records.with_company(self.company_id).with_context(
+            allowed_company_ids=self.company_id.ids)
+
     def _release_applies(self, product):
         """La liberacion de Calidad solo tiene sentido si el producto lleva lote."""
         return self._tracks_release() and product.tracking != 'none'
@@ -391,7 +397,7 @@ class ProductionPlan(models.Model):
         propondria fabricar nada. `mp_basis` deja activarlo cuando la practica
         cambie.
         """
-        libre = product.with_company(self.company_id).free_qty
+        libre = self._en_compania(product).free_qty
         base = self.mp_basis if componente else self.stock_basis
         if base == 'released' and self._release_applies(product):
             return min(libre, self._released_qty(product))
@@ -432,6 +438,7 @@ class ProductionPlan(models.Model):
         # En Odoo 19 las reservas viven en stock.move.line, no en el quant. Se
         # descuenta UNICAMENTE la reserva que pesa sobre lotes liberados: restar
         # la reserva global castigaria el stock liberado por lotes en cuarentena.
+        product = self._en_compania(product)
         reservas = self.env['stock.move.line'].sudo().search([
             ('product_id', '=', product.id),
             ('lot_id', 'in', lotes_liberados.ids),
@@ -503,8 +510,11 @@ class ProductionPlan(models.Model):
             available = pool.get(comp_id, 0.0)
             ratio = min(1.0, available / required) if required > 0 else 1.0
             if float_compare(available, required, precision_digits=3) < 0:
-                missing[data['component'].display_name] = {
+                # Indexado por id: dos componentes distintos pueden compartir
+                # nombre y uno taparia al otro.
+                missing[comp_id] = {
                     'product_id': comp_id,
+                    'name': data['component'].display_name,
                     'required': required,
                     'available': totals.get(comp_id, available),
                     'remaining': available,
