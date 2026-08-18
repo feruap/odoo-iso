@@ -279,7 +279,8 @@ class AmunetPlanAuditoriaActividad(models.Model):
     _order = 'dia_id, horario, id'
 
     dia_id = fields.Many2one('amunet.plan.auditoria.dia', required=True, ondelete='cascade')
-    horario = fields.Char(string='Horario', placeholder='08:00 – 09:00')
+    hora_inicio = fields.Float(string='Hora inicio', digits=(4, 2))
+    hora_fin = fields.Float(string='Hora fin', digits=(4, 2))
     auditor_id = fields.Many2one('res.users', string='Auditor', domain=[('share', '=', False)])
     que_auditar = fields.Char(string='¿Qué se va a auditar?')
     requisitos = fields.Char(string='Requisitos')
