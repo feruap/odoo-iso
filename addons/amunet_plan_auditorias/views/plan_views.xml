@@ -38,7 +38,7 @@
                     <separator string="Actividades"/>
                     <field name="actividad_ids" nolabel="1">
                         <list editable="bottom">
-                            <field name="equipo_ids" invisible="1"/>
+                            <field name="equipo_ids" column_invisible="1"/>
                             <field name="hora_inicio" string="Inicio" widget="float_time"/>
                             <field name="hora_fin" string="Fin" widget="float_time"/>
                             <field name="auditor_id" string="Auditor"
