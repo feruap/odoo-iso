@@ -67,12 +67,9 @@
                     <button name="action_firmar_elaboracion" type="object"
                         string="Firmar elaboración" class="btn-secondary"
                         invisible="state != 'borrador' or elaboro_id"/>
-                    <button name="action_firmar_revision" type="object"
-                        string="Firmar revisión" class="btn-secondary"
-                        invisible="state != 'borrador' or not elaboro_id or reviso_id"/>
                     <button name="action_firmar_autorizacion" type="object"
                         string="Firmar y emitir" class="btn-primary"
-                        invisible="state != 'borrador' or not reviso_id or autorizo_id"/>
+                        invisible="state != 'borrador' or not elaboro_id or autorizo_id"/>
                     <button name="action_cerrar" type="object" string="Cerrar plan"
                         invisible="state != 'emitido'"/>
                     <button name="action_borrador" type="object" string="Regresar a borrador"
@@ -232,7 +229,8 @@
                         <!-- ── Pestaña 4: Cambios ── -->
                         <page string="Cambios al plan" name="cambios">
                             <field name="cambios" nolabel="1" rows="6"
-                                placeholder="En caso de cualquier cambio al plan de auditoría, descríbelo aquí..."/>
+                                placeholder="En caso de cualquier cambio al plan de auditoría, descríbelo aquí..."
+                                readonly="state != 'emitido'"/>
                         </page>
 
                     </notebook>
@@ -240,19 +238,38 @@
                     <!-- ── Firmas ── -->
                     <separator string="Firmas"/>
                     <group>
-                        <group string="Elaboró (Auditor líder)">
-                            <field name="elaboro_id" nolabel="1"/>
-                            <field name="fecha_elaboro" nolabel="1"/>
+                        <group string="Elaboró">
+                            <field name="elaboro_id" nolabel="1" readonly="1"/>
+                            <field name="fecha_elaboro" nolabel="1" readonly="1"/>
+                            <button name="action_firmar_elaboracion" type="object"
+                                string="Firmar con PIN" icon="fa-pen"
+                                class="btn-secondary btn-sm"
+                                invisible="state != 'borrador' or elaboro_id"/>
                         </group>
-                        <group string="Revisó (Resp. Calidad del auditado)">
-                            <field name="reviso_id" nolabel="1"/>
-                            <field name="fecha_reviso" nolabel="1"/>
+                        <group string="Demás integrantes del equipo auditor">
+                            <field name="puede_firmar_equipo" invisible="1"/>
+                            <field name="auditor_ids" nolabel="1"
+                                widget="many2many_tags" readonly="1"/>
+                            <field name="firma_equipo_ids" nolabel="1" readonly="1">
+                                <list>
+                                    <field name="user_id" string="Integrante"/>
+                                    <field name="fecha" string="Fecha de firma"/>
+                                </list>
+                            </field>
+                            <button name="action_firmar_equipo" type="object"
+                                string="Firmar con PIN" icon="fa-pen"
+                                class="btn-secondary btn-sm"
+                                invisible="state != 'borrador' or not puede_firmar_equipo"/>
                         </group>
                     </group>
                     <group>
-                        <group string="Autorizó (Gerencia)">
-                            <field name="autorizo_id" nolabel="1"/>
-                            <field name="fecha_autorizo" nolabel="1"/>
+                        <group string="Auditor líder — Autorizó">
+                            <field name="autorizo_id" nolabel="1" readonly="1"/>
+                            <field name="fecha_autorizo" nolabel="1" readonly="1"/>
+                            <button name="action_firmar_autorizacion" type="object"
+                                string="Firmar y emitir" icon="fa-check"
+                                class="btn-primary btn-sm"
+                                invisible="state != 'borrador' or not elaboro_id or autorizo_id"/>
                         </group>
                     </group>
 

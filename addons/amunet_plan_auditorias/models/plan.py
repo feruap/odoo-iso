@@ -58,10 +58,10 @@ class AmunetPlanAuditoria(models.Model):
     met_cierre = fields.Boolean(string='Reunión de cierre', default=True)
 
     # Plazos del informe (días hábiles)
-    plazo_preliminar = fields.Integer(string='Informe preliminar', default=5)
-    plazo_revision_auditado = fields.Integer(string='Revisión del auditado', default=10)
-    plazo_informe_final = fields.Integer(string='Informe final', default=15)
-    plazo_plan_capa = fields.Integer(string='Plan de acciones correctivas', default=30)
+    plazo_preliminar = fields.Integer(string='Informe preliminar', default=3)
+    plazo_revision_auditado = fields.Integer(string='Revisión del auditado', default=7)
+    plazo_informe_final = fields.Integer(string='Informe final', default=10)
+    plazo_plan_capa = fields.Integer(string='Plan de acciones correctivas', default=15)
 
     state = fields.Selection([
         ('borrador', 'Borrador'),
@@ -91,11 +91,18 @@ class AmunetPlanAuditoria(models.Model):
 
     # Firmas
     elaboro_id = fields.Many2one('res.users', string='Elaboró', readonly=True)
-    fecha_elaboro = fields.Date(string='Fecha elaboración', readonly=True)
-    reviso_id = fields.Many2one('res.users', string='Revisó', readonly=True)
-    fecha_reviso = fields.Date(string='Fecha revisión', readonly=True)
-    autorizo_id = fields.Many2one('res.users', string='Autorizó', readonly=True)
-    fecha_autorizo = fields.Date(string='Fecha autorización', readonly=True)
+    fecha_elaboro = fields.Date(string='Fecha', readonly=True)
+    firma_equipo_ids = fields.One2many(
+        'amunet.plan.auditoria.firma.equipo', 'plan_id', string='Firmas del equipo')
+    puede_firmar_equipo = fields.Boolean(compute='_compute_puede_firmar_equipo')
+    autorizo_id = fields.Many2one('res.users', string='Auditor líder', readonly=True)
+    fecha_autorizo = fields.Date(string='Fecha', readonly=True)
+
+    def _compute_puede_firmar_equipo(self):
+        uid = self.env.user.id
+        for r in self:
+            ya_firmo = uid in r.firma_equipo_ids.mapped('user_id').ids
+            r.puede_firmar_equipo = (uid in r.auditor_ids.ids) and not ya_firmo
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -120,8 +127,8 @@ class AmunetPlanAuditoria(models.Model):
     def _amunet_signature_allowed_methods(self):
         return {
             '_signature_elaborar': _('Elaboración del plan de auditoría'),
-            '_signature_revisar': _('Revisión del plan de auditoría'),
-            '_signature_autorizar': _('Autorización y emisión del plan de auditoría'),
+            '_signature_firmar_equipo': _('Firma de integrante del equipo auditor'),
+            '_signature_autorizar': _('Autorización del plan de auditoría (Auditor líder)'),
         }
 
     def action_firmar_elaboracion(self):
@@ -139,32 +146,39 @@ class AmunetPlanAuditoria(models.Model):
         self.write({'elaboro_id': self.env.user.id, 'fecha_elaboro': fields.Date.today()})
         return {'type': 'ir.actions.act_window_close'}
 
-    def action_firmar_revision(self):
+    def action_firmar_equipo(self):
         self.ensure_one()
         if self.state != 'borrador':
-            raise ValidationError(_('Solo se puede firmar la revisión en estado Borrador.'))
-        if not self.elaboro_id:
-            raise ValidationError(_('Firma primero la elaboración antes de revisar.'))
+            raise ValidationError(_('Solo se puede firmar en estado Borrador.'))
+        uid = self.env.user.id
+        if uid not in self.auditor_ids.ids:
+            raise ValidationError(_('Solo los integrantes del equipo auditor pueden firmar aquí.'))
+        if uid in self.firma_equipo_ids.mapped('user_id').ids:
+            raise ValidationError(_('Ya firmaste este plan.'))
         return self.env['amunet.generic.signature.wizard'].open_for(
-            self, '_signature_revisar',
-            _('Responsable de calidad del auditado'),
-            _('Firma de revisión del plan %s.') % self.clave,
+            self, '_signature_firmar_equipo',
+            _('Integrante del equipo auditor'),
+            _('Firma de integrante del equipo auditor — plan %s.') % self.clave,
         )
 
-    def _signature_revisar(self):
+    def _signature_firmar_equipo(self):
         self.ensure_one()
-        self.write({'reviso_id': self.env.user.id, 'fecha_reviso': fields.Date.today()})
+        self.env['amunet.plan.auditoria.firma.equipo'].create({
+            'plan_id': self.id,
+            'user_id': self.env.user.id,
+            'fecha': fields.Date.today(),
+        })
         return {'type': 'ir.actions.act_window_close'}
 
     def action_firmar_autorizacion(self):
         self.ensure_one()
         if self.state != 'borrador':
             raise ValidationError(_('Solo se puede autorizar en estado Borrador.'))
-        if not self.reviso_id:
-            raise ValidationError(_('Firma primero la revisión antes de autorizar.'))
+        if not self.elaboro_id:
+            raise ValidationError(_('Firma primero la elaboración antes de autorizar.'))
         return self.env['amunet.generic.signature.wizard'].open_for(
             self, '_signature_autorizar',
-            _('Autorizó (Gerencia)'),
+            _('Auditor líder — Autorizó'),
             _('Autorización y emisión del plan %s.') % self.clave,
         )
 
@@ -186,7 +200,6 @@ class AmunetPlanAuditoria(models.Model):
         self.write({
             'state': 'borrador',
             'elaboro_id': False, 'fecha_elaboro': False,
-            'reviso_id': False, 'fecha_reviso': False,
             'autorizo_id': False, 'fecha_autorizo': False,
         })
 
@@ -326,3 +339,13 @@ class AmunetPlanAuditoriaActividad(models.Model):
                 r.equipo_ids = equipo if equipo else todos
             else:
                 r.equipo_ids = todos
+
+
+class AmunetPlanAuditoriaFirmaEquipo(models.Model):
+    _name = 'amunet.plan.auditoria.firma.equipo'
+    _description = 'Firma de integrante del equipo auditor'
+    _order = 'fecha, id'
+
+    plan_id = fields.Many2one('amunet.plan.auditoria', required=True, ondelete='cascade')
+    user_id = fields.Many2one('res.users', string='Integrante', required=True, readonly=True)
+    fecha = fields.Date(string='Fecha de firma', required=True, readonly=True)

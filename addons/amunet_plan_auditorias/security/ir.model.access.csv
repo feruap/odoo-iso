@@ -9,3 +9,5 @@ access_dia_user,Dia Usuario,model_amunet_plan_auditoria_dia,base.group_user,1,0,
 access_dia_doc,Dia Documentacion,model_amunet_plan_auditoria_dia,amunet_documentos.group_documentos_manager,1,1,1,1
 access_actividad_user,Actividad Usuario,model_amunet_plan_auditoria_actividad,base.group_user,1,0,0,0
 access_actividad_doc,Actividad Documentacion,model_amunet_plan_auditoria_actividad,amunet_documentos.group_documentos_manager,1,1,1,1
+access_firma_equipo_user,Firma Equipo Usuario,model_amunet_plan_auditoria_firma_equipo,base.group_user,1,0,0,0
+access_firma_equipo_doc,Firma Equipo Documentacion,model_amunet_plan_auditoria_firma_equipo,amunet_documentos.group_documentos_manager,1,1,1,1
