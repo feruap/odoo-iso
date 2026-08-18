@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Plan de produccion sugerido: demanda -> oferta -> restriccion de materia prima."""
 import logging
-from datetime import timedelta
+from datetime import datetime, time, timedelta
+
+import pytz
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
@@ -60,6 +62,14 @@ class ProductionPlan(models.Model):
              'no lo cuenta como oferta, pero lo reporta aparte para que se vea que '
              'el cuello de botella es liberacion, no compra ni produccion.')
 
+    mp_basis = fields.Selection([
+        ('free', 'Toda la existencia libre'),
+        ('released', 'Solo materia prima liberada por Calidad'),
+    ], string='Materia prima disponible', default='free', required=True,
+        help='Hoy Calidad libera lotes de producto terminado, no de materia prima: '
+             'con "liberada" el plan no podria fabricar nada. Cambialo a "liberada" '
+             'el dia que se empiecen a liberar tambien los lotes de insumos.')
+
     line_ids = fields.One2many('amunet.production.plan.line', 'plan_id', string='Lineas')
     shortage_ids = fields.One2many(
         'amunet.production.plan.shortage', 'plan_id', string='Faltantes de materia prima')
@@ -104,13 +114,23 @@ class ProductionPlan(models.Model):
         self.ensure_one()
         return max((self.date_to - self.date_from).days + 1, 1)
 
+    def _tz(self):
+        return pytz.timezone(self.env.user.tz or 'America/Mexico_City')
+
+    def _to_utc(self, fecha, fin=False):
+        """Odoo guarda las fechas y horas en UTC. Tomar la medianoche UTC como
+        limite corre la ventana varias horas en Mexico, asi que se convierte la
+        medianoche LOCAL (o el final del dia local) a UTC."""
+        tz = self._tz()
+        local = tz.localize(datetime.combine(fecha, time.max if fin else time.min))
+        return local.astimezone(pytz.UTC).replace(tzinfo=None)
+
     def _dt_from(self):
-        return fields.Datetime.to_datetime(self.date_from)
+        return self._to_utc(self.date_from)
 
     def _dt_to(self):
         """Fin del ultimo dia: si no, se pierden ~24 h de historico."""
-        return fields.Datetime.to_datetime(self.date_to) + timedelta(
-            hours=23, minutes=59, seconds=59)
+        return self._to_utc(self.date_to, fin=True)
 
     def _demand_from_woo(self):
         """{product_id: piezas} desde amunet.woo.sales.trend (sin importes)."""
@@ -261,7 +281,8 @@ class ProductionPlan(models.Model):
             on_hand = released if (self.stock_basis == 'released'
                                    and aplica_liberacion) else free
             wip = self._wip_qty(product)
-            suggested = max(0.0, need - on_hand - wip)
+            entrante = self._incoming_qty(product)
+            suggested = max(0.0, need - on_hand - wip - entrante)
             suggested = float_round(suggested, precision_rounding=1.0, rounding_method='UP')
 
             to_produce = to_buy = 0.0
@@ -314,6 +335,7 @@ class ProductionPlan(models.Model):
                 'qty_released': released,
                 'qty_pending_qc': pending_qc,
                 'qty_wip': wip,
+                'qty_incoming': entrante,
                 'qty_suggested': suggested,
                 'mp_coverage': coverage * 100.0,
                 'qty_to_produce': to_produce,
@@ -360,6 +382,37 @@ class ProductionPlan(models.Model):
         """La liberacion de Calidad solo tiene sentido si el producto lleva lote."""
         return self._tracks_release() and product.tracking != 'none'
 
+    def _available_qty(self, product, componente=False):
+        """Existencia utilizable segun la base elegida.
+
+        El producto terminado y la materia prima llevan bases distintas a
+        proposito: hoy Calidad libera lotes de producto terminado, no de insumos.
+        Si se exigiera lote liberado tambien en la materia prima, el plan no
+        propondria fabricar nada. `mp_basis` deja activarlo cuando la practica
+        cambie.
+        """
+        libre = product.with_company(self.company_id).free_qty
+        base = self.mp_basis if componente else self.stock_basis
+        if base == 'released' and self._release_applies(product):
+            return min(libre, self._released_qty(product))
+        return libre
+
+    def _incoming_qty(self, product):
+        """Piezas ya compradas y aun no recibidas.
+
+        Sin esto el plan vuelve a pedir lo que ya viene en camino en una orden de
+        compra confirmada. Solo cuenta lo que entra desde un proveedor: lo que
+        entra desde produccion ya se mide en _wip_qty.
+        """
+        moves = self.env['stock.move'].sudo().search([
+            ('product_id', '=', product.id),
+            ('state', 'not in', ('done', 'cancel', 'draft')),
+            ('location_id.usage', '=', 'supplier'),
+            ('location_dest_id.usage', '=', 'internal'),
+            ('company_id', '=', self.company_id.id),
+        ])
+        return sum(moves.mapped('product_qty'))
+
     def _released_qty(self, product):
         """Piezas en lotes liberados por Calidad, si amunet_lot esta instalado."""
         Quant = self.env['stock.quant'].sudo()
@@ -388,9 +441,10 @@ class ProductionPlan(models.Model):
         ])
         campo = 'quantity_product_uom' if 'quantity_product_uom' in \
             self.env['stock.move.line']._fields else 'quantity'
-        reserved = sum(
-            (ml[campo] or 0.0) for ml in reservas
-            if getattr(ml, 'picked', False) is not True)
+        # Cuenta TODA reserva viva. Una linea marcada como 'picked' sigue en el
+        # quant hasta que se valida el albaran, pero ya esta comprometida: si se
+        # excluye, la existencia liberada sale inflada.
+        reserved = sum((ml[campo] or 0.0) for ml in reservas)
         return max(0.0, released_total - reserved)
 
     @staticmethod
@@ -435,7 +489,7 @@ class ProductionPlan(models.Model):
                 # bloquear el plan: su existencia siempre seria cero.
                 continue
             if component.id not in pool:
-                libre = component.with_company(self.company_id).free_qty
+                libre = self._available_qty(component, componente=True)
                 pool[component.id] = libre
                 totals[component.id] = libre
             acc = needs.setdefault(
@@ -541,6 +595,9 @@ class ProductionPlanLine(models.Model):
     qty_free = fields.Float(string='Existencia libre total', digits='Product Unit of Measure')
     qty_released = fields.Float(string='Liberada por Calidad', digits='Product Unit of Measure')
     qty_pending_qc = fields.Float(string='Esperando liberacion', digits='Product Unit of Measure')
+    qty_incoming = fields.Float(
+        string='En camino', digits='Product Unit of Measure',
+        help='Piezas ya compradas en ordenes de compra confirmadas y aun no recibidas.')
     qty_wip = fields.Float(string='En produccion', digits='Product Unit of Measure')
     qty_suggested = fields.Float(string='Sugerido', digits='Product Unit of Measure')
     mp_coverage = fields.Float(string='Cobertura MP (%)')
