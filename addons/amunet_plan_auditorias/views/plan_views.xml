@@ -44,7 +44,7 @@
                             <field name="auditor_id" string="Auditor"
                                 domain="[('id', 'in', equipo_ids)]"/>
                             <field name="que_auditar" string="¿Qué se va a auditar?"/>
-                            <field name="auditado" string="Auditado"/>
+                            <field name="auditado_id" string="Auditado"/>
                         </list>
                     </field>
                 </sheet>

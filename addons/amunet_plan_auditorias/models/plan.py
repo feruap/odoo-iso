@@ -285,7 +285,8 @@ class AmunetPlanAuditoriaActividad(models.Model):
     auditor_id = fields.Many2one('res.users', string='Auditor', domain="[('id', 'in', equipo_ids)]")
     que_auditar = fields.Char(string='¿Qué se va a auditar?')
     requisitos = fields.Char(string='Requisitos')
-    auditado = fields.Char(string='Auditado')
+    auditado_id = fields.Many2one('res.users', string='Auditado',
+        domain=[('share', '=', False), ('active', '=', True)])
 
     def _compute_equipo_ids(self):
         todos = self.env['res.users'].search([('share', '=', False), ('active', '=', True)])
