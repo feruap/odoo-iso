@@ -46,6 +46,7 @@
                         statusbar_visible="borrador,firmado"/>
                 </header>
                 <sheet>
+                    <field name="puntos_fijos" invisible="1"/>
                     <div class="oe_title">
                         <h1><field name="clave" readonly="1"/></h1>
                     </div>
