@@ -215,17 +215,16 @@ class AmunetPlanAuditoria(models.Model):
 
     def action_agregar_dia(self):
         self.ensure_one()
-        nuevo_dia = self.env['amunet.plan.auditoria.dia'].create({
-            'plan_id': self.id,
-            'fecha': self.fecha_inicio,
-        })
         return {
             'type': 'ir.actions.act_window',
             'name': 'Agenda del día',
             'res_model': 'amunet.plan.auditoria.dia',
             'view_mode': 'form',
-            'res_id': nuevo_dia.id,
             'target': 'new',
+            'context': {
+                'default_plan_id': self.id,
+                'default_fecha': str(self.fecha_inicio) if self.fecha_inicio else False,
+            },
         }
 
     def unlink(self):
