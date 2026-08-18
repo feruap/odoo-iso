@@ -47,7 +47,7 @@ Notas
     """,
     'author': 'Amunet',
     'category': 'Manufacturing',
-    'version': '19.0.3.0.0',
+    'version': '19.0.4.0.0',
     'depends': ['mrp', 'stock', 'product', 'purchase'],
     'data': [
         'security/security.xml',
