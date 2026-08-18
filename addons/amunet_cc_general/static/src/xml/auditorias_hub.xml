@@ -52,6 +52,21 @@
                 </t>
             </div>
 
+            <!-- Listas de Verificación -->
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.abrirAccionXml('amunet_lista_verificacion.action_lista_verificacion')">
+                <i class="fa fa-check-square-o fa-2x mb-2" style="color:#b7791f"/>
+                <span class="o_amunet_hub_label">Lista de Verificación</span>
+                <t t-if="!state.loading">
+                    <span t-attf-class="o_amunet_hub_badge {{ state.listas > 0 ? 'badge-active' : 'badge-empty' }}">
+                        <t t-esc="state.listas"/> en proceso
+                    </span>
+                </t>
+                <t t-else="">
+                    <span class="o_amunet_hub_badge badge-empty">&#8212;</span>
+                </t>
+            </div>
+
         </div>
 
     </div>

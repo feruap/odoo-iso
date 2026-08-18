@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════ LISTA ════════════ -->
+    <record id="view_lista_list" model="ir.ui.view">
+        <field name="name">amunet.lista.verificacion.list</field>
+        <field name="model">amunet.lista.verificacion</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state == 'firmado'" decoration-muted="state == 'borrador'">
+                <field name="clave"/>
+                <field name="no_auditoria" string="Plan"/>
+                <field name="area_proceso" string="Área / Proceso"/>
+                <field name="fecha" string="Fecha"/>
+                <field name="lider_id" string="Auditor líder"/>
+                <field name="supervisor_id" string="Supervisor"/>
+                <field name="state" widget="badge"
+                    decoration-warning="state == 'borrador'"
+                    decoration-success="state == 'firmado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ════════════ FORMULARIO ════════════ -->
+    <record id="view_lista_form" model="ir.ui.view">
+        <field name="name">amunet.lista.verificacion.form</field>
+        <field name="model">amunet.lista.verificacion</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_firmar_supervisor" type="object"
+                        string="Firmar como Supervisor" class="btn-secondary"
+                        invisible="firma_supervisor_id or not puede_firmar_supervisor"/>
+                    <button name="action_firmar_auditor" type="object"
+                        string="Firmar como Auditor" class="btn-primary"
+                        invisible="firma_auditor_id"/>
+                    <button name="action_borrador" type="object"
+                        string="Regresar a borrador"
+                        invisible="state != 'firmado'"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="borrador,firmado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="clave" readonly="1"/></h1>
+                    </div>
+
+                    <group string="Identificación">
+                        <group>
+                            <field name="plan_id" readonly="state == 'firmado'"/>
+                            <field name="no_auditoria" readonly="1"/>
+                            <field name="fecha" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="lider_id" string="Auditor líder" readonly="1"/>
+                            <field name="area_proceso" readonly="state == 'firmado'"/>
+                            <field name="supervisor_id" readonly="state == 'firmado'"/>
+                        </group>
+                    </group>
+
+                    <!-- ── 1. Cumplimiento Legal ── -->
+                    <separator string="1. Cumplimiento Legal"/>
+                    <field name="item_legal_ids" nolabel="1"
+                        context="{'default_seccion': 'cumplimiento_legal'}"
+                        readonly="state == 'firmado'">
+                        <list editable="bottom">
+                            <field name="seccion" column_invisible="1"/>
+                            <field name="sequence" column_invisible="1"/>
+                            <field name="punto" string="Punto a evaluar"/>
+                            <field name="respuesta" string="Respuesta" widget="badge"
+                                decoration-success="respuesta == 'cumple'"
+                                decoration-warning="respuesta == 'parcial'"
+                                decoration-danger="respuesta == 'no_cumple'"
+                                decoration-muted="respuesta == 'na'"/>
+                            <field name="observaciones" string="Observaciones"/>
+                        </list>
+                    </field>
+
+                    <!-- ── 2. Capacidad del Área ── -->
+                    <separator string="2. Capacidad del Área para proporcionar resultados"/>
+                    <field name="item_capacidad_ids" nolabel="1"
+                        context="{'default_seccion': 'capacidad_area'}"
+                        readonly="state == 'firmado'">
+                        <list editable="bottom">
+                            <field name="seccion" column_invisible="1"/>
+                            <field name="sequence" column_invisible="1"/>
+                            <field name="punto" string="Punto a evaluar"/>
+                            <field name="respuesta" string="Respuesta" widget="badge"
+                                decoration-success="respuesta == 'cumple'"
+                                decoration-warning="respuesta == 'parcial'"
+                                decoration-danger="respuesta == 'no_cumple'"
+                                decoration-muted="respuesta == 'na'"/>
+                            <field name="observaciones" string="Observaciones"/>
+                        </list>
+                    </field>
+
+                    <!-- ── 3. Desempeño del Área ── -->
+                    <separator string="3. Desempeño del Área"/>
+                    <field name="item_desempeno_ids" nolabel="1"
+                        context="{'default_seccion': 'desempeno_area'}"
+                        readonly="state == 'firmado'">
+                        <list editable="bottom">
+                            <field name="seccion" column_invisible="1"/>
+                            <field name="sequence" column_invisible="1"/>
+                            <field name="punto" string="Punto a evaluar"/>
+                            <field name="respuesta" string="Respuesta" widget="badge"
+                                decoration-success="respuesta == 'cumple'"
+                                decoration-warning="respuesta == 'parcial'"
+                                decoration-danger="respuesta == 'no_cumple'"
+                                decoration-muted="respuesta == 'na'"/>
+                            <field name="observaciones" string="Observaciones"/>
+                        </list>
+                    </field>
+
+                    <!-- ── 4. Personal ── -->
+                    <separator string="4. Personal"/>
+                    <field name="item_personal_ids" nolabel="1"
+                        context="{'default_seccion': 'personal'}"
+                        readonly="state == 'firmado'">
+                        <list editable="bottom">
+                            <field name="seccion" column_invisible="1"/>
+                            <field name="sequence" column_invisible="1"/>
+                            <field name="punto" string="Punto a evaluar"/>
+                            <field name="respuesta" string="Respuesta" widget="badge"
+                                decoration-success="respuesta == 'cumple'"
+                                decoration-warning="respuesta == 'parcial'"
+                                decoration-danger="respuesta == 'no_cumple'"
+                                decoration-muted="respuesta == 'na'"/>
+                            <field name="observaciones" string="Observaciones"/>
+                        </list>
+                    </field>
+
+                    <!-- ── Cierre ── -->
+                    <separator string="Observaciones y resultado"/>
+                    <group>
+                        <field name="observaciones_generales" nolabel="1" rows="3"
+                            readonly="state == 'firmado'"
+                            placeholder="Observaciones generales de la auditoría..."/>
+                        <field name="resultado" nolabel="1" rows="3"
+                            readonly="state == 'firmado'"
+                            placeholder="Resultado de la auditoría..."/>
+                    </group>
+
+                    <!-- ── Firmas ── -->
+                    <separator string="Firmas"/>
+                    <field name="puede_firmar_supervisor" invisible="1"/>
+                    <group>
+                        <group string="Supervisor del área auditada">
+                            <field name="firma_supervisor_id" nolabel="1" readonly="1"/>
+                            <field name="fecha_firma_supervisor" nolabel="1" readonly="1"/>
+                            <button name="action_firmar_supervisor" type="object"
+                                string="Firmar con PIN" icon="fa-pen"
+                                class="btn-secondary btn-sm"
+                                invisible="firma_supervisor_id or not puede_firmar_supervisor"/>
+                        </group>
+                        <group string="Auditor (Amunet)">
+                            <field name="firma_auditor_id" nolabel="1" readonly="1"/>
+                            <field name="fecha_firma_auditor" nolabel="1" readonly="1"/>
+                            <button name="action_firmar_auditor" type="object"
+                                string="Firmar con PIN" icon="fa-pen"
+                                class="btn-primary btn-sm"
+                                invisible="firma_auditor_id"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ════════════ ACCIÓN ════════════ -->
+    <record id="action_lista_verificacion" model="ir.actions.act_window">
+        <field name="name">Listas de Verificación</field>
+        <field name="res_model">amunet.lista.verificacion</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea la lista de verificación de una auditoría interna
+            </p>
+        </field>
+    </record>
+
+</odoo>
