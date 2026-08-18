@@ -165,7 +165,6 @@
                             <field name="criterio_ids" nolabel="1"
                                 readonly="state in ('emitido','cerrado')">
                                 <list editable="bottom">
-                                    <field name="codigo" string="ID" optional="show"/>
                                     <field name="nombre" string="Criterio"/>
                                     <field name="descripcion" string="Descripción"/>
                                 </list>
