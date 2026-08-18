@@ -281,7 +281,16 @@ class AmunetPlanAuditoriaActividad(models.Model):
     dia_id = fields.Many2one('amunet.plan.auditoria.dia', required=True, ondelete='cascade')
     hora_inicio = fields.Float(string='Hora inicio', digits=(4, 2))
     hora_fin = fields.Float(string='Hora fin', digits=(4, 2))
-    auditor_id = fields.Many2one('res.users', string='Auditor', domain=[('share', '=', False)])
+    equipo_ids = fields.Many2many('res.users', compute='_compute_equipo_ids')
+    auditor_id = fields.Many2one('res.users', string='Auditor', domain="[('id', 'in', equipo_ids)]")
     que_auditar = fields.Char(string='¿Qué se va a auditar?')
     requisitos = fields.Char(string='Requisitos')
     auditado = fields.Char(string='Auditado')
+
+    def _compute_equipo_ids(self):
+        for r in self:
+            plan = r.dia_id.plan_id
+            if plan:
+                r.equipo_ids = plan.lider_id | plan.auditor_ids | plan.observador_ids | plan.experto_ids
+            else:
+                r.equipo_ids = self.env['res.users']
