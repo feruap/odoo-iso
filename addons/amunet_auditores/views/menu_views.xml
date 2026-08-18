@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Submenú bajo el área de Documentación -->
-    <menuitem id="menu_auditores_root"
-        name="Auditores internos"
-        parent="amunet_documentos.menu_amunet_documentos_root"
-        sequence="50"/>
+    <!-- Menú raíz desactivado: el acceso es por el hub del dashboard -->
+    <record id="menu_auditores_root" model="ir.ui.menu">
+        <field name="name">Auditores internos</field>
+        <field name="parent_id" ref="amunet_documentos.menu_amunet_documentos_root"/>
+        <field name="sequence">50</field>
+        <field name="active" eval="False"/>
+    </record>
 
     <menuitem id="menu_convocatorias"
         name="Convocatorias"
