@@ -50,8 +50,15 @@ class ProductionPlan(models.Model):
         'product.category', string='Categorias',
         help='Vacio = todas las categorias con demanda en la ventana.')
     only_with_bom = fields.Boolean(
-        string='Solo productos con BoM', default=True,
-        help='Sin BoM no se puede fabricar ni validar materia prima.')
+        string='Solo productos con BoM', default=False,
+        help='Si se activa, ignora los productos de compra-reventa (sin BoM).')
+    stock_basis = fields.Selection([
+        ('released', 'Solo existencia liberada por Calidad'),
+        ('free', 'Toda la existencia libre'),
+    ], string='Que cuenta como disponible', default='released', required=True,
+        help='Lo que no ha liberado Calidad no es vendible. Con "liberada" el plan '
+             'no lo cuenta como oferta, pero lo reporta aparte para que se vea que '
+             'el cuello de botella es liberacion, no compra ni produccion.')
 
     line_ids = fields.One2many('amunet.production.plan.line', 'plan_id', string='Lineas')
     shortage_ids = fields.One2many(
@@ -59,17 +66,23 @@ class ProductionPlan(models.Model):
 
     line_count = fields.Integer(compute='_compute_counts')
     to_produce_count = fields.Integer(compute='_compute_counts')
+    to_buy_count = fields.Integer(compute='_compute_counts')
     blocked_count = fields.Integer(compute='_compute_counts')
+    pending_qc_count = fields.Integer(compute='_compute_counts')
     shortage_count = fields.Integer(compute='_compute_counts')
 
-    @api.depends('line_ids.qty_to_produce', 'line_ids.qty_suggested', 'shortage_ids')
+    @api.depends('line_ids.qty_to_produce', 'line_ids.qty_to_buy',
+                 'line_ids.qty_suggested', 'line_ids.qty_pending_qc', 'shortage_ids')
     def _compute_counts(self):
         for plan in self:
             lines = plan.line_ids
             plan.line_count = len(lines)
             plan.to_produce_count = len(lines.filtered(lambda l: l.qty_to_produce > 0))
+            plan.to_buy_count = len(lines.filtered(lambda l: l.qty_to_buy > 0))
             plan.blocked_count = len(lines.filtered(
-                lambda l: l.qty_suggested > 0 and l.qty_to_produce <= 0))
+                lambda l: l.supply_mode == 'manufacture'
+                and l.qty_suggested > 0 and l.qty_to_produce <= 0))
+            plan.pending_qc_count = len(lines.filtered(lambda l: l.qty_pending_qc > 0))
             plan.shortage_count = len(plan.shortage_ids)
 
     @api.model_create_multi
@@ -171,32 +184,59 @@ class ProductionPlan(models.Model):
                 product, company_id=self.company_id.id).get(product)
             if self.only_with_bom and not bom:
                 continue
+            if bom:
+                supply_mode = 'manufacture'
+            elif product.purchase_ok:
+                supply_mode = 'buy'
+            else:
+                supply_mode = 'unknown'
 
             daily = qty_hist / days
             need = daily * (self.horizon_days + self.safety_days)
-            on_hand = product.with_company(self.company_id).free_qty
+            free = product.with_company(self.company_id).free_qty
+            released = self._released_qty(product)
+            pending_qc = max(0.0, free - released) if self._tracks_release() else 0.0
+            on_hand = released if (self.stock_basis == 'released'
+                                   and self._tracks_release()) else free
             wip = self._wip_qty(product)
             suggested = max(0.0, need - on_hand - wip)
             suggested = float_round(suggested, precision_rounding=1.0, rounding_method='UP')
 
-            coverage, missing = self._bom_coverage(product, bom, suggested)
-            to_produce = float_round(
-                suggested * coverage, precision_rounding=1.0, rounding_method='DOWN')
+            to_produce = to_buy = 0.0
+            coverage, missing = 1.0, {}
+            if supply_mode == 'manufacture':
+                coverage, missing = self._bom_coverage(product, bom, suggested)
+                to_produce = float_round(
+                    suggested * coverage, precision_rounding=1.0, rounding_method='DOWN')
+            elif supply_mode == 'buy':
+                # Compra-reventa: no hay BoM que explotar, la restriccion es el
+                # proveedor. Se sugiere comprar y Calidad tendra que liberarlo.
+                to_buy = suggested
+
+            note = ', '.join(missing.keys()) if missing else ''
+            if pending_qc > 0:
+                aviso = _('%(n)s piezas esperando liberacion de Calidad') % {
+                    'n': int(pending_qc)}
+                note = '%s | %s' % (note, aviso) if note else aviso
 
             line = Line.create({
                 'plan_id': self.id,
                 'product_id': product.id,
                 'bom_id': bom.id if bom else False,
+                'supply_mode': supply_mode,
                 'qty_history': qty_hist,
                 'qty_daily': daily,
                 'qty_need': need,
                 'qty_on_hand': on_hand,
-                'qty_released': self._released_qty(product),
+                'qty_free': free,
+                'qty_released': released,
+                'qty_pending_qc': pending_qc,
                 'qty_wip': wip,
                 'qty_suggested': suggested,
                 'mp_coverage': coverage * 100.0,
                 'qty_to_produce': to_produce,
-                'blocking_note': ', '.join(missing.keys()) if missing else '',
+                'qty_to_buy': to_buy,
+                'blocking_note': note,
             })
             for comp_id, data in missing.items():
                 key = data['product_id']
@@ -215,9 +255,10 @@ class ProductionPlan(models.Model):
 
         self.state = 'computed'
         self.message_post(body=_(
-            'Plan calculado: %(n)s productos con demanda, %(p)s con produccion posible, '
-            '%(b)s bloqueados por materia prima.',
-            n=len(self.line_ids), p=self.to_produce_count, b=self.blocked_count))
+            'Plan calculado: %(n)s productos con demanda, %(p)s a producir, '
+            '%(c)s a comprar, %(b)s bloqueados por materia prima.',
+            n=len(self.line_ids), p=self.to_produce_count,
+            c=self.to_buy_count, b=self.blocked_count))
         return True
 
     def _wip_qty(self, product):
@@ -228,19 +269,28 @@ class ProductionPlan(models.Model):
         ])
         return sum(mos.mapped('product_qty'))
 
+    def _tracks_release(self):
+        return 'amunet_lot_release_state' in self.env['stock.lot']._fields
+
     def _released_qty(self, product):
         """Piezas en lotes liberados por Calidad, si amunet_lot esta instalado."""
         Quant = self.env['stock.quant'].sudo()
-        if 'amunet_lot_release_state' not in self.env['stock.lot']._fields:
+        if not self._tracks_release():
             return 0.0
         quants = Quant.search([
             ('product_id', '=', product.id),
             ('location_id.usage', '=', 'internal'),
             ('company_id', '=', self.company_id.id),
         ])
-        return sum(
-            q.quantity - q.reserved_quantity for q in quants
+        released_total = sum(
+            q.quantity for q in quants
             if q.lot_id and q.lot_id.amunet_lot_release_state == 'released')
+        # En Odoo 19 las reservas viven en stock.move.line, no en el quant, asi
+        # que quantity - reserved_quantity mentiria. Se descuenta la reserva
+        # global (existencia total menos existencia libre) del stock liberado.
+        product = product.with_company(self.company_id)
+        reserved = max(0.0, product.qty_available - product.free_qty)
+        return max(0.0, released_total - reserved)
 
     @staticmethod
     def _is_stock_tracked(product):
@@ -285,7 +335,9 @@ class ProductionPlan(models.Model):
     # ------------------------------------------------------------------
     def action_create_mos(self):
         self.ensure_one()
-        lines = self.line_ids.filtered(lambda l: l.qty_to_produce > 0 and not l.production_id)
+        lines = self.line_ids.filtered(
+            lambda l: l.supply_mode == 'manufacture' and l.qty_to_produce > 0
+            and not l.production_id)
         if not lines:
             raise UserError(_('No hay lineas con cantidad a producir pendientes de orden.'))
         Production = self.env['mrp.production']
@@ -331,16 +383,24 @@ class ProductionPlanLine(models.Model):
     product_id = fields.Many2one('product.product', string='Producto', required=True)
     categ_id = fields.Many2one(related='product_id.categ_id', string='Categoria', store=True)
     bom_id = fields.Many2one('mrp.bom', string='Lista de materiales')
+    supply_mode = fields.Selection([
+        ('manufacture', 'Fabricar'),
+        ('buy', 'Comprar para reventa'),
+        ('unknown', 'Sin origen definido'),
+    ], string='Origen', default='manufacture')
 
     qty_history = fields.Float(string='Vendido en la ventana', digits='Product Unit of Measure')
     qty_daily = fields.Float(string='Demanda diaria', digits='Product Unit of Measure')
     qty_need = fields.Float(string='Necesidad del horizonte', digits='Product Unit of Measure')
-    qty_on_hand = fields.Float(string='Existencia libre', digits='Product Unit of Measure')
-    qty_released = fields.Float(string='Existencia liberada', digits='Product Unit of Measure')
+    qty_on_hand = fields.Float(string='Disponible contado', digits='Product Unit of Measure')
+    qty_free = fields.Float(string='Existencia libre total', digits='Product Unit of Measure')
+    qty_released = fields.Float(string='Liberada por Calidad', digits='Product Unit of Measure')
+    qty_pending_qc = fields.Float(string='Esperando liberacion', digits='Product Unit of Measure')
     qty_wip = fields.Float(string='En produccion', digits='Product Unit of Measure')
     qty_suggested = fields.Float(string='Sugerido', digits='Product Unit of Measure')
     mp_coverage = fields.Float(string='Cobertura MP (%)')
     qty_to_produce = fields.Float(string='A producir', digits='Product Unit of Measure')
+    qty_to_buy = fields.Float(string='A comprar', digits='Product Unit of Measure')
     blocking_note = fields.Char(string='Materia prima que falta')
     production_id = fields.Many2one('mrp.production', string='Orden creada', readonly=True)
 
@@ -348,14 +408,20 @@ class ProductionPlanLine(models.Model):
         ('ok', 'Se puede producir'),
         ('partial', 'Alcanza parcial'),
         ('blocked', 'Bloqueado por materia prima'),
+        ('buy', 'Hay que comprar'),
+        ('nosource', 'Sin BoM ni proveedor'),
         ('none', 'Sin necesidad'),
     ], compute='_compute_status', store=True, string='Situacion')
 
-    @api.depends('qty_suggested', 'qty_to_produce', 'mp_coverage')
+    @api.depends('qty_suggested', 'qty_to_produce', 'qty_to_buy', 'supply_mode')
     def _compute_status(self):
         for line in self:
             if line.qty_suggested <= 0:
                 line.status = 'none'
+            elif line.supply_mode == 'buy':
+                line.status = 'buy'
+            elif line.supply_mode == 'unknown':
+                line.status = 'nosource'
             elif line.qty_to_produce <= 0:
                 line.status = 'blocked'
             elif line.qty_to_produce < line.qty_suggested:

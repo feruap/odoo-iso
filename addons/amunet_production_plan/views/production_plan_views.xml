@@ -32,6 +32,7 @@
                         <group string="Que quiero cubrir">
                             <field name="horizon_days"/>
                             <field name="safety_days"/>
+                            <field name="stock_basis"/>
                             <field name="only_with_bom"/>
                             <field name="categ_ids" widget="many2many_tags"/>
                             <field name="company_id" groups="base.group_multi_company"/>
@@ -39,28 +40,35 @@
                     </group>
                     <group col="4" string="Resumen">
                         <field name="line_count" string="Productos con demanda"/>
-                        <field name="to_produce_count" string="Se pueden producir"/>
+                        <field name="to_produce_count" string="A producir"/>
+                        <field name="to_buy_count" string="A comprar"/>
                         <field name="blocked_count" string="Bloqueados por MP"/>
+                        <field name="pending_qc_count" string="Con stock sin liberar"/>
                         <field name="shortage_count" string="Materias primas faltantes"/>
                     </group>
                     <notebook>
                         <page string="Plan por producto" name="lines">
                             <field name="line_ids" readonly="1">
-                                <list decoration-danger="status == 'blocked'"
+                                <list decoration-danger="status in ('blocked','nosource')"
                                       decoration-warning="status == 'partial'"
+                                      decoration-info="status == 'buy'"
                                       decoration-success="status == 'ok'">
                                     <field name="product_id"/>
+                                    <field name="supply_mode" string="Origen"/>
                                     <field name="categ_id" optional="hide"/>
                                     <field name="qty_history" string="Vendido"/>
                                     <field name="qty_daily" string="Diario" optional="hide"/>
                                     <field name="qty_need" string="Necesidad"/>
-                                    <field name="qty_on_hand" string="Existencia"/>
+                                    <field name="qty_on_hand" string="Disponible"/>
+                                    <field name="qty_free" string="Existencia total" optional="hide"/>
                                     <field name="qty_released" string="Liberado" optional="hide"/>
+                                    <field name="qty_pending_qc" string="Sin liberar"/>
                                     <field name="qty_wip" string="En produccion"/>
                                     <field name="qty_suggested" string="Sugerido"/>
                                     <field name="mp_coverage" string="Cobertura MP %" widget="progressbar"/>
-                                    <field name="qty_to_produce" string="A producir" sum="Total piezas"/>
-                                    <field name="blocking_note" string="Falta"/>
+                                    <field name="qty_to_produce" string="A producir" sum="Total"/>
+                                    <field name="qty_to_buy" string="A comprar" sum="Total"/>
+                                    <field name="blocking_note" string="Nota"/>
                                     <field name="status"/>
                                     <field name="production_id" optional="show"/>
                                     <field name="bom_id" optional="hide"/>
@@ -97,6 +105,7 @@
                 <field name="horizon_days"/>
                 <field name="line_count"/>
                 <field name="to_produce_count"/>
+                <field name="to_buy_count"/>
                 <field name="blocked_count"/>
                 <field name="state"/>
             </list>
