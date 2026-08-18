@@ -121,17 +121,6 @@
                                 readonly="state == 'firmado'"
                                 placeholder="Espacio para que el auditado exprese dudas, inquietudes o información adicional..."/>
 
-                            <separator string="Compromisos acordados en apertura"/>
-                            <field name="apertura_compromiso_ids" nolabel="1"
-                                context="{'default_seccion': 'apertura'}"
-                                readonly="state == 'firmado'">
-                                <list editable="bottom">
-                                    <field name="seccion" column_invisible="1"/>
-                                    <field name="descripcion" string="Compromiso"/>
-                                    <field name="responsable" string="Responsable"/>
-                                    <field name="fecha_limite" string="Fecha límite"/>
-                                </list>
-                            </field>
 
                         </page>
 

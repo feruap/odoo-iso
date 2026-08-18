@@ -73,8 +73,6 @@ class AmunetActaAuditoria(models.Model):
     aper_otros = fields.Char(string='Otros')
 
     apertura_observaciones = fields.Text(string='Observaciones / Comentarios del auditado')
-    apertura_compromiso_ids = fields.One2many('amunet.acta.compromiso', 'acta_id',
-        domain=[('seccion', '=', 'apertura')], string='Compromisos')
 
     # ── REUNIÓN DE CIERRE ──────────────────────────────────────────────────
     cierre_fecha = fields.Date(string='Fecha')
