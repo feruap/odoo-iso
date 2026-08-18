@@ -6,49 +6,54 @@ from odoo.exceptions import UserError
 
 def _build_excel(label, filas, fecha, sin_clabe=None):
     try:
-        import openpyxl
-        from openpyxl.styles import Font, PatternFill
+        import xlsxwriter
     except ImportError:
-        raise UserError('Falta la librería openpyxl. Avisa a desarrollo.')
-
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = 'Lista 1 - Nomina'
-    ws.column_dimensions['A'].width = 38
-    ws.column_dimensions['B'].width = 18
-    ws.column_dimensions['C'].width = 22
-    ws.column_dimensions['D'].width = 12
-
-    ws.append(['DISPERSIÓN — %s — %s' % (label.upper(), fecha), None, None, None])
-    ws['A1'].font = Font(bold=True, size=12)
-    ws.append(['EMPLEADO', 'BANCO', 'CLABE', 'MONTO'])
-    for col in ['A2', 'B2', 'C2', 'D2']:
-        ws[col].font = Font(bold=True)
-
-    amarillo = PatternFill(fill_type='solid', fgColor='FFFF00')
-    for nombre, banco, clabe, monto, nuevo_ingreso in filas:
-        ws.append([nombre, banco, clabe, monto])
-        ws.cell(row=ws.max_row, column=3).number_format = '@'
-        if nuevo_ingreso:
-            for col in range(1, 5):
-                ws.cell(row=ws.max_row, column=col).font = Font(bold=True)
-        if not clabe:
-            ws.cell(row=ws.max_row, column=3).fill = amarillo
-
-    total = sum(r[3] for r in filas)
-    ws.append([None, None, 'TOTAL', total])
-    ws.cell(row=ws.max_row, column=3).font = Font(bold=True)
-    ws.cell(row=ws.max_row, column=4).font = Font(bold=True)
-
-    if sin_clabe:
-        ws.append([])
-        ws.append(['⚠ Sin CLABE (revisar antes de enviar al banco):', None, None, None])
-        ws.cell(row=ws.max_row, column=1).font = Font(bold=True, color='FF0000')
-        for nombre in sin_clabe:
-            ws.append(['  • ' + nombre, None, None, None])
+        raise UserError('Falta la librería xlsxwriter. Avisa a desarrollo.')
 
     buf = io.BytesIO()
-    wb.save(buf)
+    wb = xlsxwriter.Workbook(buf, {'in_memory': True})
+    ws = wb.add_worksheet('Lista 1 - Nomina')
+
+    ws.set_column(0, 0, 38)
+    ws.set_column(1, 1, 18)
+    ws.set_column(2, 2, 22)
+    ws.set_column(3, 3, 12)
+
+    fmt_titulo       = wb.add_format({'bold': True, 'font_size': 12})
+    fmt_header       = wb.add_format({'bold': True})
+    fmt_texto        = wb.add_format({'num_format': '@'})
+    fmt_bold_texto   = wb.add_format({'bold': True, 'num_format': '@'})
+    fmt_bold_num     = wb.add_format({'bold': True})
+    fmt_sin_clabe    = wb.add_format({'num_format': '@', 'bg_color': '#FFFF00'})
+    fmt_bold_sc      = wb.add_format({'bold': True, 'num_format': '@', 'bg_color': '#FFFF00'})
+    fmt_aviso        = wb.add_format({'bold': True, 'font_color': 'red'})
+
+    ws.write(0, 0, 'DISPERSIÓN — %s — %s' % (label.upper(), fecha), fmt_titulo)
+    for col, enc in enumerate(['EMPLEADO', 'BANCO', 'CLABE', 'MONTO']):
+        ws.write(1, col, enc, fmt_header)
+
+    for idx, (nombre, banco, clabe, monto, nuevo_ingreso) in enumerate(filas):
+        fila = idx + 2
+        fmt_n  = fmt_bold_num   if nuevo_ingreso else None
+        fmt_c  = (fmt_bold_sc if nuevo_ingreso else fmt_sin_clabe) if not clabe else \
+                 (fmt_bold_texto if nuevo_ingreso else fmt_texto)
+        ws.write(fila, 0, nombre, fmt_n)
+        ws.write(fila, 1, banco,  fmt_n)
+        ws.write_string(fila, 2, clabe, fmt_c)
+        ws.write_number(fila, 3, monto, fmt_n)
+
+    total = sum(r[3] for r in filas)
+    fila_total = len(filas) + 2
+    ws.write(fila_total, 2, 'TOTAL', fmt_bold_texto)
+    ws.write_number(fila_total, 3, total, fmt_bold_num)
+
+    if sin_clabe:
+        fila_av = fila_total + 2
+        ws.write(fila_av, 0, '⚠ Sin CLABE (revisar antes de enviar al banco):', fmt_aviso)
+        for i, nombre in enumerate(sin_clabe):
+            ws.write(fila_av + 1 + i, 0, '  • ' + nombre)
+
+    wb.close()
     buf.seek(0)
     return base64.b64encode(buf.read()).decode()
 
