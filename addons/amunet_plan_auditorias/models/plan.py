@@ -9,65 +9,74 @@ class AmunetPlanAuditoria(models.Model):
     _order = 'fecha_inicio desc, clave'
     _rec_name = 'clave'
 
-    clave = fields.Char(
-        string='Clave', readonly=True, copy=False,
+    clave = fields.Char(string='Clave', readonly=True, copy=False,
         default=lambda self: _('Nuevo'))
     tipo = fields.Selection([
         ('programada', 'Programada'),
         ('no_programada', 'No Programada'),
         ('reprogramada', 'Reprogramada'),
     ], string='Tipo de auditoría', required=True, default='programada')
+    modalidad = fields.Selection([
+        ('primera', 'Primera parte (interna)'),
+        ('segunda', 'Segunda parte (cliente/proveedor)'),
+        ('tercera', 'Tercera parte (certificación/regulatoria)'),
+    ], string='Modalidad', default='primera')
     fecha_inicio = fields.Date(string='Fecha de auditoría', required=True)
     fecha_fin = fields.Date(string='Fecha de término')
-    criterios = fields.Text(string='Criterios')
-    alcance = fields.Text(string='Alcance de la auditoría')
-    turnos = fields.Selection([
-        ('matutino', 'Matutino'),
-        ('vespertino', 'Vespertino'),
-        ('nocturno', 'Nocturno'),
-        ('unico', 'Único'),
-        ('todos', 'Todos'),
-    ], string='Turno auditado')
     sitio = fields.Char(string='Sitio')
-    domicilio = fields.Char(string='Domicilio')
     objetivos = fields.Text(string='Objetivos de la auditoría')
+    alcance = fields.Text(string='Alcance de la auditoría')
+    limitaciones = fields.Text(string='Limitaciones / Exclusiones')
     cambios = fields.Text(string='Cambios al plan')
+
+    # Metodología
+    met_apertura = fields.Boolean(string='Reunión de apertura', default=True)
+    met_entrevistas = fields.Boolean(string='Entrevistas con personal clave', default=True)
+    met_revision_doc = fields.Boolean(string='Revisión documental', default=True)
+    met_verificacion = fields.Boolean(string='Verificación in situ', default=True)
+    met_muestreo = fields.Boolean(string='Muestreo de registros', default=True)
+    met_observacion = fields.Boolean(string='Observación directa', default=False)
+    met_cierre = fields.Boolean(string='Reunión de cierre', default=True)
+
+    # Plazos del informe (días hábiles)
+    plazo_preliminar = fields.Integer(string='Informe preliminar', default=5)
+    plazo_revision_auditado = fields.Integer(string='Revisión del auditado', default=10)
+    plazo_informe_final = fields.Integer(string='Informe final', default=15)
+    plazo_plan_capa = fields.Integer(string='Plan de acciones correctivas', default=30)
+
     state = fields.Selection([
         ('borrador', 'Borrador'),
         ('emitido', 'Emitido'),
         ('cerrado', 'Cerrado'),
     ], default='borrador', string='Estado', required=True, tracking=True)
 
-    # Referencia a convocatoria
+    # Convocatoria de referencia
     convocatoria_id = fields.Many2one(
         'amunet.auditor.convocatoria', string='Convocatoria de referencia',
         domain=[('state', '=', 'cerrada')])
 
     # Equipo auditor
-    lider_id = fields.Many2one(
-        'res.users', string='Auditor líder',
+    lider_id = fields.Many2one('res.users', string='Auditor líder',
         domain=[('share', '=', False)])
-    auditor_ids = fields.Many2many(
-        'res.users', 'plan_auditoria_auditor_rel',
-        'plan_id', 'user_id',
-        string='Auditores',
-        domain=[('share', '=', False)])
-    observador_ids = fields.Many2many(
-        'res.users', 'plan_auditoria_observador_rel',
-        'plan_id', 'user_id',
-        string='Observadores',
-        domain=[('share', '=', False)])
-    experto_ids = fields.Many2many(
-        'res.users', 'plan_auditoria_experto_rel',
-        'plan_id', 'user_id',
-        string='Expertos técnicos',
-        domain=[('share', '=', False)])
+    auditor_ids = fields.Many2many('res.users', 'plan_auditoria_auditor_rel',
+        'plan_id', 'user_id', string='Auditores', domain=[('share', '=', False)])
+    observador_ids = fields.Many2many('res.users', 'plan_auditoria_observador_rel',
+        'plan_id', 'user_id', string='Observadores', domain=[('share', '=', False)])
+    experto_ids = fields.Many2many('res.users', 'plan_auditoria_experto_rel',
+        'plan_id', 'user_id', string='Expertos técnicos', domain=[('share', '=', False)])
 
-    # Información requerida y agenda
-    info_ids = fields.One2many(
-        'amunet.plan.auditoria.info', 'plan_id', string='Información requerida')
-    dia_ids = fields.One2many(
-        'amunet.plan.auditoria.dia', 'plan_id', string='Agenda por días')
+    # Criterios y agenda
+    criterio_ids = fields.One2many('amunet.plan.auditoria.criterio', 'plan_id', string='Criterios')
+    info_ids = fields.One2many('amunet.plan.auditoria.info', 'plan_id', string='Información requerida')
+    dia_ids = fields.One2many('amunet.plan.auditoria.dia', 'plan_id', string='Agenda por días')
+
+    # Firmas
+    elaboro_id = fields.Many2one('res.users', string='Elaboró', readonly=True)
+    fecha_elaboro = fields.Date(string='Fecha elaboración', readonly=True)
+    reviso_id = fields.Many2one('res.users', string='Revisó', readonly=True)
+    fecha_reviso = fields.Date(string='Fecha revisión', readonly=True)
+    autorizo_id = fields.Many2one('res.users', string='Autorizó', readonly=True)
+    fecha_autorizo = fields.Date(string='Fecha autorización', readonly=True)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -87,14 +96,80 @@ class AmunetPlanAuditoria(models.Model):
                 vals['clave'] = f'AI{mm}{yy}-{num}'
         return super().create(vals_list)
 
-    def action_emitir(self):
-        self.write({'state': 'emitido'})
+    # ── Firma electrónica ──────────────────────────────────────────────────────
+
+    def _amunet_signature_allowed_methods(self):
+        return {
+            '_signature_elaborar': _('Elaboración del plan de auditoría'),
+            '_signature_revisar': _('Revisión del plan de auditoría'),
+            '_signature_autorizar': _('Autorización y emisión del plan de auditoría'),
+        }
+
+    def action_firmar_elaboracion(self):
+        self.ensure_one()
+        if self.state != 'borrador':
+            raise ValidationError(_('Solo se puede firmar la elaboración en estado Borrador.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_signature_elaborar',
+            _('Elaboró'),
+            _('Firma de elaboración del plan %s.') % self.clave,
+        )
+
+    def _signature_elaborar(self):
+        self.ensure_one()
+        self.write({'elaboro_id': self.env.user.id, 'fecha_elaboro': fields.Date.today()})
+        return {'type': 'ir.actions.act_window_close'}
+
+    def action_firmar_revision(self):
+        self.ensure_one()
+        if self.state != 'borrador':
+            raise ValidationError(_('Solo se puede firmar la revisión en estado Borrador.'))
+        if not self.elaboro_id:
+            raise ValidationError(_('Firma primero la elaboración antes de revisar.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_signature_revisar',
+            _('Responsable de calidad del auditado'),
+            _('Firma de revisión del plan %s.') % self.clave,
+        )
+
+    def _signature_revisar(self):
+        self.ensure_one()
+        self.write({'reviso_id': self.env.user.id, 'fecha_reviso': fields.Date.today()})
+        return {'type': 'ir.actions.act_window_close'}
+
+    def action_firmar_autorizacion(self):
+        self.ensure_one()
+        if self.state != 'borrador':
+            raise ValidationError(_('Solo se puede autorizar en estado Borrador.'))
+        if not self.reviso_id:
+            raise ValidationError(_('Firma primero la revisión antes de autorizar.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_signature_autorizar',
+            _('Autorizó (Gerencia)'),
+            _('Autorización y emisión del plan %s.') % self.clave,
+        )
+
+    def _signature_autorizar(self):
+        self.ensure_one()
+        self.write({
+            'autorizo_id': self.env.user.id,
+            'fecha_autorizo': fields.Date.today(),
+            'state': 'emitido',
+        })
+        return {'type': 'ir.actions.act_window_close'}
+
+    # ── Acciones de estado ─────────────────────────────────────────────────────
 
     def action_cerrar(self):
         self.write({'state': 'cerrado'})
 
     def action_borrador(self):
-        self.write({'state': 'borrador'})
+        self.write({
+            'state': 'borrador',
+            'elaboro_id': False, 'fecha_elaboro': False,
+            'reviso_id': False, 'fecha_reviso': False,
+            'autorizo_id': False, 'fecha_autorizo': False,
+        })
 
     def action_cargar_equipo(self):
         self.ensure_one()
@@ -141,20 +216,27 @@ class AmunetPlanAuditoria(models.Model):
         return super().unlink()
 
 
+class AmunetPlanAuditoriaCriterio(models.Model):
+    _name = 'amunet.plan.auditoria.criterio'
+    _description = 'Criterio de auditoría'
+    _order = 'plan_id, secuencia, id'
+
+    plan_id = fields.Many2one('amunet.plan.auditoria', required=True, ondelete='cascade')
+    secuencia = fields.Integer(default=10)
+    codigo = fields.Char(string='ID', placeholder='C-01')
+    nombre = fields.Char(string='Criterio', required=True)
+    descripcion = fields.Text(string='Descripción')
+
+
 class AmunetPlanAuditoriaInfo(models.Model):
     _name = 'amunet.plan.auditoria.info'
     _description = 'Información requerida para la auditoría'
     _order = 'plan_id, secuencia, id'
 
-    plan_id = fields.Many2one(
-        'amunet.plan.auditoria', required=True, ondelete='cascade')
+    plan_id = fields.Many2one('amunet.plan.auditoria', required=True, ondelete='cascade')
     secuencia = fields.Integer(default=10)
     concepto = fields.Char(string='Concepto', required=True)
-    resultado = fields.Selection([
-        ('C', 'C'),
-        ('NC', 'NC'),
-        ('na', 'N/A'),
-    ], string='Resultado')
+    resultado = fields.Selection([('C', 'C'), ('NC', 'NC'), ('na', 'N/A')], string='Resultado')
     observaciones = fields.Char(string='Observaciones')
 
 
@@ -163,8 +245,7 @@ class AmunetPlanAuditoriaDia(models.Model):
     _description = 'Día de auditoría'
     _order = 'plan_id, fecha, id'
 
-    plan_id = fields.Many2one(
-        'amunet.plan.auditoria', required=True, ondelete='cascade')
+    plan_id = fields.Many2one('amunet.plan.auditoria', required=True, ondelete='cascade')
     fecha = fields.Date(string='Fecha', required=True)
     sitio = fields.Char(string='Sitio')
     turno = fields.Selection([
@@ -173,10 +254,8 @@ class AmunetPlanAuditoriaDia(models.Model):
         ('nocturno', 'Nocturno'),
         ('unico', 'Único'),
     ], string='Turno')
-    actividad_ids = fields.One2many(
-        'amunet.plan.auditoria.actividad', 'dia_id', string='Actividades')
-    actividad_count = fields.Integer(
-        compute='_compute_actividad_count', string='Actividades')
+    actividad_ids = fields.One2many('amunet.plan.auditoria.actividad', 'dia_id', string='Actividades')
+    actividad_count = fields.Integer(compute='_compute_actividad_count', string='Actividades')
 
     def _compute_actividad_count(self):
         for r in self:
@@ -199,12 +278,9 @@ class AmunetPlanAuditoriaActividad(models.Model):
     _description = 'Actividad de la agenda de auditoría'
     _order = 'dia_id, horario, id'
 
-    dia_id = fields.Many2one(
-        'amunet.plan.auditoria.dia', required=True, ondelete='cascade')
+    dia_id = fields.Many2one('amunet.plan.auditoria.dia', required=True, ondelete='cascade')
     horario = fields.Char(string='Horario', placeholder='08:00 – 09:00')
-    auditor_id = fields.Many2one(
-        'res.users', string='Auditor',
-        domain=[('share', '=', False)])
+    auditor_id = fields.Many2one('res.users', string='Auditor', domain=[('share', '=', False)])
     que_auditar = fields.Char(string='¿Qué se va a auditar?')
     requisitos = fields.Char(string='Requisitos')
     auditado = fields.Char(string='Auditado')

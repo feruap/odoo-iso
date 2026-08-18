@@ -5,7 +5,7 @@
     'summary': 'Plan detallado de auditoría interna (ISO 13485 §8.2.4)',
     'author': 'Amunet',
     'license': 'LGPL-3',
-    'depends': ['amunet_documentos', 'amunet_auditores'],
+    'depends': ['amunet_documentos', 'amunet_auditores', 'amunet_quality'],
     'data': [
         'security/ir.model.access.csv',
         'data/sequences.xml',

@@ -1,6 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_plan_user,Plan Usuario,model_amunet_plan_auditoria,base.group_user,1,0,0,0
 access_plan_doc,Plan Documentacion,model_amunet_plan_auditoria,amunet_documentos.group_documentos_manager,1,1,1,1
+access_criterio_user,Criterio Usuario,model_amunet_plan_auditoria_criterio,base.group_user,1,0,0,0
+access_criterio_doc,Criterio Documentacion,model_amunet_plan_auditoria_criterio,amunet_documentos.group_documentos_manager,1,1,1,1
 access_info_user,Info Usuario,model_amunet_plan_auditoria_info,base.group_user,1,0,0,0
 access_info_doc,Info Documentacion,model_amunet_plan_auditoria_info,amunet_documentos.group_documentos_manager,1,1,1,1
 access_dia_user,Dia Usuario,model_amunet_plan_auditoria_dia,base.group_user,1,0,0,0
