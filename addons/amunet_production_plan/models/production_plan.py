@@ -97,18 +97,30 @@ class ProductionPlan(models.Model):
     # Demanda
     # ------------------------------------------------------------------
     def _window_days(self):
+        """Dias de la ventana contando ambos extremos (inclusiva)."""
         self.ensure_one()
-        return max((self.date_to - self.date_from).days, 1)
+        return max((self.date_to - self.date_from).days + 1, 1)
+
+    def _dt_from(self):
+        return fields.Datetime.to_datetime(self.date_from)
+
+    def _dt_to(self):
+        """Fin del ultimo dia: si no, se pierden ~24 h de historico."""
+        return fields.Datetime.to_datetime(self.date_to) + timedelta(
+            hours=23, minutes=59, seconds=59)
 
     def _demand_from_woo(self):
         """{product_id: piezas} desde amunet.woo.sales.trend (sin importes)."""
         Trend = self.env.get('amunet.woo.sales.trend')
         if Trend is None:
             return {}
-        rows = self.env['amunet.woo.sales.trend'].sudo().search([
+        dominio = [
             ('sale_date', '>=', self.date_from),
             ('sale_date', '<=', self.date_to),
-        ])
+        ]
+        if 'company_id' in self.env['amunet.woo.sales.trend']._fields:
+            dominio.append(('company_id', 'in', (self.company_id.id, False)))
+        rows = self.env['amunet.woo.sales.trend'].sudo().search(dominio)
         demand = {}
         for row in rows:
             product = row.product_id or row.product_tmpl_id.product_variant_id
@@ -121,23 +133,33 @@ class ProductionPlan(models.Model):
         if 'sale.order.line' not in self.env:
             raise UserError(_('El modulo de Ventas no esta instalado en esta base.'))
         lines = self.env['sale.order.line'].sudo().search([
-            ('order_id.date_order', '>=', fields.Datetime.to_datetime(self.date_from)),
-            ('order_id.date_order', '<=', fields.Datetime.to_datetime(self.date_to)),
+            ('order_id.date_order', '>=', self._dt_from()),
+            ('order_id.date_order', '<=', self._dt_to()),
             ('order_id.state', 'in', ('sale', 'done')),
+            ('order_id.company_id', '=', self.company_id.id),
             ('product_id.type', '!=', 'service'),
         ])
         demand = {}
         for line in lines:
-            demand[line.product_id.id] = demand.get(line.product_id.id, 0.0) + line.product_uom_qty
+            producto = line.product_id
+            qty = line.product_uom_qty
+            # La linea puede estar en cajas y la produccion se mide en piezas.
+            uom = getattr(line, 'product_uom_id', False) or getattr(line, 'product_uom', False)
+            if uom and producto.uom_id and uom != producto.uom_id:
+                qty = uom._compute_quantity(qty, producto.uom_id)
+            demand[producto.id] = demand.get(producto.id, 0.0) + qty
         return demand
 
     def _demand_from_stock(self):
         """Salidas reales a cliente. Funciona sin Ventas y sin Woo."""
+        # Solo salidas a cliente. El consumo hacia 'production' NO es demanda:
+        # ya se contabiliza al explotar la BoM del producto terminado y contarlo
+        # aqui inflaria la necesidad de materia prima al doble.
         moves = self.env['stock.move'].sudo().search([
             ('state', '=', 'done'),
-            ('date', '>=', fields.Datetime.to_datetime(self.date_from)),
-            ('date', '<=', fields.Datetime.to_datetime(self.date_to)),
-            ('location_dest_id.usage', 'in', ('customer', 'production')),
+            ('date', '>=', self._dt_from()),
+            ('date', '<=', self._dt_to()),
+            ('location_dest_id.usage', '=', 'customer'),
             ('location_id.usage', '=', 'internal'),
             ('company_id', '=', self.company_id.id),
         ])
@@ -157,8 +179,31 @@ class ProductionPlan(models.Model):
     # ------------------------------------------------------------------
     # Calculo
     # ------------------------------------------------------------------
+    def _lock(self):
+        """Candado de fila: evita que dos llamadas concurrentes (RPC, doble
+        clic, cron) recalculen o generen ordenes sobre el mismo plan."""
+        self.ensure_one()
+        try:
+            self.env.cr.execute(
+                'SELECT id FROM amunet_production_plan WHERE id = %s FOR UPDATE NOWAIT',
+                (self.id,))
+        except Exception:
+            raise UserError(_(
+                'Otro usuario esta trabajando sobre este plan en este momento. '
+                'Vuelve a intentarlo en unos segundos.'))
+
     def action_compute(self):
         self.ensure_one()
+        self._lock()
+        if self.state == 'done':
+            raise UserError(_(
+                'Este plan ya genero ordenes de fabricacion. Duplica el plan '
+                'en lugar de recalcularlo: recalcular borraria la trazabilidad.'))
+        con_mo = self.line_ids.filtered(lambda l: l.production_id)
+        if con_mo:
+            raise UserError(_(
+                'Hay %s lineas con orden de fabricacion ya creada. No se puede '
+                'recalcular sin perder el enlace.', len(con_mo)))
         self.line_ids.unlink()
         self.shortage_ids.unlink()
 
@@ -176,6 +221,13 @@ class ProductionPlan(models.Model):
 
         Line = self.env['amunet.production.plan.line']
         shortages = {}
+        # Materia prima compartida: un mismo reactivo alimenta varias pruebas.
+        # mp_pool guarda lo que va quedando conforme se aparta para cada linea;
+        # mp_total guarda la existencia libre original para el reporte.
+        mp_pool, mp_total = {}, {}
+        # Se atiende primero al de mayor demanda historica: si la MP no alcanza,
+        # que se la lleve el producto que mas se vende, no el primero por id.
+        products = products.sorted(lambda p: demand.get(p.id, 0.0), reverse=True)
         for product in products:
             qty_hist = demand.get(product.id, 0.0)
             if qty_hist <= 0:
@@ -205,7 +257,8 @@ class ProductionPlan(models.Model):
             to_produce = to_buy = 0.0
             coverage, missing = 1.0, {}
             if supply_mode == 'manufacture':
-                coverage, missing = self._bom_coverage(product, bom, suggested)
+                coverage, missing = self._bom_coverage(
+                    product, bom, suggested, mp_pool, mp_total)
                 to_produce = float_round(
                     suggested * coverage, precision_rounding=1.0, rounding_method='DOWN')
             elif supply_mode == 'buy':
@@ -242,6 +295,7 @@ class ProductionPlan(models.Model):
                 key = data['product_id']
                 acc = shortages.setdefault(key, {'required': 0.0, 'available': data['available']})
                 acc['required'] += data['required']
+                acc['available'] = mp_total.get(key, data['available'])
                 acc.setdefault('lines', []).append(line.id)
 
         Shortage = self.env['amunet.production.plan.shortage']
@@ -267,7 +321,11 @@ class ProductionPlan(models.Model):
             ('state', 'not in', ('done', 'cancel')),
             ('company_id', '=', self.company_id.id),
         ])
-        return sum(mos.mapped('product_qty'))
+        pendiente = 0.0
+        for mo in mos:
+            hecho = mo.qty_produced if 'qty_produced' in mo._fields else 0.0
+            pendiente += max(0.0, (mo.product_qty or 0.0) - (hecho or 0.0))
+        return pendiente
 
     def _tracks_release(self):
         return 'amunet_lot_release_state' in self.env['stock.lot']._fields
@@ -282,14 +340,27 @@ class ProductionPlan(models.Model):
             ('location_id.usage', '=', 'internal'),
             ('company_id', '=', self.company_id.id),
         ])
+        lotes_liberados = quants.mapped('lot_id').filtered(
+            lambda l: l.amunet_lot_release_state == 'released')
         released_total = sum(
-            q.quantity for q in quants
-            if q.lot_id and q.lot_id.amunet_lot_release_state == 'released')
-        # En Odoo 19 las reservas viven en stock.move.line, no en el quant, asi
-        # que quantity - reserved_quantity mentiria. Se descuenta la reserva
-        # global (existencia total menos existencia libre) del stock liberado.
-        product = product.with_company(self.company_id)
-        reserved = max(0.0, product.qty_available - product.free_qty)
+            q.quantity for q in quants if q.lot_id and q.lot_id in lotes_liberados)
+        if not released_total:
+            return 0.0
+        # En Odoo 19 las reservas viven en stock.move.line, no en el quant. Se
+        # descuenta UNICAMENTE la reserva que pesa sobre lotes liberados: restar
+        # la reserva global castigaria el stock liberado por lotes en cuarentena.
+        reservas = self.env['stock.move.line'].sudo().search([
+            ('product_id', '=', product.id),
+            ('lot_id', 'in', lotes_liberados.ids),
+            ('state', 'not in', ('done', 'cancel')),
+            ('location_id.usage', '=', 'internal'),
+            ('company_id', '=', self.company_id.id),
+        ])
+        campo = 'quantity_product_uom' if 'quantity_product_uom' in \
+            self.env['stock.move.line']._fields else 'quantity'
+        reserved = sum(
+            (ml[campo] or 0.0) for ml in reservas
+            if getattr(ml, 'picked', False) is not True)
         return max(0.0, released_total - reserved)
 
     @staticmethod
@@ -298,18 +369,29 @@ class ProductionPlan(models.Model):
             return bool(product.is_storable)
         return product.type == 'product'
 
-    def _bom_coverage(self, product, bom, qty):
-        """Devuelve (cobertura 0..1, {nombre_componente: datos}) explotando la BoM."""
+    def _bom_coverage(self, product, bom, qty, pool=None, totals=None):
+        """Devuelve (cobertura 0..1, {nombre_componente: datos}) explotando la BoM.
+
+        `pool` es un diccionario compartido por todo el plan con la materia prima
+        que va quedando despues de apartar la que consumiran los productos ya
+        calculados. Sin el, dos pruebas que comparten un mismo reactivo se
+        declararian ambas cubiertas aunque juntas lo agoten.
+        """
         if not bom or qty <= 0:
             return (1.0 if qty <= 0 else 0.0 if self.only_with_bom else 1.0), {}
+        if pool is None:
+            pool = {}
+        if totals is None:
+            totals = {}
         try:
             _boms, bom_lines = bom.explode(product, qty / (bom.product_qty or 1.0))
         except Exception as exc:  # pragma: no cover - defensivo
             _logger.warning('No se pudo explotar la BoM de %s: %s', product.display_name, exc)
             return 0.0, {}
 
-        coverage = 1.0
-        missing = {}
+        # Se agrupa por componente: la misma MP puede aparecer en varias lineas
+        # de la BoM (o en sub-BoMs) y hay que sumarla, no compararla suelta.
+        needs = {}
         for bom_line, line_data in bom_lines:
             component = bom_line.product_id
             required = line_data.get('qty') or line_data.get('quantity') or 0.0
@@ -319,22 +401,49 @@ class ProductionPlan(models.Model):
                 # Un componente que Odoo no inventaria (consumible puro) no puede
                 # bloquear el plan: su existencia siempre seria cero.
                 continue
-            available = component.with_company(self.company_id).free_qty
-            ratio = 1.0 if required <= 0 else min(1.0, available / required)
+            if component.id not in pool:
+                libre = component.with_company(self.company_id).free_qty
+                pool[component.id] = libre
+                totals[component.id] = libre
+            acc = needs.setdefault(
+                component.id, {'component': component, 'required': 0.0})
+            acc['required'] += required
+
+        coverage = 1.0
+        missing = {}
+        for comp_id, data in needs.items():
+            required = data['required']
+            available = pool.get(comp_id, 0.0)
+            ratio = min(1.0, available / required) if required > 0 else 1.0
             if float_compare(available, required, precision_digits=3) < 0:
-                missing[component.display_name] = {
-                    'product_id': component.id,
+                missing[data['component'].display_name] = {
+                    'product_id': comp_id,
                     'required': required,
-                    'available': available,
+                    'available': totals.get(comp_id, available),
+                    'remaining': available,
                 }
             coverage = min(coverage, ratio)
-        return max(coverage, 0.0), missing
+        coverage = max(coverage, 0.0)
+
+        # Se aparta la MP que consumira lo que si se puede producir para que el
+        # siguiente producto del plan vea el remanente real.
+        for comp_id, data in needs.items():
+            pool[comp_id] = max(
+                0.0, pool.get(comp_id, 0.0) - data['required'] * coverage)
+        return coverage, missing
 
     # ------------------------------------------------------------------
     # Ordenes de fabricacion
     # ------------------------------------------------------------------
     def action_create_mos(self):
         self.ensure_one()
+        self._lock()
+        if self.state != 'computed':
+            raise UserError(_(
+                'Solo se pueden generar ordenes desde un plan calculado. '
+                'Estado actual: %s.', dict(
+                    self._fields['state'].selection).get(self.state, self.state)))
+        self.invalidate_recordset(['line_ids'])
         lines = self.line_ids.filtered(
             lambda l: l.supply_mode == 'manufacture' and l.qty_to_produce > 0
             and not l.production_id)
@@ -343,6 +452,8 @@ class ProductionPlan(models.Model):
         Production = self.env['mrp.production']
         created = Production.browse()
         for line in lines:
+            if line.production_id:  # carrera: alguien la creo entre medias
+                continue
             mo = Production.create({
                 'product_id': line.product_id.id,
                 'product_qty': line.qty_to_produce,
