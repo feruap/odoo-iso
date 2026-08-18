@@ -1,6 +1,25 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
+_HORAS = [
+    ('06:00', '6:00 AM'), ('06:30', '6:30 AM'),
+    ('07:00', '7:00 AM'), ('07:30', '7:30 AM'),
+    ('08:00', '8:00 AM'), ('08:30', '8:30 AM'),
+    ('09:00', '9:00 AM'), ('09:30', '9:30 AM'),
+    ('10:00', '10:00 AM'), ('10:30', '10:30 AM'),
+    ('11:00', '11:00 AM'), ('11:30', '11:30 AM'),
+    ('12:00', '12:00 PM'), ('12:30', '12:30 PM'),
+    ('13:00', '1:00 PM'), ('13:30', '1:30 PM'),
+    ('14:00', '2:00 PM'), ('14:30', '2:30 PM'),
+    ('15:00', '3:00 PM'), ('15:30', '3:30 PM'),
+    ('16:00', '4:00 PM'), ('16:30', '4:30 PM'),
+    ('17:00', '5:00 PM'), ('17:30', '5:30 PM'),
+    ('18:00', '6:00 PM'), ('18:30', '6:30 PM'),
+    ('19:00', '7:00 PM'), ('19:30', '7:30 PM'),
+    ('20:00', '8:00 PM'), ('20:30', '8:30 PM'),
+    ('21:00', '9:00 PM'),
+]
+
 
 class AmunetPlanAuditoria(models.Model):
     _name = 'amunet.plan.auditoria'
@@ -279,8 +298,8 @@ class AmunetPlanAuditoriaActividad(models.Model):
     _order = 'dia_id, horario, id'
 
     dia_id = fields.Many2one('amunet.plan.auditoria.dia', required=True, ondelete='cascade')
-    hora_inicio = fields.Float(string='Hora inicio', digits=(4, 2))
-    hora_fin = fields.Float(string='Hora fin', digits=(4, 2))
+    hora_inicio = fields.Selection(_HORAS, string='Inicio')
+    hora_fin = fields.Selection(_HORAS, string='Fin')
     equipo_ids = fields.Many2many('res.users', compute='_compute_equipo_ids')
     auditor_id = fields.Many2one('res.users', string='Auditor', domain="[('id', 'in', equipo_ids)]")
     que_auditar = fields.Char(string='¿Qué se va a auditar?')

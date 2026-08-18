@@ -39,8 +39,8 @@
                     <field name="actividad_ids" nolabel="1">
                         <list editable="bottom">
                             <field name="equipo_ids" column_invisible="1"/>
-                            <field name="hora_inicio" string="Inicio" widget="float_time"/>
-                            <field name="hora_fin" string="Fin" widget="float_time"/>
+                            <field name="hora_inicio" string="Inicio"/>
+                            <field name="hora_fin" string="Fin"/>
                             <field name="auditor_id" string="Auditor"
                                 domain="[('id', 'in', equipo_ids)]"/>
                             <field name="que_auditar" string="¿Qué se va a auditar?"/>
