@@ -288,9 +288,11 @@ class AmunetPlanAuditoriaActividad(models.Model):
     auditado = fields.Char(string='Auditado')
 
     def _compute_equipo_ids(self):
+        todos = self.env['res.users'].search([('share', '=', False), ('active', '=', True)])
         for r in self:
             plan = r.dia_id.plan_id
             if plan:
-                r.equipo_ids = plan.lider_id | plan.auditor_ids | plan.observador_ids | plan.experto_ids
+                equipo = plan.lider_id | plan.auditor_ids | plan.observador_ids | plan.experto_ids
+                r.equipo_ids = equipo if equipo else todos
             else:
-                r.equipo_ids = self.env['res.users']
+                r.equipo_ids = todos
