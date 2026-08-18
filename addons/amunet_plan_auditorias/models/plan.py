@@ -73,8 +73,18 @@ class AmunetPlanAuditoria(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('clave', _('Nuevo')) == _('Nuevo'):
-                vals['clave'] = self.env['ir.sequence'].next_by_code(
-                    'amunet.plan.auditoria') or _('Nuevo')
+                fecha = vals.get('fecha_inicio')
+                if fecha:
+                    if isinstance(fecha, str):
+                        fecha = fields.Date.from_string(fecha)
+                    mm = fecha.strftime('%m')
+                    yy = fecha.strftime('%y')
+                else:
+                    hoy = fields.Date.context_today(self)
+                    mm = hoy.strftime('%m')
+                    yy = hoy.strftime('%y')
+                num = self.env['ir.sequence'].next_by_code('amunet.plan.auditoria') or '001'
+                vals['clave'] = f'AI{mm}{yy}-{num}'
         return super().create(vals_list)
 
     def action_emitir(self):
