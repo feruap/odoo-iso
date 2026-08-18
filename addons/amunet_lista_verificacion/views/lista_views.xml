@@ -73,7 +73,7 @@
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
                             <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
-                            <field name="respuesta" string="Respuesta" widget="badge"
+                            <field name="respuesta" string="Respuesta"
                                 decoration-success="respuesta == '2'"
                                 decoration-warning="respuesta == '1'"
                                 decoration-danger="respuesta == '0'"
@@ -91,7 +91,7 @@
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
                             <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
-                            <field name="respuesta" string="Respuesta" widget="badge"
+                            <field name="respuesta" string="Respuesta"
                                 decoration-success="respuesta == '2'"
                                 decoration-warning="respuesta == '1'"
                                 decoration-danger="respuesta == '0'"
@@ -109,7 +109,7 @@
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
                             <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
-                            <field name="respuesta" string="Respuesta" widget="badge"
+                            <field name="respuesta" string="Respuesta"
                                 decoration-success="respuesta == '2'"
                                 decoration-warning="respuesta == '1'"
                                 decoration-danger="respuesta == '0'"
@@ -127,7 +127,7 @@
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
                             <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
-                            <field name="respuesta" string="Respuesta" widget="badge"
+                            <field name="respuesta" string="Respuesta"
                                 decoration-success="respuesta == '2'"
                                 decoration-warning="respuesta == '1'"
                                 decoration-danger="respuesta == '0'"
