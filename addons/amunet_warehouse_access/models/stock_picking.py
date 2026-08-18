@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, api
-from odoo.exceptions import AccessError
+from odoo import models, api, _
+from odoo.exceptions import AccessError, UserError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -34,8 +34,38 @@ class StockPicking(models.Model):
         # Validar acceso ANTES de validar
         for picking in self:
             picking._check_warehouse_access_permission(operation='validar')
+            picking._amunet_check_origen_destino_iguales()
 
         return super().button_validate()
+
+    def _amunet_check_origen_destino_iguales(self):
+        """Bloquea validar un traslado interno cuando una línea de operación
+        mueve el material al MISMO lugar de donde salió (origen = destino).
+
+        Es un error de captura frecuente: al hacer un traslado entre almacenes
+        (ej. Burgos -> Fábrica) el encabezado se cambia bien, pero la línea de
+        operación conserva el destino por defecto (el mismo del origen), y el
+        material no se mueve (traslado en falso). Este candado lo cacha antes
+        de que quede 'hecho'.
+        """
+        self.ensure_one()
+        if self.picking_type_code != 'internal':
+            return
+        malas = self.move_line_ids.filtered(
+            lambda ml: ml.quantity and ml.location_id == ml.location_dest_id)
+        if not malas:
+            return
+        detalle = '\n'.join(
+            '- %s: %s -> %s' % (
+                ml.product_id.default_code or ml.product_id.display_name,
+                ml.location_id.complete_name, ml.location_dest_id.complete_name)
+            for ml in malas[:8])
+        raise UserError(_(
+            'No se puede validar este traslado: hay líneas cuyo DESTINO es el '
+            'MISMO que el origen, así que el material no se movería.\n\n'
+            'Corrige el destino de la operación al almacén/ubicación correcto '
+            '(ej. AMP/Existencias para Fábrica) y vuelve a validar.\n\n%s'
+        ) % detalle)
 
     @api.model_create_multi
     def create(self, vals_list):
