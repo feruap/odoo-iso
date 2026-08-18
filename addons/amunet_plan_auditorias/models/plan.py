@@ -302,7 +302,7 @@ class AmunetPlanAuditoriaDia(models.Model):
 class AmunetPlanAuditoriaActividad(models.Model):
     _name = 'amunet.plan.auditoria.actividad'
     _description = 'Actividad de la agenda de auditoría'
-    _order = 'dia_id, horario, id'
+    _order = 'dia_id, hora_inicio, id'
 
     dia_id = fields.Many2one('amunet.plan.auditoria.dia', required=True, ondelete='cascade')
     hora_inicio = fields.Selection(_HORAS, string='Inicio')
