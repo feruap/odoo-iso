@@ -2,10 +2,10 @@ from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
 _RESPUESTA = [
-    ('cumple', 'Cumple'),
-    ('parcial', 'Parcial'),
-    ('no_cumple', 'No cumple'),
-    ('na', 'No aplica'),
+    ('2', '2 — Cumple'),
+    ('1', '1 — Parcial'),
+    ('0', '0 — No cumple'),
+    ('na', 'N/A'),
 ]
 
 _SECCIONES = [
@@ -52,6 +52,8 @@ class AmunetListaVerificacion(models.Model):
         domain=[('seccion', '=', 'desempeno_area')], string='Desempeño del Área')
     item_personal_ids = fields.One2many('amunet.lista.verificacion.item', 'lista_id',
         domain=[('seccion', '=', 'personal')], string='Personal')
+
+    puntos_fijos = fields.Boolean(string='Puntos fijos', default=False)
 
     # ── Cierre ────────────────────────────────────────────────────────────
     observaciones_generales = fields.Text(string='Observaciones generales')
@@ -129,9 +131,18 @@ class AmunetListaVerificacion(models.Model):
         })
         return {'type': 'ir.actions.act_window_close'}
 
+    def action_fijar_puntos(self):
+        self.ensure_one()
+        self.puntos_fijos = True
+
+    def action_desbloquear_puntos(self):
+        self.ensure_one()
+        self.puntos_fijos = False
+
     def action_borrador(self):
         self.write({
             'state': 'borrador',
+            'puntos_fijos': False,
             'firma_supervisor_id': False, 'fecha_firma_supervisor': False,
             'firma_auditor_id': False, 'fecha_firma_auditor': False,
         })

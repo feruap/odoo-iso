@@ -27,6 +27,12 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button name="action_fijar_puntos" type="object"
+                        string="Fijar puntos para evaluación" class="btn-secondary"
+                        invisible="puntos_fijos or state == 'firmado'"/>
+                    <button name="action_desbloquear_puntos" type="object"
+                        string="Desbloquear puntos" class="btn-secondary"
+                        invisible="not puntos_fijos or state == 'firmado'"/>
                     <button name="action_firmar_supervisor" type="object"
                         string="Firmar como Supervisor" class="btn-secondary"
                         invisible="firma_supervisor_id or not puede_firmar_supervisor"/>
@@ -65,11 +71,11 @@
                         <list editable="bottom">
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
-                            <field name="punto" string="Punto a evaluar"/>
+                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
                             <field name="respuesta" string="Respuesta" widget="badge"
-                                decoration-success="respuesta == 'cumple'"
-                                decoration-warning="respuesta == 'parcial'"
-                                decoration-danger="respuesta == 'no_cumple'"
+                                decoration-success="respuesta == '2'"
+                                decoration-warning="respuesta == '1'"
+                                decoration-danger="respuesta == '0'"
                                 decoration-muted="respuesta == 'na'"/>
                             <field name="observaciones" string="Observaciones"/>
                         </list>
@@ -83,11 +89,11 @@
                         <list editable="bottom">
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
-                            <field name="punto" string="Punto a evaluar"/>
+                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
                             <field name="respuesta" string="Respuesta" widget="badge"
-                                decoration-success="respuesta == 'cumple'"
-                                decoration-warning="respuesta == 'parcial'"
-                                decoration-danger="respuesta == 'no_cumple'"
+                                decoration-success="respuesta == '2'"
+                                decoration-warning="respuesta == '1'"
+                                decoration-danger="respuesta == '0'"
                                 decoration-muted="respuesta == 'na'"/>
                             <field name="observaciones" string="Observaciones"/>
                         </list>
@@ -101,11 +107,11 @@
                         <list editable="bottom">
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
-                            <field name="punto" string="Punto a evaluar"/>
+                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
                             <field name="respuesta" string="Respuesta" widget="badge"
-                                decoration-success="respuesta == 'cumple'"
-                                decoration-warning="respuesta == 'parcial'"
-                                decoration-danger="respuesta == 'no_cumple'"
+                                decoration-success="respuesta == '2'"
+                                decoration-warning="respuesta == '1'"
+                                decoration-danger="respuesta == '0'"
                                 decoration-muted="respuesta == 'na'"/>
                             <field name="observaciones" string="Observaciones"/>
                         </list>
@@ -119,11 +125,11 @@
                         <list editable="bottom">
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
-                            <field name="punto" string="Punto a evaluar"/>
+                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
                             <field name="respuesta" string="Respuesta" widget="badge"
-                                decoration-success="respuesta == 'cumple'"
-                                decoration-warning="respuesta == 'parcial'"
-                                decoration-danger="respuesta == 'no_cumple'"
+                                decoration-success="respuesta == '2'"
+                                decoration-warning="respuesta == '1'"
+                                decoration-danger="respuesta == '0'"
                                 decoration-muted="respuesta == 'na'"/>
                             <field name="observaciones" string="Observaciones"/>
                         </list>
