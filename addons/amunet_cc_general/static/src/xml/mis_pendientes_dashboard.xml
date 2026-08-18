@@ -37,6 +37,11 @@
                 <span class="o_amunet_hub_label">Desviaciones / NC</span>
             </div>
 
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_programa_auditorias.action_programa_auditoria')">
+                <i class="fa fa-calendar fa-2x mb-2" style="color:#198754"/>
+                <span class="o_amunet_hub_label">Programa Anual</span>
+            </div>
+
             <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_cc_general.action_auditorias_hub')">
                 <i class="fa fa-search fa-2x mb-2" style="color:#0d6efd"/>
                 <span class="o_amunet_hub_label">Auditorías internas</span>
