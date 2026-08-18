@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_production_plan_root"
+              name="Plan sugerido"
+              parent="mrp.menu_mrp_manufacturing"
+              action="action_production_plan"
+              sequence="90"
+              groups="amunet_production_plan.group_production_planner"/>
+
+    <menuitem id="menu_production_plan_shortage"
+              name="Faltantes de materia prima"
+              parent="mrp.menu_mrp_manufacturing"
+              action="action_production_plan_shortage"
+              sequence="95"
+              groups="amunet_production_plan.group_production_planner"/>
+</odoo>

@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_production_plan_planner,plan produccion planeador,model_amunet_production_plan,group_production_planner,1,1,1,1
+access_production_plan_line_planner,linea plan planeador,model_amunet_production_plan_line,group_production_planner,1,1,1,1
+access_production_plan_shortage_planner,faltante plan planeador,model_amunet_production_plan_shortage,group_production_planner,1,1,1,1
+access_production_plan_mrpuser,plan produccion lectura mrp,model_amunet_production_plan,mrp.group_mrp_user,1,0,0,0
+access_production_plan_line_mrpuser,linea plan lectura mrp,model_amunet_production_plan_line,mrp.group_mrp_user,1,0,0,0
+access_production_plan_shortage_mrpuser,faltante lectura mrp,model_amunet_production_plan_shortage,mrp.group_mrp_user,1,0,0,0
+access_production_plan_shortage_purchase,faltante lectura compras,model_amunet_production_plan_shortage,purchase.group_purchase_user,1,0,0,0
