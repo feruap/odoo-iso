@@ -70,6 +70,7 @@ class ProductionPlan(models.Model):
     blocked_count = fields.Integer(compute='_compute_counts')
     pending_qc_count = fields.Integer(compute='_compute_counts')
     shortage_count = fields.Integer(compute='_compute_counts')
+    unknown_count = fields.Integer(compute='_compute_counts')
 
     @api.depends('line_ids.qty_to_produce', 'line_ids.qty_to_buy',
                  'line_ids.qty_suggested', 'line_ids.qty_pending_qc', 'shortage_ids')
@@ -84,6 +85,8 @@ class ProductionPlan(models.Model):
                 and l.qty_suggested > 0 and l.qty_to_produce <= 0))
             plan.pending_qc_count = len(lines.filtered(lambda l: l.qty_pending_qc > 0))
             plan.shortage_count = len(plan.shortage_ids)
+            plan.unknown_count = len(lines.filtered(
+                lambda l: l.supply_mode == 'unknown' and l.qty_suggested > 0))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -220,11 +223,14 @@ class ProductionPlan(models.Model):
             products = products.filtered(lambda p: p.categ_id in self.categ_ids)
 
         Line = self.env['amunet.production.plan.line']
-        shortages = {}
         # Materia prima compartida: un mismo reactivo alimenta varias pruebas.
         # mp_pool guarda lo que va quedando conforme se aparta para cada linea;
         # mp_total guarda la existencia libre original para el reporte.
         mp_pool, mp_total = {}, {}
+        # Lo que el plan completo pediria de cada materia prima, para que el
+        # reporte de faltantes no compare la necesidad de una sola linea contra
+        # la existencia total.
+        requerido_total = {}
         # Se atiende primero al de mayor demanda historica: si la MP no alcanza,
         # que se la lleve el producto que mas se vende, no el primero por id.
         products = products.sorted(lambda p: demand.get(p.id, 0.0), reverse=True)
@@ -246,27 +252,50 @@ class ProductionPlan(models.Model):
             daily = qty_hist / days
             need = daily * (self.horizon_days + self.safety_days)
             free = product.with_company(self.company_id).free_qty
-            released = self._released_qty(product)
-            pending_qc = max(0.0, free - released) if self._tracks_release() else 0.0
+            # La liberacion por Calidad se lleva por lote. Un producto que no se
+            # rastrea por lote nunca tendria existencia liberada y el plan pediria
+            # fabricar de nuevo todo lo que ya hay en almacen.
+            aplica_liberacion = self._release_applies(product)
+            released = self._released_qty(product) if aplica_liberacion else free
+            pending_qc = max(0.0, free - released) if aplica_liberacion else 0.0
             on_hand = released if (self.stock_basis == 'released'
-                                   and self._tracks_release()) else free
+                                   and aplica_liberacion) else free
             wip = self._wip_qty(product)
             suggested = max(0.0, need - on_hand - wip)
             suggested = float_round(suggested, precision_rounding=1.0, rounding_method='UP')
 
             to_produce = to_buy = 0.0
-            coverage, missing = 1.0, {}
+            coverage, missing, needs = 1.0, {}, {}
+            error_bom = False
             if supply_mode == 'manufacture':
-                coverage, missing = self._bom_coverage(
+                coverage, missing, needs = self._bom_coverage(
                     product, bom, suggested, mp_pool, mp_total)
+                error_bom = needs is None
                 to_produce = float_round(
                     suggested * coverage, precision_rounding=1.0, rounding_method='DOWN')
+                # Se aparta la materia prima de lo que REALMENTE se va a fabricar.
+                # Apartarla en proporcion a la cobertura dejaba comprometida MP de
+                # una fabricacion fraccionaria que al redondear hacia abajo nunca
+                # ocurre, y bloqueaba injustamente a los productos siguientes.
+                if needs:
+                    ratio = (to_produce / suggested) if suggested > 0 else 0.0
+                    self._bom_consume(needs, mp_pool, ratio)
+                    for comp_id, data in needs.items():
+                        acc = requerido_total.setdefault(comp_id, 0.0)
+                        requerido_total[comp_id] = acc + data['required']
             elif supply_mode == 'buy':
                 # Compra-reventa: no hay BoM que explotar, la restriccion es el
                 # proveedor. Se sugiere comprar y Calidad tendra que liberarlo.
                 to_buy = suggested
 
             note = ', '.join(missing.keys()) if missing else ''
+            if error_bom:
+                note = _('No se pudo explotar la lista de materiales: revisala '
+                         'antes de confiar en esta linea')
+            if supply_mode == 'unknown' and suggested > 0:
+                aviso_u = _('Sin lista de materiales y sin marcar como comprable: '
+                            'el plan no puede proponer nada')
+                note = '%s | %s' % (note, aviso_u) if note else aviso_u
             if pending_qc > 0:
                 aviso = _('%(n)s piezas esperando liberacion de Calidad') % {
                     'n': int(pending_qc)}
@@ -291,28 +320,25 @@ class ProductionPlan(models.Model):
                 'qty_to_buy': to_buy,
                 'blocking_note': note,
             })
-            for comp_id, data in missing.items():
-                key = data['product_id']
-                acc = shortages.setdefault(key, {'required': 0.0, 'available': data['available']})
-                acc['required'] += data['required']
-                acc['available'] = mp_total.get(key, data['available'])
-                acc.setdefault('lines', []).append(line.id)
-
         Shortage = self.env['amunet.production.plan.shortage']
-        for product_id, data in shortages.items():
+        for comp_id, requerido in requerido_total.items():
+            disponible = mp_total.get(comp_id, 0.0)
+            if float_compare(disponible, requerido, precision_digits=3) >= 0:
+                continue
             Shortage.create({
                 'plan_id': self.id,
-                'product_id': product_id,
-                'qty_required': data['required'],
-                'qty_available': data['available'],
+                'product_id': comp_id,
+                'qty_required': requerido,
+                'qty_available': disponible,
             })
 
         self.state = 'computed'
         self.message_post(body=_(
             'Plan calculado: %(n)s productos con demanda, %(p)s a producir, '
-            '%(c)s a comprar, %(b)s bloqueados por materia prima.',
+            '%(c)s a comprar, %(b)s bloqueados por materia prima, '
+            '%(u)s sin BoM y sin marcar como comprables.',
             n=len(self.line_ids), p=self.to_produce_count,
-            c=self.to_buy_count, b=self.blocked_count))
+            c=self.to_buy_count, b=self.blocked_count, u=self.unknown_count))
         return True
 
     def _wip_qty(self, product):
@@ -329,6 +355,10 @@ class ProductionPlan(models.Model):
 
     def _tracks_release(self):
         return 'amunet_lot_release_state' in self.env['stock.lot']._fields
+
+    def _release_applies(self, product):
+        """La liberacion de Calidad solo tiene sentido si el producto lleva lote."""
+        return self._tracks_release() and product.tracking != 'none'
 
     def _released_qty(self, product):
         """Piezas en lotes liberados por Calidad, si amunet_lot esta instalado."""
@@ -370,15 +400,18 @@ class ProductionPlan(models.Model):
         return product.type == 'product'
 
     def _bom_coverage(self, product, bom, qty, pool=None, totals=None):
-        """Devuelve (cobertura 0..1, {nombre_componente: datos}) explotando la BoM.
+        """Devuelve (cobertura 0..1, faltantes, necesidades) explotando la BoM.
 
-        `pool` es un diccionario compartido por todo el plan con la materia prima
-        que va quedando despues de apartar la que consumiran los productos ya
-        calculados. Sin el, dos pruebas que comparten un mismo reactivo se
+        NOo: eruenta nadao: l pool: quien llama decide cuanto se va a fabricar de
+        verdad y luego llama a `_bom_consume`. `needs` viene en None si la BoM no
+        se pudo explotar, para poder distinguir un error tecnico de una  erasez.
+
+        `pool`  e un diccionario compartido por todo el plan con la materia prima
+        que va quedando; sin el, dos pruebas que comparten un mismo reactivo se
         declararian ambas cubiertas aunque juntas lo agoten.
         """
         if not bom or qty <= 0:
-            return (1.0 if qty <= 0 else 0.0 if self.only_with_bom else 1.0), {}
+            return (1.0 if qty <= 0 else 0.0 if self.only_with_bom else 1.0), {}, {}
         if pool is None:
             pool = {}
         if totals is None:
@@ -387,7 +420,7 @@ class ProductionPlan(models.Model):
             _boms, bom_lines = bom.explode(product, qty / (bom.product_qty or 1.0))
         except Exception as exc:  # pragma: no cover - defensivo
             _logger.warning('No se pudo explotar la BoM de %s: %s', product.display_name, exc)
-            return 0.0, {}
+            return 0.0, {}, None
 
         # Se agrupa por componente: la misma MP puede aparecer en varias lineas
         # de la BoM (o en sub-BoMs) y hay que sumarla, no compararla suelta.
@@ -423,14 +456,15 @@ class ProductionPlan(models.Model):
                     'remaining': available,
                 }
             coverage = min(coverage, ratio)
-        coverage = max(coverage, 0.0)
+        return max(coverage, 0.0), missing, needs
 
-        # Se aparta la MP que consumira lo que si se puede producir para que el
-        # siguiente producto del plan vea el remanente real.
+    def _bom_consume(self, needs, pool, ratio):
+        """Apartao: l pool la materia prima de lo que si se va a fabricar."""
+        if not needs or ratio <= 0:
+            return
         for comp_id, data in needs.items():
             pool[comp_id] = max(
-                0.0, pool.get(comp_id, 0.0) - data['required'] * coverage)
-        return coverage, missing
+                0.0, pool.get(comp_id, 0.0) - data['required'] * ratio)
 
     # ------------------------------------------------------------------
     # Ordenes de fabricacion
