@@ -29,7 +29,7 @@ y estado del pedido.
     """,
     'author': 'Amunet',
     'category': 'Hidden',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'depends': [
         'sale',
         'sale_management',
