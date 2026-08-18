@@ -186,6 +186,7 @@
                                 <list>
                                     <field name="fecha" string="Fecha"/>
                                     <field name="sitio" string="Sitio"/>
+                                    <field name="que_auditar_resumen" string="¿Qué se va a auditar?"/>
                                     <field name="actividad_count" string="Actividades"/>
                                 </list>
                                 <form string="Agenda del día">

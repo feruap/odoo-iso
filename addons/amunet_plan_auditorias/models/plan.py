@@ -282,10 +282,13 @@ class AmunetPlanAuditoriaDia(models.Model):
     ], string='Turno')
     actividad_ids = fields.One2many('amunet.plan.auditoria.actividad', 'dia_id', string='Actividades')
     actividad_count = fields.Integer(compute='_compute_actividad_count', string='Actividades')
+    que_auditar_resumen = fields.Char(compute='_compute_actividad_count', string='¿Qué se va a auditar?')
 
     def _compute_actividad_count(self):
         for r in self:
             r.actividad_count = len(r.actividad_ids)
+            temas = [a.que_auditar for a in r.actividad_ids if a.que_auditar]
+            r.que_auditar_resumen = ', '.join(temas) if temas else ''
 
     def action_abrir_agenda(self):
         self.ensure_one()
