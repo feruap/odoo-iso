@@ -33,6 +33,7 @@
                             <field name="horizon_days"/>
                             <field name="safety_days"/>
                             <field name="stock_basis"/>
+                            <field name="mp_basis"/>
                             <field name="only_with_bom"/>
                             <field name="categ_ids" widget="many2many_tags"/>
                             <field name="company_id" groups="base.group_multi_company"/>
