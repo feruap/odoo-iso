@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════ LISTA ════════════ -->
+    <record id="view_acta_list" model="ir.ui.view">
+        <field name="name">amunet.acta.auditoria.list</field>
+        <field name="model">amunet.acta.auditoria</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state == 'firmado'" decoration-muted="state == 'borrador'">
+                <field name="clave"/>
+                <field name="no_auditoria" string="Plan"/>
+                <field name="area_proceso" string="Área / Proceso"/>
+                <field name="apertura_fecha" string="Apertura"/>
+                <field name="cierre_fecha" string="Cierre"/>
+                <field name="lider_plan_id" string="Auditor líder"/>
+                <field name="state" widget="badge"
+                    decoration-warning="state == 'borrador'"
+                    decoration-success="state == 'firmado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ════════════ FORMULARIO ════════════ -->
+    <record id="view_acta_form" model="ir.ui.view">
+        <field name="name">amunet.acta.auditoria.form</field>
+        <field name="model">amunet.acta.auditoria</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_firmar_lider" type="object"
+                        string="Firmar como Auditor Líder" class="btn-primary"
+                        invisible="firma_lider_id"/>
+                    <button name="action_firmar_auditado" type="object"
+                        string="Firmar como Auditado" class="btn-secondary"
+                        invisible="firma_auditado_id or not puede_firmar_auditado"/>
+                    <button name="action_firmar_sanitario" type="object"
+                        string="Firmar como Resp. Sanitario" class="btn-secondary"
+                        invisible="firma_sanitario_id"/>
+                    <button name="action_borrador" type="object"
+                        string="Regresar a borrador"
+                        invisible="state != 'firmado'"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="borrador,firmado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="clave" readonly="1"/></h1>
+                    </div>
+
+                    <!-- Identificación -->
+                    <group string="Identificación de la auditoría">
+                        <group>
+                            <field name="plan_id" readonly="state == 'firmado'"/>
+                            <field name="no_auditoria" readonly="1"/>
+                            <field name="tipo" readonly="1"/>
+                            <field name="area_proceso" readonly="state == 'firmado'"/>
+                        </group>
+                        <group>
+                            <field name="fecha_ejecucion" string="Fecha de ejecución" readonly="1"/>
+                            <field name="fecha_ejecucion_fin" string="al" readonly="1"/>
+                            <field name="lider_plan_id" string="Auditor Líder" readonly="1"/>
+                            <field name="representante_auditado_id" readonly="state == 'firmado'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+
+                        <!-- ── PESTAÑA 1: Apertura ── -->
+                        <page string="Reunión de Apertura" name="apertura">
+
+                            <group string="Datos de la reunión">
+                                <group>
+                                    <field name="apertura_fecha" readonly="state == 'firmado'"/>
+                                    <field name="apertura_hora_inicio" readonly="state == 'firmado'"/>
+                                    <field name="apertura_hora_fin" readonly="state == 'firmado'"/>
+                                </group>
+                                <group>
+                                    <field name="apertura_lugar" readonly="state == 'firmado'"/>
+                                </group>
+                            </group>
+
+                            <separator string="Lista de asistencia"/>
+                            <field name="puede_asistir_apertura" invisible="1"/>
+                            <field name="apertura_asistente_ids" nolabel="1"
+                                context="{'default_seccion': 'apertura'}">
+                                <list>
+                                    <field name="seccion" column_invisible="1"/>
+                                    <field name="nombre" string="Nombre"/>
+                                    <field name="cargo_rol" string="Cargo / Rol"/>
+                                    <field name="empresa_area" string="Empresa / Área"/>
+                                    <field name="fecha" string="Firmó el"/>
+                                </list>
+                            </field>
+                            <button name="action_asistir_apertura" type="object"
+                                string="Registrar mi asistencia" icon="fa-pen"
+                                class="btn-secondary btn-sm mt-2"
+                                invisible="not puede_asistir_apertura or state == 'firmado'"/>
+
+                            <separator string="Agenda y temas tratados"/>
+                            <group>
+                                <group>
+                                    <field name="aper_presentacion_equipo" readonly="state == 'firmado'"/>
+                                    <field name="aper_confirmacion_objetivo" readonly="state == 'firmado'"/>
+                                    <field name="aper_confirmacion_alcance" readonly="state == 'firmado'"/>
+                                    <field name="aper_confirmacion_criterios" readonly="state == 'firmado'"/>
+                                </group>
+                                <group>
+                                    <field name="aper_presentacion_programa" readonly="state == 'firmado'"/>
+                                    <field name="aper_confirmacion_disponibilidad" readonly="state == 'firmado'"/>
+                                    <field name="aper_canales_comunicacion" readonly="state == 'firmado'"/>
+                                    <field name="aper_fecha_cierre" readonly="state == 'firmado'"/>
+                                </group>
+                            </group>
+                            <group>
+                                <field name="aper_otros" string="Otros" readonly="state == 'firmado'"
+                                    placeholder="Especificar si aplica..."/>
+                            </group>
+
+                            <separator string="Observaciones / Comentarios del auditado"/>
+                            <field name="apertura_observaciones" nolabel="1" rows="4"
+                                readonly="state == 'firmado'"
+                                placeholder="Espacio para que el auditado exprese dudas, inquietudes o información adicional..."/>
+
+                            <separator string="Compromisos acordados en apertura"/>
+                            <field name="apertura_compromiso_ids" nolabel="1"
+                                context="{'default_seccion': 'apertura'}"
+                                readonly="state == 'firmado'">
+                                <list editable="bottom">
+                                    <field name="seccion" column_invisible="1"/>
+                                    <field name="descripcion" string="Compromiso"/>
+                                    <field name="responsable" string="Responsable"/>
+                                    <field name="fecha_limite" string="Fecha límite"/>
+                                </list>
+                            </field>
+
+                        </page>
+
+                        <!-- ── PESTAÑA 2: Cierre ── -->
+                        <page string="Reunión de Cierre" name="cierre">
+
+                            <group string="Datos de la reunión">
+                                <group>
+                                    <field name="cierre_fecha" readonly="state == 'firmado'"/>
+                                    <field name="cierre_hora_inicio" readonly="state == 'firmado'"/>
+                                    <field name="cierre_hora_fin" readonly="state == 'firmado'"/>
+                                </group>
+                                <group>
+                                    <field name="cierre_lugar" readonly="state == 'firmado'"/>
+                                </group>
+                            </group>
+
+                            <separator string="Lista de asistencia"/>
+                            <field name="puede_asistir_cierre" invisible="1"/>
+                            <field name="cierre_asistente_ids" nolabel="1"
+                                context="{'default_seccion': 'cierre'}">
+                                <list>
+                                    <field name="seccion" column_invisible="1"/>
+                                    <field name="nombre" string="Nombre"/>
+                                    <field name="cargo_rol" string="Cargo / Rol"/>
+                                    <field name="empresa_area" string="Empresa / Área"/>
+                                    <field name="fecha" string="Firmó el"/>
+                                </list>
+                            </field>
+                            <button name="action_asistir_cierre" type="object"
+                                string="Registrar mi asistencia" icon="fa-pen"
+                                class="btn-secondary btn-sm mt-2"
+                                invisible="not puede_asistir_cierre or state == 'firmado'"/>
+
+                            <separator string="Agenda y temas tratados en cierre"/>
+                            <group>
+                                <group>
+                                    <field name="cier_agradecimiento" readonly="state == 'firmado'"/>
+                                    <field name="cier_resumen" readonly="state == 'firmado'"/>
+                                    <field name="cier_hallazgos_aparte" readonly="state == 'firmado'"/>
+                                    <field name="cier_plazos_informe" readonly="state == 'firmado'"/>
+                                </group>
+                                <group>
+                                    <field name="cier_plazos_pac" readonly="state == 'firmado'"/>
+                                    <field name="cier_seguimiento" readonly="state == 'firmado'"/>
+                                    <field name="cier_preguntas" readonly="state == 'firmado'"/>
+                                </group>
+                            </group>
+                            <group>
+                                <field name="cier_otros" string="Otros" readonly="state == 'firmado'"
+                                    placeholder="Especificar si aplica..."/>
+                            </group>
+
+                            <separator string="Observaciones y comentarios del auditado"/>
+                            <field name="cierre_observaciones" nolabel="1" rows="4"
+                                readonly="state == 'firmado'"
+                                placeholder="Espacio para que el auditado exprese su opinión sobre el proceso de auditoría..."/>
+
+                            <separator string="Compromisos acordados en cierre"/>
+                            <field name="cierre_compromiso_ids" nolabel="1"
+                                context="{'default_seccion': 'cierre'}"
+                                readonly="state == 'firmado'">
+                                <list editable="bottom">
+                                    <field name="seccion" column_invisible="1"/>
+                                    <field name="descripcion" string="Compromiso"/>
+                                    <field name="responsable" string="Responsable"/>
+                                    <field name="fecha_limite" string="Fecha límite"/>
+                                </list>
+                            </field>
+
+                        </page>
+
+                    </notebook>
+
+                    <!-- ── Firmas ── -->
+                    <separator string="Firmas"/>
+                    <field name="puede_firmar_auditado" invisible="1"/>
+                    <group>
+                        <group string="Auditor Líder">
+                            <field name="firma_lider_id" nolabel="1" readonly="1"/>
+                            <field name="fecha_firma_lider" nolabel="1" readonly="1"/>
+                            <button name="action_firmar_lider" type="object"
+                                string="Firmar con PIN" icon="fa-pen"
+                                class="btn-primary btn-sm"
+                                invisible="firma_lider_id"/>
+                        </group>
+                        <group string="Auditado">
+                            <field name="firma_auditado_id" nolabel="1" readonly="1"/>
+                            <field name="fecha_firma_auditado" nolabel="1" readonly="1"/>
+                            <button name="action_firmar_auditado" type="object"
+                                string="Firmar con PIN" icon="fa-pen"
+                                class="btn-secondary btn-sm"
+                                invisible="firma_auditado_id or not puede_firmar_auditado"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Responsable Sanitario">
+                            <field name="firma_sanitario_id" nolabel="1" readonly="1"/>
+                            <field name="fecha_firma_sanitario" nolabel="1" readonly="1"/>
+                            <button name="action_firmar_sanitario" type="object"
+                                string="Firmar con PIN" icon="fa-pen"
+                                class="btn-secondary btn-sm"
+                                invisible="firma_sanitario_id"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ════════════ ACCIÓN ════════════ -->
+    <record id="action_acta_auditoria" model="ir.actions.act_window">
+        <field name="name">Apertura y Cierre de Auditorías</field>
+        <field name="res_model">amunet.acta.auditoria</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra la apertura y cierre de una auditoría interna
+            </p>
+        </field>
+    </record>
+
+</odoo>

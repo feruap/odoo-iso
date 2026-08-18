@@ -37,6 +37,21 @@
                 </t>
             </div>
 
+            <!-- Actas de Auditoría -->
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.abrirAccionXml('amunet_acta_auditoria.action_acta_auditoria')">
+                <i class="fa fa-file-text-o fa-2x mb-2" style="color:#2f855a"/>
+                <span class="o_amunet_hub_label">Apertura y Cierre</span>
+                <t t-if="!state.loading">
+                    <span t-attf-class="o_amunet_hub_badge {{ state.actas > 0 ? 'badge-active' : 'badge-empty' }}">
+                        <t t-esc="state.actas"/> en proceso
+                    </span>
+                </t>
+                <t t-else="">
+                    <span class="o_amunet_hub_badge badge-empty">&#8212;</span>
+                </t>
+            </div>
+
         </div>
 
     </div>

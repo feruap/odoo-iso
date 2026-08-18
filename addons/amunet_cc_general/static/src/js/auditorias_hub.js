@@ -16,6 +16,7 @@ class AuditoriasHub extends Component {
             loading: true,
             convocatorias: 0,
             planes: 0,
+            actas: 0,
         });
 
         onWillStart(() => this._cargarConteos());
@@ -23,15 +24,18 @@ class AuditoriasHub extends Component {
 
     async _cargarConteos() {
         try {
-            const [convocatorias, planes] = await Promise.all([
+            const [convocatorias, planes, actas] = await Promise.all([
                 this.orm.searchCount("amunet.auditor.convocatoria", [
                     ["state", "in", ["publicada", "en_proceso"]],
                 ]),
                 this.orm.searchCount("amunet.plan.auditoria", [
                     ["state", "in", ["borrador", "emitido"]],
                 ]),
+                this.orm.searchCount("amunet.acta.auditoria", [
+                    ["state", "=", "borrador"],
+                ]),
             ]);
-            Object.assign(this.state, { convocatorias, planes, loading: false });
+            Object.assign(this.state, { convocatorias, planes, actas, loading: false });
         } catch (e) {
             console.error("Error al cargar conteos de auditorías:", e);
             Object.assign(this.state, { loading: false });
