@@ -4,8 +4,7 @@
     <menuitem id="menu_cc_general_bajo_docs"
               name="Control de cambios"
               parent="amunet_documentos.menu_amunet_documentos_root"
-              sequence="25"
-              groups="amunet_cc_general.group_cc_general_user"/>
+              sequence="25"/>
 
     <menuitem id="menu_cc_general_mis_bajo_docs"
               name="Mis controles de cambio"

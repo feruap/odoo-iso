@@ -14,8 +14,7 @@
     <menuitem id="menu_amunet_lista_maestra_root" name="Lista maestra"
               parent="menu_amunet_documentos_root"
               action="action_lista_maestra_hub"
-              sequence="20"
-              groups="amunet_documentos.group_documentos_manager"/>
+              sequence="20"/>
 
     <menuitem id="menu_amunet_documentos_lista_maestra" name="PNOs vigentes"
               parent="menu_amunet_lista_maestra_root"

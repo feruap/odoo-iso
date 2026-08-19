@@ -9,6 +9,5 @@
               name="Mis pendientes"
               parent="amunet_documentos.menu_amunet_documentos_root"
               action="action_mis_pendientes_dashboard"
-              sequence="1"
-              groups="amunet_cc_general.group_cc_general_user"/>
+              sequence="1"/>
 </odoo>
