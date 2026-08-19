@@ -4,5 +4,6 @@
         name="Lista Maestra de Copias Controladas"
         parent="amunet_documentos.menu_amunet_documentos_root"
         action="action_copia_controlada"
-        sequence="60"/>
+        sequence="60"
+        active="0"/>
 </odoo>
