@@ -227,7 +227,7 @@
                 <filter name="f_draft" string="Borrador"
                         domain="[('state','=','draft')]"/>
                 <filter name="f_confirmed" string="Confirmado"
-                        domain="[('state','=','confirmed')]"/>
+                        domain="[('state','in',['confirmed','speaker_confirmed'])]"/>
                 <filter name="f_done" string="Realizado"
                         domain="[('state','=','done')]"/>
             </search>
@@ -248,13 +248,46 @@
         </field>
     </record>
 
+    <!-- Vista de lista para ponentes: incluye botón Proyectar QR directo -->
+    <record id="view_hr_training_course_list_ponente" model="ir.ui.view">
+        <field name="name">hr.training.course.list.ponente</field>
+        <field name="model">hr.training.course</field>
+        <field name="arch" type="xml">
+            <list string="Mis cursos como ponente"
+                  create="false" delete="false" edit="false"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state == 'confirmed'"
+                  decoration-muted="state == 'cancelled'"
+                  decoration-primary="state == 'done'">
+                <field name="name" string="Curso"/>
+                <field name="date_start" string="Fecha"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'speaker_confirmed'"
+                       decoration-success="state == 'confirmed'"
+                       decoration-primary="state == 'done'"
+                       decoration-danger="state == 'cancelled'"/>
+                <button name="action_show_qr_fullscreen"
+                        string="Proyectar QR"
+                        type="object"
+                        icon="fa-qrcode"
+                        class="btn-primary"
+                        invisible="state not in ('confirmed', 'done')"
+                        title="Abre el QR en grande para que los asistentes escaneen su pase de lista"/>
+            </list>
+        </field>
+    </record>
+
     <!-- Accion para ponentes: solo sus cursos como ponente -->
     <record id="action_mis_cursos_como_ponente" model="ir.actions.act_window">
         <field name="name">Mis cursos como ponente</field>
         <field name="res_model">hr.training.course</field>
         <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5,0,0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_hr_training_course_list_ponente')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_hr_training_course_form')})]"/>
         <field name="domain">[('speaker_id.user_id', '=', uid)]</field>
-        <field name="context">{'search_default_f_draft': 1}</field>
+        <field name="context">{'search_default_f_confirmed': 1}</field>
         <field name="search_view_id" ref="view_hr_training_course_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No tienes cursos asignados como ponente.</p>
