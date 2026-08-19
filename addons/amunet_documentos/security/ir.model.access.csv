@@ -1,5 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_amunet_documento_user,amunet.documento.user,model_amunet_documento,group_documentos_user,1,1,1,0
+access_amunet_documento_user,amunet.documento.user,model_amunet_documento,group_documentos_user,1,0,0,0
 access_amunet_documento_manager,amunet.documento.manager,model_amunet_documento,group_documentos_manager,1,1,1,1
 access_amunet_documento_version_user,amunet.documento.version.user,model_amunet_documento_version,group_documentos_user,1,1,1,0
 access_amunet_documento_version_manager,amunet.documento.version.manager,model_amunet_documento_version,group_documentos_manager,1,1,1,1

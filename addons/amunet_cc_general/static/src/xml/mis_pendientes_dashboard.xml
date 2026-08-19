@@ -12,10 +12,6 @@
                 <span class="o_amunet_hub_label">PNOs vigentes</span>
             </div>
 
-            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_documento_formato')">
-                <i class="fa fa-wpforms fa-2x text-success mb-2"/>
-                <span class="o_amunet_hub_label">Formatos</span>
-            </div>
 
             <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_documento_obsoletos')">
                 <i class="fa fa-archive fa-2x text-warning mb-2"/>

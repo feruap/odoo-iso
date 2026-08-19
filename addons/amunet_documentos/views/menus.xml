@@ -15,7 +15,7 @@
               parent="menu_amunet_documentos_root"
               action="action_lista_maestra_hub"
               sequence="20"
-              groups="amunet_documentos.group_documentos_manager"/>
+              groups="amunet_documentos.group_documentos_user"/>
 
     <menuitem id="menu_amunet_documentos_lista_maestra" name="PNOs vigentes"
               parent="menu_amunet_lista_maestra_root"
@@ -23,7 +23,8 @@
 
     <menuitem id="menu_amunet_documentos_formatos" name="Formatos"
               parent="menu_amunet_lista_maestra_root"
-              action="action_amunet_documento_formato" sequence="20"/>
+              action="action_amunet_documento_formato" sequence="20"
+              groups="amunet_documentos.group_documentos_manager"/>
 
     <menuitem id="menu_amunet_documentos_obsoletos" name="Documentos obsoletos"
               parent="menu_amunet_lista_maestra_root"
