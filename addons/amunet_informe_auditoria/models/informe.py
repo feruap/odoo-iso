@@ -108,7 +108,7 @@ class AmunetInformeAuditoria(models.Model):
                     bloques.append(f'\n{_ETIQUETA_SEC.get(seccion_actual, seccion_actual)}:')
                 linea = f'  • {item.punto}: {_ETIQUETA_RESP.get(item.respuesta, item.respuesta)}'
                 if item.observaciones:
-                    linea += f' — {item.observaciones}'
+                    linea += f' — Observaciones: {item.observaciones}'
                 bloques.append(linea)
 
         self.hallazgos = '\n'.join(bloques) if bloques else self.hallazgos
