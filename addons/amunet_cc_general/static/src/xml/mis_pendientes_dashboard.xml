@@ -47,6 +47,11 @@
                 <span class="o_amunet_hub_label">Auditorías internas</span>
             </div>
 
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_copias_controladas.action_copia_controlada')">
+                <i class="fa fa-copy fa-2x mb-2" style="color:#c53030"/>
+                <span class="o_amunet_hub_label">Copias Controladas</span>
+            </div>
+
         </div>
 
         <!-- Pendientes — sección compacta -->
