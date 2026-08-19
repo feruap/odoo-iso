@@ -78,6 +78,11 @@
                         placeholder="Observaciones generales durante la ejecución de la auditoría..."/>
 
                     <separator string="Descripción de los Hallazgos"/>
+                    <div class="mb-2" invisible="not plan_id or state == 'firmado'">
+                        <button name="action_cargar_hallazgos" type="object"
+                            string="Cargar hallazgos desde Lista de Verificación"
+                            icon="fa-download" class="btn-secondary btn-sm"/>
+                    </div>
                     <field name="hallazgos" nolabel="1" rows="5"
                         readonly="state == 'firmado'"
                         placeholder="Describe los hallazgos encontrados durante la auditoría..."/>

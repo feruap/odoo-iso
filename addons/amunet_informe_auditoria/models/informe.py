@@ -69,6 +69,50 @@ class AmunetInformeAuditoria(models.Model):
                 for c in self.plan_id.criterio_ids
             )
 
+    # ── Cargar hallazgos desde Lista de Verificación ──────────────────────
+
+    def action_cargar_hallazgos(self):
+        self.ensure_one()
+        listas = self.env['amunet.lista.verificacion'].search(
+            [('plan_id', '=', self.plan_id.id)], order='id asc')
+        if not listas:
+            return
+
+        _ETIQUETA_RESP = {'0': '0 — No cumple', '1': '1 — Parcial'}
+        _ETIQUETA_SEC = {
+            'cumplimiento_legal': 'Cumplimiento Legal',
+            'capacidad_area': 'Capacidad del Área',
+            'desempeno_area': 'Desempeño del Área',
+            'personal': 'Personal',
+        }
+
+        bloques = []
+        for lista in listas:
+            items_hallazgo = lista.env['amunet.lista.verificacion.item'].search([
+                ('lista_id', '=', lista.id),
+                ('respuesta', 'in', ['0', '1']),
+            ], order='seccion, sequence, id')
+
+            if not items_hallazgo:
+                continue
+
+            encabezado = f'Lista: {lista.clave}'
+            if lista.area_proceso:
+                encabezado += f' — {lista.area_proceso}'
+            bloques.append(encabezado)
+
+            seccion_actual = None
+            for item in items_hallazgo:
+                if item.seccion != seccion_actual:
+                    seccion_actual = item.seccion
+                    bloques.append(f'\n{_ETIQUETA_SEC.get(seccion_actual, seccion_actual)}:')
+                linea = f'  • {item.punto}: {_ETIQUETA_RESP.get(item.respuesta, item.respuesta)}'
+                if item.observaciones:
+                    linea += f' — {item.observaciones}'
+                bloques.append(linea)
+
+        self.hallazgos = '\n'.join(bloques) if bloques else self.hallazgos
+
     # ── Firma electrónica ─────────────────────────────────────────────────
 
     def _amunet_signature_allowed_methods(self):
