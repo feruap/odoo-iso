@@ -115,6 +115,16 @@ class AmunetCopiaControlada(models.Model):
             )
         return copia
 
+    # ── Descarga de certificado ───────────────────────────────────────────
+
+    def action_descargar_certificado_interno(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/amunet_quality/download_certificado_interno/{self.check_id.id}',
+            'target': 'new',
+        }
+
     # ── Firma electrónica ─────────────────────────────────────────────────
 
     def _amunet_signature_allowed_methods(self):
