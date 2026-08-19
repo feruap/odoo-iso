@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="seed_product_template_copap41" model="product.template">
+            <field name="name">Cuaderno Francés</field>
+            <field name="default_code">COPAP41</field>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="categ_id" ref="seed_product_category_102"/>
+            <field name="uom_id" ref="seed_uom_uom_1"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="tracking">none</field>
+            <field name="amunet_requires_quarantine" eval="False"/>
+            <field name="list_price">1.0</field>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="seed_product_template_copap42" model="product.template">
+            <field name="name">Cuaderno Profesional</field>
+            <field name="default_code">COPAP42</field>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="categ_id" ref="seed_product_category_102"/>
+            <field name="uom_id" ref="seed_uom_uom_1"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="tracking">none</field>
+            <field name="amunet_requires_quarantine" eval="False"/>
+            <field name="list_price">1.0</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>
