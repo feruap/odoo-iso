@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════ LISTA ════════════ -->
+    <record id="view_informe_list" model="ir.ui.view">
+        <field name="name">amunet.informe.auditoria.list</field>
+        <field name="model">amunet.informe.auditoria</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state == 'firmado'" decoration-muted="state == 'borrador'">
+                <field name="clave"/>
+                <field name="no_auditoria" string="Plan"/>
+                <field name="area_proceso" string="Área / Proceso"/>
+                <field name="fecha" string="Fecha"/>
+                <field name="lider_id" string="Auditor Líder"/>
+                <field name="quien_atiende_id" string="Quien atendió"/>
+                <field name="state" widget="badge"
+                    decoration-warning="state == 'borrador'"
+                    decoration-success="state == 'firmado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ════════════ FORMULARIO ════════════ -->
+    <record id="view_informe_form" model="ir.ui.view">
+        <field name="name">amunet.informe.auditoria.form</field>
+        <field name="model">amunet.informe.auditoria</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_firmar_lider" type="object"
+                        string="Firmar informe" class="btn-primary"
+                        invisible="firma_lider_id"/>
+                    <button name="action_borrador" type="object"
+                        string="Regresar a borrador"
+                        invisible="state != 'firmado'"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="borrador,firmado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="clave" readonly="1"/></h1>
+                    </div>
+
+                    <!-- Identificación -->
+                    <group string="Identificación">
+                        <group>
+                            <field name="plan_id" readonly="state == 'firmado'"/>
+                            <field name="no_auditoria" readonly="1"/>
+                            <field name="tipo" readonly="1"/>
+                            <field name="norma" readonly="state == 'firmado'"/>
+                            <field name="fecha" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="lider_id" readonly="1"/>
+                            <field name="auditor_ids" widget="many2many_tags" readonly="1"/>
+                            <field name="area_proceso" readonly="state == 'firmado'"/>
+                            <field name="quien_atiende_id" readonly="state == 'firmado'"/>
+                            <field name="cargo_quien_atiende" readonly="state == 'firmado'"/>
+                        </group>
+                    </group>
+
+                    <!-- Objetivo y Alcance del plan -->
+                    <separator string="Objetivo de la auditoría"/>
+                    <field name="objetivos" nolabel="1" rows="3" readonly="1"/>
+
+                    <separator string="Alcance de la auditoría"/>
+                    <field name="alcance" nolabel="1" rows="3" readonly="1"/>
+
+                    <separator string="Criterios de la auditoría"/>
+                    <field name="criterios_descripcion" nolabel="1" rows="3"
+                        readonly="state == 'firmado'"
+                        placeholder="Criterios aplicados en esta auditoría..."/>
+
+                    <!-- Cuerpo del informe -->
+                    <separator string="Observaciones"/>
+                    <field name="observaciones" nolabel="1" rows="4"
+                        readonly="state == 'firmado'"
+                        placeholder="Observaciones generales durante la ejecución de la auditoría..."/>
+
+                    <separator string="Descripción de los Hallazgos"/>
+                    <field name="hallazgos" nolabel="1" rows="5"
+                        readonly="state == 'firmado'"
+                        placeholder="Describe los hallazgos encontrados durante la auditoría..."/>
+
+                    <separator string="Conclusiones"/>
+                    <field name="conclusiones" nolabel="1" rows="4"
+                        readonly="state == 'firmado'"
+                        placeholder="Conclusiones de la auditoría..."/>
+
+                    <!-- Firma -->
+                    <separator string="Firma"/>
+                    <group>
+                        <group string="Auditor Líder">
+                            <field name="firma_lider_id" nolabel="1" readonly="1"/>
+                            <field name="fecha_firma_lider" nolabel="1" readonly="1"/>
+                            <button name="action_firmar_lider" type="object"
+                                string="Firmar con PIN" icon="fa-pen"
+                                class="btn-primary btn-sm"
+                                invisible="firma_lider_id"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ════════════ ACCIÓN ════════════ -->
+    <record id="action_informe_auditoria" model="ir.actions.act_window">
+        <field name="name">Informes de Auditoría</field>
+        <field name="res_model">amunet.informe.auditoria</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea el informe de resultados de una auditoría interna
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -4,5 +4,6 @@
         name="Apertura y Cierre de Auditorías"
         parent="amunet_documentos.menu_amunet_documentos_root"
         action="action_acta_auditoria"
-        sequence="45"/>
+        sequence="45"
+        active="0"/>
 </odoo>

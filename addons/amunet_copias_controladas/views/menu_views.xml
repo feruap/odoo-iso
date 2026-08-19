@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_copia_controlada"
+        name="Lista Maestra de Copias Controladas"
+        parent="amunet_documentos.menu_amunet_documentos_root"
+        action="action_copia_controlada"
+        sequence="60"/>
+</odoo>

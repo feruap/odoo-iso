@@ -67,6 +67,21 @@
                 </t>
             </div>
 
+            <!-- Informes de Auditoría -->
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.abrirAccionXml('amunet_informe_auditoria.action_informe_auditoria')">
+                <i class="fa fa-file-pdf-o fa-2x mb-2" style="color:#c53030"/>
+                <span class="o_amunet_hub_label">Informes de Auditoría</span>
+                <t t-if="!state.loading">
+                    <span t-attf-class="o_amunet_hub_badge {{ state.informes > 0 ? 'badge-active' : 'badge-empty' }}">
+                        <t t-esc="state.informes"/> en borrador
+                    </span>
+                </t>
+                <t t-else="">
+                    <span class="o_amunet_hub_badge badge-empty">&#8212;</span>
+                </t>
+            </div>
+
         </div>
 
     </div>

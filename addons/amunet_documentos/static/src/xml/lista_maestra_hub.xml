@@ -97,6 +97,21 @@
                         </div>
                     </div>
 
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0 lm-card"
+                             t-on-click="() => this.openAction('amunet_copias_controladas.action_copia_controlada')">
+                            <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
+                                <i class="fa fa-copy fa-2x" style="color:#c53030"/>
+                                <div>
+                                    <h5 class="card-title mb-1">Copias Controladas</h5>
+                                    <p class="card-text text-muted small mb-0">
+                                        Lista maestra de copias controladas de certificados de calidad
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

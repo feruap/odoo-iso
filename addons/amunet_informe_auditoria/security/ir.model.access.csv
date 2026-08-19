@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_informe_user,Informe Usuario,model_amunet_informe_auditoria,base.group_user,1,0,0,0
+access_informe_doc,Informe Documentacion,model_amunet_informe_auditoria,amunet_documentos.group_documentos_manager,1,1,1,1
