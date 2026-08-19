@@ -32,7 +32,7 @@
                         invisible="firma_lider_id"/>
                     <button name="action_borrador" type="object"
                         string="Regresar a borrador"
-                        invisible="state != 'firmado'"/>
+                        invisible="1"/>
                     <field name="state" widget="statusbar"
                         statusbar_visible="borrador,firmado"/>
                 </header>
