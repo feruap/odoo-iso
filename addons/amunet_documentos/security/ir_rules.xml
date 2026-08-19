@@ -1,41 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Todos los empleados: solo pueden VER documentos generales (GE) -->
-    <record id="rule_docs_base_ge" model="ir.rule">
-        <field name="name">Documentos: Empleados - solo lectura de generales</field>
-        <field name="model_id" ref="model_amunet_documento"/>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-        <field name="domain_force">[('area', '=', 'GE')]</field>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
-    <!-- Formatos: Empleados sin acceso (controlado por permisos de formato) -->
-    <record id="rule_formato_base_ninguno" model="ir.rule">
-        <field name="name">Formatos: Empleados - sin acceso directo</field>
-        <field name="model_id" ref="model_amunet_documento_formato"/>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-        <field name="domain_force">[(0, '=', 1)]</field>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
-    <!-- Solicitudes de formato: Empleados sin acceso -->
-    <record id="rule_formato_solicitud_base_ninguno" model="ir.rule">
-        <field name="name">Solicitudes de Formato: Empleados - sin acceso directo</field>
-        <field name="model_id" ref="model_amunet_documento_formato_solicitud"/>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-        <field name="domain_force">[(0, '=', 1)]</field>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
     <!-- Usuario base: solo ve documentos generales (GE) -->
     <record id="rule_docs_usuario_ge" model="ir.rule">
         <field name="name">Documentos: Usuario - solo generales</field>
