@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="amunet_cc_general.ProgramasHub">
+    <div class="o_action o_amunet_mis_pendientes">
+
+        <div class="o_amunet_dash_section_title">Programas anuales</div>
+
+        <div class="o_amunet_dash_cards o_amunet_dash_cards_hub">
+
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.abrirAccionXml('amunet_programa_auditorias.action_programa_auditoria')">
+                <i class="fa fa-calendar fa-2x mb-2" style="color:#198754"/>
+                <span class="o_amunet_hub_label">Programa Anual de Auditorías</span>
+            </div>
+
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg" style="opacity:.6;cursor:default;">
+                <i class="fa fa-file-text-o fa-2x mb-2" style="color:#6f42c1"/>
+                <span class="o_amunet_hub_label">Auditoría Técnicas de Proveedores</span>
+                <span class="o_amunet_hub_badge badge-empty">En construcción</span>
+            </div>
+
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg" style="opacity:.6;cursor:default;">
+                <i class="fa fa-bug fa-2x mb-2" style="color:#b7791f"/>
+                <span class="o_amunet_hub_label">Prevención de Fauna Nociva</span>
+                <span class="o_amunet_hub_badge badge-empty">En construcción</span>
+            </div>
+
+        </div>
+
+    </div>
+</t>
+</templates>
