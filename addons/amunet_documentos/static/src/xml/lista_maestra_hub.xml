@@ -24,36 +24,6 @@
 
                     <div class="col-md-6">
                         <div class="card h-100 shadow-sm border-0 lm-card"
-                             t-on-click="() => this.openAction('amunet_documentos.action_amunet_documento_formato')">
-                            <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
-                                <i class="fa fa-wpforms fa-2x text-success"/>
-                                <div>
-                                    <h5 class="card-title mb-1">Formatos</h5>
-                                    <p class="card-text text-muted small mb-0">
-                                        Formatos controlados vigentes
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="card h-100 shadow-sm border-0 lm-card"
-                             t-on-click="() => this.openAction('amunet_documentos.action_amunet_documento_obsoletos')">
-                            <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
-                                <i class="fa fa-archive fa-2x text-warning"/>
-                                <div>
-                                    <h5 class="card-title mb-1">Documentos obsoletos</h5>
-                                    <p class="card-text text-muted small mb-0">
-                                        Historial de versiones anteriores
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="card h-100 shadow-sm border-0 lm-card"
                              t-on-click="() => this.openAction('amunet_documentos.action_amunet_prueba_rapida')">
                             <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
                                 <i class="fa fa-flask fa-2x text-info"/>

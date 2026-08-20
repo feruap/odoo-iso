@@ -13,11 +13,6 @@
             </div>
 
 
-            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_documento_obsoletos')">
-                <i class="fa fa-archive fa-2x text-warning mb-2"/>
-                <span class="o_amunet_hub_label">Obsoletos</span>
-            </div>
-
             <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_prueba_rapida')">
                 <i class="fa fa-flask fa-2x text-info mb-2"/>
                 <span class="o_amunet_hub_label">Pruebas rápidas</span>
