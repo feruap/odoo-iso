@@ -8,7 +8,7 @@
         <div class="o_amunet_dash_cards o_amunet_dash_cards_hub">
 
             <!-- Convocatorias -->
-            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+            <div t-if="state.isManager" class="o_amunet_hub_card o_amunet_hub_card_lg"
                  t-on-click="() => this.abrirAccionXml('amunet_auditores.action_convocatoria')">
                 <i class="fa fa-bullhorn fa-2x mb-2" style="color:#0d6efd"/>
                 <span class="o_amunet_hub_label">Convocatorias</span>
