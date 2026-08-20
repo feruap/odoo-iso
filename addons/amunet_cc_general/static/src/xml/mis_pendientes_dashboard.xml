@@ -13,7 +13,7 @@
             </div>
 
 
-            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_prueba_rapida')">
+            <div t-if="state.isPruebaRapidaEditor" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_prueba_rapida')">
                 <i class="fa fa-flask fa-2x text-info mb-2"/>
                 <span class="o_amunet_hub_label">Pruebas rápidas</span>
             </div>
@@ -38,7 +38,7 @@
                 <span class="o_amunet_hub_label">Auditorías internas</span>
             </div>
 
-            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_copias_controladas.action_copia_controlada')">
+            <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_copias_controladas.action_copia_controlada')">
                 <i class="fa fa-copy fa-2x mb-2" style="color:#c53030"/>
                 <span class="o_amunet_hub_label">Copias Controladas</span>
             </div>

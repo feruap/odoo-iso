@@ -21,6 +21,7 @@ class MisPendientesDashboard extends Component {
             cc_firma: 0,
             isManager: false,
             isAuditor: false,
+            isPruebaRapidaEditor: false,
         });
 
         onWillStart(() => this._cargarConteos());
@@ -29,7 +30,7 @@ class MisPendientesDashboard extends Component {
     async _cargarConteos() {
         const uid = user.userId;
         try {
-            const [corregir, revisar, autorizar, acusar, cc_firma, isManager, isAuditor] = await Promise.all([
+            const [corregir, revisar, autorizar, acusar, cc_firma, isManager, isPruebaRapidaEditor, isAuditor] = await Promise.all([
                 this.orm.searchCount("amunet.documento", [
                     ["state", "=", "borrador"], ["elabora_id", "=", uid],
                 ]),
@@ -48,6 +49,7 @@ class MisPendientesDashboard extends Component {
                     ["pendientes_para_ids", "in", [uid]],
                 ]),
                 user.hasGroup("amunet_documentos.group_documentos_manager"),
+                user.hasGroup("amunet_documentos.group_prueba_rapida_editor"),
                 (async () => {
                     const esCandidato = await this.orm.searchCount("amunet.auditor.candidato", [
                         ["usuario_id", "=", uid], ["estado", "=", "seleccionado"],
@@ -63,7 +65,7 @@ class MisPendientesDashboard extends Component {
                     return firmados < planIds.length;
                 })(),
             ]);
-            Object.assign(this.state, { corregir, revisar, autorizar, acusar, cc_firma, isManager, isAuditor, loading: false });
+            Object.assign(this.state, { corregir, revisar, autorizar, acusar, cc_firma, isManager, isPruebaRapidaEditor, isAuditor, loading: false });
         } catch (e) {
             console.error("Error al cargar pendientes:", e);
             Object.assign(this.state, { loading: false });
