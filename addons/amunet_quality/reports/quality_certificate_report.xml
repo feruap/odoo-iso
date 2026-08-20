@@ -70,13 +70,17 @@
 
                         <div class="row mt32 mb32">
                             <div class="col-6">
-                                <strong>Producto:</strong> <span t-field="o.product_id.name"/><br/>
+                                <strong>Producto:</strong> <span t-esc="o.product_id.name"/><br/>
                                 <t t-if="o.is_equipment">
-                                    <strong>Clave:</strong> <span t-field="o.product_id.default_code"/><br/>
+                                    <strong>Clave:</strong> <span t-esc="o.product_id.default_code"/><br/>
+                                </t>
+                                <t t-elif="o.product_id.default_code and (o.product_id.default_code.startswith('STBPR') or o.product_id.default_code.startswith('STREX'))">
+                                    <strong>Clave conjunta:</strong> STBPC01<br/>
+                                    <strong>Clave:</strong> <span t-esc="o.product_id.default_code"/><br/>
                                 </t>
                                 <t t-else="">
-                                    <strong>Código:</strong> <span t-field="o.product_id.default_code"/><br/>
-                                    <strong>Proveedor:</strong> <span t-field="o.partner_id.name"/>
+                                    <strong>Código:</strong> <span t-esc="o.product_id.default_code"/><br/>
+                                    <strong>Proveedor:</strong> <span t-esc="o.partner_id.name"/>
                                 </t>
                             </div>
                             <div class="col-6">
