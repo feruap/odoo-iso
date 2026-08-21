@@ -33,7 +33,8 @@
 
     <menuitem id="menu_amunet_prueba_rapida" name="Datos de pruebas rápidas"
               parent="menu_amunet_lista_maestra_root"
-              action="action_amunet_prueba_rapida" sequence="40"/>
+              action="action_amunet_prueba_rapida" sequence="40"
+              groups="amunet_documentos.group_prueba_rapida_editor"/>
 
     <!-- ── Submenú: Mis pendientes ── -->
     <menuitem id="menu_amunet_mis_pendientes" name="Mis pendientes"
