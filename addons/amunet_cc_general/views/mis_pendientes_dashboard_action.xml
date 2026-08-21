@@ -5,10 +5,7 @@
         <field name="tag">amunet_mis_pendientes_dashboard</field>
     </record>
 
-    <menuitem id="menu_mis_pendientes_dashboard"
-              name="Mis pendientes"
-              parent="amunet_documentos.menu_amunet_documentos_root"
-              action="action_mis_pendientes_dashboard"
-              sequence="1"
-              groups="amunet_cc_general.group_cc_general_user"/>
+    <record id="menu_mis_pendientes_dashboard" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 </odoo>
