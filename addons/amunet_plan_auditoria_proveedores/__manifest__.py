@@ -1,6 +1,6 @@
 {
     'name':        'Plan de Auditoría de Proveedores (F-DC-005-016)',
-    'version':     '17.0.1.0.0',
+    'version':     '19.0.1.0.0',
     'summary':     'Plan detallado de ejecución de auditoría a proveedor específico',
     'category':    'Quality/Amunet',
     'author':      'Amunet',
@@ -8,9 +8,9 @@
     'data': [
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
+        'reports/report_plan_auditoria_proveedor.xml',
         'views/plan_views.xml',
         'views/menus.xml',
-        'reports/report_plan_auditoria_proveedor.xml',
     ],
     'installable': True,
     'application': False,

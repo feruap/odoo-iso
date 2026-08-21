@@ -17,7 +17,7 @@
                 <field name="state" widget="badge"
                        decoration-success="state=='vigente'"
                        decoration-warning="state=='borrador'"
-                       decoration-secondary="state=='cerrado'"/>
+                       decoration-muted="state=='cerrado'"/>
             </list>
         </field>
     </record>
@@ -44,8 +44,8 @@
                             type="object" class="btn-link"
                             invisible="state == 'borrador'"
                             groups="amunet_documentos.group_documentos_manager"/>
-                    <button name="action_print_plan_audit_prov" string="Imprimir"
-                            type="object" class="btn-secondary" icon="fa-print"/>
+                    <button name="%(amunet_plan_auditoria_proveedores.action_print_plan_audit_prov)d"
+                            type="action" string="Imprimir" class="btn-secondary" icon="fa-print"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="borrador,vigente,cerrado"/>
                 </header>
@@ -215,14 +215,14 @@
                 <field name="clave"/>
                 <field name="proveedor"/>
                 <field name="lider_id"/>
-                <filter string="Borrador"  name="borrador" domain="[('state','=','borrador')]"/>
-                <filter string="Vigente"   name="vigente"  domain="[('state','=','vigente')]"/>
-                <filter string="Cerrado"   name="cerrado"  domain="[('state','=','cerrado')]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Proveedor" name="grp_proveedor" context="{'group_by':'proveedor'}"/>
-                    <filter string="Tipo"      name="grp_tipo"      context="{'group_by':'tipo'}"/>
-                    <filter string="Estado"    name="grp_state"     context="{'group_by':'state'}"/>
-                </group>
+                <separator/>
+                <filter string="Borrador" name="borrador" domain="[('state','=','borrador')]"/>
+                <filter string="Vigente"  name="vigente"  domain="[('state','=','vigente')]"/>
+                <filter string="Cerrado"  name="cerrado"  domain="[('state','=','cerrado')]"/>
+                <separator/>
+                <filter string="Por proveedor" name="grp_proveedor" context="{'group_by':'proveedor'}"/>
+                <filter string="Por tipo"      name="grp_tipo"      context="{'group_by':'tipo'}"/>
+                <filter string="Por estado"    name="grp_state"     context="{'group_by':'state'}"/>
             </search>
         </field>
     </record>

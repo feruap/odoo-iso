@@ -129,7 +129,7 @@ class AmunetPlanAuditoriaProveedor(models.Model):
     elaboro_id           = fields.Many2one('res.users', string='Auditor Líder (firma)', readonly=True)
     fecha_elaboro        = fields.Date(string='Fecha firma líder',  readonly=True)
     resp_calidad_prov    = fields.Char(string='Responsable de Calidad del proveedor')
-    firma_compras_id     = fields.Many2one('res.users', string='Responsable de Compras (fabricante)',
+    firma_compras_id     = fields.Many2one('res.users', string='Firmó — Resp. de Compras',
                                            readonly=True)
     fecha_firma_compras  = fields.Date(string='Fecha firma compras', readonly=True)
 

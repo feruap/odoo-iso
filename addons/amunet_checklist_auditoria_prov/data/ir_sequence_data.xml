@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_checklist_audit_prov" model="ir.sequence">
+        <field name="name">Checklist Auditoría Técnica Proveedores</field>
+        <field name="code">amunet.checklist.audit.prov</field>
+        <field name="prefix">CHKL-PROV-%(year)s-</field>
+        <field name="padding">3</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+</odoo>
