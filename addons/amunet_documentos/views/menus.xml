@@ -11,15 +11,14 @@
               sequence="90"/>
 
     <!-- ── Nivel 1: ítems directos ── -->
-    <menuitem id="menu_amunet_lista_maestra_root" name="Lista maestra"
-              parent="menu_amunet_documentos_root"
-              action="action_lista_maestra_hub"
-              sequence="20"
-              groups="amunet_documentos.group_documentos_user"/>
+    <record id="menu_amunet_lista_maestra_root" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 
     <menuitem id="menu_amunet_documentos_lista_maestra" name="PNOs vigentes"
               parent="menu_amunet_lista_maestra_root"
-              action="action_amunet_documento_lista_maestra" sequence="10"/>
+              action="action_amunet_documento_lista_maestra" sequence="10"
+              groups="amunet_documentos.group_documentos_manager"/>
 
     <menuitem id="menu_amunet_documentos_formatos" name="Formatos"
               parent="menu_amunet_lista_maestra_root"
