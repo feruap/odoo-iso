@@ -16,13 +16,13 @@
             <div class="o_amunet_hub_card o_amunet_hub_card_lg"
                  t-on-click="() => this.abrirAccionXml('amunet_programa_auditoria_proveedores.action_programa_proveedor')">
                 <i class="fa fa-file-text-o fa-2x mb-2" style="color:#6f42c1"/>
-                <span class="o_amunet_hub_label">Auditoría Técnicas de Proveedores</span>
+                <span class="o_amunet_hub_label">Programa de Auditorías Técnicas de Proveedores</span>
             </div>
 
             <div class="o_amunet_hub_card o_amunet_hub_card_lg"
                  t-on-click="() => this.abrirAccionXml('amunet_programa_fauna_nociva.action_programa_fauna_nociva')">
                 <i class="fa fa-bug fa-2x mb-2" style="color:#b7791f"/>
-                <span class="o_amunet_hub_label">Prevención de Fauna Nociva</span>
+                <span class="o_amunet_hub_label">Programa de Prevención de Fauna Nociva</span>
             </div>
 
         </div>

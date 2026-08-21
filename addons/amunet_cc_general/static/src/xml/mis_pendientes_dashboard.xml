@@ -38,6 +38,11 @@
                 <span class="o_amunet_hub_label">Auditorías internas</span>
             </div>
 
+            <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_plan_auditoria_proveedores.action_plan_audit_prov')">
+                <i class="fa fa-handshake-o fa-2x mb-2" style="color:#6f42c1"/>
+                <span class="o_amunet_hub_label">Auditoría técnica de proveedores</span>
+            </div>
+
             <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_copias_controladas.action_copia_controlada')">
                 <i class="fa fa-copy fa-2x mb-2" style="color:#c53030"/>
                 <span class="o_amunet_hub_label">Copias Controladas</span>
