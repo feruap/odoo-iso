@@ -35,6 +35,10 @@
               action="action_amunet_prueba_rapida" sequence="40"
               groups="amunet_documentos.group_prueba_rapida_editor"/>
 
+    <record id="menu_amunet_formato_mis_solicitudes" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
     <!-- ── Submenú: Mis pendientes ── -->
     <menuitem id="menu_amunet_mis_pendientes" name="Mis pendientes"
               parent="menu_amunet_documentos_root"
