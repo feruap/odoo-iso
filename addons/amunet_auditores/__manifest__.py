@@ -13,6 +13,7 @@
         'data/areas_data.xml',
         'views/convocatoria_views.xml',
         'views/menu_views.xml',
+        'reports/report_convocatoria.xml',
     ],
     'installable': True,
     'application': False,

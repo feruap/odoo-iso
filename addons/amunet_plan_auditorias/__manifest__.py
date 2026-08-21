@@ -11,6 +11,7 @@
         'data/sequences.xml',
         'views/plan_views.xml',
         'views/menu_views.xml',
+        'reports/report_plan_auditoria.xml',
     ],
     'installable': True,
     'application': False,

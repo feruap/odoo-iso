@@ -11,6 +11,7 @@
         'data/sequences.xml',
         'views/acta_views.xml',
         'views/menu_views.xml',
+        'reports/report_acta_auditoria.xml',
     ],
     'installable': True,
     'application': False,

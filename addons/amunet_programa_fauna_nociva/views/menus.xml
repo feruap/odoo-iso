@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_prog_fauna_nociva"
-        name="Prevención de Fauna Nociva"
-        parent="amunet_documentos.menu_amunet_gestion"
-        action="action_programa_fauna_nociva"
-        sequence="51"
-        groups="amunet_documentos.group_documentos_manager"/>
+    <record id="menu_prog_fauna_nociva" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 </odoo>

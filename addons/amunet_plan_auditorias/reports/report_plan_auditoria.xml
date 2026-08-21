@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_plan_auditoria" model="ir.actions.report">
+        <field name="name">Plan de Auditoría</field>
+        <field name="model">amunet.plan.auditoria</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_plan_auditorias.report_plan_auditoria</field>
+        <field name="report_file">amunet_plan_auditorias.report_plan_auditoria</field>
+        <field name="binding_model_id" ref="model_amunet_plan_auditoria"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <template id="report_plan_auditoria">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 class="text-center">Plan de Auditoría Interna</h2>
+                        <hr/>
+
+                        <!-- Datos generales -->
+                        <table class="table table-sm table-bordered" style="font-size:12px">
+                            <tbody>
+                                <tr>
+                                    <td style="width:25%; background:#f5f5f5"><strong>Clave</strong></td>
+                                    <td><t t-field="doc.clave"/></td>
+                                    <td style="width:25%; background:#f5f5f5"><strong>Estado</strong></td>
+                                    <td><t t-field="doc.state"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Tipo</strong></td>
+                                    <td><t t-field="doc.tipo"/></td>
+                                    <td style="background:#f5f5f5"><strong>Modalidad</strong></td>
+                                    <td><t t-field="doc.modalidad"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Fecha inicio</strong></td>
+                                    <td><t t-field="doc.fecha_inicio"/></td>
+                                    <td style="background:#f5f5f5"><strong>Fecha fin</strong></td>
+                                    <td><t t-field="doc.fecha_fin"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Sitio</strong></td>
+                                    <td colspan="3"><t t-field="doc.sitio"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Equipo auditor -->
+                        <h4 style="margin-top:14px; color:#333;">Equipo Auditor</h4>
+                        <table class="table table-sm table-bordered" style="font-size:12px">
+                            <tbody>
+                                <tr>
+                                    <td style="width:30%; background:#f5f5f5"><strong>Auditor Líder</strong></td>
+                                    <td>
+                                        <t t-if="doc.lider_id"><t t-esc="doc.lider_id.name"/></t>
+                                    </td>
+                                </tr>
+                                <tr t-if="doc.auditor_ids">
+                                    <td style="background:#f5f5f5"><strong>Auditores</strong></td>
+                                    <td>
+                                        <t t-foreach="doc.auditor_ids" t-as="aud">
+                                            <t t-esc="aud.name"/><t t-if="not aud_last">, </t>
+                                        </t>
+                                    </td>
+                                </tr>
+                                <tr t-if="doc.observador_ids">
+                                    <td style="background:#f5f5f5"><strong>Observadores</strong></td>
+                                    <td>
+                                        <t t-foreach="doc.observador_ids" t-as="obs">
+                                            <t t-esc="obs.name"/><t t-if="not obs_last">, </t>
+                                        </t>
+                                    </td>
+                                </tr>
+                                <tr t-if="doc.experto_ids">
+                                    <td style="background:#f5f5f5"><strong>Expertos técnicos</strong></td>
+                                    <td>
+                                        <t t-foreach="doc.experto_ids" t-as="exp">
+                                            <t t-esc="exp.name"/><t t-if="not exp_last">, </t>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Objetivos y alcance -->
+                        <t t-if="doc.objetivos">
+                            <h4 style="margin-top:14px; color:#333;">Objetivos</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;"><t t-field="doc.objetivos"/></p>
+                        </t>
+
+                        <t t-if="doc.alcance">
+                            <h4 style="margin-top:14px; color:#333;">Alcance</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;"><t t-field="doc.alcance"/></p>
+                        </t>
+
+                        <t t-if="doc.limitaciones">
+                            <h4 style="margin-top:14px; color:#333;">Limitaciones / Exclusiones</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;"><t t-field="doc.limitaciones"/></p>
+                        </t>
+
+                        <!-- Metodología -->
+                        <h4 style="margin-top:14px; color:#333;">Metodología</h4>
+                        <ul style="font-size:12px; columns:2; list-style:disc; padding-left:20px;">
+                            <li t-if="doc.met_apertura">Reunión de apertura</li>
+                            <li t-if="doc.met_entrevistas">Entrevistas</li>
+                            <li t-if="doc.met_revision_doc">Revisión documental</li>
+                            <li t-if="doc.met_verificacion">Verificación en sitio</li>
+                            <li t-if="doc.met_muestreo">Muestreo</li>
+                            <li t-if="doc.met_observacion">Observación directa</li>
+                            <li t-if="doc.met_cierre">Reunión de cierre</li>
+                        </ul>
+
+                        <!-- Criterios -->
+                        <t t-if="doc.criterio_ids">
+                            <h4 style="margin-top:14px; color:#333;">Criterios de Auditoría</h4>
+                            <table class="table table-sm table-bordered" style="font-size:12px">
+                                <thead style="background:#f5f5f5">
+                                    <tr>
+                                        <th style="width:30%">Criterio</th>
+                                        <th>Descripción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.criterio_ids" t-as="crit">
+                                        <tr>
+                                            <td><t t-esc="crit.nombre"/></td>
+                                            <td><t t-esc="crit.descripcion"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- Agenda -->
+                        <t t-if="doc.dia_ids">
+                            <h4 style="margin-top:14px; color:#333;">Agenda</h4>
+                            <t t-foreach="doc.dia_ids" t-as="dia">
+                                <p style="font-size:11px; font-weight:bold; margin-bottom:4px;">
+                                    <t t-field="dia.fecha"/> — <t t-esc="dia.sitio or ''"/>
+                                </p>
+                                <table class="table table-sm table-bordered" style="font-size:11px; margin-bottom:8px;">
+                                    <thead style="background:#f5f5f5">
+                                        <tr>
+                                            <th style="width:12%">Inicio</th>
+                                            <th style="width:12%">Fin</th>
+                                            <th style="width:25%">Auditor</th>
+                                            <th>Qué se va a auditar</th>
+                                            <th style="width:20%">Auditado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="dia.actividad_ids" t-as="act">
+                                            <tr>
+                                                <td><t t-esc="act.hora_inicio"/></td>
+                                                <td><t t-esc="act.hora_fin"/></td>
+                                                <td><t t-if="act.auditor_id"><t t-esc="act.auditor_id.name"/></t></td>
+                                                <td><t t-esc="act.que_auditar"/></td>
+                                                <td><t t-if="act.auditado_id"><t t-esc="act.auditado_id.name"/></t></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                        </t>
+
+                        <!-- Plazos del informe -->
+                        <h4 style="margin-top:14px; color:#333;">Plazos del Informe (días hábiles)</h4>
+                        <table class="table table-sm table-bordered" style="font-size:12px">
+                            <tbody>
+                                <tr t-if="doc.plazo_preliminar">
+                                    <td style="background:#f5f5f5; width:55%">Entrega de informe preliminar</td>
+                                    <td><t t-field="doc.plazo_preliminar"/> días</td>
+                                </tr>
+                                <tr t-if="doc.plazo_revision_auditado">
+                                    <td style="background:#f5f5f5">Revisión del auditado</td>
+                                    <td><t t-field="doc.plazo_revision_auditado"/> días</td>
+                                </tr>
+                                <tr t-if="doc.plazo_informe_final">
+                                    <td style="background:#f5f5f5">Emisión de informe final</td>
+                                    <td><t t-field="doc.plazo_informe_final"/> días</td>
+                                </tr>
+                                <tr t-if="doc.plazo_plan_capa">
+                                    <td style="background:#f5f5f5">Plan de acciones correctivas</td>
+                                    <td><t t-field="doc.plazo_plan_capa"/> días</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Firmas -->
+                        <div class="row mt-4" style="margin-top:40px;">
+                            <div class="col-6 text-center">
+                                <div style="border-top:1px solid #000; margin-top:50px; padding-top:6px;">
+                                    <strong>Elaboró</strong><br/>
+                                    <t t-if="doc.elaboro_id">
+                                        <t t-esc="doc.elaboro_id.name"/>
+                                        <t t-if="doc.fecha_elaboro"><br/><small><t t-field="doc.fecha_elaboro"/></small></t>
+                                    </t>
+                                </div>
+                            </div>
+                            <div class="col-6 text-center">
+                                <div style="border-top:1px solid #000; margin-top:50px; padding-top:6px;">
+                                    <strong>Autorizó (Auditor Líder)</strong><br/>
+                                    <t t-if="doc.autorizo_id">
+                                        <t t-esc="doc.autorizo_id.name"/>
+                                        <t t-if="doc.fecha_autorizo"><br/><small><t t-field="doc.fecha_autorizo"/></small></t>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nota de pie -->
+                        <p style="font-size:10px; color:#888; margin-top:20px; text-align:center;">
+                            Documento generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/> — Copia no controlada
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

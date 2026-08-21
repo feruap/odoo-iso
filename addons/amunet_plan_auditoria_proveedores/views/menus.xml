@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Submenú directo bajo Gestión (Documentación) — solo managers -->
+    <menuitem id="menu_plan_audit_prov"
+              name="Planes de Auditoría de Proveedores"
+              parent="amunet_documentos.menu_amunet_gestion"
+              action="action_plan_audit_prov"
+              sequence="50"
+              groups="amunet_documentos.group_documentos_manager"/>
+
+</odoo>
