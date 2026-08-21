@@ -75,8 +75,8 @@
                                     <strong>Clave:</strong> <span t-esc="o.product_id.default_code"/><br/>
                                 </t>
                                 <t t-elif="o.product_id.default_code and (o.product_id.default_code.startswith('STBPR') or o.product_id.default_code.startswith('STREX'))">
-                                    <strong>Clave conjunta:</strong> STBPC01<br/>
-                                    <strong>Clave:</strong> <span t-esc="o.product_id.default_code"/><br/>
+                                    <strong>Clave:</strong> STBPC01<br/>
+                                    <strong>Catálogo:</strong> <span t-esc="o.product_id.default_code"/><br/>
                                 </t>
                                 <t t-else="">
                                     <strong>Código:</strong> <span t-esc="o.product_id.default_code"/><br/>

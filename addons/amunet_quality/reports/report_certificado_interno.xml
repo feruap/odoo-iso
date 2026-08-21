@@ -100,8 +100,8 @@
                                 <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-esc="o.product_code"/></td>
                             </t>
                             <t t-elif="o.product_id.default_code and (o.product_id.default_code.startswith('STBPR') or o.product_id.default_code.startswith('STREX'))">
-                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Clave conjunta:</strong> STBPC01</td>
-                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Clave:</strong> <span t-esc="o.product_id.default_code"/></td>
+                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Clave:</strong> STBPC01</td>
+                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>Catálogo:</strong> <span t-esc="o.product_id.default_code"/></td>
                             </t>
                             <t t-elif="o.product_id.report_document_code in ('RAMP-005', 'RAMP-004')">
                                 <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CLAVE:</strong>
