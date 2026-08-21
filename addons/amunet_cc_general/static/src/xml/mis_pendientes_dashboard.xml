@@ -43,7 +43,7 @@
                 <span class="o_amunet_hub_label">Copias Controladas</span>
             </div>
 
-            <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_registros.action_registros_hub')">
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_registros.action_registros_hub')">
                 <i class="fa fa-folder-open-o fa-2x mb-2" style="color:#fd7e14"/>
                 <span class="o_amunet_hub_label">Registros de formatos</span>
             </div>
