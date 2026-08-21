@@ -6,12 +6,9 @@
         <field name="tag">amunet_registros.registros_hub</field>
     </record>
 
-    <menuitem id="menu_registros_root"
-              name="Registros de formatos"
-              parent="amunet_documentos.menu_amunet_documentos_root"
-              action="action_registros_hub"
-              sequence="50"
-              groups="amunet_documentos.group_documentos_manager"/>
+    <record id="menu_registros_root" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 
     <menuitem id="menu_registros_indumentaria"
               name="Indumentaria"
