@@ -24,13 +24,13 @@
 
                     <div t-if="state.isPruebaRapidaEditor" class="col-md-6">
                         <div class="card h-100 shadow-sm border-0 lm-card"
-                             t-on-click="() => this.openAction('amunet_documentos.action_amunet_prueba_rapida')">
+                             t-on-click="() => this.openAction('amunet_documentos.action_pruebas_rapidas_hub')">
                             <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
                                 <i class="fa fa-flask fa-2x text-info"/>
                                 <div>
-                                    <h5 class="card-title mb-1">Datos de pruebas rápidas</h5>
+                                    <h5 class="card-title mb-1">Pruebas Rápidas</h5>
                                     <p class="card-text text-muted small mb-0">
-                                        Catálogo de pruebas de diagnóstico IVD
+                                        Listas maestras de pruebas de diagnóstico IVD
                                     </p>
                                 </div>
                             </div>

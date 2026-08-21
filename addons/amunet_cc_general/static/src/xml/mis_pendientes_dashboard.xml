@@ -13,7 +13,7 @@
             </div>
 
 
-            <div t-if="state.isPruebaRapidaEditor" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_prueba_rapida')">
+            <div t-if="state.isPruebaRapidaEditor" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_pruebas_rapidas_hub')">
                 <i class="fa fa-flask fa-2x text-info mb-2"/>
                 <span class="o_amunet_hub_label">Pruebas rápidas</span>
             </div>
