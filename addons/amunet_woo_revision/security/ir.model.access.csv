@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_amunet_revision_mapeo_user,amunet.revision.mapeo user,model_amunet_revision_mapeo,base.group_user,1,0,0,0
+access_amunet_revision_mapeo_linea_user,amunet.revision.mapeo.linea user,model_amunet_revision_mapeo_linea,base.group_user,1,0,0,0
+access_amunet_revision_mapeo_stock,amunet.revision.mapeo stock,model_amunet_revision_mapeo,stock.group_stock_user,1,1,1,0
+access_amunet_revision_mapeo_linea_stock,amunet.revision.mapeo.linea stock,model_amunet_revision_mapeo_linea,stock.group_stock_user,1,1,1,0
+access_amunet_revision_mapeo_mgr,amunet.revision.mapeo manager,model_amunet_revision_mapeo,stock.group_stock_manager,1,1,1,1
+access_amunet_revision_mapeo_linea_mgr,amunet.revision.mapeo.linea manager,model_amunet_revision_mapeo_linea,stock.group_stock_manager,1,1,1,1

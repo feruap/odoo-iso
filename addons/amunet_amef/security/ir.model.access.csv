@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_amef_user,amef.user,model_amunet_amef,group_amef_user,1,1,1,0
+access_amef_approver,amef.approver,model_amunet_amef,group_amef_approver,1,1,1,1
+access_amef_line_user,amef.line.user,model_amunet_amef_line,group_amef_user,1,1,1,1
+access_amef_line_approver,amef.line.approver,model_amunet_amef_line,group_amef_approver,1,1,1,1
+access_amef_control_user,amef.control.user,model_amunet_amef_control,group_amef_user,1,1,1,1
+access_amef_control_approver,amef.control.approver,model_amunet_amef_control,group_amef_approver,1,1,1,1
+access_amef_audit_user,amef.audit.user,model_amunet_amef_audit_log,group_amef_user,1,0,0,0
+access_amef_audit_approver,amef.audit.approver,model_amunet_amef_audit_log,group_amef_approver,1,0,0,0
+access_amef_sign_wizard,amef.sign.wizard,model_amunet_amef_sign_wizard,group_amef_user,1,1,1,1

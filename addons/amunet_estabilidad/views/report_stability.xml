@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_stability" model="ir.actions.report">
+        <field name="name">Estudio de estabilidad</field>
+        <field name="model">amunet.stability.study</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_estabilidad.report_stability_document</field>
+        <field name="report_file">amunet_estabilidad.report_stability_document</field>
+        <field name="binding_model_id" ref="model_amunet_stability_study"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_stability_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Estudio de estabilidad <span t-field="o.code"/></h2>
+                        <h4 t-field="o.name"/>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Producto</strong></td>
+                                <td><span t-field="o.product_id"/></td>
+                                <td><strong>Versión</strong></td>
+                                <td><span t-field="o.version"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Estado</strong></td>
+                                <td><span t-field="o.state"/></td>
+                                <td><strong>Fecha inicio</strong></td>
+                                <td><span t-field="o.fecha_inicio"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Protocolo</strong></td>
+                                <td><span t-field="o.protocolo_id"/></td>
+                                <td><strong>Hash protocolo</strong></td>
+                                <td><span t-field="o.protocol_hash"/></td>
+                            </tr>
+                        </table>
+
+                        <h4>Lotes</h4>
+                        <table class="table table-sm o_main_table">
+                            <thead><tr><th>Lote</th><th>Escala</th><th>Fabricación</th><th>Empaque</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.batch_ids" t-as="b">
+                                    <td t-field="b.lote"/><td t-field="b.escala"/>
+                                    <td t-field="b.fecha_fabricacion"/><td t-field="b.empaque"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Condiciones</h4>
+                        <table class="table table-sm o_main_table">
+                            <thead><tr><th>Nombre</th><th>Tipo</th><th>Temp.</th><th>Humedad</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.condition_ids" t-as="c">
+                                    <td t-field="c.name"/><td t-field="c.tipo"/>
+                                    <td t-field="c.temperatura"/><td t-field="c.humedad"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Resultados</h4>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Lote</th><th>Condición</th><th>Mes</th><th>Parámetro</th>
+                                    <th>Valor</th><th>Conformidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.pull_ids" t-as="p">
+                                    <tr t-foreach="p.result_ids" t-as="r">
+                                        <td t-field="p.batch_id.lote"/>
+                                        <td t-field="p.condition_id.name"/>
+                                        <td t-field="p.mes"/>
+                                        <td t-field="r.parameter_id.parametro"/>
+                                        <td><span t-field="r.valor_num"/> <span t-field="r.valor_text"/></td>
+                                        <td t-field="r.conforme"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <h4>Conclusión</h4>
+                        <div t-field="o.conclusion"/>
+                        <p><strong>Vida útil concluida:</strong> <span t-field="o.vida_util_concluida"/></p>
+
+                        <table class="table table-sm" style="margin-top:20px;">
+                            <tr>
+                                <td><strong>Revisó:</strong> <span t-field="o.revisa_id"/> (<span t-field="o.fecha_revisa"/>)</td>
+                                <td><strong>Aprobó:</strong> <span t-field="o.aprueba_id"/> (<span t-field="o.fecha_aprueba"/>)</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2"><small>Hash informe final: <span t-field="o.final_hash"/></small></td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

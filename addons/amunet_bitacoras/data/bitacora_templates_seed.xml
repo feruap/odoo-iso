@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      SEMILLAS PENDIENTES DE CONFIRMACIÓN.
+      Todas nacen en estado 'draft' y 'requires_confirmation=True'.
+      El supervisor debe revisar áreas, límites y PNO/formato antes de aprobar/activar.
+      Las áreas y límites son valores por defecto razonables, NO confirmados.
+    -->
+    <data noupdate="1">
+
+        <!-- ===== Bitácoras de LIMPIEZA (5 áreas) ===== -->
+        <record id="tpl_limpieza_almacen_mp" model="amunet.bitacora.template">
+            <field name="name">Limpieza — Almacén de Materia Prima (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-LIMP-ALMMP</field>
+            <field name="tipo">limpieza</field>
+            <field name="department">ALMACÉN DE MATERIA PRIMA</field>
+            <field name="frecuencia">diaria</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+            <field name="notes">Semilla. Confirmar área exacta, PNO/formato y pasos antes de activar.</field>
+        </record>
+        <record id="tpl_limpieza_soluciones" model="amunet.bitacora.template">
+            <field name="name">Limpieza — Soluciones (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-LIMP-SOL</field>
+            <field name="tipo">limpieza</field>
+            <field name="department">SOLUCIONES</field>
+            <field name="frecuencia">diaria</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+        </record>
+        <record id="tpl_limpieza_inyeccion" model="amunet.bitacora.template">
+            <field name="name">Limpieza — Inyección (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-LIMP-INY</field>
+            <field name="tipo">limpieza</field>
+            <field name="department">INYECCIÓN</field>
+            <field name="frecuencia">diaria</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+        </record>
+        <record id="tpl_limpieza_encartuchado" model="amunet.bitacora.template">
+            <field name="name">Limpieza — Encartuchado (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-LIMP-ENC</field>
+            <field name="tipo">limpieza</field>
+            <field name="department">ENCARTUCHADO</field>
+            <field name="frecuencia">diaria</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+        </record>
+        <record id="tpl_limpieza_acond1" model="amunet.bitacora.template">
+            <field name="name">Limpieza — Acondicionado 1 (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-LIMP-ACO1</field>
+            <field name="tipo">limpieza</field>
+            <field name="department">ACONDICIONADO 1</field>
+            <field name="frecuencia">diaria</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+        </record>
+
+        <!-- Pasos de ejemplo para una de las bitácoras de limpieza -->
+        <record id="chk_limp_almmp_1" model="amunet.bitacora.checklist.item">
+            <field name="template_id" ref="tpl_limpieza_almacen_mp"/>
+            <field name="sequence">10</field>
+            <field name="name">Pisos barridos y trapeados</field>
+        </record>
+        <record id="chk_limp_almmp_2" model="amunet.bitacora.checklist.item">
+            <field name="template_id" ref="tpl_limpieza_almacen_mp"/>
+            <field name="sequence">20</field>
+            <field name="name">Superficies y mesas desinfectadas</field>
+        </record>
+        <record id="chk_limp_almmp_3" model="amunet.bitacora.checklist.item">
+            <field name="template_id" ref="tpl_limpieza_almacen_mp"/>
+            <field name="sequence">30</field>
+            <field name="name">Botes de basura vaciados</field>
+        </record>
+
+        <!-- ===== Bitácoras de TEMPERATURA Y HUMEDAD (4 áreas) ===== -->
+        <record id="tpl_th_almacen_mp" model="amunet.bitacora.template">
+            <field name="name">Temp./Humedad — Almacén de Materia Prima (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-TH-ALMMP</field>
+            <field name="tipo">temp_humedad</field>
+            <field name="department">ALMACÉN DE MATERIA PRIMA</field>
+            <field name="frecuencia">diaria</field>
+            <field name="temp_min">15.0</field>
+            <field name="temp_max">25.0</field>
+            <field name="hum_min">0.0</field>
+            <field name="hum_max">60.0</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+            <field name="notes">Límites por defecto (15–25°C, ≤60%HR). CONFIRMAR contra PNO antes de activar.</field>
+        </record>
+        <record id="tpl_th_estabilidad" model="amunet.bitacora.template">
+            <field name="name">Temp./Humedad — Estabilidad (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-TH-EST</field>
+            <field name="tipo">temp_humedad</field>
+            <field name="department">ESTABILIDAD</field>
+            <field name="frecuencia">diaria</field>
+            <field name="temp_min">15.0</field>
+            <field name="temp_max">25.0</field>
+            <field name="hum_min">0.0</field>
+            <field name="hum_max">60.0</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+        </record>
+        <record id="tpl_th_control_calidad" model="amunet.bitacora.template">
+            <field name="name">Temp./Humedad — Control de Calidad (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-TH-CC</field>
+            <field name="tipo">temp_humedad</field>
+            <field name="department">CONTROL DE CALIDAD</field>
+            <field name="frecuencia">diaria</field>
+            <field name="temp_min">15.0</field>
+            <field name="temp_max">25.0</field>
+            <field name="hum_min">0.0</field>
+            <field name="hum_max">60.0</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+        </record>
+        <record id="tpl_th_almacen_pt" model="amunet.bitacora.template">
+            <field name="name">Temp./Humedad — Almacén Temporal de PT (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-TH-ALMPT</field>
+            <field name="tipo">temp_humedad</field>
+            <field name="department">ALMACÉN TEMPORAL DE PRODUCTO TERMINADO</field>
+            <field name="frecuencia">diaria</field>
+            <field name="temp_min">15.0</field>
+            <field name="temp_max">25.0</field>
+            <field name="hum_min">0.0</field>
+            <field name="hum_max">60.0</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+        </record>
+
+        <!-- ===== Plantillas faltantes (paso 2, iteracion A1) ===== -->
+        <record id="tpl_th_produccion" model="amunet.bitacora.template">
+            <field name="name">Temp./Humedad — Producción (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-TH-PROD</field>
+            <field name="tipo">temp_humedad</field>
+            <field name="department">INYECCIÓN</field>
+            <field name="frecuencia">diaria</field>
+            <field name="pno_code">PNOPR-007</field>
+            <field name="temp_min">15.0</field>
+            <field name="temp_max">25.0</field>
+            <field name="hum_min">0.0</field>
+            <field name="hum_max">60.0</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+            <field name="notes">Semilla PNOPR-007. Confirmar area(s) de produccion y limites reales.</field>
+        </record>
+
+        <record id="tpl_limpieza_cc" model="amunet.bitacora.template">
+            <field name="name">Limpieza — Control de Calidad (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-LIMP-CC</field>
+            <field name="tipo">limpieza</field>
+            <field name="department">CONTROL DE CALIDAD</field>
+            <field name="frecuencia">diaria</field>
+            <field name="pno_code">PNOCC-006</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+        </record>
+        <record id="chk_limp_cc_1" model="amunet.bitacora.checklist.item">
+            <field name="template_id" ref="tpl_limpieza_cc"/>
+            <field name="sequence">10</field>
+            <field name="name">Mesas y superficies de trabajo desinfectadas</field>
+        </record>
+        <record id="chk_limp_cc_2" model="amunet.bitacora.checklist.item">
+            <field name="template_id" ref="tpl_limpieza_cc"/>
+            <field name="sequence">20</field>
+            <field name="name">Pisos barridos y trapeados</field>
+        </record>
+        <record id="chk_limp_cc_3" model="amunet.bitacora.checklist.item">
+            <field name="template_id" ref="tpl_limpieza_cc"/>
+            <field name="sequence">30</field>
+            <field name="name">Equipos de medición limpios</field>
+        </record>
+
+        <record id="tpl_limpieza_est" model="amunet.bitacora.template">
+            <field name="name">Limpieza — Estabilidad (PENDIENTE CONFIRMAR)</field>
+            <field name="code">BIT-LIMP-EST</field>
+            <field name="tipo">limpieza</field>
+            <field name="department">ESTABILIDAD</field>
+            <field name="frecuencia">diaria</field>
+            <field name="pno_code">PNOEST-003</field>
+            <field name="requires_confirmation" eval="True"/>
+            <field name="state">draft</field>
+        </record>
+        <record id="chk_limp_est_1" model="amunet.bitacora.checklist.item">
+            <field name="template_id" ref="tpl_limpieza_est"/>
+            <field name="sequence">10</field>
+            <field name="name">Cámaras de estabilidad limpias por fuera</field>
+        </record>
+        <record id="chk_limp_est_2" model="amunet.bitacora.checklist.item">
+            <field name="template_id" ref="tpl_limpieza_est"/>
+            <field name="sequence">20</field>
+            <field name="name">Pisos y superficies del área limpios</field>
+        </record>
+
+    </data>
+</odoo>

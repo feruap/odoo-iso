@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_stability_root" name="Estabilidad" sequence="57"
+              web_icon="amunet_estabilidad,static/description/icon.png"
+              groups="amunet_estabilidad.group_stability_user"/>
+
+    <menuitem id="menu_stability_studies" name="Estudios" parent="menu_stability_root"
+              action="action_stability_study" sequence="10"/>
+
+    <menuitem id="menu_stability_pulls" name="Puntos de jalado" parent="menu_stability_root"
+              action="action_stability_pull" sequence="20"/>
+
+    <menuitem id="menu_stability_config" name="Configuración" parent="menu_stability_root"
+              sequence="90" groups="amunet_estabilidad.group_stability_approver"/>
+
+    <menuitem id="menu_stability_audit" name="Auditoría" parent="menu_stability_config"
+              action="action_stability_audit_log" sequence="10"/>
+</odoo>

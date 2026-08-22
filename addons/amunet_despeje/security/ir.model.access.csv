@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_despeje_operator,despeje.operator,model_amunet_despeje,group_despeje_operator,1,1,1,0
+access_despeje_supervisor,despeje.supervisor,model_amunet_despeje,group_despeje_supervisor,1,1,1,1
+access_despeje_line_operator,despeje.line.operator,model_amunet_despeje_line,group_despeje_operator,1,1,1,1
+access_despeje_line_supervisor,despeje.line.supervisor,model_amunet_despeje_line,group_despeje_supervisor,1,1,1,1
+access_despeje_sign_wizard,despeje.sign.wizard,model_amunet_despeje_sign_wizard,group_despeje_operator,1,1,1,1

@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_review_user,review.user,model_amunet_management_review,group_review_user,1,1,1,0
+access_review_approver,review.approver,model_amunet_management_review,group_review_approver,1,1,1,1
+access_review_input_user,review.input.user,model_amunet_management_review_input,group_review_user,1,1,1,1
+access_review_input_approver,review.input.approver,model_amunet_management_review_input,group_review_approver,1,1,1,1
+access_review_action_user,review.action.user,model_amunet_management_review_action,group_review_user,1,1,1,1
+access_review_action_approver,review.action.approver,model_amunet_management_review_action,group_review_approver,1,1,1,1
+access_review_sign_wizard,review.sign.wizard,model_amunet_review_sign_wizard,group_review_user,1,1,1,1
