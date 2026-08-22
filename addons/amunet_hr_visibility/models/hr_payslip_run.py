@@ -21,10 +21,9 @@ class HrPayslipRun(models.Model):
 
     def action_generar_dispersion(self):
         try:
-            import openpyxl
-            from openpyxl.styles import Font
+            import xlsxwriter
         except ImportError:
-            raise UserError('Falta la librería openpyxl. Avisa a desarrollo.')
+            raise UserError('Falta la librería xlsxwriter. Avisa a desarrollo.')
 
         grupo1, grupo2 = [], []
 
@@ -55,32 +54,38 @@ class HrPayslipRun(models.Model):
 
         att_ids = []
         for label, filas in [('Nomina', grupo1), ('Honorarios', grupo2)]:
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            ws.title = 'Lista 1 - Nomina'
-            ws.column_dimensions['A'].width = 38
-            ws.column_dimensions['B'].width = 18
-            ws.column_dimensions['C'].width = 22
-            ws.column_dimensions['D'].width = 12
+            buf = io.BytesIO()
+            wb = xlsxwriter.Workbook(buf, {'in_memory': True})
+            ws = wb.add_worksheet('Lista 1 - Nomina')
+            ws.write(0, 4, 'XLSXWRITER-V2')  # marca de version — borrar despues
 
-            ws.append(['DISPERS\xc3\x93N — %s — %s' % (label.upper(), fecha),
-                       None, None, None])
-            ws['A1'].font = Font(bold=True, size=12)
-            ws.append(['EMPLEADO', 'BANCO', 'CLABE', 'MONTO'])
-            for col in ['A2', 'B2', 'C2', 'D2']:
-                ws[col].font = Font(bold=True)
+            ws.set_column(0, 0, 38)
+            ws.set_column(1, 1, 18)
+            ws.set_column(2, 2, 22)
+            ws.set_column(3, 3, 12)
 
-            for nombre, banco, clabe, monto in filas:
-                ws.append([nombre, banco, clabe, monto])
-                ws.cell(row=ws.max_row, column=3).number_format = '@'
+            fmt_titulo = wb.add_format({'bold': True, 'font_size': 12})
+            fmt_header = wb.add_format({'bold': True})
+            fmt_texto = wb.add_format({'num_format': '@'})
+            fmt_bold_texto = wb.add_format({'bold': True, 'num_format': '@'})
+
+            ws.write(0, 0, 'DISPERSIÓN — %s — %s' % (label.upper(), fecha), fmt_titulo)
+            for col, encabezado in enumerate(['EMPLEADO', 'BANCO', 'CLABE', 'MONTO']):
+                ws.write(1, col, encabezado, fmt_header)
+
+            for idx, (nombre, banco_n, clabe, monto) in enumerate(filas):
+                fila = idx + 2
+                ws.write(fila, 0, nombre)
+                ws.write(fila, 1, banco_n)
+                ws.write_string(fila, 2, clabe, fmt_texto)
+                ws.write_number(fila, 3, monto)
 
             total = sum(r[3] for r in filas)
-            ws.append([None, None, 'TOTAL', total])
-            ws.cell(row=ws.max_row, column=3).font = Font(bold=True)
-            ws.cell(row=ws.max_row, column=4).font = Font(bold=True)
+            fila_total = len(filas) + 2
+            ws.write(fila_total, 2, 'TOTAL', fmt_bold_texto)
+            ws.write_number(fila_total, 3, total, fmt_header)
 
-            buf = io.BytesIO()
-            wb.save(buf)
+            wb.close()
             buf.seek(0)
 
             nombre_archivo = 'Dispersion_%s_%s_%s.xlsx' % (
@@ -100,7 +105,7 @@ class HrPayslipRun(models.Model):
 
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Archivos de dispers\xf3n',
+            'name': 'Archivos de dispersión',
             'res_model': 'ir.attachment',
             'view_mode': 'list',
             'domain': [('id', 'in', att_ids)],
