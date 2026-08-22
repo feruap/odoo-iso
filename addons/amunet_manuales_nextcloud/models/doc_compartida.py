@@ -145,6 +145,14 @@ class DocCompartidaNextcloud(models.Model):
                     'amunet_manuales_nextcloud: subido %s → HTTP %s; binario liberado',
                     filename, resp.status_code,
                 )
+                # Propuesta 1: refrescar al instante "Tiene manual" del tablero Woo.
+                if 'amunet.woo.product.mapping' in self.env:
+                    try:
+                        self.env['amunet.woo.product.mapping'].sudo().action_refresh_manuals()
+                    except Exception:
+                        _logger.warning(
+                            'amunet_manuales_nextcloud: no se pudo refrescar '
+                            '"Tiene manual" del tablero Woo tras subir %s', filename)
             else:
                 self.message_post(
                     body='<p><b>Nextcloud [Error]:</b> No se pudo subir <b>%s</b>. '

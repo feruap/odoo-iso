@@ -558,8 +558,23 @@ class MrpProduction(models.Model):
             nombres = ', '.join(sin_uso.mapped('product_id.display_name'))
             raise UserError(_('La cantidad utilizada no puede ser negativa: %s') % nombres)
         # Actualizar quantity = qty_used (lo que Odoo consumirá al validar la MO)
+        # y marcar 'picked' EN SINCRONÍA con la cantidad conciliada: si hay
+        # consumo real (qty_used>0) el move debe quedar 'picked' para que el
+        # nativo lo CONSUMA al cerrar. Sin esto, los insumos surtidos por este
+        # flujo (goteros/viales/controles) quedaban picked=False y el nativo los
+        # CANCELABA al cerrar (material usado SIN descontar del stock ni
+        # trazabilidad) + el aviso de consumo los mostraba en 0. Deriva de la
+        # conciliación (qty_used), NO la pisa.
         for move in moves:
-            move.sudo().write({'quantity': move.amunet_qty_used})
+            picked = (move.amunet_qty_used or 0.0) > 0.0
+            move.sudo().write({
+                'quantity': move.amunet_qty_used,
+                'picked': picked,
+            })
+            open_lines = move.move_line_ids.filtered(
+                lambda l: l.state not in ('done', 'cancel'))
+            if open_lines:
+                open_lines.write({'picked': picked})
         # La conciliación SIEMPRE queda en 'validated' esperando la
         # confirmación explícita (aunque no haya sobrante). Antes se
         # auto-completaba sin sobrante; ahora siempre hay un paso de

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Alondra y Alma solo ven los avisos que ellas mismas crearon -->
+    <record id="rule_aviso_produccion_solo_propio" model="ir.rule">
+        <field name="name">Aviso: Producción ve solo sus propios registros</field>
+        <field name="model_id" ref="model_amunet_aviso_produccion"/>
+        <field name="domain_force">['|', ('requested_by_id', '=', user.id), ('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('amunet_doc_cambios.group_aviso_produccion_user'))]"/>
+        <field name="perm_read">1</field>
+        <field name="perm_write">0</field>
+        <field name="perm_create">0</field>
+        <field name="perm_unlink">0</field>
+    </record>
+</odoo>
