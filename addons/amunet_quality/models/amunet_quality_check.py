@@ -2638,9 +2638,29 @@ class AmunetQualityCheck(models.Model):
             raise ValidationError("El lote asociado ya no existe.")
 
         try:
-            # Validar consistencia global
-            if self.global_result == 'pending':
-                raise ValidationError('Debe completar todos los resultados antes de finalizar')
+            # Candado general: forzar recálculo fresco de todos los resultados
+            # (evita que verdicts almacenados desactualizados permitan cerrar con datos vacíos)
+            details = self.test_line_ids.detail_line_ids
+            if details:
+                details.invalidate_recordset(['verdict', 'verdict_message'])
+                details._compute_verdict()
+                self.test_line_ids.invalidate_recordset(['verdict', 'detail_pending_count',
+                                                         'detail_fail_count', 'detail_pass_count'])
+                self.test_line_ids._compute_verdict()
+
+            # Construir lista de campos sin capturar para mensaje claro al usuario
+            campos_pendientes = []
+            for line in self.test_line_ids:
+                for detail in line.detail_line_ids:
+                    if detail.verdict == 'pending':
+                        campos_pendientes.append(f'{line.code} — {detail.name}')
+
+            if campos_pendientes:
+                lista = '\n'.join([f'• {c}' for c in campos_pendientes[:30]])
+                sufijo = f'\n(y {len(campos_pendientes) - 30} más...)' if len(campos_pendientes) > 30 else ''
+                raise ValidationError(
+                    f'No se puede cerrar el análisis. Hay datos sin capturar:\n\n{lista}{sufijo}'
+                )
 
             # Validar firmas
             if not self.user_realized_id:
