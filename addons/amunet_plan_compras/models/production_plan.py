@@ -46,8 +46,12 @@ class ProductionPlan(models.Model):
                 'Los que se fabrican (hojas maestras, etc.) necesitan orden de '
                 'fabricacion, no compra.'))
 
-        Purchase = self.env['purchase.order']
-        POL = self.env['purchase.order.line']
+        # La creacion corre como SISTEMA (sudo): el precio queda en 0 sin que el
+        # usuario escriba price_unit (restringido al grupo 'Ver precios'). Asi el
+        # boton funciona para cualquier planeador SIN exponer ni tocar precios;
+        # Compras/Fernando fijan el precio despues.
+        Purchase = self.env['purchase.order'].sudo()
+        POL = self.env['purchase.order.line'].sudo()
         Shortage = self.env['amunet.production.plan.shortage']
         created = Purchase.browse()
 
