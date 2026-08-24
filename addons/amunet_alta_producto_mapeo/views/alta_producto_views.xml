@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form de la PROPUESTA: clave, tipo de suministro y anti-duplicados -->
+    <record id="view_proposal_form_alta" model="ir.ui.view">
+        <field name="name">amunet.marketplace.product.proposal.form.alta</field>
+        <field name="model">amunet.marketplace.product.proposal</field>
+        <field name="inherit_id" ref="amunet_marketplace.view_marketplace_product_proposal_form"/>
+        <field name="arch" type="xml">
+            <field name="request_type" position="after">
+                <field name="clave_propuesta" readonly="state not in ('draft','submitted')"/>
+                <field name="supply_type" readonly="state not in ('draft','submitted')"/>
+                <field name="origen_mapeo_id" readonly="1" invisible="not origen_mapeo_id"/>
+            </field>
+            <xpath expr="//field[@name='justification']/.." position="before">
+                <field name="tiene_duplicado_exacto" invisible="1"/>
+                <group string="Posibles duplicados (revisar antes de aprobar)">
+                    <div class="alert alert-danger" role="alert" colspan="2"
+                         invisible="not tiene_duplicado_exacto">
+                        Ya existe un producto con esa CLAVE (activo o archivado). NO lo apruebes sin revisar.
+                    </div>
+                    <field name="duplicados_info" nolabel="1" colspan="2" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Boton en la LINEA DE LA REVISION (los 'nuevos'): Proponer alta -->
+    <record id="view_revision_form_alta" model="ir.ui.view">
+        <field name="name">amunet.revision.mapeo.form.alta</field>
+        <field name="model">amunet.revision.mapeo</field>
+        <field name="inherit_id" ref="amunet_woo_revision.view_revision_mapeo_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='line_ids']/list" position="inside">
+                <button name="action_proponer_alta" type="object" string="Proponer alta"
+                        icon="fa-plus-circle" invisible="tipo != 'nuevo'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Boton en el MAPEO: Proponer alta -->
+    <record id="view_woo_mapping_form_alta" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.form.alta</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="inherit_id" ref="amunet_woocommerce.view_woo_product_mapping_form"/>
+        <field name="arch" type="xml">
+            <button name="action_confirm" position="after">
+                <button name="action_proponer_alta" type="object"
+                        string="Proponer alta en Odoo"
+                        invisible="product_id" class="btn-secondary"/>
+            </button>
+        </field>
+    </record>
+
+</odoo>
