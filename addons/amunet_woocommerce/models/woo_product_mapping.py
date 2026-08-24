@@ -232,15 +232,15 @@ class AmunetWooProductMapping(models.Model):
              'calidad configurado (amunet_quality). Si lo tiene, ya es '
              'evaluable para volverse vendible.')
     qc_required = fields.Boolean(
-        string='Requiere QC', compute='_compute_quality')
+        string='Requiere QC', compute='_compute_quality', store=True)
     qc_parameter_count = fields.Integer(
-        string='Parámetros de calidad', compute='_compute_quality')
+        string='Parámetros de calidad', compute='_compute_quality', store=True)
     qc_check_count = fields.Integer(
-        string='Controles de calidad', compute='_compute_quality')
+        string='Controles de calidad', compute='_compute_quality', store=True)
     quality_calculable = fields.Boolean(
-        string='Calidad calculable', compute='_compute_quality')
+        string='Calidad calculable', compute='_compute_quality', store=True)
     quality_reason = fields.Char(
-        string='Razón calidad', compute='_compute_quality')
+        string='Razón calidad', compute='_compute_quality', store=True)
 
     # --------------------------------------------------------------
     # Órdenes MRP abiertas
@@ -846,6 +846,9 @@ class AmunetWooProductMapping(models.Model):
                     'El campo regulatorio amunet_lot_release_state no existe '
                     'en stock.lot (módulo de calidad no instalado).')
 
+    @api.depends('product_id',
+                 'product_id.product_tmpl_id.qc_required',
+                 'product_id.product_tmpl_id.qc_parameter_count')
     def _compute_quality(self):
         tmpl_fields = self.env['product.template']._fields
         has_qc = 'qc_required' in tmpl_fields

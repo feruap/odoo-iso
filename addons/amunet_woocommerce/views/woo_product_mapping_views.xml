@@ -39,6 +39,10 @@
                         context="{'group_by': 'relation_state'}"/>
                 <filter name="group_classification" string="Clasificación"
                         context="{'group_by': 'supply_classification'}"/>
+                <filter name="group_qc_required" string="Requiere QC"
+                        context="{'group_by': 'qc_required'}"/>
+                <filter name="group_qc_params" string="Parámetros de calidad"
+                        context="{'group_by': 'qc_parameter_count'}"/>
                 <filter name="group_company" string="Compañía"
                         context="{'group_by': 'company_id'}"
                         groups="base.group_multi_company"/>
