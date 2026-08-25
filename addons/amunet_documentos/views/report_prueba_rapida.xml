@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Layout propio: bubble sin dirección ─────────────────────── -->
+    <template id="layout_prueba_rapida">
+        <t t-if="not company" t-set="company" t-value="res_company"/>
+
+        <!-- ENCABEZADO: logo + nombre, sin dirección, sin pt-5 -->
+        <div t-attf-class="header o_company_#{company.id}_layout" style="padding-top:4px;">
+            <svg t-attf-class="o_shape_bubble_1 z-n1 {{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}}"
+                 width="1100" height="1100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="550" cy="550" r="550" t-att-fill="company.primary_color" fill-opacity=".1"/>
+            </svg>
+            <table class="o_ignore_layout_styling table table-borderless mb-0">
+                <tbody>
+                    <tr>
+                        <td class="p-0 text-end">
+                            <img t-if="company.logo" class="o_company_logo mb-1"
+                                 t-att-src="image_data_uri(company.logo)" alt="Logo"/>
+                            <div style="font-size:11px; font-weight:bold;">
+                                <t t-esc="company.name"/>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CUERPO -->
+        <div t-attf-class="article o_report_layout_bubble o_table_boxed-rounded o_company_#{company.id}_layout"
+             t-att-data-oe-model="o and o._name"
+             t-att-data-oe-id="o and o.id"
+             t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-out="0"/>
+        </div>
+
+        <!-- PIE -->
+        <div t-attf-class="footer o_company_#{company.id}_layout {{report_type != 'pdf' and 'position-relative mt-auto mx-n5'}}">
+            <svg t-attf-class="{{report_type == 'pdf' and 'position-fixed start-0'}}"
+                 width="500" height="228" viewBox="0 0 500 228" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M500 228H0V6.52743C26.3323 2.23278 53.3561 0 80.9008 0C256.522 0 410.969 90.7656 500 228Z"
+                      t-att-fill="company.secondary_color" fill-opacity=".1"/>
+            </svg>
+            <div t-attf-class="o_footer_content {{report_type != 'pdf' and 'position-absolute end-0 start-0 bottom-0 mx-5'}} pt-3 text-center">
+                <div class="border-top pt-2">
+                    <span style="font-size:8.5px; color:#444;">
+                        El contenido de este documento es propiedad de AMUNET S.A. de C.V.
+                        Queda prohibida su reproduccion sin previa autorizacion.
+                    </span>
+                </div>
+                <span t-if="report_type == 'pdf'" class="text-muted" style="font-size:9px;">
+                    Pagina <span class="page"/> / <span class="topage"/>
+                </span>
+            </div>
+        </div>
+    </template>
+
+    <!-- ── Acción — con Registro Sanitario ─────────────────────────── -->
+    <record id="action_report_prueba_rapida_con_rs" model="ir.actions.report">
+        <field name="name">Lista Maestra de Pruebas con RS</field>
+        <field name="model">amunet.prueba.rapida</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_documentos.report_prueba_rapida_con_rs</field>
+        <field name="report_file">amunet_documentos.report_prueba_rapida_con_rs</field>
+    </record>
+
+    <!-- ── Acción — catálogo general ───────────────────────────────── -->
+    <record id="action_report_prueba_rapida_sin_rs" model="ir.actions.report">
+        <field name="name">Catálogo General de Pruebas Rápidas</field>
+        <field name="model">amunet.prueba.rapida</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_documentos.report_prueba_rapida_sin_rs</field>
+        <field name="report_file">amunet_documentos.report_prueba_rapida_sin_rs</field>
+    </record>
+
+    <!-- ── Template — Pruebas con RS ───────────────────────────────── -->
+    <template id="report_prueba_rapida_con_rs">
+        <t t-call="web.html_container">
+            <t t-call="amunet_documentos.layout_prueba_rapida">
+                <div class="page">
+                    <div class="row mb-3">
+                        <div class="col-8">
+                            <h3>Lista Maestra de Pruebas Rápidas</h3>
+                            <h5 class="text-muted">Con Registro Sanitario Cofepris</h5>
+                        </div>
+                        <div class="col-4 text-end" style="font-size:10px">
+                            <table class="table table-sm table-bordered">
+                                <tr><td><b>Código</b></td><td>F-DC-002</td></tr>
+                                <tr><td><b>Fecha</b></td>
+                                    <td><t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y')"/></td></tr>
+                                <tr><td><b>Total pruebas</b></td><td><t t-esc="len(docs)"/></td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-bordered" style="font-size:10px">
+                        <thead style="background:#eaf0fb">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre de la prueba</th>
+                                <th>Descripción genérica</th>
+                                <th>Muestra</th>
+                                <th>Referencia</th>
+                                <th>Caducidad</th>
+                                <th>No. Registro Sanitario</th>
+                                <th>Emisión RS</th>
+                                <th>Vencimiento RS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="docs" t-as="d">
+                                <tr>
+                                    <td><t t-esc="d.codigo or '—'"/></td>
+                                    <td><t t-esc="d.nombre"/></td>
+                                    <td><t t-esc="d.descripcion or '—'"/></td>
+                                    <td><t t-esc="d.muestra or '—'"/></td>
+                                    <td><t t-esc="d.referencia or '—'"/></td>
+                                    <td><t t-esc="d.caducidad_autorizada or '—'"/></td>
+                                    <td><t t-esc="d.registro_sanitario or '—'"/></td>
+                                    <td><t t-esc="d.fecha_emision_rs and d.fecha_emision_rs.strftime('%d/%m/%Y') or '—'"/></td>
+                                    <td><t t-esc="d.fecha_vencimiento_rs and d.fecha_vencimiento_rs.strftime('%d/%m/%Y') or '—'"/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <div class="mt-4 pt-2" style="border-top:1px solid #ccc; font-size:9px; color:#777">
+                        Documento controlado — F-DC-002 — Sistema de Gestión de Calidad Amunet —
+                        ISO 13485:2016 | IVDR (UE) 2017/746 — Copia no controlada si se imprime
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ── Template — Catálogo general ────────────────────────────── -->
+    <template id="report_prueba_rapida_sin_rs">
+        <t t-call="web.html_container">
+            <t t-call="amunet_documentos.layout_prueba_rapida">
+                <div class="page">
+                    <div class="row mb-3">
+                        <div class="col-8">
+                            <h3>Catálogo General de Pruebas Rápidas</h3>
+                            <h5 class="text-muted">Sin Registro Sanitario Cofepris</h5>
+                        </div>
+                        <div class="col-4 text-end" style="font-size:10px">
+                            <table class="table table-sm table-bordered">
+                                <tr><td><b>Fecha</b></td>
+                                    <td><t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y')"/></td></tr>
+                                <tr><td><b>Total pruebas</b></td><td><t t-esc="len(docs)"/></td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-bordered" style="font-size:10px">
+                        <thead style="background:#eaf0fb">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre de la prueba</th>
+                                <th>Descripción genérica</th>
+                                <th>Muestra</th>
+                                <th>Referencia</th>
+                                <th>Caducidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="docs" t-as="d">
+                                <tr>
+                                    <td><t t-esc="d.codigo or '—'"/></td>
+                                    <td><t t-esc="d.nombre"/></td>
+                                    <td><t t-esc="d.descripcion or '—'"/></td>
+                                    <td><t t-esc="d.muestra or '—'"/></td>
+                                    <td><t t-esc="d.referencia or '—'"/></td>
+                                    <td><t t-esc="d.caducidad_autorizada or '—'"/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <div class="mt-4 pt-2" style="border-top:1px solid #ccc; font-size:9px; color:#777">
+                        Documento controlado — Sistema de Gestión de Calidad Amunet —
+                        ISO 13485:2016 | IVDR (UE) 2017/746 — Copia no controlada si se imprime
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

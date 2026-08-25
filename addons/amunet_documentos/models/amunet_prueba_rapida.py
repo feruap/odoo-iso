@@ -16,3 +16,21 @@ class AmunetPruebaRapida(models.Model):
     registro_sanitario    = fields.Char(string='Registro sanitario')
     fecha_emision_rs      = fields.Date(string='Fecha de emisión RS')
     fecha_vencimiento_rs  = fields.Date(string='Fecha de vencimiento RS')
+
+    def action_print_lista_con_rs(self):
+        docs = self.search(
+            [('registro_sanitario', 'not in', [False, 'No aplica'])],
+            order='nombre',
+        )
+        return self.env.ref(
+            'amunet_documentos.action_report_prueba_rapida_con_rs'
+        ).report_action(docs)
+
+    def action_print_lista_sin_rs(self):
+        docs = self.search(
+            [('registro_sanitario', 'in', [False, 'No aplica'])],
+            order='nombre',
+        )
+        return self.env.ref(
+            'amunet_documentos.action_report_prueba_rapida_sin_rs'
+        ).report_action(docs)
