@@ -121,6 +121,7 @@
                                 <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Clave:</strong>
                                     <t t-if="o.product_id.report_document_code == 'RAMP-005'">MPCAP01</t>
                                     <t t-elif="o.product_id.report_document_code == 'RAMP-004'">MPCAI01</t>
+                                    <t t-elif="o.product_id.report_document_code == 'RAST-045'">STBPC01</t>
                                     <t t-else=""><span t-field="o.product_code"/></t>
                                 </td>
                                 <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Catálogo:</strong> <span t-field="o.product_code"/></td>
