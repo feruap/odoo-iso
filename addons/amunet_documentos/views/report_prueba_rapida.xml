@@ -4,9 +4,14 @@
     <!-- ── Layout propio: bubble sin dirección ─────────────────────── -->
     <template id="layout_prueba_rapida">
         <t t-if="not company" t-set="company" t-value="res_company"/>
+        <style>
+            .header { padding-top: 2px !important; margin-top: 0 !important; }
+            .article { padding-top: 0 !important; margin-top: 0 !important; }
+            .page { padding-top: 0 !important; margin-top: 0 !important; }
+        </style>
 
-        <!-- ENCABEZADO: logo + nombre, sin dirección, sin pt-5 -->
-        <div t-attf-class="header o_company_#{company.id}_layout" style="padding-top:4px;">
+        <!-- ENCABEZADO: logo + nombre, sin dirección -->
+        <div t-attf-class="header o_company_#{company.id}_layout">
             <svg t-attf-class="o_shape_bubble_1 z-n1 {{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}}"
                  width="1100" height="1100" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="550" cy="550" r="550" t-att-fill="company.primary_color" fill-opacity=".1"/>

@@ -5,12 +5,14 @@
         <field name="name">amunet.prueba.rapida.list.con_rs</field>
         <field name="model">amunet.prueba.rapida</field>
         <field name="arch" type="xml">
-            <list string="Pruebas con Registro Sanitario">
+            <list string="Pruebas con Registro Sanitario"
+                  decoration-info="es_lamp">
                 <header>
                     <button name="action_print_lista_con_rs" type="object"
                             string="Imprimir lista" icon="fa-print"
                             class="btn-secondary"/>
                 </header>
+                <field name="es_lamp" column_invisible="1"/>
                 <field name="codigo"      string="Código (Catálogo)"/>
                 <field name="nombre"      string="Nombre de la prueba (Denominación distintiva)"/>
                 <field name="descripcion" string="Descripción (Denominación genérica)"/>
@@ -29,19 +31,20 @@
         <field name="name">amunet.prueba.rapida.list.sin_rs</field>
         <field name="model">amunet.prueba.rapida</field>
         <field name="arch" type="xml">
-            <list string="Catálogo general de pruebas rápidas">
+            <list string="Catálogo general de pruebas rápidas"
+                  decoration-info="es_lamp">
                 <header>
                     <button name="action_print_lista_sin_rs" type="object"
                             string="Imprimir lista" icon="fa-print"
                             class="btn-secondary"/>
                 </header>
+                <field name="es_lamp" column_invisible="1"/>
                 <field name="codigo"      string="Código (Catálogo)"/>
                 <field name="nombre"      string="Nombre de la prueba (Denominación distintiva)"/>
                 <field name="descripcion" string="Descripción (Denominación genérica)"/>
                 <field name="muestra"     string="Muestra"/>
                 <field name="referencia"  string="Referencia"/>
                 <field name="caducidad_autorizada"  string="Caducidad de la prueba"/>
-                <field name="registro_sanitario"    string="Registro sanitario"/>
             </list>
         </field>
     </record>

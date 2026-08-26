@@ -16,6 +16,11 @@ class AmunetPruebaRapida(models.Model):
     registro_sanitario    = fields.Char(string='Registro sanitario')
     fecha_emision_rs      = fields.Date(string='Fecha de emisión RS')
     fecha_vencimiento_rs  = fields.Date(string='Fecha de vencimiento RS')
+    es_lamp = fields.Boolean(compute='_compute_es_lamp', store=False)
+
+    def _compute_es_lamp(self):
+        for rec in self:
+            rec.es_lamp = bool(rec.referencia and rec.referencia.startswith('DL'))
 
     def action_print_lista_con_rs(self):
         docs = self.search(
