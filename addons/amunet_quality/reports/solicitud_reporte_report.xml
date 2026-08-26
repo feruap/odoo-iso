@@ -255,6 +255,61 @@
                         </tr>
                     </table>
 
+                    <!-- ANEXO SOLUCIÓN DE CORRIMIENTO (solo productos RAST-045: buffers de proveedor) -->
+                    <t t-if="o.product_id.report_document_code == 'RAST-045'">
+                        <t t-set="_ac_part" t-value="''"/>
+                        <t t-set="_ac_lib" t-value="''"/>
+                        <t t-set="_ac_mig" t-value="''"/>
+                        <t t-set="_ac_pos" t-value="''"/>
+                        <t t-set="_ac_neg" t-value="''"/>
+                        <t t-foreach="o.test_line_ids" t-as="_ac_ln">
+                            <t t-if="_ac_ln.code == 'MAVI-13'">
+                                <t t-foreach="_ac_ln.detail_line_ids" t-as="_ac_d">
+                                    <t t-set="_ac_part" t-value="_ac_d.result_display"/>
+                                </t>
+                            </t>
+                            <t t-if="_ac_ln.code == 'MAVI-09'">
+                                <t t-foreach="_ac_ln.detail_line_ids" t-as="_ac_d">
+                                    <t t-if="_ac_d.sequence == 10"><t t-set="_ac_lib" t-value="_ac_d.result_display"/></t>
+                                    <t t-if="_ac_d.sequence == 20"><t t-set="_ac_mig" t-value="_ac_d.result_display"/></t>
+                                </t>
+                            </t>
+                            <t t-if="_ac_ln.code == 'MAVI-07'">
+                                <t t-foreach="_ac_ln.detail_line_ids" t-as="_ac_d">
+                                    <t t-if="_ac_d.sequence == 10"><t t-set="_ac_pos" t-value="_ac_d.result_display"/></t>
+                                    <t t-if="_ac_d.sequence == 20"><t t-set="_ac_neg" t-value="_ac_d.result_display"/></t>
+                                </t>
+                            </t>
+                        </t>
+                        <div style="width:100%;margin-top:24px;page-break-inside:avoid;">
+                            <div style="font-weight:bold;font-size:11pt;border-bottom:2px solid #1a56a0;padding-bottom:4px;margin-bottom:8px;">
+                                ANEXO — SOLUCIÓN DE CORRIMIENTO
+                            </div>
+                            <table style="width:100%;border-collapse:collapse;font-size:9pt;">
+                                <thead>
+                                    <tr style="background:#1a56a0;color:white;">
+                                        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:18%;"># Lote</th>
+                                        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:18%;">Partículas en solución</th>
+                                        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:16%;">Tiempo Liberación (s)</th>
+                                        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:16%;">Tiempo Migración (s)</th>
+                                        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:16%;">Desempeño Muestra (+)</th>
+                                        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:16%;">Desempeño Muestra (-)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="o.lot_name_amunet or ''"/></td>
+                                        <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="_ac_part"/></td>
+                                        <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="_ac_lib"/></td>
+                                        <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="_ac_mig"/></td>
+                                        <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="_ac_pos"/></td>
+                                        <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="_ac_neg"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+
                     <div style="font-weight: bold; margin-top: 15px; font-size: 14pt;">
                         7.- Referencias
                     </div>
