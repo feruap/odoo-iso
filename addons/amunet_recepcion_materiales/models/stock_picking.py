@@ -236,17 +236,34 @@ class StockPicking(models.Model):
                     'proveedor distintos. Corrige y vuelve a validar.'
                 ) % '\n'.join(lineas))
 
+    _CATEGORIAS_REQUIEREN_PROVEEDOR = {
+        'Materia prima / Agua',
+        'Materia prima / Cartucho',
+        'Semiprocesado / Hoja maestra',
+    }
+
     def _amunet_check_datos_recepcion(self):
         """Bloquea la validación si falta lote de proveedor, fecha de fabricación
         o fecha de caducidad en cualquier línea de la recepción.
+        Para aguas, cartuchos y hojas maestras también bloquea si falta el
+        proveedor (partner_id) en el encabezado.
         Los pickings de liberación de QC (amunet_disposition_qc_id) se excluyen:
         sus datos ya fueron validados en la recepción original."""
         for p in self.filtered(lambda x: x.picking_type_code == 'incoming'
                                and x.state not in ('done', 'cancel')
                                and not x.amunet_disposition_qc_id):
             faltan = []
-            for move in p.move_ids.filtered(lambda m: m.state not in ('done', 'cancel')
-                                            and m.product_uom_qty > 0):
+            # Verificar proveedor en encabezado para productos que lo requieren
+            moves_activos = p.move_ids.filtered(
+                lambda m: m.state not in ('done', 'cancel') and m.product_uom_qty > 0)
+            requiere_proveedor = any(
+                m.product_id.product_tmpl_id.categ_id.complete_name
+                in self._CATEGORIAS_REQUIEREN_PROVEEDOR
+                for m in moves_activos
+            )
+            if requiere_proveedor and not p.partner_id:
+                faltan.append('  • Falta el Proveedor en el encabezado de la recepción (requerido para aguas, cartuchos y hojas maestras)')
+            for move in moves_activos:
                 prod = move.product_id.display_name
                 if not move.amunet_supplier_lot:
                     faltan.append(f'  • {prod}: falta Lote de proveedor')
