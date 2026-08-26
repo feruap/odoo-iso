@@ -278,7 +278,65 @@ WHERE cfg.product_parameter_rel_id=rel.id AND rel.parameter_code='INC-002'
   AND cat.complete_name LIKE '%Pruebas rápidas%';
 
 -- ============================================================
--- 18. Nuevos productos con puntos de control copiados desde DMHBC01:
+-- 18. MAVI-04 PT cualitativos: opciones binarias por tipo de defecto
+-- ============================================================
+UPDATE amunet_quality_parameter_specification_config cfg SET binary_option_pass='Sin polvo', binary_option_fail='Con polvo'
+FROM amunet_quality_parameter_product_rel rel JOIN product_template pt ON pt.id=rel.product_tmpl_id
+JOIN product_category cat ON cat.id=pt.categ_id
+WHERE cfg.product_parameter_rel_id=rel.id AND rel.parameter_code='MAVI-04'
+  AND cfg.specification_name ILIKE '%polvo%' AND cat.complete_name LIKE '%Pruebas rápidas%';
+
+UPDATE amunet_quality_parameter_specification_config cfg SET binary_option_pass='Sin manchas', binary_option_fail='Con manchas'
+FROM amunet_quality_parameter_product_rel rel JOIN product_template pt ON pt.id=rel.product_tmpl_id
+JOIN product_category cat ON cat.id=pt.categ_id
+WHERE cfg.product_parameter_rel_id=rel.id AND rel.parameter_code='MAVI-04'
+  AND cfg.specification_name ILIKE '%mancha%' AND cat.complete_name LIKE '%Pruebas rápidas%';
+
+UPDATE amunet_quality_parameter_specification_config cfg SET binary_option_pass='Sin rasgaduras', binary_option_fail='Con rasgaduras'
+FROM amunet_quality_parameter_product_rel rel JOIN product_template pt ON pt.id=rel.product_tmpl_id
+JOIN product_category cat ON cat.id=pt.categ_id
+WHERE cfg.product_parameter_rel_id=rel.id AND rel.parameter_code='MAVI-04'
+  AND cfg.specification_name ILIKE '%rasgadura%' AND cat.complete_name LIKE '%Pruebas rápidas%';
+
+UPDATE amunet_quality_parameter_specification_config cfg SET binary_option_pass='Sí', binary_option_fail='No'
+FROM amunet_quality_parameter_product_rel rel JOIN product_template pt ON pt.id=rel.product_tmpl_id
+JOIN product_category cat ON cat.id=pt.categ_id
+WHERE cfg.product_parameter_rel_id=rel.id AND rel.parameter_code='MAVI-04'
+  AND cfg.specification_name ILIKE '%letra%' AND cat.complete_name LIKE '%Pruebas rápidas%';
+
+UPDATE amunet_quality_parameter_specification_config cfg SET binary_option_pass='Sin deformidad', binary_option_fail='Con deformidad'
+FROM amunet_quality_parameter_product_rel rel JOIN product_template pt ON pt.id=rel.product_tmpl_id
+JOIN product_category cat ON cat.id=pt.categ_id
+WHERE cfg.product_parameter_rel_id=rel.id AND rel.parameter_code='MAVI-04'
+  AND cfg.specification_name ILIKE '%deformidad%' AND cat.complete_name LIKE '%Pruebas rápidas%';
+
+-- ============================================================
+-- 19. MAVI-07 PT cualitativos: text_phrase_mapping desde SPHMC01
+-- ============================================================
+UPDATE amunet_quality_parameter_specification_config cfg SET
+    text_phrase_mapping = src.text_phrase_mapping
+FROM amunet_quality_parameter_specification_config src,
+     amunet_quality_parameter_product_rel rel
+JOIN product_template pt ON pt.id=rel.product_tmpl_id
+JOIN product_category cat ON cat.id=pt.categ_id
+WHERE cfg.product_parameter_rel_id=rel.id AND rel.parameter_code='MAVI-07'
+  AND cfg.specification_id=629 AND cfg.evaluation_type='vama_multi_check'
+  AND cfg.text_phrase_mapping IS NULL AND src.id=80756
+  AND cat.complete_name LIKE '%Pruebas rápidas%';
+
+UPDATE amunet_quality_parameter_specification_config cfg SET
+    text_phrase_mapping = src.text_phrase_mapping
+FROM amunet_quality_parameter_specification_config src,
+     amunet_quality_parameter_product_rel rel
+JOIN product_template pt ON pt.id=rel.product_tmpl_id
+JOIN product_category cat ON cat.id=pt.categ_id
+WHERE cfg.product_parameter_rel_id=rel.id AND rel.parameter_code='MAVI-07'
+  AND cfg.specification_id=628 AND cfg.evaluation_type='vama_multi_check'
+  AND cfg.text_phrase_mapping IS NULL AND src.id=80759
+  AND cat.complete_name LIKE '%Pruebas rápidas%';
+
+-- ============================================================
+-- 20. Nuevos productos con puntos de control copiados desde DMHBC01:
 --     DMPSA02 (Prostatinet) y DMHPY01 (H. pylori)
 --     (5 parámetros: INC-002, MAVI-04, MAVI-07, MAVI-09, MGA-0486)
 -- ============================================================
