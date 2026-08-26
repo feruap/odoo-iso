@@ -5,7 +5,7 @@
         <field name="name">Anexo General Amunet</field>
         <field name="default" eval="False"/>
         <field name="format">A4</field>
-        <field name="orientation">Portrait</field>
+        <field name="orientation">Landscape</field>
         <field name="margin_top">15</field>
         <field name="header_spacing">0</field>
         <field name="margin_bottom">15</field>
@@ -37,7 +37,7 @@
 
                         <!-- Fila 1: Título -->
                         <tr>
-                            <td colspan="8" style="
+                            <td colspan="9" style="
                                 text-align:       center;
                                 font-weight:      bold;
                                 font-size:        13pt;
@@ -82,7 +82,7 @@
                                 white-space:      nowrap;">
                                 No. Análisis:
                             </td>
-                            <td colspan="3" style="
+                            <td colspan="4" style="
                                 background-color: #FFFFFF;
                                 border:           1.5px solid #1F4E79;
                                 padding:          3px 6px;
@@ -93,27 +93,33 @@
                         </tr>
 
                         <!-- Fila 3: Encabezados de columnas -->
-                        <tr style="background-color: #D9D9D9; font-weight: bold; text-align: center;">
-                            <td colspan="2" style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 11%;">
+                        <tr style="background-color: #D9D9D9; font-weight: bold; text-align: center; font-size: 8pt;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; vertical-align: middle; width: 5%;">
                                 # Muestra
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; vertical-align: middle; width: 12%;">
                                 <t t-esc="o.anexo_col1_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; vertical-align: middle; width: 12%;">
                                 <t t-esc="o.anexo_col2_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; vertical-align: middle; width: 10%;">
                                 <t t-esc="o.anexo_col3_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; vertical-align: middle; width: 11%;">
                                 <t t-esc="o.anexo_col4_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; vertical-align: middle; width: 10%;">
                                 <t t-esc="o.anexo_col5_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 14%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; vertical-align: middle; width: 8%;">
                                 <t t-esc="o.anexo_col6_header or ''"/>
+                            </td>
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; vertical-align: middle; width: 8%;">
+                                <t t-esc="o.anexo_col7_header or ''"/>
+                            </td>
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; vertical-align: middle; width: 24%;">
+                                <t t-esc="o.anexo_col8_header or ''"/>
                             </td>
                         </tr>
 
@@ -121,8 +127,8 @@
                         <t t-set="data_rows_count" t-value="len(o.anexo_line_ids)"/>
                         <t t-set="min_data_rows" t-value="25"/>
                         <t t-foreach="o.anexo_line_ids" t-as="line">
-                            <tr>
-                                <td colspan="2" style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; text-align: center; vertical-align: middle;">
+                            <tr style="font-size: 9pt;">
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; text-align: center; vertical-align: middle;">
                                     <t t-esc="line.muestra or ''"/>
                                 </td>
                                 <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col1 or ''"/></td>
@@ -130,7 +136,9 @@
                                 <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col3 or ''"/></td>
                                 <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col4 or ''"/></td>
                                 <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col5 or ''"/></td>
-                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col6 or ''"/></td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; text-align: center; vertical-align: middle;"><t t-esc="line.col6 or ''"/></td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; text-align: center; vertical-align: middle;"><t t-esc="line.col7 or ''"/></td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col8 or ''"/></td>
                             </tr>
                         </t>
 
@@ -138,7 +146,9 @@
                         <t t-if="data_rows_count &lt; min_data_rows">
                             <t t-foreach="range(min_data_rows - data_rows_count)" t-as="i">
                                 <tr>
-                                    <td colspan="2" style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
                                     <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
                                     <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
                                     <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>

@@ -553,57 +553,63 @@
                             <div style="font-weight:bold;font-size:11pt;border-bottom:2px solid #1a56a0;padding-bottom:4px;margin-bottom:8px;">
                                 <t t-out="o.anexo_titulo or 'ANEXO'"/>
                             </div>
-                            <table style="width:100%;border-collapse:collapse;font-size:9pt;">
+                            <table style="width:100%;border-collapse:collapse;font-size:8pt;">
                                 <thead>
                                     <tr style="background:#1a56a0;color:white;">
-                                        <th style="border:1px solid #999;padding:4px 6px;text-align:center;"># Muestra</th>
+                                        <th style="border:1px solid #999;padding:3px 4px;text-align:center;width:5%;word-wrap:break-word;"># Muestra</th>
                                         <t t-if="o.anexo_col1_header">
-                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;"><t t-out="o.anexo_col1_header"/></th>
+                                            <th style="border:1px solid #999;padding:3px 4px;text-align:center;max-width:60px;word-wrap:break-word;"><t t-out="o.anexo_col1_header"/></th>
                                         </t>
                                         <t t-if="o.anexo_col2_header">
-                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;"><t t-out="o.anexo_col2_header"/></th>
+                                            <th style="border:1px solid #999;padding:3px 4px;text-align:center;max-width:60px;word-wrap:break-word;"><t t-out="o.anexo_col2_header"/></th>
                                         </t>
                                         <t t-if="o.anexo_col3_header">
-                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;"><t t-out="o.anexo_col3_header"/></th>
+                                            <th style="border:1px solid #999;padding:3px 4px;text-align:center;max-width:60px;word-wrap:break-word;"><t t-out="o.anexo_col3_header"/></th>
                                         </t>
                                         <t t-if="o.anexo_col4_header">
-                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;"><t t-out="o.anexo_col4_header"/></th>
+                                            <th style="border:1px solid #999;padding:3px 4px;text-align:center;max-width:60px;word-wrap:break-word;"><t t-out="o.anexo_col4_header"/></th>
                                         </t>
                                         <t t-if="o.anexo_col5_header">
-                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;"><t t-out="o.anexo_col5_header"/></th>
+                                            <th style="border:1px solid #999;padding:3px 4px;text-align:center;max-width:60px;word-wrap:break-word;"><t t-out="o.anexo_col5_header"/></th>
                                         </t>
                                         <t t-if="o.anexo_col6_header">
-                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;"><t t-out="o.anexo_col6_header"/></th>
+                                            <th style="border:1px solid #999;padding:3px 4px;text-align:center;max-width:50px;word-wrap:break-word;"><t t-out="o.anexo_col6_header"/></th>
                                         </t>
                                         <t t-if="o.anexo_col7_header">
-                                            <th style="border:1px solid #999;padding:4px 6px;text-align:center;"><t t-out="o.anexo_col7_header"/></th>
+                                            <th style="border:1px solid #999;padding:3px 4px;text-align:center;max-width:50px;word-wrap:break-word;"><t t-out="o.anexo_col7_header"/></th>
+                                        </t>
+                                        <t t-if="o.anexo_col8_header">
+                                            <th style="border:1px solid #999;padding:3px 4px;text-align:center;word-wrap:break-word;"><t t-out="o.anexo_col8_header"/></th>
                                         </t>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-foreach="o.anexo_line_ids" t-as="line">
                                         <tr t-att-style="'background:#f7f7f7;' if line_index % 2 == 0 else 'background:#ffffff;'">
-                                            <td style="border:1px solid #ccc;padding:4px 6px;text-align:center;"><t t-out="line.muestra or ''"/></td>
+                                            <td style="border:1px solid #ccc;padding:3px 4px;text-align:center;word-wrap:break-word;"><t t-out="line.muestra or ''"/></td>
                                             <t t-if="o.anexo_col1_header">
-                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="line.col1 or ''"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 4px;word-wrap:break-word;"><t t-out="line.col1 or ''"/></td>
                                             </t>
                                             <t t-if="o.anexo_col2_header">
-                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="line.col2 or ''"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 4px;word-wrap:break-word;"><t t-out="line.col2 or ''"/></td>
                                             </t>
                                             <t t-if="o.anexo_col3_header">
-                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="line.col3 or ''"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 4px;word-wrap:break-word;"><t t-out="line.col3 or ''"/></td>
                                             </t>
                                             <t t-if="o.anexo_col4_header">
-                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="line.col4 or ''"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 4px;word-wrap:break-word;"><t t-out="line.col4 or ''"/></td>
                                             </t>
                                             <t t-if="o.anexo_col5_header">
-                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="line.col5 or ''"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 4px;word-wrap:break-word;"><t t-out="line.col5 or ''"/></td>
                                             </t>
                                             <t t-if="o.anexo_col6_header">
-                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="line.col6 or ''"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 4px;text-align:center;word-wrap:break-word;"><t t-out="line.col6 or ''"/></td>
                                             </t>
                                             <t t-if="o.anexo_col7_header">
-                                                <td style="border:1px solid #ccc;padding:4px 6px;"><t t-out="line.col7 or ''"/></td>
+                                                <td style="border:1px solid #ccc;padding:3px 4px;text-align:center;word-wrap:break-word;"><t t-out="line.col7 or ''"/></td>
+                                            </t>
+                                            <t t-if="o.anexo_col8_header">
+                                                <td style="border:1px solid #ccc;padding:3px 4px;word-wrap:break-word;"><t t-out="line.col8 or ''"/></td>
                                             </t>
                                         </tr>
                                     </t>
