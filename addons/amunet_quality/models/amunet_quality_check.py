@@ -98,7 +98,8 @@ class AmunetQualityCheck(models.Model):
             rec.is_esterilizador = code.upper().startswith('EQEPV')
             rec.is_balanza = code.upper().startswith('EQBAD')
 
-    _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO', 'STB', 'STRE')
+    _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO',
+                       'DM', 'DIAM', 'DRAM', 'DL', 'STB', 'STRE')
 
     @api.depends('product_id.default_code')
     def _compute_is_material_con_anexo(self):
@@ -132,6 +133,9 @@ class AmunetQualityCheck(models.Model):
         self.ensure_one()
         WizardModel = self.env['amunet.quality.anexo.wizard']
         lineas = WizardModel._load_lines_from_check(self)
+        if not lineas:
+            qty = int(self.qty_sampling or 0) or 10
+            lineas = [(0, 0, {'sequence': (i + 1) * 10, 'muestra': str(i + 1)}) for i in range(qty)]
         wizard = WizardModel.create({'check_id': self.id, 'line_ids': lineas})
         return {
             'type': 'ir.actions.act_window',
