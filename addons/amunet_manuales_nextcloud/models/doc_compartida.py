@@ -31,7 +31,7 @@ class DocCompartidaNextcloud(models.Model):
                 continue
             if rec.url_nextcloud:
                 url = rec.url_nextcloud
-            elif rec.manual_file:
+            elif rec.manual_file and isinstance(rec.id, int):
                 url = (
                     '/web/content?model=amunet.doc.compartida'
                     '&id=%d&field=manual_file&filename=%s&download=true'
