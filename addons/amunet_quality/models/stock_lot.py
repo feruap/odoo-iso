@@ -729,7 +729,24 @@ class StockLot(models.Model):
                         '(%s). Cree un reanálisis o registre una desviación/CAPA si '
                         'necesita cambiar el expediente.' % ', '.join(sorted(set(cambios)))
                     )
-        return super().write(vals)
+        res = super().write(vals)
+        # Blindaje: cuando el lote recibe/actualiza fecha de fabricacion o caducidad,
+        # propagar a los analisis de calidad de ese lote que la tengan VACIA. Evita el
+        # hueco por timing (la check se crea en recepcion antes de que el lote tenga la
+        # fecha). No destructivo (solo rellena vacios) y no toca checks done/cancel.
+        if (('manufacturing_date' in vals or 'expiration_date' in vals)
+                and not self.env.context.get('_amunet_skip_qc_date_sync')):
+            for lot in self:
+                for qc in lot.quality_check_ids.filtered(lambda c: c.state not in ('done', 'cancel')):
+                    upd = {}
+                    if lot.manufacturing_date and not qc.manufacturing_date:
+                        upd['manufacturing_date'] = lot.manufacturing_date
+                    if lot.expiration_date and not qc.expiration_date:
+                        exp = lot.expiration_date
+                        upd['expiration_date'] = exp.date() if hasattr(exp, 'date') else exp
+                    if upd:
+                        qc.sudo().write(upd)
+        return res
 
     # ========== Alerta automática de reanálisis ==========
 
