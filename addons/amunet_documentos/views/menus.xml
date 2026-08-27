@@ -12,7 +12,7 @@
 
     <!-- ── Nivel 1: ítems directos ── -->
     <record id="menu_amunet_lista_maestra_root" model="ir.ui.menu">
-        <field name="active" eval="False"/>
+        <field name="groups_id" eval="[(6,0,[ref('amunet_documentos.group_documentos_manager')])]"/>
     </record>
 
     <menuitem id="menu_amunet_documentos_lista_maestra" name="PNOs vigentes"
