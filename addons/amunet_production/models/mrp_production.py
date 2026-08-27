@@ -143,6 +143,17 @@ class MrpProduction(models.Model):
     amunet_pt_qc_fecha = fields.Datetime(
         string='Fecha resolución análisis PT', readonly=True, copy=False)
 
+    # ── Baja de lote no conforme (análisis rechazado) ───────────────────────
+    # Solo el Responsable Sanitario puede dar de baja un lote rechazado. El
+    # producto terminado se rutea a APT/Rechazo (segregado, no vendible) y la
+    # MO se cierra. Trazabilidad ISO 13485: firma + motivo + fecha.
+    amunet_baja_motivo = fields.Text(
+        string='Motivo de baja (no conforme)', copy=False, tracking=True)
+    amunet_baja_por_id = fields.Many2one(
+        'res.users', string='Baja autorizada por', readonly=True, copy=False)
+    amunet_baja_fecha = fields.Datetime(
+        string='Fecha de baja', readonly=True, copy=False)
+
     # ── Supervisión de elaboración (soluciones) ─────────────────────────────
     # Al terminar de elaborar la solucion, el fabricante la envia a supervision
     # de su JEFE DIRECTO (manager de RRHH), que firma con PIN. Sin esa firma no
@@ -1680,6 +1691,7 @@ class MrpProduction(models.Model):
             '_signature_amunet_supervision': _('Supervisión de elaboración'),
             '_amunet_qc_firma_aprobar': _('Aprobación de análisis de PT'),
             '_amunet_qc_firma_rechazar': _('Rechazo de análisis de PT'),
+            '_amunet_baja_rechazada_firma': _('Baja de lote no conforme'),
         }
 
     def _amunet_signature_required_procedures(self):
@@ -1852,6 +1864,72 @@ class MrpProduction(models.Model):
             'Análisis de producto terminado <b>RECHAZADO</b> por <b>%s</b>.') % self.env.user.name)
         return True
 
+    # ── Baja de lote no conforme (análisis rechazado) ───────────────────────
+    def _amunet_rechazo_location(self):
+        return self.env['stock.location'].sudo().search(
+            [('complete_name', '=', 'APT/Rechazo')], limit=1)
+
+    def action_amunet_baja_rechazada(self):
+        """Da de baja un lote cuyo análisis fue RECHAZADO: rutea el producto
+        terminado a APT/Rechazo (no conforme, segregado, no vendible) y cierra
+        la MO. Solo el Responsable Sanitario. Requiere motivo + firma con PIN.
+        ISO 13485: control de producto no conforme."""
+        self.ensure_one()
+        if self.quality_analysis_status != 'rejected':
+            raise UserError(_('Solo se puede dar de baja un lote cuyo análisis de calidad fue RECHAZADO.'))
+        if self.state not in ('progress', 'to_close'):
+            raise UserError(_('La orden debe estar en progreso o por cerrar para dar de baja el lote.'))
+        if not self.env.user.has_group('amunet_quality.group_quality_sanitary'):
+            raise UserError(_('Solo el Responsable Sanitario puede dar de baja un lote no conforme.'))
+        if not (self.amunet_baja_motivo or '').strip():
+            raise UserError(_('Captura el MOTIVO de la baja antes de continuar (queda en el historial ISO 13485).'))
+        if not self._amunet_rechazo_location():
+            raise UserError(_('No existe la ubicación "APT/Rechazo" para segregar el lote no conforme.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_amunet_baja_rechazada_firma',
+            _('Baja de lote no conforme'),
+            _('Firma del Responsable Sanitario que da de BAJA como NO CONFORME el '
+              'lote de %(mo)s. Motivo: %(motivo)s') % {
+                'mo': self.name, 'motivo': self.amunet_baja_motivo})
+
+    def _amunet_baja_rechazada_firma(self):
+        """Ejecuta la baja tras la firma del RS: segrega el terminado a
+        APT/Rechazo y cierra la MO (sin backorder)."""
+        self.ensure_one()
+        if self.quality_analysis_status != 'rejected':
+            raise UserError(_('Solo se puede dar de baja un lote RECHAZADO.'))
+        rechazo = self._amunet_rechazo_location()
+        if not rechazo:
+            raise UserError(_('No existe la ubicación "APT/Rechazo".'))
+        # Rutear el producto terminado a la ubicacion de rechazo (no vendible)
+        for move in self.move_finished_ids.filtered(lambda m: m.state not in ('done', 'cancel')):
+            move.sudo().write({'location_dest_id': rechazo.id})
+            for ml in move.move_line_ids:
+                ml.sudo().location_dest_id = rechazo.id
+        self.sudo().write({
+            'amunet_baja_por_id': self.env.user.id,
+            'amunet_baja_fecha': fields.Datetime.now(),
+        })
+        # Cerrar la MO por la via de baja: amunet_baja_rechazada salta el candado
+        # de QC aprobado; skip_consumption/skip_backorder evitan los wizards de
+        # Odoo (se cierra produciendo lo hecho, sin backorder de lo faltante — es
+        # un lote NO CONFORME que se da de baja, no se va a completar).
+        self.with_context(
+            amunet_baja_rechazada=True,
+            skip_consumption=True,
+            skip_backorder=True,
+        ).button_mark_done()
+        self.sudo().message_post(body=_(
+            'Lote <b>%(lot)s</b> dado de <b>BAJA como NO CONFORME</b> por '
+            '<b>%(user)s</b> (Responsable Sanitario). Producto segregado a '
+            '<b>APT/Rechazo</b>. Motivo: %(motivo)s'
+        ) % {
+            'lot': ', '.join(self.lot_producing_ids.mapped('name')) or self.name,
+            'user': self.env.user.name,
+            'motivo': self.amunet_baja_motivo or '',
+        })
+        return True
+
     def button_mark_done(self):
         """Bloqueo del flujo nativo de la orden de producción"""
         for record in self:
@@ -1895,8 +1973,12 @@ class MrpProduction(models.Model):
                 if missing:
                     raise UserError('ATENCIÓN: Faltan las siguientes actividades operativas por marcar en la Pestaña de Actividades:\n- ' + '\n- '.join(missing))
             
-            # 2. Validar Calidad (solo si el producto lo requiere y NO es desarrollo)
-            if record.amunet_sys_req_qc and not record.amunet_es_desarrollo and record.quality_analysis_status != 'approved':
+            # 2. Validar Calidad (solo si el producto lo requiere y NO es desarrollo).
+            # Excepcion: la BAJA de un lote no conforme (rechazado) cierra la MO
+            # por su propia via firmada por el RS, ruteando a APT/Rechazo.
+            if (record.amunet_sys_req_qc and not record.amunet_es_desarrollo
+                    and record.quality_analysis_status != 'approved'
+                    and not self.env.context.get('amunet_baja_rechazada')):
                 raise UserError('ATENCIÓN: Este producto requiere Análisis C.C. No puedes "Marcar como Hecho" hasta que el área de Calidad apruebe el análisis.')
                 
         return super(MrpProduction, self).button_mark_done()
