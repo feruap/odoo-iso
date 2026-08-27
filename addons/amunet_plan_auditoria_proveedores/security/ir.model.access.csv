@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_plan_audit_prov_user,plan.audit.prov.user,model_amunet_plan_audit_prov,amunet_documentos.group_documentos_user,1,0,0,0
+access_plan_audit_prov_manager,plan.audit.prov.manager,model_amunet_plan_audit_prov,amunet_documentos.group_documentos_manager,1,1,1,1
+access_plan_audit_prov_area_user,plan.audit.prov.area.user,model_amunet_plan_audit_prov_area,amunet_documentos.group_documentos_user,1,0,0,0
+access_plan_audit_prov_area_manager,plan.audit.prov.area.manager,model_amunet_plan_audit_prov_area,amunet_documentos.group_documentos_manager,1,1,1,1
+access_plan_audit_prov_dia_user,plan.audit.prov.dia.user,model_amunet_plan_audit_prov_dia,amunet_documentos.group_documentos_user,1,0,0,0
+access_plan_audit_prov_dia_manager,plan.audit.prov.dia.manager,model_amunet_plan_audit_prov_dia,amunet_documentos.group_documentos_manager,1,1,1,1
+access_plan_audit_prov_asistente_user,plan.audit.prov.asistente.user,model_amunet_plan_audit_prov_asistente,amunet_documentos.group_documentos_user,1,0,0,0
+access_plan_audit_prov_asistente_manager,plan.audit.prov.asistente.manager,model_amunet_plan_audit_prov_asistente,amunet_documentos.group_documentos_manager,1,1,1,1

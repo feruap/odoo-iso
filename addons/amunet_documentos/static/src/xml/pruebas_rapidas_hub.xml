@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="amunet_documentos.PruebasRapidasHub">
+    <div class="o_view_controller">
+        <div class="container py-5">
+            <h3 class="mb-1 fw-bold">Pruebas Rápidas</h3>
+            <p class="text-muted mb-4">Selecciona la lista que deseas consultar.</p>
+            <div class="row g-4">
+
+                <div class="col-md-6">
+                    <div class="card h-100 shadow-sm border-0 lm-card"
+                         t-on-click="() => this.openAction('amunet_documentos.action_amunet_prueba_rapida_con_rs')">
+                        <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
+                            <i class="fa fa-flask fa-2x text-info"/>
+                            <div>
+                                <h5 class="card-title mb-1">Con Registro Sanitario</h5>
+                                <p class="card-text text-muted small mb-0">
+                                    Pruebas IVD con número de Registro Sanitario Cofepris (F-DC-002)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card h-100 shadow-sm border-0 lm-card"
+                         t-on-click="() => this.openAction('amunet_documentos.action_amunet_prueba_rapida_sin_rs')">
+                        <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
+                            <i class="fa fa-list fa-2x" style="color:#6f42c1"/>
+                            <div>
+                                <h5 class="card-title mb-1">Catálogo general</h5>
+                                <p class="card-text text-muted small mb-0">
+                                    Pruebas IVD sin Registro Sanitario Cofepris
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</t>
+</templates>

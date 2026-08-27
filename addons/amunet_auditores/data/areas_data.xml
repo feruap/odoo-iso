@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="area_general" model="amunet.area">
+            <field name="name">General (todas las áreas)</field>
+            <field name="secuencia">1</field>
+        </record>
+        <record id="area_ge" model="amunet.area">
+            <field name="name">Generales</field>
+            <field name="secuencia">10</field>
+        </record>
+        <record id="area_ad" model="amunet.area">
+            <field name="name">Administración</field>
+            <field name="secuencia">20</field>
+        </record>
+        <record id="area_ma" model="amunet.area">
+            <field name="name">Mantenimiento</field>
+            <field name="secuencia">30</field>
+        </record>
+        <record id="area_tv" model="amunet.area">
+            <field name="name">Tecnovigilancia</field>
+            <field name="secuencia">40</field>
+        </record>
+        <record id="area_dc" model="amunet.area">
+            <field name="name">Documentación</field>
+            <field name="secuencia">50</field>
+        </record>
+        <record id="area_pr" model="amunet.area">
+            <field name="name">Producción</field>
+            <field name="secuencia">60</field>
+        </record>
+        <record id="area_cc" model="amunet.area">
+            <field name="name">Control de Calidad</field>
+            <field name="secuencia">70</field>
+        </record>
+        <record id="area_est" model="amunet.area">
+            <field name="name">Estabilidad</field>
+            <field name="secuencia">80</field>
+        </record>
+        <record id="area_as" model="amunet.area">
+            <field name="name">Aseguramiento de Calidad</field>
+            <field name="secuencia">90</field>
+        </record>
+        <record id="area_al" model="amunet.area">
+            <field name="name">Almacén</field>
+            <field name="secuencia">100</field>
+        </record>
+        <record id="area_in" model="amunet.area">
+            <field name="name">Ingeniería</field>
+            <field name="secuencia">110</field>
+        </record>
+        <record id="area_rh" model="amunet.area">
+            <field name="name">Recursos Humanos</field>
+            <field name="secuencia">120</field>
+        </record>
+
+    </data>
+</odoo>

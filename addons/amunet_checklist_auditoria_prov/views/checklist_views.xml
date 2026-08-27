@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Lista ──────────────────────────────────────────────────── -->
+    <record id="view_checklist_audit_prov_list" model="ir.ui.view">
+        <field name="name">amunet.checklist.audit.prov.list</field>
+        <field name="model">amunet.checklist.audit.prov</field>
+        <field name="arch" type="xml">
+            <list string="Checklists de Auditoría Técnica"
+                  decoration-success="state=='vigente'"
+                  decoration-muted="state=='cerrado'">
+                <field name="clave"/>
+                <field name="proveedor"/>
+                <field name="tipo_proveedor"/>
+                <field name="fecha"/>
+                <field name="lider_id"/>
+                <field name="porcentaje" string="%" widget="progressbar"/>
+                <field name="conclusion_auto" widget="badge"
+                       decoration-success="conclusion_auto=='aprobado'"
+                       decoration-warning="conclusion_auto=='condicionado'"
+                       decoration-danger="conclusion_auto=='rechazado'"/>
+                <field name="state" widget="badge"
+                       decoration-success="state=='vigente'"
+                       decoration-warning="state=='borrador'"
+                       decoration-muted="state=='cerrado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Formulario ─────────────────────────────────────────────── -->
+    <record id="view_checklist_audit_prov_form" model="ir.ui.view">
+        <field name="name">amunet.checklist.audit.prov.form</field>
+        <field name="model">amunet.checklist.audit.prov</field>
+        <field name="arch" type="xml">
+            <form string="Checklist de Auditoría Técnica a Proveedores">
+                <header>
+                    <button name="action_firmar_lider" string="Firmar (Auditor)"
+                            type="object" class="btn-primary"
+                            invisible="elaboro_id"/>
+                    <button name="action_firmar_compras" string="Firmar (Compras)"
+                            type="object" class="btn-primary"
+                            invisible="not elaboro_id or firma_compras_id"/>
+                    <button name="action_cerrar" string="Cerrar"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'vigente'"/>
+                    <button name="action_borrador" string="Volver a borrador"
+                            type="object" class="btn-link"
+                            invisible="state == 'borrador'"
+                            groups="amunet_documentos.group_documentos_manager"/>
+                    <button name="%(amunet_checklist_auditoria_prov.action_print_checklist)d"
+                            type="action" string="Imprimir" class="btn-secondary" icon="fa-print"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,vigente,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title mb-3">
+                        <h4 class="text-muted mb-0">F-DC-005-018 — Auditoría Técnica a Proveedores</h4>
+                        <h1><field name="clave" readonly="1"/></h1>
+                    </div>
+
+                    <!-- Encabezado -->
+                    <group col="4">
+                        <field name="tipo_proveedor" widget="radio" options="{'horizontal': true}"/>
+                        <field name="proveedor"/>
+                        <field name="fecha"/>
+                        <field name="lider_id"/>
+                        <field name="no_auditoria"/>
+                        <field name="plan_id"/>
+                    </group>
+
+                    <!-- Resultado en vivo -->
+                    <group string="Resultado en tiempo real" col="4"
+                           invisible="not linea_ids">
+                        <field name="puntos_obtenidos" readonly="1"/>
+                        <field name="puntos_posibles" readonly="1"/>
+                        <field name="porcentaje" readonly="1" string="% Cumplimiento"/>
+                        <field name="conclusion_auto" readonly="1" widget="badge"
+                               decoration-success="conclusion_auto=='aprobado'"
+                               decoration-warning="conclusion_auto=='condicionado'"
+                               decoration-danger="conclusion_auto=='rechazado'"/>
+                    </group>
+
+                    <notebook>
+
+                        <!-- Datos del proveedor (solo General) -->
+                        <page string="Datos del proveedor"
+                              invisible="tipo_proveedor != 'general'">
+                            <group col="2">
+                                <field name="gen_razon_social"/>
+                                <field name="gen_producto"/>
+                                <field name="gen_contacto"/>
+                                <field name="gen_telefono"/>
+                                <field name="gen_correo"/>
+                                <field name="gen_anos_experiencia"/>
+                                <field name="gen_antiguedad"/>
+                            </group>
+                        </page>
+
+                        <!-- Criterios -->
+                        <page string="Criterios de evaluación">
+                            <div class="alert alert-info" invisible="linea_ids"
+                                 style="font-size:13px">
+                                Selecciona el <b>Tipo de proveedor</b> para cargar automáticamente
+                                los criterios de evaluación correspondientes.
+                            </div>
+                            <field name="linea_ids">
+                                <list editable="bottom" decoration-success="cumple=='si'"
+                                      decoration-danger="cumple=='no'"
+                                      decoration-muted="cumple=='na'">
+                                    <field name="seccion_num" column_invisible="1"/>
+                                    <field name="seccion_nombre" readonly="1" optional="show"
+                                           string="Sección"/>
+                                    <field name="no" readonly="1" string="Nº"/>
+                                    <field name="criterio" readonly="1"/>
+                                    <field name="cumple" widget="radio"
+                                           options="{'horizontal': true}"/>
+                                    <field name="observaciones"/>
+                                    <field name="puntos_posibles" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Hallazgos (Crítico e Importante) -->
+                        <page string="Hallazgos"
+                              invisible="tipo_proveedor == 'general'">
+                            <field name="hallazgo_ids">
+                                <list editable="bottom">
+                                    <field name="tipo" widget="badge"
+                                           decoration-danger="tipo=='nc_mayor'"
+                                           decoration-warning="tipo=='nc_menor'"
+                                           decoration-info="tipo=='observacion'"/>
+                                    <field name="descripcion"/>
+                                    <field name="evidencia"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Acciones correctivas (solo Crítico) -->
+                        <page string="Acciones correctivas"
+                              invisible="tipo_proveedor != 'critico'">
+                            <group>
+                                <field name="fecha_seguimiento"/>
+                            </group>
+                            <field name="accion_ids">
+                                <list editable="bottom">
+                                    <field name="nc_asociada"/>
+                                    <field name="accion"/>
+                                    <field name="responsable"/>
+                                    <field name="fecha_limite"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Conclusión -->
+                        <page string="Conclusión y aprobaciones">
+                            <group string="Conclusión">
+                                <field name="conclusion_auto" readonly="1" widget="badge"
+                                       decoration-success="conclusion_auto=='aprobado'"
+                                       decoration-warning="conclusion_auto=='condicionado'"
+                                       decoration-danger="conclusion_auto=='rechazado'"/>
+                                <field name="justificacion" widget="text" rows="3"
+                                       invisible="tipo_proveedor == 'general'"/>
+                                <field name="observaciones_gen" widget="text" rows="3"
+                                       invisible="tipo_proveedor != 'general'"
+                                       string="Observaciones"/>
+                            </group>
+                            <group string="Auditor Líder" col="2">
+                                <field name="elaboro_id" readonly="1"/>
+                                <field name="fecha_elaboro" readonly="1"/>
+                            </group>
+                            <group string="Responsable de Calidad del proveedor" col="2"
+                                   invisible="tipo_proveedor != 'critico'">
+                                <field name="resp_calidad_prov"/>
+                            </group>
+                            <group string="Responsable de Compras (fabricante)" col="2">
+                                <field name="firma_compras_id" readonly="1"/>
+                                <field name="fecha_firma_compras" readonly="1"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Búsqueda ───────────────────────────────────────────────── -->
+    <record id="view_checklist_audit_prov_search" model="ir.ui.view">
+        <field name="name">amunet.checklist.audit.prov.search</field>
+        <field name="model">amunet.checklist.audit.prov</field>
+        <field name="arch" type="xml">
+            <search string="Buscar checklist">
+                <field name="clave"/>
+                <field name="proveedor"/>
+                <field name="lider_id"/>
+                <separator/>
+                <filter string="Borrador"  name="borrador"  domain="[('state','=','borrador')]"/>
+                <filter string="Vigente"   name="vigente"   domain="[('state','=','vigente')]"/>
+                <filter string="Cerrado"   name="cerrado"   domain="[('state','=','cerrado')]"/>
+                <separator/>
+                <filter string="Crítico"   name="critico"   domain="[('tipo_proveedor','=','critico')]"/>
+                <filter string="Importante" name="importante" domain="[('tipo_proveedor','=','importante')]"/>
+                <filter string="General"   name="general"   domain="[('tipo_proveedor','=','general')]"/>
+                <separator/>
+                <filter string="Por tipo"      name="grp_tipo"  context="{'group_by':'tipo_proveedor'}"/>
+                <filter string="Por proveedor" name="grp_prov"  context="{'group_by':'proveedor'}"/>
+                <filter string="Por estado"    name="grp_state" context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Acción ─────────────────────────────────────────────────── -->
+    <record id="action_checklist_audit_prov" model="ir.actions.act_window">
+        <field name="name">Checklists de Auditoría Técnica a Proveedores</field>
+        <field name="res_model">amunet.checklist.audit.prov</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_checklist_audit_prov_search"/>
+        <field name="context">{'search_default_vigente': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aún no hay checklists de auditoría técnica
+            </p>
+            <p>Crea el primero con <b>Nuevo</b>. Al seleccionar el tipo de proveedor
+               (Crítico, Importante o General) se cargan automáticamente los criterios
+               de evaluación correspondientes.</p>
+        </field>
+    </record>
+
+</odoo>

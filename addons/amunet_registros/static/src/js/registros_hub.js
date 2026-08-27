@@ -1,13 +1,20 @@
 /** @odoo-module **/
-import { Component } from "@odoo/owl";
+import { Component, onWillStart, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { user } from "@web/core/user";
 
 class RegistrosHub extends Component {
     static template = "amunet_registros.RegistrosHub";
 
     setup() {
         this.actionService = useService("action");
+        this.state = useState({ isManager: false });
+        onWillStart(async () => {
+            this.state.isManager = await user.hasGroup(
+                "amunet_documentos.group_documentos_manager"
+            );
+        });
     }
 
     openAction(xmlId) {

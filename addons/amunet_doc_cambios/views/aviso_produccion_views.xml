@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── VISTA LISTA ──────────────────────────────────────── -->
+    <record id="view_aviso_produccion_list" model="ir.ui.view">
+        <field name="name">amunet.aviso.produccion.list</field>
+        <field name="model">amunet.aviso.produccion</field>
+        <field name="arch" type="xml">
+            <list string="Avisos de produccion"
+                  decoration-success="state == 'cerrado'"
+                  decoration-danger="state == 'rechazado'"
+                  decoration-warning="state == 'pendiente'">
+                <field name="name" string="Referencia"/>
+                <field name="production_id" string="Orden"/>
+                <field name="product_id" string="Producto"/>
+                <field name="requested_by_id" string="Enviado por"/>
+                <field name="fecha_envio" string="Fecha"/>
+                <field name="state" string="Estado" widget="badge"
+                       decoration-success="state == 'cerrado'"
+                       decoration-danger="state == 'rechazado'"
+                       decoration-warning="state == 'pendiente'"/>
+                <field name="firmado_por_id" string="Revisado por"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── VISTA FORMULARIO ──────────────────────────────────── -->
+    <record id="view_aviso_produccion_form" model="ir.ui.view">
+        <field name="name">amunet.aviso.produccion.form</field>
+        <field name="model">amunet.aviso.produccion</field>
+        <field name="arch" type="xml">
+            <form string="Aviso de produccion">
+                <header>
+                    <button name="action_cerrar" type="object"
+                            string="Cerrar con firma"
+                            class="btn-primary"
+                            invisible="state != 'pendiente'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <button name="action_rechazar" type="object"
+                            string="Rechazar"
+                            class="btn-danger"
+                            invisible="state != 'pendiente'"
+                            groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pendiente,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Origen">
+                            <field name="production_id"
+                                   readonly="context.get('default_production_id') or state != 'pendiente'"/>
+                            <field name="product_id"/>
+                            <field name="requested_by_id" readonly="1"/>
+                            <field name="fecha_envio" readonly="1"/>
+                        </group>
+                        <group string="Cierre" invisible="state == 'pendiente'">
+                            <field name="firmado_por_id" readonly="1"/>
+                            <field name="fecha_cierre" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Lo que noto el operador">
+                        <field name="descripcion" readonly="1" nolabel="1" widget="text"/>
+                    </group>
+                    <group string="Parametro afectado" invisible="not instruccion_vigente and not instruccion_propuesta">
+                        <field name="instruccion_vigente" readonly="1" string="Proceso original"/>
+                        <field name="instruccion_propuesta" readonly="1" string="Que se hizo"/>
+                    </group>
+                    <group string="Evaluacion de Calidad">
+                        <field name="evaluacion" nolabel="1" widget="text"
+                               placeholder="Escribe aqui tu evaluacion antes de cerrar..."
+                               readonly="state != 'pendiente'"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── ACCIÓN ──────────────────────────────────────────── -->
+    <record id="action_avisos_enviados" model="ir.actions.act_window">
+        <field name="name">Avisos enviados</field>
+        <field name="res_model">amunet.aviso.produccion</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

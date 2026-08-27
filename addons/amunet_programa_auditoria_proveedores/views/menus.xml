@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_prog_proveedor"
+        name="Auditoría Técnicas de Proveedores"
+        parent="amunet_documentos.menu_amunet_gestion"
+        action="action_programa_proveedor"
+        sequence="50"
+        groups="amunet_documentos.group_documentos_manager"/>
+</odoo>

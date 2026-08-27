@@ -6,28 +6,28 @@
         <field name="tag">amunet_registros.registros_hub</field>
     </record>
 
-    <menuitem id="menu_registros_root"
-              name="Registros de formatos"
-              parent="amunet_documentos.menu_amunet_documentos_root"
-              action="action_registros_hub"
-              sequence="50"
-              groups="amunet_documentos.group_documentos_user"/>
+    <record id="menu_registros_root" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 
     <menuitem id="menu_registros_indumentaria"
               name="Indumentaria"
               parent="menu_registros_root"
-              sequence="10"/>
+              sequence="10"
+              groups="amunet_documentos.group_documentos_manager"/>
 
     <menuitem id="menu_entrega_vest"
               name="Entrega de indumentaria"
               parent="menu_registros_indumentaria"
               action="action_entrega_vest"
-              sequence="10"/>
+              sequence="10"
+              groups="amunet_documentos.group_documentos_manager"/>
 
     <menuitem id="menu_revision_vest"
               name="Revisión de indumentaria"
               parent="menu_registros_indumentaria"
               action="action_revision_vest"
-              sequence="20"/>
+              sequence="20"
+              groups="amunet_documentos.group_documentos_manager"/>
 
 </odoo>

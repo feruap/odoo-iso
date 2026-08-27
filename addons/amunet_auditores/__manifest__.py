@@ -9,8 +9,11 @@
     'data': [
         'security/ir.model.access.csv',
         'data/criterios_data.xml',
+        'data/preguntas_data.xml',
+        'data/areas_data.xml',
         'views/convocatoria_views.xml',
         'views/menu_views.xml',
+        'reports/report_convocatoria.xml',
     ],
     'installable': True,
     'application': False,

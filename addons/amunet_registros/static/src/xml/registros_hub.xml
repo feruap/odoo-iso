@@ -11,39 +11,25 @@
 
                     <div class="col-12">
                         <h6 class="text-uppercase text-muted fw-semibold mb-2" style="letter-spacing:.05em">
-                            Indumentaria — PNOGE-007
+                            Gestión de riesgos
                         </h6>
                     </div>
 
                     <div class="col-md-6">
                         <div class="card h-100 shadow-sm border-0 lm-card"
-                             t-on-click="() => this.openAction('amunet_registros.action_entrega_vest')">
+                             t-on-click="() => this.openAction('amunet_risk_management.action_risk_analysis')">
                             <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
-                                <i class="fa fa-tshirt fa-2x" style="color:#0d6efd"/>
+                                <i class="fa fa-shield fa-2x" style="color:#e53e3e"/>
                                 <div>
-                                    <h5 class="card-title mb-1">Entrega de indumentaria</h5>
+                                    <h5 class="card-title mb-1">Gestión de riesgos</h5>
                                     <p class="card-text text-muted small mb-0">
-                                        F-GE-007/001 — Registro de entrega de bata y zapatos por persona
+                                        Análisis y seguimiento de riesgos del sistema de calidad
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <div class="card h-100 shadow-sm border-0 lm-card"
-                             t-on-click="() => this.openAction('amunet_registros.action_revision_vest')">
-                            <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
-                                <i class="fa fa-check-square-o fa-2x" style="color:#198754"/>
-                                <div>
-                                    <h5 class="card-title mb-1">Revisión de indumentaria</h5>
-                                    <p class="card-text text-muted small mb-0">
-                                        F-GE-007/002 — Supervisión de indumentaria por turno
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                 </div>
             </div>
@@ -55,7 +41,7 @@
        t-inherit="amunet_documentos.ListaMaestraHub"
        t-inherit-mode="extension">
         <xpath expr="//div[hasclass('row')]" position="inside">
-            <div class="col-md-6">
+            <div t-if="state.isManager" class="col-md-6">
                 <div class="card h-100 shadow-sm border-0 lm-card"
                      t-on-click="() => this.openAction('amunet_registros.action_registros_hub')">
                     <div class="card-body d-flex align-items-center gap-3 py-4 px-4">

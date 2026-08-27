@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_acta_auditoria"
+        name="Apertura y Cierre de Auditorías"
+        parent="amunet_documentos.menu_amunet_documentos_root"
+        action="action_acta_auditoria"
+        sequence="45"
+        active="0"/>
+</odoo>

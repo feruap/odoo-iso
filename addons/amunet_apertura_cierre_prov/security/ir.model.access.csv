@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_apertura_cierre_prov_user,apertura.cierre.prov.user,model_amunet_apertura_cierre_prov,amunet_documentos.group_documentos_user,1,0,0,0
+access_apertura_cierre_prov_mgr,apertura.cierre.prov.mgr,model_amunet_apertura_cierre_prov,amunet_documentos.group_documentos_manager,1,1,1,1
+access_ap_prov_asistente_user,ap.prov.asistente.user,model_amunet_ap_prov_asistente,amunet_documentos.group_documentos_user,1,0,0,0
+access_ap_prov_asistente_mgr,ap.prov.asistente.mgr,model_amunet_ap_prov_asistente,amunet_documentos.group_documentos_manager,1,1,1,1
+access_ci_prov_asistente_user,ci.prov.asistente.user,model_amunet_ci_prov_asistente,amunet_documentos.group_documentos_user,1,0,0,0
+access_ci_prov_asistente_mgr,ci.prov.asistente.mgr,model_amunet_ci_prov_asistente,amunet_documentos.group_documentos_manager,1,1,1,1
+access_ap_prov_compromiso_user,ap.prov.compromiso.user,model_amunet_ap_prov_compromiso,amunet_documentos.group_documentos_user,1,0,0,0
+access_ap_prov_compromiso_mgr,ap.prov.compromiso.mgr,model_amunet_ap_prov_compromiso,amunet_documentos.group_documentos_manager,1,1,1,1
+access_ci_prov_compromiso_user,ci.prov.compromiso.user,model_amunet_ci_prov_compromiso,amunet_documentos.group_documentos_user,1,0,0,0
+access_ci_prov_compromiso_mgr,ci.prov.compromiso.mgr,model_amunet_ci_prov_compromiso,amunet_documentos.group_documentos_manager,1,1,1,1

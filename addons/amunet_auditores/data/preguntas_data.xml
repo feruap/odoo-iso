@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- CRITERIO 1: Conocimiento de ISO 13485                     -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+
+    <record id="pregunta_iso_1" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_iso13485"/>
+        <field name="name">¿Cuál es el propósito principal de la ISO 13485 y a qué tipo de organizaciones aplica?</field>
+        <field name="secuencia">10</field>
+    </record>
+    <record id="opcion_iso1_p1_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_1"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Explica que regula el SGC para fabricantes de dispositivos médicos (IVD incluido) y menciona proveedores y distribuidores.</field>
+    </record>
+    <record id="opcion_iso1_p1_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_1"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Menciona dispositivos médicos y sistema de calidad, sin especificar IVD.</field>
+    </record>
+    <record id="opcion_iso1_p1_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_1"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Sabe que es una norma ISO de calidad, pero no detalla a quién aplica.</field>
+    </record>
+    <record id="opcion_iso1_p1_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_1"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">La confunde con ISO 9001 o no la diferencia con claridad.</field>
+    </record>
+    <record id="opcion_iso1_p1_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_1"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No la conoce.</field>
+    </record>
+
+    <record id="pregunta_iso_2" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_iso13485"/>
+        <field name="name">¿Qué diferencia hay entre un documento controlado y un registro de calidad?</field>
+        <field name="secuencia">20</field>
+    </record>
+    <record id="opcion_iso1_p2_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_2"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">El documento dice cómo hacer las cosas; el registro es evidencia de que se hicieron. Ambos requieren control y retención.</field>
+    </record>
+    <record id="opcion_iso1_p2_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_2"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Los distingue correctamente aunque no detalla los requisitos de retención.</field>
+    </record>
+    <record id="opcion_iso1_p2_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_2"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Sabe que son diferentes pero no puede explicar la diferencia con precisión.</field>
+    </record>
+    <record id="opcion_iso1_p2_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_2"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Los confunde o mezcla sus definiciones.</field>
+    </record>
+    <record id="opcion_iso1_p2_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_2"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No los distingue.</field>
+    </record>
+
+    <record id="pregunta_iso_4" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_iso13485"/>
+        <field name="name">¿Qué es una no conformidad y cómo debe manejarse según la norma?</field>
+        <field name="secuencia">40</field>
+    </record>
+    <record id="opcion_iso1_p4_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_4"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Define NC como incumplimiento de un requisito; describe disposición del producto, acción correctiva y cierre con evidencia.</field>
+    </record>
+    <record id="opcion_iso1_p4_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_4"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">La define y menciona acciones correctivas.</field>
+    </record>
+    <record id="opcion_iso1_p4_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_4"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Sabe que es un incumplimiento que debe corregirse.</field>
+    </record>
+    <record id="opcion_iso1_p4_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_4"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">La confunde con una observación o queja del cliente.</field>
+    </record>
+    <record id="opcion_iso1_p4_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_iso_4"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No la conoce.</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- CRITERIO 2: Conocimiento de regulaciones Cofepris         -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+
+    <record id="pregunta_cof_1" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_cofepris"/>
+        <field name="name">¿Qué es un registro sanitario y por qué es obligatorio para los IVD?</field>
+        <field name="secuencia">10</field>
+    </record>
+    <record id="opcion_cof_p1_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_1"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Autorización de Cofepris para comercializar en México; sin él no se puede fabricar ni vender legalmente el IVD.</field>
+    </record>
+    <record id="opcion_cof_p1_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_1"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Es un permiso de Cofepris necesario para poder vender el producto.</field>
+    </record>
+    <record id="opcion_cof_p1_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_1"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Sabe que existe pero no puede detallarlo.</field>
+    </record>
+    <record id="opcion_cof_p1_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_1"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Lo confunde con otro tipo de registro interno o de calidad.</field>
+    </record>
+    <record id="opcion_cof_p1_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_1"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No lo conoce.</field>
+    </record>
+
+    <record id="pregunta_cof_2" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_cofepris"/>
+        <field name="name">¿Qué información debe contener el etiquetado de una prueba rápida según Cofepris?</field>
+        <field name="secuencia">20</field>
+    </record>
+    <record id="opcion_cof_p2_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_2"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Menciona nombre del producto, fabricante, lote, caducidad, instrucciones de uso, número de registro sanitario y condiciones de almacenamiento.</field>
+    </record>
+    <record id="opcion_cof_p2_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_2"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Menciona la mayoría de los elementos obligatorios (nombre, lote, fecha, fabricante).</field>
+    </record>
+    <record id="opcion_cof_p2_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_2"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Menciona algunos elementos como lote y fecha de caducidad.</field>
+    </record>
+    <record id="opcion_cof_p2_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_2"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Sabe que hay requisitos de etiquetado pero no los conoce.</field>
+    </record>
+    <record id="opcion_cof_p2_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_2"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No sabe.</field>
+    </record>
+
+    <record id="pregunta_cof_3" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_cofepris"/>
+        <field name="name">¿Qué obligaciones tiene el fabricante ante un evento adverso o retiro del mercado?</field>
+        <field name="secuencia">30</field>
+    </record>
+    <record id="opcion_cof_p3_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_3"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Notificar a Cofepris, retirar el lote afectado, comunicar a clientes y distribuidores, documentar el evento y las acciones tomadas.</field>
+    </record>
+    <record id="opcion_cof_p3_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_3"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Notificar a Cofepris y retirar el producto.</field>
+    </record>
+    <record id="opcion_cof_p3_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_3"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Sabe que debe reportar a Cofepris.</field>
+    </record>
+    <record id="opcion_cof_p3_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_3"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Sabe que debe actuar pero no conoce el proceso.</field>
+    </record>
+    <record id="opcion_cof_p3_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_cof_3"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No lo sabe.</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- CRITERIO 3: Conocimiento del proceso productivo           -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+
+    <record id="pregunta_proc_1" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_proceso"/>
+        <field name="name">¿Cuáles son las etapas principales del proceso de fabricación de las pruebas rápidas?</field>
+        <field name="secuencia">10</field>
+    </record>
+    <record id="opcion_proc_p1_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_1"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Describe correctamente las etapas del proceso de Amunet: recepción de MP, producción, control en proceso, empaque y liberación de lote.</field>
+    </record>
+    <record id="opcion_proc_p1_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_1"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Menciona la mayoría de las etapas en orden correcto.</field>
+    </record>
+    <record id="opcion_proc_p1_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_1"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Conoce algunas etapas generales del proceso.</field>
+    </record>
+    <record id="opcion_proc_p1_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_1"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Solo tiene conocimiento vago del proceso.</field>
+    </record>
+    <record id="opcion_proc_p1_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_1"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No conoce el proceso.</field>
+    </record>
+
+    <record id="pregunta_proc_2" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_proceso"/>
+        <field name="name">¿Qué controles de calidad se realizan durante la producción?</field>
+        <field name="secuencia">20</field>
+    </record>
+    <record id="opcion_proc_p2_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_2"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Menciona controles en proceso, pruebas de desempeño, inspección de materiales y liberación de lote con registro.</field>
+    </record>
+    <record id="opcion_proc_p2_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_2"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Menciona pruebas de desempeño e inspección de materiales.</field>
+    </record>
+    <record id="opcion_proc_p2_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_2"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Sabe que hay controles pero no los puede detallar.</field>
+    </record>
+    <record id="opcion_proc_p2_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_2"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Conoce solo algún control aislado.</field>
+    </record>
+    <record id="opcion_proc_p2_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_2"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No los conoce.</field>
+    </record>
+
+    <record id="pregunta_proc_3" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_proceso"/>
+        <field name="name">¿Cómo se asegura la trazabilidad de un lote desde materia prima hasta producto terminado?</field>
+        <field name="secuencia">30</field>
+    </record>
+    <record id="opcion_proc_p3_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_3"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Explica el uso del número de lote en todos los registros, vinculando materia prima, producción, controles y producto terminado.</field>
+    </record>
+    <record id="opcion_proc_p3_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_3"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Menciona el número de lote y los registros de producción.</field>
+    </record>
+    <record id="opcion_proc_p3_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_3"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Sabe que el número de lote es la clave de trazabilidad.</field>
+    </record>
+    <record id="opcion_proc_p3_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_3"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Sabe que existe trazabilidad pero no cómo funciona.</field>
+    </record>
+    <record id="opcion_proc_p3_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_proc_3"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No sabe.</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- CRITERIO 4: Comunicación efectiva                         -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+
+    <record id="pregunta_com_1" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_comunicacion"/>
+        <field name="name">Describe cómo explicarías un hallazgo de auditoría a alguien del área auditada.</field>
+        <field name="secuencia">10</field>
+    </record>
+    <record id="opcion_com_p1_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_1"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Con respeto y empatía, basándose en evidencia objetiva, explicando el impacto y proponiendo una vía de solución.</field>
+    </record>
+    <record id="opcion_com_p1_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_1"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Con objetividad y basándose en hechos, evitando juicios personales.</field>
+    </record>
+    <record id="opcion_com_p1_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_1"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Lo explicaría directamente sin considerar cómo podría recibirlo el auditado.</field>
+    </record>
+    <record id="opcion_com_p1_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_1"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Lo haría de forma impositiva o generando confrontación.</field>
+    </record>
+    <record id="opcion_com_p1_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_1"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No sabría cómo hacerlo.</field>
+    </record>
+
+    <record id="pregunta_com_2" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_comunicacion"/>
+        <field name="name">¿Cómo manejarías una situación en la que el auditado no está de acuerdo con tu hallazgo?</field>
+        <field name="secuencia">20</field>
+    </record>
+    <record id="opcion_com_p2_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_2"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Escucharía la perspectiva, revisaría la evidencia juntos; mantendría el hallazgo si es objetivo o lo ajustaría si hay nueva evidencia válida.</field>
+    </record>
+    <record id="opcion_com_p2_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_2"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Escucharía y revisaría la evidencia con el auditado.</field>
+    </record>
+    <record id="opcion_com_p2_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_2"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Mantendría su posición escuchando, pero sin considerar nueva evidencia.</field>
+    </record>
+    <record id="opcion_com_p2_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_2"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Cedería ante la presión o se pondría a la defensiva.</field>
+    </record>
+    <record id="opcion_com_p2_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_2"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No sabría cómo manejarlo.</field>
+    </record>
+
+    <record id="pregunta_com_3" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_comunicacion"/>
+        <field name="name">¿Cómo redactarías un hallazgo en el informe de auditoría?</field>
+        <field name="secuencia">30</field>
+    </record>
+    <record id="opcion_com_p3_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_3"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Qué se encontró, dónde, cuándo, evidencia objetiva y referencia al requisito incumplido; sin adjetivos subjetivos.</field>
+    </record>
+    <record id="opcion_com_p3_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_3"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Incluiría la evidencia objetiva y la referencia normativa.</field>
+    </record>
+    <record id="opcion_com_p3_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_3"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Describiría lo encontrado, sin necesariamente incluir la referencia normativa.</field>
+    </record>
+    <record id="opcion_com_p3_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_3"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">La redacción sería subjetiva, vaga o basada en interpretaciones personales.</field>
+    </record>
+    <record id="opcion_com_p3_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_com_3"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No sabría cómo redactarlo.</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- CRITERIO 5: Análisis crítico                              -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+
+    <record id="pregunta_ana_1" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_analisis"/>
+        <field name="name">Si encuentras un procedimiento que no se sigue en la práctica, ¿cómo lo evalúas?</field>
+        <field name="secuencia">10</field>
+    </record>
+    <record id="opcion_ana_p1_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_1"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Lo documenta como no conformidad con evidencia objetiva, sin emitir juicio personal, y lo comunica al auditor líder.</field>
+    </record>
+    <record id="opcion_ana_p1_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_1"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Lo documenta como no conformidad con evidencia.</field>
+    </record>
+    <record id="opcion_ana_p1_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_1"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Lo reporta pero sin claridad sobre cómo documentarlo formalmente.</field>
+    </record>
+    <record id="opcion_ana_p1_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_1"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Lo menciona informalmente o lo pasa por alto.</field>
+    </record>
+    <record id="opcion_ana_p1_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_1"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No sabría qué hacer.</field>
+    </record>
+
+    <record id="pregunta_ana_2" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_analisis"/>
+        <field name="name">¿Cómo distingues una observación de una no conformidad?</field>
+        <field name="secuencia">20</field>
+    </record>
+    <record id="opcion_ana_p2_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_2"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">NC es incumplimiento demostrable de un requisito; observación es riesgo potencial o área de mejora sin evidencia suficiente de incumplimiento.</field>
+    </record>
+    <record id="opcion_ana_p2_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_2"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Los distingue correctamente aunque usa terminología menos precisa.</field>
+    </record>
+    <record id="opcion_ana_p2_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_2"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Sabe que son diferentes pero no puede explicar cómo.</field>
+    </record>
+    <record id="opcion_ana_p2_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_2"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Los confunde o los usa indistintamente.</field>
+    </record>
+    <record id="opcion_ana_p2_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_2"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">No los distingue.</field>
+    </record>
+
+    <record id="pregunta_ana_3" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_analisis"/>
+        <field name="name">¿Qué harías si durante la auditoría encuentras evidencia de un problema de mayor alcance?</field>
+        <field name="secuencia">30</field>
+    </record>
+    <record id="opcion_ana_p3_5" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_3"/>
+        <field name="puntaje">5</field>
+        <field name="descripcion">Lo documenta, lo comunica de inmediato al auditor líder y propone ampliar el alcance de la auditoría si es necesario.</field>
+    </record>
+    <record id="opcion_ana_p3_4" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_3"/>
+        <field name="puntaje">4</field>
+        <field name="descripcion">Lo documenta y lo comunica al auditor líder al concluir la sesión.</field>
+    </record>
+    <record id="opcion_ana_p3_3" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_3"/>
+        <field name="puntaje">3</field>
+        <field name="descripcion">Lo menciona en el informe final.</field>
+    </record>
+    <record id="opcion_ana_p3_2" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_3"/>
+        <field name="puntaje">2</field>
+        <field name="descripcion">Solo lo registraría en sus notas personales.</field>
+    </record>
+    <record id="opcion_ana_p3_1" model="amunet.auditor.opcion">
+        <field name="pregunta_id" ref="pregunta_ana_3"/>
+        <field name="puntaje">1</field>
+        <field name="descripcion">Lo ignoraría o no sabría qué hacer.</field>
+    </record>
+
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- CRITERIO 6: Experiencia en área de calidad (abierta)      -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+
+    <record id="pregunta_exp_1" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_experiencia"/>
+        <field name="name">¿En qué actividades relacionadas con calidad has participado en Amunet?</field>
+        <field name="secuencia">10</field>
+    </record>
+
+    <record id="pregunta_exp_2" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_experiencia"/>
+        <field name="name">¿Has participado en alguna auditoría interna o externa anteriormente? ¿En qué rol?</field>
+        <field name="secuencia">20</field>
+    </record>
+
+    <record id="pregunta_exp_3" model="amunet.auditor.pregunta">
+        <field name="criterio_id" ref="criterio_experiencia"/>
+        <field name="name">¿Qué acciones correctivas o mejoras has impulsado en tu área?</field>
+        <field name="secuencia">30</field>
+    </record>
+
+</odoo>

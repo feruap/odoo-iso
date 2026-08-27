@@ -710,4 +710,123 @@
         <field name="caducidad_autorizada">24 meses</field>
         <field name="registro_sanitario">No aplica</field>
     </record>
+
+    <!-- ── Pruebas LAMP agregadas agosto 2026 ───────────────────── -->
+    <record id="prueba_rapida_76" model="amunet.prueba.rapida">
+        <field name="nombre">ECOHEM-ADN</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo basado en la amplificación isotérmica mediada por bucle (LAMP) que permite detectar la presencia de ADN de E. coli O157:H7</field>
+        <field name="codigo">ECO</field>
+        <field name="referencia">DLECO01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_77" model="amunet.prueba.rapida">
+        <field name="nombre">ISOLISTER-ADN</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo basado en la amplificación isotérmica mediada por bucle (LAMP) que permite detectar la presencia de ADN de Listeria monocytogenes (L. monocytogenes)</field>
+        <field name="codigo">ISL</field>
+        <field name="referencia">DLISL01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_79" model="amunet.prueba.rapida">
+        <field name="nombre">Salmonet</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo basado en la amplificación isotérmica mediada por bucle (LAMP) que permite detectar la presencia de ADN de Salmonella spp</field>
+        <field name="codigo">SAN</field>
+        <field name="referencia">DLSAN01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_80" model="amunet.prueba.rapida">
+        <field name="nombre">FACTOR REUMATOIDE</field>
+        <field name="muestra">Suero o Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de Factor Reumatoide en muestras de suero o plasma.</field>
+        <field name="codigo">FRE</field>
+        <field name="referencia">DMFRE01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_81" model="amunet.prueba.rapida">
+        <field name="nombre">Mycoplasma pneumoniae</field>
+        <field name="muestra">Sangre total / capilar, Suero, Plasma</field>
+        <field name="descripcion">Prueba rápida para la detección cualitativa de antígenos de Mycoplasma pneumoniae en muestras exudado orofaríngeo.</field>
+        <field name="codigo">MYC</field>
+        <field name="referencia">DMMYC01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_84" model="amunet.prueba.rapida">
+        <field name="nombre">Aureus-ADN</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo basado en la amplificación isotérmica mediada por bucle (LAMP) que permite detectar la presencia de ADN de S. aureus</field>
+        <field name="codigo">AUR</field>
+        <field name="referencia">DLAUR01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_85" model="amunet.prueba.rapida">
+        <field name="nombre">Campy-ADN</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo basado en la amplificación isotérmica mediada por bucle (LAMP) que permite detectar la presencia de ADN de C.coli/jejuni.</field>
+        <field name="codigo">CPY</field>
+        <field name="referencia">DLCAM01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_86" model="amunet.prueba.rapida">
+        <field name="nombre">ChlamyGo</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo para la amplificación isotérmica mediada por bucle (LAMP) que permiten detectar la presencia de ADN (por separado) de N. gonorrhoeae y C. trachomatis</field>
+        <field name="codigo">CGO</field>
+        <field name="referencia">DLCGO01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_87" model="amunet.prueba.rapida">
+        <field name="nombre">Enteronet-ADN</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo basado en la amplificación isotérmica mediada por bucle (LAMP) que permite detectar la presencia de ADN de Enterococcus faecalis (E. faecalis)</field>
+        <field name="codigo">ENT</field>
+        <field name="referencia">DLENT01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_88" model="amunet.prueba.rapida">
+        <field name="nombre">Fetalamp</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo basado en la amplificación isotérmica mediada por bucle (LAMP) que permite detectar la presencia del gen SRY</field>
+        <field name="codigo">FTA</field>
+        <field name="referencia">DLSFE01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_89" model="amunet.prueba.rapida">
+        <field name="nombre">12Kras-net</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo basado en la amplificación isotérmica mediada por bucle (LAMP) que permite detectar la presencia de las mutaciones G12A, G12D, G12R, G12C, G12S y G12V del codón 12 del gen KRAS humano.</field>
+        <field name="codigo">KRS</field>
+        <field name="referencia">DLKRS01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_90" model="amunet.prueba.rapida">
+        <field name="nombre">TB-DxNet</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo para la amplificación isotérmica mediada por bucle (LAMP) que permiten detectar la presencia del gen 16S de ARN ribosomal para la detección cualitativa de MTB</field>
+        <field name="codigo">TBD</field>
+        <field name="referencia">DLTB02</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
+    <record id="prueba_rapida_91" model="amunet.prueba.rapida">
+        <field name="nombre">VIHLAMP-NET</field>
+        <field name="muestra">Reacciones de amplificaciones de ADN</field>
+        <field name="descripcion">Ensayo basado en la amplificación isotérmica mediada por bucle (LAMP) que permite detectar la presencia de ARN del VIH</field>
+        <field name="codigo">VHL</field>
+        <field name="referencia">DLVIH01</field>
+        <field name="caducidad_autorizada">6 meses</field>
+        <field name="registro_sanitario">No aplica</field>
+    </record>
 </odoo>

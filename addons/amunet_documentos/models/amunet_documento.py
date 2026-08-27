@@ -409,7 +409,7 @@ class AmunetDocumento(models.Model):
         return super().write(vals)
 
     def _workflow_write(self, vals):
-        return self.with_context(amunet_documento_workflow_write=True).write(vals)
+        return self.sudo().with_context(amunet_documento_workflow_write=True).write(vals)
 
     def _amunet_signature_allowed_methods(self):
         return {

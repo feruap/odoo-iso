@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Lista ──────────────────────────────────────────────────── -->
+    <record id="view_plan_audit_prov_list" model="ir.ui.view">
+        <field name="name">amunet.plan.audit.prov.list</field>
+        <field name="model">amunet.plan.audit.prov</field>
+        <field name="arch" type="xml">
+            <list string="Planes de auditoría de proveedores" decoration-success="state=='vigente'"
+                  decoration-muted="state=='cerrado'">
+                <field name="clave"/>
+                <field name="proveedor"/>
+                <field name="tipo"/>
+                <field name="fecha_inicio"/>
+                <field name="fecha_fin"/>
+                <field name="lider_id"/>
+                <field name="state" widget="badge"
+                       decoration-success="state=='vigente'"
+                       decoration-warning="state=='borrador'"
+                       decoration-muted="state=='cerrado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Formulario ─────────────────────────────────────────────── -->
+    <record id="view_plan_audit_prov_form" model="ir.ui.view">
+        <field name="name">amunet.plan.audit.prov.form</field>
+        <field name="model">amunet.plan.audit.prov</field>
+        <field name="arch" type="xml">
+            <form string="Plan de Auditoría de Proveedores">
+
+                <!-- Barra de estado -->
+                <header>
+                    <button name="action_firmar_lider" string="Firmar (Líder)"
+                            type="object" class="btn-primary"
+                            invisible="elaboro_id"/>
+                    <button name="action_firmar_compras" string="Firmar (Compras)"
+                            type="object" class="btn-primary"
+                            invisible="not elaboro_id or firma_compras_id"/>
+                    <button name="action_cerrar" string="Cerrar auditoría"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'vigente'"/>
+                    <button name="action_borrador" string="Volver a borrador"
+                            type="object" class="btn-link"
+                            invisible="state == 'borrador'"
+                            groups="amunet_documentos.group_documentos_manager"/>
+                    <button name="%(amunet_plan_auditoria_proveedores.action_print_plan_audit_prov)d"
+                            type="action" string="Imprimir" class="btn-secondary" icon="fa-print"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,vigente,cerrado"/>
+                </header>
+
+                <sheet>
+                    <!-- 1. Datos generales -->
+                    <div class="oe_title mb-3">
+                        <h4 class="text-muted mb-0">F-DC-005-016</h4>
+                        <h1>
+                            <field name="clave" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group string="1. Datos generales" col="4">
+                        <field name="fecha_emision"/>
+                        <field name="norma"/>
+                        <field name="tipo"/>
+                        <field name="proveedor"/>
+                        <field name="fecha_inicio"/>
+                        <field name="fecha_fin"/>
+                        <field name="lider_id"/>
+                        <field name="auditor_ids" widget="many2many_tags"/>
+                        <field name="acompanante" colspan="2"/>
+                    </group>
+
+                    <notebook>
+
+                        <!-- 2. Objetivo -->
+                        <page string="2. Objetivo">
+                            <group>
+                                <field name="objetivo" nolabel="1" widget="text" rows="6"/>
+                            </group>
+                        </page>
+
+                        <!-- 3. Alcance -->
+                        <page string="3. Alcance">
+                            <group string="Alcance">
+                                <field name="alcance" nolabel="1" widget="text" rows="10"/>
+                            </group>
+                            <group string="Exclusiones">
+                                <field name="exclusiones" nolabel="1"/>
+                            </group>
+                        </page>
+
+                        <!-- 4. Criterios -->
+                        <page string="4. Criterios de auditoría">
+                            <group string="4.1 Normativa externa">
+                                <field name="criterios_normativa" nolabel="1" widget="text" rows="5"/>
+                            </group>
+                            <group string="4.2 Documentación del fabricante">
+                                <field name="criterios_fabricante" nolabel="1" widget="text" rows="4"/>
+                            </group>
+                            <group string="4.3 Documentación interna del proveedor">
+                                <field name="criterios_proveedor" nolabel="1" widget="text" rows="5"/>
+                            </group>
+                        </page>
+
+                        <!-- 5. Metodología -->
+                        <page string="5. Metodología">
+                            <group string="Técnicas a aplicar" col="2">
+                                <field name="met_apertura"/>
+                                <field name="met_entrevistas"/>
+                                <field name="met_revision"/>
+                                <field name="met_verificacion"/>
+                                <field name="met_muestreo"/>
+                                <field name="met_observacion"/>
+                                <field name="met_cierre"/>
+                            </group>
+                        </page>
+
+                        <!-- 6. Áreas a auditar -->
+                        <page string="6. Áreas a auditar">
+                            <field name="area_ids">
+                                <list editable="bottom">
+                                    <field name="secuencia" widget="handle"/>
+                                    <field name="codigo"/>
+                                    <field name="area"/>
+                                    <field name="responsable"/>
+                                    <field name="duracion"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- 7. Cronograma -->
+                        <page string="7. Cronograma">
+                            <field name="cronograma_ids">
+                                <list editable="bottom">
+                                    <field name="secuencia" widget="handle"/>
+                                    <field name="dia"/>
+                                    <field name="hora"/>
+                                    <field name="actividad"/>
+                                    <field name="area"/>
+                                    <field name="auditor_responsable"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- 8-9. Plazos -->
+                        <page string="8-9. Informes y plazos">
+                            <group string="Plazos (días hábiles)" col="2">
+                                <field name="plazo_preliminar"/>
+                                <field name="plazo_revision_proveedor"/>
+                                <field name="plazo_final"/>
+                                <field name="plazo_pac"/>
+                            </group>
+                        </page>
+
+                        <!-- 10. Lista de asistencia -->
+                        <page string="10. Lista de asistencia">
+                            <field name="asistente_ids">
+                                <list editable="bottom">
+                                    <field name="no"/>
+                                    <field name="fecha"/>
+                                    <field name="nombre"/>
+                                    <field name="empresa_area"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- 11. Distribución -->
+                        <page string="11. Distribución">
+                            <group col="2">
+                                <field name="dist_archivo"/>
+                                <field name="dist_calidad"/>
+                                <field name="dist_compras"/>
+                                <field name="dist_proveedor"/>
+                                <field name="dist_otros" colspan="2"/>
+                            </group>
+                        </page>
+
+                        <!-- 12. Firmas -->
+                        <page string="12. Firmas">
+                            <group string="Elaboró (Auditor Líder)" col="2">
+                                <field name="elaboro_id" readonly="1"/>
+                                <field name="fecha_elaboro" readonly="1"/>
+                            </group>
+                            <group string="Responsable de Calidad del proveedor" col="2">
+                                <field name="resp_calidad_prov"/>
+                            </group>
+                            <group string="Revisó / Aprobó (Responsable de Compras)" col="2">
+                                <field name="firma_compras_id" readonly="1"/>
+                                <field name="fecha_firma_compras" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <!-- 13. Observaciones -->
+                        <page string="13. Observaciones">
+                            <group>
+                                <field name="observaciones" nolabel="1" widget="text" rows="6"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Búsqueda ───────────────────────────────────────────────── -->
+    <record id="view_plan_audit_prov_search" model="ir.ui.view">
+        <field name="name">amunet.plan.audit.prov.search</field>
+        <field name="model">amunet.plan.audit.prov</field>
+        <field name="arch" type="xml">
+            <search string="Buscar plan de auditoría">
+                <field name="clave"/>
+                <field name="proveedor"/>
+                <field name="lider_id"/>
+                <separator/>
+                <filter string="Borrador" name="borrador" domain="[('state','=','borrador')]"/>
+                <filter string="Vigente"  name="vigente"  domain="[('state','=','vigente')]"/>
+                <filter string="Cerrado"  name="cerrado"  domain="[('state','=','cerrado')]"/>
+                <separator/>
+                <filter string="Por proveedor" name="grp_proveedor" context="{'group_by':'proveedor'}"/>
+                <filter string="Por tipo"      name="grp_tipo"      context="{'group_by':'tipo'}"/>
+                <filter string="Por estado"    name="grp_state"     context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Acción ─────────────────────────────────────────────────── -->
+    <record id="action_plan_audit_prov" model="ir.actions.act_window">
+        <field name="name">Planes de Auditoría de Proveedores</field>
+        <field name="res_model">amunet.plan.audit.prov</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_plan_audit_prov_search"/>
+        <field name="context">{'search_default_vigente': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aún no hay planes de auditoría de proveedores
+            </p>
+            <p>
+                Crea el primer plan usando el botón <b>Nuevo</b>.
+            </p>
+        </field>
+    </record>
+
+</odoo>

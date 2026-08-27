@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Lista ──────────────────────────────────────────────────── -->
+    <record id="view_apertura_cierre_prov_list" model="ir.ui.view">
+        <field name="name">amunet.apertura.cierre.prov.list</field>
+        <field name="model">amunet.apertura.cierre.prov</field>
+        <field name="arch" type="xml">
+            <list string="Registros de Apertura y Cierre" decoration-success="state=='vigente'"
+                  decoration-muted="state=='cerrado'">
+                <field name="clave"/>
+                <field name="proveedor"/>
+                <field name="tipo"/>
+                <field name="fecha_auditoria_inicio"/>
+                <field name="fecha_auditoria_fin"/>
+                <field name="lider_id"/>
+                <field name="state" widget="badge"
+                       decoration-success="state=='vigente'"
+                       decoration-warning="state=='borrador'"
+                       decoration-muted="state=='cerrado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Formulario ─────────────────────────────────────────────── -->
+    <record id="view_apertura_cierre_prov_form" model="ir.ui.view">
+        <field name="name">amunet.apertura.cierre.prov.form</field>
+        <field name="model">amunet.apertura.cierre.prov</field>
+        <field name="arch" type="xml">
+            <form string="Registro de Apertura y Cierre — Auditoría de Proveedores">
+                <header>
+                    <button name="action_firmar_lider" string="Firmar (Líder)"
+                            type="object" class="btn-primary"
+                            invisible="elaboro_id"/>
+                    <button name="action_firmar_compras" string="Firmar (Compras)"
+                            type="object" class="btn-primary"
+                            invisible="not elaboro_id or firma_compras_id"/>
+                    <button name="action_cerrar" string="Cerrar registro"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'vigente'"/>
+                    <button name="action_borrador" string="Volver a borrador"
+                            type="object" class="btn-link"
+                            invisible="state == 'borrador'"
+                            groups="amunet_documentos.group_documentos_manager"/>
+                    <button name="%(amunet_apertura_cierre_prov.action_print_apertura_cierre)d"
+                            type="action" string="Imprimir" class="btn-secondary" icon="fa-print"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,vigente,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title mb-3">
+                        <h4 class="text-muted mb-0">F-DC-005-017</h4>
+                        <h1><field name="clave" readonly="1"/></h1>
+                    </div>
+
+                    <!-- 1. Identificación -->
+                    <group string="1. Identificación de la auditoría" col="4">
+                        <field name="plan_id"/>
+                        <field name="proveedor"/>
+                        <field name="tipo"/>
+                        <field name="fecha_auditoria_inicio"/>
+                        <field name="fecha_auditoria_fin"/>
+                        <field name="lider_id"/>
+                        <field name="auditor_ids" widget="many2many_tags"/>
+                        <field name="acompanante" colspan="2"/>
+                    </group>
+
+                    <notebook>
+
+                        <!-- 2. Reunión de apertura -->
+                        <page string="2. Reunión de apertura">
+                            <group col="4">
+                                <field name="ap_fecha"/>
+                                <field name="ap_hora_inicio"/>
+                                <field name="ap_hora_fin"/>
+                                <field name="ap_lugar"/>
+                            </group>
+
+                            <separator string="2.1 Lista de asistencia"/>
+                            <field name="ap_asistente_ids">
+                                <list editable="bottom">
+                                    <field name="no"/>
+                                    <field name="nombre"/>
+                                    <field name="cargo_rol"/>
+                                    <field name="empresa"/>
+                                </list>
+                            </field>
+
+                            <separator string="2.2 Agenda y temas tratados"/>
+                            <group col="2">
+                                <field name="ap_presentacion_equipo"/>
+                                <field name="ap_confirm_objetivo"/>
+                                <field name="ap_confirm_alcance"/>
+                                <field name="ap_confirm_criterios"/>
+                                <field name="ap_cronograma"/>
+                                <field name="ap_disponibilidad"/>
+                                <field name="ap_canales_comunicacion"/>
+                                <field name="ap_acuerdo_cierre"/>
+                                <field name="ap_acuerdo_cierre_detalle" colspan="2"
+                                       invisible="not ap_acuerdo_cierre"/>
+                                <field name="ap_otros"/>
+                                <field name="ap_otros_texto" invisible="not ap_otros"/>
+                            </group>
+
+                            <separator string="2.3 Observaciones / comentarios del proveedor"/>
+                            <group>
+                                <field name="ap_observaciones" nolabel="1" widget="text" rows="4"/>
+                            </group>
+
+                            <separator string="2.4 Compromisos acordados en apertura"/>
+                            <field name="ap_compromiso_ids">
+                                <list editable="bottom">
+                                    <field name="no"/>
+                                    <field name="compromiso"/>
+                                    <field name="responsable"/>
+                                    <field name="fecha_limite"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- 3. Reunión de cierre -->
+                        <page string="3. Reunión de cierre">
+                            <group col="4">
+                                <field name="ci_fecha"/>
+                                <field name="ci_hora_inicio"/>
+                                <field name="ci_hora_fin"/>
+                                <field name="ci_lugar"/>
+                            </group>
+
+                            <separator string="3.1 Lista de asistencia"/>
+                            <field name="ci_asistente_ids">
+                                <list editable="bottom">
+                                    <field name="no"/>
+                                    <field name="nombre"/>
+                                    <field name="cargo_rol"/>
+                                    <field name="empresa"/>
+                                </list>
+                            </field>
+
+                            <separator string="3.2 Agenda y temas tratados en cierre"/>
+                            <group col="2">
+                                <field name="ci_agradecimiento"/>
+                                <field name="ci_resumen_auditoria"/>
+                                <field name="ci_recordatorio_hallazgos"/>
+                                <field name="ci_plazo_informe"/>
+                                <field name="ci_plazo_pac"/>
+                                <field name="ci_fecha_seguimiento"/>
+                                <field name="ci_preguntas"/>
+                                <field name="ci_otros"/>
+                                <field name="ci_otros_texto" invisible="not ci_otros"/>
+                            </group>
+
+                            <separator string="3.3 Resumen de la auditoría"/>
+                            <group col="2">
+                                <field name="ci_areas_auditadas" widget="text" rows="3"/>
+                                <field name="ci_documentacion_revisada" widget="text" rows="3"/>
+                                <field name="ci_fortalezas" widget="text" rows="3"/>
+                                <field name="ci_oportunidades" widget="text" rows="3"/>
+                                <field name="ci_nc_total"/>
+                            </group>
+
+                            <separator string="3.4 Plazos acordados en cierre"/>
+                            <group col="2">
+                                <field name="plazo_informe_preliminar"/>
+                                <field name="plazo_revision_prov"/>
+                                <field name="plazo_informe_final"/>
+                                <field name="plazo_pac"/>
+                                <field name="plazo_verificacion" colspan="2"/>
+                            </group>
+
+                            <separator string="3.5 Observaciones / comentarios del proveedor"/>
+                            <group>
+                                <field name="ci_observaciones" nolabel="1" widget="text" rows="4"/>
+                            </group>
+
+                            <separator string="3.6 Compromisos acordados en cierre"/>
+                            <field name="ci_compromiso_ids">
+                                <list editable="bottom">
+                                    <field name="no"/>
+                                    <field name="compromiso"/>
+                                    <field name="responsable"/>
+                                    <field name="fecha_limite"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- 4. Aprobaciones -->
+                        <page string="4. Aprobaciones">
+                            <group string="Auditor Líder" col="2">
+                                <field name="elaboro_id" readonly="1"/>
+                                <field name="fecha_elaboro" readonly="1"/>
+                            </group>
+                            <group string="Responsable de Calidad del proveedor" col="2">
+                                <field name="resp_calidad_prov"/>
+                            </group>
+                            <group string="Responsable de Compras (fabricante)" col="2">
+                                <field name="firma_compras_id" readonly="1"/>
+                                <field name="fecha_firma_compras" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <!-- 5. Distribución -->
+                        <page string="5. Distribución">
+                            <group col="2">
+                                <field name="dist_archivo"/>
+                                <field name="dist_calidad"/>
+                                <field name="dist_compras"/>
+                                <field name="dist_proveedor"/>
+                                <field name="dist_otros" colspan="2"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Búsqueda ───────────────────────────────────────────────── -->
+    <record id="view_apertura_cierre_prov_search" model="ir.ui.view">
+        <field name="name">amunet.apertura.cierre.prov.search</field>
+        <field name="model">amunet.apertura.cierre.prov</field>
+        <field name="arch" type="xml">
+            <search string="Buscar registro">
+                <field name="clave"/>
+                <field name="proveedor"/>
+                <field name="lider_id"/>
+                <separator/>
+                <filter string="Borrador" name="borrador" domain="[('state','=','borrador')]"/>
+                <filter string="Vigente"  name="vigente"  domain="[('state','=','vigente')]"/>
+                <filter string="Cerrado"  name="cerrado"  domain="[('state','=','cerrado')]"/>
+                <separator/>
+                <filter string="Por proveedor" name="grp_proveedor" context="{'group_by':'proveedor'}"/>
+                <filter string="Por estado"    name="grp_state"     context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Acción ─────────────────────────────────────────────────── -->
+    <record id="action_apertura_cierre_prov" model="ir.actions.act_window">
+        <field name="name">Registros de Apertura y Cierre</field>
+        <field name="res_model">amunet.apertura.cierre.prov</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_apertura_cierre_prov_search"/>
+        <field name="context">{'search_default_vigente': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aún no hay registros de apertura y cierre
+            </p>
+            <p>Crea el primero con el botón <b>Nuevo</b>.</p>
+        </field>
+    </record>
+
+</odoo>

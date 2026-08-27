@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_lista_verificacion" model="ir.actions.report">
+        <field name="name">Lista de Verificación de Auditoría</field>
+        <field name="model">amunet.lista.verificacion</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_lista_verificacion.report_lista_verificacion</field>
+        <field name="report_file">amunet_lista_verificacion.report_lista_verificacion</field>
+        <field name="binding_model_id" ref="model_amunet_lista_verificacion"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <template id="report_lista_verificacion">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 class="text-center">Lista de Verificación de Auditoría</h2>
+                        <hr/>
+
+                        <!-- Datos generales -->
+                        <table class="table table-sm table-bordered" style="font-size:12px">
+                            <tbody>
+                                <tr>
+                                    <td style="width:25%; background:#f5f5f5"><strong>Clave</strong></td>
+                                    <td><t t-field="doc.clave"/></td>
+                                    <td style="width:25%; background:#f5f5f5"><strong>Plan de auditoría</strong></td>
+                                    <td><t t-if="doc.plan_id"><t t-esc="doc.plan_id.clave"/></t></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Fecha</strong></td>
+                                    <td><t t-field="doc.fecha"/></td>
+                                    <td style="background:#f5f5f5"><strong>Área / Proceso</strong></td>
+                                    <td><t t-field="doc.area_proceso"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Auditor Líder</strong></td>
+                                    <td><t t-if="doc.lider_id"><t t-esc="doc.lider_id.name"/></t></td>
+                                    <td style="background:#f5f5f5"><strong>Supervisor del área</strong></td>
+                                    <td><t t-if="doc.supervisor_id"><t t-esc="doc.supervisor_id.name"/></t></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Macro para tabla de items -->
+                        <t t-set="col_respuesta_width" t-value="'15%'"/>
+
+                        <!-- 1. Cumplimiento Legal -->
+                        <t t-if="doc.item_legal_ids">
+                            <h4 style="margin-top:14px; color:#333;">1. Cumplimiento Legal</h4>
+                            <table class="table table-sm table-bordered" style="font-size:11px">
+                                <thead style="background:#f5f5f5">
+                                    <tr>
+                                        <th>Punto a evaluar</th>
+                                        <th style="width:15%; text-align:center;">Respuesta</th>
+                                        <th style="width:30%">Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.item_legal_ids" t-as="item">
+                                        <tr>
+                                            <td><t t-esc="item.punto"/></td>
+                                            <td style="text-align:center;">
+                                                <t t-if="item.respuesta == '2'">Sí</t>
+                                                <t t-elif="item.respuesta == '1'">Parcial</t>
+                                                <t t-elif="item.respuesta == '0'">No</t>
+                                                <t t-elif="item.respuesta == 'na'">N/A</t>
+                                                <t t-else=""/>
+                                            </td>
+                                            <td><t t-esc="item.observaciones"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- 2. Capacidad del Área -->
+                        <t t-if="doc.item_capacidad_ids">
+                            <h4 style="margin-top:14px; color:#333;">2. Capacidad del Área para Proporcionar Resultados</h4>
+                            <table class="table table-sm table-bordered" style="font-size:11px">
+                                <thead style="background:#f5f5f5">
+                                    <tr>
+                                        <th>Punto a evaluar</th>
+                                        <th style="width:15%; text-align:center;">Respuesta</th>
+                                        <th style="width:30%">Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.item_capacidad_ids" t-as="item">
+                                        <tr>
+                                            <td><t t-esc="item.punto"/></td>
+                                            <td style="text-align:center;">
+                                                <t t-if="item.respuesta == '2'">Sí</t>
+                                                <t t-elif="item.respuesta == '1'">Parcial</t>
+                                                <t t-elif="item.respuesta == '0'">No</t>
+                                                <t t-elif="item.respuesta == 'na'">N/A</t>
+                                                <t t-else=""/>
+                                            </td>
+                                            <td><t t-esc="item.observaciones"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- 3. Desempeño del Área -->
+                        <t t-if="doc.item_desempeno_ids">
+                            <h4 style="margin-top:14px; color:#333;">3. Desempeño del Área</h4>
+                            <table class="table table-sm table-bordered" style="font-size:11px">
+                                <thead style="background:#f5f5f5">
+                                    <tr>
+                                        <th>Punto a evaluar</th>
+                                        <th style="width:15%; text-align:center;">Respuesta</th>
+                                        <th style="width:30%">Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.item_desempeno_ids" t-as="item">
+                                        <tr>
+                                            <td><t t-esc="item.punto"/></td>
+                                            <td style="text-align:center;">
+                                                <t t-if="item.respuesta == '2'">Sí</t>
+                                                <t t-elif="item.respuesta == '1'">Parcial</t>
+                                                <t t-elif="item.respuesta == '0'">No</t>
+                                                <t t-elif="item.respuesta == 'na'">N/A</t>
+                                                <t t-else=""/>
+                                            </td>
+                                            <td><t t-esc="item.observaciones"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- 4. Personal -->
+                        <t t-if="doc.item_personal_ids">
+                            <h4 style="margin-top:14px; color:#333;">4. Personal</h4>
+                            <table class="table table-sm table-bordered" style="font-size:11px">
+                                <thead style="background:#f5f5f5">
+                                    <tr>
+                                        <th>Punto a evaluar</th>
+                                        <th style="width:15%; text-align:center;">Respuesta</th>
+                                        <th style="width:30%">Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.item_personal_ids" t-as="item">
+                                        <tr>
+                                            <td><t t-esc="item.punto"/></td>
+                                            <td style="text-align:center;">
+                                                <t t-if="item.respuesta == '2'">Sí</t>
+                                                <t t-elif="item.respuesta == '1'">Parcial</t>
+                                                <t t-elif="item.respuesta == '0'">No</t>
+                                                <t t-elif="item.respuesta == 'na'">N/A</t>
+                                                <t t-else=""/>
+                                            </td>
+                                            <td><t t-esc="item.observaciones"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- Observaciones generales y resultado -->
+                        <t t-if="doc.observaciones_generales">
+                            <h4 style="margin-top:14px; color:#333;">Observaciones Generales</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                                <t t-field="doc.observaciones_generales"/>
+                            </p>
+                        </t>
+
+                        <t t-if="doc.resultado">
+                            <h4 style="margin-top:14px; color:#333;">Resultado de la Auditoría</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                                <t t-field="doc.resultado"/>
+                            </p>
+                        </t>
+
+                        <!-- Firmas -->
+                        <div class="row mt-4" style="margin-top:40px;">
+                            <div class="col-6 text-center">
+                                <div style="border-top:1px solid #000; margin-top:50px; padding-top:6px;">
+                                    <strong>Supervisor del Área Auditada</strong><br/>
+                                    <t t-if="doc.firma_supervisor_id">
+                                        <t t-esc="doc.firma_supervisor_id.name"/>
+                                        <t t-if="doc.fecha_firma_supervisor"><br/><small><t t-field="doc.fecha_firma_supervisor"/></small></t>
+                                    </t>
+                                </div>
+                            </div>
+                            <div class="col-6 text-center">
+                                <div style="border-top:1px solid #000; margin-top:50px; padding-top:6px;">
+                                    <strong>Auditor (Amunet)</strong><br/>
+                                    <t t-if="doc.firma_auditor_id">
+                                        <t t-esc="doc.firma_auditor_id.name"/>
+                                        <t t-if="doc.fecha_firma_auditor"><br/><small><t t-field="doc.fecha_firma_auditor"/></small></t>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nota de pie -->
+                        <p style="font-size:10px; color:#888; margin-top:20px; text-align:center;">
+                            Documento generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/> — Copia no controlada
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>
