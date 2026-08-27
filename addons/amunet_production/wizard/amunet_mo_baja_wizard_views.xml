@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_mo_baja_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.mo.baja.wizard.form</field>
+        <field name="model">amunet.mo.baja.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Dar de baja lote no conforme">
+                <div class="alert alert-danger" role="alert">
+                    <strong>Baja de lote NO CONFORME.</strong> El producto terminado se segregará a
+                    <b>APT/Rechazo</b> (no vendible) y la orden se cerrará. Queda registrado con tu firma.
+                </div>
+                <group>
+                    <field name="production_id" invisible="1"/>
+                    <field name="motivo" placeholder="Motivo de la baja del lote no conforme (obligatorio)"/>
+                    <field name="password" password="True" string="PIN / Contraseña"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Dar de baja y cerrar" class="btn-danger"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

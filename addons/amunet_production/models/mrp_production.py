@@ -1881,16 +1881,17 @@ class MrpProduction(models.Model):
             raise UserError(_('La orden debe estar en progreso o por cerrar para dar de baja el lote.'))
         if not self.env.user.has_group('amunet_quality.group_quality_sanitary'):
             raise UserError(_('Solo el Responsable Sanitario puede dar de baja un lote no conforme.'))
-        if not (self.amunet_baja_motivo or '').strip():
-            raise UserError(_('Captura el MOTIVO de la baja antes de continuar (queda en el historial ISO 13485).'))
         if not self._amunet_rechazo_location():
             raise UserError(_('No existe la ubicación "APT/Rechazo" para segregar el lote no conforme.'))
-        return self.env['amunet.generic.signature.wizard'].open_for(
-            self, '_amunet_baja_rechazada_firma',
-            _('Baja de lote no conforme'),
-            _('Firma del Responsable Sanitario que da de BAJA como NO CONFORME el '
-              'lote de %(mo)s. Motivo: %(motivo)s') % {
-                'mo': self.name, 'motivo': self.amunet_baja_motivo})
+        # Popup emergente: pide motivo + firma (PIN) en un solo dialogo.
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Dar de baja lote no conforme'),
+            'res_model': 'amunet.mo.baja.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_production_id': self.id},
+        }
 
     def _amunet_baja_rechazada_firma(self):
         """Ejecuta la baja tras la firma del RS: segrega el terminado a
