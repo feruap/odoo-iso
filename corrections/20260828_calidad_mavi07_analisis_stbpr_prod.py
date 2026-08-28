@@ -51,7 +51,7 @@ print(f"Detalles duplicados eliminados: {env.cr.rowcount}")
 env.cr.execute("""
     UPDATE amunet_quality_test_line_detail td
     SET evaluation_type='mavi_07_ternary',
-        acceptance_criteria='#5 y/o #1-4 (patrón PRB-01)',
+        acceptance_criteria='#5',
         sequence=20,
         specification_id=628,
         specification_config_id=(
@@ -76,7 +76,7 @@ print(f"'Muestra negativa' corregidas: {env.cr.rowcount}")
 env.cr.execute("""
     UPDATE amunet_quality_test_line_detail td
     SET evaluation_type='mavi_07_ternary',
-        acceptance_criteria='#1-4 y/o #5 (patrón PRB-01)',
+        acceptance_criteria='#1, #2, #3 y #4',
         sequence=10,
         specification_id=629,
         specification_config_id=(
@@ -106,7 +106,7 @@ env.cr.execute("""
         (SELECT sc.id FROM amunet_quality_parameter_specification_config sc
          WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
            AND sc.specification_id=629 AND sc.active=true LIMIT 1),
-        'mavi_07_ternary', '#1-4 y/o #5 (patrón PRB-01)', 10,
+        'mavi_07_ternary', '#1, #2, #3 y #4', 10,
         2, 2, NOW(), NOW()
     FROM amunet_quality_test_line tl
     JOIN amunet_quality_check qc ON qc.id=tl.check_id
@@ -121,6 +121,48 @@ env.cr.execute("""
       )
 """)
 print(f"'Muestra positiva' insertadas: {env.cr.rowcount}")
+
+# ── 6. Corregir acceptance_criteria en spec configs activas ─────────────────────
+env.cr.execute("""
+    UPDATE amunet_quality_parameter_specification_config sc
+    SET acceptance_criteria = CASE sc.specification_name
+          WHEN 'Muestra positiva' THEN '#1, #2, #3 y #4'
+          WHEN 'Muestra negativa' THEN '#5'
+        END,
+        write_date = NOW()
+    FROM amunet_quality_parameter_product_rel r
+    JOIN product_template pt ON r.product_tmpl_id=pt.id
+    WHERE sc.product_parameter_rel_id=r.id
+      AND r.parameter_code='MAVI-07'
+      AND pt.default_code IN ('STBPR01','STBPR02','STBPR03','STBPR04')
+      AND sc.active=true
+      AND sc.specification_name IN ('Muestra positiva','Muestra negativa')
+""")
+print(f"Spec configs MAVI-07 acceptance_criteria corregidas: {env.cr.rowcount}")
+
+# ── 7. Configurar ANEXO BUFFER en análisis abiertos ─────────────────────────────
+env.cr.execute("""
+    UPDATE amunet_quality_check
+    SET tiene_anexos      = true,
+        is_material_con_anexo = true,
+        anexo_titulo      = 'ANEXO BUFFER',
+        anexo_col1_header = 'Partículas suspendidas',
+        anexo_col2_header = 'Liberación de conjugado',
+        anexo_col3_header = 'Migración de conjugado',
+        anexo_col4_header = 'Desempeño',
+        anexo_col5_header = '',
+        anexo_col6_header = '',
+        anexo_col7_header = '',
+        write_date = NOW()
+    WHERE id IN (
+        SELECT qc.id FROM amunet_quality_check qc
+        JOIN product_product pp ON pp.id=qc.product_id
+        JOIN product_template pt ON pt.id=pp.product_tmpl_id
+        WHERE pt.default_code IN ('STBPR01','STBPR02','STBPR03','STBPR04')
+          AND qc.state NOT IN ('done','cancel')
+    )
+""")
+print(f"ANEXO BUFFER configurado en análisis abiertos: {env.cr.rowcount}")
 
 # ── Verificación final ────────────────────────────────────────────────────────────
 env.cr.execute("""
