@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Semaforo en la lista de lotes que ya usa almacen -->
+    <record id="view_stock_lot_list_caducidad" model="ir.ui.view">
+        <field name="name">stock.lot.list.caducidad</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_tree"/>
+        <field name="arch" type="xml">
+            <list position="attributes">
+                <attribute name="decoration-danger">amunet_condicion_caducidad in ('vencido','retirar')</attribute>
+                <attribute name="decoration-warning">amunet_condicion_caducidad == 'cortesia'</attribute>
+                <attribute name="decoration-info">amunet_condicion_caducidad == 'corta'</attribute>
+            </list>
+            <field name="name" position="after">
+                <field name="amunet_condicion_caducidad" widget="badge"
+                       decoration-danger="amunet_condicion_caducidad in ('vencido','retirar')"
+                       decoration-warning="amunet_condicion_caducidad == 'cortesia'"
+                       decoration-info="amunet_condicion_caducidad == 'corta'"
+                       decoration-success="amunet_condicion_caducidad == 'normal'"
+                       optional="show"/>
+                <field name="amunet_dias_caducidad" optional="show"/>
+                <field name="amunet_ubicacion_condicion" optional="show"/>
+                <field name="amunet_requiere_movimiento" optional="show" widget="boolean_toggle" readonly="1"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Y en la ficha del lote -->
+    <record id="view_stock_lot_form_caducidad" model="ir.ui.view">
+        <field name="name">stock.lot.form.caducidad</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <field name="expiration_date" position="after">
+                <field name="amunet_condicion_caducidad" widget="badge"
+                       decoration-danger="amunet_condicion_caducidad in ('vencido','retirar')"
+                       decoration-warning="amunet_condicion_caducidad == 'cortesia'"
+                       decoration-info="amunet_condicion_caducidad == 'corta'"
+                       decoration-success="amunet_condicion_caducidad == 'normal'"/>
+                <field name="amunet_dias_caducidad"/>
+                <field name="amunet_caducidad_revisada"/>
+                <field name="amunet_ubicacion_condicion"/>
+                <field name="amunet_requiere_movimiento"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Filtros para trabajar por condicion -->
+    <record id="view_stock_lot_search_caducidad" model="ir.ui.view">
+        <field name="name">stock.lot.search.caducidad</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.search_product_lot_filter"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <filter name="amunet_f_corta" string="Caducidad corta (4 a 6 meses)"
+                        domain="[('amunet_condicion_caducidad','=','corta')]"/>
+                <filter name="amunet_f_cortesia" string="Cortesia (2 a 4 meses)"
+                        domain="[('amunet_condicion_caducidad','=','cortesia')]"/>
+                <filter name="amunet_f_retirar" string="Retirar (menos de 2 meses)"
+                        domain="[('amunet_condicion_caducidad','=','retirar')]"/>
+                <filter name="amunet_f_vencido" string="Vencidos"
+                        domain="[('amunet_condicion_caducidad','=','vencido')]"/>
+                <separator/>
+                <filter name="amunet_f_por_mover" string="Por mover a promociones"
+                        domain="[('amunet_condicion_caducidad','in',('corta','cortesia'))]"/>
+                <filter name="amunet_f_debe_moverse" string="Pendientes de mover de anaquel"
+                        domain="[('amunet_requiere_movimiento','=',True)]"/>
+                <separator/>
+                <filter name="amunet_f_pt" string="Solo producto terminado"
+                        domain="[('product_id.categ_id.complete_name','=like','Producto terminado%')]"/>
+                <separator/>
+                <filter name="amunet_g_condicion" string="Condicion por caducidad"
+                        context="{'group_by': 'amunet_condicion_caducidad'}"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Pantalla de trabajo para almacen -->
+    <record id="action_lotes_por_mover" model="ir.actions.act_window">
+        <field name="name">Caducidad: lotes por mover</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('amunet_requiere_movimiento','=',True)]</field>
+        <field name="context">{'search_default_amunet_g_condicion': 1, 'search_default_amunet_f_pt': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Todo esta en su anaquel</p>
+            <p>Aqui aparecen los lotes cuya fecha ya los cambio de condicion pero que
+               siguen en el anaquel anterior. Muevelos y confirma el traslado en Odoo:
+               <b>caducidad corta</b> se vende con descuento, <b>cortesia</b> a precio
+               simbolico, y lo marcado para <b>retirar</b> sale de la venta.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_lotes_por_mover"
+              name="Caducidad: lotes por mover"
+              parent="stock.menu_stock_inventory_control"
+              action="action_lotes_por_mover"
+              sequence="25"/>
+
+</odoo>
