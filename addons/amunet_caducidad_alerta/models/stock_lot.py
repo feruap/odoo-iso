@@ -16,6 +16,13 @@ DEFAULTS = {UMBRAL_CORTA: 6, UMBRAL_CORTESIA: 4, UMBRAL_RETIRO: 2}
 # baja, y eso lo decide produccion, no almacen de producto terminado.
 CATEGORIA_PT = 'Producto terminado'
 
+# Las HOJAS MAESTRAS (semiprocesado) tienen su propio anaquel "Caducidad corta"
+# bajo AMP/Existencias. Como no se producen pruebas con hojas de <6 meses de vida,
+# a los 6 meses o menos se apartan ahi (NO se dan de baja: se siguen usando).
+# Es un solo anaquel (no las 3 gradas de PT).
+CATEGORIA_HOJA = 'Semiprocesado / Hoja maestra'
+XMLID_CORTA_HOJAS = 'amunet_caducidad_alerta.location_caducidad_corta_hojas'
+
 
 class StockLot(models.Model):
     _inherit = 'stock.lot'
@@ -115,16 +122,21 @@ class StockLot(models.Model):
         """En que anaquel esta el lote hoy, segun donde tiene existencia."""
         self.ensure_one()
         corta, cortesia, retenidos = self._amunet_ubicaciones_promocion()
+        corta_hojas = self._amunet_ubicacion_corta_hojas()
         quants = self.quant_ids.filtered(
             lambda q: q.location_id.usage == 'internal' and q.quantity > 0)
         if not quants:
             return 'sin_stock'
         ubicaciones = quants.mapped('location_id')
+        especiales = corta | cortesia | retenidos
+        if corta_hojas:
+            especiales |= corta_hojas
         # Se reporta el anaquel "pendiente" primero: si algo sigue en el anaquel
         # normal, el lote todavia tiene trabajo por hacer.
-        if any(u not in (corta | cortesia | retenidos) for u in ubicaciones):
+        if any(u not in especiales for u in ubicaciones):
             return 'normal'
-        if corta and corta in ubicaciones:
+        # El anaquel de hojas cuenta como 'corta' (unica grada de las hojas).
+        if (corta and corta in ubicaciones) or (corta_hojas and corta_hojas in ubicaciones):
             return 'corta'
         if cortesia and cortesia in ubicaciones:
             return 'cortesia'
@@ -137,9 +149,27 @@ class StockLot(models.Model):
         nombre = self.product_id.categ_id.complete_name or ''
         return nombre == CATEGORIA_PT or nombre.startswith(CATEGORIA_PT + ' /')
 
+    def _amunet_es_hoja_maestra(self):
+        """Las hojas maestras usan su propio anaquel de caducidad corta."""
+        self.ensure_one()
+        nombre = self.product_id.categ_id.complete_name or ''
+        return nombre == CATEGORIA_HOJA or nombre.startswith(CATEGORIA_HOJA + ' /')
+
+    def _amunet_ubicacion_corta_hojas(self):
+        """Anaquel 'Caducidad corta' de las hojas (bajo AMP/Existencias)."""
+        return self.env.ref(XMLID_CORTA_HOJAS, raise_if_not_found=False)
+
     def _amunet_destino_esperado(self):
         """El anaquel donde deberia estar este lote hoy. False si no aplica."""
         self.ensure_one()
+        # HOJAS MAESTRAS: una sola grada. A 6 meses o menos (o vencidas) -> anaquel
+        # 'Caducidad corta'; si aun tienen vida normal -> su Existencias (AMP).
+        if self._amunet_es_hoja_maestra():
+            corta_hojas = self._amunet_ubicacion_corta_hojas()
+            if self.amunet_condicion_caducidad in ('corta', 'cortesia', 'retirar', 'vencido'):
+                return corta_hojas
+            almacen = self.env['stock.warehouse'].search([('code', '=', 'AMP')], limit=1)
+            return almacen.lot_stock_id if almacen else False
         if not self._amunet_es_producto_terminado():
             return False
         corta, cortesia, retenidos = self._amunet_ubicaciones_promocion()
@@ -196,13 +226,22 @@ class StockLot(models.Model):
             # Debe moverse cuando el calendario ya lo cambio de condicion pero
             # la mercancia sigue donde estaba. 'retirar' y 'vencido' tambien
             # piden movimiento: salen de la venta.
-            esperado = {
-                'corta': 'corta',
-                'cortesia': 'cortesia',
-                'retirar': 'retenido',
-                'vencido': 'retenido',
-            }.get(condicion, 'normal')
-            if donde == 'sin_stock' or not lote._amunet_es_producto_terminado():
+            if lote._amunet_es_hoja_maestra():
+                # Hojas: una sola grada. A 6 meses o menos (o vencidas) su lugar
+                # es el anaquel 'Caducidad corta'; si no, su Existencias (normal).
+                esperado = ('corta'
+                            if condicion in ('corta', 'cortesia', 'retirar', 'vencido')
+                            else 'normal')
+            else:
+                esperado = {
+                    'corta': 'corta',
+                    'cortesia': 'cortesia',
+                    'retirar': 'retenido',
+                    'vencido': 'retenido',
+                }.get(condicion, 'normal')
+            if donde == 'sin_stock' or not (
+                    lote._amunet_es_producto_terminado()
+                    or lote._amunet_es_hoja_maestra()):
                 mover = False
             else:
                 mover = (donde != esperado)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Semaforo de caducidad en lotes',
-    'version': '19.0.3.0.0',
+    'version': '19.0.3.1.0',
     'summary': 'Marca cada lote como normal, caducidad corta, cortesia o retirar, '
                'para que almacen sepa que mover a promociones y cuando.',
     'description': """Semaforo de caducidad para el almacen de producto terminado.
