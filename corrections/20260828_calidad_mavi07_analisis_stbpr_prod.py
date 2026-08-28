@@ -1,0 +1,151 @@
+"""
+Corrección URGENTE: MAVI-07 en análisis abiertos de STBPR01-04 en producción.
+
+Problema:
+  - Detalles de "Muestra negativa" duplicados (tipo mavi_07 + vama_multi_check)
+  - Tipo incorrecto: mavi_07 y vama_multi_check no muestran semáforo pass/fail
+  - Tipo correcto: mavi_07_ternary (igual que STBPR03 de referencia)
+  - Algunos análisis carecen de "Muestra positiva"
+  - Spec configs de STBPR02/04 con active=NULL que impiden cerrar análisis
+
+Pasos:
+  1. Activar spec configs inactivas (STBPR02 Positiva, STBPR04 ambas)
+  2. Eliminar "Muestra negativa" vama_multi_check duplicada donde ya existe mavi_07
+  3. Corregir todos los "Muestra negativa" → mavi_07_ternary + criterio correcto
+  4. Corregir todos los "Muestra positiva" → mavi_07_ternary + criterio correcto
+  5. Insertar "Muestra positiva" donde falta (análisis 468, 469, 470)
+
+Confirmado por Diana Flores, 2026-08-28.
+Idempotente — seguro de correr más de una vez.
+"""
+
+# ── 1. Activar spec configs inactivas ────────────────────────────────────────────
+env.cr.execute("""
+    UPDATE amunet_quality_parameter_specification_config
+    SET active=true, write_date=NOW()
+    WHERE id IN (80778, 80810, 80811) AND (active IS NULL OR active=false)
+""")
+env.cr.execute("SELECT id, active FROM amunet_quality_parameter_specification_config WHERE id IN (80778,80810,80811)")
+print("Spec configs activadas:", env.cr.fetchall())
+
+# ── 2. Eliminar "Muestra negativa" vama_multi_check duplicada ────────────────────
+env.cr.execute("""
+    DELETE FROM amunet_quality_test_line_detail
+    WHERE id IN (
+        SELECT td.id
+        FROM amunet_quality_test_line_detail td
+        JOIN amunet_quality_test_line tl ON tl.id=td.test_line_id
+        JOIN amunet_quality_check_parameter p ON p.id=tl.parameter_id AND p.code='MAVI-07'
+        JOIN amunet_quality_check qc ON qc.id=tl.check_id
+        JOIN product_product pp ON pp.id=qc.product_id
+        JOIN product_template pt ON pt.id=pp.product_tmpl_id
+        WHERE td.name='Muestra negativa'
+          AND td.evaluation_type='vama_multi_check'
+          AND pt.default_code IN ('STBPR01','STBPR02','STBPR03','STBPR04')
+          AND qc.state NOT IN ('done','cancel')
+          AND EXISTS (
+              SELECT 1 FROM amunet_quality_test_line_detail td2
+              WHERE td2.test_line_id=td.test_line_id
+                AND td2.name='Muestra negativa'
+                AND td2.evaluation_type='mavi_07'
+          )
+    )
+""")
+print(f"Detalles duplicados eliminados: {env.cr.rowcount}")
+
+# ── 3. Corregir "Muestra negativa" → mavi_07_ternary ────────────────────────────
+env.cr.execute("""
+    UPDATE amunet_quality_test_line_detail td
+    SET evaluation_type='mavi_07_ternary',
+        acceptance_criteria='#5 y/o #1-4 (patrón PRB-01)',
+        sequence=20,
+        specification_id=628,
+        specification_config_id=(
+            SELECT sc.id FROM amunet_quality_parameter_specification_config sc
+            WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
+              AND sc.specification_id=628 LIMIT 1
+        ),
+        write_date=NOW()
+    FROM amunet_quality_test_line tl
+    JOIN amunet_quality_check qc ON qc.id=tl.check_id
+    JOIN amunet_quality_check_parameter p ON p.id=tl.parameter_id AND p.code='MAVI-07'
+    JOIN product_product pp ON pp.id=qc.product_id
+    JOIN product_template pt ON pt.id=pp.product_tmpl_id
+    WHERE td.test_line_id=tl.id
+      AND td.name='Muestra negativa'
+      AND pt.default_code IN ('STBPR01','STBPR02','STBPR03','STBPR04')
+      AND qc.state NOT IN ('done','cancel')
+""")
+print(f"'Muestra negativa' corregidas: {env.cr.rowcount}")
+
+# ── 4. Corregir "Muestra positiva" → mavi_07_ternary ────────────────────────────
+env.cr.execute("""
+    UPDATE amunet_quality_test_line_detail td
+    SET evaluation_type='mavi_07_ternary',
+        acceptance_criteria='#1-4 y/o #5 (patrón PRB-01)',
+        sequence=10,
+        specification_id=629,
+        specification_config_id=(
+            SELECT sc.id FROM amunet_quality_parameter_specification_config sc
+            WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
+              AND sc.specification_id=629 LIMIT 1
+        ),
+        write_date=NOW()
+    FROM amunet_quality_test_line tl
+    JOIN amunet_quality_check qc ON qc.id=tl.check_id
+    JOIN amunet_quality_check_parameter p ON p.id=tl.parameter_id AND p.code='MAVI-07'
+    JOIN product_product pp ON pp.id=qc.product_id
+    JOIN product_template pt ON pt.id=pp.product_tmpl_id
+    WHERE td.test_line_id=tl.id
+      AND td.name='Muestra positiva'
+      AND pt.default_code IN ('STBPR01','STBPR02','STBPR03','STBPR04')
+      AND qc.state NOT IN ('done','cancel')
+""")
+print(f"'Muestra positiva' corregidas: {env.cr.rowcount}")
+
+# ── 5. Insertar "Muestra positiva" donde falta ───────────────────────────────────
+env.cr.execute("""
+    INSERT INTO amunet_quality_test_line_detail
+      (test_line_id, check_id, name, specification_id, specification_config_id,
+       evaluation_type, acceptance_criteria, sequence, create_uid, write_uid, create_date, write_date)
+    SELECT tl.id, tl.check_id, 'Muestra positiva', 629,
+        (SELECT sc.id FROM amunet_quality_parameter_specification_config sc
+         WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
+           AND sc.specification_id=629 LIMIT 1),
+        'mavi_07_ternary', '#1-4 y/o #5 (patrón PRB-01)', 10,
+        2, 2, NOW(), NOW()
+    FROM amunet_quality_test_line tl
+    JOIN amunet_quality_check qc ON qc.id=tl.check_id
+    JOIN amunet_quality_check_parameter p ON p.id=tl.parameter_id AND p.code='MAVI-07'
+    JOIN product_product pp ON pp.id=qc.product_id
+    JOIN product_template pt ON pt.id=pp.product_tmpl_id
+    WHERE pt.default_code IN ('STBPR01','STBPR02','STBPR03','STBPR04')
+      AND qc.state NOT IN ('done','cancel')
+      AND NOT EXISTS (
+          SELECT 1 FROM amunet_quality_test_line_detail td2
+          WHERE td2.test_line_id=tl.id AND td2.name='Muestra positiva'
+      )
+""")
+print(f"'Muestra positiva' insertadas: {env.cr.rowcount}")
+
+# ── Verificación final ────────────────────────────────────────────────────────────
+env.cr.execute("""
+    SELECT qc.id, pt.default_code, COUNT(td.id) AS detalles,
+           STRING_AGG(td.evaluation_type, ', ' ORDER BY td.sequence) AS tipos
+    FROM amunet_quality_check qc
+    JOIN product_product pp ON pp.id=qc.product_id
+    JOIN product_template pt ON pt.id=pp.product_tmpl_id
+    JOIN amunet_quality_test_line tl ON tl.check_id=qc.id
+    JOIN amunet_quality_check_parameter p ON p.id=tl.parameter_id AND p.code='MAVI-07'
+    JOIN amunet_quality_test_line_detail td ON td.test_line_id=tl.id
+    WHERE pt.default_code IN ('STBPR01','STBPR02','STBPR03','STBPR04')
+      AND qc.state NOT IN ('done','cancel')
+    GROUP BY qc.id, pt.default_code
+    ORDER BY qc.id
+""")
+rows = env.cr.fetchall()
+for r in rows:
+    ok = "✓" if r[2] == 2 and r[3] == 'mavi_07_ternary, mavi_07_ternary' else "✗"
+    print(f"  {ok} análisis {r[0]} {r[1]}: {r[2]} detalles | tipos: {r[3]}")
+
+print("\n✓ Script completado.")
