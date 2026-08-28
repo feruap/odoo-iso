@@ -50,7 +50,7 @@ print(f"Detalles duplicados eliminados: {env.cr.rowcount}")
 # ── 3. Corregir "Muestra negativa" → mavi_07_ternary ────────────────────────────
 env.cr.execute("""
     UPDATE amunet_quality_test_line_detail td
-    SET evaluation_type='mavi_07_ternary',
+    SET evaluation_type='vama_multi_check',
         acceptance_criteria='#5',
         sequence=20,
         specification_id=628,
@@ -59,6 +59,7 @@ env.cr.execute("""
             WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
               AND sc.specification_id=628 AND sc.active=true LIMIT 1
         ),
+        mavi07_observed_result=NULL,
         write_date=NOW()
     FROM amunet_quality_test_line tl
     JOIN amunet_quality_check qc ON qc.id=tl.check_id
@@ -75,7 +76,7 @@ print(f"'Muestra negativa' corregidas: {env.cr.rowcount}")
 # ── 4. Corregir "Muestra positiva" → mavi_07_ternary ────────────────────────────
 env.cr.execute("""
     UPDATE amunet_quality_test_line_detail td
-    SET evaluation_type='mavi_07_ternary',
+    SET evaluation_type='vama_multi_check',
         acceptance_criteria='#1, #2, #3 y #4',
         sequence=10,
         specification_id=629,
@@ -84,6 +85,7 @@ env.cr.execute("""
             WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
               AND sc.specification_id=629 AND sc.active=true LIMIT 1
         ),
+        mavi07_observed_result=NULL,
         write_date=NOW()
     FROM amunet_quality_test_line tl
     JOIN amunet_quality_check qc ON qc.id=tl.check_id
@@ -106,7 +108,7 @@ env.cr.execute("""
         (SELECT sc.id FROM amunet_quality_parameter_specification_config sc
          WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
            AND sc.specification_id=629 AND sc.active=true LIMIT 1),
-        'mavi_07_ternary', '#1, #2, #3 y #4', 10,
+        'vama_multi_check', '#1, #2, #3 y #4', 10,
         2, 2, NOW(), NOW()
     FROM amunet_quality_test_line tl
     JOIN amunet_quality_check qc ON qc.id=tl.check_id
@@ -125,7 +127,8 @@ print(f"'Muestra positiva' insertadas: {env.cr.rowcount}")
 # ── 6. Corregir acceptance_criteria en spec configs activas ─────────────────────
 env.cr.execute("""
     UPDATE amunet_quality_parameter_specification_config sc
-    SET acceptance_criteria = CASE sc.specification_name
+    SET evaluation_type    = 'vama_multi_check',
+        acceptance_criteria = CASE sc.specification_name
           WHEN 'Muestra positiva' THEN '#1, #2, #3 y #4'
           WHEN 'Muestra negativa' THEN '#5'
         END,
