@@ -94,6 +94,15 @@
                        decoration-success="amunet_calidad_estado == 'released'"
                        column_invisible="parent.picking_type_code != 'incoming'"
                        readonly="1"/>
+                <!-- Lote de proveedor + fechas en operaciones detalladas: permite
+                     verificar la migracion de datos (ej. conversion de combos, donde
+                     el dato vive en la linea, no en el move). -->
+                <field name="factory_lot_id" string="Lote de proveedor"
+                       optional="show" readonly="1"/>
+                <field name="manufacturing_date" string="Fabricación"
+                       optional="show" readonly="1"/>
+                <field name="expiration_date" string="Caducidad"
+                       optional="show" readonly="1"/>
             </xpath>
 
         </field>
