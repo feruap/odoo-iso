@@ -10,7 +10,7 @@ reglas, mismo registro- en vez de inventar otra credencial. Si Calidad cambia
 como firma, cambia en un solo lugar.
 """
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessDenied, UserError, ValidationError
 
 
 class AmunetDevolucionFirma(models.TransientModel):
@@ -68,22 +68,69 @@ class AmunetDevolucionFirma(models.TransientModel):
                     'Las piezas que se liberan tienen que estar entre 1 y %s.'
                 ) % w.cantidad_recibida)
 
+    def _validar_firmante(self):
+        """Quien puede dictaminar una devolucion.
+
+        Mismo criterio que la liberacion final de lote, que es el analogo mas
+        cercano: poner producto otra vez a la venta lo decide el Responsable
+        Sanitario o el Manager de Calidad, no un analista. Los grupos de calidad
+        NO son jerarquicos -un Supervisor no implica Analista-, asi que hay que
+        nombrarlos uno por uno.
+        """
+        self.ensure_one()
+        permitido = (
+            self.env.user.has_group('amunet_quality.group_quality_sanitary')
+            or self.env.user.has_group('amunet_quality.group_quality_manager')
+            or self.env.user.has_group('base.group_system')
+        )
+        if not permitido:
+            self._anotar_en_bitacora(
+                'intento_no_autorizado',
+                'FALLIDA: usuario sin grupo autorizado')
+            raise AccessDenied(_(
+                'Solo Responsable Sanitario o Manager de Calidad pueden dictaminar '
+                'una devolucion.'))
+
+    def _anotar_en_bitacora(self, campo, valor, anterior=None):
+        """Deja el intento en la bitacora ISO 13485, exitoso o no.
+
+        Un intento fallido de firma tambien es un registro: bajo CFR 21 Part 11
+        lo que importa no es solo quien firmo, sino quien intento firmar.
+        """
+        self.ensure_one()
+        self.env['amunet.quality.audit.log'].sudo().create({
+            'model_name': 'amunet.devolucion',
+            'res_id': self.devolucion_id.id,
+            'res_name': self.devolucion_id.referencia,
+            'user_id': self.env.user.id,
+            'field_name': campo,
+            'field_description': _('Dictamen de calidad sobre una devolucion'),
+            'old_value': anterior or (self.devolucion_id.estado or ''),
+            'new_value': valor,
+            'justification': self.dictamen or '',
+        })
+
     def action_firmar(self):
         self.ensure_one()
-        if not self.env.user.has_group('amunet_quality.group_quality_user'):
-            raise UserError(_(
-                'Solo Calidad puede dictaminar una devolucion. Si te toca hacerlo, '
-                'pide que te den el rol.'))
+        self._validar_firmante()
 
-        # Se valida con el mismo metodo que usan los controles de calidad: acepta
-        # el PIN de firma o la contrasena del usuario, y deja su registro.
-        firma = self.env['amunet.quality.signature.wizard'].new({})
+        # Se valida con el MISMO metodo que usan los controles de calidad y la
+        # liberacion de lote: acepta el PIN de firma o la contrasena, y deja su
+        # propio registro. No se inventa otra credencial.
+        firma = self.env['amunet.quality.signature.wizard'].new({
+            'password': self.pin,
+            'signature_type': 'authorized',
+        })
         if not firma._validate_credentials(self.pin):
+            self._anotar_en_bitacora('firma_fallida', 'FALLIDA: credencial incorrecta')
             raise UserError(_('El PIN no es correcto. La devolucion no se firmo.'))
 
         devolucion = self.devolucion_id
         if self.decision == 'liberar':
             devolucion._liberar(self.cantidad_liberada, self.dictamen)
+            self._anotar_en_bitacora(
+                'liberacion', _('LIBERADA: %s piezas') % self.cantidad_liberada, 'received')
         else:
             devolucion._rechazar(self.dictamen)
+            self._anotar_en_bitacora('rechazo', _('RECHAZADA'), 'received')
         return {'type': 'ir.actions.act_window_close'}

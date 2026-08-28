@@ -96,20 +96,33 @@ class AmunetDevolucion(models.Model):
             raise UserError(_('No hay un tipo de operacion de traslado interno configurado.'))
         return tipo
 
-    def _mover(self, origen, destino, cantidad, motivo):
-        """Un traslado interno validado. Nada de ajustes silenciosos."""
+    def _mover(self, origen, destino, cantidad, motivo, por_dictamen=False):
+        """Un traslado interno validado. Nada de ajustes silenciosos.
+
+        `por_dictamen` es para los movimientos que ordena Calidad al firmar. Ahi
+        el traslado se hace con permisos del sistema, a proposito: quien decide
+        es Calidad, pero el almacen de producto terminado esta restringido por
+        amunet_warehouse_access y el Responsable Sanitario no lo tiene -ni debe
+        tenerlo, porque su trabajo no es mover cajas-.
+
+        La autorizacion no se pierde: es la firma. Queda quien la dio en el
+        origen del traslado, en el chatter y en la bitacora ISO.
+        """
         self.ensure_one()
         if cantidad <= 0:
             return self.env['stock.picking']
         if not self.lot_id:
             raise UserError(_('Falta decir de que lote es esta devolucion.'))
-        picking = self.env['stock.picking'].create({
+        quien = self.env.user
+        entorno = self.sudo() if por_dictamen else self
+        motivo = '%s - autorizo %s' % (motivo, quien.name) if por_dictamen else motivo
+        picking = entorno.env['stock.picking'].create({
             'picking_type_id': self._tipo_traslado().id,
             'location_id': origen.id,
             'location_dest_id': destino.id,
             'origin': motivo,
         })
-        movimiento = self.env['stock.move'].create({
+        movimiento = entorno.env['stock.move'].create({
             'picking_id': picking.id,
             'product_id': self.product_id.id,
             'product_uom_qty': cantidad,
@@ -207,16 +220,18 @@ class AmunetDevolucion(models.Model):
                 almacen = dev.env['stock.warehouse'].search([('code', '=', 'APT')], limit=1)
                 destino = almacen.lot_stock_id
             picking = dev._mover(dev._ubicacion_cuarentena(), destino, liberar,
-                                 _('Liberacion de la devolucion %s') % dev.referencia)
+                                 _('Liberacion de la devolucion %s') % dev.referencia,
+                                 por_dictamen=True)
 
             if desechar > 0:
                 retenidos = dev.env.ref('amunet_caducidad_alerta.location_retenidos',
                                         raise_if_not_found=False)
                 if retenidos:
                     dev._mover(dev._ubicacion_cuarentena(), retenidos, desechar,
-                               _('Rechazo parcial de la devolucion %s') % dev.referencia)
+                               _('Rechazo parcial de la devolucion %s') % dev.referencia,
+                               por_dictamen=True)
 
-            dev.write({
+            dev.sudo().write({
                 'estado': 'released',
                 'cantidad_liberada': liberar,
                 'cantidad_desechada': desechar,
@@ -242,8 +257,9 @@ class AmunetDevolucion(models.Model):
             if not retenidos:
                 raise UserError(_('Falta el anaquel de retenidos.'))
             picking = dev._mover(dev._ubicacion_cuarentena(), retenidos, dev.cantidad_recibida,
-                                 _('Rechazo de la devolucion %s') % dev.referencia)
-            dev.write({
+                                 _('Rechazo de la devolucion %s') % dev.referencia,
+                                 por_dictamen=True)
+            dev.sudo().write({
                 'estado': 'rejected',
                 'cantidad_liberada': 0,
                 'cantidad_desechada': dev.cantidad_recibida,
@@ -266,7 +282,10 @@ class AmunetDevolucion(models.Model):
     def _avisar_a_la_tienda(self, estado):
         """Le devuelve el estado a la tienda, para que los dos expedientes coincidan."""
         self.ensure_one()
-        backend = self.env['amunet.woo.backend'].search([('active', '=', True)], limit=1)
+        # Avisarle a la tienda es una accion del sistema, no un permiso de quien
+        # firma: Calidad no tiene -ni necesita- acceso a la configuracion de la
+        # tienda.
+        backend = self.env['amunet.woo.backend'].sudo().search([('active', '=', True)], limit=1)
         if not backend or not backend.bridge_secret:
             self.message_post(body=_(
                 'No se pudo avisar a la tienda: el puente no esta configurado. '
@@ -299,10 +318,10 @@ class AmunetDevolucion(models.Model):
     @api.model
     def traer_de_la_tienda(self):
         """Trae las devoluciones abiertas en la tienda que aun no estan aqui."""
-        backend = self.env['amunet.woo.backend'].search([('active', '=', True)], limit=1)
+        backend = self.env['amunet.woo.backend'].sudo().search([('active', '=', True)], limit=1)
         if not backend or not backend.bridge_secret:
             raise UserError(_('El puente con la tienda no esta configurado.'))
-        datos = backend._call_bridge('POST', 'devoluciones/pendientes', {}) or {}
+        datos = backend.sudo()._call_bridge('POST', 'devoluciones/pendientes', {}) or {}
         nuevas = self.browse()
         for fila in datos.get('devoluciones', []):
             woo_id = int(fila.get('id') or 0)
