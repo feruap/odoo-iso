@@ -105,17 +105,24 @@ class StockPicking(models.Model):
             [('name', '=', 'Conversión de combos'), ('code', '=', 'internal')],
             limit=1)
         input_loc = self._amunet_combo_input_location()
+        wh = self._amunet_combo_warehouse()
+        qc_loc = wh.wh_qc_stock_loc_id if wh else self.env['stock.location']
+        landing = input_loc | qc_loc
         for picking in self:
             # no re-disparar sobre la propia conversion
             if conv_pt and picking.picking_type_id == conv_pt:
                 continue
-            # combos que acaban de aterrizar en la ENTRADA del almacen
+            # combos que aterrizaron en la ENTRADA del almacen (ideal) o en
+            # CONTROL DE CALIDAD (por si el ruteo de 3 pasos los mando a
+            # cuarentena): en ambos casos se dispara la conversion, consumiendo
+            # el combo desde donde haya quedado.
             combo_moves = picking.move_ids.filtered(
                 lambda m: m.state == 'done'
                 and m.product_id.product_tmpl_id.es_combo_compra
-                and m.location_dest_id == input_loc)
+                and m.location_dest_id in landing)
             if combo_moves:
-                picking._amunet_create_combo_conversion(combo_moves, input_loc)
+                combo_loc = combo_moves[0].location_dest_id
+                picking._amunet_create_combo_conversion(combo_moves, combo_loc)
         return res
 
     def _amunet_create_combo_conversion(self, combo_moves, combo_loc):

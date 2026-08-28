@@ -105,6 +105,12 @@ class StockPicking(models.Model):
     @api.constrains('location_id', 'location_dest_id', 'picking_type_code')
     def _check_locations_different(self):
         for rec in self:
+            # La conversion de combos es una transformacion en sitio: el combo se
+            # consume y sus hojas se producen. Puede quedar con el mismo almacen de
+            # origen y destino (p.ej. ambos en Control de calidad, si el combo
+            # aterrizo en cuarentena). Es valido, se exime de esta validacion.
+            if rec.picking_type_id.sequence_code == 'CONV':
+                continue
             if (rec.picking_type_code == 'internal'
                     and rec.location_id
                     and rec.location_dest_id
