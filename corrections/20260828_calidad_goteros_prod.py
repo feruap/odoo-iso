@@ -104,3 +104,50 @@ env.cr.execute("""
 print("STGOT02 MAVI-17 spec config: texto corregido")
 
 print("\n✓ Script completado.")
+
+# ── 5. Activar spec MAVI-17 de STGOT02 (active=NULL → true) ─────────────────────
+env.cr.execute("""
+    UPDATE amunet_quality_parameter_specification_config sc
+    SET active = true, write_date = NOW()
+    FROM amunet_quality_parameter_product_rel r
+    JOIN product_template pt ON r.product_tmpl_id=pt.id
+    WHERE sc.product_parameter_rel_id=r.id
+      AND pt.default_code='STGOT02'
+      AND r.parameter_code='MAVI-17'
+      AND (sc.active IS NULL OR sc.active=false)
+""")
+print("STGOT02 MAVI-17 spec: activada")
+
+# ── 6. Aplicar ANEXO GOTERO a todos los análisis abiertos de goteros ─────────────
+env.cr.execute("""
+    UPDATE amunet_quality_check
+    SET tiene_anexos = true,
+        is_material_con_anexo = true,
+        anexo_titulo = 'ANEXO GOTERO',
+        anexo_col1_header = 'Determinación de aspectos',
+        anexo_col2_header = 'Punta del gotero (mm)',
+        anexo_col3_header = 'Largo del gotero (mm)',
+        anexo_col4_header = 'Volumen (µL)',
+        anexo_col5_header = '',
+        anexo_col6_header = '',
+        write_date = NOW()
+    WHERE id = ANY(%s)
+""", [CHECK_IDS])
+print("ANEXO GOTERO aplicado a todos los análisis abiertos")
+
+# ── 7. Corregir nombre y valores MAVI-17 en detalles de análisis ─────────────────
+env.cr.execute("""
+    UPDATE amunet_quality_test_line_detail td
+    SET name = 'Conteo de gotas',
+        max_value = sc.max_value,
+        min_value = sc.min_value,
+        acceptance_criteria = sc.acceptance_criteria,
+        write_date = NOW()
+    FROM amunet_quality_test_line tl
+    JOIN amunet_quality_check_parameter p ON p.id=tl.parameter_id AND p.code='MAVI-17'
+    JOIN amunet_quality_parameter_product_rel r ON r.id=tl.parameter_rel_id
+    JOIN amunet_quality_parameter_specification_config sc
+      ON sc.product_parameter_rel_id=r.id AND sc.active=true
+    WHERE td.test_line_id=tl.id AND tl.check_id = ANY(%s)
+""", [CHECK_IDS])
+print("MAVI-17 detalles corregidos: nombre y valores por gotero")
