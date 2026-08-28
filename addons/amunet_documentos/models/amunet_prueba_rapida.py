@@ -16,3 +16,4 @@ class AmunetPruebaRapida(models.Model):
     registro_sanitario    = fields.Char(string='Registro sanitario')
     fecha_emision_rs      = fields.Date(string='Fecha de emisión RS')
     fecha_vencimiento_rs  = fields.Date(string='Fecha de vencimiento RS')
+    es_lamp               = fields.Boolean(string='Es prueba LAMP/molecular', default=False)

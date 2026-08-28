@@ -818,6 +818,7 @@ class AmunetQualityCheck(models.Model):
     anexo_col5_header = fields.Char(string='Encabezado Col 5', default='')
     anexo_col6_header = fields.Char(string='Encabezado Col 6', default='')
     anexo_col7_header = fields.Char(string='Encabezado Col 7', default='')
+    anexo_col8_header = fields.Char(string='Encabezado Col 8', default='')
     # Filas de datos
     anexo_line_ids = fields.One2many(
         'amunet.quality.anexo.line',
