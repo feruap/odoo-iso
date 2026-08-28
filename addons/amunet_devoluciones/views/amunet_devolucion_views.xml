@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_devolucion_list" model="ir.ui.view">
+        <field name="name">amunet.devolucion.list</field>
+        <field name="model">amunet.devolucion</field>
+        <field name="arch" type="xml">
+            <list decoration-warning="estado == 'pending_reception'"
+                  decoration-info="estado == 'received'"
+                  decoration-muted="estado in ('released','rejected')">
+                <field name="referencia"/>
+                <field name="woo_order_id" string="Pedido"/>
+                <field name="woo_sku"/>
+                <field name="woo_producto" string="Producto"/>
+                <field name="lot_id"/>
+                <field name="condicion_al_volver" widget="badge"
+                       decoration-danger="condicion_al_volver in ('vencido','retirar')"
+                       decoration-warning="condicion_al_volver == 'cortesia'"
+                       decoration-info="condicion_al_volver == 'corta'"
+                       optional="show"/>
+                <field name="cantidad_declarada" optional="show"/>
+                <field name="cantidad_recibida"/>
+                <field name="cantidad_liberada" optional="show"/>
+                <field name="estado" widget="badge"
+                       decoration-warning="estado == 'pending_reception'"
+                       decoration-info="estado == 'received'"
+                       decoration-success="estado == 'released'"
+                       decoration-danger="estado == 'rejected'"/>
+                <field name="fecha_apertura" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_devolucion_form" model="ir.ui.view">
+        <field name="name">amunet.devolucion.form</field>
+        <field name="model">amunet.devolucion</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_recibir" type="object" string="Confirmar recepcion"
+                            class="btn-primary" invisible="estado != 'pending_reception'"
+                            groups="stock.group_stock_user"/>
+                    <button name="action_liberar" type="object" string="Liberar"
+                            class="btn-primary" invisible="estado != 'received'"
+                            confirm="El material vuelve al anaquel que le toque por su fecha. ¿Firmas la liberacion?"/>
+                    <button name="action_rechazar" type="object" string="Rechazar"
+                            invisible="estado != 'received'"
+                            confirm="El material se va a retenidos y no se vuelve a vender. ¿Firmas el rechazo?"/>
+                    <field name="estado" widget="statusbar" statusbar_visible="pending_reception,received,released"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="referencia" readonly="1"/></h1>
+                    </div>
+                    <div class="alert alert-info" role="alert" invisible="estado != 'pending_reception'">
+                        El material todavia no llega, o no se ha confirmado que llego.
+                        Mientras tanto no cuenta como existencia y la tienda no lo ofrece.
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="estado != 'received'">
+                        En cuarentena, esperando a calidad. Salio de la empresa: nadie sabe como lo
+                        trataron, asi que no vuelve al anaquel hasta que se revise.
+                    </div>
+                    <group>
+                        <group string="De donde viene">
+                            <field name="woo_order_id" readonly="1"/>
+                            <field name="woo_sku" readonly="1"/>
+                            <field name="woo_producto" readonly="1"/>
+                            <field name="motivo" readonly="1"/>
+                            <field name="fecha_apertura" readonly="1"/>
+                        </group>
+                        <group string="Que es">
+                            <field name="product_id" readonly="estado != 'pending_reception'"/>
+                            <field name="lot_id" readonly="estado != 'pending_reception'"/>
+                            <field name="condicion_al_volver"/>
+                            <field name="cantidad_declarada" readonly="1"/>
+                            <field name="cantidad_recibida" readonly="estado != 'pending_reception'"/>
+                        </group>
+                    </group>
+                    <group string="Dictamen de calidad" invisible="estado == 'pending_reception'">
+                        <field name="dictamen" readonly="estado not in ('received',)"
+                               placeholder="Que se reviso y que se concluyo. Queda en el expediente."
+                               nolabel="1" colspan="2"/>
+                        <field name="cantidad_liberada" invisible="estado != 'received'"
+                               help="Deja vacio para liberar todo lo recibido."/>
+                    </group>
+                    <group col="4" invisible="estado in ('pending_reception','received')">
+                        <field name="cantidad_liberada" readonly="1"/>
+                        <field name="cantidad_desechada" readonly="1"/>
+                    </group>
+                    <group col="4" string="Quien y cuando" invisible="estado == 'pending_reception'">
+                        <field name="recibido_por_id" readonly="1"/>
+                        <field name="fecha_recepcion" readonly="1"/>
+                        <field name="evaluado_por_id" readonly="1"/>
+                        <field name="fecha_evaluacion" readonly="1"/>
+                        <field name="picking_recepcion_id" readonly="1"/>
+                        <field name="picking_salida_id" readonly="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_devolucion_search" model="ir.ui.view">
+        <field name="name">amunet.devolucion.search</field>
+        <field name="model">amunet.devolucion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="referencia"/>
+                <field name="woo_sku"/>
+                <field name="lot_id"/>
+                <filter name="f_pendientes" string="Esperando recepcion"
+                        domain="[('estado','=','pending_reception')]"/>
+                <filter name="f_cuarentena" string="En cuarentena"
+                        domain="[('estado','=','received')]"/>
+                <separator/>
+                <filter name="f_abiertas" string="Abiertas"
+                        domain="[('estado','in',('pending_reception','received'))]"/>
+                <separator/>
+                <filter name="g_estado" string="Estado" context="{'group_by': 'estado'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_devoluciones" model="ir.actions.act_window">
+        <field name="name">Devoluciones por evaluar</field>
+        <field name="res_model">amunet.devolucion</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_f_abiertas': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No hay devoluciones abiertas</p>
+            <p>Aqui llega el material que regresa de un pedido cancelado en la tienda.
+               El almacen confirma que recibio y cuanto, y calidad decide si vuelve al anaquel
+               o se retiene.</p>
+        </field>
+    </record>
+
+    <record id="action_traer_devoluciones" model="ir.actions.server">
+        <field name="name">Traer devoluciones de la tienda</field>
+        <field name="model_id" ref="model_amunet_devolucion"/>
+        <field name="state">code</field>
+        <field name="code">
+nuevas = model.traer_de_la_tienda()
+action = {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
+    'title': 'Devoluciones',
+    'message': 'Se trajeron %s devoluciones nuevas de la tienda.' % len(nuevas),
+    'type': 'success', 'next': {'type': 'ir.actions.act_window_close'}}}
+        </field>
+    </record>
+
+    <menuitem id="menu_devoluciones"
+              name="Devoluciones por evaluar"
+              parent="stock.menu_stock_inventory_control"
+              action="action_devoluciones"
+              sequence="26"/>
+
+    <menuitem id="menu_traer_devoluciones"
+              name="Traer devoluciones de la tienda"
+              parent="stock.menu_stock_inventory_control"
+              action="action_traer_devoluciones"
+              sequence="27"/>
+
+</odoo>

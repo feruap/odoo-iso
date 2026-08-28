@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
+from . import amunet_devolucion
 from . import stock_lot
-from . import stock_picking

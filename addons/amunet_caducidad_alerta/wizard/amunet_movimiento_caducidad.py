@@ -108,7 +108,10 @@ class AmunetMovimientoCaducidad(models.TransientModel):
                     'picked': True,
                 })]
                 movimiento.picked = True
-            picking.button_validate()
+            if not picking.amunet_validar():
+                raise UserError(_(
+                    'El traslado %s no se pudo validar. Revisalo antes de continuar: '
+                    'el material no se movio.') % picking.name)
             pickings |= picking
 
         ahora = fields.Datetime.now()
