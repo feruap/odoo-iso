@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_auditorias_hub" model="ir.actions.client">
+        <field name="name">Auditorías internas</field>
+        <field name="tag">amunet_auditorias_hub</field>
+    </record>
+</odoo>

@@ -12,17 +12,8 @@
                 <span class="o_amunet_hub_label">PNOs vigentes</span>
             </div>
 
-            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_documento_formato')">
-                <i class="fa fa-wpforms fa-2x text-success mb-2"/>
-                <span class="o_amunet_hub_label">Formatos</span>
-            </div>
 
-            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_documento_obsoletos')">
-                <i class="fa fa-archive fa-2x text-warning mb-2"/>
-                <span class="o_amunet_hub_label">Obsoletos</span>
-            </div>
-
-            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_prueba_rapida')">
+            <div t-if="state.isPruebaRapidaEditor" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_pruebas_rapidas_hub')">
                 <i class="fa fa-flask fa-2x text-info mb-2"/>
                 <span class="o_amunet_hub_label">Pruebas rápidas</span>
             </div>
@@ -35,6 +26,31 @@
             <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_desviaciones.action_desviacion')">
                 <i class="fa fa-exclamation-triangle fa-2x text-danger mb-2"/>
                 <span class="o_amunet_hub_label">Desviaciones / NC</span>
+            </div>
+
+            <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_cc_general.action_programas_hub')">
+                <i class="fa fa-calendar fa-2x mb-2" style="color:#198754"/>
+                <span class="o_amunet_hub_label">Programas anuales</span>
+            </div>
+
+            <div t-if="state.isAuditor || state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_cc_general.action_auditorias_hub')">
+                <i class="fa fa-search fa-2x mb-2" style="color:#0d6efd"/>
+                <span class="o_amunet_hub_label">Auditorías internas</span>
+            </div>
+
+            <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_cc_general.action_audit_prov_hub')">
+                <i class="fa fa-handshake-o fa-2x mb-2" style="color:#6f42c1"/>
+                <span class="o_amunet_hub_label">Auditoría técnica de proveedores</span>
+            </div>
+
+            <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_copias_controladas.action_copia_controlada')">
+                <i class="fa fa-copy fa-2x mb-2" style="color:#c53030"/>
+                <span class="o_amunet_hub_label">Copias Controladas</span>
+            </div>
+
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_registros.action_registros_hub')">
+                <i class="fa fa-folder-open-o fa-2x mb-2" style="color:#fd7e14"/>
+                <span class="o_amunet_hub_label">Registros de formatos</span>
             </div>
 
         </div>

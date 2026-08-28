@@ -1,6 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ── Vista lista ─────────────────────────────────────────── -->
+    <!-- ── Vista lista — Pruebas con RS ────────────────────────── -->
+    <record id="view_amunet_prueba_rapida_list_con_rs" model="ir.ui.view">
+        <field name="name">amunet.prueba.rapida.list.con_rs</field>
+        <field name="model">amunet.prueba.rapida</field>
+        <field name="arch" type="xml">
+            <list string="Pruebas con Registro Sanitario"
+                  decoration-info="es_lamp">
+                <header>
+                    <button name="action_print_lista_con_rs" type="object"
+                            string="Imprimir lista" icon="fa-print"
+                            class="btn-secondary"/>
+                </header>
+                <field name="es_lamp" column_invisible="1"/>
+                <field name="codigo"      string="Código (Catálogo)"/>
+                <field name="nombre"      string="Nombre de la prueba (Denominación distintiva)"/>
+                <field name="descripcion" string="Descripción (Denominación genérica)"/>
+                <field name="muestra"     string="Muestra"/>
+                <field name="referencia"  string="Referencia"/>
+                <field name="caducidad_autorizada"  string="Caducidad de la prueba"/>
+                <field name="registro_sanitario"    string="Registro sanitario"/>
+                <field name="fecha_emision_rs"      string="Emisión RS" optional="hide"/>
+                <field name="fecha_vencimiento_rs"  string="Vencimiento RS" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Vista lista — Catálogo general ──────────────────────── -->
+    <record id="view_amunet_prueba_rapida_list_sin_rs" model="ir.ui.view">
+        <field name="name">amunet.prueba.rapida.list.sin_rs</field>
+        <field name="model">amunet.prueba.rapida</field>
+        <field name="arch" type="xml">
+            <list string="Catálogo general de pruebas rápidas"
+                  decoration-info="es_lamp">
+                <header>
+                    <button name="action_print_lista_sin_rs" type="object"
+                            string="Imprimir lista" icon="fa-print"
+                            class="btn-secondary"/>
+                </header>
+                <field name="es_lamp" column_invisible="1"/>
+                <field name="codigo"      string="Código (Catálogo)"/>
+                <field name="nombre"      string="Nombre de la prueba (Denominación distintiva)"/>
+                <field name="descripcion" string="Descripción (Denominación genérica)"/>
+                <field name="muestra"     string="Muestra"/>
+                <field name="referencia"  string="Referencia"/>
+                <field name="caducidad_autorizada"  string="Caducidad de la prueba"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Vista lista base (para la acción general) ────────────── -->
     <record id="view_amunet_prueba_rapida_list" model="ir.ui.view">
         <field name="name">amunet.prueba.rapida.list</field>
         <field name="model">amunet.prueba.rapida</field>
@@ -56,7 +105,7 @@
         </field>
     </record>
 
-    <!-- ── Acción ──────────────────────────────────────────────── -->
+    <!-- ── Acción — catálogo completo ─────────────────────────── -->
     <record id="action_amunet_prueba_rapida" model="ir.actions.act_window">
         <field name="name">Datos de pruebas rápidas</field>
         <field name="res_model">amunet.prueba.rapida</field>
@@ -66,5 +115,39 @@
                 Agrega el primer registro de prueba rápida.
             </p>
         </field>
+    </record>
+
+    <!-- ── Acción — solo pruebas con Registro Sanitario (F-DC-002) ─ -->
+    <record id="action_amunet_prueba_rapida_con_rs" model="ir.actions.act_window">
+        <field name="name">Pruebas Rápidas con Registro Sanitario</field>
+        <field name="res_model">amunet.prueba.rapida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('registro_sanitario', 'not in', [False, 'No aplica'])]</field>
+        <field name="view_ids" eval="[(5,0,0),(0,0,{'view_mode':'list','view_id':ref('view_amunet_prueba_rapida_list_con_rs')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aún no hay pruebas con Registro Sanitario Cofepris registradas.
+            </p>
+        </field>
+    </record>
+
+    <!-- ── Acción — pruebas sin Registro Sanitario (catálogo general) ─ -->
+    <record id="action_amunet_prueba_rapida_sin_rs" model="ir.actions.act_window">
+        <field name="name">Catálogo general de pruebas rápidas</field>
+        <field name="res_model">amunet.prueba.rapida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('registro_sanitario', 'in', [False, 'No aplica'])]</field>
+        <field name="view_ids" eval="[(5,0,0),(0,0,{'view_mode':'list','view_id':ref('view_amunet_prueba_rapida_list_sin_rs')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aún no hay pruebas en el catálogo general.
+            </p>
+        </field>
+    </record>
+
+    <!-- ── Client action — sub-hub Pruebas Rápidas ─────────────── -->
+    <record id="action_pruebas_rapidas_hub" model="ir.actions.client">
+        <field name="name">Pruebas Rápidas</field>
+        <field name="tag">amunet_documentos.pruebas_rapidas_hub</field>
     </record>
 </odoo>

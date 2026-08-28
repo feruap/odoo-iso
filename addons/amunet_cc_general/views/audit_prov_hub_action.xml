@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_audit_prov_hub" model="ir.actions.client">
+        <field name="name">Auditoría Técnica de Proveedores</field>
+        <field name="tag">amunet_cc_general.audit_prov_hub</field>
+    </record>
+</odoo>

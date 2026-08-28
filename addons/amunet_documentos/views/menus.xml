@@ -11,32 +11,38 @@
               sequence="90"/>
 
     <!-- ── Nivel 1: ítems directos ── -->
-    <menuitem id="menu_amunet_lista_maestra_root" name="Lista maestra"
-              parent="menu_amunet_documentos_root"
-              action="action_lista_maestra_hub"
-              sequence="20"
-              groups="amunet_documentos.group_documentos_manager"/>
+    <record id="menu_amunet_lista_maestra_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6,0,[ref('amunet_documentos.group_documentos_manager'), ref('amunet_documentos.group_responsable_sanitario'), ref('amunet_documentos.group_supervisor_documentacion')])]"/>
+    </record>
 
     <menuitem id="menu_amunet_documentos_lista_maestra" name="PNOs vigentes"
               parent="menu_amunet_lista_maestra_root"
-              action="action_amunet_documento_lista_maestra" sequence="10"/>
+              action="action_amunet_documento_lista_maestra" sequence="10"
+              groups="amunet_documentos.group_documentos_manager"/>
 
     <menuitem id="menu_amunet_documentos_formatos" name="Formatos"
               parent="menu_amunet_lista_maestra_root"
-              action="action_amunet_documento_formato" sequence="20"/>
+              action="action_amunet_documento_formato" sequence="20"
+              groups="amunet_documentos.group_documentos_manager"/>
 
     <menuitem id="menu_amunet_documentos_obsoletos" name="Documentos obsoletos"
               parent="menu_amunet_lista_maestra_root"
-              action="action_amunet_documento_obsoletos" sequence="30"/>
+              action="action_amunet_documento_obsoletos" sequence="30"
+              groups="amunet_documentos.group_documentos_manager"/>
 
     <menuitem id="menu_amunet_prueba_rapida" name="Datos de pruebas rápidas"
               parent="menu_amunet_lista_maestra_root"
-              action="action_amunet_prueba_rapida" sequence="40"/>
+              action="action_amunet_prueba_rapida" sequence="40"
+              groups="amunet_documentos.group_prueba_rapida_editor"/>
 
-    <!-- ── Submenú: Mis pendientes ── -->
-    <menuitem id="menu_amunet_mis_pendientes" name="Mis pendientes"
-              parent="menu_amunet_documentos_root"
-              sequence="30"/>
+    <record id="menu_amunet_formato_mis_solicitudes" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- ── Submenú: Mis pendientes (desactivado: el tablero Inicio lo cubre) ── -->
+    <record id="menu_amunet_mis_pendientes" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 
     <menuitem id="menu_amunet_documentos_a_corregir" name="Documentos a corregir"
               parent="menu_amunet_mis_pendientes"
@@ -61,28 +67,18 @@
               sequence="40"
               groups="amunet_documentos.group_documentos_manager,amunet_documentos.group_responsable_sanitario,amunet_documentos.group_supervisor_documentacion"/>
 
-    <menuitem id="menu_amunet_formato_permisos" name="Permisos de formatos"
-              parent="menu_amunet_gestion"
-              action="action_amunet_formato_permisos"
-              sequence="7"
-              groups="amunet_documentos.group_supervisor_documentacion"/>
-
-    <menuitem id="menu_amunet_distribucion_panel" name="Panel de distribución"
-              parent="menu_amunet_gestion"
-              action="action_distribucion_panel"
-              sequence="8"
-              groups="amunet_documentos.group_supervisor_documentacion"/>
-
-    <menuitem id="menu_amunet_bitacora_firmas" name="Bitácora de firmas"
-              parent="menu_amunet_gestion"
-              action="action_bitacora_firmas_docs"
-              sequence="9"
-              groups="amunet_documentos.group_supervisor_documentacion"/>
-
-    <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de impresión"
-              parent="menu_amunet_gestion"
-              action="action_amunet_formato_solicitudes_pendientes" sequence="10"
-              groups="group_documentos_manager"/>
+    <record id="menu_amunet_formato_permisos" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+    <record id="menu_amunet_distribucion_panel" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+    <record id="menu_amunet_bitacora_firmas" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+    <record id="menu_amunet_formato_solicitudes_pendientes" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 
     <menuitem id="menu_amunet_catalogo_firma" name="Catálogo de firmas"
               parent="menu_amunet_gestion"
