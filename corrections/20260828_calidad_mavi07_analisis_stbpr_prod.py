@@ -145,12 +145,12 @@ env.cr.execute("""
     UPDATE amunet_quality_check
     SET tiene_anexos      = true,
         is_material_con_anexo = true,
-        anexo_titulo      = 'ANEXO BUFFER',
+        anexo_titulo      = 'ANEXO SOLUCIÓN DE CORRIMIENTO',
         anexo_col1_header = 'Partículas suspendidas',
-        anexo_col2_header = 'Liberación de conjugado',
-        anexo_col3_header = 'Migración de conjugado',
-        anexo_col4_header = 'Desempeño (+) patrón #1-#4',
-        anexo_col5_header = 'Desempeño (-) patrón #5',
+        anexo_col2_header = 'Liberación',
+        anexo_col3_header = 'Migración',
+        anexo_col4_header = 'Desempeño',
+        anexo_col5_header = '',
         anexo_col6_header = '',
         anexo_col7_header = '',
         write_date = NOW()
