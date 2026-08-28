@@ -40,12 +40,9 @@
                     <button name="action_recibir" type="object" string="Confirmar recepcion"
                             class="btn-primary" invisible="estado != 'pending_reception'"
                             groups="stock.group_stock_user"/>
-                    <button name="action_liberar" type="object" string="Liberar"
+                    <button name="action_dictaminar" type="object" string="Dictaminar y firmar"
                             class="btn-primary" invisible="estado != 'received'"
-                            confirm="El material vuelve al anaquel que le toque por su fecha. ¿Firmas la liberacion?"/>
-                    <button name="action_rechazar" type="object" string="Rechazar"
-                            invisible="estado != 'received'"
-                            confirm="El material se va a retenidos y no se vuelve a vender. ¿Firmas el rechazo?"/>
+                            groups="amunet_quality.group_quality_user"/>
                     <field name="estado" widget="statusbar" statusbar_visible="pending_reception,received,released"/>
                 </header>
                 <sheet>
@@ -76,13 +73,12 @@
                             <field name="cantidad_recibida" readonly="estado != 'pending_reception'"/>
                         </group>
                     </group>
-                    <group string="Dictamen de calidad" invisible="estado == 'pending_reception'">
-                        <field name="dictamen" readonly="estado not in ('received',)"
-                               placeholder="Que se reviso y que se concluyo. Queda en el expediente."
-                               nolabel="1" colspan="2"/>
-                        <field name="cantidad_liberada" invisible="estado != 'received'"
-                               help="Deja vacio para liberar todo lo recibido."/>
+                    <group string="Dictamen de calidad" invisible="estado in ('pending_reception','received')">
+                        <field name="dictamen" readonly="1" nolabel="1" colspan="2"/>
                     </group>
+                    <div class="alert alert-secondary" role="alert" invisible="estado != 'received'">
+                        Esperando el dictamen de Calidad. Solo Calidad puede firmarlo, con su PIN.
+                    </div>
                     <group col="4" invisible="estado in ('pending_reception','received')">
                         <field name="cantidad_liberada" readonly="1"/>
                         <field name="cantidad_desechada" readonly="1"/>
