@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_movimiento_caducidad_form" model="ir.ui.view">
+        <field name="name">amunet.movimiento.caducidad.form</field>
+        <field name="model">amunet.movimiento.caducidad</field>
+        <field name="arch" type="xml">
+            <form string="Confirmar movimiento de anaquel">
+                <div class="alert alert-info" role="alert" invisible="sin_pendientes">
+                    Confirma esto <b>despues</b> de haber movido fisicamente las cajas.
+                    Odoo va a generar un traslado interno con folio, fecha y tu nombre.
+                </div>
+                <div class="alert alert-warning" role="alert" invisible="not sin_pendientes">
+                    Los lotes que seleccionaste ya estan en su anaquel, o no tienen
+                    existencia que mover.
+                </div>
+                <field name="sin_pendientes" invisible="1"/>
+                <field name="lot_ids" invisible="1"/>
+                <group>
+                    <field name="nota" placeholder="Quien reviso el anaquel, numero de tarima, etc."/>
+                </group>
+                <field name="linea_ids" nolabel="1">
+                    <list editable="bottom" create="false" delete="true">
+                        <field name="lot_id" readonly="1"/>
+                        <field name="product_id" readonly="1"/>
+                        <field name="condicion" widget="badge"
+                               decoration-danger="condicion in ('vencido','retirar')"
+                               decoration-warning="condicion == 'cortesia'"
+                               decoration-info="condicion == 'corta'"
+                               readonly="1"/>
+                        <field name="caducidad" readonly="1" optional="show"/>
+                        <field name="location_origen_id" readonly="1"/>
+                        <field name="location_destino_id"/>
+                        <field name="cantidad_en_anaquel" readonly="1"/>
+                        <field name="cantidad_reservada" readonly="1" optional="show"
+                               decoration-danger="cantidad_reservada &gt; 0"/>
+                        <field name="cantidad"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_confirmar" type="object" string="Confirmar movimiento"
+                            class="btn-primary" invisible="sin_pendientes"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_movimiento_caducidad" model="ir.actions.act_window">
+        <field name="name">Confirmar movimiento de anaquel</field>
+        <field name="res_model">amunet.movimiento.caducidad</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="stock.model_stock_lot"/>
+        <field name="binding_view_types">list,form</field>
+    </record>
+
+</odoo>

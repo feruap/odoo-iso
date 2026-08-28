@@ -13,6 +13,7 @@ _logger = logging.getLogger(__name__)
 UBICACIONES = [
     ('amunet_caducidad_alerta.location_caducidad_corta', 'Caducidad corta'),
     ('amunet_caducidad_alerta.location_cortesias', 'Cortesias'),
+    ('amunet_caducidad_alerta.location_retenidos', 'Retenidos por caducidad'),
 ]
 
 
