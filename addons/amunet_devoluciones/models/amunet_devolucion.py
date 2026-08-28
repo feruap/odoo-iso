@@ -292,7 +292,7 @@ class AmunetDevolucion(models.Model):
                 'El estado en la tienda hay que ponerlo a mano.'))
             return False
         try:
-            backend._call_bridge('POST', 'devoluciones/%s/estado' % self.woo_return_id, {
+            backend._bridge_request('POST', 'devoluciones/%s/estado' % self.woo_return_id, {
                 'estado': estado,
                 'cantidad_recibida': self.cantidad_recibida,
                 'cantidad_liberada': self.cantidad_liberada,
@@ -321,7 +321,7 @@ class AmunetDevolucion(models.Model):
         backend = self.env['amunet.woo.backend'].sudo().search([('active', '=', True)], limit=1)
         if not backend or not backend.bridge_secret:
             raise UserError(_('El puente con la tienda no esta configurado.'))
-        datos = backend.sudo()._call_bridge('POST', 'devoluciones/pendientes', {}) or {}
+        datos = backend.sudo()._bridge_request('POST', 'devoluciones/pendientes', {}) or {}
         nuevas = self.browse()
         for fila in datos.get('devoluciones', []):
             woo_id = int(fila.get('id') or 0)
