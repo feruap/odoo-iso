@@ -190,6 +190,9 @@ class AmunetQualityPoint(models.Model):
                 'picking_id': picking.id,
                 'product_id': product.id,
                 'lot_id': lot.id if lot else False,
+                # Llenar el "Lote Amunet" visible con el nombre del lote (antes
+                # quedaba vacio al generar el analisis por codigo).
+                'lot_amunet': lot.name if lot else False,
             }
             
             # EXTRAER UOM DE MUESTREO
