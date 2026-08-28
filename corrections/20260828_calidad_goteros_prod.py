@@ -96,7 +96,23 @@ env.cr.execute("""
 """, [CHECK_IDS])
 print("MAVI-17 detalles con criterio por gotero: agregados")
 
-# ── 3. Corregir STGOT02/03 MAVI-11 en análisis (±1 → ±5) ──────────────────────
+# ── 2b. Activar has_details y detail_count en test_line de MAVI-17 ───────────────
+# Sin esto, el widget de Odoo no renderiza el detalle y aparece "inactivo" en UI.
+env.cr.execute("""
+    UPDATE amunet_quality_test_line tl
+    SET has_details = true,
+        detail_count = (
+            SELECT COUNT(*) FROM amunet_quality_test_line_detail
+            WHERE test_line_id = tl.id
+        ),
+        write_date = NOW()
+    FROM amunet_quality_check_parameter p
+    WHERE tl.parameter_id = p.id AND p.code = 'MAVI-17'
+      AND tl.check_id = ANY(%s)
+""", [CHECK_IDS])
+print(f"MAVI-17 has_details activado en test_lines: {env.cr.rowcount}")
+
+# ── 3. Corregir TODOS los goteros MAVI-11 en análisis (±1 → ±5) ────────────────
 env.cr.execute("""
     UPDATE amunet_quality_test_line_detail td
     SET max_value = sc.max_value,
@@ -108,8 +124,8 @@ env.cr.execute("""
     JOIN amunet_quality_check_parameter p ON p.id=tl.parameter_id AND p.code='MAVI-11'
     JOIN amunet_quality_parameter_product_rel r ON r.id=tl.parameter_rel_id
     JOIN amunet_quality_parameter_specification_config sc
-      ON sc.product_parameter_rel_id=r.id AND sc.specification_id=td.specification_id AND sc.active=true
-    WHERE td.test_line_id=tl.id AND qc.id = ANY(%s)
+      ON sc.product_parameter_rel_id=r.id AND sc.active=true
+    WHERE td.test_line_id=tl.id AND sc.specification_id=td.specification_id AND qc.id = ANY(%s)
 """, [CHECK_IDS])
 print("MAVI-11 corregido (±5) en análisis STGOT02/03")
 

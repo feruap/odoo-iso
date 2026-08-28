@@ -3,15 +3,15 @@ Corrección URGENTE: MAVI-07 en análisis abiertos de STBPR01-04 en producción.
 
 Problema:
   - Detalles de "Muestra negativa" duplicados (tipo mavi_07 + vama_multi_check)
-  - Tipo incorrecto: mavi_07 y vama_multi_check no muestran semáforo pass/fail
-  - Tipo correcto: mavi_07_ternary (igual que STBPR03 de referencia)
+  - Tipo correcto: vama_multi_check (igual que STBPR03 de referencia, que tiene
+    analisis cerrados con ese tipo)
   - Algunos análisis carecen de "Muestra positiva"
   - Spec configs de STBPR02/04 con active=NULL que impiden cerrar análisis
 
 Pasos:
   1. Eliminar "Muestra negativa" vama_multi_check duplicada donde ya existe mavi_07
-  2. Corregir todos los "Muestra negativa" → mavi_07_ternary + criterio correcto
-  3. Corregir todos los "Muestra positiva" → mavi_07_ternary + criterio correcto
+  2. Corregir todos los "Muestra negativa" → vama_multi_check + criterio correcto
+  3. Corregir todos los "Muestra positiva" → vama_multi_check + criterio correcto
   4. Insertar "Muestra positiva" donde falta (análisis 468, 469, 470)
 
 NOTA: El script anterior (20260828_calidad_buffers_qc_prod.py) ya creó specs activas
@@ -47,7 +47,7 @@ env.cr.execute("""
 """)
 print(f"Detalles duplicados eliminados: {env.cr.rowcount}")
 
-# ── 3. Corregir "Muestra negativa" → mavi_07_ternary ────────────────────────────
+# ── 3. Corregir "Muestra negativa" → vama_multi_check ────────────────────────────
 env.cr.execute("""
     UPDATE amunet_quality_test_line_detail td
     SET evaluation_type='vama_multi_check',
@@ -73,7 +73,7 @@ env.cr.execute("""
 """)
 print(f"'Muestra negativa' corregidas: {env.cr.rowcount}")
 
-# ── 4. Corregir "Muestra positiva" → mavi_07_ternary ────────────────────────────
+# ── 4. Corregir "Muestra positiva" → vama_multi_check ────────────────────────────
 env.cr.execute("""
     UPDATE amunet_quality_test_line_detail td
     SET evaluation_type='vama_multi_check',
@@ -184,7 +184,7 @@ env.cr.execute("""
 """)
 rows = env.cr.fetchall()
 for r in rows:
-    ok = "✓" if r[2] == 2 and r[3] == 'mavi_07_ternary, mavi_07_ternary' else "✗"
+    ok = "✓" if r[2] == 2 and r[3] == 'vama_multi_check, vama_multi_check' else "✗"
     print(f"  {ok} análisis {r[0]} {r[1]}: {r[2]} detalles | tipos: {r[3]}")
 
 print("\n✓ Script completado.")
