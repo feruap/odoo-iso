@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
+<odoo noupdate="1">
     <record id="cron_traer_devoluciones" model="ir.cron">
         <field name="name">Amunet: traer devoluciones de la tienda</field>
         <field name="model_id" ref="model_amunet_devolucion"/>
@@ -7,6 +7,10 @@
         <field name="code">model._cron_traer_de_la_tienda()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">hours</field>
+        <!-- Nace apagado, pero una vez que alguien lo prende no se vuelve a
+             tocar: el noupdate del <odoo> evita que una actualizacion del modulo
+             lo regrese a apagado. Paso el 28-ago-2026 y las devoluciones se
+             habrian quedado sin traer sin que nadie se enterara. -->
         <field name="active" eval="False"/>
     </record>
 </odoo>
