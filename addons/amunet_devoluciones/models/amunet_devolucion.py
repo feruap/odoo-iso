@@ -58,7 +58,8 @@ class AmunetDevolucion(models.Model):
     fecha_apertura = fields.Datetime(string='Abierta el', readonly=True)
     recibido_por_id = fields.Many2one('res.users', string='Recibido por', readonly=True)
     fecha_recepcion = fields.Datetime(string='Recibido el', readonly=True)
-    evaluado_por_id = fields.Many2one('res.users', string='Evaluado por', readonly=True)
+    evaluado_por_id = fields.Many2one('res.users', string='Firmado por', readonly=True,
+                                      help='Quien de calidad firmo el dictamen con su PIN.')
     fecha_evaluacion = fields.Datetime(string='Evaluado el', readonly=True)
     dictamen = fields.Text(string='Dictamen de calidad', tracking=True)
 
@@ -169,14 +170,33 @@ class AmunetDevolucion(models.Model):
             dev._avisar_a_la_tienda('received')
         return True
 
-    def action_liberar(self):
-        """Calidad libera. Vuelve al anaquel que le toca HOY."""
+    def action_dictaminar(self):
+        """Abre la firma de calidad. Nadie libera sin identificarse."""
+        self.ensure_one()
+        self._exigir_recibido()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Dictamen de calidad'),
+            'res_model': 'amunet.devolucion.firma',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': dict(self.env.context, active_id=self.id),
+        }
+
+    def _liberar(self, liberar, dictamen):
+        """Calidad libera. Vuelve al anaquel que le toca HOY.
+
+        Se llama desde la firma, nunca desde un boton directo: la decision de
+        poner un producto sanitario devuelto otra vez a la venta tiene que estar
+        atada a la persona que la tomo.
+        """
         for dev in self:
             dev._exigir_recibido()
-            liberar = dev.cantidad_liberada or dev.cantidad_recibida
+            liberar = float(liberar or 0)
             if liberar <= 0 or liberar > dev.cantidad_recibida:
                 raise UserError(_(
                     'Las piezas liberadas tienen que estar entre 1 y %s.') % dev.cantidad_recibida)
+            dev.dictamen = dictamen
             desechar = dev.cantidad_recibida - liberar
 
             # Aqui esta el punto: el lote conserva su fecha, pero paso tiempo.
@@ -205,15 +225,18 @@ class AmunetDevolucion(models.Model):
                 'picking_salida_id': picking.id,
             })
             dev.message_post(body=_(
-                'Calidad libero %(lib)s piezas y desecho %(des)s. Regresaron a %(dest)s.',
-                lib=liberar, des=desechar, dest=destino.display_name))
+                'Calidad libero %(lib)s piezas y desecho %(des)s. Regresaron a %(dest)s. '
+                'Firmado con PIN por %(quien)s.',
+                lib=liberar, des=desechar, dest=destino.display_name,
+                quien=dev.env.user.name))
             dev._avisar_a_la_tienda('released')
         return True
 
-    def action_rechazar(self):
+    def _rechazar(self, dictamen):
         """Calidad rechaza todo. Se va a retenidos, no a la basura sin registro."""
         for dev in self:
             dev._exigir_recibido()
+            dev.dictamen = dictamen
             retenidos = dev.env.ref('amunet_caducidad_alerta.location_retenidos',
                                     raise_if_not_found=False)
             if not retenidos:
@@ -228,7 +251,9 @@ class AmunetDevolucion(models.Model):
                 'fecha_evaluacion': fields.Datetime.now(),
                 'picking_salida_id': picking.id,
             })
-            dev.message_post(body=_('Calidad rechazo la devolucion completa. %s') % (dev.dictamen or ''))
+            dev.message_post(body=_(
+                'Calidad rechazo la devolucion completa. Firmado con PIN por %(quien)s. %(dic)s',
+                quien=dev.env.user.name, dic=dev.dictamen or ''))
             dev._avisar_a_la_tienda('rejected')
         return True
 
@@ -236,8 +261,6 @@ class AmunetDevolucion(models.Model):
         self.ensure_one()
         if self.estado != 'received':
             raise UserError(_('Calidad solo puede dictaminar lo que el almacen ya recibio.'))
-        if not self.dictamen:
-            raise UserError(_('Escribe el dictamen antes de firmar. Queda en el expediente.'))
 
     # ------------------------------------------------------------------
     def _avisar_a_la_tienda(self, estado):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Devoluciones por cancelacion',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'summary': 'Recepcion en almacen y reevaluacion por calidad del material que '
                'regresa de un pedido cancelado.',
     'description': """Circuito de devoluciones de producto terminado.
@@ -22,9 +22,10 @@ Es lo que pide ISO 13485 de un producto sanitario que salio de la empresa y
 regresa.""",
     'author': 'Amunet',
     'category': 'Inventory',
-    'depends': ['stock', 'product_expiry', 'amunet_caducidad_alerta'],
+    'depends': ['stock', 'product_expiry', 'amunet_caducidad_alerta', 'amunet_quality'],
     'data': [
         'security/ir.model.access.csv',
+        'wizard/amunet_devolucion_firma_views.xml',
         'views/amunet_devolucion_views.xml',
         'data/ir_cron.xml',
     ],

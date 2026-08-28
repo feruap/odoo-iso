@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_devolucion_firma_form" model="ir.ui.view">
+        <field name="name">amunet.devolucion.firma.form</field>
+        <field name="model">amunet.devolucion.firma</field>
+        <field name="arch" type="xml">
+            <form string="Dictamen de calidad">
+                <field name="devolucion_id" invisible="1"/>
+                <div class="alert alert-info" role="alert">
+                    Este material salio de la empresa y regreso. Lo que decidas aqui queda
+                    firmado con tu nombre y tu PIN.
+                </div>
+                <group>
+                    <group>
+                        <field name="lote_nombre"/>
+                        <field name="condicion" widget="badge"
+                               decoration-danger="condicion in ('vencido','retirar')"
+                               decoration-warning="condicion == 'cortesia'"
+                               decoration-info="condicion == 'corta'"/>
+                        <field name="cantidad_recibida"/>
+                    </group>
+                    <group>
+                        <field name="decision" widget="radio"/>
+                        <field name="cantidad_liberada" invisible="decision != 'liberar'"/>
+                        <field name="destino_nombre"/>
+                    </group>
+                </group>
+                <div class="alert alert-warning" role="alert"
+                     invisible="decision != 'liberar' or condicion not in ('corta','cortesia','retirar','vencido')">
+                    Ojo: el lote conserva su fecha, pero paso tiempo. Por su caducidad ya no
+                    vuelve al anaquel normal.
+                </div>
+                <group>
+                    <field name="dictamen" nolabel="1" colspan="2"
+                           placeholder="Que se reviso y que se concluyo. Queda en el expediente del lote."/>
+                </group>
+                <group>
+                    <field name="pin" password="True"/>
+                </group>
+                <footer>
+                    <button name="action_firmar" type="object" string="Firmar el dictamen"
+                            class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
