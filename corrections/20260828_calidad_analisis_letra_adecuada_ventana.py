@@ -4,11 +4,11 @@ Corrección de análisis abiertos de cartuchos en PRODUCCIÓN.
 1. Agregar spec "Letra adecuada" (specification_id=702) a todos los análisis
    abiertos de cartuchos (MPCAR*) que no la tienen en su línea MAVI-04.
 
-2. Corregir texto de aceptación MPCAR79 ventana largo:
-   "Máximo 18 mm" → "Máximo 21 mm" (el max_value ya estaba en 21, solo faltaba el texto).
+2. Corregir MPCAR79 ventana largo en spec config Y en análisis abiertos:
+   - acceptance_criteria: "Máximo 18 mm" → "Máximo 21 mm"
+   - max_value: 18 → 21
 
-Confirmado por Diana Flores, 2026-08-28.
-Idempotente.
+Confirmado por Diana Flores, 2026-08-28. Idempotente.
 """
 
 # ── 1. Agregar "Letra adecuada" a análisis abiertos ─────────────────────────────
@@ -18,12 +18,8 @@ env.cr.execute("""
        name, evaluation_type, acceptance_criteria,
        sequence, create_uid, write_uid, create_date, write_date)
     SELECT
-      tl.id,
-      qc.id,
-      702,
-      sc.id,
-      'Letra adecuada',
-      'binary_selection',
+      tl.id, qc.id, 702, sc.id,
+      'Letra adecuada', 'binary_selection',
       'Información fácil de entender, letra con tono uniforme y definida.',
       (SELECT COALESCE(MAX(td2.sequence), 0) + 10
        FROM amunet_quality_test_line_detail td2 WHERE td2.test_line_id=tl.id),
@@ -58,17 +54,47 @@ env.cr.execute("""
 pendientes = env.cr.fetchone()[0]
 print(f"Análisis sin Letra adecuada después: {pendientes} (esperado 0)")
 
-# ── 2. Corregir texto ventana largo MPCAR79 ──────────────────────────────────────
+# ── 2a. Corregir spec config MPCAR79 ventana largo ──────────────────────────────
 env.cr.execute("""
     UPDATE amunet_quality_parameter_specification_config sc
-    SET acceptance_criteria = 'Máximo 21 mm', write_date = NOW()
+    SET acceptance_criteria = 'Máximo 21 mm',
+        max_value = 21,
+        write_date = NOW()
     FROM amunet_quality_parameter_product_rel r
     JOIN product_template pt ON r.product_tmpl_id=pt.id
     WHERE sc.product_parameter_rel_id=r.id
       AND pt.default_code='MPCAR79'
       AND sc.specification_name ILIKE '%%ventana%%largo%%'
-      AND sc.acceptance_criteria ILIKE '%%18%%'
+      AND (sc.max_value != 21 OR sc.acceptance_criteria ILIKE '%%18%%')
 """)
-print("MPCAR79 ventana largo: texto corregido a 'Máximo 21 mm'")
+print("MPCAR79 spec config ventana largo: max_value=21, texto='Máximo 21 mm'")
+
+# ── 2b. Corregir max_value y texto en detalles de análisis abiertos de MPCAR79 ──
+env.cr.execute("""
+    UPDATE amunet_quality_test_line_detail td
+    SET acceptance_criteria = 'Máximo 21 mm',
+        max_value = 21,
+        write_date = NOW()
+    FROM amunet_quality_test_line tl
+    JOIN amunet_quality_check qc ON qc.id=tl.check_id
+    JOIN product_product pp ON pp.id=qc.product_id
+    JOIN product_template pt ON pt.id=pp.product_tmpl_id
+    WHERE td.test_line_id=tl.id
+      AND pt.default_code='MPCAR79'
+      AND qc.state NOT IN ('done','cancel')
+      AND td.name ILIKE '%%ventana%%largo%%'
+      AND (td.max_value != 21 OR td.acceptance_criteria ILIKE '%%18%%')
+""")
+env.cr.execute("""
+    SELECT COUNT(*) FROM amunet_quality_test_line_detail td
+    JOIN amunet_quality_test_line tl ON tl.id=td.test_line_id
+    JOIN amunet_quality_check qc ON qc.id=tl.check_id
+    JOIN product_product pp ON pp.id=qc.product_id
+    JOIN product_template pt ON pt.id=pp.product_tmpl_id
+    WHERE pt.default_code='MPCAR79' AND qc.state NOT IN ('done','cancel')
+      AND td.name ILIKE '%%ventana%%largo%%' AND td.max_value=21
+""")
+actualizados = env.cr.fetchone()[0]
+print(f"Análisis MPCAR79 con ventana largo = 21 mm: {actualizados}")
 
 print("\n✓ Script completado.")
