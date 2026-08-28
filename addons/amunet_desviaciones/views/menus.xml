@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_desviaciones_bajo_docs"
-              name="Desviaciones / NC"
-              parent="amunet_documentos.menu_amunet_documentos_root"
-              sequence="30"
-              groups="base.group_user"/>
+    <!-- Menú raíz desactivado: el acceso es por el hub del dashboard -->
+    <record id="menu_desviaciones_bajo_docs" model="ir.ui.menu">
+        <field name="name">Desviaciones / NC</field>
+        <field name="parent_id" ref="amunet_documentos.menu_amunet_documentos_root"/>
+        <field name="sequence">30</field>
+        <field name="active" eval="False"/>
+    </record>
 
     <menuitem id="menu_desviaciones_mis"
               name="Mis desviaciones"

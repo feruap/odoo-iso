@@ -402,6 +402,12 @@ class AmunetDesviacion(models.Model):
             raise UserError(_('Ya se registró esta firma.'))
         if self.responsable_id and self.responsable_id != self.env.user:
             raise UserError(_('Solo %s puede firmar en este espacio.') % self.responsable_id.name)
+        pendientes = self.accion_ids.filtered(lambda a: a.state == 'pendiente')
+        if pendientes:
+            descripciones = '\n'.join('• ' + (a.descripcion or '(sin descripción)') for a in pendientes)
+            raise UserError(_(
+                'No puedes firmar como Responsable mientras haya acciones pendientes de realizar:\n\n%s'
+            ) % descripciones)
         return self._abrir_firma('_signature_responsable', _('Firma del responsable'))
 
     def _signature_responsable(self):
@@ -415,6 +421,12 @@ class AmunetDesviacion(models.Model):
             raise UserError(_('Ya se registró esta firma.'))
         if self.verifico_id and self.verifico_id != self.env.user:
             raise UserError(_('Solo %s puede firmar en este espacio.') % self.verifico_id.name)
+        pendientes = self.accion_ids.filtered(lambda a: a.state == 'pendiente')
+        if pendientes:
+            descripciones = '\n'.join('• ' + (a.descripcion or '(sin descripción)') for a in pendientes)
+            raise UserError(_(
+                'No puedes firmar como Verificó mientras haya acciones pendientes de realizar:\n\n%s'
+            ) % descripciones)
         return self._abrir_firma('_signature_verifico', _('Firma de quien verificó'))
 
     def _signature_verifico(self):

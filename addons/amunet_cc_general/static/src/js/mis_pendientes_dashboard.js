@@ -19,6 +19,7 @@ class MisPendientesDashboard extends Component {
             autorizar: 0,
             acusar: 0,
             cc_firma: 0,
+            acciones_desviacion: 0,
             isManager: false,
             isAuditor: false,
             isPruebaRapidaEditor: false,
@@ -30,7 +31,7 @@ class MisPendientesDashboard extends Component {
     async _cargarConteos() {
         const uid = user.userId;
         try {
-            const [corregir, revisar, autorizar, acusar, cc_firma, isManager, isPruebaRapidaEditor, isAuditor] = await Promise.all([
+            const [corregir, revisar, autorizar, acusar, cc_firma, acciones_desviacion, isManager, isPruebaRapidaEditor, isAuditor] = await Promise.all([
                 this.orm.searchCount("amunet.documento", [
                     ["state", "=", "borrador"], ["elabora_id", "=", uid],
                 ]),
@@ -48,24 +49,29 @@ class MisPendientesDashboard extends Component {
                 this.orm.searchCount("amunet.cc.general", [
                     ["pendientes_para_ids", "in", [uid]],
                 ]),
+                this.orm.searchCount("amunet.desviacion.accion", [
+                    ["responsable_id", "=", uid], ["state", "=", "pendiente"],
+                ]),
                 user.hasGroup("amunet_documentos.group_documentos_manager"),
                 user.hasGroup("amunet_documentos.group_prueba_rapida_editor"),
                 (async () => {
-                    const esCandidato = await this.orm.searchCount("amunet.auditor.candidato", [
-                        ["usuario_id", "=", uid], ["estado", "=", "seleccionado"],
-                    ]);
-                    if (!esCandidato) return false;
-                    const planIds = await this.orm.search("amunet.plan.auditoria", [
-                        "|", ["lider_id", "=", uid], ["auditor_ids", "in", [uid]],
-                    ]);
-                    if (planIds.length === 0) return true;
-                    const firmados = await this.orm.searchCount("amunet.informe.auditoria", [
-                        ["plan_id", "in", planIds], ["state", "=", "firmado"],
-                    ]);
-                    return firmados < planIds.length;
+                    try {
+                        const esCandidato = await this.orm.searchCount("amunet.auditor.candidato", [
+                            ["usuario_id", "=", uid], ["estado", "=", "seleccionado"],
+                        ]);
+                        if (!esCandidato) return false;
+                        const planIds = await this.orm.search("amunet.plan.auditoria", [
+                            "|", ["lider_id", "=", uid], ["auditor_ids", "in", [uid]],
+                        ]);
+                        if (planIds.length === 0) return true;
+                        const firmados = await this.orm.searchCount("amunet.informe.auditoria", [
+                            ["plan_id", "in", planIds], ["state", "=", "firmado"],
+                        ]);
+                        return firmados < planIds.length;
+                    } catch (_) { return false; }
                 })(),
             ]);
-            Object.assign(this.state, { corregir, revisar, autorizar, acusar, cc_firma, isManager, isPruebaRapidaEditor, isAuditor, loading: false });
+            Object.assign(this.state, { corregir, revisar, autorizar, acusar, cc_firma, acciones_desviacion, isManager, isPruebaRapidaEditor, isAuditor, loading: false });
         } catch (e) {
             console.error("Error al cargar pendientes:", e);
             Object.assign(this.state, { loading: false });

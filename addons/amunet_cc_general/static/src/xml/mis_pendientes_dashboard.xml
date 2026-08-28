@@ -97,6 +97,12 @@
                     <div class="o_amunet_mini_label">CC por firmar</div>
                 </div>
 
+                <div t-attf-class="o_amunet_mini_card {{ state.acciones_desviacion > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => this.abrirAccionXml('amunet_desviaciones.action_mis_acciones_desviacion')">
+                    <div class="o_amunet_mini_count"><t t-esc="state.acciones_desviacion"/></div>
+                    <div class="o_amunet_mini_label">Acciones cort./prev.</div>
+                </div>
+
             </div>
         </t>
 

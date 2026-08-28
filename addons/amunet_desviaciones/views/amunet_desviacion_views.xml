@@ -312,10 +312,10 @@
                            invisible="state == 'borrador'"/>
 
                     <!-- ══ 6. FIRMAS DE ÁREAS INVOLUCRADAS ════════════════ -->
-                    <separator string="6. Firmas de áreas involucradas" invisible="state == 'borrador'"/>
-                    <group invisible="state == 'borrador'">
+                    <separator string="6. Firmas de áreas involucradas"/>
+                    <group>
                         <group string="Emisor (quien reporta)">
-                            <field name="emisor_id" readonly="state != 'investigacion'"/>
+                            <field name="emisor_id" readonly="state not in ('borrador', 'investigacion')"/>
                             <field name="firma_emisor_id" readonly="1" invisible="not firma_emisor_id"/>
                             <field name="fecha_firma_emisor" readonly="1" invisible="not fecha_firma_emisor"/>
                             <button name="action_firmar_emisor"
@@ -324,7 +324,7 @@
                                     invisible="firma_emisor_id or state != 'investigacion'"/>
                         </group>
                         <group string="Supervisor de área">
-                            <field name="supervisor_id" readonly="state != 'investigacion'"/>
+                            <field name="supervisor_id" readonly="state not in ('borrador', 'investigacion')"/>
                             <field name="firma_supervisor_id" readonly="1" invisible="not firma_supervisor_id"/>
                             <field name="fecha_firma_supervisor" readonly="1" invisible="not fecha_firma_supervisor"/>
                             <button name="action_firmar_supervisor"
@@ -333,9 +333,9 @@
                                     invisible="firma_supervisor_id or state != 'investigacion'"/>
                         </group>
                     </group>
-                    <group invisible="state == 'borrador'">
+                    <group>
                         <group string="Responsable (análisis y conclusión)">
-                            <field name="responsable_id" readonly="state != 'investigacion'"/>
+                            <field name="responsable_id" readonly="state not in ('borrador', 'investigacion')"/>
                             <field name="firma_responsable_id" readonly="1" invisible="not firma_responsable_id"/>
                             <field name="fecha_firma_responsable" readonly="1" invisible="not fecha_firma_responsable"/>
                             <button name="action_firmar_responsable"
@@ -344,7 +344,7 @@
                                     invisible="firma_responsable_id or state != 'investigacion'"/>
                         </group>
                         <group string="Verificó (Calidad / Gerencia)">
-                            <field name="verifico_id" readonly="state != 'investigacion'"/>
+                            <field name="verifico_id" readonly="state not in ('borrador', 'investigacion')"/>
                             <field name="firma_verifico_id" readonly="1" invisible="not firma_verifico_id"/>
                             <field name="fecha_firma_verifico" readonly="1" invisible="not fecha_firma_verifico"/>
                             <button name="action_firmar_verifico"
@@ -437,6 +437,36 @@
                     context="{'group_by': 'area_afectada'}"/>
             </search>
         </field>
+    </record>
+
+    <!-- ── Vista: mis acciones pendientes ──────────────────────────── -->
+    <record id="view_desviacion_accion_mis_list" model="ir.ui.view">
+        <field name="name">amunet.desviacion.accion.mis.list</field>
+        <field name="model">amunet.desviacion.accion</field>
+        <field name="arch" type="xml">
+            <list string="Mis acciones pendientes">
+                <field name="desviacion_id" string="Desviación"/>
+                <field name="tipo" string="Tipo"/>
+                <field name="descripcion" string="Descripción"/>
+                <field name="fecha_limite" string="Fecha límite"/>
+                <field name="state" readonly="1" widget="badge"
+                       decoration-danger="state == 'pendiente'"
+                       decoration-warning="state == 'realizada'"
+                       decoration-success="state == 'verificada'"/>
+                <button name="action_marcar_realizada" type="object"
+                        string="Marcar realizada" icon="fa-check"
+                        class="btn-sm btn-warning"
+                        invisible="state != 'pendiente'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_mis_acciones_desviacion" model="ir.actions.act_window">
+        <field name="name">Mis acciones pendientes</field>
+        <field name="res_model">amunet.desviacion.accion</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_desviacion_accion_mis_list"/>
+        <field name="domain">[('responsable_id', '=', uid), ('state', '=', 'pendiente')]</field>
     </record>
 
     <!-- ── Acciones ────────────────────────────────────────────────── -->
