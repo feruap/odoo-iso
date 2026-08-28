@@ -106,8 +106,9 @@ class AmunetQualityController(http.Controller):
             # Pass report XML ID and IDs list
             pdf_content, _ = report.sudo()._render_qweb_pdf(report_xml_id, [check_id])
 
-            # Agregar anexo si existe contenido en líneas, fotos o el usuario lo marcó
-            if check.tiene_anexos or check.anexo_line_ids or check.anexo_photo_ids:
+            # El anexo de datos siempre va inmerso en el reporte principal.
+            # Solo se agrega página extra para fotografías.
+            if check.anexo_photo_ids:
                 try:
                     anexo_xml_id = 'amunet_quality.action_report_anexo_solicitud'
                     anexo_report = request.env.ref(anexo_xml_id, raise_if_not_found=False)
