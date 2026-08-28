@@ -21,6 +21,28 @@ Confirmado por Diana Flores, 2026-08-28. Idempotente.
 
 CHECK_IDS = [373, 374, 375, 376, 377, 378, 379, 753]
 
+# ── 0. Eliminar VAMA-038 de los análisis abiertos de goteros ────────────────────
+# VAMA-038 fue el parámetro original de volumen/goteo; MAVI-17 lo reemplaza.
+env.cr.execute("""
+    DELETE FROM amunet_quality_test_line_detail
+    WHERE test_line_id IN (
+        SELECT tl.id
+        FROM amunet_quality_test_line tl
+        JOIN amunet_quality_check_parameter p ON p.id=tl.parameter_id AND p.code='VAMA-038'
+        WHERE tl.check_id = ANY(%s)
+    )
+""", [CHECK_IDS])
+print(f"VAMA-038 detalles eliminados: {env.cr.rowcount}")
+
+env.cr.execute("""
+    DELETE FROM amunet_quality_test_line
+    WHERE check_id = ANY(%s)
+      AND parameter_id IN (
+          SELECT id FROM amunet_quality_check_parameter WHERE code='VAMA-038'
+      )
+""", [CHECK_IDS])
+print(f"VAMA-038 líneas de parámetro eliminadas: {env.cr.rowcount}")
+
 # ── 1. Agregar test_line MAVI-17 a análisis que no la tienen ────────────────────
 env.cr.execute("""
     INSERT INTO amunet_quality_test_line
