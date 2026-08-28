@@ -37,7 +37,7 @@
 
                         <!-- Fila 1: Título -->
                         <tr>
-                            <td colspan="8" style="
+                            <td colspan="9" style="
                                 text-align:       center;
                                 font-weight:      bold;
                                 font-size:        13pt;
@@ -82,7 +82,7 @@
                                 white-space:      nowrap;">
                                 No. Análisis:
                             </td>
-                            <td colspan="3" style="
+                            <td colspan="4" style="
                                 background-color: #FFFFFF;
                                 border:           1.5px solid #1F4E79;
                                 padding:          3px 6px;
@@ -92,28 +92,31 @@
                             </td>
                         </tr>
 
-                        <!-- Fila 3: Encabezados de columnas -->
+                        <!-- Fila 3: Encabezados — # Muestra + col1-col7 = 8 columnas visibles -->
                         <tr style="background-color: #D9D9D9; font-weight: bold; text-align: center;">
-                            <td colspan="2" style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 11%;">
+                            <td colspan="2" style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 9%;">
                                 # Muestra
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 13%;">
                                 <t t-esc="o.anexo_col1_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 13%;">
                                 <t t-esc="o.anexo_col2_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 13%;">
                                 <t t-esc="o.anexo_col3_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 13%;">
                                 <t t-esc="o.anexo_col4_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 15%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 13%;">
                                 <t t-esc="o.anexo_col5_header or ''"/>
                             </td>
-                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 14%;">
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 13%;">
                                 <t t-esc="o.anexo_col6_header or ''"/>
+                            </td>
+                            <td style="border: 1.5px solid #1F4E79; padding: 4px; height: 24px; vertical-align: middle; width: 13%;">
+                                <t t-esc="o.anexo_col7_header or ''"/>
                             </td>
                         </tr>
 
@@ -131,6 +134,7 @@
                                 <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col4 or ''"/></td>
                                 <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col5 or ''"/></td>
                                 <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col6 or ''"/></td>
+                                <td style="border: 1px solid #1F4E79; padding: 3px 5px; height: 22px; vertical-align: middle;"><t t-esc="line.col7 or ''"/></td>
                             </tr>
                         </t>
 
@@ -139,6 +143,7 @@
                             <t t-foreach="range(min_data_rows - data_rows_count)" t-as="i">
                                 <tr>
                                     <td colspan="2" style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
+                                    <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
                                     <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
                                     <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>
                                     <td style="border: 1px solid #1F4E79; height: 22px; padding: 3px 5px;"></td>

@@ -103,9 +103,7 @@ env.cr.execute("""
 """)
 print("STGOT02 MAVI-17 spec config: texto corregido")
 
-print("\n✓ Script completado.")
-
-# ── 5. Activar spec MAVI-17 de STGOT02 (active=NULL → true) ─────────────────────
+# ── 5. Activar spec MAVI-17 de STGOT02 si está inactiva ─────────────────────────
 env.cr.execute("""
     UPDATE amunet_quality_parameter_specification_config sc
     SET active = true, write_date = NOW()
@@ -116,7 +114,7 @@ env.cr.execute("""
       AND r.parameter_code='MAVI-17'
       AND (sc.active IS NULL OR sc.active=false)
 """)
-print("STGOT02 MAVI-17 spec: activada")
+print("STGOT02 MAVI-17 spec: activada (si estaba inactiva)")
 
 # ── 6. Aplicar ANEXO GOTERO a todos los análisis abiertos de goteros ─────────────
 env.cr.execute("""
@@ -135,19 +133,34 @@ env.cr.execute("""
 """, [CHECK_IDS])
 print("ANEXO GOTERO aplicado a todos los análisis abiertos")
 
-# ── 7. Corregir nombre y valores MAVI-17 en detalles de análisis ─────────────────
+# ── 7. Corregir nombre y criterio de MAVI-17 en detalles (CASE por gotero) ────────
+# Se usa CASE WHEN explícito para no depender de que la spec tenga el texto correcto.
 env.cr.execute("""
     UPDATE amunet_quality_test_line_detail td
-    SET name = 'Conteo de gotas',
+    SET name = sc.specification_name,
         max_value = sc.max_value,
         min_value = sc.min_value,
-        acceptance_criteria = sc.acceptance_criteria,
+        acceptance_criteria = CASE pt.default_code
+          WHEN 'STGOT01' THEN '10 µl ±5 µl'
+          WHEN 'STGOT02' THEN '5 a 10 µl ±2 µl'
+          WHEN 'STGOT03' THEN '20 µl ±5 µl'
+          WHEN 'STGOT04' THEN '25 µl ±5 µl'
+          WHEN 'STGOT05' THEN '40 µl ±5 µl'
+          WHEN 'STGOT06' THEN '40 µl ±5 µl'
+          WHEN 'STGOT07' THEN '20 µl ±5 µl'
+          ELSE sc.acceptance_criteria
+        END,
         write_date = NOW()
     FROM amunet_quality_test_line tl
+    JOIN amunet_quality_check qc ON qc.id=tl.check_id
+    JOIN product_product pp ON pp.id=qc.product_id
+    JOIN product_template pt ON pt.id=pp.product_tmpl_id
     JOIN amunet_quality_check_parameter p ON p.id=tl.parameter_id AND p.code='MAVI-17'
     JOIN amunet_quality_parameter_product_rel r ON r.id=tl.parameter_rel_id
     JOIN amunet_quality_parameter_specification_config sc
       ON sc.product_parameter_rel_id=r.id AND sc.active=true
     WHERE td.test_line_id=tl.id AND tl.check_id = ANY(%s)
 """, [CHECK_IDS])
-print("MAVI-17 detalles corregidos: nombre y valores por gotero")
+print("MAVI-17 detalles corregidos: nombre y criterio por gotero")
+
+print("\n✓ Script completado.")

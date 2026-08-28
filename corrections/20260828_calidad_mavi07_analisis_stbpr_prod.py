@@ -9,26 +9,20 @@ Problema:
   - Spec configs de STBPR02/04 con active=NULL que impiden cerrar análisis
 
 Pasos:
-  1. Activar spec configs inactivas (STBPR02 Positiva, STBPR04 ambas)
-  2. Eliminar "Muestra negativa" vama_multi_check duplicada donde ya existe mavi_07
-  3. Corregir todos los "Muestra negativa" → mavi_07_ternary + criterio correcto
-  4. Corregir todos los "Muestra positiva" → mavi_07_ternary + criterio correcto
-  5. Insertar "Muestra positiva" donde falta (análisis 468, 469, 470)
+  1. Eliminar "Muestra negativa" vama_multi_check duplicada donde ya existe mavi_07
+  2. Corregir todos los "Muestra negativa" → mavi_07_ternary + criterio correcto
+  3. Corregir todos los "Muestra positiva" → mavi_07_ternary + criterio correcto
+  4. Insertar "Muestra positiva" donde falta (análisis 468, 469, 470)
+
+NOTA: El script anterior (20260828_calidad_buffers_qc_prod.py) ya creó specs activas
+nuevas para STBPR04 (88702/88703) y STBPR02 Positiva (88707). Las inactivas viejas
+(80778/80810/80811) se dejan como están para evitar duplicados activos.
 
 Confirmado por Diana Flores, 2026-08-28.
 Idempotente — seguro de correr más de una vez.
 """
 
-# ── 1. Activar spec configs inactivas ────────────────────────────────────────────
-env.cr.execute("""
-    UPDATE amunet_quality_parameter_specification_config
-    SET active=true, write_date=NOW()
-    WHERE id IN (80778, 80810, 80811) AND (active IS NULL OR active=false)
-""")
-env.cr.execute("SELECT id, active FROM amunet_quality_parameter_specification_config WHERE id IN (80778,80810,80811)")
-print("Spec configs activadas:", env.cr.fetchall())
-
-# ── 2. Eliminar "Muestra negativa" vama_multi_check duplicada ────────────────────
+# ── 1. Eliminar "Muestra negativa" vama_multi_check duplicada ────────────────────
 env.cr.execute("""
     DELETE FROM amunet_quality_test_line_detail
     WHERE id IN (
@@ -63,7 +57,7 @@ env.cr.execute("""
         specification_config_id=(
             SELECT sc.id FROM amunet_quality_parameter_specification_config sc
             WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
-              AND sc.specification_id=628 LIMIT 1
+              AND sc.specification_id=628 AND sc.active=true LIMIT 1
         ),
         write_date=NOW()
     FROM amunet_quality_test_line tl
@@ -88,7 +82,7 @@ env.cr.execute("""
         specification_config_id=(
             SELECT sc.id FROM amunet_quality_parameter_specification_config sc
             WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
-              AND sc.specification_id=629 LIMIT 1
+              AND sc.specification_id=629 AND sc.active=true LIMIT 1
         ),
         write_date=NOW()
     FROM amunet_quality_test_line tl
@@ -111,7 +105,7 @@ env.cr.execute("""
     SELECT tl.id, tl.check_id, 'Muestra positiva', 629,
         (SELECT sc.id FROM amunet_quality_parameter_specification_config sc
          WHERE sc.product_parameter_rel_id=tl.parameter_rel_id
-           AND sc.specification_id=629 LIMIT 1),
+           AND sc.specification_id=629 AND sc.active=true LIMIT 1),
         'mavi_07_ternary', '#1-4 y/o #5 (patrón PRB-01)', 10,
         2, 2, NOW(), NOW()
     FROM amunet_quality_test_line tl
