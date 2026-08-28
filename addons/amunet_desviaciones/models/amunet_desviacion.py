@@ -28,8 +28,9 @@ class AmunetDesviacionAccion(models.Model):
         ('realizada',  'Realizada'),
         ('verificada', 'Verificada'),
     ], string='Estado', default='pendiente', required=True)
-    fecha_cierre        = fields.Date(string='Fecha de cierre')
-    evidencia_cierre    = fields.Text(string='Evidencia del cumplimiento')
+    fecha_cierre            = fields.Date(string='Fecha de cierre')
+    evidencia_cierre        = fields.Text(string='Evidencia de implementación')
+    evidencia_efectividad   = fields.Text(string='Evidencia de efectividad')
 
     def _notificar_responsable(self):
         for accion in self.filtered(lambda a: a.responsable_id and a.desviacion_id):
@@ -72,15 +73,21 @@ class AmunetDesviacionAccion(models.Model):
                 raise UserError(_(
                     'Solo %s puede marcar esta acción como Realizada.'
                 ) % accion.responsable_id.name)
+            if not accion.evidencia_cierre or not accion.evidencia_cierre.strip():
+                raise UserError(_(
+                    'Antes de marcar como Realizada debes describir cómo se implementó la acción '
+                    '(campo "Evidencia de implementación").'))
             accion.write({
                 'state': 'realizada',
                 'fecha_cierre': fields.Date.today(),
             })
             accion.desviacion_id._message_log(
-                body=_('<p><b>%s</b> marcó como <b>Realizada</b> la acción: %s</p>') % (
-                    self.env.user.name, accion.descripcion or ''))
+                body=_('<p><b>%s</b> marcó como <b>Realizada</b> la acción: %s</p>'
+                       '<p><b>Evidencia:</b> %s</p>') % (
+                    self.env.user.name, accion.descripcion or '', accion.evidencia_cierre))
 
     def action_verificar(self):
+        self.ensure_one()
         puede = (
             self.env.user.has_group('amunet_documentos.group_responsable_sanitario') or
             self.env.user.has_group('amunet_desviaciones.group_desviaciones_manager')
@@ -88,13 +95,15 @@ class AmunetDesviacionAccion(models.Model):
         if not puede:
             raise UserError(_(
                 'Solo el Responsable Sanitario o el Responsable de Desviaciones puede verificar acciones.'))
-        for accion in self:
-            if accion.state != 'realizada':
-                raise UserError(_('Solo puedes verificar una acción que ya fue marcada como Realizada.'))
-            accion.write({'state': 'verificada'})
-            accion.desviacion_id._message_log(
-                body=_('<p><b>%s</b> verificó la acción: %s</p>') % (
-                    self.env.user.name, accion.descripcion or ''))
+        if self.state != 'realizada':
+            raise UserError(_('Solo puedes verificar una acción que ya fue marcada como Realizada.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'amunet.desviacion.verificar.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_accion_id': self.id},
+        }
 
 
 class AmunetDesviacion(models.Model):
