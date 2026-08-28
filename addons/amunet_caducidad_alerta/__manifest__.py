@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Semaforo de caducidad en lotes',
-    'version': '19.0.2.0.0',
+    'version': '19.0.3.0.0',
     'summary': 'Marca cada lote como normal, caducidad corta, cortesia o retirar, '
                'para que almacen sepa que mover a promociones y cuando.',
     'description': """Semaforo de caducidad para el almacen de producto terminado.
@@ -16,13 +16,20 @@ Calcula, para cada lote con fecha de caducidad, en que condicion comercial esta:
 
 Los umbrales se ajustan en Ajustes tecnicos sin tocar codigo. Un proceso diario
 recalcula la condicion de todos los lotes, porque el paso del tiempo la cambia
-aunque nadie edite nada.""",
+aunque nadie edite nada.
+
+Ademas registra donde esta fisicamente cada lote -anaquel normal, caducidad
+corta, cortesias o retenidos- y avisa cuales estan fuera de su lugar. Desde la
+lista de pendientes, almacen confirma el movimiento y Odoo genera el traslado
+interno correspondiente, con folio, fecha y usuario.""",
     'author': 'Amunet',
     'category': 'Inventory',
     'depends': ['stock', 'product_expiry'],
     'data': [
+        'security/ir.model.access.csv',
         'data/parametros.xml',
         'data/ir_cron.xml',
+        'wizard/amunet_movimiento_caducidad_views.xml',
         'views/stock_lot_views.xml',
     ],
     'post_init_hook': 'post_init_hook',

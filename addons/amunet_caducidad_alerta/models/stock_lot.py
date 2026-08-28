@@ -11,6 +11,11 @@ UMBRAL_RETIRO = 'amunet_caducidad.meses_retiro'      # por debajo de esto: retir
 
 DEFAULTS = {UMBRAL_CORTA: 6, UMBRAL_CORTESIA: 4, UMBRAL_RETIRO: 2}
 
+# Los anaqueles de promociones solo existen para producto terminado. Una materia
+# prima con caducidad corta no se vende con descuento: se usa antes o se da de
+# baja, y eso lo decide produccion, no almacen de producto terminado.
+CATEGORIA_PT = 'Producto terminado'
+
 
 class StockLot(models.Model):
     _inherit = 'stock.lot'
@@ -38,6 +43,7 @@ class StockLot(models.Model):
         ('normal', 'Anaquel normal'),
         ('corta', 'Anaquel de caducidad corta'),
         ('cortesia', 'Anaquel de cortesias'),
+        ('retenido', 'Retenido por caducidad'),
         ('sin_stock', 'Sin existencia'),
     ], string='Donde esta hoy', default='sin_stock', readonly=True, index=True,
         copy=False,
@@ -47,6 +53,18 @@ class StockLot(models.Model):
         string='Debe moverse', readonly=True, index=True, copy=False,
         help='La fecha de caducidad ya cambio la condicion del lote, pero la '
              'mercancia sigue en el anaquel anterior.')
+
+    amunet_movimiento_fecha = fields.Datetime(
+        string='Movido de anaquel el', readonly=True, copy=False,
+        help='Cuando se confirmo por ultima vez que este lote se cambio de anaquel.')
+
+    amunet_movimiento_usuario_id = fields.Many2one(
+        'res.users', string='Movido por', readonly=True, copy=False,
+        help='Quien confirmo el ultimo cambio de anaquel de este lote.')
+
+    amunet_movimiento_picking_id = fields.Many2one(
+        'stock.picking', string='Traslado del movimiento', readonly=True, copy=False,
+        help='El documento de traslado interno que respalda el ultimo cambio de anaquel.')
 
     # ------------------------------------------------------------------
     @api.model
@@ -89,22 +107,74 @@ class StockLot(models.Model):
                     raise_if_not_found=False)
         cortesia = ref('amunet_caducidad_alerta.location_cortesias',
                        raise_if_not_found=False)
-        return corta, cortesia
+        retenidos = ref('amunet_caducidad_alerta.location_retenidos',
+                        raise_if_not_found=False)
+        return corta, cortesia, retenidos
 
     def _amunet_donde_esta(self):
         """En que anaquel esta el lote hoy, segun donde tiene existencia."""
         self.ensure_one()
-        corta, cortesia = self._amunet_ubicaciones_promocion()
+        corta, cortesia, retenidos = self._amunet_ubicaciones_promocion()
         quants = self.quant_ids.filtered(
             lambda q: q.location_id.usage == 'internal' and q.quantity > 0)
         if not quants:
             return 'sin_stock'
         ubicaciones = quants.mapped('location_id')
+        # Se reporta el anaquel "pendiente" primero: si algo sigue en el anaquel
+        # normal, el lote todavia tiene trabajo por hacer.
+        if any(u not in (corta | cortesia | retenidos) for u in ubicaciones):
+            return 'normal'
         if corta and corta in ubicaciones:
             return 'corta'
         if cortesia and cortesia in ubicaciones:
             return 'cortesia'
-        return 'normal'
+        return 'retenido'
+
+    # ------------------------------------------------------------------
+    def _amunet_es_producto_terminado(self):
+        """Solo el producto terminado se mueve a los anaqueles de promociones."""
+        self.ensure_one()
+        nombre = self.product_id.categ_id.complete_name or ''
+        return nombre == CATEGORIA_PT or nombre.startswith(CATEGORIA_PT + ' /')
+
+    def _amunet_destino_esperado(self):
+        """El anaquel donde deberia estar este lote hoy. False si no aplica."""
+        self.ensure_one()
+        if not self._amunet_es_producto_terminado():
+            return False
+        corta, cortesia, retenidos = self._amunet_ubicaciones_promocion()
+        condicion = self.amunet_condicion_caducidad
+        if condicion == 'corta':
+            return corta
+        if condicion == 'cortesia':
+            return cortesia
+        if condicion in ('retirar', 'vencido'):
+            return retenidos
+        # Normal o sin fecha: su lugar es el anaquel de existencias del almacen.
+        almacen = self.env['stock.warehouse'].search([('code', '=', 'APT')], limit=1)
+        return almacen.lot_stock_id if almacen else False
+
+    def _amunet_quants_movibles(self, destino):
+        """Existencias del lote que aun no estan en el anaquel destino."""
+        self.ensure_one()
+        if not destino:
+            return self.env['stock.quant'].browse()
+        return self.quant_ids.filtered(
+            lambda q: q.location_id.usage == 'internal'
+            and q.quantity > 0
+            and q.location_id != destino)
+
+    def action_amunet_confirmar_movimiento(self):
+        """Abre el asistente para registrar que ya se movieron las cajas."""
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Confirmar movimiento de anaquel'),
+            'res_model': 'amunet.movimiento.caducidad',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': dict(self.env.context, active_ids=self.ids,
+                            active_model='stock.lot'),
+        }
 
     def _amunet_recalcular_caducidad(self):
         """Escribe la condicion en cada lote. Solo toca lo que cambio."""
@@ -126,15 +196,16 @@ class StockLot(models.Model):
             # Debe moverse cuando el calendario ya lo cambio de condicion pero
             # la mercancia sigue donde estaba. 'retirar' y 'vencido' tambien
             # piden movimiento: salen de la venta.
-            esperado = {'corta': 'corta', 'cortesia': 'cortesia'}.get(condicion)
-            if donde == 'sin_stock':
+            esperado = {
+                'corta': 'corta',
+                'cortesia': 'cortesia',
+                'retirar': 'retenido',
+                'vencido': 'retenido',
+            }.get(condicion, 'normal')
+            if donde == 'sin_stock' or not lote._amunet_es_producto_terminado():
                 mover = False
-            elif condicion in ('retirar', 'vencido'):
-                mover = True
-            elif esperado:
-                mover = (donde != esperado)
             else:
-                mover = (donde != 'normal')
+                mover = (donde != esperado)
             if lote.amunet_requiere_movimiento != mover:
                 valores['amunet_requiere_movimiento'] = mover
             if valores:
