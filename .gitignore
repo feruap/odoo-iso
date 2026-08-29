@@ -10,3 +10,8 @@ package-lock.json
 package.json
 encrypt_secret.js
 github_actions_ed25519.txt
+
+# --- 28-ago-2026: lo que produccion escribe al correr no debe atorar el deploy ---
+logs/*.log
+*.bak.*
+.odoo-deploy.lock
