@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Los dos crones nacen apagados. Aunque se enciendan, cada uno solo
+             actua sobre las tiendas que tengan su propio candado prendido. -->
+
+        <record id="cron_woo_sincronizar_existencias" model="ir.cron">
+            <field name="name">Amunet Woo: publicar el inventario en la tienda</field>
+            <field name="model_id" ref="amunet_woocommerce.model_amunet_woo_backend"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_sincronizar_existencias()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="active" eval="False"/>
+        </record>
+
+        <record id="cron_woo_traer_ventas" model="ir.cron">
+            <field name="name">Amunet Woo: traer las ventas de la tienda</field>
+            <field name="model_id" ref="amunet_woocommerce.model_amunet_woo_backend"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_traer_ventas()</field>
+            <field name="interval_number">15</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
