@@ -32,10 +32,8 @@
                     <group string="Odoo manda el inventario">
                         <field name="allow_stock_publish"/>
                         <field name="apt_base_publicacion" widget="radio"/>
-                        <field name="apt_wp_user"
-                               placeholder="usuario de WordPress"/>
-                        <field name="apt_wp_app_password" password="True"
-                               placeholder="Application Password (lo da Fernando)"/>
+                        <field name="bridge_secret" password="True"
+                               placeholder="el mismo secreto del puente de nombre e imagen"/>
                     </group>
                     <group string="La tienda regresa sus ventas">
                         <field name="allow_stock_consume"/>

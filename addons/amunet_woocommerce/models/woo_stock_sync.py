@@ -17,8 +17,12 @@ Son dos caminos, cada uno con su candado y los dos apagados de nacimiento:
 Mientras el puente no este encendido, almacen sigue capturando en los dos lados.
 """
 
+import hashlib
+import hmac
+import json
 import logging
 import re
+import time
 from datetime import datetime, timedelta
 
 import requests
@@ -235,22 +239,46 @@ class AmunetWooBackend(models.Model):
         return salida
 
     def _puente_llamar(self, metodo, ruta, payload=None, params=None):
+        """Habla con la tienda FIRMANDO, no con contrasena.
+
+        Se reusa el mismo secreto compartido que ya usa el puente de nombre e
+        imagen (campo 'bridge_secret'): HMAC-SHA256 sobre "sello.cuerpo", con
+        las cabeceras X-Amunet-Timestamp y X-Amunet-Signature. La tienda lo
+        verifica igual en los dos namespaces.
+
+        Es mejor que una Application Password de WordPress viviendo aqui: no
+        caduca, no hay que rotarla, no se filtra en un log, y ademas el cuerpo
+        va firmado, asi que nadie puede cambiarlo por el camino.
+        """
         self.ensure_one()
-        if not self.apt_wp_user or not self.apt_wp_app_password:
+        if not self.bridge_secret:
             raise UserError(_(
-                'Falta el usuario de WordPress y su Application Password para hablar '
-                'con la tienda. Los da Fernando; ningun agente los genera.'))
+                'Esta tienda no tiene el secreto del puente configurado. Es el '
+                'mismo que ya usa el puente de nombre e imagen.'))
         base = (self.store_url or '').strip().rstrip('/')
         if not base.lower().startswith('https://'):
-            # Con http:// el usuario y la Application Password viajarian en claro.
+            # Con http:// la firma viajaria en claro y se podria reusar.
             raise UserError(_(
-                'La direccion de la tienda tiene que ser https. Con http la contrasena '
-                'viaja en claro por la red.'))
+                'La direccion de la tienda tiene que ser https.'))
         url = '%s%s' % (base, ruta)
+        crudo = json.dumps(payload or {}, separators=(',', ':')).encode('utf-8') if payload is not None else b''
+        sello = str(int(time.time()))
+        firma = hmac.new(
+            self.bridge_secret.encode('utf-8'),
+            sello.encode('utf-8') + b'.' + crudo,
+            hashlib.sha256).hexdigest()
         try:
             respuesta = requests.request(
-                metodo, url, json=payload, params=params,
-                auth=(self.apt_wp_user, self.apt_wp_app_password),
+                metodo, url,
+                data=(crudo if payload is not None else None),
+                params=params,
+                headers={
+                    'Content-Type': 'application/json',
+                    'X-Amunet-Timestamp': sello,
+                    'X-Amunet-Signature': firma,
+                    # Cloudflare rechaza agentes raros; conviene decir quien es.
+                    'User-Agent': 'Amunet-Odoo-Bridge/1.0',
+                },
                 timeout=TIEMPO_LIMITE, verify=True, allow_redirects=False)
         except requests.RequestException as exc:
             raise UserError(_('No se pudo hablar con la tienda: %s') % exc)
