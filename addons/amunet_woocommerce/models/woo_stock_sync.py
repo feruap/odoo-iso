@@ -130,6 +130,14 @@ class AmunetWooBackend(models.Model):
         help='El id que la tienda le dio al ultimo movimiento leido. Junto con la '
              'fecha forma el cursor: sin el, dos ventas del mismo segundo se '
              'perdian o se repetian.')
+    apt_base_publicacion = fields.Selection([
+        ('libre', 'Todo lo libre del anaquel (columna "Odoo libre")'),
+        ('liberado', 'Solo los lotes marcados como liberados'),
+    ], string='Que se publica en la tienda', default='libre', required=True,
+        help='"Odoo libre" es lo que ya esta en el anaquel de producto terminado '
+             'listo para vender: para llegar ahi el lote tuvo que pasar por el '
+             'proceso. La otra opcion es mas estricta y solo publica los lotes '
+             'que ademas traen la marca de liberacion puesta en Odoo.')
     apt_venta_cliente_location_id = fields.Many2one(
         'stock.location', string='Destino de las ventas de la tienda',
         domain="[('usage','in',('customer','inventory','production'))]",
@@ -155,7 +163,7 @@ class AmunetWooBackend(models.Model):
         salida = []
         for mapeo in mapeos:
             lotes = []
-            for fila in self._read_released_piece_stock(mapeo):
+            for fila in self._lectura_anaquel(mapeo):
                 if not fila.get('expiration_month') or not fila.get('expiration_year'):
                     # sin caducidad no se puede clasificar en la tienda: se omite
                     # y se deja constancia, en vez de mandar una fecha inventada.
@@ -172,6 +180,57 @@ class AmunetWooBackend(models.Model):
             salida.append({
                 'product_id': int(mapeo.woo_product_id),
                 'lotes': lotes,
+            })
+        return salida
+
+    def _lectura_anaquel(self, mapeo):
+        """Lo que hay en el anaquel de piezas, con el criterio que eligio la casa.
+
+        Con 'libre' se publica TODO lo libre del anaquel, que es justo lo que
+        ensena la columna "Odoo libre" de la pantalla de mapeo. El criterio es
+        de la direccion y tiene su razon: para que una pieza llegue a ese
+        anaquel tuvo que pasar por el proceso; la entrega de producto terminado
+        solo existe si Calidad aprobo el analisis.
+
+        Con 'liberado' se publica solo lo que ademas trae la marca de liberacion
+        puesta en Odoo. Es mas estricto y deja fuera lo que entro al anaquel por
+        un ajuste de inventario en vez de por la entrega, que es donde se pone
+        esa marca.
+        """
+        self.ensure_one()
+        if self.apt_base_publicacion == 'liberado':
+            return self._read_released_piece_stock(mapeo)
+
+        ubicacion = self._apt_pieces_location()
+        if not mapeo.product_id or not ubicacion:
+            return []
+        quants = self.env['stock.quant'].search([
+            ('product_id', '=', mapeo.product_id.id),
+            ('location_id', 'child_of', ubicacion.id),
+            ('company_id', '=', self.company_id.id),
+        ])
+        por_lote = {}
+        for quant in quants:
+            lote = quant.lot_id
+            if not lote:
+                continue
+            libre = quant.quantity - getattr(quant, 'reserved_quantity', 0.0)
+            if libre <= 0:
+                continue
+            por_lote.setdefault(lote, 0.0)
+            por_lote[lote] += libre
+        salida = []
+        for lote, cantidad in por_lote.items():
+            mes = anio = False
+            if lote.expiration_date:
+                mes = lote.expiration_date.month
+                anio = lote.expiration_date.year
+            salida.append({
+                'lot': lote,
+                'lot_number': lote.name,
+                'quantity': cantidad,
+                'expiration_month': mes,
+                'expiration_year': anio,
             })
         return salida
 
@@ -539,8 +598,11 @@ class AmunetWooBackend(models.Model):
         lote = iguales
         comun['lot_id'] = lote.id
 
-        # ---- Calidad manda tambien al descontar, no solo al publicar ----
-        if getattr(lote, 'amunet_lot_release_state', 'released') != 'released':
+        # ---- al descontar se aplica el MISMO criterio con que se publico ----
+        # Seria absurdo publicar una pieza y luego negarse a descontarla: la
+        # tienda ya la vendio y el anaquel tiene que reflejarlo.
+        if (self.apt_base_publicacion == 'liberado'
+                and getattr(lote, 'amunet_lot_release_state', 'released') != 'released'):
             return self._guardar_resultado(
                 mov, fila, 'lote_retenido',
                 _('El lote %s ya no esta liberado por Calidad; no se descuenta solo.')

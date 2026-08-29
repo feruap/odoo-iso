@@ -31,6 +31,7 @@
                        groups="amunet_woocommerce.group_woo_admin">
                     <group string="Odoo manda el inventario">
                         <field name="allow_stock_publish"/>
+                        <field name="apt_base_publicacion" widget="radio"/>
                         <field name="apt_wp_user"
                                placeholder="usuario de WordPress"/>
                         <field name="apt_wp_app_password" password="True"
