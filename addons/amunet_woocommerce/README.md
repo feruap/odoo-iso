@@ -84,6 +84,30 @@ inventario existente y capacidad potencial siempre por separado. Si se exige
 calidad, solo cuentan los lotes liberados; si el campo regulatorio
 `amunet_lot_release_state` no existe, el dato es "No calculable".
 
+## Recepción de material para venta (woolibre) — RECEPCIÓN-céntrico
+
+El almacén de venta (woolibre) acepta la recepción del producto terminado ANTES
+de que se vuelva existencia vendible ("Woo disponible"). Dos acciones separadas,
+en orden: (1) Calidad **LIBERA** el lote (`amunet_lot_release_state == 'released'`,
+binario por lote); (2) el almacén **ACEPTA** la recepción (modelo
+`amunet.woo.reception`), posiblemente en **cantidades parciales** a lo largo del
+tiempo. Solo entonces se publica.
+
+- **Candado duro**: no se puede aceptar la recepción de un lote que Calidad no
+  ha liberado (si el módulo de Calidad no está instalado, no hay concepto de
+  liberación y no se bloquea — dependencia suave).
+- **Parciales**: cada aceptación es un evento auditable e independiente; se
+  publica una sola vez (idempotencia **por recepción**, no solo por lote).
+- La **publicación** a la tienda la dispara la aceptación de la recepción, ya
+  **no** la liberación del lote ni el cierre de la orden de fabricación
+  (`stock_lot`/`mrp_production` ya no auto-publican). La acción legada
+  `action_publish_stock` delega en `action_publicar_recepciones` para no
+  duplicar existencias por dos caminos.
+- Sigue tras el candado `allow_stock_publish` y el Application Password de la
+  tienda; deja bitácora en `woo_sync_log` y ledger de idempotencia en
+  `amunet.woo.stock.delivery`. Botón "Aceptar recepción (venta)" en el lote y
+  menú **Recepción de material (venta)**.
+
 ## Integraciones y degradación segura
 
 El módulo depende de `amunet_packaging_planning` para usar el catálogo
