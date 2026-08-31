@@ -44,10 +44,21 @@ SPECS_ACTIVAS_MAVI07 = {'Almacenamiento en refrigeración', 'Almacenamiento en t
 MAPPING_MAVI20 = {
     "positions": [
         {"index": 0, "type": "binary",
-         "A": "Blanco, compacto y sin humedad aparente",
-         "B": "No cumple",
-         "label": "Apariencia",
-         "instruction": "Verificar que el liofilizado sea blanco, compacto y sin humedad aparente."},
+         "A": "Blanco", "B": "Amarillo",
+         "label": "1. Color",
+         "instruction": "Verificar el color del liofilizado."},
+        {"index": 1, "type": "binary",
+         "A": "Compacto", "B": "Deformado",
+         "label": "2. Forma",
+         "instruction": "Verificar la forma del liofilizado."},
+        {"index": 2, "type": "binary",
+         "A": "Sin textura pegajosa", "B": "Con textura pegajosa",
+         "label": "3. Textura",
+         "instruction": "Verificar la textura del liofilizado."},
+        {"index": 3, "type": "binary",
+         "A": "Sin humedad aparente", "B": "Con humedad aparente",
+         "label": "4. Humedad",
+         "instruction": "Verificar humedad aparente del liofilizado."},
     ]
 }
 
