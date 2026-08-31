@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="group_bitacora_operator" model="res.groups">
+            <field name="name">Bitácoras / Operador (captura)</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">Captura y firma registros de bitácora (limpieza, temperatura y humedad).</field>
+        </record>
+
+        <record id="group_bitacora_supervisor" model="res.groups">
+            <field name="name">Bitácoras / Supervisor</field>
+            <field name="implied_ids" eval="[(4, ref('group_bitacora_operator'))]"/>
+            <field name="comment">Configura plantillas, aprueba versiones y cierra desviaciones.</field>
+        </record>
+
+        <!--
+          Nota de seguridad: por ahora los operadores ven TODOS los registros de bitácora
+          (realidad de piso, sin mapa usuario->area todavia). La inmutabilidad tras firma se
+          garantiza por codigo (write/unlink) y por las ACL (sin create/unlink para operador).
+          PENDIENTE DE CONFIGURAR: segmentacion por area cuando exista relacion usuario->area.
+        -->
+        <record id="rule_entry_operator_all" model="ir.rule">
+            <field name="name">Operador: ve y captura todos los registros (sin segmentación por área aún)</field>
+            <field name="model_id" ref="model_amunet_bitacora_entry"/>
+            <field name="groups" eval="[(4, ref('group_bitacora_operator'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+    </data>
+</odoo>

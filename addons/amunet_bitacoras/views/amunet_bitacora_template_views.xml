@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bitacora_template_list" model="ir.ui.view">
+        <field name="name">amunet.bitacora.template.list</field>
+        <field name="model">amunet.bitacora.template</field>
+        <field name="arch" type="xml">
+            <list string="Plantillas de bitácora" decoration-muted="state == 'archived'"
+                  decoration-warning="requires_confirmation">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="tipo"/>
+                <field name="department"/>
+                <field name="frecuencia"/>
+                <field name="version"/>
+                <field name="requires_confirmation"/>
+                <field name="state"/>
+                <field name="entry_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_bitacora_template_form" model="ir.ui.view">
+        <field name="name">amunet.bitacora.template.form</field>
+        <field name="model">amunet.bitacora.template</field>
+        <field name="arch" type="xml">
+            <form string="Plantilla de bitácora">
+                <header>
+                    <button name="action_approve" type="object" string="Aprobar"
+                            class="btn-primary" invisible="state != 'draft'"
+                            groups="amunet_bitacoras.group_bitacora_supervisor"/>
+                    <button name="action_activate" type="object" string="Activar"
+                            class="btn-primary" invisible="state != 'approved'"
+                            groups="amunet_bitacoras.group_bitacora_supervisor"/>
+                    <button name="action_new_revision" type="object" string="Nueva revisión"
+                            invisible="state != 'active'"
+                            groups="amunet_bitacoras.group_bitacora_supervisor"/>
+                    <button name="action_archive_template" type="object" string="Archivar"
+                            invisible="state == 'archived'"
+                            groups="amunet_bitacoras.group_bitacora_supervisor"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,active"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="not requires_confirmation">
+                        Esta plantilla tiene datos sembrados por defecto. Revisa área, límites,
+                        PNO y formato, desmarca "Pendiente de confirmar datos" y luego aprueba.
+                    </div>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_entries" type="object" class="oe_stat_button" icon="fa-list">
+                            <field name="entry_count" widget="statinfo" string="Registros"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="version"/>
+                            <field name="tipo"/>
+                            <field name="requires_confirmation"/>
+                        </group>
+                        <group>
+                            <field name="area_id"/>
+                            <field name="department"/>
+                            <field name="frecuencia"/>
+                            <field name="shift_count" invisible="frecuencia != 'turno'"/>
+                            <field name="tolerance_hours"/>
+                        </group>
+                    </group>
+                    <group string="Documento controlado">
+                        <field name="document_id"/>
+                        <field name="pno_code"/>
+                        <field name="formato_code"/>
+                    </group>
+                    <group string="Límites de especificación" invisible="tipo != 'temp_humedad'">
+                        <group>
+                            <field name="temp_min"/>
+                            <field name="temp_max"/>
+                        </group>
+                        <group>
+                            <field name="hum_min"/>
+                            <field name="hum_max"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Pasos a verificar" invisible="tipo != 'limpieza'">
+                            <field name="checklist_item_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="required"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Aprobación / notas">
+                            <group>
+                                <field name="approved_by"/>
+                                <field name="approved_on"/>
+                            </group>
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bitacora_template" model="ir.actions.act_window">
+        <field name="name">Plantillas de bitácora</field>
+        <field name="res_model">amunet.bitacora.template</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

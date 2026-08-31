@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_despeje_list" model="ir.ui.view">
+        <field name="name">amunet.despeje.list</field>
+        <field name="model">amunet.despeje</field>
+        <field name="arch" type="xml">
+            <list string="Despejes de línea"
+                  decoration-success="state == 'signed' and conforme"
+                  decoration-danger="state == 'signed' and not conforme"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="area"/>
+                <field name="production_id"/>
+                <field name="lote_nuevo"/>
+                <field name="fecha"/>
+                <field name="operator_id"/>
+                <field name="conforme"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_despeje_form" model="ir.ui.view">
+        <field name="name">amunet.despeje.form</field>
+        <field name="model">amunet.despeje</field>
+        <field name="arch" type="xml">
+            <form string="Despeje de línea">
+                <header>
+                    <button name="action_open_sign_wizard" type="object" string="Firmar despeje"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,signed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="area" readonly="state == 'signed'"/>
+                            <field name="production_id" readonly="state == 'signed'"/>
+                            <field name="lote_nuevo" readonly="state == 'signed'"/>
+                        </group>
+                        <group>
+                            <field name="fecha" readonly="state == 'signed'"/>
+                            <field name="turno" readonly="state == 'signed'"/>
+                            <field name="operator_id"/>
+                            <field name="conforme"/>
+                        </group>
+                    </group>
+                    <field name="line_ids" readonly="state == 'signed'">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="done"/>
+                            <field name="observacion"/>
+                        </list>
+                    </field>
+                    <group string="Firma">
+                        <field name="signed_by"/>
+                        <field name="signed_on"/>
+                        <field name="snapshot_hash"/>
+                        <field name="notas"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_despeje" model="ir.actions.act_window">
+        <field name="name">Despejes de línea</field>
+        <field name="res_model">amunet.despeje</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="rule_woo_stock_consumo_company" model="ir.rule">
+            <field name="name">Ventas de la tienda: solo las de mi compañía</field>
+            <field name="model_id" ref="model_amunet_woo_stock_consumo"/>
+            <!-- Se filtra por la compania GUARDADA en el renglon, no por la del
+                 backend: si manana cambian la compania del backend, este
+                 movimiento debe seguir contando donde de verdad ocurrio. -->
+            <field name="domain_force">[('company_id','in',company_ids)]</field>
+        </record>
+</odoo>

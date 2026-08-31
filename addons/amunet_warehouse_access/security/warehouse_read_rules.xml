@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Segregacion de LECTURA de inventario por almacen (complementa el candado de
+        ESCRITURA que ya existe en stock_quant.py).
+
+        Patron de dos reglas (se combinan con OR entre reglas de grupo):
+        - Regla operadores (base.group_user): cada usuario solo VE los quants de sus
+          almacenes permitidos (user.warehouse_ids). Ubicaciones SIN almacen (transito,
+          ajuste de inventario, proveedor, cliente, produccion) quedan visibles para no
+          romper flujos.
+        - Regla admin (base.group_system): ve TODO. Como los admin tambien son
+          base.group_user, el OR de ambas reglas les da acceso total.
+
+        Nota: NO se usa has_group() ni metodos en el domain_force porque el safe_eval
+        de ir.rule no los evalua de forma fiable; el bypass de admin se hace por grupo.
+    -->
+    <record id="stock_quant_warehouse_read_rule" model="ir.rule">
+        <field name="name">Existencias: ver solo almacenes permitidos</field>
+        <field name="model_id" ref="stock.model_stock_quant"/>
+        <field name="domain_force">['|', ('location_id.warehouse_id', '=', False), ('location_id.warehouse_id', 'in', user.warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="stock_quant_warehouse_admin_rule" model="ir.rule">
+        <field name="name">Existencias: admin ve todo</field>
+        <field name="model_id" ref="stock.model_stock_quant"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+</odoo>

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_stability_study_list" model="ir.ui.view">
+        <field name="name">amunet.stability.study.list</field>
+        <field name="model">amunet.stability.study</field>
+        <field name="arch" type="xml">
+            <list string="Estudios de estabilidad"
+                  decoration-success="state == 'approved'"
+                  decoration-danger="oos_count &gt; 0"
+                  decoration-muted="state == 'archived'">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="version"/>
+                <field name="pull_total"/>
+                <field name="pull_done"/>
+                <field name="pull_pending"/>
+                <field name="oos_count"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_stability_pull_form" model="ir.ui.view">
+        <field name="name">amunet.stability.pull.form</field>
+        <field name="model">amunet.stability.pull</field>
+        <field name="arch" type="xml">
+            <form string="Punto de jalado">
+                <header>
+                    <button name="action_mark_done" type="object" string="Completar punto"
+                            class="btn-primary" invisible="estado in ('done','missed','cancelled')"/>
+                    <field name="estado" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="study_id" readonly="1"/>
+                            <field name="batch_id" readonly="1"/>
+                            <field name="condition_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="mes" readonly="1"/>
+                            <field name="fecha_programada"/>
+                            <field name="tested_by"/>
+                            <field name="fecha_real"/>
+                        </group>
+                    </group>
+                    <field name="result_ids" readonly="estado in ('done','missed','cancelled')">
+                        <list editable="bottom">
+                            <field name="parameter_id"/>
+                            <field name="valor_num"/>
+                            <field name="valor_text"/>
+                            <field name="unidad"/>
+                            <field name="equipo"/>
+                            <field name="conforme" decoration-danger="conforme == 'no'"
+                                   decoration-success="conforme == 'si'"/>
+                            <field name="observacion"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_stability_pull_list" model="ir.ui.view">
+        <field name="name">amunet.stability.pull.list</field>
+        <field name="model">amunet.stability.pull</field>
+        <field name="arch" type="xml">
+            <list string="Puntos de jalado"
+                  decoration-warning="estado == 'pending'" decoration-danger="estado == 'missed'"
+                  decoration-success="estado == 'done'">
+                <field name="batch_id"/>
+                <field name="condition_id"/>
+                <field name="mes"/>
+                <field name="fecha_programada"/>
+                <field name="estado"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_stability_study_form" model="ir.ui.view">
+        <field name="name">amunet.stability.study.form</field>
+        <field name="model">amunet.stability.study</field>
+        <field name="arch" type="xml">
+            <form string="Estudio de estabilidad">
+                <header>
+                    <button name="action_open_approve_protocol" type="object" string="Aprobar protocolo"
+                            class="btn-primary" invisible="state != 'draft'"
+                            groups="amunet_estabilidad.group_stability_approver"/>
+                    <button name="action_submit_review" type="object" string="Enviar a revisión"
+                            class="btn-primary" invisible="state not in ('protocol_approved','in_progress')"/>
+                    <button name="action_open_sign_final" type="object" string="Firmar informe (revisa/aprueba)"
+                            class="btn-primary" invisible="state != 'under_review'"/>
+                    <button name="action_new_revision" type="object" string="Nueva versión"
+                            invisible="state != 'approved'"
+                            groups="amunet_estabilidad.group_stability_approver"/>
+                    <button name="action_escalate_capa" type="object" string="Escalar a CAPA"
+                            class="btn-warning" invisible="oos_count == 0"
+                            groups="amunet_estabilidad.group_stability_approver"/>
+                    <button name="action_archive_study" type="object" string="Archivar"
+                            invisible="state == 'archived'"
+                            groups="amunet_estabilidad.group_stability_approver"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,protocol_approved,in_progress,under_review,approved"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="oos_count == 0">
+                        Hay resultados FUERA DE ESPECIFICACIÓN. Requieren investigación OOS/desviación.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="version"/>
+                            <field name="product_id"/>
+                            <field name="protocolo_id"/>
+                        </group>
+                        <group>
+                            <field name="objetivo_meses"/>
+                            <field name="timepoints" readonly="state != 'draft'"/>
+                            <field name="duracion_meses"/>
+                            <field name="tolerancia_dias"/>
+                            <field name="fecha_inicio" readonly="state != 'draft'"/>
+                            <field name="responsable_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Lotes">
+                            <field name="batch_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="lote"/>
+                                    <field name="escala"/>
+                                    <field name="fecha_fabricacion"/>
+                                    <field name="empaque"/>
+                                    <field name="cantidad"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Condiciones">
+                            <field name="condition_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="tipo"/>
+                                    <field name="temperatura"/>
+                                    <field name="humedad"/>
+                                    <field name="luz"/>
+                                    <field name="camara"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Parámetros / especificaciones">
+                            <field name="parameter_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="parametro"/>
+                                    <field name="metodo"/>
+                                    <field name="tipo_dato"/>
+                                    <field name="spec_min"/>
+                                    <field name="spec_max"/>
+                                    <field name="spec_text"/>
+                                    <field name="unidad"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Puntos de jalado">
+                            <field name="pull_ids" readonly="1"/>
+                        </page>
+                        <page string="Conclusión e informe final">
+                            <group>
+                                <field name="conclusion"/>
+                                <field name="vida_util_concluida"/>
+                                <field name="requiere_control_cambios"/>
+                                <field name="capa_id"/>
+                            </group>
+                            <group string="Firmas">
+                                <field name="protocol_approved_by"/>
+                                <field name="protocol_approved_on"/>
+                                <field name="protocol_hash"/>
+                                <field name="revisa_id"/>
+                                <field name="fecha_revisa"/>
+                                <field name="aprueba_id"/>
+                                <field name="fecha_aprueba"/>
+                                <field name="final_hash"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_stability_study" model="ir.actions.act_window">
+        <field name="name">Estudios de estabilidad</field>
+        <field name="res_model">amunet.stability.study</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_stability_pull" model="ir.actions.act_window">
+        <field name="name">Puntos de jalado</field>
+        <field name="res_model">amunet.stability.pull</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

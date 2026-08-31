@@ -1,0 +1,289 @@
+name: Deploy Odoo
+# WARNING TO AI AGENTS: Do NOT remove the sleep delays or retry loops (for j in 1 2 3)
+# around the "odoo -u all" commands. They are critical to prevent PostgreSQL serialization
+# lock errors (SerializationFailure) during concurrent container startups.
+#
+# WARNING TO AI AGENTS: Do NOT replace `git pull --ff-only` with
+# `git reset --hard`. Fast-forward-only protects in-flight uncommitted
+# work on the server; conflicting deploys must fail loudly.
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+concurrency:
+  group: odoo-deploy-server
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy to Staging via SSH
+        env:
+          SSH_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          echo "$SSH_KEY_B64" | base64 -d > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          cat > /tmp/deploy_staging.sh << 'SCRIPT'
+          set -e
+          LOCK_FILE=/tmp/odoo-deploy.lock
+          exec 9>"$LOCK_FILE"
+          echo "Esperando candado global de deploy..."
+          flock -w 1800 9 || { echo "ERROR: no se pudo obtener el candado de deploy en 30 minutos"; exit 1; }
+          echo "Candado global de deploy adquirido."
+          cd /opt/odoo/staging
+          UPGRADE_TIMEOUT=30m
+          cleanup_upgrade_containers() {
+            echo "Limpiando contenedores de upgrade staging previos/zombies..."
+            docker ps -a --filter "name=odoo-staging-upgrade-" -q | xargs -r docker rm -f || true
+          }
+          log_db_state() {
+            echo "Estado DB staging:"
+            docker inspect -f '  container={{.Name}} id={{.Id}} status={{.State.Status}} started={{.State.StartedAt}} restart_count={{.RestartCount}}' odoo-staging-db 2>/dev/null || true
+          }
+          wait_for_db() {
+            echo "Esperando PostgreSQL staging..."
+            for i in $(seq 1 60); do
+              if docker exec odoo-staging-db pg_isready -U odoo >/dev/null 2>&1 && docker exec odoo-staging-db psql -U odoo -d Amunet_testing -tAc 'SELECT 1' >/dev/null 2>&1; then
+                echo "PostgreSQL staging listo despues de $((i * 2))s"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "ERROR: PostgreSQL staging no quedo listo en 120s"
+            log_db_state
+            return 1
+          }
+          cleanup_upgrade_containers
+          log_db_state
+          initial_db_id=$(docker inspect -f '{{.Id}}' odoo-staging-db 2>/dev/null || true)
+          old_head=$(git rev-parse HEAD 2>/dev/null || true)
+          git fetch origin
+          git checkout staging 2>/dev/null || git checkout -b staging origin/staging
+          git pull --ff-only origin staging
+          new_head=$(git rev-parse HEAD)
+          update_modules=""
+          if [ -n "$old_head" ] && [ "$old_head" != "$new_head" ]; then
+            update_modules=$(git diff --name-only "$old_head" "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
+          elif [ -n "$new_head" ]; then
+            update_modules=$(git diff-tree --no-commit-id --name-only -r "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
+          fi
+          echo "Modulos Odoo modificados: ${update_modules:-ninguno}"
+          docker compose -f docker-compose.staging.yml build --no-cache web-staging
+          docker compose -f docker-compose.staging.yml stop web-staging || true
+          if [ -n "$update_modules" ]; then
+            upgrade_ok=0
+            for j in 1 2 3; do
+              cleanup_upgrade_containers
+              wait_for_db
+              current_db_id=$(docker inspect -f '{{.Id}}' odoo-staging-db 2>/dev/null || true)
+              if [ -n "$initial_db_id" ] && [ -n "$current_db_id" ] && [ "$initial_db_id" != "$current_db_id" ]; then
+                echo "WARNING: odoo-staging-db cambio de container id durante el deploy."
+                initial_db_id="$current_db_id"
+                log_db_state
+              fi
+              upgrade_container=odoo-staging-upgrade-$j-$$
+              if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.staging.yml run -T --rm --name "$upgrade_container" --no-deps -e UPDATE_MODULES="$update_modules" web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+                upgrade_ok=1
+                break
+              fi
+              docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
+              log_db_state
+              wait_for_db || true
+              echo "Reintentando actualizacion en 15s..."
+              sleep 15
+            done
+            if [ "$upgrade_ok" != 1 ]; then
+              echo "ERROR: odoo -u $update_modules -d Amunet_testing fallo tras 3 intentos. Abortando deploy a staging."
+              docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging || true
+              exit 1
+            fi
+
+            test_tags=$(printf '%s' "$update_modules" | tr ',' '\n' | while read module; do if [ -d "addons/$module/tests" ]; then printf '/%s,' "$module"; fi; done | sed 's/,$//')
+            if [ -n "$test_tags" ]; then
+              echo "Ejecutando tests de modulos modificados: $test_tags"
+              test_container=odoo-staging-tests-$$
+              if ! timeout 30m docker compose -f docker-compose.staging.yml run -T --rm --name "$test_container" --no-deps -e UPDATE_MODULES="$update_modules" -e TEST_TAGS="$test_tags" web-staging bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --test-enable --test-tags "$TEST_TAGS" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+                docker rm -f "$test_container" >/dev/null 2>&1 || true
+                docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging || true
+                exit 1
+              fi
+            fi
+          else
+            echo "Sin cambios en addons; se omite actualizacion de modulos Odoo."
+          fi
+
+          echo "Corrections automaticas deshabilitadas. Ejecutarlas manualmente solo con guarda de DB revisada."
+
+          old_container=$(docker compose -f docker-compose.staging.yml ps -q web-staging || true)
+          echo "Recreando contenedor web-staging..."
+          docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging
+          new_container=$(docker compose -f docker-compose.staging.yml ps -q web-staging || true)
+          if [ -z "$new_container" ] || [ "$new_container" = "$old_container" ]; then
+            echo "ERROR: web-staging no fue recreado."
+            exit 1
+          fi
+          echo "Esperando que Odoo staging este listo..."
+          health_ok=0
+          for i in $(seq 1 24); do
+            if docker exec odoo-staging curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
+              echo "Odoo listo despues de $((i * 5))s"
+              sleep 15
+              health_ok=1
+              break
+            fi
+            echo " Intento $i/24..."
+            sleep 5
+          done
+          if [ "$health_ok" != 1 ]; then
+            echo "ERROR: Odoo staging no quedo healthy tras recrear el contenedor."
+            exit 1
+          fi
+          SCRIPT
+          ssh -i /tmp/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o BatchMode=yes \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=20 \
+            "$SSH_USER@$SSH_HOST" 'bash -s' < /tmp/deploy_staging.sh
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy to Production via SSH
+        env:
+          SSH_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          echo "$SSH_KEY_B64" | base64 -d > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          cat > /tmp/deploy_production.sh << 'SCRIPT'
+          set -e
+          LOCK_FILE=/tmp/odoo-deploy.lock
+          exec 9>"$LOCK_FILE"
+          echo "Esperando candado global de deploy..."
+          flock -w 1800 9 || { echo "ERROR: no se pudo obtener el candado de deploy en 30 minutos"; exit 1; }
+          echo "Candado global de deploy adquirido."
+          cd /opt/odoo/production
+          UPGRADE_TIMEOUT=30m
+          cleanup_upgrade_containers() {
+            echo "Limpiando contenedores de upgrade production previos/zombies..."
+            docker ps -a --filter "name=odoo-production-upgrade-" -q | xargs -r docker rm -f || true
+          }
+          log_db_state() {
+            echo "Estado DB production:"
+            docker inspect -f '  container={{.Name}} id={{.Id}} status={{.State.Status}} started={{.State.StartedAt}} restart_count={{.RestartCount}}' odoo-production-db 2>/dev/null || true
+          }
+          wait_for_db() {
+            echo "Esperando PostgreSQL production..."
+            for i in $(seq 1 60); do
+              if docker exec odoo-production-db pg_isready -U odoo >/dev/null 2>&1 && docker exec odoo-production-db psql -U odoo -d amunet_prod -tAc 'SELECT 1' >/dev/null 2>&1; then
+                echo "PostgreSQL production listo despues de $((i * 2))s"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "ERROR: PostgreSQL production no quedo listo en 120s"
+            log_db_state
+            return 1
+          }
+          cleanup_upgrade_containers
+          log_db_state
+          initial_db_id=$(docker inspect -f '{{.Id}}' odoo-production-db 2>/dev/null || true)
+          old_head=$(git rev-parse HEAD 2>/dev/null || true)
+          git fetch origin
+          git checkout main 2>/dev/null || git checkout -b main origin/main
+          git pull --ff-only origin main
+          new_head=$(git rev-parse HEAD)
+          update_modules=""
+          if [ -n "$old_head" ] && [ "$old_head" != "$new_head" ]; then
+            update_modules=$(git diff --name-only "$old_head" "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
+          elif [ -n "$new_head" ]; then
+            update_modules=$(git diff-tree --no-commit-id --name-only -r "$new_head" -- addons | awk -F/ '$1 == "addons" && $2 {print $2}' | sort -u | paste -sd, -)
+          fi
+          echo "Modulos Odoo modificados: ${update_modules:-ninguno}"
+          docker compose -f docker-compose.production.yml build --no-cache web-production
+          docker compose -f docker-compose.production.yml stop web-production || true
+          if [ -n "$update_modules" ]; then
+            upgrade_ok=0
+            for j in 1 2 3; do
+              cleanup_upgrade_containers
+              wait_for_db
+              current_db_id=$(docker inspect -f '{{.Id}}' odoo-production-db 2>/dev/null || true)
+              if [ -n "$initial_db_id" ] && [ -n "$current_db_id" ] && [ "$initial_db_id" != "$current_db_id" ]; then
+                echo "WARNING: odoo-production-db cambio de container id durante el deploy."
+                initial_db_id="$current_db_id"
+                log_db_state
+              fi
+              upgrade_container=odoo-production-upgrade-$j-$$
+              if timeout "$UPGRADE_TIMEOUT" docker compose -f docker-compose.production.yml run -T --rm --name "$upgrade_container" --no-deps -e UPDATE_MODULES="$update_modules" web-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d amunet_prod -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' < /dev/null; then
+                upgrade_ok=1
+                break
+              fi
+              docker rm -f "$upgrade_container" >/dev/null 2>&1 || true
+              log_db_state
+              wait_for_db || true
+              echo "Reintentando actualizacion en 15s..."
+              sleep 15
+            done
+            if [ "$upgrade_ok" != 1 ]; then
+              echo "ERROR: odoo -u $update_modules -d amunet_prod fallo tras 3 intentos. Abortando deploy a produccion."
+              docker compose -f docker-compose.production.yml up -d --force-recreate web-production || true
+              exit 1
+            fi
+          else
+            echo "Sin cambios en addons; se omite actualizacion de modulos Odoo."
+          fi
+
+          echo "Corrections automaticas deshabilitadas en produccion. No se ejecutan scripts one-shot durante deploy."
+
+          old_container=$(docker compose -f docker-compose.production.yml ps -q web-production || true)
+          echo "Recreando contenedor web-production..."
+          docker compose -f docker-compose.production.yml up -d --force-recreate web-production
+          new_container=$(docker compose -f docker-compose.production.yml ps -q web-production || true)
+          if [ -z "$new_container" ] || [ "$new_container" = "$old_container" ]; then
+            echo "ERROR: web-production no fue recreado."
+            exit 1
+          fi
+          echo "Esperando que Odoo se estabilice antes del upgrade de Amunet_testing..."
+          health_ok=0
+          for i in $(seq 1 24); do
+            if docker exec odoo-production curl -sf http://localhost:8069/web/health > /dev/null 2>&1; then
+              echo "Odoo listo despues de $((i * 5))s"
+              sleep 15
+              health_ok=1
+              break
+            fi
+            echo " Intento $i/24..."
+            sleep 5
+          done
+          if [ "$health_ok" != 1 ]; then
+            echo "ERROR: Odoo produccion no quedo healthy tras recrear el contenedor."
+            exit 1
+          fi
+          if [ -n "$update_modules" ]; then
+            timeout "$UPGRADE_TIMEOUT" docker exec -e UPDATE_MODULES="$update_modules" odoo-production bash -c 'odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD' || echo "WARNING: Amunet_testing upgrade failed, but production is live."
+          fi
+          bash scripts/monitor_odoo_health.sh || echo "WARNING: health monitor reported issues after deploy."
+          (crontab -l 2>/dev/null | grep -v 'amunet-odoo-health-monitor' || true; echo '*/5 * * * * /opt/odoo/production/scripts/monitor_odoo_health.sh >> /opt/odoo/production/logs/monitor_odoo_health.log 2>&1 # amunet-odoo-health-monitor') | crontab -
+          SCRIPT
+          ssh -i /tmp/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o BatchMode=yes \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=20 \
+            "$SSH_USER@$SSH_HOST" 'bash -s' < /tmp/deploy_production.sh

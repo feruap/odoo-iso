@@ -1,0 +1,48 @@
+services:
+  db-staging:
+    image: postgres:16
+    container_name: odoo-staging-db
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-odoo_staging_2024_secure}
+      - POSTGRES_USER=${POSTGRES_USER:-odoo}
+      - TZ=America/Mexico_City
+    volumes:
+      - odoo-staging-db:/var/lib/postgresql/data
+    networks:
+      - odoo-staging-net
+
+  web-staging:
+    build: .
+    image: odoo:19.0-amunet-staging
+    container_name: odoo-staging
+    restart: always
+    depends_on:
+      - db-staging
+    command: odoo -c /etc/odoo/odoo.conf --db-filter=^Amunet_testing$
+    ports:
+      - "127.0.0.1:8070:8069"
+      - "127.0.0.1:8073:8072"
+    volumes:
+      - odoo-staging-data:/var/lib/odoo
+    environment:
+      - HOST=db-staging
+      - PORT=5432
+      - USER=${POSTGRES_USER:-odoo}
+      - PASSWORD=${POSTGRES_PASSWORD:-odoo_staging_2024_secure}
+      - TZ=America/Mexico_City
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8069/web/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - odoo-staging-net
+
+volumes:
+  odoo-staging-db:
+  odoo-staging-data:
+
+networks:
+  odoo-staging-net:

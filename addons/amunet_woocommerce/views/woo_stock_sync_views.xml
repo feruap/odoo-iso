@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Botones y candados del puente de existencias, encima del formulario
+         de la tienda. Los dos interruptores nacen apagados a proposito. -->
+    <record id="view_woo_backend_form_puente" model="ir.ui.view">
+        <field name="name">amunet.woo.backend.form.puente</field>
+        <field name="model">amunet.woo.backend</field>
+        <field name="inherit_id" ref="amunet_woocommerce.view_woo_backend_form"/>
+        <field name="arch" type="xml">
+            <button name="action_import_catalog" position="after">
+                <button name="action_simular_sincronizacion" type="object"
+                        string="Simular inventario"
+                        help="Pregunta a la tienda que cambiaria, sin escribir nada."
+                        groups="amunet_woocommerce.group_woo_admin"/>
+                <button name="action_sincronizar_existencias" type="object"
+                        string="Publicar inventario"
+                        confirm="Esto deja el inventario de la tienda IGUAL al anaquel de Odoo. Lo que la tienda tenga de mas se pone en cero. ¿Continuar?"
+                        invisible="not allow_stock_publish"
+                        groups="amunet_woocommerce.group_woo_admin"/>
+                <button name="action_traer_ventas" type="object"
+                        string="Traer ventas"
+                        help="Lee las ventas que la tienda registro y las descuenta del anaquel."
+                        invisible="not allow_stock_consume"
+                        groups="amunet_woocommerce.group_woo_admin"/>
+            </button>
+            <!-- Odoo 19 no deja usar @string como selector de herencia: se ancla
+                 al grupo exterior de la hoja, que es estable. -->
+            <xpath expr="//sheet/group" position="after">
+                <group string="Puente de existencias con la tienda"
+                       groups="amunet_woocommerce.group_woo_admin">
+                    <group string="Odoo manda el inventario">
+                        <field name="allow_stock_publish"/>
+                        <field name="apt_base_publicacion" widget="radio"/>
+                        <field name="bridge_secret" password="True"
+                               placeholder="el mismo secreto del puente de nombre e imagen"/>
+                    </group>
+                    <group string="La tienda regresa sus ventas">
+                        <field name="allow_stock_consume"/>
+                        <field name="apt_venta_cliente_location_id"
+                               invisible="not allow_stock_consume"/>
+                        <field name="apt_ultima_venta" readonly="1"/>
+                        <field name="apt_ultima_venta_id" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+
+            <!-- El aviso de "nunca escribe existencias" dejo de ser cierto en cuanto
+                 se enciende cualquiera de los dos candados. Decirlo claro importa:
+                 esta pantalla mueve inventario real. -->
+            <xpath expr="//div[hasclass('alert-info')]" position="replace">
+                <div class="alert alert-info" role="alert"
+                     invisible="allow_stock_publish or allow_stock_consume">
+                    Esta tienda esta en <b>solo lectura</b>: unicamente hace llamadas
+                    GET a la API de WooCommerce. No escribe existencias.
+                </div>
+                <div class="alert alert-warning" role="alert"
+                     invisible="not (allow_stock_publish or allow_stock_consume)">
+                    <b>El puente de existencias esta encendido.</b> Publicar deja el
+                    inventario de la tienda identico al anaquel de Odoo, y traer ventas
+                    crea movimientos de existencias reales con su lote. Todo queda
+                    asentado en la bitacora y en "Ventas de la tienda".
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_woo_stock_consumo_list" model="ir.ui.view">
+        <field name="name">amunet.woo.stock.consumo.list</field>
+        <field name="model">amunet.woo.stock.consumo</field>
+        <field name="arch" type="xml">
+            <list string="Ventas de la tienda descontadas" create="false" edit="false">
+                <field name="fecha_tienda"/>
+                <field name="backend_id"/>
+                <field name="tienda_mov_id"/>
+                <field name="product_id"/>
+                <field name="lote_texto"/>
+                <field name="cantidad"/>
+                <field name="pedido_tienda"/>
+                <field name="estado"
+                       decoration-success="estado == 'aplicado'"
+                       decoration-warning="estado != 'aplicado'"
+                       widget="badge"/>
+                <field name="intentos" optional="hide"/>
+                <field name="ultimo_intento" optional="hide"/>
+                <field name="nota" optional="show"/>
+                <field name="move_id" optional="hide"/>
+                <field name="company_id" optional="hide" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_woo_stock_consumo_form" model="ir.ui.view">
+        <field name="name">amunet.woo.stock.consumo.form</field>
+        <field name="model">amunet.woo.stock.consumo</field>
+        <field name="arch" type="xml">
+            <form string="Venta de la tienda" create="false" edit="false">
+                <sheet>
+                    <group>
+                        <group string="Lo que dijo la tienda">
+                            <field name="backend_id"/>
+                            <field name="tienda_mov_id"/>
+                            <field name="woo_product_id"/>
+                            <field name="lote_texto"/>
+                            <field name="cantidad"/>
+                            <field name="pedido_tienda"/>
+                            <field name="fecha_tienda"/>
+                        </group>
+                        <group string="Lo que se hizo en Odoo">
+                            <field name="estado"/>
+                            <field name="product_id"/>
+                            <field name="lot_id"/>
+                            <field name="move_id"/>
+                            <field name="intentos"/>
+                            <field name="ultimo_intento"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="nota"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_woo_stock_consumo_search" model="ir.ui.view">
+        <field name="name">amunet.woo.stock.consumo.search</field>
+        <field name="model">amunet.woo.stock.consumo</field>
+        <field name="arch" type="xml">
+            <search string="Ventas de la tienda">
+                <field name="lote_texto"/>
+                <field name="product_id"/>
+                <field name="pedido_tienda"/>
+                <filter name="f_pendientes" string="Sin descontar"
+                        domain="[('estado','!=','aplicado')]"/>
+                <filter name="f_aplicados" string="Descontadas"
+                        domain="[('estado','=','aplicado')]"/>
+                <separator/>
+                <filter name="g_estado" string="Resultado"
+                        context="{'group_by': 'estado'}"/>
+                <filter name="g_producto" string="Producto"
+                        context="{'group_by': 'product_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_woo_stock_consumo" model="ir.actions.act_window">
+        <field name="name">Ventas de la tienda</field>
+        <field name="res_model">amunet.woo.stock.consumo</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_f_pendientes': 0}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aqui aparece cada venta que la tienda registro
+            y que Odoo ya descontó del anaquel de piezas.</p>
+            <p>Las que dicen algo distinto de "Descontado" hay que revisarlas a mano:
+            la tienda vendio algo que aqui no se pudo identificar.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_woo_stock_consumo"
+              name="Ventas de la tienda"
+              parent="menu_amunet_woo_root"
+              action="action_woo_stock_consumo"
+              sequence="45"/>
+
+</odoo>

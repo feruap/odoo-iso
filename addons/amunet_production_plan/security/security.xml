@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="group_production_planner" model="res.groups">
+            <field name="name">Amunet / Planeacion de produccion</field>
+            <field name="comment">Puede calcular el plan de produccion sugerido y generar ordenes en borrador. No implica acceso a datos comerciales ni a precios.</field>
+            <field name="implied_ids" eval="[(4, ref('mrp.group_mrp_user'))]"/>
+        </record>
+
+        <record id="seq_production_plan" model="ir.sequence">
+            <field name="name">Plan de produccion</field>
+            <field name="code">amunet.production.plan</field>
+            <field name="prefix">PLAN/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

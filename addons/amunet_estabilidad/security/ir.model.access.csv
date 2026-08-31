@@ -1,0 +1,16 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_stability_study_user,stability.study.user,model_amunet_stability_study,group_stability_user,1,1,1,0
+access_stability_study_approver,stability.study.approver,model_amunet_stability_study,group_stability_approver,1,1,1,1
+access_stability_batch_user,stability.batch.user,model_amunet_stability_batch,group_stability_user,1,1,1,1
+access_stability_batch_approver,stability.batch.approver,model_amunet_stability_batch,group_stability_approver,1,1,1,1
+access_stability_condition_user,stability.condition.user,model_amunet_stability_condition,group_stability_user,1,1,1,1
+access_stability_condition_approver,stability.condition.approver,model_amunet_stability_condition,group_stability_approver,1,1,1,1
+access_stability_parameter_user,stability.parameter.user,model_amunet_stability_parameter,group_stability_user,1,1,1,1
+access_stability_parameter_approver,stability.parameter.approver,model_amunet_stability_parameter,group_stability_approver,1,1,1,1
+access_stability_pull_user,stability.pull.user,model_amunet_stability_pull,group_stability_user,1,1,0,0
+access_stability_pull_approver,stability.pull.approver,model_amunet_stability_pull,group_stability_approver,1,1,1,1
+access_stability_result_user,stability.result.user,model_amunet_stability_result,group_stability_user,1,1,1,0
+access_stability_result_approver,stability.result.approver,model_amunet_stability_result,group_stability_approver,1,1,1,1
+access_stability_audit_user,stability.audit.user,model_amunet_stability_audit_log,group_stability_user,1,0,0,0
+access_stability_audit_approver,stability.audit.approver,model_amunet_stability_audit_log,group_stability_approver,1,0,0,0
+access_stability_sign_wizard,stability.sign.wizard,model_amunet_stability_sign_wizard,group_stability_user,1,1,1,1

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bitacora_entry_list" model="ir.ui.view">
+        <field name="name">amunet.bitacora.entry.list</field>
+        <field name="model">amunet.bitacora.entry</field>
+        <field name="arch" type="xml">
+            <list string="Registros de bitácora"
+                  decoration-danger="state == 'missed' or deviation == True"
+                  decoration-success="state == 'signed' and deviation == False"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="template_id"/>
+                <field name="tipo"/>
+                <field name="area_name"/>
+                <field name="scheduled_date"/>
+                <field name="operator_id"/>
+                <field name="temp_value" optional="show"/>
+                <field name="hum_value" optional="show"/>
+                <field name="within_spec"/>
+                <field name="deviation"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_bitacora_entry_form" model="ir.ui.view">
+        <field name="name">amunet.bitacora.entry.form</field>
+        <field name="model">amunet.bitacora.entry</field>
+        <field name="arch" type="xml">
+            <form string="Registro de bitácora">
+                <header>
+                    <button name="action_start_capture" type="object" string="Iniciar captura"
+                            class="btn-primary" invisible="state != 'pending'"/>
+                    <button name="action_open_sign_wizard" type="object" string="Firmar"
+                            class="btn-primary" invisible="state not in ('pending', 'in_progress')"/>
+                    <button name="action_close_deviation" type="object" string="Cerrar desviación"
+                            class="btn-warning" invisible="deviation_state != 'open'"
+                            groups="amunet_bitacoras.group_bitacora_supervisor"/>
+                    <button name="action_escalate_capa" type="object" string="Escalar a CAPA"
+                            class="btn-secondary" invisible="not deviation"
+                            groups="amunet_bitacoras.group_bitacora_supervisor"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pending,in_progress,signed"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="not deviation">
+                        DESVIACIÓN: registro fuera de especificación. Requiere disposición y cierre de supervisor.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="template_id" readonly="state != 'pending'"/>
+                            <field name="template_version"/>
+                            <field name="tipo"/>
+                            <field name="area_name"/>
+                            <field name="pno_code"/>
+                        </group>
+                        <group>
+                            <field name="scheduled_date"/>
+                            <field name="shift"/>
+                            <field name="operator_id"/>
+                            <field name="datetime_done"/>
+                            <field name="within_spec"/>
+                        </group>
+                    </group>
+                    <group string="Lecturas" invisible="tipo != 'temp_humedad'">
+                        <group>
+                            <field name="temp_value" readonly="state in ('signed', 'missed', 'cancelled')"/>
+                            <field name="temp_min" readonly="1"/>
+                            <field name="temp_max" readonly="1"/>
+                            <field name="instrument_id" readonly="state in ('signed', 'missed', 'cancelled')"/>
+                        </group>
+                        <group>
+                            <field name="hum_value" readonly="state in ('signed', 'missed', 'cancelled')"/>
+                            <field name="hum_min" readonly="1"/>
+                            <field name="hum_max" readonly="1"/>
+                            <field name="instrument_name" invisible="not instrument_name"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Pasos" invisible="tipo != 'limpieza'">
+                            <field name="line_ids" readonly="state == 'signed'">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name" readonly="1"/>
+                                    <field name="required" readonly="1"/>
+                                    <field name="done"/>
+                                    <field name="observation"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Desviación / firma">
+                            <group>
+                                <field name="signed_by"/>
+                                <field name="signed_role"/>
+                                <field name="signed_on"/>
+                                <field name="snapshot_hash"/>
+                            </group>
+                            <group string="Desviación">
+                                <field name="deviation"/>
+                                <field name="deviation_state"/>
+                                <field name="deviation_note"/>
+                                <field name="supervisor_id"/>
+                                <field name="supervisor_signed_on"/>
+                                <field name="correction_reason"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_bitacora_entry_search" model="ir.ui.view">
+        <field name="name">amunet.bitacora.entry.search</field>
+        <field name="model">amunet.bitacora.entry</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="template_id"/>
+                <field name="area_name"/>
+                <field name="operator_id"/>
+                <filter name="f_pending" string="Pendientes" domain="[('state', 'in', ('pending', 'in_progress'))]"/>
+                <filter name="f_signed" string="Firmados" domain="[('state', '=', 'signed')]"/>
+                <filter name="f_missed" string="Omitidos" domain="[('state', '=', 'missed')]"/>
+                <filter name="f_deviation" string="Con desviación" domain="[('deviation', '=', True)]"/>
+                <separator/>
+                <filter name="g_template" string="Plantilla" context="{'group_by': 'template_id'}"/>
+                <filter name="g_area" string="Área" context="{'group_by': 'area_name'}"/>
+                <filter name="g_state" string="Estado" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_bitacora_entry" model="ir.actions.act_window">
+        <field name="name">Registros de bitácora</field>
+        <field name="res_model">amunet.bitacora.entry</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_bitacora_entry_search"/>
+    </record>
+
+    <record id="action_bitacora_entry_pending" model="ir.actions.act_window">
+        <field name="name">Pendientes</field>
+        <field name="res_model">amunet.bitacora.entry</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', 'in', ('pending', 'in_progress'))]</field>
+    </record>
+
+    <record id="action_bitacora_entry_deviation" model="ir.actions.act_window">
+        <field name="name">Desviaciones</field>
+        <field name="res_model">amunet.bitacora.entry</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('deviation', '=', True)]</field>
+    </record>
+</odoo>

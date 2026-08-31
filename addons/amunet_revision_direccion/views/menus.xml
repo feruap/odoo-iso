@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_review_root" name="Revisión Dirección" sequence="59"
+              web_icon="amunet_revision_direccion,static/description/icon.png"
+              groups="amunet_revision_direccion.group_review_user"/>
+    <menuitem id="menu_review_list" name="Revisiones" parent="menu_review_root"
+              action="action_management_review" sequence="10"/>
+</odoo>

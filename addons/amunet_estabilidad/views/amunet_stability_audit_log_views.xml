@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_stability_audit_log_list" model="ir.ui.view">
+        <field name="name">amunet.stability.audit.log.list</field>
+        <field name="model">amunet.stability.audit.log</field>
+        <field name="arch" type="xml">
+            <list string="Auditoría de estabilidad" create="false" edit="false">
+                <field name="create_date"/>
+                <field name="study_id"/>
+                <field name="event"/>
+                <field name="user_id"/>
+                <field name="detail"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_stability_audit_log" model="ir.actions.act_window">
+        <field name="name">Auditoría</field>
+        <field name="res_model">amunet.stability.audit.log</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

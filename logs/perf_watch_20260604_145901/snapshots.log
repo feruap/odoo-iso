@@ -1,0 +1,1750 @@
+--- 2026-06-04 14:59:02 CST ---
+ 22:59:02 up 21:19,  6 users,  load average: 12.30, 11.13, 9.25
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.3Gi        17Gi       241Mi       2.1Gi        18Gi
+container=odoo-production status=Up 4 minutes (healthy)
+container=odoo-staging status=Up 23 minutes (healthy)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=200 time=1.004309
+health host=stagingfc.amunet.com.mx status=200 time=0.190099
+stats container=odoo-production cpu=60.46% mem=928.5MiB / 23.47GiB
+stats container=odoo-staging cpu=890.00% mem=976.5MiB / 23.47GiB
+stats container=odoo-production-db cpu=33.50% mem=221.7MiB / 23.47GiB
+stats container=odoo-staging-db cpu=232.41% mem=155.1MiB / 23.47GiB
+ 636689       00:21  2.8  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 636800       00:11  2.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml stop web-staging 2>&1 | tail -2' < /dev/null && pwd -P >| /tmp/claude-a2a1-cwd
+ 636858       00:09  2.1  0.1 docker compose -f docker-compose.staging.yml stop web-staging
+--- 2026-06-04 15:00:09 CST ---
+ 23:00:09 up 21:20,  6 users,  load average: 14.68, 12.12, 9.72
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.3Gi        18Gi       241Mi       2.1Gi        19Gi
+container=odoo-production status=Up 5 minutes (healthy)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=200 time=0.664684
+health host=stagingfc.amunet.com.mx status=502 time=0.040797
+stats container=odoo-production cpu=176.54% mem=928.7MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=0.00% mem=213.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=14.38% mem=112.2MiB / 23.47GiB
+ 636689       01:27  0.6  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 637352       00:38  0.4  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-aa07-cwd
+ 637376       00:36  5.7  0.1 docker compose -f docker-compose.production.yml build
+ 637678       00:17  8.7  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 637849       00:07 39.8  0.3 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:01:14 CST ---
+ 23:01:14 up 21:21,  6 users,  load average: 10.02, 11.34, 9.63
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.4Gi        17Gi       241Mi       2.1Gi        19Gi
+container=priceless_knuth status=Up About a minute
+container=odoo-production status=Up 6 minutes (healthy)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=200 time=0.600345
+health host=stagingfc.amunet.com.mx status=502 time=0.015436
+stats container=odoo-production cpu=0.16% mem=928.9MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=0.03% mem=206.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.03% mem=113.1MiB / 23.47GiB
+ 636689       02:36  0.6  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 637352       01:47  0.1  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-aa07-cwd
+ 637376       01:45  1.9  0.1 docker compose -f docker-compose.production.yml build
+ 637678       01:26  1.7  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 637849       01:16 50.5  0.4 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:02:24 CST ---
+ 23:02:24 up 21:22,  6 users,  load average: 11.58, 11.45, 9.78
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.4Gi        17Gi       241Mi       2.1Gi        19Gi
+container=priceless_knuth status=Up 2 minutes
+container=odoo-production status=Up 7 minutes (healthy)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=200 time=0.115800
+health host=stagingfc.amunet.com.mx status=502 time=0.037705
+stats container=odoo-production cpu=40.20% mem=929MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=48.60% mem=213.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=128.38% mem=116.9MiB / 23.47GiB
+ 636689       03:43  0.4  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 637352       02:54  0.1  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-aa07-cwd
+ 637376       02:52  1.6  0.1 docker compose -f docker-compose.production.yml build
+ 637678       02:33  0.9  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 637849       02:23 55.1  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:03:30 CST ---
+ 23:03:30 up 21:23,  6 users,  load average: 11.12, 11.30, 9.84
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.4Gi        17Gi       241Mi       2.2Gi        19Gi
+container=priceless_knuth status=Up 3 minutes
+container=odoo-production status=Up 9 minutes (healthy)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=200 time=0.243916
+health host=stagingfc.amunet.com.mx status=502 time=0.160055
+stats container=odoo-production cpu=568.77% mem=929.2MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=94.50% mem=207.4MiB / 23.47GiB
+stats container=odoo-staging-db cpu=349.67% mem=117.4MiB / 23.47GiB
+ 636689       04:57  0.5  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 637352       04:08  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-aa07-cwd
+ 637376       04:06  1.1  0.1 docker compose -f docker-compose.production.yml build
+ 637678       03:47  0.6  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 637849       03:37 56.5  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:04:45 CST ---
+ 23:04:45 up 21:24,  6 users,  load average: 10.05, 11.04, 9.87
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.4Gi        17Gi       241Mi       2.2Gi        19Gi
+container=priceless_knuth status=Up 4 minutes
+container=odoo-production status=Up 10 minutes (healthy)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=200 time=0.955891
+health host=stagingfc.amunet.com.mx status=502 time=0.629536
+stats container=odoo-production cpu=212.22% mem=929.2MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=125.93% mem=208.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.03% mem=117.8MiB / 23.47GiB
+ 636689       06:18  0.4  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 637352       05:29  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-aa07-cwd
+ 637376       05:27  0.9  0.1 docker compose -f docker-compose.production.yml build
+ 637678       05:08  0.6  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 637849       04:58 57.5  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:06:07 CST ---
+ 23:06:07 up 21:26,  6 users,  load average: 11.65, 11.66, 10.21
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.4Gi        17Gi       241Mi       2.2Gi        19Gi
+container=priceless_knuth status=Up 6 minutes
+container=odoo-production status=Up 11 minutes (healthy)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=200 time=1.926423
+health host=stagingfc.amunet.com.mx status=502 time=0.516185
+stats container=odoo-production cpu=71.43% mem=929.3MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=26.67% mem=221.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=77.67% mem=118.1MiB / 23.47GiB
+ 636689       07:36  0.3  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 637352       06:47  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-aa07-cwd
+ 637376       06:45  0.7  0.1 docker compose -f docker-compose.production.yml build
+ 637678       06:26  0.5  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+--- 2026-06-04 15:07:24 CST ---
+ 23:07:24 up 21:27,  6 users,  load average: 10.45, 11.36, 10.22
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.2Gi        17Gi       241Mi       2.3Gi        19Gi
+container=odoo-production status=Up 12 minutes (healthy)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=200 time=1.012614
+health host=stagingfc.amunet.com.mx status=502 time=0.124085
+stats container=odoo-production cpu=3.02% mem=929.3MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=0.06% mem=207.2MiB / 23.47GiB
+stats container=odoo-staging-db cpu=1.30% mem=109.7MiB / 23.47GiB
+ 640890       00:05  0.4  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-636455 --no-deps -e UPDATE_MODULES=amunet_price_visibility web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 640891       00:05  4.8  0.1 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-636455 --no-deps -e UPDATE_MODULES=amunet_price_visibility web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 640911       00:04 46.2  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-636455 --no-deps -e UPDATE_MODULES=amunet_price_visibility web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+--- 2026-06-04 15:08:32 CST ---
+ 23:08:32 up 21:28,  6 users,  load average: 12.99, 12.02, 10.54
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.4Gi        18Gi       241Mi       2.3Gi        20Gi
+container=odoo-staging-upgrade-1-636455 status=Up 56 seconds (health: starting)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=502 time=0.569614
+health host=stagingfc.amunet.com.mx status=502 time=0.718065
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=232.76% mem=9.426MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.00% mem=155.2MiB / 23.47GiB
+stats container=odoo-staging-db cpu=72.11% mem=114.1MiB / 23.47GiB
+ 640890       01:29  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-636455 --no-deps -e UPDATE_MODULES=amunet_price_visibility web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 640891       01:29  0.2  0.1 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-636455 --no-deps -e UPDATE_MODULES=amunet_price_visibility web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 640911       01:28  2.3  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-636455 --no-deps -e UPDATE_MODULES=amunet_price_visibility web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 641147       01:15 57.0  0.4 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u amunet_price_visibility --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 641690       00:16  3.6  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_price_visibility,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:09:57 CST ---
+ 23:09:57 up 21:29,  6 users,  load average: 13.46, 12.24, 10.73
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.8Gi        18Gi       242Mi       2.3Gi        19Gi
+container=hardcore_heyrovsky status=Up About a minute
+container=odoo-staging status=Up About a minute (health: starting)
+container=odoo-staging-db status=Up About an hour
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 21 hours (healthy)
+container=admin-tools status=Up 21 hours
+health host=fc.amunet.com.mx status=502 time=0.668884
+health host=stagingfc.amunet.com.mx status=200 time=1.721911
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=63.51% mem=543.3MiB / 23.47GiB
+stats container=odoo-production-db cpu=137.59% mem=160.2MiB / 23.47GiB
+stats container=odoo-staging-db cpu=85.86% mem=145.3MiB / 23.47GiB
+ 641690       01:29  0.9  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_price_visibility,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 641922       01:15 39.8  0.4 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_price_visibility,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED*** --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 642634       00:09  6.8  0.0 docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging
+ 642657       00:08 28.8  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml up -d --force-recreate web-staging
+--- 2026-06-04 15:11:08 CST ---
+ 23:11:09 up 21:31,  6 users,  load average: 13.18, 12.52, 10.95
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.5Gi        18Gi       243Mi       2.3Gi        20Gi
+container=odoo-staging status=Up 20 seconds (health: starting)
+container=hardcore_heyrovsky status=Up 2 minutes
+container=odoo-staging-db status=Up 2 hours
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.094648
+health host=stagingfc.amunet.com.mx status=200 time=11.299020
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=306.39% mem=506.5MiB / 23.47GiB
+stats container=odoo-production-db cpu=54.82% mem=166.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=30.36% mem=126.9MiB / 23.47GiB
+ 641690       02:51  0.5  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_price_visibility,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 641922       02:37 45.3  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_price_visibility,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED*** --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:12:30 CST ---
+ 23:12:30 up 21:32,  6 users,  load average: 9.51, 11.44, 10.70
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.2Gi        17Gi       243Mi       2.3Gi        19Gi
+container=odoo-staging status=Up About a minute (healthy)
+container=hardcore_heyrovsky status=Up 3 minutes
+container=odoo-staging-db status=Up 2 hours
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.029078
+health host=stagingfc.amunet.com.mx status=200 time=0.587277
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=455.50% mem=759.8MiB / 23.47GiB
+stats container=odoo-production-db cpu=25.45% mem=167.6MiB / 23.47GiB
+stats container=odoo-staging-db cpu=125.11% mem=151.7MiB / 23.47GiB
+ 641690       04:00  0.4  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_price_visibility,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 641922       03:46 48.8  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_price_visibility,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED*** --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 643880       00:50  0.1  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'docker exec odoo-staging bash -c '"'"'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" --logfile="" --log-level=warn 2>&1'"'"' | tail -5' < /dev/null && pwd -P >| /tmp/claude-6e17-cwd
+ 643900       00:50  0.9  0.1 docker exec odoo-staging bash -c odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" --logfile="" --log-level=warn 2>&1
+ 643929       00:49  0.8  0.0 bash -c odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" --logfile="" --log-level=warn 2>&1
+ 643935       00:48 76.8  0.5 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED*** --logfile= --log-level=warn
+ 644233       00:14  4.2  0.0 docker compose -f docker-compose.production.yml build --no-cache web-production
+--- 2026-06-04 15:13:40 CST ---
+ 23:13:40 up 21:33,  6 users,  load average: 9.58, 11.17, 10.66
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.2Gi        17Gi       243Mi       2.3Gi        19Gi
+container=odoo-staging status=Up 2 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.283668
+health host=stagingfc.amunet.com.mx status=200 time=0.858326
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=254.46% mem=808.7MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.03% mem=158.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=98.62% mem=157MiB / 23.47GiB
+ 643880       02:01  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'docker exec odoo-staging bash -c '"'"'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" --logfile="" --log-level=warn 2>&1'"'"' | tail -5' < /dev/null && pwd -P >| /tmp/claude-6e17-cwd
+ 643900       02:01  0.3  0.1 docker exec odoo-staging bash -c odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" --logfile="" --log-level=warn 2>&1
+ 643929       02:00  0.3  0.0 bash -c odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" --logfile="" --log-level=warn 2>&1
+ 643935       01:59 72.1  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED*** --logfile= --log-level=warn
+ 644233       01:25  0.8  0.0 docker compose -f docker-compose.production.yml build --no-cache web-production
+--- 2026-06-04 15:14:50 CST ---
+ 23:14:51 up 21:34,  6 users,  load average: 8.57, 10.60, 10.51
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.1Gi        18Gi        98Mi       2.2Gi        19Gi
+container=odoo-staging status=Up 4 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=odoo-production-db status=Up 3 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.010867
+health host=stagingfc.amunet.com.mx status=200 time=1.328864
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=102.95% mem=809.5MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.00% mem=0B / 0B
+stats container=odoo-staging-db cpu=91.58% mem=149.7MiB / 23.47GiB
+ 643880       03:22  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'docker exec odoo-staging bash -c '"'"'odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" --logfile="" --log-level=warn 2>&1'"'"' | tail -5' < /dev/null && pwd -P >| /tmp/claude-6e17-cwd
+ 643900       03:22  0.5  0.1 docker exec odoo-staging bash -c odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" --logfile="" --log-level=warn 2>&1
+ 643929       03:21  0.2  0.0 bash -c odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" --logfile="" --log-level=warn 2>&1
+ 643935       03:20 65.3  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED*** --logfile= --log-level=warn
+ 644233       02:46  0.7  0.0 docker compose -f docker-compose.production.yml build --no-cache web-production
+ 645195       00:44  0.4  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml up -d --force-recreate 2>&1 | tail -4' < /dev/null && pwd -P >| /tmp/claude-6fa8-cwd
+ 645242       00:41  2.0  0.1 docker compose -f docker-compose.production.yml up -d --force-recreate
+ 645274       00:38  5.6  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.production.yml up -d --force-recreate
+--- 2026-06-04 15:16:11 CST ---
+ 23:16:12 up 21:36,  6 users,  load average: 15.15, 12.54, 11.22
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.1Gi        18Gi       115Mi       2.2Gi        19Gi
+container=odoo-production-db status=Up 38 seconds
+container=odoo-staging status=Up 5 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=1.083875
+health host=stagingfc.amunet.com.mx status=200 time=0.782523
+stats container=odoo-production cpu=431.75% mem=109.3MiB / 23.47GiB
+stats container=odoo-staging cpu=80.11% mem=725.6MiB / 23.47GiB
+stats container=odoo-production-db cpu=27.86% mem=29.71MiB / 23.47GiB
+stats container=odoo-staging-db cpu=11.23% mem=149.1MiB / 23.47GiB
+ 644233       04:06  0.5  0.1 docker compose -f docker-compose.production.yml build --no-cache web-production
+--- 2026-06-04 15:17:33 CST ---
+ 23:17:33 up 21:37,  6 users,  load average: 20.93, 14.88, 12.15
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.8Gi        19Gi       134Mi       1.2Gi        20Gi
+container=odoo-production status=Up About a minute (health: starting)
+container=odoo-production-db status=Up About a minute
+container=odoo-staging status=Up 6 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.329601
+health host=stagingfc.amunet.com.mx status=502 time=0.011192
+stats container=odoo-production cpu=2.65% mem=513.4MiB / 23.47GiB
+stats container=odoo-staging cpu=61.59% mem=3.656MiB / 23.47GiB
+stats container=odoo-production-db cpu=35.55% mem=78.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.20% mem=101.8MiB / 23.47GiB
+ 644233       05:46  0.7  0.1 docker compose -f docker-compose.production.yml build --no-cache web-production
+--- 2026-06-04 15:19:12 CST ---
+ 23:19:12 up 21:39,  6 users,  load average: 17.88, 15.60, 12.70
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.4Gi        19Gi       143Mi       1.3Gi        20Gi
+container=odoo-production status=Up 3 minutes (healthy)
+container=odoo-production-db status=Up 3 minutes
+container=odoo-staging status=Up About a minute (health: starting)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.604591
+health host=stagingfc.amunet.com.mx status=502 time=0.023084
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=91.85% mem=39.5MiB / 23.47GiB
+stats container=odoo-production-db cpu=3.50% mem=52.36MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.01% mem=103.2MiB / 23.47GiB
+--- 2026-06-04 15:20:31 CST ---
+ 23:20:31 up 21:40,  6 users,  load average: 15.80, 15.36, 12.84
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.8Gi        19Gi       143Mi       1.4Gi        20Gi
+container=odoo-production-db status=Up 4 minutes
+container=odoo-staging status=Up 2 minutes (health: starting)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.335360
+health host=stagingfc.amunet.com.mx status=200 time=0.195706
+stats container=odoo-production cpu=361.82% mem=31.89MiB / 23.47GiB
+stats container=odoo-staging cpu=74.05% mem=526.5MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.00% mem=52.36MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.13% mem=128.4MiB / 23.47GiB
+ 649287       00:01 43.0  0.0 docker compose -f docker-compose.production.yml ps -q web-production
+--- 2026-06-04 15:21:59 CST ---
+ 23:21:59 up 21:41,  6 users,  load average: 12.56, 14.59, 12.80
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.5Gi        18Gi       147Mi       1.4Gi        19Gi
+container=odoo-production status=Up About a minute (healthy)
+container=odoo-production-db status=Up 6 minutes
+container=odoo-staging status=Up 4 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.105818
+health host=stagingfc.amunet.com.mx status=200 time=0.117252
+stats container=odoo-production cpu=813.90% mem=645.7MiB / 23.47GiB
+stats container=odoo-staging cpu=263.81% mem=741.6MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.07% mem=92.28MiB / 23.47GiB
+stats container=odoo-staging-db cpu=182.99% mem=134.1MiB / 23.47GiB
+--- 2026-06-04 15:23:14 CST ---
+ 23:23:14 up 21:43,  6 users,  load average: 15.20, 15.43, 13.26
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.7Gi        18Gi       158Mi       1.4Gi        19Gi
+container=odoo-production status=Up 2 minutes (healthy)
+container=odoo-production-db status=Up 7 minutes
+container=odoo-staging status=Up 5 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.376290
+health host=stagingfc.amunet.com.mx status=200 time=0.536171
+stats container=odoo-production cpu=1.25% mem=842.1MiB / 23.47GiB
+stats container=odoo-staging cpu=252.53% mem=718.4MiB / 23.47GiB
+stats container=odoo-production-db cpu=73.17% mem=98.96MiB / 23.47GiB
+stats container=odoo-staging-db cpu=40.34% mem=139MiB / 23.47GiB
+--- 2026-06-04 15:24:23 CST ---
+ 23:24:23 up 21:44,  6 users,  load average: 9.98, 13.60, 12.77
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        18Gi       159Mi       1.4Gi        19Gi
+container=odoo-production status=Up 3 minutes (healthy)
+container=odoo-production-db status=Up 8 minutes
+container=odoo-staging status=Up 6 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=4.043323
+health host=stagingfc.amunet.com.mx status=200 time=0.850075
+stats container=odoo-production cpu=804.42% mem=853MiB / 23.47GiB
+stats container=odoo-staging cpu=498.33% mem=721.2MiB / 23.47GiB
+stats container=odoo-production-db cpu=385.36% mem=108.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=102.15% mem=139.2MiB / 23.47GiB
+--- 2026-06-04 15:25:45 CST ---
+ 23:25:45 up 21:45,  6 users,  load average: 8.72, 12.70, 12.55
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.9Gi        18Gi       164Mi       1.5Gi        19Gi
+container=odoo-production status=Up 5 minutes (healthy)
+container=odoo-production-db status=Up 10 minutes
+container=odoo-staging status=Up 8 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.080713
+health host=stagingfc.amunet.com.mx status=200 time=0.095627
+stats container=odoo-production cpu=507.32% mem=928.6MiB / 23.47GiB
+stats container=odoo-staging cpu=373.19% mem=823.4MiB / 23.47GiB
+stats container=odoo-production-db cpu=388.82% mem=117.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=155.17% mem=144.4MiB / 23.47GiB
+--- 2026-06-04 15:26:57 CST ---
+ 23:26:57 up 21:46,  6 users,  load average: 7.05, 11.64, 12.21
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.0Gi        18Gi       166Mi       1.5Gi        18Gi
+container=odoo-production status=Up 6 minutes (healthy)
+container=odoo-production-db status=Up 11 minutes
+container=odoo-staging status=Up 9 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.110074
+health host=stagingfc.amunet.com.mx status=200 time=0.506381
+stats container=odoo-production cpu=895.03% mem=975.3MiB / 23.47GiB
+stats container=odoo-staging cpu=22.18% mem=834.6MiB / 23.47GiB
+stats container=odoo-production-db cpu=136.95% mem=132.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.04% mem=140MiB / 23.47GiB
+--- 2026-06-04 15:28:07 CST ---
+ 23:28:07 up 21:48,  6 users,  load average: 7.32, 10.75, 11.85
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.0Gi        17Gi       169Mi       1.5Gi        18Gi
+container=odoo-production status=Up 7 minutes (healthy)
+container=odoo-production-db status=Up 12 minutes
+container=odoo-staging status=Up 10 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.086982
+health host=stagingfc.amunet.com.mx status=200 time=0.102439
+stats container=odoo-production cpu=43.37% mem=977MiB / 23.47GiB
+stats container=odoo-staging cpu=136.47% mem=857.1MiB / 23.47GiB
+stats container=odoo-production-db cpu=8.42% mem=134.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=35.96% mem=147.5MiB / 23.47GiB
+--- 2026-06-04 15:29:11 CST ---
+ 23:29:11 up 21:49,  6 users,  load average: 4.91, 9.32, 11.28
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       171Mi       1.5Gi        18Gi
+container=odoo-production status=Up 8 minutes (healthy)
+container=odoo-production-db status=Up 13 minutes
+container=odoo-staging status=Up 11 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.674948
+health host=stagingfc.amunet.com.mx status=200 time=0.637253
+stats container=odoo-production cpu=266.09% mem=985MiB / 23.47GiB
+stats container=odoo-staging cpu=237.61% mem=869.6MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.81% mem=146.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=90.74% mem=155.9MiB / 23.47GiB
+--- 2026-06-04 15:30:24 CST ---
+ 23:30:24 up 21:50,  6 users,  load average: 5.90, 8.69, 10.91
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       173Mi       1.5Gi        18Gi
+container=odoo-production status=Up 9 minutes (healthy)
+container=odoo-production-db status=Up 14 minutes
+container=odoo-staging status=Up 12 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=2.392685
+health host=stagingfc.amunet.com.mx status=200 time=0.329217
+stats container=odoo-production cpu=146.92% mem=987.8MiB / 23.47GiB
+stats container=odoo-staging cpu=105.42% mem=891.6MiB / 23.47GiB
+stats container=odoo-production-db cpu=41.99% mem=146.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=46.67% mem=155.9MiB / 23.47GiB
+--- 2026-06-04 15:31:34 CST ---
+ 23:31:35 up 21:51,  6 users,  load average: 6.31, 8.33, 10.63
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       175Mi       1.5Gi        18Gi
+container=odoo-production status=Up 11 minutes (healthy)
+container=odoo-production-db status=Up 15 minutes
+container=odoo-staging status=Up 13 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.731617
+health host=stagingfc.amunet.com.mx status=200 time=0.348593
+stats container=odoo-production cpu=0.00% mem=999.4MiB / 23.47GiB
+stats container=odoo-staging cpu=1.20% mem=891.9MiB / 23.47GiB
+stats container=odoo-production-db cpu=17.00% mem=143.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.02% mem=149.1MiB / 23.47GiB
+--- 2026-06-04 15:32:43 CST ---
+ 23:32:43 up 21:52,  6 users,  load average: 6.71, 8.09, 10.39
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       175Mi       1.5Gi        18Gi
+container=odoo-production status=Up 12 minutes (healthy)
+container=odoo-production-db status=Up 17 minutes
+container=odoo-staging status=Up 15 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.981587
+health host=stagingfc.amunet.com.mx status=200 time=2.075186
+stats container=odoo-production cpu=32.21% mem=999.4MiB / 23.47GiB
+stats container=odoo-staging cpu=65.93% mem=915.7MiB / 23.47GiB
+stats container=odoo-production-db cpu=63.21% mem=150.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.04% mem=156.8MiB / 23.47GiB
+--- 2026-06-04 15:33:56 CST ---
+ 23:33:56 up 21:53,  6 users,  load average: 5.44, 7.38, 9.96
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       175Mi       1.5Gi        18Gi
+container=odoo-production status=Up 13 minutes (healthy)
+container=odoo-production-db status=Up 18 minutes
+container=odoo-staging status=Up 16 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.746043
+health host=stagingfc.amunet.com.mx status=200 time=0.735556
+stats container=odoo-production cpu=134.57% mem=999.6MiB / 23.47GiB
+stats container=odoo-staging cpu=171.01% mem=915.8MiB / 23.47GiB
+stats container=odoo-production-db cpu=82.47% mem=149.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=55.62% mem=157.3MiB / 23.47GiB
+--- 2026-06-04 15:35:08 CST ---
+ 23:35:08 up 21:55,  6 users,  load average: 7.14, 7.36, 9.75
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       175Mi       1.5Gi        18Gi
+container=odoo-production status=Up 14 minutes (healthy)
+container=odoo-production-db status=Up 19 minutes
+container=odoo-staging status=Up 17 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.311741
+health host=stagingfc.amunet.com.mx status=200 time=1.634104
+stats container=odoo-production cpu=242.92% mem=999.7MiB / 23.47GiB
+stats container=odoo-staging cpu=156.32% mem=915.9MiB / 23.47GiB
+stats container=odoo-production-db cpu=246.24% mem=168MiB / 23.47GiB
+stats container=odoo-staging-db cpu=50.80% mem=156.8MiB / 23.47GiB
+--- 2026-06-04 15:36:20 CST ---
+ 23:36:20 up 21:56,  6 users,  load average: 8.15, 7.83, 9.75
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.2Gi        17Gi       192Mi       1.6Gi        18Gi
+container=odoo-production status=Up 15 minutes (healthy)
+container=odoo-production-db status=Up 20 minutes
+container=odoo-staging status=Up 18 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.133192
+health host=stagingfc.amunet.com.mx status=200 time=0.159366
+stats container=odoo-production cpu=0.11% mem=1001MiB / 23.47GiB
+stats container=odoo-staging cpu=1.14% mem=915.8MiB / 23.47GiB
+stats container=odoo-production-db cpu=61.04% mem=205.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.00% mem=149.5MiB / 23.47GiB
+--- 2026-06-04 15:37:25 CST ---
+ 23:37:25 up 21:57,  6 users,  load average: 8.13, 7.88, 9.64
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.2Gi        17Gi       237Mi       1.7Gi        18Gi
+container=odoo-production status=Up 16 minutes (healthy)
+container=odoo-production-db status=Up 21 minutes
+container=odoo-staging status=Up 19 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=3.356942
+health host=stagingfc.amunet.com.mx status=200 time=0.412096
+stats container=odoo-production cpu=279.57% mem=1001MiB / 23.47GiB
+stats container=odoo-staging cpu=0.42% mem=915.9MiB / 23.47GiB
+stats container=odoo-production-db cpu=28.92% mem=216.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.02% mem=149.7MiB / 23.47GiB
+--- 2026-06-04 15:38:35 CST ---
+ 23:38:35 up 21:58,  6 users,  load average: 7.48, 7.85, 9.51
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.2Gi        17Gi       238Mi       1.7Gi        18Gi
+container=odoo-production status=Up 18 minutes (healthy)
+container=odoo-production-db status=Up 23 minutes
+container=odoo-staging status=Up 20 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.534643
+health host=stagingfc.amunet.com.mx status=200 time=1.984156
+stats container=odoo-production cpu=148.90% mem=1001MiB / 23.47GiB
+stats container=odoo-staging cpu=132.88% mem=916MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.46% mem=216.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=41.44% mem=149.7MiB / 23.47GiB
+--- 2026-06-04 15:39:49 CST ---
+ 23:39:49 up 21:59,  6 users,  load average: 6.52, 7.51, 9.26
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.2Gi        17Gi       239Mi       1.7Gi        18Gi
+container=odoo-production status=Up 19 minutes (healthy)
+container=odoo-production-db status=Up 24 minutes
+container=odoo-staging status=Up 22 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.409812
+health host=stagingfc.amunet.com.mx status=200 time=0.951483
+stats container=odoo-production cpu=49.94% mem=1001MiB / 23.47GiB
+stats container=odoo-staging cpu=206.20% mem=916.1MiB / 23.47GiB
+stats container=odoo-production-db cpu=78.10% mem=220.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=45.11% mem=163.6MiB / 23.47GiB
+--- 2026-06-04 15:40:56 CST ---
+ 23:40:56 up 22:00,  6 users,  load average: 7.90, 7.74, 9.22
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.2Gi        17Gi       239Mi       1.7Gi        18Gi
+container=odoo-production status=Up 20 minutes (healthy)
+container=odoo-production-db status=Up 25 minutes
+container=odoo-staging status=Up 23 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.751458
+health host=stagingfc.amunet.com.mx status=200 time=1.521380
+stats container=odoo-production cpu=323.00% mem=1001MiB / 23.47GiB
+stats container=odoo-staging cpu=249.52% mem=916.3MiB / 23.47GiB
+stats container=odoo-production-db cpu=97.94% mem=219.9MiB / 23.47GiB
+stats container=odoo-staging-db cpu=230.55% mem=160.1MiB / 23.47GiB
+--- 2026-06-04 15:42:13 CST ---
+ 23:42:13 up 22:02,  6 users,  load average: 10.50, 8.61, 9.41
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.2Gi        17Gi       239Mi       1.7Gi        18Gi
+container=odoo-production status=Up 21 minutes (healthy)
+container=odoo-production-db status=Up 26 minutes
+container=odoo-staging status=Up 24 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=2.524506
+health host=stagingfc.amunet.com.mx status=200 time=1.265570
+stats container=odoo-production cpu=315.17% mem=1002MiB / 23.47GiB
+stats container=odoo-staging cpu=138.43% mem=916.2MiB / 23.47GiB
+stats container=odoo-production-db cpu=21.32% mem=218.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=162.85% mem=157.3MiB / 23.47GiB
+ 659314       01:17  0.3  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-2b15-cwd
+ 659347       01:13  3.0  0.1 docker compose -f docker-compose.production.yml build
+ 659349       01:13  2.5  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 15:43:32 CST ---
+ 23:43:33 up 22:03,  6 users,  load average: 8.22, 8.27, 9.22
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.2Gi        17Gi       240Mi       1.8Gi        18Gi
+container=odoo-production status=Up 23 minutes (healthy)
+container=odoo-production-db status=Up 27 minutes
+container=odoo-staging status=Up 25 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=2.370975
+health host=stagingfc.amunet.com.mx status=200 time=0.238309
+stats container=odoo-production cpu=21.52% mem=1002MiB / 23.47GiB
+stats container=odoo-staging cpu=69.49% mem=937MiB / 23.47GiB
+stats container=odoo-production-db cpu=27.63% mem=219.6MiB / 23.47GiB
+stats container=odoo-staging-db cpu=5.72% mem=146.8MiB / 23.47GiB
+ 659314       02:29  0.1  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-2b15-cwd
+ 659347       02:25  1.6  0.1 docker compose -f docker-compose.production.yml build
+ 659349       02:25  1.3  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 15:44:44 CST ---
+ 23:44:44 up 22:04,  6 users,  load average: 12.83, 9.54, 9.57
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.3Gi        17Gi       240Mi       1.8Gi        18Gi
+container=odoo-production status=Up 24 minutes (healthy)
+container=odoo-production-db status=Up 29 minutes
+container=odoo-staging status=Up 27 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.379850
+health host=stagingfc.amunet.com.mx status=200 time=2.532340
+stats container=odoo-production cpu=27.18% mem=1002MiB / 23.47GiB
+stats container=odoo-staging cpu=157.17% mem=966.2MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.02% mem=212.2MiB / 23.47GiB
+stats container=odoo-staging-db cpu=32.35% mem=146.7MiB / 23.47GiB
+ 659314       03:45  0.1  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-2b15-cwd
+ 659347       03:41  1.1  0.1 docker compose -f docker-compose.production.yml build
+ 659349       03:41  0.9  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 15:46:01 CST ---
+ 23:46:01 up 22:06,  6 users,  load average: 14.58, 10.91, 10.06
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.3Gi        17Gi       240Mi       1.9Gi        18Gi
+container=odoo-production status=Up 25 minutes (healthy)
+container=odoo-production-db status=Up 30 minutes
+container=odoo-staging status=Up 28 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.780331
+health host=stagingfc.amunet.com.mx status=200 time=3.031583
+stats container=odoo-production cpu=260.93% mem=1002MiB / 23.47GiB
+stats container=odoo-staging cpu=225.12% mem=966.3MiB / 23.47GiB
+stats container=odoo-production-db cpu=53.03% mem=219MiB / 23.47GiB
+stats container=odoo-staging-db cpu=105.08% mem=148.6MiB / 23.47GiB
+ 659314       05:09  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-2b15-cwd
+ 659347       05:05  0.8  0.1 docker compose -f docker-compose.production.yml build
+ 659349       05:05  0.9  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 15:47:25 CST ---
+ 23:47:25 up 22:07,  6 users,  load average: 16.42, 12.36, 10.64
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.3Gi        17Gi       240Mi       1.9Gi        18Gi
+container=odoo-production status=Up 26 minutes (healthy)
+container=odoo-production-db status=Up 31 minutes
+container=odoo-staging status=Up 29 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.988053
+health host=stagingfc.amunet.com.mx status=200 time=0.268377
+stats container=odoo-production cpu=43.38% mem=1002MiB / 23.47GiB
+stats container=odoo-staging cpu=165.99% mem=1013MiB / 23.47GiB
+stats container=odoo-production-db cpu=33.38% mem=219.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=61.03% mem=149.7MiB / 23.47GiB
+ 659314       06:21  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-2b15-cwd
+ 659347       06:17  0.7  0.1 docker compose -f docker-compose.production.yml build
+ 659349       06:17  0.7  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 15:48:37 CST ---
+ 23:48:37 up 22:08,  6 users,  load average: 14.70, 12.65, 10.86
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.4Gi        17Gi       240Mi       2.0Gi        18Gi
+container=odoo-production status=Up 28 minutes (healthy)
+container=odoo-production-db status=Up 33 minutes
+container=odoo-staging status=Up 30 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.938201
+health host=stagingfc.amunet.com.mx status=200 time=1.489049
+stats container=odoo-production cpu=25.16% mem=1004MiB / 23.47GiB
+stats container=odoo-staging cpu=164.57% mem=1014MiB / 23.47GiB
+stats container=odoo-production-db cpu=21.63% mem=212.6MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.08% mem=148.3MiB / 23.47GiB
+ 659314       07:46  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-2b15-cwd
+ 659347       07:42  0.6  0.1 docker compose -f docker-compose.production.yml build
+ 659349       07:42  0.6  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 15:50:03 CST ---
+ 23:50:03 up 22:10,  6 users,  load average: 17.15, 14.24, 11.60
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.4Gi        18Gi       240Mi       2.0Gi        19Gi
+container=odoo-production status=Up 29 minutes (healthy)
+container=odoo-production-db status=Up 34 minutes
+container=odoo-staging status=Up 32 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.211650
+health host=stagingfc.amunet.com.mx status=200 time=2.035148
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=36.44% mem=1012MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.08% mem=155.9MiB / 23.47GiB
+stats container=odoo-staging-db cpu=151.49% mem=150.3MiB / 23.47GiB
+ 659349       09:05  0.6  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 663372       00:41  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/production && docker compose -f docker-compose.production.yml stop web-production 2>&1 | tail -2' < /dev/null && pwd -P >| /tmp/claude-8790-cwd
+--- 2026-06-04 15:51:25 CST ---
+ 23:51:25 up 22:11,  6 users,  load average: 14.70, 14.05, 11.75
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.5Gi        18Gi       240Mi       2.1Gi        20Gi
+container=clever_cray status=Up 34 seconds
+container=odoo-production-db status=Up 35 minutes
+container=odoo-staging status=Up 33 minutes (healthy)
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.025502
+health host=stagingfc.amunet.com.mx status=502 time=0.022433
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=0.00% mem=159.9MiB / 23.47GiB
+stats container=odoo-staging-db cpu=118.81% mem=106.7MiB / 23.47GiB
+ 663952       00:55  1.3  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664154       00:37 29.4  0.3 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED*** --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664516       00:01  8.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664517       00:00  0.0  0.0 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+--- 2026-06-04 15:52:35 CST ---
+ 23:52:35 up 22:12,  6 users,  load average: 12.45, 13.49, 11.73
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.6Gi        18Gi       241Mi       2.1Gi        20Gi
+container=odoo-staging-upgrade-1-658944 status=Up 37 seconds (health: starting)
+container=clever_cray status=Up About a minute
+container=odoo-production-db status=Up 37 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.008032
+health host=stagingfc.amunet.com.mx status=502 time=0.227197
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=153.80% mem=161.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=75.93% mem=111.1MiB / 23.47GiB
+ 663952       02:06  0.8  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664154       01:48 41.0  0.4 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED*** --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664516       01:12  0.1  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664517       01:11  2.2  0.0 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664543       01:08  4.8  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664695       00:45 47.4  0.4 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u amunet_competencias,amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:53:46 CST ---
+ 23:53:47 up 22:13,  6 users,  load average: 7.87, 12.01, 11.35
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.6Gi        18Gi       243Mi       2.1Gi        20Gi
+container=odoo-staging-upgrade-1-658944 status=Up About a minute (health: starting)
+container=clever_cray status=Up 2 minutes
+container=odoo-production-db status=Up 38 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.718480
+health host=stagingfc.amunet.com.mx status=502 time=0.016373
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=55.91% mem=168.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.09% mem=114.3MiB / 23.47GiB
+ 663952       03:15  0.5  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664154       02:57 44.5  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED*** --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664516       02:21  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664517       02:20  1.1  0.0 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664543       02:17  2.8  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664695       01:54 52.2  0.6 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u amunet_competencias,amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:54:55 CST ---
+ 23:54:55 up 22:14,  6 users,  load average: 10.65, 11.74, 11.28
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.7Gi        18Gi       244Mi       2.1Gi        20Gi
+container=odoo-staging-upgrade-1-658944 status=Up 2 minutes (health: starting)
+container=clever_cray status=Up 4 minutes
+container=odoo-production-db status=Up 39 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.371343
+health host=stagingfc.amunet.com.mx status=502 time=0.350728
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=76.02% mem=170MiB / 23.47GiB
+stats container=odoo-staging-db cpu=64.40% mem=115.5MiB / 23.47GiB
+ 663952       04:28  0.6  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664154       04:10 48.0  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED*** --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664516       03:34  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664517       03:33  0.7  0.0 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664543       03:30  1.8  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664695       03:07 56.7  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u amunet_competencias,amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:56:07 CST ---
+ 23:56:08 up 22:16,  6 users,  load average: 7.58, 10.60, 10.92
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.7Gi        18Gi       245Mi       2.1Gi        20Gi
+container=odoo-staging-upgrade-1-658944 status=Up 4 minutes (unhealthy)
+container=clever_cray status=Up 5 minutes
+container=odoo-production-db status=Up 40 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.026247
+health host=stagingfc.amunet.com.mx status=502 time=0.040217
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=145.14% mem=171.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=63.93% mem=116.1MiB / 23.47GiB
+ 663952       05:37  0.5  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664154       05:19 51.3  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED*** --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 664516       04:43  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664517       04:42  0.5  0.0 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664543       04:39  1.5  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-658944 --no-deps -e UPDATE_MODULES=amunet_competencias,amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 664695       04:16 58.2  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u amunet_competencias,amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 15:57:16 CST ---
+ 23:57:16 up 22:17,  6 users,  load average: 7.65, 10.04, 10.71
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.6Gi        18Gi       245Mi       2.1Gi        20Gi
+container=clever_cray status=Up 6 minutes
+container=odoo-production-db status=Up 41 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.018650
+health host=stagingfc.amunet.com.mx status=502 time=0.051983
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=117.07% mem=171.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=3.14% mem=107.4MiB / 23.47GiB
+ 663952       06:44  0.4  0.1 docker run --rm --network production_odoo-production-net -e HOST=db-production -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-production-data:/var/lib/odoo odoo:19.0-amunet odoo -c /etc/odoo/odoo.conf -d amunet_prod -u amunet_competencias,amunet_quality --stop-after-init --no-http --logfile /dev/stdout --db_host db-production --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 666885       00:02 13.5  0.1 docker compose -f docker-compose.staging.yml up -d --force-recreate web-staging
+ 666900       00:02 31.5  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml up -d --force-recreate web-staging
+--- 2026-06-04 15:58:24 CST ---
+ 23:58:25 up 22:18,  6 users,  load average: 10.06, 10.13, 10.68
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       2.7Gi        18Gi       245Mi       2.1Gi        20Gi
+container=odoo-staging status=Up 29 seconds (health: starting)
+container=odoo-production-db status=Up 42 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=0.012984
+health host=stagingfc.amunet.com.mx status=200 time=0.086202
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=63.29% mem=381.3MiB / 23.47GiB
+stats container=odoo-production-db cpu=1.92% mem=163MiB / 23.47GiB
+stats container=odoo-staging-db cpu=63.16% mem=118.8MiB / 23.47GiB
+ 667446       00:18  9.4  0.1 docker compose -f docker-compose.production.yml up -d
+ 667464       00:15 19.4  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.production.yml up -d
+--- 2026-06-04 15:59:33 CST ---
+ 23:59:33 up 22:19,  6 users,  load average: 10.24, 10.05, 10.61
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.3Gi        18Gi       245Mi       2.1Gi        19Gi
+container=odoo-production status=Up 51 seconds (healthy)
+container=odoo-staging status=Up About a minute (healthy)
+container=odoo-production-db status=Up 43 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.332874
+health host=stagingfc.amunet.com.mx status=200 time=0.061954
+stats container=odoo-production cpu=88.00% mem=356.6MiB / 23.47GiB
+stats container=odoo-staging cpu=230.51% mem=650.6MiB / 23.47GiB
+stats container=odoo-production-db cpu=79.11% mem=178.7MiB / 23.47GiB
+stats container=odoo-staging-db cpu=65.67% mem=143.2MiB / 23.47GiB
+ 668032       00:31  3.5  0.1 docker compose -f docker-compose.production.yml build --no-cache web-production
+--- 2026-06-04 16:00:42 CST ---
+ 00:00:42 up 22:20,  6 users,  load average: 16.14, 11.59, 11.09
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.5Gi        17Gi       245Mi       2.1Gi        19Gi
+container=odoo-production status=Up About a minute (healthy)
+container=odoo-staging status=Up 2 minutes (healthy)
+container=odoo-production-db status=Up 45 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.619432
+health host=stagingfc.amunet.com.mx status=200 time=0.117182
+stats container=odoo-production cpu=403.97% mem=516.8MiB / 23.47GiB
+stats container=odoo-staging cpu=147.30% mem=662.7MiB / 23.47GiB
+stats container=odoo-production-db cpu=134.19% mem=190.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=25.82% mem=129.6MiB / 23.47GiB
+ 668032       01:47  1.0  0.1 docker compose -f docker-compose.production.yml build --no-cache web-production
+--- 2026-06-04 16:01:57 CST ---
+ 00:01:57 up 22:21,  6 users,  load average: 13.73, 12.35, 11.42
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.5Gi        17Gi       245Mi       2.1Gi        19Gi
+container=odoo-production status=Up 3 minutes (healthy)
+container=odoo-staging status=Up 4 minutes (healthy)
+container=odoo-production-db status=Up 46 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.758810
+health host=stagingfc.amunet.com.mx status=200 time=0.424502
+stats container=odoo-production cpu=150.60% mem=516.7MiB / 23.47GiB
+stats container=odoo-staging cpu=21.27% mem=671.8MiB / 23.47GiB
+stats container=odoo-production-db cpu=14.82% mem=179.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=100.73% mem=128.3MiB / 23.47GiB
+ 668032       02:58  0.6  0.1 docker compose -f docker-compose.production.yml build --no-cache web-production
+--- 2026-06-04 16:03:10 CST ---
+ 00:03:10 up 22:23,  6 users,  load average: 10.91, 11.89, 11.34
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.5Gi        17Gi       245Mi       2.1Gi        19Gi
+container=odoo-production status=Up 4 minutes (healthy)
+container=odoo-staging status=Up 5 minutes (healthy)
+container=odoo-production-db status=Up 47 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=1.006329
+health host=stagingfc.amunet.com.mx status=200 time=0.747205
+stats container=odoo-production cpu=332.42% mem=520MiB / 23.47GiB
+stats container=odoo-staging cpu=392.48% mem=684.1MiB / 23.47GiB
+stats container=odoo-production-db cpu=13.80% mem=177.7MiB / 23.47GiB
+stats container=odoo-staging-db cpu=194.96% mem=131.1MiB / 23.47GiB
+ 668032       04:20  0.5  0.1 docker compose -f docker-compose.production.yml build --no-cache web-production
+--- 2026-06-04 16:04:36 CST ---
+ 00:04:36 up 22:24,  6 users,  load average: 14.47, 12.80, 11.71
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.6Gi        17Gi       245Mi       2.1Gi        19Gi
+container=odoo-production status=Up 5 minutes (healthy)
+container=odoo-staging status=Up 6 minutes (healthy)
+container=odoo-production-db status=Up 49 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.423628
+health host=stagingfc.amunet.com.mx status=200 time=1.247994
+stats container=odoo-production cpu=0.08% mem=517.1MiB / 23.47GiB
+stats container=odoo-staging cpu=279.96% mem=829.8MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.04% mem=177.7MiB / 23.47GiB
+stats container=odoo-staging-db cpu=61.13% mem=135.4MiB / 23.47GiB
+ 668032       05:39  0.4  0.1 docker compose -f docker-compose.production.yml build --no-cache web-production
+--- 2026-06-04 16:05:51 CST ---
+ 00:05:52 up 22:25,  6 users,  load average: 11.94, 12.30, 11.61
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.9Gi        17Gi       245Mi       2.2Gi        18Gi
+container=odoo-production status=Up 7 minutes (healthy)
+container=odoo-staging status=Up 7 minutes (healthy)
+container=odoo-production-db status=Up 50 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=502 time=9.584568
+health host=stagingfc.amunet.com.mx status=200 time=1.431811
+stats container=odoo-production cpu=0.00% mem=0B / 0B
+stats container=odoo-staging cpu=5.17% mem=972.1MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.05% mem=163MiB / 23.47GiB
+stats container=odoo-staging-db cpu=5.43% mem=140.9MiB / 23.47GiB
+ 672021       00:01 36.0  0.1 docker compose -f docker-compose.production.yml ps -q web-production
+--- 2026-06-04 16:07:36 CST ---
+ 00:07:36 up 22:27,  6 users,  load average: 7.82, 11.23, 11.33
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.5Gi        17Gi       245Mi       2.2Gi        19Gi
+container=odoo-production status=Up 38 seconds (healthy)
+container=odoo-staging status=Up 9 minutes (healthy)
+container=odoo-production-db status=Up 52 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.387530
+health host=stagingfc.amunet.com.mx status=200 time=0.617607
+stats container=odoo-production cpu=70.03% mem=304.1MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=972.3MiB / 23.47GiB
+stats container=odoo-production-db cpu=53.86% mem=173.9MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.04% mem=140.9MiB / 23.47GiB
+--- 2026-06-04 16:08:43 CST ---
+ 00:08:43 up 22:28,  6 users,  load average: 5.12, 9.67, 10.78
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.7Gi        17Gi       245Mi       2.2Gi        19Gi
+container=odoo-production status=Up About a minute (healthy)
+container=odoo-staging status=Up 10 minutes (healthy)
+container=odoo-production-db status=Up 53 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.603072
+health host=stagingfc.amunet.com.mx status=200 time=0.882177
+stats container=odoo-production cpu=271.92% mem=495MiB / 23.47GiB
+stats container=odoo-staging cpu=145.14% mem=972.6MiB / 23.47GiB
+stats container=odoo-production-db cpu=18.05% mem=191.7MiB / 23.47GiB
+stats container=odoo-staging-db cpu=160.44% mem=141MiB / 23.47GiB
+--- 2026-06-04 16:09:58 CST ---
+ 00:09:59 up 22:29,  6 users,  load average: 4.17, 8.36, 10.23
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        17Gi       245Mi       2.2Gi        19Gi
+container=odoo-production status=Up 3 minutes (healthy)
+container=odoo-staging status=Up 12 minutes (healthy)
+container=odoo-production-db status=Up 54 minutes
+container=odoo-staging-db status=Up 2 hours
+container=authelia status=Up 22 hours (healthy)
+container=admin-tools status=Up 22 hours
+health host=fc.amunet.com.mx status=200 time=0.860972
+health host=stagingfc.amunet.com.mx status=200 time=1.222832
+stats container=odoo-production cpu=125.19% mem=495.1MiB / 23.47GiB
+stats container=odoo-staging cpu=215.55% mem=974.6MiB / 23.47GiB
+stats container=odoo-production-db cpu=76.01% mem=191.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=36.33% mem=147.9MiB / 23.47GiB
+--- 2026-06-04 16:11:11 CST ---
+ 00:11:11 up 22:31,  6 users,  load average: 3.18, 7.20, 9.69
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        17Gi       245Mi       2.2Gi        19Gi
+container=odoo-production status=Up 4 minutes (healthy)
+container=odoo-staging status=Up 13 minutes (healthy)
+container=odoo-production-db status=Up 55 minutes
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.720073
+health host=stagingfc.amunet.com.mx status=200 time=1.211959
+stats container=odoo-production cpu=158.28% mem=497.2MiB / 23.47GiB
+stats container=odoo-staging cpu=294.69% mem=973.5MiB / 23.47GiB
+stats container=odoo-production-db cpu=107.35% mem=198.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=185.46% mem=149.2MiB / 23.47GiB
+--- 2026-06-04 16:12:26 CST ---
+ 00:12:27 up 22:32,  6 users,  load average: 4.20, 6.72, 9.33
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.7Gi        17Gi       245Mi       2.2Gi        19Gi
+container=odoo-production status=Up 5 minutes (healthy)
+container=odoo-staging status=Up 14 minutes (healthy)
+container=odoo-production-db status=Up 56 minutes
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.481376
+health host=stagingfc.amunet.com.mx status=200 time=0.723948
+stats container=odoo-production cpu=58.08% mem=497.4MiB / 23.47GiB
+stats container=odoo-staging cpu=4.81% mem=972.8MiB / 23.47GiB
+stats container=odoo-production-db cpu=77.68% mem=191.6MiB / 23.47GiB
+stats container=odoo-staging-db cpu=27.22% mem=141MiB / 23.47GiB
+--- 2026-06-04 16:13:39 CST ---
+ 00:13:39 up 22:33,  6 users,  load average: 5.90, 6.67, 9.12
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        17Gi       245Mi       2.2Gi        19Gi
+container=odoo-production status=Up 6 minutes (healthy)
+container=odoo-staging status=Up 15 minutes (healthy)
+container=odoo-production-db status=Up 58 minutes
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.955624
+health host=stagingfc.amunet.com.mx status=200 time=0.768475
+stats container=odoo-production cpu=74.62% mem=497.5MiB / 23.47GiB
+stats container=odoo-staging cpu=14.59% mem=980.7MiB / 23.47GiB
+stats container=odoo-production-db cpu=201.44% mem=191.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.04% mem=141.6MiB / 23.47GiB
+--- 2026-06-04 16:15:00 CST ---
+ 00:15:00 up 22:35,  6 users,  load average: 6.17, 6.65, 8.90
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        17Gi       245Mi       2.2Gi        19Gi
+container=odoo-production status=Up 8 minutes (healthy)
+container=odoo-staging status=Up 17 minutes (healthy)
+container=odoo-production-db status=Up 59 minutes
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.110036
+health host=stagingfc.amunet.com.mx status=200 time=0.171317
+stats container=odoo-production cpu=257.65% mem=497.6MiB / 23.47GiB
+stats container=odoo-staging cpu=17.56% mem=988MiB / 23.47GiB
+stats container=odoo-production-db cpu=7.27% mem=191.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=49.78% mem=142.4MiB / 23.47GiB
+--- 2026-06-04 16:16:12 CST ---
+ 00:16:12 up 22:36,  6 users,  load average: 7.54, 7.05, 8.88
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        17Gi       245Mi       2.2Gi        19Gi
+container=odoo-production status=Up 9 minutes (healthy)
+container=odoo-staging status=Up 18 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.616971
+health host=stagingfc.amunet.com.mx status=200 time=1.139819
+stats container=odoo-production cpu=104.39% mem=499.5MiB / 23.47GiB
+stats container=odoo-staging cpu=277.69% mem=1020MiB / 23.47GiB
+stats container=odoo-production-db cpu=40.59% mem=189.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=27.66% mem=149.6MiB / 23.47GiB
+--- 2026-06-04 16:17:25 CST ---
+ 00:17:25 up 22:37,  6 users,  load average: 7.36, 6.96, 8.70
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        18Gi       245Mi       1.2Gi        19Gi
+container=odoo-production status=Up 10 minutes (healthy)
+container=odoo-staging status=Up 19 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=1.850033
+health host=stagingfc.amunet.com.mx status=200 time=2.425025
+stats container=odoo-production cpu=372.95% mem=498.2MiB / 23.47GiB
+stats container=odoo-staging cpu=639.38% mem=1008MiB / 23.47GiB
+stats container=odoo-production-db cpu=151.91% mem=190.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=116.45% mem=152.2MiB / 23.47GiB
+--- 2026-06-04 16:18:56 CST ---
+ 00:18:56 up 22:38,  6 users,  load average: 10.44, 8.14, 8.96
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.9Gi        18Gi       245Mi       1.3Gi        18Gi
+container=odoo-production status=Up 11 minutes (healthy)
+container=odoo-staging status=Up 21 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.256163
+health host=stagingfc.amunet.com.mx status=200 time=0.396622
+stats container=odoo-production cpu=39.42% mem=503MiB / 23.47GiB
+stats container=odoo-staging cpu=151.09% mem=1012MiB / 23.47GiB
+stats container=odoo-production-db cpu=40.09% mem=181MiB / 23.47GiB
+stats container=odoo-staging-db cpu=20.53% mem=140.1MiB / 23.47GiB
+--- 2026-06-04 16:20:05 CST ---
+ 00:20:05 up 22:40,  6 users,  load average: 9.88, 8.45, 9.01
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.9Gi        18Gi       245Mi       1.3Gi        18Gi
+container=odoo-production status=Up 13 minutes (healthy)
+container=odoo-staging status=Up 22 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.146912
+health host=stagingfc.amunet.com.mx status=200 time=116.140901
+stats container=odoo-production cpu=239.94% mem=523.4MiB / 23.47GiB
+stats container=odoo-staging cpu=824.75% mem=894.1MiB / 23.47GiB
+stats container=odoo-production-db cpu=3.98% mem=183.2MiB / 23.47GiB
+stats container=odoo-staging-db cpu=99.63% mem=134.6MiB / 23.47GiB
+--- 2026-06-04 16:23:14 CST ---
+ 00:23:14 up 22:43,  6 users,  load average: 10.32, 9.39, 9.27
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.7Gi        18Gi       245Mi       1.4Gi        19Gi
+container=odoo-production status=Up 16 minutes (healthy)
+container=odoo-staging status=Up 25 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.114384
+health host=stagingfc.amunet.com.mx status=200 time=0.148431
+stats container=odoo-production cpu=0.00% mem=523.6MiB / 23.47GiB
+stats container=odoo-staging cpu=4.21% mem=952.1MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.00% mem=176.4MiB / 23.47GiB
+stats container=odoo-staging-db cpu=14.95% mem=132.4MiB / 23.47GiB
+--- 2026-06-04 16:24:22 CST ---
+ 00:24:22 up 22:44,  6 users,  load average: 8.65, 9.03, 9.15
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        18Gi       245Mi       1.4Gi        19Gi
+container=odoo-production status=Up 17 minutes (healthy)
+container=odoo-staging status=Up 26 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.346855
+health host=stagingfc.amunet.com.mx status=200 time=0.798387
+stats container=odoo-production cpu=19.96% mem=524.7MiB / 23.47GiB
+stats container=odoo-staging cpu=79.42% mem=1017MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.00% mem=176.4MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.04% mem=140.2MiB / 23.47GiB
+--- 2026-06-04 16:25:35 CST ---
+ 00:25:35 up 22:45,  6 users,  load average: 10.11, 9.30, 9.23
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        18Gi       245Mi       1.5Gi        19Gi
+container=odoo-production status=Up 18 minutes (healthy)
+container=odoo-staging status=Up 27 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.218188
+health host=stagingfc.amunet.com.mx status=200 time=0.164409
+stats container=odoo-production cpu=10.10% mem=525.2MiB / 23.47GiB
+stats container=odoo-staging cpu=0.40% mem=1016MiB / 23.47GiB
+stats container=odoo-production-db cpu=11.44% mem=176.6MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.00% mem=133.5MiB / 23.47GiB
+ 680366       01:13  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-f84e-cwd
+ 680388       01:12  0.6  0.1 docker compose -f docker-compose.staging.yml build
+ 680659       00:45  1.7  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 16:26:51 CST ---
+ 00:26:51 up 22:46,  6 users,  load average: 11.93, 9.92, 9.44
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        18Gi       245Mi       1.6Gi        19Gi
+container=odoo-production status=Up 19 minutes (healthy)
+container=odoo-staging status=Up 28 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.099224
+health host=stagingfc.amunet.com.mx status=200 time=0.752756
+stats container=odoo-production cpu=20.68% mem=525.3MiB / 23.47GiB
+stats container=odoo-staging cpu=13.02% mem=1016MiB / 23.47GiB
+stats container=odoo-production-db cpu=5.37% mem=176.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=33.24% mem=140.7MiB / 23.47GiB
+ 680366       02:23  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-f84e-cwd
+ 680388       02:22  0.7  0.1 docker compose -f docker-compose.staging.yml build
+ 680659       01:55  0.7  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 16:28:02 CST ---
+ 00:28:02 up 22:48,  6 users,  load average: 12.24, 10.20, 9.56
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.9Gi        17Gi       245Mi       1.6Gi        18Gi
+container=odoo-production status=Up 21 minutes (healthy)
+container=odoo-staging status=Up 30 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.130318
+health host=stagingfc.amunet.com.mx status=200 time=0.475333
+stats container=odoo-production cpu=34.95% mem=525.4MiB / 23.47GiB
+stats container=odoo-staging cpu=62.23% mem=1.031GiB / 23.47GiB
+stats container=odoo-production-db cpu=0.00% mem=176.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=35.57% mem=146.3MiB / 23.47GiB
+ 680366       03:37  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-f84e-cwd
+ 680388       03:36  0.6  0.1 docker compose -f docker-compose.staging.yml build
+ 680659       03:09  0.4  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 16:29:16 CST ---
+ 00:29:16 up 22:49,  6 users,  load average: 13.56, 10.88, 9.84
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.9Gi        17Gi       245Mi       1.7Gi        18Gi
+container=odoo-production status=Up 22 minutes (healthy)
+container=odoo-staging status=Up 31 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.573194
+health host=stagingfc.amunet.com.mx status=200 time=0.683374
+stats container=odoo-production cpu=330.18% mem=526.4MiB / 23.47GiB
+stats container=odoo-staging cpu=263.96% mem=1.086GiB / 23.47GiB
+stats container=odoo-production-db cpu=72.34% mem=191.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=106.48% mem=144.9MiB / 23.47GiB
+ 680366       04:51  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-f84e-cwd
+ 680388       04:50  0.6  0.1 docker compose -f docker-compose.staging.yml build
+ 680659       04:23  0.5  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 16:30:29 CST ---
+ 00:30:29 up 22:50,  6 users,  load average: 12.13, 11.08, 9.99
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.0Gi        17Gi       246Mi       1.7Gi        18Gi
+container=odoo-production status=Up 23 minutes (healthy)
+container=odoo-staging status=Up 32 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.103460
+health host=stagingfc.amunet.com.mx status=200 time=0.049519
+stats container=odoo-production cpu=284.50% mem=615.7MiB / 23.47GiB
+stats container=odoo-staging cpu=335.55% mem=1.086GiB / 23.47GiB
+stats container=odoo-production-db cpu=20.82% mem=185.7MiB / 23.47GiB
+stats container=odoo-staging-db cpu=1.37% mem=152.6MiB / 23.47GiB
+ 680366       06:04  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-f84e-cwd
+ 680388       06:03  0.4  0.1 docker compose -f docker-compose.staging.yml build
+ 680659       05:36  0.4  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+--- 2026-06-04 16:31:42 CST ---
+ 00:31:42 up 22:51,  6 users,  load average: 15.24, 12.19, 10.46
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       246Mi       1.8Gi        18Gi
+container=odoo-production status=Up 24 minutes (healthy)
+container=odoo-staging status=Up 33 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=2.314518
+health host=stagingfc.amunet.com.mx status=200 time=2.517884
+stats container=odoo-production cpu=104.83% mem=618.4MiB / 23.47GiB
+stats container=odoo-staging cpu=90.19% mem=1.089GiB / 23.47GiB
+stats container=odoo-production-db cpu=2.05% mem=186.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=29.03% mem=153.2MiB / 23.47GiB
+ 680366       07:18  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-f84e-cwd
+ 680388       07:17  0.4  0.1 docker compose -f docker-compose.staging.yml build
+ 680659       06:50  0.6  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 684124       00:28  1.3  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-be21-cwd
+ 684151       00:24  0.9  0.1 docker compose -f docker-compose.staging.yml build
+--- 2026-06-04 16:32:56 CST ---
+ 00:32:56 up 22:52,  6 users,  load average: 17.96, 13.87, 11.19
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       246Mi       1.8Gi        18Gi
+container=odoo-production status=Up 25 minutes (healthy)
+container=odoo-staging status=Up 35 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=1.104201
+health host=stagingfc.amunet.com.mx status=200 time=0.840702
+stats container=odoo-production cpu=341.35% mem=691MiB / 23.47GiB
+stats container=odoo-staging cpu=520.57% mem=1.108GiB / 23.47GiB
+stats container=odoo-production-db cpu=4.31% mem=180.9MiB / 23.47GiB
+stats container=odoo-staging-db cpu=270.99% mem=160.9MiB / 23.47GiB
+ 680366       08:32  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-f84e-cwd
+ 680388       08:31  0.3  0.1 docker compose -f docker-compose.staging.yml build
+ 680659       08:04  0.5  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 684124       01:42  0.3  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-be21-cwd
+ 684151       01:38  0.2  0.1 docker compose -f docker-compose.staging.yml build
+--- 2026-06-04 16:34:12 CST ---
+ 00:34:12 up 22:54,  6 users,  load average: 15.36, 14.13, 11.50
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.2Gi        17Gi       246Mi       1.8Gi        18Gi
+container=odoo-production status=Up 27 minutes (healthy)
+container=odoo-staging status=Up 36 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=1.293883
+health host=stagingfc.amunet.com.mx status=200 time=1.759960
+stats container=odoo-production cpu=2.46% mem=701.2MiB / 23.47GiB
+stats container=odoo-staging cpu=32.55% mem=1.106GiB / 23.47GiB
+stats container=odoo-production-db cpu=22.23% mem=183.7MiB / 23.47GiB
+stats container=odoo-staging-db cpu=5.90% mem=152.4MiB / 23.47GiB
+ 680659       09:25  0.5  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 684124       03:03  0.2  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-be21-cwd
+ 684151       02:59  0.8  0.1 docker compose -f docker-compose.staging.yml build
+--- 2026-06-04 16:35:31 CST ---
+ 00:35:31 up 22:55,  6 users,  load average: 13.77, 14.19, 11.74
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       246Mi       1.9Gi        18Gi
+container=odoo-production status=Up 28 minutes (healthy)
+container=odoo-staging status=Up 37 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=2.358180
+health host=stagingfc.amunet.com.mx status=200 time=0.308979
+stats container=odoo-production cpu=210.77% mem=703.1MiB / 23.47GiB
+stats container=odoo-staging cpu=100.29% mem=1.107GiB / 23.47GiB
+stats container=odoo-production-db cpu=0.00% mem=184.2MiB / 23.47GiB
+stats container=odoo-staging-db cpu=145.61% mem=160.8MiB / 23.47GiB
+ 680659       10:40  0.6  0.1 docker compose -f docker-compose.staging.yml build --no-cache web-staging
+ 684124       04:18  0.1  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-be21-cwd
+ 684151       04:14  0.6  0.1 docker compose -f docker-compose.staging.yml build
+--- 2026-06-04 16:36:46 CST ---
+ 00:36:46 up 22:56,  6 users,  load average: 14.64, 14.38, 12.00
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.1Gi        18Gi       246Mi       1.9Gi        19Gi
+container=odoo-production status=Up 29 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=odoo-staging-db status=Up 3 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.531682
+health host=stagingfc.amunet.com.mx status=502 time=0.027161
+stats container=odoo-production cpu=0.89% mem=765.9MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=0.06% mem=189MiB / 23.47GiB
+stats container=odoo-staging-db cpu=0.00% mem=110.6MiB / 23.47GiB
+ 686850       00:23  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && \ docker compose -f docker-compose.staging.yml stop web-staging && \ docker compose -f docker-compose.staging.yml up -d --force-recreate 2>&1 | tail -4' < /dev/null && pwd -P >| /tmp/claude-d8f6-cwd
+ 687056       00:11  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 687057       00:11  3.1  0.1 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 687058       00:11  1.0  0.1 docker compose -f docker-compose.staging.yml up -d --force-recreate
+ 687109       00:10 43.9  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-1-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 687123       00:09 31.1  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml up -d --force-recreate
+--- 2026-06-04 16:37:54 CST ---
+ 00:37:55 up 22:57,  6 users,  load average: 11.32, 13.47, 11.86
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.1Gi        18Gi       150Mi       1.8Gi        19Gi
+container=odoo-production status=Up 30 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=2.700555
+health host=stagingfc.amunet.com.mx status=502 time=0.359877
+stats container=odoo-production cpu=112.89% mem=767.6MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=0.00% mem=189.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=41.96% mem=2.82MiB / 23.47GiB
+ 686850       01:37  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && \ docker compose -f docker-compose.staging.yml stop web-staging && \ docker compose -f docker-compose.staging.yml up -d --force-recreate 2>&1 | tail -4' < /dev/null && pwd -P >| /tmp/claude-d8f6-cwd
+ 687058       01:25  0.1  0.1 docker compose -f docker-compose.staging.yml up -d --force-recreate
+ 687123       01:23  4.5  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml up -d --force-recreate
+--- 2026-06-04 16:39:09 CST ---
+ 00:39:09 up 22:59,  6 users,  load average: 10.94, 12.81, 11.75
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.6Gi        18Gi       182Mi       1.8Gi        19Gi
+container=odoo-staging-upgrade-2-680321 status=Up 46 seconds (health: starting)
+container=odoo-staging status=Up About a minute (healthy)
+container=odoo-staging-db status=Up About a minute
+container=odoo-production status=Up 32 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.748734
+health host=stagingfc.amunet.com.mx status=200 time=0.076267
+stats container=odoo-production cpu=0.00% mem=765.9MiB / 23.47GiB
+stats container=odoo-staging cpu=162.76% mem=452.8MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.01% mem=189.2MiB / 23.47GiB
+stats container=odoo-staging-db cpu=1.23% mem=58.71MiB / 23.47GiB
+ 687978       01:11  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 687979       01:11  1.7  0.1 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 688040       01:09  5.4  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 688273       00:54 29.8  0.3 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 16:40:21 CST ---
+ 00:40:21 up 23:00,  6 users,  load average: 10.10, 12.14, 11.59
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        17Gi       198Mi       1.9Gi        19Gi
+container=odoo-staging-upgrade-2-680321 status=Up About a minute (health: starting)
+container=odoo-staging status=Up 2 minutes (healthy)
+container=odoo-staging-db status=Up 2 minutes
+container=odoo-production status=Up 33 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.087548
+health host=stagingfc.amunet.com.mx status=200 time=1.493377
+stats container=odoo-production cpu=0.00% mem=767MiB / 23.47GiB
+stats container=odoo-staging cpu=432.81% mem=705.5MiB / 23.47GiB
+stats container=odoo-production-db cpu=0.01% mem=190.6MiB / 23.47GiB
+stats container=odoo-staging-db cpu=91.94% mem=103.4MiB / 23.47GiB
+ 687978       02:26  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 687979       02:26  0.8  0.1 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 688040       02:24  3.6  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 688273       02:09 38.5  0.4 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 689607       00:09  5.0  0.1 docker compose -f docker-compose.staging.yml stop web-staging
+--- 2026-06-04 16:41:35 CST ---
+ 00:41:35 up 23:01,  6 users,  load average: 8.97, 11.34, 11.35
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.3Gi        18Gi       209Mi       1.9Gi        19Gi
+container=odoo-staging-upgrade-2-680321 status=Up 3 minutes (health: starting)
+container=odoo-staging-db status=Up 3 minutes
+container=odoo-production status=Up 34 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=1.761986
+health host=stagingfc.amunet.com.mx status=502 time=0.354628
+stats container=odoo-production cpu=89.07% mem=768.9MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=2.06% mem=191.6MiB / 23.47GiB
+stats container=odoo-staging-db cpu=293.92% mem=81.71MiB / 23.47GiB
+ 687978       03:44  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 687979       03:44  0.5  0.1 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 688040       03:42  2.5  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 688273       03:27 36.2  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 689966       00:46  2.4  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 690112       00:33 38.3  0.3 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 16:42:54 CST ---
+ 00:42:54 up 23:02,  6 users,  load average: 9.49, 11.22, 11.33
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.3Gi        18Gi       218Mi       1.9Gi        19Gi
+container=odoo-staging-upgrade-2-680321 status=Up 4 minutes (unhealthy)
+container=odoo-staging-db status=Up 4 minutes
+container=odoo-production status=Up 35 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.317758
+health host=stagingfc.amunet.com.mx status=502 time=0.130493
+stats container=odoo-production cpu=86.85% mem=767.1MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=4.38% mem=190.7MiB / 23.47GiB
+stats container=odoo-staging-db cpu=33.73% mem=86.63MiB / 23.47GiB
+ 687978       04:54  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 687979       04:54  0.9  0.1 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 688040       04:52  2.1  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-2-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 688273       04:37 39.7  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u amunet_quality --stop-after-init --no-http --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 16:44:04 CST ---
+ 00:44:04 up 23:04,  6 users,  load average: 10.35, 10.98, 11.23
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.1Gi        18Gi       219Mi       1.9Gi        19Gi
+container=odoo-staging-db status=Up 6 minutes
+container=odoo-production status=Up 37 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=1.158905
+health host=stagingfc.amunet.com.mx status=502 time=0.541949
+stats container=odoo-production cpu=9.99% mem=767.2MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=0.06% mem=190.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=167.02% mem=79.1MiB / 23.47GiB
+ 690946       01:07  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-8a20-cwd
+ 690966       01:07  0.5  0.1 docker compose -f docker-compose.staging.yml build
+ 691418       00:18  1.1  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 691637       00:03  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-3-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 691642       00:03 13.6  0.1 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-3-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 691668       00:01 35.0  0.0 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-3-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+--- 2026-06-04 16:45:18 CST ---
+ 00:45:18 up 23:05,  6 users,  load average: 12.87, 11.60, 11.42
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.4Gi        18Gi       219Mi       1.9Gi        19Gi
+container=odoo-staging-upgrade-3-680321 status=Up 40 seconds (health: starting)
+container=heuristic_mclean status=Up About a minute
+container=odoo-staging-db status=Up 7 minutes
+container=odoo-production status=Up 38 minutes (healthy)
+container=odoo-production-db status=Up About an hour
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.686524
+health host=stagingfc.amunet.com.mx status=502 time=0.586999
+stats container=odoo-production cpu=2.29% mem=767.2MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=0B / 0B
+stats container=odoo-production-db cpu=143.25% mem=190.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=11.49% mem=83.77MiB / 23.47GiB
+ 690946       02:24  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-8a20-cwd
+ 690966       02:24  0.3  0.1 docker compose -f docker-compose.staging.yml build
+ 691418       01:35  0.2  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 691521       01:27 53.7  0.6 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 691637       01:20  0.0  0.0 timeout 45m docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-3-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 691642       01:20  0.5  0.1 docker compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-3-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+ 691668       01:18  6.2  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml run -T --rm --name odoo-staging-upgrade-3-680321 --no-deps -e UPDATE_MODULES=amunet_quality web-staging bash -c odoo -c /etc/odoo/odoo.conf --logfile /dev/stdout --workers 0 --max-cron-threads 0 -d Amunet_testing -u "$UPDATE_MODULES" --stop-after-init --no-http --db_host $HOST --db_port $PORT --db_user $USER --db_password $PASSWORD
+--- 2026-06-04 16:46:36 CST ---
+ 00:46:36 up 23:06,  6 users,  load average: 14.09, 12.32, 11.70
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.3Gi        18Gi       219Mi       1.9Gi        19Gi
+container=heuristic_mclean status=Up 2 minutes
+container=odoo-staging-db status=Up 8 minutes
+container=odoo-production status=Up 39 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.084915
+health host=stagingfc.amunet.com.mx status=502 time=0.015279
+stats container=odoo-production cpu=78.18% mem=767.2MiB / 23.47GiB
+stats container=odoo-staging cpu=225.20% mem=52.8MiB / 23.47GiB
+stats container=odoo-production-db cpu=68.61% mem=197.6MiB / 23.47GiB
+stats container=odoo-staging-db cpu=55.45% mem=87.96MiB / 23.47GiB
+ 690946       03:35  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-8a20-cwd
+ 690966       03:35  0.2  0.1 docker compose -f docker-compose.staging.yml build
+ 691418       02:46  0.1  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 691521       02:38 55.3  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 16:47:45 CST ---
+ 00:47:45 up 23:07,  6 users,  load average: 16.10, 13.10, 12.00
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.8Gi        17Gi       220Mi       2.0Gi        19Gi
+container=odoo-staging status=Up About a minute (healthy)
+container=heuristic_mclean status=Up 3 minutes
+container=odoo-staging-db status=Up 9 minutes
+container=odoo-production status=Up 40 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.456433
+health host=stagingfc.amunet.com.mx status=200 time=1.467904
+stats container=odoo-production cpu=103.76% mem=767.4MiB / 23.47GiB
+stats container=odoo-staging cpu=49.91% mem=514.5MiB / 23.47GiB
+stats container=odoo-production-db cpu=48.68% mem=204.6MiB / 23.47GiB
+stats container=odoo-staging-db cpu=87.73% mem=123.5MiB / 23.47GiB
+ 690946       04:42  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-8a20-cwd
+ 690966       04:42  0.5  0.1 docker compose -f docker-compose.staging.yml build
+ 691418       03:53  0.1  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 691521       03:45 55.9  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 16:48:53 CST ---
+ 00:48:53 up 23:08,  6 users,  load average: 18.24, 14.38, 12.53
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.0Gi        17Gi       222Mi       2.0Gi        18Gi
+container=odoo-staging status=Up 2 minutes (healthy)
+container=heuristic_mclean status=Up 4 minutes
+container=odoo-staging-db status=Up 10 minutes
+container=odoo-production status=Up 41 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.566560
+health host=stagingfc.amunet.com.mx status=200 time=0.508109
+stats container=odoo-production cpu=83.15% mem=767.4MiB / 23.47GiB
+stats container=odoo-staging cpu=4.81% mem=585.2MiB / 23.47GiB
+stats container=odoo-production-db cpu=154.39% mem=202.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=220.80% mem=118.9MiB / 23.47GiB
+ 690946       05:59  0.0  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml build 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-8a20-cwd
+ 690966       05:59  0.5  0.1 docker compose -f docker-compose.staging.yml build
+ 691418       05:10  0.3  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=odoo-staging-db -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v /opt/odoo/staging/addons:/opt/amunet-addons odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn
+ 691521       05:02 55.3  0.7 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_quality --stop-after-init --no-http --logfile= --log-level=warn --db_host odoo-staging-db --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 16:50:09 CST ---
+ 00:50:09 up 23:10,  6 users,  load average: 13.20, 13.79, 12.47
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.9Gi        17Gi       223Mi       2.0Gi        18Gi
+container=odoo-staging status=Up 3 minutes (healthy)
+container=odoo-staging-db status=Up 12 minutes
+container=odoo-production status=Up 43 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.741529
+health host=stagingfc.amunet.com.mx status=502 time=6.776282
+stats container=odoo-production cpu=177.76% mem=767.5MiB / 23.47GiB
+stats container=odoo-staging cpu=269.52% mem=9.098MiB / 23.47GiB
+stats container=odoo-production-db cpu=149.56% mem=198.7MiB / 23.47GiB
+stats container=odoo-staging-db cpu=3.71% mem=85.17MiB / 23.47GiB
+ 694847       00:27  0.6  0.0 /bin/bash -c source /home/agentia-odoo/.claude-calidad/shell-snapshots/snapshot-bash-1780590732936-brfthz.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml up -d 2>&1 | tail -3' < /dev/null && pwd -P >| /tmp/claude-afec-cwd
+ 694899       00:26  5.5  0.1 docker compose -f docker-compose.staging.yml up -d
+ 694940       00:24  2.7  0.1 /usr/libexec/docker/cli-plugins/docker-compose compose -f docker-compose.staging.yml up -d
+ 695294       00:06  0.1  0.0 /bin/bash -c source /home/agentia-odoo/.claude/shell-snapshots/snapshot-bash-1780532745107-dtrikj.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && eval 'cd /opt/odoo/staging && docker compose -f docker-compose.staging.yml stop web-staging 2>&1 | tail -2' < /dev/null && pwd -P >| /tmp/claude-9357-cwd
+ 695314       00:06  8.6  0.0 docker compose -f docker-compose.staging.yml stop web-staging
+--- 2026-06-04 16:51:25 CST ---
+ 00:51:25 up 23:11,  6 users,  load average: 13.03, 13.54, 12.48
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       3.6Gi        17Gi       224Mi       2.0Gi        19Gi
+container=intelligent_burnell status=Up 24 seconds
+container=odoo-staging status=Up 33 seconds (health: starting)
+container=odoo-staging-db status=Up 13 minutes
+container=odoo-production status=Up 44 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.369814
+health host=stagingfc.amunet.com.mx status=200 time=6.340858
+stats container=odoo-production cpu=421.42% mem=767.5MiB / 23.47GiB
+stats container=odoo-staging cpu=407.25% mem=514.8MiB / 23.47GiB
+stats container=odoo-production-db cpu=60.97% mem=205.1MiB / 23.47GiB
+stats container=odoo-staging-db cpu=198.92% mem=118.3MiB / 23.47GiB
+ 695635       00:47  0.9  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=db-staging -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-staging-data:/var/lib/odoo odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_price_visibility --stop-after-init --no-http --logfile /dev/stdout --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+ 695770       00:39 48.1  0.4 /usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_price_visibility --stop-after-init --no-http --logfile /dev/stdout --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED*** --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 16:52:42 CST ---
+ 00:52:42 up 23:12,  6 users,  load average: 12.00, 13.14, 12.43
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       227Mi       2.0Gi        18Gi
+container=intelligent_burnell status=Up About a minute
+container=odoo-staging status=Up About a minute (healthy)
+container=odoo-staging-db status=Up 14 minutes
+container=odoo-production status=Up 45 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.278233
+health host=stagingfc.amunet.com.mx status=200 time=9.436518
+stats container=odoo-production cpu=147.30% mem=767.5MiB / 23.47GiB
+stats container=odoo-staging cpu=415.94% mem=929.2MiB / 23.47GiB
+stats container=odoo-production-db cpu=62.07% mem=204.4MiB / 23.47GiB
+stats container=odoo-staging-db cpu=129.01% mem=148.4MiB / 23.47GiB
+ 695635       02:10  0.3  0.1 docker run --rm --network staging_odoo-staging-net -e HOST=db-staging -e PORT=5432 -e USER=odoo -e PASSWORD=***MASKED*** -v odoo-staging-data:/var/lib/odoo odoo:19.0-amunet-staging odoo -c /etc/odoo/odoo.conf -d Amunet_testing -u amunet_price_visibility --stop-after-init --no-http --logfile /dev/stdout --db_host db-staging --db_port 5432 --db_user odoo --db_password ***MASKED***
+--- 2026-06-04 16:54:06 CST ---
+ 00:54:06 up 23:14,  6 users,  load average: 8.76, 12.07, 12.13
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.1Gi        17Gi       230Mi       2.0Gi        18Gi
+container=odoo-staging status=Up 3 minutes (healthy)
+container=odoo-staging-db status=Up 16 minutes
+container=odoo-production status=Up 47 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.491405
+health host=stagingfc.amunet.com.mx status=200 time=0.095457
+stats container=odoo-production cpu=89.22% mem=767.5MiB / 23.47GiB
+stats container=odoo-staging cpu=157.78% mem=993.6MiB / 23.47GiB
+stats container=odoo-production-db cpu=15.86% mem=194.3MiB / 23.47GiB
+stats container=odoo-staging-db cpu=48.94% mem=153.4MiB / 23.47GiB
+--- 2026-06-04 16:55:14 CST ---
+ 00:55:14 up 23:15,  6 users,  load average: 9.76, 11.67, 11.98
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.3Gi        17Gi       233Mi       2.0Gi        18Gi
+container=odoo-staging status=Up 4 minutes (healthy)
+container=odoo-staging-db status=Up 17 minutes
+container=odoo-production status=Up 48 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.516659
+health host=stagingfc.amunet.com.mx status=200 time=0.369947
+stats container=odoo-production cpu=0.00% mem=767.6MiB / 23.47GiB
+stats container=odoo-staging cpu=106.34% mem=1.001GiB / 23.47GiB
+stats container=odoo-production-db cpu=0.00% mem=190.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=34.94% mem=153.9MiB / 23.47GiB
+--- 2026-06-04 16:56:28 CST ---
+ 00:56:28 up 23:16,  6 users,  load average: 7.39, 10.57, 11.58
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.3Gi        17Gi       233Mi       2.0Gi        18Gi
+container=odoo-staging status=Up 5 minutes (healthy)
+container=odoo-staging-db status=Up 18 minutes
+container=odoo-production status=Up 49 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.842704
+health host=stagingfc.amunet.com.mx status=200 time=0.560492
+stats container=odoo-production cpu=0.14% mem=767.6MiB / 23.47GiB
+stats container=odoo-staging cpu=0.00% mem=1.002GiB / 23.47GiB
+stats container=odoo-production-db cpu=0.00% mem=190.8MiB / 23.47GiB
+stats container=odoo-staging-db cpu=65.11% mem=154.6MiB / 23.47GiB
+--- 2026-06-04 16:57:37 CST ---
+ 00:57:37 up 23:17,  6 users,  load average: 8.43, 10.15, 11.35
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.3Gi        17Gi       234Mi       2.0Gi        18Gi
+container=odoo-staging status=Up 6 minutes (healthy)
+container=odoo-staging-db status=Up 19 minutes
+container=odoo-production status=Up 50 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=0.501160
+health host=stagingfc.amunet.com.mx status=200 time=0.689552
+stats container=odoo-production cpu=204.80% mem=767.7MiB / 23.47GiB
+stats container=odoo-staging cpu=101.13% mem=1.003GiB / 23.47GiB
+stats container=odoo-production-db cpu=203.91% mem=191.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=37.39% mem=155.7MiB / 23.47GiB
+--- 2026-06-04 16:58:46 CST ---
+ 00:58:46 up 23:18,  6 users,  load average: 8.38, 9.85, 11.17
+               total        used        free      shared  buff/cache   available
+Mem:            23Gi       4.4Gi        17Gi       234Mi       2.0Gi        18Gi
+container=odoo-staging status=Up 7 minutes (healthy)
+container=odoo-staging-db status=Up 20 minutes
+container=odoo-production status=Up 51 minutes (healthy)
+container=odoo-production-db status=Up 2 hours
+container=authelia status=Up 23 hours (healthy)
+container=admin-tools status=Up 23 hours
+health host=fc.amunet.com.mx status=200 time=1.449910
+health host=stagingfc.amunet.com.mx status=200 time=1.092698
+stats container=odoo-production cpu=51.92% mem=777.1MiB / 23.47GiB
+stats container=odoo-staging cpu=178.60% mem=1.049GiB / 23.47GiB
+stats container=odoo-production-db cpu=4.82% mem=191.5MiB / 23.47GiB
+stats container=odoo-staging-db cpu=48.90% mem=158MiB / 23.47GiB
