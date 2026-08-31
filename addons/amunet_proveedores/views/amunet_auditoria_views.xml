@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════════════════════════════════════════════
+         VISTA LISTA — Informes de Auditoría de Proveedores
+    ════════════════════════════════════════════════════ -->
+    <record id="view_auditoria_proveedor_list" model="ir.ui.view">
+        <field name="name">amunet.auditoria.proveedor.list</field>
+        <field name="model">amunet.auditoria.proveedor</field>
+        <field name="arch" type="xml">
+            <list string="Informes de Auditoría"
+                  decoration-success="state == 'aprobado'"
+                  decoration-muted="state == 'cerrado'"
+                  decoration-warning="state == 'en_revision'">
+                <field name="name"/>
+                <field name="proveedor_id"/>
+                <field name="tipo"/>
+                <field name="fecha_auditoria"/>
+                <field name="calificacion_final"/>
+                <field name="total_hallazgos"/>
+                <field name="ncm_count" string="NCM"/>
+                <field name="ncme_count" string="NCMe"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════════════
+         VISTA BÚSQUEDA
+    ════════════════════════════════════════════════════ -->
+    <record id="view_auditoria_proveedor_search" model="ir.ui.view">
+        <field name="name">amunet.auditoria.proveedor.search</field>
+        <field name="model">amunet.auditoria.proveedor</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="No. Auditoría"/>
+                <field name="proveedor_id"/>
+                <filter name="f_borrador" string="Borrador" domain="[('state','=','borrador')]"/>
+                <filter name="f_revision" string="En revisión" domain="[('state','=','en_revision')]"/>
+                <filter name="f_aprobado" string="Aprobado" domain="[('state','=','aprobado')]"/>
+                <filter name="f_cerrado" string="Cerrado" domain="[('state','=','cerrado')]"/>
+                <filter name="f_interna" string="Interna" domain="[('tipo','=','interna')]"/>
+                <filter name="f_externa" string="Externa" domain="[('tipo','=','externa')]"/>
+                <filter name="f_ncm" string="Con NCM" domain="[('ncm_count','>',0)]"/>
+                <filter name="g_proveedor" string="Por proveedor" context="{'group_by':'proveedor_id'}"/>
+                <filter name="g_state" string="Por estado" context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════════════
+         VISTA FORMULARIO
+    ════════════════════════════════════════════════════ -->
+    <record id="view_auditoria_proveedor_form" model="ir.ui.view">
+        <field name="name">amunet.auditoria.proveedor.form</field>
+        <field name="model">amunet.auditoria.proveedor</field>
+        <field name="arch" type="xml">
+            <form string="Informe de Auditoría de Proveedor">
+                <header>
+                    <button name="action_enviar_revision" string="Enviar a revisión"
+                            type="object" class="btn-primary"
+                            invisible="state != 'borrador'"/>
+                    <button name="action_aprobar" string="Aprobar"
+                            type="object" class="btn-success"
+                            invisible="state != 'en_revision'"/>
+                    <button name="action_cerrar" string="Cerrar auditoría"
+                            type="object"
+                            invisible="state != 'aprobado'"/>
+                    <button name="action_volver_borrador" string="Volver a borrador"
+                            type="object"
+                            invisible="state not in ('en_revision',)"/>
+                    <button name="action_report_auditoria_proveedor" string="Imprimir informe"
+                            type="object" class="btn-secondary"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,en_revision,aprobado,cerrado"/>
+                </header>
+
+                <sheet>
+                    <!-- Título -->
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h3>
+                            <field name="proveedor_id" placeholder="Selecciona el proveedor..."/>
+                        </h3>
+                    </div>
+
+                    <!-- Encabezado rápido -->
+                    <group>
+                        <group>
+                            <field name="tipo"/>
+                            <field name="fecha_auditoria"/>
+                            <field name="norma"/>
+                        </group>
+                        <group>
+                            <field name="fecha_emision"/>
+                            <field name="calificacion_final" widget="badge"
+                                   decoration-success="calificacion_final == 'aprobado'"
+                                   decoration-warning="calificacion_final == 'condiciones'"
+                                   decoration-danger="calificacion_final == 'no_aprobado'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+
+                        <!-- ─── TAB 1: Información General ─── -->
+                        <page string="1. Información General" name="info_general">
+                            <group string="Auditores">
+                                <field name="auditor_lider_id"/>
+                                <field name="auditores_internos_ids" widget="many2many_tags"/>
+                            </group>
+                            <group string="Representante del proveedor">
+                                <field name="nombre_atiende"/>
+                                <field name="cargo_representante"/>
+                                <field name="departamento_auditado"/>
+                            </group>
+                        </page>
+
+                        <!-- ─── TAB 2: Objetivo, Alcance y Criterios ─── -->
+                        <page string="2–4. Objetivo, Alcance y Criterios" name="obj_alcance">
+                            <group string="2. Objetivo de la auditoría">
+                                <field name="objetivo" nolabel="1"
+                                       placeholder="Describa el propósito principal de la auditoría..."/>
+                            </group>
+                            <separator string="3. Alcance de la auditoría"/>
+                            <group>
+                                <field name="alcance" nolabel="1"
+                                       placeholder="Procesos, áreas, productos, servicios, período de tiempo..."/>
+                            </group>
+                            <separator string="4. Criterios de la auditoría"/>
+                            <group>
+                                <group>
+                                    <field name="criterio_iso9001"/>
+                                    <field name="criterio_iso14001"/>
+                                    <field name="criterio_iso45001"/>
+                                    <field name="criterio_contractual"/>
+                                </group>
+                                <group>
+                                    <field name="criterio_legislacion"
+                                           placeholder="Especificar legislación..."/>
+                                    <field name="criterio_politicas"
+                                           placeholder="Especificar política..."/>
+                                    <field name="criterio_otros"
+                                           placeholder="Especificar otros..."/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ─── TAB 3: Metodología ─── -->
+                        <page string="5. Metodología" name="metodologia">
+                            <group>
+                                <field name="met_documentacion"
+                                       placeholder="Documentos, registros y evidencias revisados..."/>
+                                <field name="met_entrevistas"
+                                       placeholder="Personas entrevistadas y sus roles..."/>
+                                <field name="met_areas"
+                                       placeholder="Áreas y procesos físicamente inspeccionados..."/>
+                                <field name="met_muestras"
+                                       placeholder="Muestras o elementos revisados..."/>
+                                <field name="met_herramientas"
+                                       placeholder="Listas de verificación, software, instrumentos..."/>
+                            </group>
+                        </page>
+
+                        <!-- ─── TAB 4: Hallazgos ─── -->
+                        <page string="6–8. Hallazgos" name="hallazgos">
+                            <!-- Resumen ejecutivo -->
+                            <div class="row" style="margin-bottom:16px;">
+                                <div class="col-2 text-center border rounded p-2 mx-1">
+                                    <div class="text-muted small">Total</div>
+                                    <div style="font-size:1.8em;font-weight:bold;">
+                                        <field name="total_hallazgos" readonly="1"/>
+                                    </div>
+                                </div>
+                                <div class="col-2 text-center border rounded p-2 mx-1 bg-danger-subtle">
+                                    <div class="text-muted small">NCM</div>
+                                    <div style="font-size:1.8em;font-weight:bold;">
+                                        <field name="ncm_count" readonly="1"/>
+                                    </div>
+                                </div>
+                                <div class="col-2 text-center border rounded p-2 mx-1 bg-warning-subtle">
+                                    <div class="text-muted small">NCMe</div>
+                                    <div style="font-size:1.8em;font-weight:bold;">
+                                        <field name="ncme_count" readonly="1"/>
+                                    </div>
+                                </div>
+                                <div class="col-2 text-center border rounded p-2 mx-1 bg-info-subtle">
+                                    <div class="text-muted small">OP</div>
+                                    <div style="font-size:1.8em;font-weight:bold;">
+                                        <field name="op_count" readonly="1"/>
+                                    </div>
+                                </div>
+                                <div class="col-2 text-center border rounded p-2 mx-1 bg-primary-subtle">
+                                    <div class="text-muted small">OM</div>
+                                    <div style="font-size:1.8em;font-weight:bold;">
+                                        <field name="om_count" readonly="1"/>
+                                    </div>
+                                </div>
+                                <div class="col-2 text-center border rounded p-2 mx-1 bg-success-subtle">
+                                    <div class="text-muted small">Fortalezas</div>
+                                    <div style="font-size:1.8em;font-weight:bold;">
+                                        <field name="fortalezas_count" readonly="1"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <group>
+                                <field name="calificacion_final"/>
+                                <field name="fortalezas_resumen"
+                                       placeholder="Resumen breve de las fortalezas identificadas..."/>
+                            </group>
+                            <separator string="7. Observaciones generales"/>
+                            <group>
+                                <field name="observaciones_generales" nolabel="1"
+                                       placeholder="Aspectos relevantes que no son hallazgos formales..."/>
+                            </group>
+                            <separator string="8. Detalle de hallazgos"/>
+                            <field name="hallazgo_ids" nolabel="1">
+                                <list editable="bottom"
+                                      decoration-danger="tipo == 'ncm'"
+                                      decoration-warning="tipo == 'ncme'"
+                                      decoration-success="tipo == 'fortaleza'"
+                                      decoration-info="tipo == 'om'">
+                                    <field name="tipo" width="140"/>
+                                    <field name="proceso_area"/>
+                                    <field name="requisito_incumplido"
+                                           column_invisible="parent.ncm_count == 0 and parent.ncme_count == 0"/>
+                                    <field name="evidencia"/>
+                                    <field name="impacto"
+                                           column_invisible="parent.ncm_count == 0"/>
+                                    <field name="plazo_dias"
+                                           column_invisible="parent.ncm_count == 0 and parent.ncme_count == 0"/>
+                                    <field name="descripcion" string="Descripción / Fortaleza"
+                                           column_invisible="parent.om_count == 0 and parent.fortalezas_count == 0 and parent.op_count == 0"/>
+                                    <field name="beneficio_esperado"
+                                           column_invisible="parent.om_count == 0"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ─── TAB 5: Análisis por Proceso ─── -->
+                        <page string="9. Análisis por Proceso" name="analisis">
+                            <field name="analisis_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="proceso_area"/>
+                                    <field name="cumplimiento" widget="percentage"/>
+                                    <field name="observaciones"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ─── TAB 6: Conclusiones ─── -->
+                        <page string="10. Conclusiones" name="conclusiones">
+                            <group string="Conclusión general">
+                                <field name="conclusion_general" nolabel="1"
+                                       placeholder="Juicio global sobre el desempeño del proveedor..."/>
+                            </group>
+                            <separator string="Recomendaciones"/>
+                            <group>
+                                <field name="recomendaciones" nolabel="1"
+                                       placeholder="1. ...\n2. ...\n3. ..."/>
+                            </group>
+                            <separator string="Riesgos identificados"/>
+                            <group>
+                                <field name="riesgos_identificados" nolabel="1"
+                                       placeholder="1. ...\n2. ..."/>
+                            </group>
+                        </page>
+
+                        <!-- ─── TAB 7: Plan de Acción Correctiva ─── -->
+                        <page string="11. Plan de Acción" name="plan_accion">
+                            <field name="accion_ids" nolabel="1">
+                                <list editable="bottom"
+                                      decoration-success="estado == 'completado'"
+                                      decoration-warning="estado == 'en_proceso'"
+                                      decoration-muted="estado == 'pendiente'">
+                                    <field name="hallazgo_ref" string="N° Hallazgo" width="100"/>
+                                    <field name="accion_propuesta"/>
+                                    <field name="responsable"/>
+                                    <field name="fecha_inicio"/>
+                                    <field name="fecha_fin"/>
+                                    <field name="estado" widget="badge"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ─── TAB 8: Seguimiento, Firmas y Cierre ─── -->
+                        <page string="12–14. Seguimiento y Cierre" name="seguimiento_cierre">
+                            <group string="12. Seguimiento">
+                                <group string="Seguimiento 1">
+                                    <field name="fecha_seguimiento_1"/>
+                                    <field name="resultado_seguimiento_1"
+                                           placeholder="Resultados del primer seguimiento..."/>
+                                </group>
+                                <group string="Seguimiento 2">
+                                    <field name="fecha_seguimiento_2"/>
+                                    <field name="resultado_seguimiento_2"
+                                           placeholder="Resultados del segundo seguimiento..."/>
+                                </group>
+                            </group>
+                            <group string="Cierre">
+                                <field name="fecha_cierre"/>
+                                <field name="auditoria_cerrada"/>
+                            </group>
+
+                            <separator string="13. Firmas"/>
+                            <group>
+                                <group string="Auditor Líder">
+                                    <field name="firma_nombre_lider" string="Nombre"/>
+                                    <field name="firma_fecha_lider" string="Fecha"/>
+                                </group>
+                                <group string="Auditor(es) Interno(s)">
+                                    <field name="firma_nombre_auditores" string="Nombre"/>
+                                    <field name="firma_fecha_auditores" string="Fecha"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Representante del proveedor">
+                                    <field name="firma_nombre_representante" string="Nombre"/>
+                                    <field name="firma_fecha_representante" string="Fecha"/>
+                                </group>
+                                <group string="Gerente de Calidad">
+                                    <field name="firma_nombre_gerente" string="Nombre"/>
+                                    <field name="firma_fecha_gerente" string="Fecha"/>
+                                </group>
+                            </group>
+
+                            <separator string="14. Anexos"/>
+                            <group>
+                                <group>
+                                    <field name="anexo_checklist"/>
+                                    <field name="anexo_fotos"/>
+                                    <field name="anexo_entrevistas"/>
+                                </group>
+                                <group>
+                                    <field name="anexo_documentacion"/>
+                                    <field name="anexo_otros"
+                                           placeholder="Especificar otros anexos..."/>
+                                </group>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════════════
+         ACCIÓN Y MENÚ
+    ════════════════════════════════════════════════════ -->
+    <record id="action_auditoria_proveedor" model="ir.actions.act_window">
+        <field name="name">Informes de Auditoría</field>
+        <field name="res_model">amunet.auditoria.proveedor</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_auditoria_proveedor_search"/>
+        <field name="context">{'search_default_f_aprobado': 0}</field>
+    </record>
+
+    <!-- Informes de Auditoría dentro de "Auditoría Técnicas de Proveedores" (menú 757).
+         La reestructuración del menú padre y sus hermanos se hizo vía SQL en staging;
+         para producción desarrollo debe aplicar el mismo cambio. -->
+    <menuitem id="menu_proveedores_auditorias"
+              name="Informes de Auditoría"
+              parent="amunet_documentos.menu_amunet_gestion"
+              action="action_auditoria_proveedor"
+              sequence="52"/>
+
+</odoo>

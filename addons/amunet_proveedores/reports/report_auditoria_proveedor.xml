@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Acción de reporte ── -->
+    <record id="action_report_auditoria_proveedor" model="ir.actions.report">
+        <field name="name">Informe de Auditoría de Proveedor</field>
+        <field name="model">amunet.auditoria.proveedor</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_proveedores.report_auditoria_proveedor_doc</field>
+        <field name="report_file">amunet_proveedores.report_auditoria_proveedor_doc</field>
+        <field name="binding_model_id" ref="model_amunet_auditoria_proveedor"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <!-- ── Plantilla QWeb ── -->
+    <template id="report_auditoria_proveedor_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family: Arial, sans-serif; font-size: 11pt; color: #222;">
+
+                        <!-- ══════════════════════════════════
+                             ENCABEZADO DEL DOCUMENTO
+                        ══════════════════════════════════ -->
+                        <div style="text-align:center; margin-bottom:18px;">
+                            <h2 style="margin:0; color:#003366; text-transform:uppercase; letter-spacing:1px;">
+                                INFORME DE AUDITORÍA DE PROVEEDORES
+                            </h2>
+                            <div style="color:#666; font-size:9pt; margin-top:4px;">
+                                Código: F-DC-005-019 &#160;|&#160; Versión: 2.0 &#160;|&#160;
+                                Fecha de actualización: Agosto 2026
+                            </div>
+                        </div>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 1 — INFORMACIÓN GENERAL
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 0 0;">
+                            1. INFORMACIÓN GENERAL
+                        </h4>
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                            <tr>
+                                <td style="width:35%; background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">No. Auditoría:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.name"/></td>
+                                <td style="width:35%; background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Fecha de emisión:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.fecha_emision"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Norma por aplicar:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;" colspan="3"><t t-esc="o.norma or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Tipo de auditoría:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;" colspan="3">
+                                    <t t-esc="dict(o._fields['tipo'].selection).get(o.tipo, '')"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Empresa por auditar:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;" colspan="3"><t t-esc="o.proveedor_id.name"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Fecha de la auditoría:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.fecha_auditoria"/></td>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Departamento / Área auditada:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.departamento_auditado or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Auditor Líder:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.auditor_lider_id.name or ''"/></td>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Auditor(es) Interno(s):</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;">
+                                    <t t-esc="', '.join(o.auditores_internos_ids.mapped('name'))"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Nombre de quien atiende:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.nombre_atiende or ''"/></td>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Cargo del representante:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.cargo_representante or ''"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 2 — OBJETIVO
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 4px 0;">
+                            2. OBJETIVO DE LA AUDITORÍA
+                        </h4>
+                        <div style="border:1px solid #b0b8c8; padding:8px; min-height:40px; margin-bottom:14px; white-space:pre-wrap;">
+                            <t t-esc="o.objetivo or ''"/>
+                        </div>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 3 — ALCANCE
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 4px 0;">
+                            3. ALCANCE DE LA AUDITORÍA
+                        </h4>
+                        <div style="border:1px solid #b0b8c8; padding:8px; min-height:40px; margin-bottom:14px; white-space:pre-wrap;">
+                            <t t-esc="o.alcance or ''"/>
+                        </div>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 4 — CRITERIOS
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 4px 0;">
+                            4. CRITERIOS DE LA AUDITORÍA
+                        </h4>
+                        <div style="border:1px solid #b0b8c8; padding:8px; margin-bottom:14px;">
+                            <div><t t-esc="'☑' if o.criterio_iso9001 else '☐'"/> Norma ISO 9001:2015 (Sistema de Gestión de Calidad)</div>
+                            <div><t t-esc="'☑' if o.criterio_iso14001 else '☐'"/> Norma ISO 14001:2015 (Sistema de Gestión Ambiental)</div>
+                            <div><t t-esc="'☑' if o.criterio_iso45001 else '☐'"/> Norma ISO 45001:2018 (Seguridad y Salud en el Trabajo)</div>
+                            <div><t t-esc="'☑' if o.criterio_contractual else '☐'"/> Requisitos contractuales del cliente</div>
+                            <div>
+                                <t t-esc="'☑' if o.criterio_legislacion else '☐'"/>
+                                Legislación aplicable: <t t-esc="o.criterio_legislacion or ''"/>
+                            </div>
+                            <div>
+                                <t t-esc="'☑' if o.criterio_politicas else '☐'"/>
+                                Políticas internas: <t t-esc="o.criterio_politicas or ''"/>
+                            </div>
+                            <div>
+                                <t t-esc="'☑' if o.criterio_otros else '☐'"/>
+                                Otros: <t t-esc="o.criterio_otros or ''"/>
+                            </div>
+                        </div>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 5 — METODOLOGÍA
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 0 0;">
+                            5. METODOLOGÍA APLICADA
+                        </h4>
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                            <tr style="background:#e8edf4;">
+                                <th style="padding:4px 8px; border:1px solid #b0b8c8; width:30%;">Actividad</th>
+                                <th style="padding:4px 8px; border:1px solid #b0b8c8;">Descripción</th>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Documentación revisada</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="o.met_documentacion or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Entrevistas realizadas</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="o.met_entrevistas or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Áreas / Procesos inspeccionados</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="o.met_areas or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Muestras tomadas</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="o.met_muestras or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Herramientas utilizadas</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="o.met_herramientas or ''"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 6 — RESUMEN EJECUTIVO
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 0 0;">
+                            6. RESUMEN EJECUTIVO
+                        </h4>
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                            <tr style="background:#e8edf4;">
+                                <th style="padding:4px 8px; border:1px solid #b0b8c8;">Indicador</th>
+                                <th style="padding:4px 8px; border:1px solid #b0b8c8; text-align:center;">Resultado</th>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;">Total de hallazgos</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; text-align:center; font-weight:bold;"><t t-esc="o.total_hallazgos"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;">No Conformidades Mayores (NCM)</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; text-align:center; font-weight:bold; color:#c00;"><t t-esc="o.ncm_count"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;">No Conformidades Menores (NCMe)</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; text-align:center; font-weight:bold; color:#b87c00;"><t t-esc="o.ncme_count"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;">Observaciones (OP)</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; text-align:center;"><t t-esc="o.op_count"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;">Oportunidades de Mejora (OM)</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; text-align:center;"><t t-esc="o.om_count"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;">Fortalezas identificadas</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="o.fortalezas_resumen or str(o.fortalezas_count)"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Calificación final</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; text-align:center; font-weight:bold;">
+                                    <t t-esc="dict(o._fields['calificacion_final'].selection).get(o.calificacion_final, 'Pendiente')"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 7 — OBSERVACIONES GENERALES
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 4px 0;">
+                            7. OBSERVACIONES GENERALES
+                        </h4>
+                        <div style="border:1px solid #b0b8c8; padding:8px; min-height:40px; margin-bottom:14px; white-space:pre-wrap;">
+                            <t t-esc="o.observaciones_generales or ''"/>
+                        </div>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 8 — HALLAZGOS
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 6px 0;">
+                            8. DESCRIPCIÓN DE HALLAZGOS
+                        </h4>
+
+                        <!-- 8.1 NCM -->
+                        <t t-set="ncms" t-value="o.hallazgo_ids.filtered(lambda h: h.tipo == 'ncm')"/>
+                        <div style="margin-bottom:10px;">
+                            <div style="background:#c8232c; color:#fff; padding:3px 8px; font-weight:bold; font-size:10pt;">
+                                8.1 No Conformidades Mayores (NCM)
+                            </div>
+                            <t t-if="ncms">
+                                <table style="width:100%; border-collapse:collapse;">
+                                    <tr style="background:#f5d5d5;">
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:5%;">N°</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:18%;">Proceso / Área</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:22%;">Requisito incumplido</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc;">Evidencia</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:15%;">Impacto</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:8%;">Plazo (días)</th>
+                                    </tr>
+                                    <t t-foreach="ncms" t-as="h">
+                                        <tr>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; text-align:center;"><t t-esc="h_index + 1"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc;"><t t-esc="h.proceso_area or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc;"><t t-esc="h.requisito_incumplido or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; white-space:pre-wrap;"><t t-esc="h.evidencia or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; white-space:pre-wrap;"><t t-esc="h.impacto or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; text-align:center;"><t t-esc="h.plazo_dias or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div style="border:1px solid #ccc; padding:6px; color:#888; font-style:italic;">Sin hallazgos de este tipo.</div>
+                            </t>
+                        </div>
+
+                        <!-- 8.2 NCMe -->
+                        <t t-set="ncmes" t-value="o.hallazgo_ids.filtered(lambda h: h.tipo == 'ncme')"/>
+                        <div style="margin-bottom:10px;">
+                            <div style="background:#e6a800; color:#fff; padding:3px 8px; font-weight:bold; font-size:10pt;">
+                                8.2 No Conformidades Menores (NCMe)
+                            </div>
+                            <t t-if="ncmes">
+                                <table style="width:100%; border-collapse:collapse;">
+                                    <tr style="background:#fff8d5;">
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:5%;">N°</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:20%;">Proceso / Área</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:25%;">Requisito incumplido</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc;">Evidencia</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:8%;">Plazo (días)</th>
+                                    </tr>
+                                    <t t-foreach="ncmes" t-as="h">
+                                        <tr>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; text-align:center;"><t t-esc="h_index + 1"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc;"><t t-esc="h.proceso_area or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc;"><t t-esc="h.requisito_incumplido or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; white-space:pre-wrap;"><t t-esc="h.evidencia or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; text-align:center;"><t t-esc="h.plazo_dias or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div style="border:1px solid #ccc; padding:6px; color:#888; font-style:italic;">Sin hallazgos de este tipo.</div>
+                            </t>
+                        </div>
+
+                        <!-- 8.3 OM -->
+                        <t t-set="oms" t-value="o.hallazgo_ids.filtered(lambda h: h.tipo == 'om')"/>
+                        <div style="margin-bottom:10px;">
+                            <div style="background:#1a6bbf; color:#fff; padding:3px 8px; font-weight:bold; font-size:10pt;">
+                                8.3 Oportunidades de Mejora (OM)
+                            </div>
+                            <t t-if="oms">
+                                <table style="width:100%; border-collapse:collapse;">
+                                    <tr style="background:#ddeeff;">
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:5%;">N°</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:20%;">Proceso / Área</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc;">Descripción de la mejora</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:25%;">Beneficio esperado</th>
+                                    </tr>
+                                    <t t-foreach="oms" t-as="h">
+                                        <tr>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; text-align:center;"><t t-esc="h_index + 1"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc;"><t t-esc="h.proceso_area or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; white-space:pre-wrap;"><t t-esc="h.descripcion or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; white-space:pre-wrap;"><t t-esc="h.beneficio_esperado or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div style="border:1px solid #ccc; padding:6px; color:#888; font-style:italic;">Sin hallazgos de este tipo.</div>
+                            </t>
+                        </div>
+
+                        <!-- 8.4 Fortalezas -->
+                        <t t-set="fortalezas" t-value="o.hallazgo_ids.filtered(lambda h: h.tipo == 'fortaleza')"/>
+                        <div style="margin-bottom:14px;">
+                            <div style="background:#1a7a3b; color:#fff; padding:3px 8px; font-weight:bold; font-size:10pt;">
+                                8.4 Fortalezas Identificadas
+                            </div>
+                            <t t-if="fortalezas">
+                                <table style="width:100%; border-collapse:collapse;">
+                                    <tr style="background:#d5f0de;">
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:5%;">N°</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc; width:30%;">Proceso / Área</th>
+                                        <th style="padding:3px 6px; border:1px solid #ccc;">Fortaleza encontrada</th>
+                                    </tr>
+                                    <t t-foreach="fortalezas" t-as="h">
+                                        <tr>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; text-align:center;"><t t-esc="h_index + 1"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc;"><t t-esc="h.proceso_area or ''"/></td>
+                                            <td style="padding:3px 6px; border:1px solid #ccc; white-space:pre-wrap;"><t t-esc="h.descripcion or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div style="border:1px solid #ccc; padding:6px; color:#888; font-style:italic;">Sin fortalezas registradas.</div>
+                            </t>
+                        </div>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 9 — ANÁLISIS POR PROCESO
+                        ══════════════════════════════════ -->
+                        <t t-if="o.analisis_ids">
+                            <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 0 0;">
+                                9. ANÁLISIS POR PROCESO / ÁREA
+                            </h4>
+                            <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                                <tr style="background:#e8edf4;">
+                                    <th style="padding:4px 8px; border:1px solid #b0b8c8; width:35%;">Proceso / Área</th>
+                                    <th style="padding:4px 8px; border:1px solid #b0b8c8; width:15%; text-align:center;">Cumplimiento (%)</th>
+                                    <th style="padding:4px 8px; border:1px solid #b0b8c8;">Observaciones</th>
+                                </tr>
+                                <t t-foreach="o.analisis_ids" t-as="a">
+                                    <tr>
+                                        <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="a.proceso_area or ''"/></td>
+                                        <td style="padding:4px 8px; border:1px solid #b0b8c8; text-align:center;"><t t-esc="'%.1f' % a.cumplimiento"/>%</td>
+                                        <td style="padding:4px 8px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="a.observaciones or ''"/></td>
+                                    </tr>
+                                </t>
+                            </table>
+                        </t>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 10 — CONCLUSIONES
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 4px 0;">
+                            10. CONCLUSIONES DE LA AUDITORÍA
+                        </h4>
+                        <div style="margin-bottom:8px;">
+                            <strong>Conclusión general:</strong>
+                            <div style="border:1px solid #b0b8c8; padding:8px; min-height:35px; margin-top:4px; white-space:pre-wrap;">
+                                <t t-esc="o.conclusion_general or ''"/>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:8px;">
+                            <strong>Recomendaciones:</strong>
+                            <div style="border:1px solid #b0b8c8; padding:8px; min-height:35px; margin-top:4px; white-space:pre-wrap;">
+                                <t t-esc="o.recomendaciones or ''"/>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <strong>Riesgos identificados:</strong>
+                            <div style="border:1px solid #b0b8c8; padding:8px; min-height:35px; margin-top:4px; white-space:pre-wrap;">
+                                <t t-esc="o.riesgos_identificados or ''"/>
+                            </div>
+                        </div>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 11 — PLAN DE ACCIÓN
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 0 0;">
+                            11. PLAN DE ACCIÓN CORRECTIVA
+                        </h4>
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                            <tr style="background:#e8edf4;">
+                                <th style="padding:3px 6px; border:1px solid #b0b8c8; width:8%;">N° Hallazgo</th>
+                                <th style="padding:3px 6px; border:1px solid #b0b8c8;">Acción Correctiva Propuesta</th>
+                                <th style="padding:3px 6px; border:1px solid #b0b8c8; width:15%;">Responsable</th>
+                                <th style="padding:3px 6px; border:1px solid #b0b8c8; width:10%;">Fecha inicio</th>
+                                <th style="padding:3px 6px; border:1px solid #b0b8c8; width:10%;">Fecha fin</th>
+                                <th style="padding:3px 6px; border:1px solid #b0b8c8; width:12%;">Estado</th>
+                            </tr>
+                            <t t-if="o.accion_ids">
+                                <t t-foreach="o.accion_ids" t-as="ac">
+                                    <tr>
+                                        <td style="padding:3px 6px; border:1px solid #b0b8c8; text-align:center;"><t t-esc="ac.hallazgo_ref or ''"/></td>
+                                        <td style="padding:3px 6px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="ac.accion_propuesta or ''"/></td>
+                                        <td style="padding:3px 6px; border:1px solid #b0b8c8;"><t t-esc="ac.responsable or ''"/></td>
+                                        <td style="padding:3px 6px; border:1px solid #b0b8c8;"><t t-esc="ac.fecha_inicio or ''"/></td>
+                                        <td style="padding:3px 6px; border:1px solid #b0b8c8;"><t t-esc="ac.fecha_fin or ''"/></td>
+                                        <td style="padding:3px 6px; border:1px solid #b0b8c8;">
+                                            <t t-esc="dict(ac._fields['estado'].selection).get(ac.estado, '')"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
+                            <t t-else="">
+                                <tr>
+                                    <td colspan="6" style="padding:6px; border:1px solid #b0b8c8; color:#888; font-style:italic; text-align:center;">Sin acciones correctivas registradas.</td>
+                                </tr>
+                            </t>
+                        </table>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 12 — SEGUIMIENTO Y CIERRE
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 0 0;">
+                            12. SEGUIMIENTO Y CIERRE
+                        </h4>
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold; width:25%;">Fecha de seguimiento 1:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; width:25%;"><t t-esc="o.fecha_seguimiento_1 or ''"/></td>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold; width:15%;">Resultados:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="o.resultado_seguimiento_1 or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Fecha de seguimiento 2:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.fecha_seguimiento_2 or ''"/></td>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Resultados:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; white-space:pre-wrap;"><t t-esc="o.resultado_seguimiento_2 or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Fecha de cierre:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.fecha_cierre or ''"/></td>
+                                <td style="background:#e8edf4; padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Auditoría cerrada:</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="'Sí' if o.auditoria_cerrada else 'No'"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 13 — FIRMAS
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 0 0;">
+                            13. APROBACIONES Y FIRMAS
+                        </h4>
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                            <tr style="background:#e8edf4;">
+                                <th style="padding:4px 8px; border:1px solid #b0b8c8; width:25%;">Rol</th>
+                                <th style="padding:4px 8px; border:1px solid #b0b8c8; width:30%;">Nombre</th>
+                                <th style="padding:4px 8px; border:1px solid #b0b8c8;">Firma</th>
+                                <th style="padding:4px 8px; border:1px solid #b0b8c8; width:15%;">Fecha</th>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Auditor Líder</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.firma_nombre_lider or ''"/></td>
+                                <td style="padding:14px 8px; border:1px solid #b0b8c8;"></td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.firma_fecha_lider or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Auditor(es) Interno(s)</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.firma_nombre_auditores or ''"/></td>
+                                <td style="padding:14px 8px; border:1px solid #b0b8c8;"></td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.firma_fecha_auditores or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Representante del proveedor</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.firma_nombre_representante or ''"/></td>
+                                <td style="padding:14px 8px; border:1px solid #b0b8c8;"></td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.firma_fecha_representante or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8; font-weight:bold;">Gerente de Calidad</td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.firma_nombre_gerente or ''"/></td>
+                                <td style="padding:14px 8px; border:1px solid #b0b8c8;"></td>
+                                <td style="padding:4px 8px; border:1px solid #b0b8c8;"><t t-esc="o.firma_fecha_gerente or ''"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- ══════════════════════════════════
+                             SECCIÓN 14 — ANEXOS
+                        ══════════════════════════════════ -->
+                        <h4 style="background:#003366; color:#fff; padding:4px 8px; margin:0 0 4px 0;">
+                            14. ANEXOS
+                        </h4>
+                        <div style="border:1px solid #b0b8c8; padding:8px; margin-bottom:14px;">
+                            <div><t t-esc="'☑' if o.anexo_checklist else '☐'"/> Lista de verificación (checklist) utilizada</div>
+                            <div><t t-esc="'☑' if o.anexo_fotos else '☐'"/> Evidencias fotográficas</div>
+                            <div><t t-esc="'☑' if o.anexo_entrevistas else '☐'"/> Registros de entrevistas</div>
+                            <div><t t-esc="'☑' if o.anexo_documentacion else '☐'"/> Documentación de respaldo</div>
+                            <t t-if="o.anexo_otros">
+                                <div>☑ Otros: <t t-esc="o.anexo_otros"/></div>
+                            </t>
+                        </div>
+
+                        <!-- Nota final -->
+                        <div style="border:1px solid #b0b8c8; padding:8px; background:#f8f9fa; font-size:9pt; color:#555; margin-top:8px;">
+                            <strong>Nota:</strong> Este informe debe ser custodiado y archivado según la política de gestión documental.
+                            Su distribución es confidencial y está restringida al personal autorizado.
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>
