@@ -803,4 +803,9 @@ class AmunetCCGeneral(models.Model):
             if r.state != 'borrador':
                 raise UserError(_('Solo puedes eliminar un registro en borrador.'))
         self.unlink()
-        return {'type': 'ir.actions.client', 'tag': 'history_back'}
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'amunet.cc.general',
+            'view_mode': 'list,form',
+            'target': 'current',
+        }
