@@ -356,13 +356,19 @@
         <field name="context">{'search_default_f_aprobado': 0}</field>
     </record>
 
-    <!-- Informes de Auditoría dentro de "Auditoría Técnicas de Proveedores" (menú 757).
-         La reestructuración del menú padre y sus hermanos se hizo vía SQL en staging;
-         para producción desarrollo debe aplicar el mismo cambio. -->
+    <!-- Mantener activo y reubicado el menú "Auditoría Técnicas de Proveedores" (ID 757)
+         bajo el módulo Proveedores (786). Su módulo original no tiene código en disco;
+         lo gestionamos aquí para que persista en cada update. -->
+    <record id="amunet_programa_auditoria_proveedores.menu_prog_proveedor" model="ir.ui.menu">
+        <field name="active" eval="True"/>
+        <field name="parent_id" ref="menu_proveedores_root"/>
+        <field name="sequence">20</field>
+    </record>
+
     <menuitem id="menu_proveedores_auditorias"
               name="Informes de Auditoría"
-              parent="amunet_documentos.menu_amunet_gestion"
+              parent="amunet_programa_auditoria_proveedores.menu_prog_proveedor"
               action="action_auditoria_proveedor"
-              sequence="52"/>
+              sequence="50"/>
 
 </odoo>
