@@ -233,6 +233,33 @@ print(f"\nSpecs VAMA-078 desactivadas:    {eliminadas}")
 print(f"Specs actualizadas (activas):   {actualizadas}")
 print(f"Specs desactivadas:             {desactivadas}")
 
+# ── Descripción "Control positivo de ..." en cada producto STCPL ─────────────
+print("\n── Configurando descripción en productos STCPL ──")
+descripciones = {
+    'STCPL01': 'Control positivo de SARS-CoV-2',
+    'STCPL02': 'Control positivo de Influenza A+B',
+    'STCPL03': 'Control positivo de Tuberculosis',
+    'STCPL04': 'Control positivo de VPH NET',
+    'STCPL05': 'Control positivo de K-RAS',
+    'STCPL06': 'Control positivo de P/anticuerpos VIH tipo 1',
+    'STCPL07': 'Control positivo de P/anticuerpos VIH tipo 2',
+    'STCPL08': 'Control positivo de Tuberculosis TB',
+    'STCPL09': 'Control positivo de Tuberculosis RIF/INH',
+    'STCPL10': 'Control positivo de Isolister-ADN',
+    'STCPL11': 'Control positivo de AUREUS-ADN',
+    'STCPL12': 'Control positivo de CAMPY-ADN',
+    'STCPL13': 'Control positivo de ENTERONET-ADN',
+    'STCPL14': 'Control positivo de SALMONET-ADN',
+    'STCPL15': 'Control positivo de EcoHem-ADN',
+    'STCPL16': 'Control positivo de VIHLAMP-ADN',
+}
+Product = env['product.product']
+for codigo, desc in descripciones.items():
+    prod = Product.search([('default_code', '=', codigo)], limit=1)
+    if prod:
+        prod.product_tmpl_id.write({'description': desc})
+        print(f"  {codigo}: {desc}")
+
 # ── Configurar anexo en análisis ABIERTOS de STCPL ────────────────────────────
 print("\n── Configurando ANEXO CONTROL POSITIVO en análisis abiertos de STCPL ──")
 checks_stcpl = env['amunet.quality.check'].search([
@@ -253,6 +280,13 @@ anexo_config = {
 }
 checks_stcpl.write(anexo_config)
 print(f"  Análisis actualizados con anexo: {len(checks_stcpl)}")
+
+# Poner descripción también en los análisis abiertos
+for check in checks_stcpl:
+    codigo = check.product_id.default_code or ''
+    desc = descripciones.get(codigo, '')
+    if desc and not check.product_description:
+        check.write({'product_description': desc})
 
 env.cr.commit()
 print("\n✓ Script completado — STCPL01-16 configurados con MAVI-20 + MAVI-07 + ANEXO.")
