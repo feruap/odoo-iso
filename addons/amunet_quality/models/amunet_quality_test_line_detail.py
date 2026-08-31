@@ -2014,9 +2014,13 @@ class AmunetQualityTestLineDetail(models.Model):
                     import json as _json
                     results = _json.loads(record.multi_check_results_json or '{}')
                     selected = results.get('0', '')
-                    record.result_display = _PATTERN_LABELS.get(selected, selected)
+                    if selected in _PATTERN_LABELS:
+                        record.result_display = _PATTERN_LABELS[selected]
+                    else:
+                        # Para multi-check binario (A/B), usar el mensaje de dictamen
+                        record.result_display = record.verdict_message or ''
                 except Exception:
-                    record.result_display = ''
+                    record.result_display = record.verdict_message or ''
 
             else:
                 record.result_display = ''
