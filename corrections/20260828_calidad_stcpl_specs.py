@@ -281,12 +281,15 @@ anexo_config = {
 checks_stcpl.write(anexo_config)
 print(f"  Análisis actualizados con anexo: {len(checks_stcpl)}")
 
-# Poner descripción también en los análisis abiertos
+# Poner descripción en TODOS los análisis abiertos (sobreescribe si ya tenían)
+actualizados_desc = 0
 for check in checks_stcpl:
     codigo = check.product_id.default_code or ''
     desc = descripciones.get(codigo, '')
-    if desc and not check.product_description:
+    if desc:
         check.write({'product_description': desc})
+        actualizados_desc += 1
+print(f"  Análisis actualizados con descripción: {actualizados_desc}")
 
 env.cr.commit()
 print("\n✓ Script completado — STCPL01-16 configurados con MAVI-20 + MAVI-07 + ANEXO.")
