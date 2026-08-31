@@ -42,6 +42,8 @@ SPECS_ACTIVAS_MAVI20 = {'Aspectos del liofilizado'}
 SPECS_ACTIVAS_MAVI07 = {'Almacenamiento en refrigeración', 'Almacenamiento en temperatura ambiente'}
 
 MAPPING_MAVI20 = {
+    "success_message": "Liofilizado blanco y compacto, sin textura pegajosa y sin humedad aparente.",
+    "error_prefix": "Liofilizado mala apariencia",
     "positions": [
         {"index": 0, "type": "binary",
          "A": "Blanco", "B": "Amarillo",
