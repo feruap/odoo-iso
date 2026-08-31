@@ -98,7 +98,7 @@ class AmunetQualityCheck(models.Model):
             rec.is_esterilizador = code.upper().startswith('EQEPV')
             rec.is_balanza = code.upper().startswith('EQBAD')
 
-    _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO')
+    _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO', 'STCPL')
 
     @api.depends('product_id.default_code')
     def _compute_is_material_con_anexo(self):
@@ -1814,6 +1814,19 @@ class AmunetQualityCheck(models.Model):
                 'anexo_col4_header': 'Volumen (µL)',
                 'anexo_col5_header': '',
                 'anexo_col6_header': '',
+            })
+        elif code.startswith('STCPL'):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO CONTROL POSITIVO',
+                'anexo_col1_header': 'Apariencia',
+                'anexo_col2_header': 'Liberación',
+                'anexo_col3_header': 'Migración',
+                'anexo_col4_header': 'Observación',
+                'anexo_col5_header': '',
+                'anexo_col6_header': '',
+                'anexo_col7_header': '',
+                'anexo_col8_header': '',
             })
         elif code in ('MPABI01', 'MPADE01', 'MPATR01'):
             self.write({

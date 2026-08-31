@@ -232,5 +232,27 @@ for codigo, nombre in CONTROLES:
 print(f"\nSpecs VAMA-078 desactivadas:    {eliminadas}")
 print(f"Specs actualizadas (activas):   {actualizadas}")
 print(f"Specs desactivadas:             {desactivadas}")
+
+# ── Configurar anexo en análisis ABIERTOS de STCPL ────────────────────────────
+print("\n── Configurando ANEXO CONTROL POSITIVO en análisis abiertos de STCPL ──")
+checks_stcpl = env['amunet.quality.check'].search([
+    ('product_id.default_code', 'like', 'STCPL'),
+    ('state', 'not in', ('done', 'cancel')),
+])
+anexo_config = {
+    'tiene_anexos':      True,
+    'anexo_titulo':      'ANEXO CONTROL POSITIVO',
+    'anexo_col1_header': 'Apariencia',
+    'anexo_col2_header': 'Liberación',
+    'anexo_col3_header': 'Migración',
+    'anexo_col4_header': 'Observación',
+    'anexo_col5_header': '',
+    'anexo_col6_header': '',
+    'anexo_col7_header': '',
+    'anexo_col8_header': '',
+}
+checks_stcpl.write(anexo_config)
+print(f"  Análisis actualizados con anexo: {len(checks_stcpl)}")
+
 env.cr.commit()
-print("\n✓ Script completado — STCPL01-16 configurados con MAVI-20 + MAVI-07.")
+print("\n✓ Script completado — STCPL01-16 configurados con MAVI-20 + MAVI-07 + ANEXO.")
