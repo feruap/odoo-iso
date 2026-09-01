@@ -9,9 +9,9 @@
     'data': [
         'security/ir.model.access.csv',
         'data/sequences.xml',
+        'reports/report_informe_auditoria.xml',
         'views/informe_views.xml',
         'views/menu_views.xml',
-        'reports/report_informe_auditoria.xml',
     ],
     'installable': True,
     'application': False,

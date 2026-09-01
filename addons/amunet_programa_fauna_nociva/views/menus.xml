@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="menu_prog_fauna_nociva" model="ir.ui.menu">
+        <field name="name">Prevención de Fauna Nociva</field>
+        <field name="parent_id" ref="amunet_documentos.menu_amunet_gestion"/>
         <field name="active" eval="False"/>
     </record>
 </odoo>
