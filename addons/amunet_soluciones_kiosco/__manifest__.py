@@ -32,7 +32,7 @@ firmas de Calidad, que siguen validando el PIN contra el usuario de la sesion.
     'author': 'Amunet',
     'category': 'Manufacturing',
     'license': 'LGPL-3',
-    'depends': ['amunet_production', 'amunet_quality', 'mrp'],
+    'depends': ['amunet_production', 'amunet_quality', 'amunet_process_inspection', 'mrp'],
     'data': [
         'security/amunet_soluciones_kiosco_security.xml',
         'security/ir.model.access.csv',

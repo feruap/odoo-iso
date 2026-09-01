@@ -120,4 +120,22 @@
               groups="amunet_production.group_solution_maker"
               sequence="90"/>
 
+    <!-- La tablet NO elige linea de produccion: solo hace soluciones.
+         A nivel de datos ya estaba bloqueado (la regla de registro filtra por
+         route_type), pero el desplegable seguia ofreciendo las 4 lineas y al
+         guardar fallaba con AccessError. No se debe ofrecer lo que se va a
+         rechazar: confunde y parece un hueco.
+         Se hereda de la vista de amunet_process_inspection, que es la que
+         declara el campo; la vista base de mrp NO lo tiene. -->
+    <record id="view_mrp_production_kiosco_ruta" model="ir.ui.view">
+        <field name="name">mrp.production.form.kiosco.ruta</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="amunet_process_inspection.view_mrp_production_form_inspection"/>
+        <field name="arch" type="xml">
+            <field name="route_type" position="attributes">
+                <attribute name="readonly">kiosco_es_dispositivo</attribute>
+            </field>
+        </field>
+    </record>
+
 </odoo>
