@@ -19,15 +19,15 @@ Confirmado por Diana Flores, 2026-09-01.
 import json
 
 CONTROLES = [
-    ('STCNL01', 'Control Negativo',     'Control negativo de SARS-CoV-2 / Influenza'),
+    ('STCNL01', 'Control Negativo',     'Control negativo'),
     ('STCON01', 'Control negativo',     'Control negativo'),
-    ('SPCNL04', 'Control Negativo VPH', 'Control negativo de VPH'),
+    ('SPCNL04', 'Control Negativo VPH', 'Control negativo'),
 ]
 
 DESCRIPCION_MAP = {
-    'STCNL01': 'Control negativo de SARS-CoV-2 / Influenza',
+    'STCNL01': 'Control negativo',
     'STCON01':  'Control negativo',
-    'SPCNL04':  'Control negativo de VPH',
+    'SPCNL04':  'Control negativo',
 }
 
 SPECS_ACTIVAS_MAVI20 = {'Aspectos del liofilizado'}
