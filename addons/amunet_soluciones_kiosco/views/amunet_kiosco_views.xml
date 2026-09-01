@@ -77,6 +77,24 @@
         <field name="search_view_id" ref="view_kiosco_sesion_search"/>
     </record>
 
+    <!-- ============ Pantalla de inicio de la tablet ============ -->
+    <!-- La tablet es un dispositivo de piso, no un escritorio: debe abrir
+         directo en el trabajo. Se asigna como accion de inicio del usuario
+         (Preferencias > Accion inicial), NO como menu, para no alterar la
+         navegacion de nadie mas.
+         Se dejo el dominio en route_type porque la regla de registro ya filtra
+         igual: si algun dia cambia la regla, esto no abre de mas. -->
+    <record id="action_kiosco_ordenes" model="ir.actions.act_window">
+        <field name="name">Soluciones</field>
+        <field name="res_model">mrp.production</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('route_type','=','solution')]</field>
+        <field name="context">{'default_route_type': 'solution'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aqui se elaboran las soluciones</p>
+        </field>
+    </record>
+
     <!-- ============ Botones en la orden de solucion ============ -->
     <record id="view_mrp_production_kiosco" model="ir.ui.view">
         <field name="name">mrp.production.form.kiosco</field>
