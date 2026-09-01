@@ -716,6 +716,12 @@ class MrpProduction(models.Model):
         except Exception:
             val = None
         if not val:
+            # Soluciones de DESARROLLO: cada preparacion es distinta y su vida
+            # util la decide quien la elabora. NO se inventa el default de 24
+            # meses (para una solucion es una barbaridad y pasa inadvertido).
+            # Se devuelve False y action_confirm exige capturarla.
+            if getattr(product, 'amunet_es_desarrollo', False):
+                return False
             return base_date + relativedelta(months=24)
         if 'año' in txt or 'ano' in txt:
             return base_date + relativedelta(months=int(round(val * 12)))
@@ -1363,6 +1369,20 @@ class MrpProduction(models.Model):
         return '%s-%02d' % (prefix, consec + 1)
 
     def action_confirm(self):
+        # Candado: una solucion de DESARROLLO no se confirma sin caducidad.
+        # Antes caia al default de 24 meses sin que nadie se enterara.
+        for prod in self:
+            if (prod.amunet_es_desarrollo
+                    and prod.amunet_is_solution_product
+                    and not prod.solution_expiration_date):
+                raise UserError(_(
+                    'Captura la fecha de caducidad antes de confirmar la '
+                    'solucion de desarrollo %(orden)s.\n\n'
+                    'Cada preparacion de desarrollo tiene su propia vida util, '
+                    'asi que el sistema no la puede suponer. Escribela en '
+                    '"Fecha de Caducidad (Calendario)".',
+                    orden=prod.name or '',
+                ))
         # Crear fisicamente el lote ahora que se esta confirmando.
         # Politica Amunet (PNOGE-014):
         #  - Producto TERMINADO: el lote = folio de la MO (ej. 0526/04/IGE).
