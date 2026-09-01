@@ -78,6 +78,14 @@
                                     <strong>Clave:</strong> STBPC01<br/>
                                     <strong>Catálogo:</strong> <span t-esc="o.product_id.default_code"/><br/>
                                 </t>
+                                <t t-elif="o.product_id.report_document_code == 'RAST-038'">
+                                    <strong>Clave:</strong> STCOP01<br/>
+                                    <strong>Catálogo:</strong> <span t-esc="o.product_id.default_code"/><br/>
+                                </t>
+                                <t t-elif="o.product_id.report_document_code == 'RAST-039'">
+                                    <strong>Clave:</strong> STCON01<br/>
+                                    <strong>Catálogo:</strong> <span t-esc="o.product_id.default_code"/><br/>
+                                </t>
                                 <t t-else="">
                                     <strong>Código:</strong> <span t-esc="o.product_id.default_code"/><br/>
                                     <strong>Proveedor:</strong> <span t-esc="o.partner_id.name"/>

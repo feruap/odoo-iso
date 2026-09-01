@@ -16,8 +16,14 @@ Confirmado por Diana Flores, 2026-09-01.
 Idempotente — seguro de correr más de una vez.
 """
 
-REFS_POSITIVO = '- ESPST-038\n- Técnica de análisis TAST-038\n- PNOCC-002'
-REFS_NEGATIVO = '- ESPST-039\n- Técnica de análisis TAST-039'
+REFS_POSITIVO = ('- ESPST-038\n'
+                 '- Técnica de análisis TAST-038\n'
+                 '- Inspección de Insumos PNOCC-002\n'
+                 '- Método de muestreo de acuerdo a la Norma ANSI/ASQ Z1.4 PNOCC-005')
+REFS_NEGATIVO = ('- ESPST-039\n'
+                 '- Técnica de análisis TAST-039\n'
+                 '- Inspección de Insumos PNOCC-002\n'
+                 '- Método de muestreo de acuerdo a la Norma ANSI/ASQ Z1.4 PNOCC-005')
 
 POSITIVOS = [
     'STCOP01',
@@ -61,5 +67,25 @@ for codigo in NEGATIVOS:
     """, (REFS_NEGATIVO, codigo))
     print(f"  {codigo}: {env.cr.rowcount} registro(s) actualizado(s)")
 
+# ── ANEXO: agregar Desempeño entre Migración y Observación ───────────────────
+print("\n── Actualizando ANEXO con columna Desempeño ──")
+todos_controles = POSITIVOS + NEGATIVOS
+env.cr.execute("""
+    UPDATE amunet_quality_check SET
+        anexo_col4_header = 'Desempeño',
+        anexo_col5_header = 'Observación',
+        anexo_col6_header = '',
+        anexo_col7_header = '',
+        anexo_col8_header = ''
+    WHERE product_id IN (
+        SELECT pp.id FROM product_product pp
+        JOIN product_template pt ON pt.id = pp.product_tmpl_id
+        WHERE pt.default_code = ANY(%s)
+    )
+    AND state NOT IN ('done','cancel')
+    AND tiene_anexos = true
+""", (todos_controles,))
+print(f"  Análisis actualizados con Desempeño: {env.cr.rowcount}")
+
 env.cr.commit()
-print("\n✓ Códigos de reporte y certificado aplicados a controles positivos y negativos.")
+print("\n✓ Códigos de reporte, certificado, referencias y ANEXO aplicados a controles positivos y negativos.")
