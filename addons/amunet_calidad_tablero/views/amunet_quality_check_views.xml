@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ KANBAN: el tablero de Diana ============ -->
+    <record id="view_tablero_calidad_kanban" model="ir.ui.view">
+        <field name="name">amunet.quality.check.tablero.kanban</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="tablero_analista_id"
+                    quick_create="false"
+                    group_create="false"
+                    class="o_kanban_small_column">
+                <field name="tablero_prioridad"/>
+                <field name="tablero_mo_count"/>
+                <field name="tablero_bloquea_venta"/>
+                <field name="tablero_dias_caducidad"/>
+                <field name="tablero_aviso_capacitacion"/>
+                <field name="tablero_orden"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_record_top mb-1">
+                            <strong class="o_kanban_record_title">
+                                <field name="name"/>
+                            </strong>
+                        </div>
+                        <div>
+                            <field name="product_id"/>
+                        </div>
+                        <div class="text-muted">
+                            Lote: <field name="lot_id"/>
+                        </div>
+
+                        <div class="mt-1">
+                            <span t-if="record.tablero_prioridad.raw_value == 'bloqueo'"
+                                  class="badge text-bg-danger">
+                                Bloquea produccion o venta
+                            </span>
+                            <span t-elif="record.tablero_prioridad.raw_value == 'caducidad'"
+                                  class="badge text-bg-warning">
+                                Proximo a caducar
+                            </span>
+                            <span t-else="" class="badge text-bg-secondary">Normal</span>
+                        </div>
+
+                        <div t-if="record.tablero_mo_count.raw_value > 0" class="mt-1 text-danger">
+                            <i class="fa fa-exclamation-triangle"/>
+                            <field name="tablero_mo_count"/> orden(es) detenida(s)
+                        </div>
+
+                        <div t-if="record.tablero_aviso_capacitacion.raw_value" class="mt-1 text-warning">
+                            <i class="fa fa-graduation-cap"/>
+                            <field name="tablero_aviso_capacitacion"/>
+                        </div>
+
+                        <div class="o_kanban_record_bottom mt-2">
+                            <div class="oe_kanban_bottom_left">
+                                <field name="tablero_fecha_planeada" widget="remaining_days"/>
+                            </div>
+                            <div class="oe_kanban_bottom_right">
+                                <field name="state" widget="badge"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============ LISTA priorizada ============ -->
+    <record id="view_tablero_calidad_list" model="ir.ui.view">
+        <field name="name">amunet.quality.check.tablero.list</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="arch" type="xml">
+            <!-- editable: el supervisor reparte el trabajo escribiendo en el
+                 renglon, sin abrir cada analisis. Sin esto no habia forma de
+                 asignar: la lista era de solo lectura y el formulario del
+                 analisis no mostraba los campos del tablero. -->
+            <list string="Tablero de Calidad"
+                  editable="bottom"
+                  default_order="tablero_orden asc, request_date asc"
+                  decoration-danger="tablero_prioridad == 'bloqueo'"
+                  decoration-warning="tablero_prioridad == 'caducidad'">
+                <!-- En una lista editable TODO el renglon se vuelve editable.
+                     Solo el analista y la fecha se reparten desde aqui; el
+                     resto va readonly para que nadie cambie por accidente el
+                     producto o el lote de un analisis al hacer clic. -->
+                <field name="tablero_es_supervisor" column_invisible="True"/>
+                <field name="name" readonly="1"/>
+                <field name="product_id" readonly="1"/>
+                <field name="lot_id" optional="show" readonly="1"/>
+                <!-- UNA sola columna de prioridad: muestra la que dedujo el
+                     sistema y se puede cambiar como desplegable. Al cambiarla,
+                     esa manda; al regresarla al valor deducido, vuelve a ser
+                     automatica. Antes eran dos columnas (deducida + forzada) y
+                     confundia. -->
+                <field name="tablero_prioridad"
+                       readonly="not tablero_es_supervisor"
+                       decoration-danger="tablero_prioridad == 'bloqueo'"
+                       decoration-warning="tablero_prioridad == 'caducidad'"/>
+                <field name="tablero_prioridad_manual" string="Forzada"
+                       optional="hide" readonly="1"/>
+                <!-- El motivo NO se muestra por defecto: ensuciaba la lista y
+                     casi siempre va vacio. Sigue siendo obligatorio al forzar,
+                     y se captura en el formulario del analisis. Quien lo quiera
+                     ver en la lista puede activarlo desde el selector de
+                     columnas (el icono de la derecha del encabezado). -->
+                <field name="tablero_prioridad_motivo" string="Motivo"
+                       optional="hide"
+                       required="tablero_prioridad_manual"/>
+                <field name="tablero_mo_count" string="Ordenes detenidas" readonly="1"/>
+                <field name="tablero_bloquea_venta" optional="hide" readonly="1"/>
+                <field name="tablero_dias_caducidad" string="Dias p/caducar" optional="show" readonly="1"/>
+                <!-- Los dos unicos editables: es lo que el supervisor reparte -->
+                <field name="tablero_analista_id" widget="many2one_avatar_user"
+                       readonly="not tablero_es_supervisor"/>
+                <!-- La fecha SI la mueve el analista: es cuando planea hacerlo -->
+                <field name="tablero_fecha_planeada"/>
+                <field name="tablero_aviso_capacitacion" optional="show" readonly="1"/>
+                <field name="request_date" string="Solicitado" optional="show" readonly="1"/>
+                <field name="state" widget="badge" readonly="1"/>
+                <field name="tablero_orden" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============ BUSQUEDA y filtros ============ -->
+    <!-- Los campos del tablero en el formulario del analisis.
+         Sin esto, abrir un analisis desde el tablero no mostraba ni el
+         analista ni la fecha planeada: no habia forma de asignar salvo la
+         lista. Se agrega junto a la fecha de solicitud, que es donde el
+         supervisor ya mira las fechas. -->
+    <record id="view_amunet_quality_check_form_tablero" model="ir.ui.view">
+        <field name="name">amunet.quality.check.form.tablero</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="inherit_id" ref="amunet_quality.view_amunet_quality_check_form"/>
+        <field name="arch" type="xml">
+            <field name="request_date" position="after">
+                <field name="tablero_es_supervisor" invisible="1"/>
+                <field name="tablero_analista_id" widget="many2one_avatar_user"
+                       readonly="not tablero_es_supervisor"/>
+                <field name="tablero_fecha_planeada"/>
+                <field name="tablero_prioridad" readonly="not tablero_es_supervisor"/>
+                <field name="tablero_prioridad_motivo"
+                       invisible="not tablero_prioridad_manual"/>
+                <field name="tablero_mo_count" string="Ordenes detenidas" readonly="1"
+                       invisible="not tablero_mo_count"/>
+                <field name="tablero_aviso_capacitacion" readonly="1"
+                       invisible="not tablero_aviso_capacitacion"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_tablero_calidad_search" model="ir.ui.view">
+        <field name="name">amunet.quality.check.tablero.search</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="tablero_analista_id"/>
+                <filter name="f_forzados" string="Prioridad forzada a mano"
+                        domain="[('tablero_prioridad_manual','!=',False)]"/>
+                <filter name="f_bloqueo" string="Bloquea produccion o venta"
+                        domain="[('tablero_prioridad','=','bloqueo')]"/>
+                <filter name="f_caducidad" string="Proximo a caducar"
+                        domain="[('tablero_prioridad','=','caducidad')]"/>
+                <filter name="f_sin_asignar" string="Sin asignar"
+                        domain="[('tablero_analista_id','=',False)]"/>
+                <filter name="f_mios" string="Mis analisis"
+                        domain="[('tablero_analista_id','=',uid)]"/>
+                <filter name="f_sin_terminar" string="Sin terminar"
+                        domain="[('state','not in',['done','cancel'])]"/>
+                <filter name="g_analista" string="Analista"
+                        context="{'group_by':'tablero_analista_id'}"/>
+                <filter name="g_prioridad" string="Prioridad"
+                        context="{'group_by':'tablero_prioridad'}"/>
+                <filter name="g_estado" string="Estado"
+                        context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============ ACCIONES ============ -->
+    <record id="action_tablero_calidad" model="ir.actions.act_window">
+        <field name="name">Tablero de Calidad</field>
+        <field name="res_model">amunet.quality.check</field>
+        <!-- Abre en LISTA a proposito. El kanban se agrupa por analista, asi que
+             mientras nadie tenga asignacion muestra una sola columna "Ninguno"
+             plegada y el tablero se ve VACIO aunque tenga decenas de analisis
+             dentro. La lista es donde se reparte el trabajo; el kanban sirve
+             despues, para ver como quedo repartido y mover tarjetas. -->
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('state','not in',['done','cancel'])]</field>
+        <field name="context">{'search_default_f_sin_terminar': 1}</field>
+        <field name="search_view_id" ref="view_tablero_calidad_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No hay analisis pendientes</p>
+            <p>Aqui se reparte el trabajo de Control de Calidad entre los analistas.</p>
+        </field>
+    </record>
+
+    <record id="action_tablero_calidad_kanban_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_tablero_calidad_kanban"/>
+        <field name="act_window_id" ref="action_tablero_calidad"/>
+    </record>
+
+    <record id="action_tablero_calidad_list_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_tablero_calidad_list"/>
+        <field name="act_window_id" ref="action_tablero_calidad"/>
+    </record>
+
+    <!-- Mis analisis: la vista del analista -->
+    <record id="action_mis_analisis" model="ir.actions.act_window">
+        <field name="name">Mis analisis</field>
+        <field name="res_model">amunet.quality.check</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('state','not in',['done','cancel'])]</field>
+        <field name="context">{'search_default_f_mios': 1}</field>
+        <field name="search_view_id" ref="view_tablero_calidad_search"/>
+    </record>
+
+    <!-- ============ MENUS ============ -->
+    <menuitem id="menu_tablero_calidad_root"
+              name="Tablero de Actividades"
+              parent="amunet_quality.menu_quality_root"
+              sequence="5"/>
+
+    <menuitem id="menu_tablero_calidad"
+              name="Tablero de Calidad"
+              parent="menu_tablero_calidad_root"
+              action="action_tablero_calidad"
+              groups="amunet_quality.group_quality_supervisor"
+              sequence="10"/>
+
+    <menuitem id="menu_mis_analisis"
+              name="Mis analisis"
+              parent="menu_tablero_calidad_root"
+              action="action_mis_analisis"
+              groups="amunet_quality.group_quality_user"
+              sequence="20"/>
+
+</odoo>
