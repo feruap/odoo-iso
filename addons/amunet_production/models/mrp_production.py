@@ -1032,6 +1032,30 @@ class MrpProduction(models.Model):
             else:
                 vals.pop('workorder_ids', None)
 
+    @api.model
+    def _amunet_producto_es_solucion(self, product):
+        """La categoria manda, igual que amunet_is_solution_product."""
+        if not product:
+            return False
+        categ = product.product_tmpl_id.categ_id.complete_name or ''
+        return 'solucion' in categ.lower()
+
+    @api.onchange('product_id')
+    def _amunet_onchange_product_route_type(self):
+        """La LINEA DE PRODUCCION debe seguir al producto, no depender de que
+        alguien se acuerde de cambiarla.
+
+        route_type nace con default='short' (Linea Corta). Si se elige una
+        solucion y nadie lo corrige, la orden queda clasificada como linea
+        corta: se le aplica el flujo SGC equivocado y el propio fabricante de
+        soluciones NO la ve (la regla de registro filtra por route_type).
+        Paso con AMP/MO/00028 en produccion.
+        """
+        if 'route_type' not in self._fields:
+            return
+        if self._amunet_producto_es_solucion(self.product_id):
+            self.route_type = 'solution'
+
     @api.onchange('product_id')
     def _amunet_onchange_product_desarrollo(self):
         # Al elegir un producto de desarrollo (STDES01), marcar la orden como
@@ -1081,6 +1105,16 @@ class MrpProduction(models.Model):
                 product = self.env['product.product'].browse(vals['product_id']).exists()
                 if product and (product.amunet_req_quality_control or product.qc_required):
                     vals['quality_analysis_status'] = 'to_request'
+            # LINEA DE PRODUCCION: debe seguir al producto. route_type nace
+            # con default='short'; si se crea una solucion y nadie lo corrige,
+            # queda como linea corta, se le aplica el flujo SGC equivocado y el
+            # fabricante NO la ve (la regla de registro filtra por route_type).
+            # Paso con AMP/MO/00028 en produccion.
+            if (vals.get('product_id') and not vals.get('route_type')
+                    and 'route_type' in self._fields):
+                prod_ruta = self.env['product.product'].browse(vals['product_id']).exists()
+                if prod_ruta and self._amunet_producto_es_solucion(prod_ruta):
+                    vals['route_type'] = 'solution'
             # Solucion de DESARROLLO: si el producto esta marcado como de
             # desarrollo, la orden hereda es_desarrollo automaticamente (receta
             # ajustable, sin analisis de Calidad, ARU/Desarrollo, con supervision).
