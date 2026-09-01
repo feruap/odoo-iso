@@ -72,9 +72,16 @@
         <field name="name">amunet.woo.product.mapping.list</field>
         <field name="model">amunet.woo.product.mapping</field>
         <field name="arch" type="xml">
-            <list string="Mapeos WooCommerce"
+            <list string="Mapeos WooCommerce" editable="bottom"
                   decoration-warning="has_alerts"
                   decoration-muted="relation_state == 'rejected'">
+                <!-- Inventario inicial: el almacen captura en la lista y
+                     este boton lo carga al anaquel de piezas de APT. -->
+                <header>
+                    <button name="action_cargar_inventario_inicial"
+                            type="object" class="btn-primary"
+                            string="Cargar inventario inicial"/>
+                </header>
                 <field name="backend_id" optional="hide"/>
                 <field name="woo_sku"/>
                 <field name="woo_name" optional="hide"/>
@@ -106,6 +113,20 @@
                 <field name="stock_posproduccion" optional="show"/>
                 <field name="odoo_free_display" optional="show"/>
                 <field name="woo_available_display" optional="show"/>
+                <!-- ============ INVENTARIO INICIAL ============
+                     Migracion de papel a digital. El lote y la caducidad
+                     son OPCIONALES: los decide el operador. El
+                     desplegable "Lote existente" ensena los lotes que el
+                     producto YA tiene, para ajustar en vez de duplicar. -->
+                <field name="lote_opcion_ids" column_invisible="True"/>
+                <field name="inicial_cargado_qty" optional="hide"/>
+                <field name="inicial_qty" optional="show"
+                       sum="Piezas por cargar"/>
+                <field name="inicial_lot_id" optional="show"
+                       options="{'no_create': True, 'no_open': True}"/>
+                <field name="inicial_lot_name" optional="show"/>
+                <field name="inicial_expiration_date" optional="show"/>
+                <field name="inicial_nota" optional="hide"/>
                 <field name="stock_existencias" string="Existencia total" optional="show"/>
                 <field name="stock_entrada" optional="hide"/>
                 <field name="stock_salida" optional="hide"/>
@@ -313,6 +334,8 @@
                             <group>
                                 <group string="Inventario Woo (snapshot)">
                                     <field name="woo_available_display"/>
+                                    <field name="inicial_cargado_qty"
+                                           string="De inventario inicial"/>
                                     <field name="woo_reserved_display"/>
                                     <field name="woo_expired_display"/>
                                     <field name="woo_damaged_display"/>
@@ -427,6 +450,52 @@
                 </sheet>
                 <chatter/>
             </form>
+        </field>
+    </record>
+
+    <!-- Captura de inventario inicial desde la ficha del producto -->
+    <record id="view_woo_product_mapping_form_inicial" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.form.inicial</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="inherit_id" ref="view_woo_product_mapping_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header" position="inside">
+                <button name="action_cargar_inventario_inicial" type="object"
+                        string="Cargar inventario inicial" class="btn-primary"
+                        invisible="not inicial_qty"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <group string="Inventario inicial (migracion de papel a digital)"
+                       name="inventario_inicial">
+                    <div class="text-muted" colspan="2">
+                        Material que el almacen ya tiene fisicamente y que nunca
+                        paso por el sistema porque se llevaba en papel. No lleva
+                        orden de fabricacion ni liberacion de Calidad: es
+                        anterior al sistema. Si queda el registro de quien lo
+                        capturo, cuando y por que.
+                        <br/>
+                        El numero de lote y la caducidad son opcionales: los
+                        decide el operador. Sin caducidad el material se carga
+                        en Odoo, pero la tienda no lo puede clasificar y por eso
+                        no se publica.
+                    </div>
+                    <group>
+                        <field name="inicial_qty"/>
+                        <field name="lote_opcion_ids" invisible="1"/>
+                        <field name="inicial_lot_id"
+                               options="{'no_create': True}"/>
+                        <field name="inicial_lot_name"
+                               invisible="inicial_lot_id"/>
+                        <field name="inicial_expiration_date"/>
+                        <field name="inicial_nota"/>
+                    </group>
+                    <group>
+                        <field name="inicial_cargado_qty" readonly="1"/>
+                        <field name="lote_resumen" readonly="1"
+                               string="Lotes que ya tiene este producto"/>
+                    </group>
+                </group>
+            </xpath>
         </field>
     </record>
 
