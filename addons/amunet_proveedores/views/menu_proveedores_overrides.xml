@@ -13,4 +13,10 @@
     <record id="amunet_checklist_auditoria_prov.menu_checklist_audit_prov" model="ir.ui.menu">
         <field name="parent_id" ref="amunet_programa_auditoria_proveedores.menu_prog_proveedor"/>
     </record>
+
+    <!-- Oculta el menú de Auditoría Técnicas de Proveedores de Gestión;
+         el acceso queda en el hub del tablero. -->
+    <record id="amunet_programa_auditoria_proveedores.menu_prog_proveedor" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 </odoo>

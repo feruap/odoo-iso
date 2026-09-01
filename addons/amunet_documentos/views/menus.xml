@@ -85,7 +85,7 @@
     <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de impresión"
               parent="menu_amunet_gestion"
               action="action_amunet_formato_solicitudes_pendientes" sequence="10"
-              groups="group_documentos_manager"/>
+              groups="group_documentos_manager" active="0"/>
 
     <menuitem id="menu_amunet_catalogo_firma" name="Catálogo de firmas"
               parent="menu_amunet_gestion"
