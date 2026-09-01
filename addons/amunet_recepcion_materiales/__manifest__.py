@@ -1,11 +1,12 @@
 {
     'name': 'Recepción de Materiales MP',
-    'version': '19.0.2.1.1',
+    'version': '19.0.2.1.2',
     'summary': 'Inspección de entrada, criterios de aceptación, destino automático y firma con PIN',
     'category': 'Inventory',
     'author': 'Amunet',
     'depends': ['amunet_lot', 'stock', 'amunet_quality', 'product', 'amunet_equipment_calibration'],
     'data': [
+        'data/seeds_20260901_165910.xml',
         'security/ir.model.access.csv',
         'data/cron_reorder_notify.xml',
         'wizard/recepcion_pin_wizard_views.xml',
