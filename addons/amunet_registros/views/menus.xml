@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_registros_hub" model="ir.actions.client">
+        <field name="name">Registros de formatos</field>
+        <field name="tag">amunet_registros.registros_hub</field>
+    </record>
+
+    <record id="menu_registros_root" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <menuitem id="menu_registros_indumentaria"
+              name="Indumentaria"
+              parent="menu_registros_root"
+              sequence="10"
+              groups="amunet_documentos.group_documentos_manager"/>
+
+    <menuitem id="menu_entrega_vest"
+              name="Entrega de indumentaria"
+              parent="menu_registros_indumentaria"
+              action="action_entrega_vest"
+              sequence="10"
+              groups="amunet_documentos.group_documentos_manager"/>
+
+    <menuitem id="menu_revision_vest"
+              name="Revisión de indumentaria"
+              parent="menu_registros_indumentaria"
+              action="action_revision_vest"
+              sequence="20"
+              groups="amunet_documentos.group_documentos_manager"/>
+
+</odoo>

@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_risk_matrix_user,risk.matrix.user,model_amunet_risk_matrix,amunet_documentos.group_documentos_user,1,0,0,0
+access_risk_matrix_manager,risk.matrix.manager,model_amunet_risk_matrix,amunet_documentos.group_documentos_manager,1,1,1,1
+access_risk_analysis_user,risk.analysis.user,model_amunet_risk_analysis,amunet_documentos.group_documentos_user,1,0,0,0
+access_risk_analysis_manager,risk.analysis.manager,model_amunet_risk_analysis,amunet_documentos.group_documentos_manager,1,1,1,1
+access_risk_analysis_linea_user,risk.analysis.linea.user,model_amunet_risk_analysis_linea,amunet_documentos.group_documentos_user,1,0,0,0
+access_risk_analysis_linea_manager,risk.analysis.linea.manager,model_amunet_risk_analysis_linea,amunet_documentos.group_documentos_manager,1,1,1,1
+access_risk_reanalysis_user,risk.reanalysis.user,model_amunet_risk_reanalysis,amunet_documentos.group_documentos_user,1,0,0,0
+access_risk_reanalysis_manager,risk.reanalysis.manager,model_amunet_risk_reanalysis,amunet_documentos.group_documentos_manager,1,1,1,1
+access_risk_reanalysis_linea_user,risk.reanalysis.linea.user,model_amunet_risk_reanalysis_linea,amunet_documentos.group_documentos_user,1,0,0,0
+access_risk_reanalysis_linea_manager,risk.reanalysis.linea.manager,model_amunet_risk_reanalysis_linea,amunet_documentos.group_documentos_manager,1,1,1,1
+access_risk_seguimiento_user,risk.seguimiento.user,model_amunet_risk_seguimiento,amunet_documentos.group_documentos_user,1,0,0,0
+access_risk_seguimiento_manager,risk.seguimiento.manager,model_amunet_risk_seguimiento,amunet_documentos.group_documentos_manager,1,1,1,1

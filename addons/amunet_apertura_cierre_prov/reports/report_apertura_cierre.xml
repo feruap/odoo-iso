@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_print_apertura_cierre" model="ir.actions.report">
+        <field name="name">Registro de Apertura y Cierre</field>
+        <field name="model">amunet.apertura.cierre.prov</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_apertura_cierre_prov.report_apertura_cierre</field>
+        <field name="report_file">amunet_apertura_cierre_prov.report_apertura_cierre</field>
+        <field name="binding_model_id" ref="model_amunet_apertura_cierre_prov"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_apertura_cierre">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+
+                        <!-- Encabezado -->
+                        <div class="row mb-3">
+                            <div class="col-8">
+                                <h3>Registro de Apertura y Cierre de Auditoría de Proveedores</h3>
+                                <h5 class="text-muted">F-DC-005-017</h5>
+                            </div>
+                            <div class="col-4 text-end">
+                                <table class="table table-sm table-bordered" style="font-size:11px">
+                                    <tr><td><b>No. Registro</b></td><td><t t-esc="doc.clave"/></td></tr>
+                                    <tr><td><b>Estado</b></td><td><t t-esc="doc.state"/></td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 1. Identificación -->
+                        <h5>1. Identificación de la auditoría</h5>
+                        <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                            <tr>
+                                <td width="25%"><b>Proveedor</b></td>
+                                <td><t t-esc="doc.proveedor"/></td>
+                                <td width="25%"><b>Tipo</b></td>
+                                <td><t t-esc="dict(doc._fields['tipo'].selection).get(doc.tipo, doc.tipo)"/></td>
+                            </tr>
+                            <tr>
+                                <td><b>Fecha auditoría</b></td>
+                                <td><t t-esc="doc.fecha_auditoria_inicio"/> al <t t-esc="doc.fecha_auditoria_fin or '—'"/></td>
+                                <td><b>Auditor Líder</b></td>
+                                <td><t t-esc="doc.lider_id.name"/></td>
+                            </tr>
+                            <tr>
+                                <td><b>Auditores internos</b></td>
+                                <td colspan="3"><t t-esc="', '.join(doc.auditor_ids.mapped('name')) or '—'"/></td>
+                            </tr>
+                            <tr>
+                                <td><b>Acompañante proveedor</b></td>
+                                <td colspan="3"><t t-esc="doc.acompanante or '—'"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- 2. Reunión de Apertura -->
+                        <h5>2. Reunión de Apertura</h5>
+                        <table class="table table-sm table-bordered mb-2" style="font-size:11px">
+                            <tr>
+                                <td><b>Fecha</b>: <t t-esc="doc.ap_fecha or '—'"/></td>
+                                <td><b>Hora inicio</b>: <t t-esc="doc.ap_hora_inicio or '—'"/></td>
+                                <td><b>Hora fin</b>: <t t-esc="doc.ap_hora_fin or '—'"/></td>
+                                <td><b>Lugar</b>: <t t-esc="doc.ap_lugar or '—'"/></td>
+                            </tr>
+                        </table>
+
+                        <p style="font-size:11px"><b>2.1 Lista de asistencia</b></p>
+                        <table class="table table-sm table-bordered mb-2" style="font-size:11px">
+                            <thead><tr><th>No.</th><th>Nombre y Apellidos</th><th>Cargo / Rol</th><th>Empresa</th><th>Firma</th></tr></thead>
+                            <tbody>
+                                <t t-foreach="doc.ap_asistente_ids" t-as="a">
+                                    <tr>
+                                        <td><t t-esc="a.no or ''"/></td>
+                                        <td><t t-esc="a.nombre or ''"/></td>
+                                        <td><t t-esc="a.cargo_rol or ''"/></td>
+                                        <td><t t-esc="a.empresa or ''"/></td>
+                                        <td style="width:80px"/>
+                                    </tr>
+                                </t>
+                                <t t-if="not doc.ap_asistente_ids">
+                                    <tr><td colspan="5" style="height:40px"/></tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <p style="font-size:11px"><b>2.2 Agenda</b></p>
+                        <table class="table table-sm table-bordered mb-2" style="font-size:10px">
+                            <tr><td width="20px"><t t-esc="'☑' if doc.ap_presentacion_equipo   else '☐'"/></td><td>Presentación del equipo auditor</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ap_confirm_objetivo      else '☐'"/></td><td>Confirmación del objetivo</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ap_confirm_alcance       else '☐'"/></td><td>Confirmación del alcance</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ap_confirm_criterios     else '☐'"/></td><td>Confirmación de los criterios</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ap_cronograma            else '☐'"/></td><td>Presentación del cronograma</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ap_disponibilidad        else '☐'"/></td><td>Confirmación de disponibilidad</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ap_canales_comunicacion  else '☐'"/></td><td>Acuerdo sobre canales de comunicación</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ap_acuerdo_cierre        else '☐'"/></td><td>Acuerdo reunión de cierre: <t t-esc="doc.ap_acuerdo_cierre_detalle or ''"/></td></tr>
+                            <t t-if="doc.ap_otros"><tr><td>☑</td><td>Otros: <t t-esc="doc.ap_otros_texto or ''"/></td></tr></t>
+                        </table>
+
+                        <t t-if="doc.ap_observaciones">
+                            <p style="font-size:11px"><b>2.3 Observaciones:</b> <t t-esc="doc.ap_observaciones"/></p>
+                        </t>
+
+                        <t t-if="doc.ap_compromiso_ids">
+                            <p style="font-size:11px"><b>2.4 Compromisos (apertura)</b></p>
+                            <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                                <thead><tr><th>Nº</th><th>Compromiso</th><th>Responsable</th><th>Fecha límite</th></tr></thead>
+                                <tbody>
+                                    <t t-foreach="doc.ap_compromiso_ids" t-as="c">
+                                        <tr>
+                                            <td><t t-esc="c.no or ''"/></td>
+                                            <td><t t-esc="c.compromiso"/></td>
+                                            <td><t t-esc="c.responsable or ''"/></td>
+                                            <td><t t-esc="c.fecha_limite or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- 3. Reunión de Cierre -->
+                        <h5>3. Reunión de Cierre</h5>
+                        <table class="table table-sm table-bordered mb-2" style="font-size:11px">
+                            <tr>
+                                <td><b>Fecha</b>: <t t-esc="doc.ci_fecha or '—'"/></td>
+                                <td><b>Hora inicio</b>: <t t-esc="doc.ci_hora_inicio or '—'"/></td>
+                                <td><b>Hora fin</b>: <t t-esc="doc.ci_hora_fin or '—'"/></td>
+                                <td><b>Lugar</b>: <t t-esc="doc.ci_lugar or '—'"/></td>
+                            </tr>
+                        </table>
+
+                        <p style="font-size:11px"><b>3.1 Lista de asistencia</b></p>
+                        <table class="table table-sm table-bordered mb-2" style="font-size:11px">
+                            <thead><tr><th>No.</th><th>Nombre y Apellidos</th><th>Cargo / Rol</th><th>Empresa</th><th>Firma</th></tr></thead>
+                            <tbody>
+                                <t t-foreach="doc.ci_asistente_ids" t-as="a">
+                                    <tr>
+                                        <td><t t-esc="a.no or ''"/></td>
+                                        <td><t t-esc="a.nombre or ''"/></td>
+                                        <td><t t-esc="a.cargo_rol or ''"/></td>
+                                        <td><t t-esc="a.empresa or ''"/></td>
+                                        <td style="width:80px"/>
+                                    </tr>
+                                </t>
+                                <t t-if="not doc.ci_asistente_ids">
+                                    <tr><td colspan="5" style="height:40px"/></tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <p style="font-size:11px"><b>3.2 Agenda</b></p>
+                        <table class="table table-sm table-bordered mb-2" style="font-size:10px">
+                            <tr><td width="20px"><t t-esc="'☑' if doc.ci_agradecimiento         else '☐'"/></td><td>Agradecimiento por la colaboración</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ci_resumen_auditoria      else '☐'"/></td><td>Presentación del resumen de la auditoría</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ci_recordatorio_hallazgos else '☐'"/></td><td>Recordatorio: hallazgos detallados constan en formato aparte</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ci_plazo_informe          else '☐'"/></td><td>Acuerdo de plazos para entrega del informe final</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ci_plazo_pac              else '☐'"/></td><td>Acuerdo de plazos para presentación del PAC</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ci_fecha_seguimiento      else '☐'"/></td><td>Acuerdo sobre fecha de seguimiento (si aplica)</td></tr>
+                            <tr><td><t t-esc="'☑' if doc.ci_preguntas              else '☐'"/></td><td>Turno de preguntas y aclaraciones</td></tr>
+                            <t t-if="doc.ci_otros"><tr><td>☑</td><td>Otros: <t t-esc="doc.ci_otros_texto or ''"/></td></tr></t>
+                        </table>
+
+                        <p style="font-size:11px"><b>3.3 Resumen de la auditoría</b></p>
+                        <table class="table table-sm table-bordered mb-2" style="font-size:11px">
+                            <tr><td width="35%"><b>Áreas auditadas</b></td><td><t t-esc="doc.ci_areas_auditadas or '—'"/></td></tr>
+                            <tr><td><b>Documentación revisada</b></td><td><t t-esc="doc.ci_documentacion_revisada or '—'"/></td></tr>
+                            <tr><td><b>Fortalezas observadas</b></td><td><t t-esc="doc.ci_fortalezas or '—'"/></td></tr>
+                            <tr><td><b>Oportunidades de mejora</b></td><td><t t-esc="doc.ci_oportunidades or '—'"/></td></tr>
+                            <tr><td><b>No conformidades (total)</b></td><td><t t-esc="doc.ci_nc_total or '—'"/></td></tr>
+                        </table>
+
+                        <p style="font-size:11px"><b>3.4 Plazos acordados</b></p>
+                        <table class="table table-sm table-bordered mb-2" style="font-size:11px">
+                            <tr><td><b>Informe preliminar</b></td><td><t t-esc="doc.plazo_informe_preliminar"/> días hábiles</td><td><b>Revisión proveedor</b></td><td><t t-esc="doc.plazo_revision_prov"/> días hábiles</td></tr>
+                            <tr><td><b>Informe final</b></td><td><t t-esc="doc.plazo_informe_final"/> días hábiles</td><td><b>PAC</b></td><td><t t-esc="doc.plazo_pac"/> días hábiles</td></tr>
+                            <tr><td><b>Verificación de cierre</b></td><td colspan="3"><t t-esc="doc.plazo_verificacion or '—'"/></td></tr>
+                        </table>
+
+                        <t t-if="doc.ci_observaciones">
+                            <p style="font-size:11px"><b>3.5 Observaciones:</b> <t t-esc="doc.ci_observaciones"/></p>
+                        </t>
+
+                        <t t-if="doc.ci_compromiso_ids">
+                            <p style="font-size:11px"><b>3.6 Compromisos (cierre)</b></p>
+                            <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                                <thead><tr><th>Nº</th><th>Compromiso</th><th>Responsable</th><th>Fecha límite</th></tr></thead>
+                                <tbody>
+                                    <t t-foreach="doc.ci_compromiso_ids" t-as="c">
+                                        <tr>
+                                            <td><t t-esc="c.no or ''"/></td>
+                                            <td><t t-esc="c.compromiso"/></td>
+                                            <td><t t-esc="c.responsable or ''"/></td>
+                                            <td><t t-esc="c.fecha_limite or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- 4. Aprobaciones -->
+                        <h5>4. Aprobaciones</h5>
+                        <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                            <thead><tr><th>Rol</th><th>Nombre</th><th>Firma</th><th>Fecha</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td>Auditor Líder</td>
+                                    <td><t t-esc="doc.elaboro_id.name if doc.elaboro_id else '—'"/></td>
+                                    <td style="width:80px"/>
+                                    <td><t t-esc="doc.fecha_elaboro or '—'"/></td>
+                                </tr>
+                                <tr>
+                                    <td>Resp. de Calidad del proveedor</td>
+                                    <td><t t-esc="doc.resp_calidad_prov or '—'"/></td>
+                                    <td style="width:80px"/>
+                                    <td>—</td>
+                                </tr>
+                                <tr>
+                                    <td>Resp. de Compras (fabricante)</td>
+                                    <td><t t-esc="doc.firma_compras_id.name if doc.firma_compras_id else '—'"/></td>
+                                    <td style="width:80px"/>
+                                    <td><t t-esc="doc.fecha_firma_compras or '—'"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- 5. Distribución -->
+                        <h5>5. Distribución</h5>
+                        <p style="font-size:11px">
+                            <t t-if="doc.dist_archivo">• Archivo de Auditorías de Proveedores<br/></t>
+                            <t t-if="doc.dist_calidad">• Responsable de Calidad (fabricante)<br/></t>
+                            <t t-if="doc.dist_compras">• Responsable de Compras (fabricante)<br/></t>
+                            <t t-if="doc.dist_proveedor">• Proveedor auditado<br/></t>
+                            <t t-if="doc.dist_otros">• <t t-esc="doc.dist_otros"/></t>
+                        </p>
+
+                        <div class="mt-4 pt-2" style="border-top:1px solid #ccc; font-size:9px; color:#777">
+                            Documento controlado — F-DC-005-017 — Sistema de Gestión de Calidad Amunet —
+                            ISO 13485:2016 | IVDR (UE) 2017/746 — Copia no controlada si se imprime
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

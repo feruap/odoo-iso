@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="seq_risk_analysis" model="ir.sequence">
+        <field name="name">Análisis de Riesgos AMEF</field>
+        <field name="code">amunet.risk.analysis</field>
+        <field name="prefix">AMEF-%(year)s%(month)s-</field>
+        <field name="padding">3</field>
+    </record>
+
+    <record id="seq_risk_reanalysis" model="ir.sequence">
+        <field name="name">Re-análisis de Riesgos</field>
+        <field name="code">amunet.risk.reanalysis</field>
+        <field name="prefix">RE-%(year)s%(month)s-</field>
+        <field name="padding">3</field>
+    </record>
+
+    <record id="seq_risk_seguimiento" model="ir.sequence">
+        <field name="name">Seguimiento de Riesgos</field>
+        <field name="code">amunet.risk.seguimiento</field>
+        <field name="prefix">SEG-%(year)s%(month)s-</field>
+        <field name="padding">3</field>
+    </record>
+
+    <record id="criteria_ninguno" model="amunet.risk.matrix">
+        <field name="name">Sin riesgo</field>
+        <field name="nivel">ninguno</field>
+        <field name="npr_min">0</field>
+        <field name="npr_max">0</field>
+        <field name="descripcion">NPR = 0 — No existe riesgo identificado</field>
+        <field name="accion_requerida">Ninguna acción requerida</field>
+        <field name="color">10</field>
+    </record>
+
+    <record id="criteria_bajo" model="amunet.risk.matrix">
+        <field name="name">Bajo riesgo de falla</field>
+        <field name="nivel">bajo</field>
+        <field name="npr_min">1</field>
+        <field name="npr_max">8</field>
+        <field name="descripcion">NPR de 1 a 8 — Riesgo aceptable; monitorear periódicamente</field>
+        <field name="accion_requerida">Monitoreo periódico y documentación</field>
+        <field name="color">10</field>
+    </record>
+
+    <record id="criteria_medio" model="amunet.risk.matrix">
+        <field name="name">Probabilidad media de riesgo</field>
+        <field name="nivel">medio</field>
+        <field name="npr_min">9</field>
+        <field name="npr_max">63</field>
+        <field name="descripcion">NPR de 9 a 63 — Requiere plan de acción correctiva</field>
+        <field name="accion_requerida">Definir acción correctiva con responsable y fecha compromiso</field>
+        <field name="color">3</field>
+    </record>
+
+    <record id="criteria_alto" model="amunet.risk.matrix">
+        <field name="name">Alto riesgo de falla</field>
+        <field name="nivel">alto</field>
+        <field name="npr_min">64</field>
+        <field name="npr_max">125</field>
+        <field name="descripcion">NPR de 64 a 125 — Acción inmediata requerida; escalar a dirección</field>
+        <field name="accion_requerida">Acción inmediata; detener proceso si es necesario; CAPA obligatoria</field>
+        <field name="color">1</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ── Vista lista ─────────────────────────────────────────────── -->
+    <record id="view_desviacion_list" model="ir.ui.view">
+        <field name="name">amunet.desviacion.list</field>
+        <field name="model">amunet.desviacion</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'borrador'"
+                  decoration-warning="state == 'investigacion'"
+                  decoration-success="state == 'cerrado'"
+                  decoration-muted="state == 'no_procede'">
+                <field name="name" string="Folio"/>
+                <field name="fecha_reporte"/>
+                <field name="reporta_id" string="Reportó"/>
+                <field name="area_afectada" string="Área"/>
+                <field name="nivel_riesgo" string="Riesgo" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'borrador'"
+                       decoration-warning="state == 'investigacion'"
+                       decoration-success="state == 'cerrado'"
+                       decoration-danger="state == 'no_procede'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Vista formulario ────────────────────────────────────────── -->
+    <record id="view_desviacion_form" model="ir.ui.view">
+        <field name="name">amunet.desviacion.form</field>
+        <field name="model">amunet.desviacion</field>
+        <field name="arch" type="xml">
+            <form string="Desviación / No Conformidad">
+                <header>
+                    <button name="action_iniciar_investigacion"
+                            string="Iniciar investigación"
+                            type="object" class="btn-primary"
+                            invisible="state != 'borrador'"/>
+                    <button name="action_no_procede"
+                            string="No procede"
+                            type="object"
+                            invisible="state != 'investigacion'"/>
+                    <button name="action_cerrar"
+                            string="Cerrar desviación"
+                            type="object" class="btn-primary"
+                            invisible="state != 'investigacion'"
+                            groups="amunet_documentos.group_responsable_sanitario,amunet_desviaciones.group_desviaciones_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,investigacion,cerrado"/>
+                </header>
+                <sheet>
+                    <field name="is_manager" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name" string="Folio" invisible="not id"/>
+                        <h1 invisible="not id"><field name="name" readonly="1"/></h1>
+                        <h1 invisible="id"><span>Nueva desviación / NC</span></h1>
+                    </div>
+
+                    <!-- ══ 1. IDENTIFICACIÓN ══════════════════════════════ -->
+                    <separator string="1. Identificación de la incidencia"/>
+                    <group>
+                        <group>
+                            <field name="fecha_reporte" readonly="state != 'borrador'"/>
+                            <field name="reporta_id" readonly="state != 'borrador'"/>
+                            <field name="area_afectada"
+                                   placeholder="Ej. Laboratorio de Calidad"
+                                   readonly="state != 'borrador'"/>
+                            <field name="tipo_incidencia"
+                                   widget="radio"
+                                   options="{'horizontal': true}"
+                                   readonly="state != 'borrador'"/>
+                        </group>
+                        <group>
+                            <field name="producto"
+                                   placeholder="Ej. Prueba rápida Salmonella"
+                                   readonly="state != 'borrador'"/>
+                            <field name="lote"
+                                   placeholder="Ej. LOTE-2026-078"
+                                   readonly="state != 'borrador'"
+                                   invisible="tipo_incidencia != 'producto'"/>
+                        </group>
+                    </group>
+                    <group string="Clasificación de la desviación">
+                        <group>
+                            <field name="clasif_interna" readonly="state != 'borrador'"/>
+                            <field name="clasif_externa" readonly="state != 'borrador'"/>
+                        </group>
+                    </group>
+                    <group invisible="tipo_incidencia != 'producto'" string="Producto — información adicional">
+                        <group>
+                            <field name="producto_salio_mercado"
+                                   readonly="state != 'borrador'"/>
+                            <field name="disposicion_producto"
+                                   readonly="state != 'borrador'"/>
+                        </group>
+                        <group>
+                            <field name="requiere_cofepris"
+                                   readonly="state != 'borrador'"/>
+                            <field name="referencia_cofepris"
+                                   invisible="not requiere_cofepris"
+                                   readonly="state != 'borrador'"
+                                   placeholder="Ej. TV-2026-001"/>
+                        </group>
+                    </group>
+
+                    <group invisible="tipo_incidencia != 'proceso'" string="Proceso — información adicional">
+                        <group>
+                            <field name="proceso_suspendido"
+                                   readonly="state != 'borrador'"/>
+                            <field name="afecta_otras_areas"
+                                   readonly="state != 'borrador'"/>
+                            <field name="areas_impactadas_ids"
+                                   widget="many2many_tags"
+                                   invisible="tipo_incidencia != 'proceso' or afecta_otras_areas != 'si'"
+                                   readonly="state != 'borrador'"/>
+                        </group>
+                        <group>
+                            <field name="procedimiento_afectado"
+                                   readonly="state != 'borrador'"/>
+                        </group>
+                    </group>
+
+                    <label for="descripcion" string="Descripción detallada de la desviación / NC"/>
+                    <field name="descripcion"
+                           placeholder="Describe qué pasó, cuándo, dónde, cuántas veces y qué desviación se observó respecto al estándar..."
+                           readonly="state != 'borrador'"/>
+                    <label for="evidencia" string="Descripción de la evidencia objetiva"/>
+                    <p class="text-muted ms-0 mb-1" style="font-size:0.9em">
+                        Escribe con palabras qué prueba encontraste, cuándo y dónde está
+                        (por ejemplo: "captura de pantalla del sistema tomada el 11/ago/2026",
+                        "correo recibido de Producción el 10/ago", "registro de lote impreso sin firma").
+                        Las capturas de pantalla, fotos y archivos los subes en el campo
+                        <b>Evidencia objetiva adjunta</b> que aparece justo debajo.
+                    </p>
+                    <field name="evidencia"
+                           placeholder="Ej. Captura de pantalla del documento en estado Borrador tomada el 11/ago/2026, correo del área de Producción donde se envió sin pasar por aprobación, foto del formato impreso sin marca de copia controlada..."
+                           readonly="state != 'borrador'"/>
+                    <label for="evidencia_adjunta_ids" string="Evidencia objetiva adjunta (archivos)"/>
+                    <field name="evidencia_adjunta_ids" widget="many2many_binary"
+                           readonly="state != 'borrador'"/>
+
+                    <!-- ══ 2. INVESTIGACIÓN Y VALORACIÓN ══════════════════ -->
+                    <separator string="2. Investigación y valoración" invisible="state == 'borrador'"/>
+                    <group invisible="state == 'borrador'">
+                        <label for="criterio" string="Criterio de referencia (procedimiento, norma, especificación)"/>
+                        <field name="criterio"
+                               placeholder="Ej. Procedimiento PR-LAB-012, punto 5.2..."
+                               nolabel="1"
+                               readonly="state != 'investigacion'"/>
+                        <field name="valoracion" readonly="state != 'investigacion'"/>
+                    </group>
+                    <div class="alert alert-info mx-0" role="alert"
+                         style="font-size:0.9em;"
+                         invisible="state == 'borrador'">
+                        <strong>¿Cuándo marcar "No procede"?</strong>
+                        <ul class="mb-0 mt-1">
+                            <li>El reporte fue un error — al investigar se confirmó que el procedimiento sí se siguió correctamente.</li>
+                            <li>Lo observado está dentro de especificaciones o límites aceptables.</li>
+                            <li>Ya existe un registro previo del mismo evento bajo otro folio (duplicado).</li>
+                            <li>No es una desviación sino otra cosa: sugerencia de mejora, queja de cliente o evento de tecnovigilancia.</li>
+                            <li>No existe un criterio de referencia definido contra el cual medir el incumplimiento.</li>
+                        </ul>
+                    </div>
+                    <group invisible="state == 'borrador'">
+                        <field name="resolucion_no_procede"
+                               placeholder="Describe el motivo por el que no procede..."
+                               invisible="valoracion != 'no_procede'"
+                               readonly="state != 'investigacion'"/>
+                    </group>
+
+                    <!-- ══ 3. ANÁLISIS DE CAUSA RAÍZ ══════════════════════ -->
+                    <separator string="3. Análisis de causa raíz" invisible="state == 'borrador'"/>
+                    <group invisible="state == 'borrador'" string="Herramienta utilizada">
+                        <group>
+                            <field name="herramienta_ishikawa" readonly="state != 'investigacion'"/>
+                            <field name="herramienta_5porque" readonly="state != 'investigacion'"/>
+                        </group>
+                    </group>
+                    <!-- 5 Porqués -->
+                    <group invisible="not herramienta_5porque or state == 'borrador'"
+                           string="5 Porqués">
+                        <field name="porque_1" placeholder="¿Por qué ocurrió el problema?" readonly="state != 'investigacion'"/>
+                        <field name="porque_2" placeholder="¿Por qué ocurrió lo anterior?" readonly="state != 'investigacion'"/>
+                        <field name="porque_3" placeholder="¿Por qué ocurrió lo anterior?" readonly="state != 'investigacion'"/>
+                        <field name="porque_4" placeholder="¿Por qué ocurrió lo anterior?" readonly="state != 'investigacion'"/>
+                        <field name="porque_5" placeholder="Causa raíz identificada" readonly="state != 'investigacion'"/>
+                    </group>
+
+                    <!-- Ishikawa -->
+                    <group invisible="not herramienta_ishikawa or state == 'borrador'"
+                           string="Diagrama de Ishikawa (6M)">
+                        <p class="text-muted ms-0 mb-2" style="font-size:0.9em" colspan="2">
+                            Escribe en cada M la posible causa relacionada con esa categoría.
+                            Si alguna no aplica a tu desviación, déjala en blanco.
+                        </p>
+                        <group>
+                            <field name="ishikawa_mano_obra"
+                                   placeholder="¿La causa tiene que ver con las personas? Ej. El personal no conocía el flujo de aprobación, no había recibido capacitación en el sistema"
+                                   readonly="state != 'investigacion'"
+                                   help="Personas: errores humanos, falta de capacitación, responsabilidades no claras, desconocimiento del procedimiento."/>
+                            <field name="ishikawa_maquina"
+                                   placeholder="¿La causa tiene que ver con el sistema o herramientas? Ej. El sistema no estaba disponible, el usuario no tenía acceso al módulo"
+                                   readonly="state != 'investigacion'"
+                                   help="Máquina / Sistema: fallas técnicas, acceso limitado, el sistema no permite hacer algo que se necesita."/>
+                            <field name="ishikawa_metodo"
+                                   placeholder="¿La causa tiene que ver con el procedimiento? Ej. El PNO no indica claramente quién debe aprobar, el flujo no estaba definido"
+                                   readonly="state != 'investigacion'"
+                                   help="Método: instrucciones poco claras, flujo mal definido, ausencia de un procedimiento, pasos ambiguos."/>
+                        </group>
+                        <group>
+                            <field name="ishikawa_material"
+                                   placeholder="¿La causa tiene que ver con documentos o formatos? Ej. Se usó una plantilla obsoleta que no había sido retirada de circulación"
+                                   readonly="state != 'investigacion'"
+                                   help="Material / Insumo: documentos desactualizados, formatos confusos, plantillas incorrectas en circulación."/>
+                            <field name="ishikawa_medicion"
+                                   placeholder="¿La causa tiene que ver con falta de control o verificación? Ej. No existe un mecanismo que confirme que el personal usa la versión vigente"
+                                   readonly="state != 'investigacion'"
+                                   help="Medición: falta de indicadores, sin revisiones periódicas, sin alertas de vencimiento, criterios subjetivos."/>
+                            <field name="ishikawa_medio_ambiente"
+                                   placeholder="¿La causa tiene que ver con el entorno o cultura? Ej. Alta carga de trabajo llevó a omitir el flujo de aprobación para entregar a tiempo"
+                                   readonly="state != 'investigacion'"
+                                   help="Medio ambiente: carga excesiva de trabajo, presión de tiempo, resistencia al cambio, cultura organizacional."/>
+                        </group>
+                    </group>
+
+                    <!-- Árbol de fallos / Otra / resumen -->
+                    <group invisible="state == 'borrador'">
+                        <label for="causas" string="Causa(s) identificada(s) / Conclusión del análisis"/>
+                        <field name="causas"
+                               placeholder="Resume la causa raíz encontrada con la herramienta seleccionada..."
+                               nolabel="1"
+                               readonly="state != 'investigacion'"/>
+                    </group>
+                    <group invisible="state == 'borrador'" string="Análisis de riesgo">
+                        <group>
+                            <field name="severidad" readonly="state != 'investigacion'"/>
+                            <field name="probabilidad" readonly="state != 'investigacion'"/>
+                        </group>
+                        <group>
+                            <field name="nivel_riesgo" readonly="1"/>
+                            <field name="clasificacion_final" readonly="1" widget="badge"
+                                   decoration-danger="clasificacion_final == 'critica'"
+                                   decoration-warning="clasificacion_final == 'mayor'"
+                                   decoration-info="clasificacion_final == 'menor'"/>
+                        </group>
+                    </group>
+
+                    <!-- ══ 4. CONCLUSIÓN ══════════════════════════════════ -->
+                    <separator string="4. Conclusión" invisible="state == 'borrador'"/>
+                    <group invisible="state == 'borrador'">
+                        <label for="conclusion" string="Conclusión del análisis"/>
+                        <field name="conclusion"
+                               placeholder="Ej. La desviación fue causada por un cambio no controlado en el proveedor..."
+                               nolabel="1"
+                               readonly="state != 'investigacion'"/>
+                        <label for="lecciones" string="Lecciones aprendidas"/>
+                        <field name="lecciones"
+                               placeholder="Ej. Es indispensable evaluar a proveedores críticos mediante control de cambios antes de su aprobación."
+                               nolabel="1"
+                               readonly="state != 'investigacion'"/>
+                    </group>
+                    <group invisible="state == 'borrador'">
+                        <group string="Vínculo con Control de Cambios">
+                            <field name="deriva_cc" readonly="state != 'investigacion'"/>
+                            <field name="folio_cc_id"
+                                   invisible="deriva_cc != 'si'"
+                                   readonly="state != 'investigacion'"/>
+                        </group>
+                    </group>
+
+                    <!-- ══ 5. PLAN DE ACCIONES ═══════════════════════════ -->
+                    <separator string="5. Plan de acciones correctivas y preventivas" invisible="state == 'borrador'"/>
+                    <p class="text-muted ms-0 mb-2" style="font-size:0.9em" invisible="state == 'borrador'">
+                        Registra aquí las acciones que se tomarán para corregir la causa raíz
+                        (correctivas) y para evitar que vuelva a ocurrir (preventivas).
+                        Puedes actualizar el estado de cada acción conforme se vayan completando,
+                        incluso después de cerrada la desviación.
+                    </p>
+                    <field name="accion_ids" invisible="state == 'borrador'" nolabel="1">
+                        <list editable="bottom"
+                              decoration-success="state == 'verificada'"
+                              decoration-warning="state == 'realizada'"
+                              decoration-muted="state == 'pendiente'">
+                            <field name="tipo"/>
+                            <field name="descripcion" string="Descripción de la acción"/>
+                            <field name="responsable_id" string="Responsable"
+                                   options="{'no_create': True}"/>
+                            <field name="fecha_limite" string="Fecha límite"/>
+                            <field name="state" readonly="1" widget="badge"
+                                   decoration-danger="state == 'pendiente'"
+                                   decoration-warning="state == 'realizada'"
+                                   decoration-success="state == 'verificada'"/>
+                            <field name="evidencia_cierre" string="¿Qué se hizo?"
+                                   readonly="state != 'pendiente'"
+                                   placeholder="Describe qué acciones tomaste para resolver el problema."/>
+                            <field name="fecha_cierre" string="Fecha de cierre"
+                                   readonly="1" optional="show"/>
+                            <button name="action_marcar_realizada" type="object"
+                                    string="Marcar realizada" icon="fa-check"
+                                    class="btn-sm btn-warning"
+                                    invisible="state != 'pendiente'"/>
+                            <button name="action_verificar" type="object"
+                                    string="Verificar" icon="fa-check-circle"
+                                    class="btn-sm btn-success"
+                                    invisible="state != 'realizada'"/>
+                        </list>
+                    </field>
+
+                    <label for="adjunto_acciones_ids"
+                           string="Anexos de evidencia (sube aquí todos los archivos que respaldan las acciones)"
+                           invisible="state == 'borrador'"/>
+                    <field name="adjunto_acciones_ids"
+                           widget="many2many_binary"
+                           nolabel="1"
+                           invisible="state == 'borrador'"/>
+
+                    <!-- ══ 6. FIRMAS DE ÁREAS INVOLUCRADAS ════════════════ -->
+                    <separator string="6. Firmas de áreas involucradas"/>
+                    <group>
+                        <group string="Emisor (quien reporta)">
+                            <field name="emisor_id" readonly="state not in ('borrador', 'investigacion')"/>
+                            <field name="firma_emisor_id" readonly="1" invisible="not firma_emisor_id"/>
+                            <field name="fecha_firma_emisor" readonly="1" invisible="not fecha_firma_emisor"/>
+                            <button name="action_firmar_emisor"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    type="object" class="btn-primary"
+                                    invisible="firma_emisor_id or state != 'investigacion'"/>
+                        </group>
+                        <group string="Supervisor de área">
+                            <field name="supervisor_id" readonly="state not in ('borrador', 'investigacion')"/>
+                            <field name="firma_supervisor_id" readonly="1" invisible="not firma_supervisor_id"/>
+                            <field name="fecha_firma_supervisor" readonly="1" invisible="not fecha_firma_supervisor"/>
+                            <button name="action_firmar_supervisor"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    type="object" class="btn-primary"
+                                    invisible="firma_supervisor_id or state != 'investigacion'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Responsable (análisis y conclusión)">
+                            <field name="responsable_id" readonly="state not in ('borrador', 'investigacion')"/>
+                            <field name="firma_responsable_id" readonly="1" invisible="not firma_responsable_id"/>
+                            <field name="fecha_firma_responsable" readonly="1" invisible="not fecha_firma_responsable"/>
+                            <button name="action_firmar_responsable"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    type="object" class="btn-primary"
+                                    invisible="firma_responsable_id or state != 'investigacion'"/>
+                        </group>
+                        <group string="Verificó (Calidad / Gerencia)">
+                            <field name="verifico_id" readonly="state not in ('borrador', 'investigacion')"/>
+                            <field name="firma_verifico_id" readonly="1" invisible="not firma_verifico_id"/>
+                            <field name="fecha_firma_verifico" readonly="1" invisible="not fecha_firma_verifico"/>
+                            <button name="action_firmar_verifico"
+                                    string="Firmar" icon="fa-pencil-square-o"
+                                    type="object" class="btn-primary"
+                                    invisible="firma_verifico_id or state != 'investigacion'"/>
+                        </group>
+                    </group>
+
+                    <!-- ══ CIERRE ═════════════════════════════════════════ -->
+                    <separator string="Cierre de la desviación / NC"
+                               invisible="state not in ('investigacion', 'cerrado')"
+                               groups="amunet_documentos.group_responsable_sanitario,amunet_desviaciones.group_desviaciones_manager"/>
+                    <group invisible="state not in ('investigacion', 'cerrado')"
+                           groups="amunet_documentos.group_responsable_sanitario,amunet_desviaciones.group_desviaciones_manager">
+                        <label for="conclusion_cierre" string="Conclusión de cierre"/>
+                        <field name="conclusion_cierre"
+                               placeholder="Ej. Todas las acciones implementadas, desviación cerrada."
+                               nolabel="1"
+                               readonly="state != 'investigacion'"/>
+                        <group>
+                            <field name="cerro_id" readonly="1" invisible="not cerro_id"/>
+                            <field name="fecha_cierre" readonly="1" invisible="not fecha_cierre"/>
+                        </group>
+                        <group>
+                            <field name="firma_cerro_id" readonly="1" invisible="not firma_cerro_id"/>
+                            <field name="fecha_firma_cierre" readonly="1" invisible="not fecha_firma_cierre"/>
+                            <button name="action_firmar_cierre"
+                                    string="Firmar cierre" icon="fa-pencil-square-o"
+                                    type="object" class="btn-primary"
+                                    invisible="firma_cerro_id or state != 'investigacion'"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Lista simplificada (Mis desviaciones) ──────────────────── -->
+    <record id="view_desviacion_mis_list" model="ir.ui.view">
+        <field name="name">amunet.desviacion.mis.list</field>
+        <field name="model">amunet.desviacion</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'borrador'"
+                  decoration-warning="state == 'investigacion'"
+                  decoration-success="state == 'cerrado'"
+                  decoration-muted="state == 'no_procede'">
+                <field name="name" string="Folio"/>
+                <field name="fecha_reporte"/>
+                <field name="area_afectada" string="Área"/>
+                <field name="producto" string="Producto / Proceso"/>
+                <field name="nivel_riesgo" string="Riesgo"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'borrador'"
+                       decoration-warning="state == 'investigacion'"
+                       decoration-success="state == 'cerrado'"
+                       decoration-danger="state == 'no_procede'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Vista de búsqueda ─────────────────────────────────────── -->
+    <record id="view_desviacion_search" model="ir.ui.view">
+        <field name="name">amunet.desviacion.search</field>
+        <field name="model">amunet.desviacion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Folio"/>
+                <field name="area_afectada" string="Área"/>
+                <field name="producto" string="Producto / Proceso"/>
+                <field name="reporta_id" string="Quien reporta"/>
+                <separator/>
+                <filter name="f_borrador" string="Borrador"
+                    domain="[('state','=','borrador')]"/>
+                <filter name="f_investigacion" string="En investigación"
+                    domain="[('state','=','investigacion')]"/>
+                <filter name="f_cerrado" string="Cerrada"
+                    domain="[('state','=','cerrado')]"/>
+                <filter name="f_no_procede" string="No procede"
+                    domain="[('state','=','no_procede')]"/>
+                <separator/>
+                <filter name="g_estado" string="Estado"
+                    context="{'group_by': 'state'}"/>
+                <filter name="g_mes" string="Mes"
+                    context="{'group_by': 'fecha_reporte:month'}"/>
+                <filter name="g_anio" string="Año"
+                    context="{'group_by': 'fecha_reporte:year'}"/>
+                <filter name="g_area" string="Área"
+                    context="{'group_by': 'area_afectada'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Vista: mis acciones pendientes ──────────────────────────── -->
+    <record id="view_desviacion_accion_mis_list" model="ir.ui.view">
+        <field name="name">amunet.desviacion.accion.mis.list</field>
+        <field name="model">amunet.desviacion.accion</field>
+        <field name="arch" type="xml">
+            <list string="Mis acciones pendientes" editable="bottom">
+                <field name="desviacion_id" string="Desviación"/>
+                <field name="tipo" string="Tipo"/>
+                <field name="descripcion" string="Descripción"/>
+                <field name="fecha_limite" string="Fecha límite"/>
+                <field name="state" readonly="1" widget="badge"
+                       decoration-danger="state == 'pendiente'"
+                       decoration-warning="state == 'realizada'"
+                       decoration-success="state == 'verificada'"/>
+                <field name="evidencia_cierre" string="Evidencia de implementación"
+                       readonly="state != 'pendiente'"
+                       placeholder="¿Qué se hizo exactamente?"/>
+                <button name="action_marcar_realizada" type="object"
+                        string="Marcar realizada" icon="fa-check"
+                        class="btn-sm btn-warning"
+                        invisible="state != 'pendiente'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_mis_acciones_desviacion" model="ir.actions.act_window">
+        <field name="name">Mis acciones pendientes</field>
+        <field name="res_model">amunet.desviacion.accion</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_desviacion_accion_mis_list"/>
+        <field name="domain">[('responsable_id', '=', uid), ('state', '=', 'pendiente')]</field>
+    </record>
+
+    <!-- ── Acciones ────────────────────────────────────────────────── -->
+    <record id="action_desviacion_mis" model="ir.actions.act_window">
+        <field name="name">Mis desviaciones</field>
+        <field name="res_model">amunet.desviacion</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('reporta_id', '=', uid)]</field>
+        <field name="view_id" ref="view_desviacion_mis_list"/>
+    </record>
+
+    <record id="action_desviacion" model="ir.actions.act_window">
+        <field name="name">Todas las desviaciones / NC</field>
+        <field name="res_model">amunet.desviacion</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_desviacion_list"/>
+    </record>
+
+    <!-- ── Wizard: verificar efectividad ─────────────────────────────── -->
+    <record id="view_verificar_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.desviacion.verificar.wizard.form</field>
+        <field name="model">amunet.desviacion.verificar.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Verificar efectividad de la acción">
+                <group>
+                    <field name="accion_id" invisible="1"/>
+                    <label for="descripcion_accion" string="Acción que se está verificando"/>
+                    <field name="descripcion_accion" nolabel="1" readonly="1"/>
+                    <separator/>
+                    <label for="evidencia_efectividad"
+                           string="¿Fue efectiva la acción? Describe cómo lo comprobaste."/>
+                    <field name="evidencia_efectividad" nolabel="1"
+                           placeholder="Ej.: Se revisaron los registros de temperatura de la semana siguiente y se mantuvieron dentro del rango. No se han presentado incidencias nuevas."/>
+                </group>
+                <footer>
+                    <button name="action_confirmar" type="object"
+                            string="Confirmar verificación" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

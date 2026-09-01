@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_print_checklist" model="ir.actions.report">
+        <field name="name">Checklist de Auditoría Técnica a Proveedores</field>
+        <field name="model">amunet.checklist.audit.prov</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_checklist_auditoria_prov.report_checklist</field>
+        <field name="report_file">amunet_checklist_auditoria_prov.report_checklist</field>
+        <field name="binding_model_id" ref="model_amunet_checklist_audit_prov"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_checklist">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+
+                        <!-- Encabezado -->
+                        <div class="row mb-3">
+                            <div class="col-8">
+                                <h3>Checklist de Auditoría Técnica a Proveedores</h3>
+                                <h5 class="text-muted">F-DC-005-018 —
+                                    <t t-esc="dict(doc._fields['tipo_proveedor'].selection).get(doc.tipo_proveedor, '')"/>
+                                </h5>
+                            </div>
+                            <div class="col-4 text-end">
+                                <table class="table table-sm table-bordered" style="font-size:10px">
+                                    <tr><td><b>No. Checklist</b></td><td><t t-esc="doc.clave"/></td></tr>
+                                    <tr><td><b>Fecha</b></td><td><t t-esc="doc.fecha"/></td></tr>
+                                    <tr><td><b>No. Auditoría</b></td><td><t t-esc="doc.no_auditoria or '—'"/></td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Datos generales -->
+                        <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                            <tr>
+                                <td width="25%"><b>Proveedor</b></td>
+                                <td><t t-esc="doc.proveedor"/></td>
+                                <td width="25%"><b>Auditor</b></td>
+                                <td><t t-esc="doc.lider_id.name"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- Datos proveedor general -->
+                        <t t-if="doc.tipo_proveedor == 'general'">
+                            <h5>Datos del proveedor</h5>
+                            <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                                <tr><td><b>Razón social</b></td><td><t t-esc="doc.gen_razon_social or '—'"/></td><td><b>Producto/Servicio</b></td><td><t t-esc="doc.gen_producto or '—'"/></td></tr>
+                                <tr><td><b>Contacto</b></td><td><t t-esc="doc.gen_contacto or '—'"/></td><td><b>Teléfono</b></td><td><t t-esc="doc.gen_telefono or '—'"/></td></tr>
+                                <tr><td><b>Correo</b></td><td><t t-esc="doc.gen_correo or '—'"/></td><td><b>Años experiencia</b></td><td><t t-esc="doc.gen_anos_experiencia or '—'"/></td></tr>
+                                <tr><td><b>Antigüedad</b></td><td colspan="3"><t t-esc="doc.gen_antiguedad or '—'"/></td></tr>
+                            </table>
+                        </t>
+
+                        <!-- Criterios agrupados por sección -->
+                        <t t-set="secciones" t-value="doc.linea_ids.mapped('seccion_num')"/>
+                        <t t-foreach="list(dict.fromkeys(doc.linea_ids.mapped('seccion_num')))" t-as="snum">
+                            <t t-set="lineas_sec" t-value="doc.linea_ids.filtered(lambda l: l.seccion_num == snum)"/>
+                            <t t-set="sec_nombre" t-value="lineas_sec[0].seccion_nombre if lineas_sec else ''"/>
+                            <t t-set="sec_pond" t-value="lineas_sec[0].ponderacion if lineas_sec else 0"/>
+                            <t t-set="sec_obtenidos" t-value="sum(l.puntos_posibles for l in lineas_sec if l.cumple == 'si')"/>
+                            <t t-set="sec_posibles" t-value="sum(l.puntos_posibles for l in lineas_sec if l.cumple != 'na')"/>
+
+                            <h6 style="font-size:11px; font-weight:bold; margin-top:8px">
+                                <t t-esc="snum"/>. <t t-esc="sec_nombre"/>
+                                (Ponderación: <t t-esc="int(sec_pond)"/>%)
+                                — Puntuación: <t t-esc="sec_obtenidos"/> / <t t-esc="sec_posibles"/>
+                            </h6>
+                            <table class="table table-sm table-bordered mb-2" style="font-size:10px">
+                                <thead>
+                                    <tr><th width="25px">Nº</th><th>Criterio</th><th width="50px" class="text-center">Cumple</th><th>Observaciones</th></tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="lineas_sec" t-as="l">
+                                        <tr>
+                                            <td class="text-center"><t t-esc="l.no"/></td>
+                                            <td><t t-esc="l.criterio"/></td>
+                                            <td class="text-center">
+                                                <t t-if="l.cumple == 'si'">✓ Sí</t>
+                                                <t t-elif="l.cumple == 'na'">N/A</t>
+                                                <t t-else="">✗ No</t>
+                                            </td>
+                                            <td><t t-esc="l.observaciones or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- Resumen de resultados -->
+                        <h5 style="margin-top:10px">Resumen de resultados</h5>
+                        <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                            <thead>
+                                <tr><th>Sección</th><th class="text-center">Ponderación</th><th class="text-center">Pts. Teóricos</th><th class="text-center">Pts. Obtenidos</th><th class="text-center">% Sección</th></tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="list(dict.fromkeys(doc.linea_ids.mapped('seccion_num')))" t-as="snum">
+                                    <t t-set="ls" t-value="doc.linea_ids.filtered(lambda l: l.seccion_num == snum)"/>
+                                    <t t-set="s_pos" t-value="sum(l.puntos_posibles for l in ls if l.cumple != 'na')"/>
+                                    <t t-set="s_obt" t-value="sum(l.puntos_posibles for l in ls if l.cumple == 'si')"/>
+                                    <tr>
+                                        <td><t t-esc="ls[0].seccion_nombre if ls else ''"/></td>
+                                        <td class="text-center"><t t-esc="int(ls[0].ponderacion if ls else 0)"/>%</td>
+                                        <td class="text-center"><t t-esc="s_pos"/></td>
+                                        <td class="text-center"><t t-esc="s_obt"/></td>
+                                        <td class="text-center"><t t-esc="'%.1f' % (s_obt / s_pos * 100 if s_pos else 0)"/>%</td>
+                                    </tr>
+                                </t>
+                                <tr style="font-weight:bold; background:#f5f5f5">
+                                    <td>TOTAL</td>
+                                    <td class="text-center">100%</td>
+                                    <td class="text-center"><t t-esc="doc.puntos_posibles"/></td>
+                                    <td class="text-center"><t t-esc="doc.puntos_obtenidos"/></td>
+                                    <td class="text-center"><t t-esc="'%.1f' % doc.porcentaje"/>%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Hallazgos -->
+                        <t t-if="doc.hallazgo_ids">
+                            <h5>Hallazgos</h5>
+                            <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                                <thead><tr><th>Tipo</th><th>Descripción</th><th>Evidencia / Recomendación</th></tr></thead>
+                                <tbody>
+                                    <t t-foreach="doc.hallazgo_ids" t-as="h">
+                                        <tr>
+                                            <td><t t-esc="dict(h._fields['tipo'].selection).get(h.tipo, h.tipo)"/></td>
+                                            <td><t t-esc="h.descripcion"/></td>
+                                            <td><t t-esc="h.evidencia or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- Acciones correctivas (Crítico) -->
+                        <t t-if="doc.tipo_proveedor == 'critico' and doc.accion_ids">
+                            <h5>Acciones Correctivas</h5>
+                            <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                                <thead><tr><th>NC Asociada</th><th>Acción Correctiva</th><th>Responsable</th><th>Fecha Límite</th></tr></thead>
+                                <tbody>
+                                    <t t-foreach="doc.accion_ids" t-as="a">
+                                        <tr>
+                                            <td><t t-esc="a.nc_asociada or ''"/></td>
+                                            <td><t t-esc="a.accion"/></td>
+                                            <td><t t-esc="a.responsable or ''"/></td>
+                                            <td><t t-esc="a.fecha_limite or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <t t-if="doc.fecha_seguimiento">
+                                <p style="font-size:11px"><b>Fecha de seguimiento:</b> <t t-esc="doc.fecha_seguimiento"/></p>
+                            </t>
+                        </t>
+
+                        <!-- Conclusión -->
+                        <h5>Conclusión</h5>
+                        <table class="table table-sm table-bordered mb-3" style="font-size:12px">
+                            <tr>
+                                <td width="33%" class="text-center"
+                                    t-attf-style="background:{{ '#d4edda' if doc.conclusion_auto == 'aprobado' else '#f8f9fa' }}; font-weight:{{ 'bold' if doc.conclusion_auto == 'aprobado' else 'normal' }}">
+                                    ☐ APROBADO (≥86%)
+                                </td>
+                                <td width="33%" class="text-center"
+                                    t-attf-style="background:{{ '#fff3cd' if doc.conclusion_auto == 'condicionado' else '#f8f9fa' }}; font-weight:{{ 'bold' if doc.conclusion_auto == 'condicionado' else 'normal' }}">
+                                    ☐ CONDICIONADO (65–85%)
+                                </td>
+                                <td width="33%" class="text-center"
+                                    t-attf-style="background:{{ '#f8d7da' if doc.conclusion_auto == 'rechazado' else '#f8f9fa' }}; font-weight:{{ 'bold' if doc.conclusion_auto == 'rechazado' else 'normal' }}">
+                                    ☐ RECHAZADO (&lt;65%)
+                                </td>
+                            </tr>
+                        </table>
+                        <t t-if="doc.justificacion">
+                            <p style="font-size:11px"><b>Justificación:</b> <t t-esc="doc.justificacion"/></p>
+                        </t>
+                        <t t-if="doc.observaciones_gen">
+                            <p style="font-size:11px"><b>Observaciones:</b> <t t-esc="doc.observaciones_gen"/></p>
+                        </t>
+
+                        <!-- Aprobaciones -->
+                        <h5>Aprobaciones</h5>
+                        <table class="table table-sm table-bordered mb-3" style="font-size:11px">
+                            <thead><tr><th>Rol</th><th>Nombre</th><th>Firma</th><th>Fecha</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td>Auditor Líder</td>
+                                    <td><t t-esc="doc.elaboro_id.name if doc.elaboro_id else '—'"/></td>
+                                    <td style="width:80px"/>
+                                    <td><t t-esc="doc.fecha_elaboro or '—'"/></td>
+                                </tr>
+                                <t t-if="doc.tipo_proveedor == 'critico'">
+                                    <tr>
+                                        <td>Resp. de Calidad del proveedor</td>
+                                        <td><t t-esc="doc.resp_calidad_prov or '—'"/></td>
+                                        <td style="width:80px"/>
+                                        <td>—</td>
+                                    </tr>
+                                </t>
+                                <tr>
+                                    <td>Resp. de Compras (fabricante)</td>
+                                    <td><t t-esc="doc.firma_compras_id.name if doc.firma_compras_id else '—'"/></td>
+                                    <td style="width:80px"/>
+                                    <td><t t-esc="doc.fecha_firma_compras or '—'"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="mt-4 pt-2" style="border-top:1px solid #ccc; font-size:9px; color:#777">
+                            Documento controlado — F-DC-005-018 — Sistema de Gestión de Calidad Amunet —
+                            ISO 13485:2016 | IVDR (UE) 2017/746 — Copia no controlada si se imprime
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

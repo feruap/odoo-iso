@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_plan_auditoria"
+        name="Planes de Auditoría"
+        parent="amunet_auditores.menu_auditores_root"
+        action="action_plan_auditoria"
+        sequence="20"/>
+
+</odoo>

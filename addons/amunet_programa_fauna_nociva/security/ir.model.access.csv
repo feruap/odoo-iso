@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fauna_user,Fauna Nociva Usuario,model_amunet_programa_fauna_nociva,base.group_user,1,0,0,0
+access_fauna_manager,Fauna Nociva Manager,model_amunet_programa_fauna_nociva,amunet_documentos.group_documentos_manager,1,1,1,1
+access_fauna_linea_user,Fauna Nociva Linea Usuario,model_amunet_programa_fauna_nociva_linea,base.group_user,1,0,0,0
+access_fauna_linea_manager,Fauna Nociva Linea Manager,model_amunet_programa_fauna_nociva_linea,amunet_documentos.group_documentos_manager,1,1,1,1

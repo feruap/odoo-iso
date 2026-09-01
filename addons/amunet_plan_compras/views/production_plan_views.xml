@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_production_plan_form_compras" model="ir.ui.view">
+        <field name="name">amunet.production.plan.form.compras</field>
+        <field name="model">amunet.production.plan</field>
+        <field name="inherit_id" ref="amunet_production_plan.view_production_plan_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_create_mos']" position="after">
+                <button name="action_create_purchase_requisition" type="object"
+                        string="Crear requisicion de compra"
+                        invisible="state == 'draft'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

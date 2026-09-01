@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_programa_auditoria"
+        name="Programa Anual"
+        parent="amunet_auditores.menu_auditores_root"
+        action="action_programa_auditoria"
+        sequence="30"/>
+
+</odoo>

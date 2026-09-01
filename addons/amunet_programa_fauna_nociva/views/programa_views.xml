@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_fauna_list" model="ir.ui.view">
+        <field name="name">amunet.programa.fauna.nociva.list</field>
+        <field name="model">amunet.programa.fauna.nociva</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state=='vigente'" decoration-muted="state=='cerrado'">
+                <field name="name"/>
+                <field name="anio"/>
+                <field name="elaboro_id" string="Elaboró"/>
+                <field name="reviso_id"  string="Revisó"/>
+                <field name="state" widget="badge"
+                    decoration-warning="state == 'borrador'"
+                    decoration-success="state == 'vigente'"
+                    decoration-muted="state == 'cerrado'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fauna_form" model="ir.ui.view">
+        <field name="name">amunet.programa.fauna.nociva.form</field>
+        <field name="model">amunet.programa.fauna.nociva</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_cerrar" type="object" string="Cerrar programa"
+                        invisible="state != 'vigente'"/>
+                    <button name="action_borrador" type="object" string="Regresar a borrador"
+                        invisible="state != 'vigente'"
+                        groups="amunet_documentos.group_documentos_manager"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="borrador,vigente,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Datos generales">
+                            <field name="anio" readonly="state != 'borrador'"/>
+                        </group>
+                    </group>
+
+                    <div style="margin-bottom:8px; color:#6c757d; font-size:0.9em;">
+                        <strong>P</strong> = Programada&#160;&#160;·&#160;&#160;
+                        <strong>R</strong> = Reprogramada&#160;&#160;·&#160;&#160;
+                        <strong>Realizada</strong> = Ejecutada&#160;&#160;·&#160;&#160;
+                        <strong>Cancelada</strong> = Cancelada
+                    </div>
+
+                    <field name="linea_ids" nolabel="1"
+                        readonly="state in ('vigente', 'cerrado')">
+                        <list editable="bottom">
+                            <field name="secuencia" widget="handle"/>
+                            <field name="area" string="Área"/>
+                            <field name="ene"/>
+                            <field name="feb"/>
+                            <field name="mar"/>
+                            <field name="abr"/>
+                            <field name="may"/>
+                            <field name="jun"/>
+                            <field name="jul"/>
+                            <field name="ago"/>
+                            <field name="sep"/>
+                            <field name="oct"/>
+                            <field name="nov"/>
+                            <field name="dic"/>
+                        </list>
+                    </field>
+
+                    <separator string="Observaciones"/>
+                    <field name="observaciones" nolabel="1" rows="4"
+                        readonly="state in ('vigente', 'cerrado')"
+                        placeholder="Notas generales del programa..."/>
+
+                    <separator string="Firmas"/>
+                    <group>
+                        <group string="Elaboró">
+                            <field name="elaboro_id" readonly="1" string="Nombre"/>
+                            <field name="fecha_elaboracion" readonly="1" string="Fecha"/>
+                            <button name="action_firmar_elaboracion" type="object"
+                                string="Firmar elaboración" icon="fa-pencil"
+                                class="btn-secondary"
+                                invisible="elaboro_id != False or state != 'borrador'"/>
+                        </group>
+                        <group string="Revisó">
+                            <field name="reviso_id" readonly="1" string="Nombre"/>
+                            <field name="fecha_revision" readonly="1" string="Fecha"/>
+                            <button name="action_firmar_revision" type="object"
+                                string="Firmar y publicar" icon="fa-check"
+                                class="btn-primary"
+                                invisible="reviso_id != False or state == 'cerrado'"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_programa_fauna_nociva" model="ir.actions.act_window">
+        <field name="name">Prevención de Fauna Nociva</field>
+        <field name="res_model">amunet.programa.fauna.nociva</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea el primer programa anual de prevención de fauna nociva
+            </p>
+        </field>
+    </record>
+
+</odoo>

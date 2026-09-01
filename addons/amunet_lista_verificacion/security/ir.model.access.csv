@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_lista_user,Lista Usuario,model_amunet_lista_verificacion,base.group_user,1,0,0,0
+access_lista_doc,Lista Documentacion,model_amunet_lista_verificacion,amunet_documentos.group_documentos_manager,1,1,1,1
+access_item_user,Item Usuario,model_amunet_lista_verificacion_item,base.group_user,1,0,0,0
+access_item_doc,Item Documentacion,model_amunet_lista_verificacion_item,amunet_documentos.group_documentos_manager,1,1,1,1
