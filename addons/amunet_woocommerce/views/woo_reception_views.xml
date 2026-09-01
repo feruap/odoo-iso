@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_woo_reception_list" model="ir.ui.view">
+        <field name="name">amunet.woo.reception.list</field>
+        <field name="model">amunet.woo.reception</field>
+        <field name="arch" type="xml">
+            <list string="Recepciones para venta"
+                  decoration-danger="not vendible"
+                  decoration-success="state == 'publicada'"
+                  decoration-muted="state == 'cancelada'">
+                <field name="received_date"/>
+                <field name="product_id"/>
+                <field name="lot_number"/>
+                <field name="quantity"/>
+                <field name="expiration_month"/>
+                <field name="expiration_year"/>
+                <field name="received_by"/>
+                <field name="delivery_id" optional="show"/>
+                <field name="sin_liberacion" string="SIN liberación"
+                       widget="boolean_toggle" readonly="1"/>
+                <field name="vendible" widget="boolean_toggle" readonly="1"/>
+                <field name="requiere_regularizacion" string="Regularizar"
+                       widget="boolean_toggle" readonly="1"/>
+                <field name="authorized_by" string="Autorizó" optional="show"/>
+                <button name="action_autorizar" type="object"
+                        string="Autorizar (concesión)" icon="fa-unlock"
+                        invisible="not requiere_regularizacion"
+                        confirm="Vas a autorizar vender material SIN la liberación de Calidad (liberación bajo concesión). Quedará registrado con tu nombre. ¿Continuar?"
+                        groups="amunet_woocommerce.group_woo_autoriza_concesion"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'publicada'"
+                       decoration-info="state == 'aceptada'"/>
+                <field name="backend_id" optional="hide"/>
+                <field name="company_id" optional="hide"
+                       groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_woo_reception_form" model="ir.ui.view">
+        <field name="name">amunet.woo.reception.form</field>
+        <field name="model">amunet.woo.reception</field>
+        <field name="arch" type="xml">
+            <form string="Recepción para venta">
+                <header>
+                    <button name="action_autorizar" type="object"
+                            string="Autorizar venta sin liberación"
+                            class="btn-danger"
+                            confirm="Vas a autorizar que se venda material SIN la liberación de Calidad (liberación bajo concesión). Quedará registrado con tu nombre. ¿Continuar?"
+                            invisible="not requiere_regularizacion"
+                            groups="amunet_woocommerce.group_woo_autoriza_concesion"/>
+                    <button name="action_cancelar" type="object"
+                            string="Cancelar" class="btn-secondary"
+                            confirm="¿Cancelar esta recepción para venta?"
+                            invisible="state != 'aceptada'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="aceptada,publicada"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert"
+                         invisible="vendible">
+                        <b>MATERIAL RETENIDO — no vendible.</b>
+                        El lote no está liberado por Calidad y no hay
+                        autorización. Se recibió físicamente, pero
+                        <b>no se publica</b> a la tienda. PM (Mery) o Calidad
+                        pueden regularizarlo autorizándolo bajo concesión.
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not sin_liberacion or not vendible">
+                        <b>VENDIBLE BAJO CONCESIÓN.</b>
+                        El lote NO está liberado por Calidad; su venta se
+                        autorizó expresamente. Calidad debe regularizarlo
+                        (ISO 13485 8.3).
+                    </div>
+                    <group>
+                        <group string="Material recibido">
+                            <field name="product_id"/>
+                            <field name="lot_id"/>
+                            <field name="lot_number"/>
+                            <field name="quantity"/>
+                            <field name="delivery_id"/>
+                        </group>
+                        <group string="Trazabilidad">
+                            <field name="expiration_month"/>
+                            <field name="expiration_year"/>
+                            <field name="received_by"/>
+                            <field name="received_date"/>
+                            <field name="sin_liberacion" readonly="1"/>
+                            <field name="vendible" readonly="1"/>
+                            <field name="requiere_regularizacion" readonly="1"/>
+                            <field name="authorized_by" readonly="1"
+                                   invisible="not authorized_by"/>
+                            <field name="authorized_date" readonly="1"
+                                   invisible="not authorized_by"/>
+                            <field name="authorization_note"
+                                   placeholder="Motivo de la autorización..."
+                                   invisible="not sin_liberacion"/>
+                            <field name="backend_id"/>
+                            <field name="sync_log_id"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <field name="notes" placeholder="Notas de la recepción..."/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_woo_reception_search" model="ir.ui.view">
+        <field name="name">amunet.woo.reception.search</field>
+        <field name="model">amunet.woo.reception</field>
+        <field name="arch" type="xml">
+            <search string="Recepciones para venta">
+                <field name="product_id"/>
+                <field name="lot_number"/>
+                <field name="received_by"/>
+                <filter name="aceptada" string="Aceptadas"
+                        domain="[('state', '=', 'aceptada')]"/>
+                <filter name="publicada" string="Publicadas"
+                        domain="[('state', '=', 'publicada')]"/>
+                <filter name="cancelada" string="Canceladas"
+                        domain="[('state', '=', 'cancelada')]"/>
+                <separator/>
+                <filter name="retenido" string="Retenido (no vendible)"
+                        domain="[('vendible', '=', False)]"/>
+                <filter name="regularizar"
+                        string="Requiere regularización (PM/Calidad)"
+                        domain="[('requiere_regularizacion', '=', True)]"/>
+                <filter name="concesion" string="Vendible bajo concesión"
+                        domain="[('sin_liberacion', '=', True),
+                                 ('vendible', '=', True)]"/>
+                <separator/>
+                <filter name="group_state" string="Estado"
+                        context="{'group_by': 'state'}"/>
+                <filter name="group_product" string="Producto"
+                        context="{'group_by': 'product_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_woo_reception" model="ir.actions.act_window">
+        <field name="name">Recepción de material (venta)</field>
+        <field name="res_model">amunet.woo.reception</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_aceptada': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aún no hay recepciones para venta.</p>
+            <p>Cuando Calidad libere un lote, el almacén acepta su recepción desde
+               el lote; aquí queda la bitácora de lo recibido para venta.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_woo_reception"
+              name="Recepción de material (venta)"
+              parent="menu_amunet_woo_root"
+              action="action_woo_reception"
+              groups="amunet_woocommerce.group_woo_revisor"
+              sequence="12"/>
+
+    <record id="view_stock_lot_form_woo_recepcion" model="ir.ui.view">
+        <field name="name">stock.lot.form.woo.recepcion</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_aceptar_recepcion_venta" type="object"
+                        class="oe_stat_button" icon="fa-check-circle"
+                        groups="amunet_woocommerce.group_woo_revisor">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Aceptar recepción</span>
+                        <span class="o_stat_text">(venta)</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

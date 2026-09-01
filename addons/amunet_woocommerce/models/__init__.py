@@ -7,6 +7,8 @@ from . import woo_stock_snapshot
 from . import woo_long_process
 from . import woo_sync_log
 from . import woo_stock_delivery
+from . import woo_delivery
+from . import woo_reception
 from . import mrp_production
 from . import stock_lot
 from . import woo_stock_sync
