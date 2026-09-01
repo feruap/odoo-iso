@@ -99,33 +99,27 @@
         <field name="name">amunet.quality.check.tablero.search</field>
         <field name="model">amunet.quality.check</field>
         <field name="arch" type="xml">
-            <search string="Tablero de Calidad">
+            <search>
                 <field name="name"/>
                 <field name="product_id"/>
                 <field name="lot_id"/>
                 <field name="tablero_analista_id"/>
-
                 <filter name="f_bloqueo" string="Bloquea produccion o venta"
                         domain="[('tablero_prioridad','=','bloqueo')]"/>
                 <filter name="f_caducidad" string="Proximo a caducar"
                         domain="[('tablero_prioridad','=','caducidad')]"/>
-                <separator/>
                 <filter name="f_sin_asignar" string="Sin asignar"
                         domain="[('tablero_analista_id','=',False)]"/>
                 <filter name="f_mios" string="Mis analisis"
                         domain="[('tablero_analista_id','=',uid)]"/>
-                <separator/>
                 <filter name="f_sin_terminar" string="Sin terminar"
                         domain="[('state','not in',['done','cancel'])]"/>
-
-                <group expand="0" string="Agrupar por">
-                    <filter name="g_analista" string="Analista"
-                            context="{'group_by':'tablero_analista_id'}"/>
-                    <filter name="g_prioridad" string="Prioridad"
-                            context="{'group_by':'tablero_prioridad'}"/>
-                    <filter name="g_estado" string="Estado"
-                            context="{'group_by':'state'}"/>
-                </group>
+                <filter name="g_analista" string="Analista"
+                        context="{'group_by':'tablero_analista_id'}"/>
+                <filter name="g_prioridad" string="Prioridad"
+                        context="{'group_by':'tablero_prioridad'}"/>
+                <filter name="g_estado" string="Estado"
+                        context="{'group_by':'state'}"/>
             </search>
         </field>
     </record>
