@@ -97,6 +97,66 @@
                         </div>
                     </div>
 
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0 lm-card"
+                             t-on-click="() => this.openAction('amunet_programa_auditorias.action_programa_auditoria')">
+                            <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
+                                <i class="fa fa-calendar fa-2x" style="color:#2b7bb9"/>
+                                <div>
+                                    <h5 class="card-title mb-1">Programas anuales</h5>
+                                    <p class="card-text text-muted small mb-0">
+                                        Programa anual de auditorías internas
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0 lm-card"
+                             t-on-click="() => this.openAction('amunet_plan_auditorias.action_plan_auditoria')">
+                            <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
+                                <i class="fa fa-search fa-2x" style="color:#38a169"/>
+                                <div>
+                                    <h5 class="card-title mb-1">Auditorías internas</h5>
+                                    <p class="card-text text-muted small mb-0">
+                                        Planes, informes y registros de auditorías internas
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0 lm-card"
+                             t-on-click="() => this.openAction('amunet_proveedores.action_auditoria_proveedor')">
+                            <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
+                                <i class="fa fa-truck fa-2x" style="color:#805ad5"/>
+                                <div>
+                                    <h5 class="card-title mb-1">Auditorías a proveedores</h5>
+                                    <p class="card-text text-muted small mb-0">
+                                        Informes de auditoría técnica a proveedores
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0 lm-card"
+                             t-on-click="() => this.openAction('amunet_copias_controladas.action_copia_controlada')">
+                            <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
+                                <i class="fa fa-print fa-2x" style="color:#d69e2e"/>
+                                <div>
+                                    <h5 class="card-title mb-1">Copias controladas</h5>
+                                    <p class="card-text text-muted small mb-0">
+                                        Lista maestra de copias controladas de documentos
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
