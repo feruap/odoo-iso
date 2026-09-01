@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+          Se marca el USUARIO de la tablet, no el registro. Asi el mismo flujo
+          sirve desde el telefono de cada quien SIN pedir PIN de apertura:
+          ahi la sesion ya identifica a la persona.
+
+          NO asignar este grupo a personas: es para la sesion compartida del
+          dispositivo. Quien lo tenga vera los botones de kiosco y se le pedira
+          PIN para identificarse.
+        -->
+        <record id="group_kiosco_soluciones" model="res.groups">
+            <field name="name">Soluciones / Dispositivo de kiosco</field>
+            <field name="implied_ids" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('amunet_production.group_solution_maker')),
+            ]"/>
+        </record>
+    </data>
+</odoo>

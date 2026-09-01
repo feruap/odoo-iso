@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ Captura de PIN ============ -->
+    <record id="view_kiosco_pin_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.kiosco.pin.wizard.form</field>
+        <field name="model">amunet.kiosco.pin.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="production_id" invisible="1"/>
+                <field name="accion" invisible="1"/>
+                <div class="text-center mb-3">
+                    <h2><field name="titulo" readonly="1" nolabel="1"/></h2>
+                    <div class="text-muted" invisible="not operador_actual_id">
+                        Elaboracion abierta por
+                        <b><field name="operador_actual_id" readonly="1" nolabel="1"/></b>
+                    </div>
+                </div>
+                <group>
+                    <field name="pin" password="True" nolabel="1"
+                           placeholder="Escribe tu PIN"
+                           class="text-center" style="font-size:2rem;"/>
+                </group>
+                <div class="text-muted text-center">
+                    Tu PIN dice quien eres. Lo que quede en el expediente lleva
+                    tu nombre, no el de la tablet.
+                </div>
+                <footer>
+                    <button name="action_confirmar" type="object"
+                            string="Confirmar" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ Sesiones de kiosco (consulta) ============ -->
+    <record id="view_kiosco_sesion_list" model="ir.ui.view">
+        <field name="name">amunet.kiosco.sesion.list</field>
+        <field name="model">amunet.kiosco.sesion</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state == 'activa'">
+                <field name="production_id"/>
+                <field name="operador_id" widget="many2one_avatar_user"/>
+                <field name="dispositivo_uid" string="Tablet"/>
+                <field name="inicio"/>
+                <field name="ultima_actividad"/>
+                <field name="fin" optional="show"/>
+                <field name="motivo_cierre" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'activa'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_kiosco_sesion_search" model="ir.ui.view">
+        <field name="name">amunet.kiosco.sesion.search</field>
+        <field name="model">amunet.kiosco.sesion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="production_id"/>
+                <field name="operador_id"/>
+                <filter name="f_activas" string="Activas"
+                        domain="[('state','=','activa')]"/>
+                <filter name="g_operador" string="Quien elabora"
+                        context="{'group_by':'operador_id'}"/>
+                <filter name="g_estado" string="Estado"
+                        context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_kiosco_sesiones" model="ir.actions.act_window">
+        <field name="name">Sesiones de kiosco</field>
+        <field name="res_model">amunet.kiosco.sesion</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_kiosco_sesion_search"/>
+    </record>
+
+    <!-- ============ Botones en la orden de solucion ============ -->
+    <record id="view_mrp_production_kiosco" model="ir.ui.view">
+        <field name="name">mrp.production.form.kiosco</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="kiosco_es_dispositivo" invisible="1"/>
+                <field name="kiosco_operador_id" invisible="1"/>
+                <button name="action_kiosco_iniciar" type="object"
+                        string="Iniciar elaboracion (PIN)" class="btn-primary"
+                        invisible="not kiosco_es_dispositivo or not amunet_is_solution_product or kiosco_operador_id"/>
+                <button name="action_kiosco_supervision" type="object"
+                        string="Enviar a supervision (PIN)" class="btn-primary"
+                        invisible="not kiosco_es_dispositivo or not amunet_is_solution_product or not kiosco_operador_id"/>
+                <button name="action_kiosco_analisis" type="object"
+                        string="Solicitar analisis (PIN)"
+                        invisible="not kiosco_es_dispositivo or not amunet_is_solution_product"/>
+                <button name="action_kiosco_producir" type="object"
+                        string="Producir (PIN)"
+                        invisible="not kiosco_es_dispositivo or not amunet_is_solution_product"/>
+            </xpath>
+            <!-- Quien esta trabajando, SIEMPRE visible en la tablet -->
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-info text-center mb-0"
+                     role="status"
+                     invisible="not kiosco_es_dispositivo or not kiosco_operador_id">
+                    <h3 class="mb-0">
+                        Trabajando: <field name="kiosco_operador_id" readonly="1" nolabel="1"/>
+                    </h3>
+                    <small>La sesion se cierra sola tras 10 minutos sin actividad.</small>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <menuitem id="menu_kiosco_sesiones"
+              name="Sesiones de kiosco"
+              parent="mrp.menu_mrp_manufacturing"
+              action="action_kiosco_sesiones"
+              groups="amunet_production.group_solution_maker"
+              sequence="90"/>
+
+</odoo>

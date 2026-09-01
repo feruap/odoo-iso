@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_kiosco_sesion_fabricante,kiosco sesion fabricante,model_amunet_kiosco_sesion,amunet_production.group_solution_maker,1,1,1,0
+access_kiosco_sesion_kiosco,kiosco sesion dispositivo,model_amunet_kiosco_sesion,group_kiosco_soluciones,1,1,1,0
+access_kiosco_pin_wizard_fabricante,kiosco pin wizard fabricante,model_amunet_kiosco_pin_wizard,amunet_production.group_solution_maker,1,1,1,1
+access_kiosco_pin_wizard_kiosco,kiosco pin wizard dispositivo,model_amunet_kiosco_pin_wizard,group_kiosco_soluciones,1,1,1,1
