@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista lista: Cumplimiento de Capacitación
+         Cruce empleado × curso requerido con semáforo
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_cumplimiento_list" model="ir.ui.view">
+        <field name="name">amunet.cumplimiento.list</field>
+        <field name="model">amunet.cumplimiento</field>
+        <field name="arch" type="xml">
+            <list string="Cumplimiento de Capacitación"
+                  create="false" edit="false" delete="false"
+                  decoration-success="estado == 'vigente'"
+                  decoration-warning="estado == 'por_vencer'"
+                  decoration-danger="estado in ('vencida', 'sin_iniciar')"
+                  default_group_by="employee_id">
+                <field name="employee_id" string="Empleado"/>
+                <field name="department_id" string="Departamento" optional="show"/>
+                <field name="job_id" string="Puesto" optional="show"/>
+                <field name="plan_id" string="Plan" optional="show"/>
+                <field name="curso_id" string="Curso"/>
+                <field name="obligatorio" optional="show"/>
+                <field name="expiry_date" string="Vence" optional="show"/>
+                <field name="estado" widget="badge"
+                       decoration-success="estado == 'vigente'"
+                       decoration-warning="estado == 'por_vencer'"
+                       decoration-danger="estado == 'vencida'"
+                       decoration-muted="estado == 'sin_iniciar'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista pivot: % cumplimiento por departamento
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_cumplimiento_pivot" model="ir.ui.view">
+        <field name="name">amunet.cumplimiento.pivot</field>
+        <field name="model">amunet.cumplimiento</field>
+        <field name="arch" type="xml">
+            <pivot string="Cumplimiento de Capacitación">
+                <field name="department_id" type="row"/>
+                <field name="employee_id" type="row"/>
+                <field name="estado" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Vista gráfica: semáforo por departamento
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_cumplimiento_graph" model="ir.ui.view">
+        <field name="name">amunet.cumplimiento.graph</field>
+        <field name="model">amunet.cumplimiento</field>
+        <field name="arch" type="xml">
+            <graph string="Cumplimiento por Departamento" type="bar" stacked="1">
+                <field name="department_id"/>
+                <field name="estado"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Búsqueda
+    ══════════════════════════════════════════════════════ -->
+    <record id="view_amunet_cumplimiento_search" model="ir.ui.view">
+        <field name="name">amunet.cumplimiento.search</field>
+        <field name="model">amunet.cumplimiento</field>
+        <field name="arch" type="xml">
+            <search string="Filtrar cumplimiento">
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="curso_id"/>
+                <field name="plan_id"/>
+                <separator/>
+                <filter name="f_vigentes" string="Vigentes"
+                        domain="[('estado', '=', 'vigente')]"/>
+                <filter name="f_por_vencer" string="Por vencer"
+                        domain="[('estado', '=', 'por_vencer')]"/>
+                <filter name="f_vencidas" string="Vencidas"
+                        domain="[('estado', '=', 'vencida')]"/>
+                <filter name="f_pendientes" string="Pendientes (sin iniciar)"
+                        domain="[('estado', '=', 'sin_iniciar')]"/>
+                <filter name="f_incompletos" string="Incompletos"
+                        domain="[('estado', 'in', ['vencida', 'sin_iniciar'])]"/>
+                <separator/>
+                <filter name="f_solo_obligatorios" string="Solo obligatorios"
+                        domain="[('obligatorio', '=', True)]"/>
+                <separator/>
+                <filter name="group_empleado" string="Por Empleado"
+                        context="{'group_by': 'employee_id'}"/>
+                <filter name="group_depto" string="Por Departamento"
+                        context="{'group_by': 'department_id'}"/>
+                <filter name="group_plan" string="Por Plan"
+                        context="{'group_by': 'plan_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Acción
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_amunet_cumplimiento" model="ir.actions.act_window">
+        <field name="name">Cumplimiento de Capacitación</field>
+        <field name="res_model">amunet.cumplimiento</field>
+        <field name="view_mode">list,pivot,graph</field>
+        <field name="search_view_id" ref="view_amunet_cumplimiento_search"/>
+        <field name="context">{'search_default_f_solo_obligatorios': 1,
+                               'group_by': ['employee_id']}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No hay datos de cumplimiento</p>
+            <p>Asegúrate de que los empleados tengan puesto y departamento asignados
+            y que los planes de estudio estén configurados.</p>
+        </field>
+    </record>
+
+</odoo>
