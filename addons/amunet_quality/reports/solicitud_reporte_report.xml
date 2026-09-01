@@ -117,6 +117,14 @@
                             <t t-elif="o.product_id.default_code and o.product_id.default_code.startswith('SPHM')">
                                 <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Catálogo:</strong> <span t-field="o.product_code"/></td>
                             </t>
+                            <t t-elif="o.product_id.report_document_code == 'RAST-038'">
+                                <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Clave:</strong> STCOP01</td>
+                                <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Catálogo:</strong> <span t-field="o.product_code"/></td>
+                            </t>
+                            <t t-elif="o.product_id.report_document_code == 'RAST-039'">
+                                <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Clave:</strong> STCON01</td>
+                                <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Catálogo:</strong> <span t-field="o.product_code"/></td>
+                            </t>
                             <t t-else="">
                                 <td class="no-border" style="width: 50%; border: 0px none transparent !important; padding: 2px 0;"><strong>Clave:</strong>
                                     <t t-if="o.product_id.report_document_code == 'RAMP-005'">MPCAP01</t>
