@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_programas_hub" model="ir.actions.client">
+        <field name="name">Programas anuales</field>
+        <field name="tag">amunet_programas_hub</field>
+    </record>
+</odoo>

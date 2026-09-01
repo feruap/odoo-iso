@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="amunet_cc_general.AuditProvHub">
+    <div class="o_action o_amunet_mis_pendientes">
+        <div class="o_amunet_dash_section_title">Auditoría Técnica de Proveedores</div>
+        <div class="o_amunet_dash_cards o_amunet_dash_cards_hub">
+
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.openAction('amunet_plan_auditoria_proveedores.action_plan_audit_prov')">
+                <i class="fa fa-file-text-o fa-2x mb-2" style="color:#6f42c1"/>
+                <span class="o_amunet_hub_label">Plan de Auditoría</span>
+                <span class="o_amunet_hub_sublabel">F-DC-005-016</span>
+            </div>
+
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.openAction('amunet_apertura_cierre_prov.action_apertura_cierre_prov')">
+                <i class="fa fa-handshake-o fa-2x mb-2" style="color:#0d6efd"/>
+                <span class="o_amunet_hub_label">Registro de Apertura y Cierre</span>
+                <span class="o_amunet_hub_sublabel">F-DC-005-017</span>
+            </div>
+
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.openAction('amunet_checklist_auditoria_prov.action_checklist_audit_prov')">
+                <i class="fa fa-list-alt fa-2x mb-2" style="color:#198754"/>
+                <span class="o_amunet_hub_label">Checklist de Auditoría Técnica</span>
+                <span class="o_amunet_hub_sublabel">F-DC-005-018</span>
+            </div>
+
+        </div>
+    </div>
+</t>
+</templates>
