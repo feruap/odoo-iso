@@ -295,5 +295,23 @@ for check in checks_neg:
                     detail.write({'text_phrase_mapping': mapping_json})
                     print(f"    Análisis {check.name}: detalle {detail.id} ({param_name}) actualizado")
 
+# ── Códigos de reporte, certificado y referencias ────────────────────────────
+print("\n── Configurando códigos de reporte y referencias ──")
+REFS_NEGATIVO = '- ESPST-039\n- Técnica de análisis TAST-039'
+
+for codigo in ['STCON01', 'STCNL01', 'SPCNL04']:
+    env.cr.execute("""
+        UPDATE product_template SET
+            report_document_code       = 'RAST-039',
+            report_version             = 4,
+            report_effective_date      = '2025-08-01',
+            certificate_document_code  = 'CERST-039',
+            certificate_version        = 4,
+            certificate_effective_date = '2025-08-01',
+            report_references          = %s
+        WHERE default_code = %s
+    """, (REFS_NEGATIVO, codigo))
+    print(f"  {codigo}: RAST-039 / CERST-039 rev04 Ago.2025")
+
 env.cr.commit()
-print("\n✓ Script completado — STCNL01, STCON01, SPCNL04 configurados con MAVI-20 (4 binarios) + MAVI-07 negativo + ANEXO.")
+print("\n✓ Script completado — STCNL01, STCON01, SPCNL04 configurados con MAVI-20 (4 binarios) + MAVI-07 negativo + ANEXO + códigos de reporte.")
