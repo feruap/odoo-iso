@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_auditoria_prov_user,Auditoría Proveedor Usuario,model_amunet_auditoria_proveedor,base.group_user,1,1,1,0
+access_auditoria_prov_manager,Auditoría Proveedor Manager,model_amunet_auditoria_proveedor,amunet_quality.group_quality_manager,1,1,1,1
+access_auditoria_prov_hallazgo_user,Hallazgo Prov Usuario,model_amunet_auditoria_prov_hallazgo,base.group_user,1,1,1,0
+access_auditoria_prov_hallazgo_mgr,Hallazgo Prov Manager,model_amunet_auditoria_prov_hallazgo,amunet_quality.group_quality_manager,1,1,1,1
+access_auditoria_prov_accion_user,Acción Prov Usuario,model_amunet_auditoria_prov_accion,base.group_user,1,1,1,0
+access_auditoria_prov_accion_mgr,Acción Prov Manager,model_amunet_auditoria_prov_accion,amunet_quality.group_quality_manager,1,1,1,1
+access_auditoria_prov_analisis_user,Análisis Prov Usuario,model_amunet_auditoria_prov_analisis,base.group_user,1,1,1,0
+access_auditoria_prov_analisis_mgr,Análisis Prov Manager,model_amunet_auditoria_prov_analisis,amunet_quality.group_quality_manager,1,1,1,1
