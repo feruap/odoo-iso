@@ -175,6 +175,7 @@
                     </group>
                     <group string="Tipo de cambio (selecciona los que apliquen)">
                         <group>
+                            <field name="tipo_pno"           readonly="state not in ('borrador',)"/>
                             <field name="tipo_procedimiento" string="Instrucciones" readonly="state not in ('borrador',)"/>
                             <field name="tipo_formula"       readonly="state not in ('borrador',)"/>
                             <field name="tipo_proveedor"     readonly="state not in ('borrador',)"/>
