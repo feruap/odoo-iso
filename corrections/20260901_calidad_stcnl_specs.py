@@ -282,7 +282,10 @@ print("\n── Actualizando parámetros en líneas de análisis abiertos ──
 Detail = env['amunet.quality.test.line.detail']
 for check in checks_neg:
     for line in check.test_line_ids:
-        for detail in line.detail_ids:
+        # CORREGIDO 2026-09-01 (PM, autorizado por Mery): el campo se llama
+        # detail_line_ids, no detail_ids. Con el nombre viejo el script
+        # reventaba en cuanto tocaba un analisis que SI tenia lineas.
+        for detail in line.detail_line_ids:
             if detail.evaluation_type == 'vama_multi_check':
                 mapping_json = None
                 # Detectar si es MAVI-20 (por el nombre del parámetro)
