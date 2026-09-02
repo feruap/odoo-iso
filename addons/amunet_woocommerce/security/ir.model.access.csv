@@ -19,3 +19,4 @@ access_amunet_entrega_pt_operador,amunet.entrega.pt operador,model_amunet_entreg
 access_amunet_entrega_pt_almacen,amunet.entrega.pt almacen,model_amunet_entrega_pt,amunet_woocommerce.group_almacen_pt,1,1,1,0
 access_entrega_pt_wizard_operador,amunet.entrega.pt.wizard operador,model_amunet_entrega_pt_wizard,amunet_production.group_production_operator,1,1,1,1
 access_entrega_pt_wizard_almacen,amunet.entrega.pt.wizard almacen,model_amunet_entrega_pt_wizard,amunet_woocommerce.group_almacen_pt,1,1,1,1
+access_recibir_pt_wizard_almacen,amunet.recibir.pt.wizard almacen,model_amunet_recibir_pt_wizard,amunet_woocommerce.group_almacen_pt,1,1,1,1

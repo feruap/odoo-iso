@@ -33,11 +33,10 @@
                     <!-- Validar o rechazar: no se acepta a medias. Si el
                          conteo no cuadra se rechaza, se aclara y Produccion
                          vuelve a entregar. -->
-                    <button name="action_entrega_pt_validar" type="object"
-                            string="Validar ingreso a PT" class="btn-primary"
+                    <button name="action_entrega_pt_recibir" type="object"
+                            string="Recibir e ingresar" class="btn-primary"
                             invisible="not picking_ingreso_id or state != 'por_recibir'"
-                            groups="amunet_woocommerce.group_almacen_pt"
-                            confirm="¿Confirmas que contaste esta cantidad y que entra a existencias de PT?"/>
+                            groups="amunet_woocommerce.group_almacen_pt"/>
                     <button name="action_entrega_pt_rechazar" type="object"
                             string="Rechazar entrega" class="btn-danger"
                             invisible="not picking_ingreso_id or state != 'por_recibir'"

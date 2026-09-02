@@ -21,7 +21,7 @@
                             <span class="text-muted"> pza(s)</span>
                         </div>
                         <field name="tipo" widget="radio"/>
-                        <field name="quantity" readonly="tipo == 'total'"/>
+                        <field name="quantity"/>
                     </group>
                 </group>
 

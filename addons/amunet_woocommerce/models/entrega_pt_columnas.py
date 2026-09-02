@@ -86,7 +86,10 @@ class StockPickingEntregaPt(models.Model):
         return self.amunet_entrega_pt_id
 
     def action_entrega_pt_validar_desde_picking(self):
-        return self._amunet_entrega_pt_o_error().action_entrega_pt_validar()
+        # Pregunta el conteo en vez de exigir que lo capturen en una columna
+        # del documento: ahi se perdia y el boton parecia no funcionar.
+        return self.env['amunet.recibir.pt.wizard'].abrir_para(
+            self._amunet_entrega_pt_o_error())
 
     def action_entrega_pt_rechazar_desde_picking(self):
         return self._amunet_entrega_pt_o_error().action_entrega_pt_rechazar()

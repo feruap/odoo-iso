@@ -26,10 +26,9 @@
 
             <xpath expr="//header" position="inside">
                 <button name="action_entrega_pt_validar_desde_picking" type="object"
-                        string="Validar entrega de Producción" class="btn-primary"
+                        string="Recibir e ingresar" class="btn-primary"
                         invisible="not amunet_entrega_pt_id or amunet_entrega_pt_state != 'por_recibir'"
-                        groups="amunet_woocommerce.group_almacen_pt"
-                        confirm="¿Confirmas que contaste esta cantidad y que entra a existencias de PT?"/>
+                        groups="amunet_woocommerce.group_almacen_pt"/>
                 <button name="action_entrega_pt_rechazar_desde_picking" type="object"
                         string="Rechazar entrega" class="btn-danger"
                         invisible="not amunet_entrega_pt_id or amunet_entrega_pt_state != 'por_recibir'"

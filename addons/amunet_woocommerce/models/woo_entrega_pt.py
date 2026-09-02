@@ -352,6 +352,11 @@ class AmunetEntregaPtStock(models.Model):
     # ------------------------------------------------------------------
     # Validacion y rechazo del almacenista
     # ------------------------------------------------------------------
+    def action_entrega_pt_recibir(self):
+        """Abre la pantalla que pregunta cuantas piezas se estan recibiendo."""
+        self.ensure_one()
+        return self.env['amunet.recibir.pt.wizard'].abrir_para(self)
+
     def action_entrega_pt_validar(self):
         """El almacen acepta: el material entra a existencias."""
         for rec in self:
@@ -420,4 +425,49 @@ class AmunetEntregaPtStock(models.Model):
                 'entregar.',
                 quien=self.env.user.display_name,
                 origen=rec._entrega_pt_origen().complete_name))
+            rec._entrega_pt_avisar_rechazo()
         return True
+
+    def _entrega_pt_avisar_rechazo(self):
+        """Le avisa a Produccion que su entrega no paso.
+
+        La nota del rechazo quedaba solo en el historial de la ENTREGA, que
+        Produccion no mira: ellos viven en su orden de fabricacion. Sin este
+        aviso el material regresaba a Temporal PT y nadie se enteraba hasta que
+        alguien preguntara. Lo detecto Mery el 2026-09-02.
+
+        Se avisa en los dos lugares donde si van a verlo:
+          - en el historial de SU ORDEN, que es la pantalla que tienen abierta;
+          - como actividad pendiente para quien entrego, para que le salga en
+            su lista de tareas y no se le pase.
+        """
+        self.ensure_one()
+        mo = self.production_id
+        if not mo:
+            return
+        cuerpo = _(
+            'El almacen RECHAZO la entrega <b>%(entrega)s</b>: '
+            '%(qty)s pza(s) del lote <b>%(lote)s</b>.<br/><br/>'
+            'Rechazada por <b>%(quien)s</b>. El material ya regreso completo a '
+            '<b>%(origen)s</b>, no se perdio nada.<br/><br/>'
+            '<b>Que sigue:</b> revisen la diferencia con el almacen -normalmente '
+            'es que el conteo no coincidio- y vuelvan a entregar con el boton '
+            '"Entrega de PT" de esta misma orden.',
+            entrega=self.name or '',
+            qty=int(self.quantity_delivered),
+            lote=self.lot_id.name or '',
+            quien=self.env.user.display_name,
+            origen=self._entrega_pt_origen().complete_name,
+        )
+        mo.sudo().message_post(body=cuerpo)
+        # Y una tarea para quien entrego, que es quien tiene que volver a
+        # hacerlo. Si no se sabe quien fue, se le deja al responsable de la orden.
+        responsable = self.delivered_by or mo.user_id
+        if responsable:
+            mo.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Volver a entregar a PT: el almacen rechazo %s')
+                        % (self.name or ''),
+                note=cuerpo,
+                user_id=responsable.id,
+            )
