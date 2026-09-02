@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_exento" model="ir.ui.view">
+        <field name="name">hr.employee.form.exento</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Campo exento_retenciones en la pestaña de Información Privada / Nómina -->
+            <xpath expr="//page[@name='payroll_information']" position="inside">
+                <group string="Nómina especial">
+                    <field name="exento_retenciones"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
