@@ -1942,7 +1942,7 @@ class AmunetWooProductMapping(models.Model):
             else:
                 color, cad_txt = 'text-muted', 'sin caducidad'
             lineas.append(
-                '<div style="white-space:nowrap;line-height:1.5">'
+                '<div style="white-space:normal;line-height:1.5">'
                 '<span style="font-family:monospace">%s</span>'
                 ' &nbsp;&middot;&nbsp; <span class="%s">%s</span>'
                 ' &nbsp;&middot;&nbsp; <b>%g pz</b></div>' % (
@@ -1950,7 +1950,7 @@ class AmunetWooProductMapping(models.Model):
                     color, cad_txt, q.quantity))
         return (
             '<details style="display:block;white-space:normal">'
-            '<summary style="cursor:pointer;white-space:nowrap">%d lote(s) &middot; %g pz</summary>'
+            '<summary style="cursor:pointer;white-space:normal">%d lote(s) &middot; %g pz</summary>'
             '<div style="display:block;margin-top:2px">%s</div></details>'
             % (len(lineas), total, ''.join(lineas)))
 

@@ -20,7 +20,7 @@ fabricación, controles de calidad, BOM ni presentaciones de Odoo.
 - Tres grupos: Consulta, Revisor y Administrador, con reglas multiempresa.""",
     'author': 'Amunet',
     'category': 'Inventory',
-    'version': '19.0.11.2.2',
+    'version': '19.0.11.2.3',
     'depends': [
         'mail',
         'stock',
