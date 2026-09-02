@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════ La entrega ══════════ -->
+
+    <record id="view_amunet_entrega_pt_list" model="ir.ui.view">
+        <field name="name">amunet.entrega.pt.list</field>
+        <field name="model">amunet.entrega.pt</field>
+        <field name="arch" type="xml">
+            <list string="Entregas de PT"
+                  decoration-success="state == 'recibida'"
+                  decoration-danger="state == 'rechazada'"
+                  decoration-muted="state == 'cancelada'">
+                <field name="name"/>
+                <field name="delivered_date"/>
+                <field name="production_id"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="quantity_delivered" sum="Piezas"/>
+                <field name="delivered_by"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_entrega_pt_form" model="ir.ui.view">
+        <field name="name">amunet.entrega.pt.form</field>
+        <field name="model">amunet.entrega.pt</field>
+        <field name="arch" type="xml">
+            <form string="Entrega de PT">
+                <header>
+                    <field name="picking_ingreso_id" invisible="1"/>
+                    <!-- Validar o rechazar: no se acepta a medias. Si el
+                         conteo no cuadra se rechaza, se aclara y Produccion
+                         vuelve a entregar. -->
+                    <button name="action_entrega_pt_validar" type="object"
+                            string="Validar ingreso a PT" class="btn-primary"
+                            invisible="not picking_ingreso_id or state != 'por_recibir'"
+                            groups="amunet_woocommerce.group_almacen_pt"
+                            confirm="¿Confirmas que contaste esta cantidad y que entra a existencias de PT?"/>
+                    <button name="action_entrega_pt_rechazar" type="object"
+                            string="Rechazar entrega" class="btn-danger"
+                            invisible="not picking_ingreso_id or state != 'por_recibir'"
+                            groups="amunet_woocommerce.group_almacen_pt"
+                            confirm="¿Rechazar la entrega? El material REGRESA a producción y tendrán que volver a entregarlo."/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="por_recibir,recibida"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Qué se entregó">
+                            <field name="production_id" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="lot_id" readonly="1"/>
+                            <field name="quantity_delivered" readonly="1"/>
+                        </group>
+                        <group string="Quién y cuándo">
+                            <field name="delivered_by" readonly="1"/>
+                            <field name="delivered_date" readonly="1"/>
+                            <field name="picking_ingreso_id" readonly="1"
+                                   invisible="not picking_ingreso_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="Notas">
+                        <field name="notes" nolabel="1" placeholder="Observaciones de la entrega"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_amunet_entrega_pt_search" model="ir.ui.view">
+        <field name="name">amunet.entrega.pt.search</field>
+        <field name="model">amunet.entrega.pt</field>
+        <field name="arch" type="xml">
+            <search string="Entregas de PT">
+                <field name="name"/>
+                <field name="production_id"/>
+                <field name="lot_id"/>
+                <field name="product_id"/>
+                <filter name="por_recibir" string="Por recibir"
+                        domain="[('state','=','por_recibir')]"/>
+                <filter name="recibidas" string="Recibidas"
+                        domain="[('state','=','recibida')]"/>
+                <filter name="rechazadas" string="Rechazadas"
+                        domain="[('state','=','rechazada')]"/>
+                <!-- Los filtros de agrupacion van SUELTOS, no dentro de un
+                     <group>: en Odoo 19 ese contenedor solo admite <field> y
+                     la vista se rechaza con "Expecting an element field". -->
+                <separator/>
+                <filter name="g_estado" string="Estado" context="{'group_by':'state'}"/>
+                <filter name="g_producto" string="Producto" context="{'group_by':'product_id'}"/>
+                <filter name="g_quien" string="Entregado por" context="{'group_by':'delivered_by'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_amunet_entrega_pt" model="ir.actions.act_window">
+        <field name="name">Entregas de PT</field>
+        <field name="res_model">amunet.entrega.pt</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_por_recibir': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aquí llegan las entregas de Producción</p>
+            <p>Producción entrega desde su orden con el botón "Entrega de PT".
+               Aquí las cuentas y decides si las validas o las rechazas.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_amunet_entrega_pt"
+              name="Entregas de PT"
+              parent="stock.menu_stock_warehouse_mgmt"
+              action="action_amunet_entrega_pt"
+              sequence="35"
+              groups="amunet_woocommerce.group_almacen_pt,amunet_production.group_production_operator"/>
+
+    <!-- ══════════ El botón en la orden de fabricación ══════════ -->
+
+    <record id="view_mrp_production_form_entrega_pt_flag" model="ir.ui.view">
+        <field name="name">mrp.production.form.entrega.pt.bandera</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="amunet_entrega_pt_disponible" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- El boton va PEGADO a "Producir": ahi es donde mira el operador cuando
+         termina de fabricar. Insertarlo al final de la cabecera lo dejaba en la
+         posicion 41 de 41 y no se veia. -->
+    <record id="view_mrp_production_entrega_pt_pos" model="ir.ui.view">
+        <field name="name">mrp.production.form.entrega.pt.posicion</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="amunet_production.view_mrp_production_form_amunet_inherit"/>
+        <field name="arch" type="xml">
+            <button name="button_mark_done" position="after">
+                <button name="action_amunet_entrega_pt" type="object"
+                        string="Entrega de PT" class="btn-primary"
+                        invisible="not amunet_entrega_pt_disponible"
+                        groups="amunet_production.group_production_operator"/>
+            </button>
+        </field>
+    </record>
+
+</odoo>

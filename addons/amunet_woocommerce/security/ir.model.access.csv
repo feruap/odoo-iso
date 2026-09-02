@@ -15,3 +15,7 @@ access_woo_stock_delivery_consulta,amunet.woo.stock.delivery consulta,model_amun
 access_woo_stock_delivery_admin,amunet.woo.stock.delivery admin,model_amunet_woo_stock_delivery,amunet_woocommerce.group_woo_admin,1,0,1,0
 access_woo_stock_consumo_consulta,amunet.woo.stock.consumo consulta,model_amunet_woo_stock_consumo,amunet_woocommerce.group_woo_consulta,1,0,0,0
 access_woo_stock_consumo_admin,amunet.woo.stock.consumo admin,model_amunet_woo_stock_consumo,amunet_woocommerce.group_woo_admin,1,0,1,0
+access_amunet_entrega_pt_operador,amunet.entrega.pt operador,model_amunet_entrega_pt,amunet_production.group_production_operator,1,1,1,0
+access_amunet_entrega_pt_almacen,amunet.entrega.pt almacen,model_amunet_entrega_pt,amunet_woocommerce.group_almacen_pt,1,1,1,0
+access_entrega_pt_wizard_operador,amunet.entrega.pt.wizard operador,model_amunet_entrega_pt_wizard,amunet_production.group_production_operator,1,1,1,1
+access_entrega_pt_wizard_almacen,amunet.entrega.pt.wizard almacen,model_amunet_entrega_pt_wizard,amunet_woocommerce.group_almacen_pt,1,1,1,1

@@ -1901,7 +1901,16 @@ class MrpProduction(models.Model):
         })
         self.sudo().message_post(body=_(
             'Análisis de producto terminado <b>APROBADO</b> por <b>%s</b>.') % self.env.user.name)
-        self._amunet_crear_entrega_pt()
+        # DESACTIVADO 2026-09-02 por decision de Mery: la entrega de PT la
+        # dispara PRODUCCION con su boton y su PIN (amunet_woocommerce), no la
+        # aprobacion de Calidad. Tener los dos caminos creaba DOS traslados por
+        # las mismas piezas. Este nunca genero un documento (0 en produccion y
+        # 0 en staging). El metodo se conserva sin llamarse.
+        #
+        # Lo unico util que hacia -liberar el lote al validar- SI se conserva:
+        # el ingreso que crea amunet_woocommerce se marca amunet_es_entrega_pt
+        # cuando el analisis ya esta aprobado, y entonces corre el mismo
+        # _amunet_liberar_lotes_entrega de siempre.
         return True
 
     def _amunet_crear_entrega_pt(self):
