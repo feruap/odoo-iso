@@ -1604,6 +1604,10 @@ class AmunetWooProductMapping(models.Model):
         string='Piezas en anaquel', compute='_compute_anaquel')
     anaquel_lotes = fields.Integer(
         string='Lotes en anaquel', compute='_compute_anaquel')
+    anaquel_html = fields.Html(
+        string='Lotes', compute='_compute_anaquel', sanitize=False,
+        help='Los lotes del anaquel con su caducidad y piezas, desplegables '
+             'desde la lista sin abrir el producto.')
 
 
     @api.depends('product_id')
@@ -1887,6 +1891,7 @@ class AmunetWooProductMapping(models.Model):
             rec.anaquel_quant_ids = Quant.browse()
             rec.anaquel_total_pz = 0.0
             rec.anaquel_lotes = 0
+            rec.anaquel_html = '<span class="text-muted">sin lotes</span>'
         por_backend = {}
         for rec in self:
             if rec.product_id and rec.backend_id:
@@ -1910,6 +1915,42 @@ class AmunetWooProductMapping(models.Model):
                 rec.anaquel_quant_ids = qs
                 rec.anaquel_total_pz = sum(qs.mapped('quantity'))
                 rec.anaquel_lotes = len(qs.filtered('lot_id').mapped('lot_id'))
+                rec.anaquel_html = self._html_lotes(qs)
+
+    @api.model
+    def _html_lotes(self, quants):
+        """Tabla desplegable (details/summary) con lote, caducidad y piezas.
+
+        Va en la lista 1109 para ver los lotes sin salir de la pantalla. El
+        HTML lo arma el sistema (sanitize=False) y los textos van escapados.
+        """
+        from markupsafe import escape
+        import datetime
+        if not quants:
+            return '<span class="text-muted">sin lotes</span>'
+        total = sum(quants.mapped('quantity'))
+        hoy = datetime.date.today()
+        filas = []
+        for q in quants.sorted(key=lambda x: (x.expiration_date or datetime.datetime.max, x.id)):
+            cad = q.expiration_date.date() if hasattr(q.expiration_date, 'date') and q.expiration_date else q.expiration_date
+            if cad:
+                color = 'text-danger' if cad < hoy else ('text-warning' if (cad - hoy).days <= 183 else '')
+                cad_txt = cad.strftime('%d/%m/%Y')
+            else:
+                color, cad_txt = 'text-muted', 'sin caducidad'
+            filas.append(
+                '<tr><td style="padding:0 8px 0 0">%s</td>'
+                '<td class="%s" style="padding:0 8px 0 0">%s</td>'
+                '<td style="text-align:right">%s</td></tr>' % (
+                    escape(q.lot_id.name if q.lot_id else '(sin lote)'),
+                    color, cad_txt, ('%g' % q.quantity)))
+        return (
+            '<details><summary style="cursor:pointer">%d lote(s) &middot; %g pz</summary>'
+            '<table style="font-size:90%%;margin-top:4px"><thead><tr>'
+            '<th style="text-align:left;padding-right:8px">Lote</th>'
+            '<th style="text-align:left;padding-right:8px">Caducidad</th>'
+            '<th style="text-align:right">Piezas</th></tr></thead><tbody>%s</tbody></table></details>'
+            % (len(filas), total, ''.join(filas)))
 
     @api.depends('inicial_line_ids.state')
     def _compute_inicial_pendientes(self):

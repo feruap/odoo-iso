@@ -91,6 +91,7 @@
                         title="Ver lotes del anaquel y capturar inventario inicial"/>
                 <field name="anaquel_total_pz" optional="show" sum="Piezas"/>
                 <field name="anaquel_lotes" optional="show"/>
+                <field name="anaquel_html" widget="html" optional="show" string="Lotes (clic para desplegar)"/>
                 <field name="inicial_pendientes" optional="show"/>
                 <field name="relation_state" widget="badge"
                        decoration-success="relation_state == 'confirmed'"
