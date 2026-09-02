@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
+from calendar import monthrange
+from datetime import datetime
 from odoo import models, fields, api, Command, _
 from odoo.exceptions import UserError, ValidationError
 from markupsafe import Markup
@@ -1208,7 +1210,23 @@ class MrpProduction(models.Model):
             for prod in self:
                 if prod.lot_producing_ids:
                     prod.solution_lot_id = ", ".join(prod.lot_producing_ids.mapped('name'))
-                    
+
+        # Si se corrige la caducidad en la orden, el lote la sigue. Sin esto el
+        # lote se queda con la fecha vieja y el registro vuelve a separarse de
+        # la etiqueta, que es justo el problema que esto resuelve.
+        if ('amunet_expiration_text' in vals
+                or 'solution_expiration_date' in vals
+                or 'date_start' in vals
+                or 'product_id' in vals
+                or 'lot_producing_ids' in vals
+                or 'lot_producing_id' in vals):
+            # date_start y product_id no traen la caducidad en vals, pero la
+            # recalculan (_compute_quality_params). Hay que bajar ese recalculo
+            # antes de leerla, o se sincroniza con el valor viejo.
+            self.flush_recordset(['amunet_expiration_text',
+                                  'solution_expiration_date'])
+            self._amunet_sincronizar_caducidad_lotes()
+
         return res
 
     def _amunet_check_lote_lock(self):
@@ -1362,6 +1380,99 @@ class MrpProduction(models.Model):
                 consec = max(consec, int(m.group(1)))
         return '%s-%02d' % (prefix, consec + 1)
 
+    def _amunet_caducidad_de_la_orden(self):
+        """La caducidad que vale es la que dice la ORDEN, no la del producto.
+
+        Es la misma que ya se imprime en la etiqueta (ver amunet_label), asi que
+        de aqui sale la unica fecha que el cliente llega a ver.
+
+        Dos formatos, segun lo que valida _check_expiration_text_format:
+          - Terminados: 'AAAA-MM'. Se toma el ULTIMO DIA de ese mes; el texto
+            declara el mes completo, no el dia 1.
+          - Soluciones: 'DD.MM.YY', que ya es un dia exacto.
+
+        Devuelve None si la orden no trae caducidad; quien llama decide.
+        """
+        self.ensure_one()
+        texto = (self.amunet_expiration_text or '').strip()
+        if texto:
+            m = re.match(r'^(\d{4})-(\d{2})$', texto)
+            if m:
+                anio, mes = int(m.group(1)), int(m.group(2))
+                return datetime(anio, mes, monthrange(anio, mes)[1], 23, 59, 59)
+            m = re.match(r'^(\d{2})\.(\d{2})\.(\d{2})$', texto)
+            if m:
+                dia, mes, anio = (int(m.group(1)), int(m.group(2)),
+                                  2000 + int(m.group(3)))
+                return datetime(anio, mes, dia, 23, 59, 59)
+        # Las soluciones de desarrollo capturan la fecha en el calendario y el
+        # texto se deriva de ahi; si el texto viniera vacio, esta es la buena.
+        if self.solution_expiration_date:
+            return self.solution_expiration_date
+        return None
+
+    def _amunet_sincronizar_caducidad_lotes(self):
+        """Deja los lotes de la orden con la caducidad que dice la orden.
+
+        Regla de Mery (2026-09-02): el lote debe decir lo mismo que su orden.
+        Antes el lote nacia sin caducidad y Odoo se la inventaba desde el
+        producto; asi se acumularon 57 lotes descuadrados.
+
+        Las fechas derivadas (consumo preferente, retiro, alerta) se recorren el
+        mismo numero de dias para conservar la separacion que tenian.
+
+        Un lote LIBERADO esta bloqueado a proposito por Calidad. Aqui se usa la
+        salida que ese mismo candado expone, porque no se esta cambiando la vida
+        util autorizada: se esta haciendo que el registro diga lo que la
+        etiqueta impresa ya dice. Cada ajuste queda anotado en el historial del
+        lote para que Calidad lo pueda auditar.
+
+        UNICA EXCEPCION: ALARGAR la caducidad de un lote ya LIBERADO no se hace
+        por aqui. Para eso existe amunet.lot.extension, con sus tres firmas
+        (Calidad, Responsable Sanitario, Almacen). Si esto lo dejara pasar, esa
+        autorizacion se podria saltar editando un campo de la orden. Acortarla
+        si pasa: es mas restrictivo y no libera nada que estuviera detenido.
+        """
+        for prod in self:
+            nueva = prod._amunet_caducidad_de_la_orden()
+            if not nueva:
+                continue
+            for lote in prod.lot_producing_ids:
+                antes = lote.expiration_date
+                if antes and antes == nueva:
+                    continue
+                if (antes and nueva > antes
+                        and lote.amunet_lot_release_state == 'released'):
+                    raise UserError(_(
+                        'El lote %(lote)s ya esta liberado y esta caducidad lo '
+                        'ALARGA (%(antes)s -> %(ahora)s).\n\n'
+                        'Alargar la vida util de un lote liberado se autoriza '
+                        'con una Extension de caducidad, que lleva la firma de '
+                        'Calidad, del Responsable Sanitario y de Almacen. '
+                        'Creala desde el lote.\n\n'
+                        'Si lo que quieres es ACORTAR la caducidad, eso si se '
+                        'hace desde aqui.',
+                        lote=lote.name or '',
+                        antes=antes.strftime('%d/%m/%Y'),
+                        ahora=nueva.strftime('%d/%m/%Y'),
+                    ))
+                vals = {'expiration_date': nueva}
+                if antes:
+                    delta = nueva.date() - antes.date()
+                    for campo in ('use_date', 'removal_date', 'alert_date'):
+                        if lote[campo]:
+                            vals[campo] = lote[campo] + delta
+                lote.sudo().with_context(
+                    skip_lot_release_lock=True).write(vals)
+                lote.sudo().message_post(body=_(
+                    'Caducidad tomada de la orden <b>%(orden)s</b>, que indica '
+                    '<b>%(texto)s</b>: %(antes)s &rarr; <b>%(ahora)s</b>.',
+                    orden=prod.name or '',
+                    texto=prod.amunet_expiration_text or '',
+                    antes=antes.strftime('%d/%m/%Y') if antes else _('sin fecha'),
+                    ahora=nueva.strftime('%d/%m/%Y'),
+                ))
+
     def action_confirm(self):
         # Crear fisicamente el lote ahora que se esta confirmando.
         # Politica Amunet (PNOGE-014):
@@ -1380,6 +1491,12 @@ class MrpProduction(models.Model):
                         'product_id': prod.product_id.id,
                         'company_id': prod.company_id.id,
                     }
+                    # El lote nace con la caducidad de SU orden. Si no se pone
+                    # aqui, Odoo la calcula desde el producto y queda distinta
+                    # de la que se imprime en la etiqueta.
+                    caducidad = prod._amunet_caducidad_de_la_orden()
+                    if caducidad:
+                        lot_vals['expiration_date'] = caducidad
                     # Soluciones de desarrollo: el nombre de desarrollo se guarda
                     # como referencia del lote (identifica el batch sin tocar el
                     # producto maestro).
@@ -1393,6 +1510,9 @@ class MrpProduction(models.Model):
                 except Exception:
                     pass
         res = super().action_confirm()
+        # Red de seguridad: cubre el lote que ya venia puesto a mano y el que
+        # Odoo crea por su cuenta al confirmar. Si ya coincide, no hace nada.
+        self._amunet_sincronizar_caducidad_lotes()
         # Ruteo del terminado de SOLUCIONES segun requieran analisis o no.
         self._amunet_route_solution_finished()
         # Surtido DENTRO de la orden solo si la solucion lleva sub-soluciones.
