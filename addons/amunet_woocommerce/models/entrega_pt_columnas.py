@@ -21,7 +21,8 @@ columnas SI son necesarias en las recepciones de Karla y en la conversion de
 combos, y no se tocan.
 """
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 SEQ_INGRESO_PT = 'APTIN'
 
@@ -53,3 +54,50 @@ class StockMoveLine(models.Model):
         help='Lo que Produccion firmo con su PIN. Si no coincide con lo que '
              'cuentas, no lo corrijas: rechaza la entrega y el material '
              'regresa completo a Produccion.')
+
+
+class StockPickingEntregaPt(models.Model):
+    """Los botones de la entrega, tambien en el documento de Recepciones.
+
+    Quien recibe llega al documento, no a la pantalla de la entrega. Aqui se le
+    dan los mismos botones para que pueda cerrar donde ya esta.
+    """
+    _inherit = 'stock.picking'
+
+    amunet_entrega_pt_id = fields.Many2one(
+        'amunet.entrega.pt', string='Entrega de PT',
+        compute='_compute_amunet_entrega_pt_id',
+        help='La entrega que genero este documento, si la hubo.')
+    amunet_entrega_pt_state = fields.Selection(
+        related='amunet_entrega_pt_id.state', string='Estado de la entrega')
+
+    @api.depends('picking_type_id')
+    def _compute_amunet_entrega_pt_id(self):
+        Entrega = self.env['amunet.entrega.pt'].sudo()
+        for rec in self:
+            rec.amunet_entrega_pt_id = Entrega.search(
+                [('picking_ingreso_id', '=', rec.id)], limit=1)
+
+    def _amunet_entrega_pt_o_error(self):
+        self.ensure_one()
+        if not self.amunet_entrega_pt_id:
+            raise UserError(_(
+                'Este documento no viene de una entrega de Produccion.'))
+        return self.amunet_entrega_pt_id
+
+    def action_entrega_pt_validar_desde_picking(self):
+        return self._amunet_entrega_pt_o_error().action_entrega_pt_validar()
+
+    def action_entrega_pt_rechazar_desde_picking(self):
+        return self._amunet_entrega_pt_o_error().action_entrega_pt_rechazar()
+
+    def action_entrega_pt_abrir(self):
+        entrega = self._amunet_entrega_pt_o_error()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Entrega de PT'),
+            'res_model': 'amunet.entrega.pt',
+            'res_id': entrega.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }

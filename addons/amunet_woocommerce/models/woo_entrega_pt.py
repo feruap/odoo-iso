@@ -388,6 +388,10 @@ class AmunetEntregaPtStock(models.Model):
                      'lote': rec.lot_id.name or ''})
             picking.move_ids.picked = True
             picking.with_context(skip_expired=True).button_validate()
+            # La entrega se cierra. Sin esto quedaba en 'por recibir' aunque el
+            # material ya estuviera en existencias: los botones seguian a la
+            # vista y no habia forma de saber que ya se habia atendido.
+            rec.state = 'recibida'
             rec.message_post(body=_(
                 'Ingreso a PT validado por <b>%(quien)s</b>: %(qty)s pza(s) del '
                 'lote <b>%(lote)s</b> entraron a existencias.',
@@ -409,6 +413,7 @@ class AmunetEntregaPtStock(models.Model):
             rec._entrega_pt_mover(
                 rec._entrega_pt_entrada(), rec._entrega_pt_origen(),
                 _('Rechazo de entrega %s') % (rec.production_id.name or ''))
+            rec.state = 'rechazada'
             rec.message_post(body=_(
                 'Entrega RECHAZADA por <b>%(quien)s</b>. El material regreso a '
                 '%(origen)s; Produccion debe aclarar la diferencia y volver a '

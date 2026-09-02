@@ -80,7 +80,7 @@ class AmunetEntregaPtWizard(models.TransientModel):
             'lot_id': lot.id,
             'qty_pendiente': pendiente,
             'quantity': pendiente,
-            'aviso_liberacion': self._aviso_liberacion(lot),
+            'aviso_liberacion': self._aviso_liberacion(lot, production),
             'aviso_caducidad': self._aviso_caducidad(lot),
             'lote_caducidad': (lot.expiration_date.strftime('%d/%m/%Y')
                                if lot.expiration_date else _('sin fecha')),
@@ -123,14 +123,29 @@ class AmunetEntregaPtWizard(models.TransientModel):
         return ''
 
     @api.model
-    def _aviso_liberacion(self, lot):
-        estado = getattr(lot, 'amunet_lot_release_state', False)
-        if estado == 'released':
+    def _aviso_liberacion(self, lot, production=None):
+        """Aviso sobre la liberacion del lote.
+
+        OJO con la distincion, que confundio a Mery el 2026-09-02: que Calidad
+        haya APROBADO EL ANALISIS de la orden no es lo mismo que el LOTE este
+        liberado. Son dos estados distintos y el aviso decia "Calidad no lo ha
+        liberado" en ordenes con el analisis ya aprobado, que es exactamente al
+        reves de lo que pasa: con el analisis aprobado el lote se libera SOLO
+        cuando el almacen valide esta entrega.
+        """
+        if getattr(lot, 'amunet_lot_release_state', False) == 'released':
             return ''
+        aprobado = production is not None and getattr(
+            production, 'quality_analysis_status', False) == 'approved'
+        if aprobado:
+            return _(
+                'Calidad ya aprobo el analisis de esta orden. El lote se '
+                'liberara SOLO, en automatico, cuando el almacen valide esta '
+                'entrega: no hay que pedir nada mas.')
         return _(
-            'Este lote NO esta liberado por Calidad. Se puede entregar, pero el '
-            'material quedara RETENIDO: entra al almacen y no se puede vender '
-            'hasta que Calidad lo libere.')
+            'Calidad todavia NO ha aprobado el analisis de esta orden. Se puede '
+            'entregar, pero el material quedara RETENIDO: entra al almacen y no '
+            'se puede vender hasta que Calidad apruebe.')
 
     # ------------------------------------------------------------------
     def _validar_pin(self):
@@ -148,17 +163,29 @@ class AmunetEntregaPtWizard(models.TransientModel):
             raise UserError(_('El PIN no es correcto.'))
 
     def _validar_gracia_liberacion(self):
-        """Vencida la gracia, no se entrega material sin liberar."""
+        """Vencida la gracia, no se entrega material que Calidad no aprobo.
+
+        Se aceptan DOS formas de tener el visto bueno de Calidad, porque son dos
+        estados distintos del mismo hecho:
+          - el LOTE ya liberado, o
+          - el ANALISIS de la orden ya aprobado (el lote se libera solo cuando
+            el almacen valide esta entrega).
+        Antes solo se miraba el lote, asi que una orden con el analisis aprobado
+        se habria bloqueado al vencer la gracia sin ninguna razon.
+        """
         self.ensure_one()
         if getattr(self.lot_id, 'amunet_lot_release_state', False) == 'released':
+            return
+        if getattr(self.production_id, 'quality_analysis_status',
+                   False) == 'approved':
             return
         limite = self.env['ir.config_parameter'].sudo().get_param(P_GRACIA)
         if limite and fields.Date.context_today(self) <= fields.Date.to_date(limite):
             return
         raise UserError(_(
-            'El lote %(lote)s no esta liberado por Calidad y el periodo de '
-            'gracia termino el %(fecha)s.\n\n'
-            'Calidad debe liberarlo antes de entregarlo al almacen.'
+            'Calidad no ha aprobado el analisis del lote %(lote)s y el periodo '
+            'de gracia termino el %(fecha)s.\n\n'
+            'Calidad debe aprobar el analisis antes de entregarlo al almacen.'
         ) % {'lote': self.lot_id.name, 'fecha': limite or '-'})
 
     # ------------------------------------------------------------------
