@@ -88,6 +88,24 @@ class AmunetQualityCheck(models.Model):
     )
 
     @api.model
+    def _tablero_cron_refrescar(self):
+        """Red de seguridad del tablero.
+
+        El aviso desde la orden de produccion cubre el caso principal, pero el
+        bloqueo tambien cambia por cosas que pasan fuera de la orden: un lote
+        que se libera, una caducidad que se acerca. En vez de perseguir cada
+        camino uno por uno, se recalcula lo abierto cada tanto.
+        """
+        abiertos = self.search([('state', 'not in', ('done', 'cancel'))])
+        if not abiertos:
+            return True
+        abiertos._compute_tablero_bloqueo()
+        abiertos._compute_tablero_caducidad()
+        abiertos._compute_tablero_prioridad()
+        abiertos._compute_tablero_orden()
+        return True
+
+    @api.model
     def _tablero_dominio_analistas(self):
         """Solo se puede asignar el analisis a un Analista de Calidad.
 
