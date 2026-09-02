@@ -10,3 +10,4 @@ from . import woo_stock_delivery
 from . import mrp_production
 from . import stock_lot
 from . import woo_stock_sync
+from . import woo_inicial_line

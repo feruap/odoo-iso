@@ -15,3 +15,6 @@ access_woo_stock_delivery_consulta,amunet.woo.stock.delivery consulta,model_amun
 access_woo_stock_delivery_admin,amunet.woo.stock.delivery admin,model_amunet_woo_stock_delivery,amunet_woocommerce.group_woo_admin,1,0,1,0
 access_woo_stock_consumo_consulta,amunet.woo.stock.consumo consulta,model_amunet_woo_stock_consumo,amunet_woocommerce.group_woo_consulta,1,0,0,0
 access_woo_stock_consumo_admin,amunet.woo.stock.consumo admin,model_amunet_woo_stock_consumo,amunet_woocommerce.group_woo_admin,1,0,1,0
+access_woo_inicial_line_consulta,amunet.woo.inicial.line consulta,model_amunet_woo_inicial_line,amunet_woocommerce.group_woo_consulta,1,0,0,0
+access_woo_inicial_line_revisor,amunet.woo.inicial.line revisor,model_amunet_woo_inicial_line,amunet_woocommerce.group_woo_revisor,1,1,1,1
+access_woo_inicial_line_admin,amunet.woo.inicial.line admin,model_amunet_woo_inicial_line,amunet_woocommerce.group_woo_admin,1,1,1,1
