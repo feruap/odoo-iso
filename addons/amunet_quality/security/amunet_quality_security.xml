@@ -79,4 +79,22 @@
         <field name="perm_unlink" eval="True"/>
     </record>
 
+
+    <!-- Firma de ALMACEN en las extensiones de caducidad.
+
+         La extension pide tres firmas: Calidad -> Responsable Sanitario ->
+         Almacen. Pero solo los grupos de Calidad tenian permiso de escritura
+         sobre amunet.lot.extension, y la firma de almacen escribe para cerrar
+         el registro. Resultado: el flujo SIEMPRE se trababa en el ultimo paso
+         y por eso el mecanismo llevaba cero usos.
+
+         Detectado por el agente de Almacen el 2026-09-02 con EXT/2026/0001
+         (antidoping, 1,730 pz sin poderse vender).
+
+         El grupo vive aqui, junto al modelo, porque amunet_quality no depende
+         de los modulos de almacen ni al reves. -->
+    <record id="group_lot_extension_warehouse" model="res.groups">
+        <field name="name">Almacen / Firma extensiones de caducidad</field>
+    </record>
+
 </odoo>
