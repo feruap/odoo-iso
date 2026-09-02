@@ -110,6 +110,14 @@
                                 </td>
                                 <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-esc="o.product_code"/></td>
                             </t>
+                            <t t-elif="o.product_id.report_document_code == 'RAST-038'">
+                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CLAVE:</strong> STCOP01</td>
+                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-esc="o.product_code"/></td>
+                            </t>
+                            <t t-elif="o.product_id.report_document_code == 'RAST-039'">
+                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CLAVE:</strong> STCON01</td>
+                                <td class="no-border" style="width: 50%; padding: 2px 0;"><strong>CATÁLOGO:</strong> <span t-esc="o.product_code"/></td>
+                            </t>
                             <t t-else="">
                                 <td class="no-border" colspan="2" style="padding: 2px 0;"><strong>CLAVE:</strong> <span t-esc="o.product_code"/></td>
                             </t>

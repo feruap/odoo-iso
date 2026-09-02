@@ -347,7 +347,14 @@ class AmunetWooBackend(models.Model):
         by_lot = {}
         for quant in quants:
             lot = quant.lot_id
-            if not lot or lot.amunet_lot_release_state != 'released':
+            if not lot:
+                continue
+            # El material de INVENTARIO INICIAL es anterior al sistema: no tiene
+            # liberacion de Calidad que citar porque nunca paso por el proceso.
+            # Exigirsela lo dejaria fuera para siempre. Su constancia es el
+            # ajuste de inventario con usuario, fecha y motivo.
+            inicial = bool(getattr(lot, 'amunet_origen_inicial', False))
+            if not inicial and lot.amunet_lot_release_state != 'released':
                 continue
             reserved = getattr(quant, 'reserved_quantity', 0.0)
             free = quant.quantity - reserved

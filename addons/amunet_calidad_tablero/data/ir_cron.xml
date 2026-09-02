@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Red de seguridad del tablero.
+
+         El aviso desde la orden de produccion (models/mrp_production.py) cubre
+         el caso principal: orden nueva o cambio de estado. Pero la prioridad
+         tambien depende de cosas que pasan fuera de la orden -un lote que se
+         libera, una caducidad que se acerca-, y perseguir cada camino uno por
+         uno es fragil.
+
+         Cada 30 minutos, no cada minuto: el tablero es para repartir trabajo del
+         dia, no un semaforo en vivo, y recalcular todos los analisis abiertos
+         cuesta. -->
+    <record id="cron_tablero_refrescar" model="ir.cron">
+        <field name="name">Tablero de Calidad: refrescar prioridades</field>
+        <field name="model_id" ref="amunet_quality.model_amunet_quality_check"/>
+        <field name="state">code</field>
+        <field name="code">model._tablero_cron_refrescar()</field>
+        <field name="interval_number">30</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+</odoo>

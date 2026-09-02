@@ -10,6 +10,8 @@ from . import stock_quant
 from . import stock_scrap
 from . import amunet_lot_factory
 from . import stock_move
+# Sella la fecha de fabricacion en los lotes que produce una orden
+from . import mrp_production
 # Reporte de trazabilidad con columna factory_lot_id
 from . import stock_traceability_report
 

@@ -303,6 +303,46 @@ class StockPicking(models.Model):
                     'AVISO — captura la CADUCIDAD real antes de validar.\n\n%s'
                 ) % '\n\n'.join(partes))
 
+    def _amunet_check_manufacturing_captured(self):
+        """Bloquea la validacion si falta la FECHA DE FABRICACION en material de
+        MATERIA PRIMA.
+
+        Es el dato que el proveedor imprime en el envase y solo se puede capturar
+        aqui: si la recepcion se valida sin el, no hay de donde recuperarlo
+        despues. Se detecto con 205 lotes recibidos con el campo en blanco y
+        1,137 mas que entraron por ajuste de inventario.
+
+        Se limita a materia prima a proposito. Lo que fabricamos nosotros recibe
+        la fecha solo al cerrar su orden (ver amunet_lot), y para consumibles o
+        material impreso el dato no aplica.
+        """
+        for p in self.filtered(lambda x: x.picking_type_code == 'incoming'):
+            faltan = []
+            for line in p.move_line_ids:
+                if (line.quantity or 0) <= 0:
+                    continue
+                categ = line.product_id.product_tmpl_id.categ_id.complete_name or ''
+                if not categ.startswith('Materia prima'):
+                    continue
+                fab = line.manufacturing_date or (
+                    line.lot_id.manufacturing_date if line.lot_id else False)
+                # Igual que en la caducidad: si se capturo como texto en el
+                # movimiento y aun no se propago a la linea, no bloquear en falso.
+                mv = line.move_id
+                if not fab and mv and mv.amunet_mfg_date:
+                    fab = _parse_date(mv.amunet_mfg_date)
+                if not fab:
+                    lote = line.lot_id.name or line.lot_name or 's/l'
+                    faltan.append('  - %s (lote %s)' % (
+                        line.product_id.display_name, lote))
+            if faltan:
+                raise UserError(_(
+                    'AVISO — captura la FECHA DE FABRICACION antes de validar.\n\n'
+                    'Viene impresa en el envase del proveedor. Si la recepcion se '
+                    'valida sin ella, despues no hay de donde recuperarla.\n\n'
+                    'SIN fecha de fabricacion:\n%s'
+                ) % '\n'.join(faltan))
+
     def _amunet_check_inspeccion_entrada(self):
         """Bloquea la validación si la inspección de entrada no está completa.
         ISO 13485 §7.4.3: obligatoria para TODA recepción entrante sin excepción."""
@@ -374,6 +414,7 @@ class StockPicking(models.Model):
             self._amunet_check_duplicate_supplier_lots()
             self._amunet_check_datos_recepcion()
             self._amunet_check_expiration_captured()
+            self._amunet_check_manufacturing_captured()
             # La inspeccion de entrada NO bloquea la recepcion (alineado a
             # produccion, criterio de Fernando): el control de aceptacion va en
             # la LIBERACION de Calidad, no al recibir. Si faltan los criterios,

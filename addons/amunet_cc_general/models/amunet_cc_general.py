@@ -350,7 +350,6 @@ class AmunetCCGeneral(models.Model):
             rec.accion_pendiente_usuario = ' / '.join(acciones) if acciones else ''
 
     # ── Secuencia ────────────────────────────────────────────────
-    @api.model_create_multi
     def _compute_display_name(self):
         for rec in self:
             display = rec.name or 'Nuevo'
