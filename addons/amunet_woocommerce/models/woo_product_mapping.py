@@ -1919,40 +1919,38 @@ class AmunetWooProductMapping(models.Model):
 
     @api.model
     def _html_lotes(self, quants):
-        """Lotes desplegables (details/summary): una linea por lote con
-        lote, caducidad y piezas. Sin tabla: la celda de la lista de Odoo
-        recorta el ancho (nowrap + overflow hidden) y de una tabla solo se
-        veia la primera columna. El HTML lo arma el sistema
-        (sanitize=False) y los textos van escapados.
+        """Lotes SIEMPRE visibles en la columna de la lista: una linea por
+        lote con lote, caducidad y piezas. Sin clic: en la lista editable
+        cualquier clic mete el renglon en edicion y Odoo salta a la derecha,
+        con lo que el usuario dejaba de ver la columna. El HTML lo arma el
+        sistema (sanitize=False) y los textos van escapados.
         """
         from markupsafe import escape
         import datetime
         if not quants:
             return '<span class="text-muted">sin lotes</span>'
-        total = sum(quants.mapped('quantity'))
         hoy = datetime.date.today()
         lineas = []
-        for q in quants.sorted(key=lambda x: (x.expiration_date or datetime.datetime.max, x.id)):
+        ordenados = quants.sorted(key=lambda x: (x.expiration_date or datetime.datetime.max, x.id))
+        for q in ordenados[:8]:
             cad = q.expiration_date
             if cad and hasattr(cad, 'date'):
                 cad = cad.date()
             if cad:
                 color = 'text-danger' if cad < hoy else ('text-warning' if (cad - hoy).days <= 183 else 'text-success')
-                cad_txt = 'cad. ' + cad.strftime('%d/%m/%Y')
+                cad_txt = cad.strftime('%d/%m/%Y')
             else:
                 color, cad_txt = 'text-muted', 'sin caducidad'
             lineas.append(
-                '<div style="white-space:normal;line-height:1.5">'
+                '<div style="white-space:normal;line-height:1.4">'
                 '<span style="font-family:monospace">%s</span>'
-                ' &nbsp;&middot;&nbsp; <span class="%s">%s</span>'
-                ' &nbsp;&middot;&nbsp; <b>%g pz</b></div>' % (
+                ' &middot; <span class="%s">%s</span>'
+                ' &middot; <b>%g pz</b></div>' % (
                     escape(q.lot_id.name if q.lot_id else '(sin lote)'),
                     color, cad_txt, q.quantity))
-        return (
-            '<details style="display:block;white-space:normal">'
-            '<summary style="cursor:pointer;white-space:normal">%d lote(s) &middot; %g pz</summary>'
-            '<div style="display:block;margin-top:2px">%s</div></details>'
-            % (len(lineas), total, ''.join(lineas)))
+        if len(ordenados) > 8:
+            lineas.append('<div class="text-muted">&hellip; y %d lote(s) mas (abrir el producto)</div>' % (len(ordenados) - 8))
+        return '<div style="display:block;white-space:normal">%s</div>' % ''.join(lineas)
 
     @api.depends('inicial_line_ids.state')
     def _compute_inicial_pendientes(self):
