@@ -1868,7 +1868,8 @@ class AmunetQualityTestLineDetail(models.Model):
                  'mga0981_vol_declarado', 'mga0981_vol_obtenido',
                  'vama105_nominal_volume', 'vama105_measured_volume',
                  'vama034_sample_type', 'vama034_observed_result',
-                 'multi_cond_binary', 'multi_cond_num1', 'multi_cond_num2')
+                 'multi_cond_binary', 'multi_cond_num1', 'multi_cond_num2',
+                 'multi_check_results_json', 'text_phrase_mapping')
     def _compute_result_display(self):
         """Genera texto de resultado para mostrar"""
         for record in self:
@@ -2004,17 +2005,9 @@ class AmunetQualityTestLineDetail(models.Model):
                     record.result_display = ''
 
             elif record.evaluation_type == 'vama_multi_check':
-                _PATTERN_LABELS = {
-                    'result_1': '#1', 'result_2': '#2', 'result_3': '#3',
-                    'result_4': '#4', 'result_5': '#5',
-                    'result_6': 'INVÁLIDA (#6)', 'result_7': 'INVÁLIDA (#7)',
-                    'na': 'N/A',
-                }
                 try:
-                    import json as _json
-                    results = _json.loads(record.multi_check_results_json or '{}')
-                    selected = results.get('0', '')
-                    record.result_display = _PATTERN_LABELS.get(selected, selected)
+                    evaluation = record._evaluate_vama_multi_check()
+                    record.result_display = evaluation.get('message', '')
                 except Exception:
                     record.result_display = ''
 
