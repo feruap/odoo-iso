@@ -688,9 +688,11 @@
         <field name="model">amunet.quality.test.line.detail</field>
         <field name="arch" type="xml">
             <list string="Especificaciones" editable="bottom">
+                <field name="display_type" column_invisible="1"/>
                 <field name="sequence" widget="handle"/>
                 <field name="name" readonly="1"/>
-                <field name="acceptance_criteria" readonly="1" optional="show"/>
+                <field name="acceptance_criteria" readonly="1" optional="show"
+                       invisible="display_type == 'line_section'"/>
                 <field name="evaluation_type" column_invisible="1"/>
                 
                 <!-- Campos de resultado según tipo de evaluación -->

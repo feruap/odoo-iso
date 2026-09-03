@@ -58,6 +58,11 @@ class AmunetQualityTestLineDetail(models.Model):
         default=10
     )
 
+    display_type = fields.Selection([
+        ('line_section', 'Sección'),
+    ], string='Tipo de línea', default=False,
+        help='Cuando es "Sección", la fila actúa como encabezado visual dentro del punto de control.')
+
     # ========== Identificación (copiados de especificación) ==========
 
     name = fields.Char(
@@ -95,7 +100,7 @@ class AmunetQualityTestLineDetail(models.Model):
         ('mavi_15_ternary', 'MAVI-15: Selección Ternaria'),
         ('mavi_11_height', 'MAVI-11: Altura (6/8 cm ± 0.5)'),
         ('mavi_07_ternary', 'MAVI-07: Ternario (Hojas Maestras)'),
-    ], string='Tipo de evaluación', required=True, default='binary_selection')
+    ], string='Tipo de evaluación', required=False, default='binary_selection')
 
     # ========== Campos de Resultado ==========
 
