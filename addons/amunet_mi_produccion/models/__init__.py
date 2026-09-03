@@ -2,3 +2,4 @@
 from . import mrp_workcenter
 from . import mrp_workorder
 from . import amunet_mi_supervision_wizard
+from . import hr_employee

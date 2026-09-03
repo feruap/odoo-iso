@@ -50,6 +50,19 @@ class MrpWorkorder(models.Model):
         compute='_compute_amunet_mi_i_supervise',
         search='_search_amunet_mi_i_supervise')
 
+    @staticmethod
+    def _amunet_mi_domain_positivo(operator, value):
+        """True si el dominio pide los registros donde el booleano es verdadero.
+        Odoo 19 normaliza ('campo','=',True) a ('campo','in',[True]), asi que
+        hay que aceptar las dos formas; si no, el filtro se invierte."""
+        if isinstance(value, (list, tuple, set)):
+            value = any(value)
+        if operator in ('=', 'in'):
+            return bool(value)
+        if operator in ('!=', 'not in'):
+            return not value
+        return bool(value)
+
     @api.depends_context('uid')
     def _compute_amunet_mi_i_supervise(self):
         is_mgr = self.env.user.has_group('mrp.group_mrp_manager')
@@ -58,7 +71,7 @@ class MrpWorkorder(models.Model):
                 self.env.user in wo.workcenter_id.amunet_supervisor_ids)
 
     def _search_amunet_mi_i_supervise(self, operator, value):
-        positive = (operator == '=' and value) or (operator == '!=' and not value)
+        positive = self._amunet_mi_domain_positivo(operator, value)
         # El gerente de manufactura ve todas las estaciones.
         if self.env.user.has_group('mrp.group_mrp_manager'):
             return [(1, '=', 1)] if positive else [(0, '=', 1)]
@@ -68,6 +81,39 @@ class MrpWorkorder(models.Model):
         if positive:
             return [('workcenter_id', 'in', my_wcs.ids)]
         return [('workcenter_id', 'not in', my_wcs.ids)]
+
+    # ------------------------------------------------------------------
+    # Mi dia: ¿esta actividad es de MI puesto?
+    # El puesto son las estaciones asignadas al empleado del usuario
+    # (hr.employee.amunet_mi_workcenter_ids). Sin estaciones asignadas o sin
+    # empleado ligado se ve todo, para no dejar a nadie sin pantalla.
+    # ------------------------------------------------------------------
+    amunet_mi_es_mio = fields.Boolean(
+        string='De mi puesto',
+        compute='_compute_amunet_mi_es_mio',
+        search='_search_amunet_mi_es_mio')
+
+    @api.model
+    def _amunet_mi_workcenters_del_usuario(self):
+        """Estaciones del puesto del usuario actual. Vacio = sin filtro."""
+        emp = self.env['hr.employee'].sudo().search(
+            [('user_id', '=', self.env.uid)], limit=1)
+        return emp.amunet_mi_workcenter_ids if emp else self.env['mrp.workcenter']
+
+    @api.depends_context('uid')
+    def _compute_amunet_mi_es_mio(self):
+        wcs = self._amunet_mi_workcenters_del_usuario()
+        for wo in self:
+            wo.amunet_mi_es_mio = (not wcs) or (wo.workcenter_id in wcs)
+
+    def _search_amunet_mi_es_mio(self, operator, value):
+        positive = self._amunet_mi_domain_positivo(operator, value)
+        wcs = self._amunet_mi_workcenters_del_usuario()
+        if not wcs:
+            return [(1, '=', 1)] if positive else [(0, '=', 1)]
+        if positive:
+            return [('workcenter_id', 'in', wcs.ids)]
+        return [('workcenter_id', 'not in', wcs.ids)]
 
     def _amunet_mi_worked_by_current_user(self):
         """True si el usuario actual ejecuto (registro tiempo en) esta
