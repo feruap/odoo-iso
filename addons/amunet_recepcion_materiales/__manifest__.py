@@ -7,6 +7,7 @@
     'depends': ['amunet_lot', 'stock', 'amunet_quality', 'product', 'amunet_equipment_calibration'],
     'data': [
         'security/ir.model.access.csv',
+        'data/location_transito_adt.xml',
         'data/cron_reorder_notify.xml',
         'wizard/recepcion_pin_wizard_views.xml',
         'wizard/amunet_lot_serial_split_wizard_views.xml',

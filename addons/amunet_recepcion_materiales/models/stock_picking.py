@@ -480,100 +480,73 @@ class StockPicking(models.Model):
             'context': {'default_picking_id': self.id},
         }
 
-    def _amunet_crear_traslado_distribucion(self):
-        """Cuando una liberación de QC se valida y el producto es de categoría
-        Distribución/*, crea una recepción en APT para que Luis confirme físicamente
-        que recibió el equipo o material."""
+    def _amunet_transit_adt_location(self):
+        """Ubicación de tránsito entre AMP/Calidad y ADT/Stock."""
+        return self.env.ref(
+            'amunet_recepcion_materiales.location_transito_amp_adt',
+            raise_if_not_found=False,
+        ) or self.env['stock.location']
+
+    def _amunet_crear_recepcion_adt(self, lines):
+        """Crea recepción ADT/IN para Luis con los materiales que ya están
+        en la ubicación de tránsito tras la validación de Karla.
+
+        Flujo: AMP/Calidad → Tránsito (Karla valida) → ADT/Stock (Luis valida).
+        """
         self.ensure_one()
-
-        cat_raiz = self.env['product.category'].search(
-            [('name', '=', 'Distribución')], limit=1)
-        if not cat_raiz:
-            return
-        cat_ids = self.env['product.category'].search(
-            [('id', 'child_of', cat_raiz.id)]).ids
-
-        lines = self.move_line_ids.filtered(
-            lambda l: l.product_id.categ_id.id in cat_ids and (l.quantity or 0) > 0
-        )
         if not lines:
             return
 
-        loc_apt = self.env['stock.location'].search([
-            ('name', '=', 'Existencias_Distribución'),
-            ('usage', '=', 'internal'),
-        ], limit=1)
-        if not loc_apt:
+        wh_adt = self.env['stock.warehouse'].search([('code', '=', 'ADT')], limit=1)
+        if not wh_adt:
             _logger.warning(
-                'amunet_recepcion: no se encontró Existencias_Distribución; '
-                'traslado automático no creado para picking %s', self.name)
+                'amunet_recepcion: almacén ADT no encontrado; '
+                'recepción para Luis no creada (picking %s)', self.name)
             return
 
-        # Usar el tipo Traslados internos de APT (no Recepciones) para evitar
-        # que la ruta multi-paso de APT desvíe el material a QC intermedio.
-        # El material ya pasó QC en AMP; va directo a Existencias_Distribución.
-        wh_apt = self.env['stock.warehouse'].search(
-            [('code', '=', 'APT')], limit=1)
-        pt = wh_apt.int_type_id if wh_apt else False
-        if not pt:
+        loc_adt_stock = wh_adt.lot_stock_id
+        pt_adt_in = wh_adt.in_type_id
+        if not pt_adt_in or not loc_adt_stock:
             _logger.warning(
-                'amunet_recepcion: no se encontró almacén APT o su tipo interno; '
-                'traslado automático no creado para picking %s', self.name)
+                'amunet_recepcion: almacén ADT sin tipo de recepción o ubicación stock; '
+                'recepción para Luis no creada (picking %s)', self.name)
             return
 
-        loc_src = lines[0].location_dest_id  # AMP/Existencias
+        transit_loc = self._amunet_transit_adt_location()
+        loc_src = transit_loc if transit_loc else lines[0].location_dest_id
 
-        # Cantidad real aprobada: suma de quants en ubicaciones internas.
-        # Si hubo split antes de la liberación, el picking de QC mueve la cantidad
-        # original (ej. 5) pero solo existían 3 en QC → queda +5 en Existencias
-        # y -2 en QC. La suma interna 5 + (-2) = 3, que es la cantidad correcta.
-        def _qty_real(line):
-            if not line.lot_id:
-                return line.quantity
-            quants = self.env['stock.quant'].search([
-                ('product_id', '=', line.product_id.id),
-                ('lot_id', '=', line.lot_id.id),
-                ('location_id.usage', '=', 'internal'),
-            ])
-            total = sum(quants.mapped('quantity'))
-            return total if total > 0 else line.quantity
-
-        move_vals = [(0, 0, {
-            'product_id': l.product_id.id,
-            'product_uom_qty': _qty_real(l),
-            'product_uom': l.product_id.uom_id.id,
-            'location_id': loc_src.id,
-            'location_dest_id': loc_apt.id,
-        }) for l in lines]
-
-        traslado = self.env['stock.picking'].sudo().create({
-            'picking_type_id': pt.id,
-            'location_id': loc_src.id,
-            'location_dest_id': loc_apt.id,
-            'origin': 'Distribución desde QC: ' + self.name,
-            'move_ids': move_vals,
-        })
-        traslado.action_confirm()
-        # Forzar destino directo a Existencias_Distribución en todos los movimientos,
-        # evitando que la ruta multi-paso de APT desvíe a QC intermedio.
-        traslado.move_ids.write({'location_dest_id': loc_apt.id})
-        traslado.action_assign()
-
-        # Asignar lote y datos de proveedor en las líneas del traslado
-        # y construir resumen para la nota de Luis.
-        # Si la liberación de QC no tiene los datos del proveedor (factory_lot,
-        # fechas), los buscamos en la recepción original como respaldo.
+        # Datos de proveedor de la recepción original (para copiarlos a Luis)
         qc = self.amunet_disposition_qc_id
         orig_ml_map = {}
         if qc and qc.picking_id:
             for oml in qc.picking_id.move_line_ids:
                 orig_ml_map[oml.product_id.id] = oml
 
+        move_vals = [(0, 0, {
+            'product_id': l.product_id.id,
+            'product_uom_qty': l.quantity,
+            'product_uom': l.product_id.uom_id.id,
+            'location_id': loc_src.id,
+            'location_dest_id': loc_adt_stock.id,
+        }) for l in lines]
+
+        recepcion = self.env['stock.picking'].sudo().create({
+            'picking_type_id': pt_adt_in.id,
+            'location_id': loc_src.id,
+            'location_dest_id': loc_adt_stock.id,
+            'origin': 'Distribución desde Calidad: ' + self.name,
+            'move_ids': move_vals,
+        })
+        recepcion.action_confirm()
+        recepcion.move_ids.write({'location_id': loc_src.id, 'location_dest_id': loc_adt_stock.id})
+        recepcion.action_assign()
+
+        # Copiar lote, serie de proveedor y fechas a las líneas de Luis
         resumen_lineas = []
         for line in lines:
             if not line.lot_id:
                 continue
-            ml = traslado.move_line_ids.filtered(
+            ml = recepcion.move_line_ids.filtered(
                 lambda ml, p=line.product_id: ml.product_id == p
             )[:1]
             if ml:
@@ -598,28 +571,27 @@ class StockPicking(models.Model):
 
         detalle = '<ul>' + ''.join(resumen_lineas) + '</ul>' if resumen_lineas else ''
 
-        # Poner el resumen también en la nota interna del traslado para que
-        # Luis lo vea al abrir el picking sin necesidad de entrar al lote
-        traslado.sudo().write({'note': (
-            f'Material liberado por Calidad (origen: {self.name}).\n'
+        recepcion.sudo().write({'note': (
+            f'Material liberado por Calidad — viene de {self.name}.\n'
             f'Verifica físicamente cada artículo antes de validar.\n\n'
             + '\n'.join(
                 f'- {line.product_id.display_name}: '
-                f'Lote {line.lot_id.name} | Serie proveedor: {line.factory_lot_id.name if line.factory_lot_id else "sin número"} | Cant: {int(line.quantity)}'
+                f'Lote {line.lot_id.name} | '
+                f'Serie proveedor: {line.factory_lot_id.name if line.factory_lot_id else "sin número"} | '
+                f'Cant: {int(line.quantity)}'
                 for line in lines if line.lot_id
             )
         )})
 
-        # Notificar a Luis con una actividad para que confirme recepción física
         luis = self.env['res.users'].search(
             [('login', '=', 'almacen2@amunet.com.mx')], limit=1)
         if luis:
-            traslado.sudo().activity_schedule(
+            recepcion.sudo().activity_schedule(
                 'mail.mail_activity_data_todo',
                 user_id=luis.id,
-                summary='Confirmar recepción de equipo/cristalería',
+                summary='Confirmar recepción de material de distribución',
                 note=(
-                    f'Calidad liberó material de Distribución desde <b>{self.name}</b>.<br/>'
+                    f'Calidad liberó material desde <b>{self.name}</b>.<br/>'
                     f'Verifica físicamente cada artículo y valida la recepción:<br/>'
                     f'{detalle}'
                 ),
@@ -627,21 +599,42 @@ class StockPicking(models.Model):
 
         self.message_post(
             body=(
-                f'Recepción en APT/Distribución generada: <b>{traslado.name}</b>. '
-                f'Luis (APT) recibirá aviso para confirmar.'
+                f'Recepción ADT generada: <b>{recepcion.name}</b>. '
+                f'Luis recibirá aviso para confirmar físicamente.'
             ),
             message_type='notification',
             subtype_xmlid='mail.mt_note',
         )
 
     def _action_done(self):
+        # Para liberaciones QC con productos de distribución: antes de validar,
+        # redirigir el destino de AMP/Existencias → Tránsito AMP→ADT,
+        # para que Karla mueva directamente a tránsito y Luis reciba desde ahí.
+        transit_loc = self._amunet_transit_adt_location()
+        dist_lines_by_picking = {}
+        if transit_loc:
+            for picking in self.filtered(lambda p: p.amunet_disposition_qc_id):
+                dist_moves = picking.move_ids.filtered(
+                    lambda m: m.product_id.product_tmpl_id.amunet_va_a_distribucion
+                )
+                if dist_moves:
+                    dist_moves.write({'location_dest_id': transit_loc.id})
+                    dist_moves.move_line_ids.write({'location_dest_id': transit_loc.id})
+                    dist_lines_by_picking[picking.id] = dist_moves.move_line_ids
+
         res = super()._action_done()
-        # Liberaciones de QC con productos de categoría Distribución/* →
-        # crear traslado automático a APT/Existencias_Distribución
+
+        # Crear recepción ADT/IN para Luis por cada liberación con productos de distribución
         for picking in self.filtered(
             lambda p: p.state == 'done' and p.amunet_disposition_qc_id
         ):
-            picking._amunet_crear_traslado_distribucion()
+            lines = dist_lines_by_picking.get(picking.id)
+            if lines is None:
+                lines = picking.move_line_ids.filtered(
+                    lambda l: l.product_id.product_tmpl_id.amunet_va_a_distribucion
+                              and (l.quantity or 0) > 0
+                )
+            picking._amunet_crear_recepcion_adt(lines)
         for picking in self.filtered(
             lambda p: p.picking_type_code == 'incoming' and p.amunet_con_observaciones
         ):

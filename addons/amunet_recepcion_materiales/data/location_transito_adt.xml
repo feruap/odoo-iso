@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="location_transito_amp_adt" model="stock.location">
+        <field name="name">En tránsito — AMP a Distribución</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_locations_virtual"/>
+        <field name="active">True</field>
+        <field name="comment">Punto de tránsito entre AMP/Control de calidad y ADT/Stock.
+Karla valida la liberación QC y los materiales quedan aquí.
+Luis ve una recepción ADT pendiente y valida cuando verifica físicamente.</field>
+    </record>
+</odoo>
