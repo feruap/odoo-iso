@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_woo_product_mapping_list_sellable" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.list.sellable</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="inherit_id" ref="amunet_woocommerce.view_woo_product_mapping_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='woo_available_display']" position="after">
+                <field name="odoo_sellable_qty" string="Vendible (&gt;= 6 m)" optional="show" sum="Total"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
