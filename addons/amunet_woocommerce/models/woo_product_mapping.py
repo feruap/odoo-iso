@@ -2,14 +2,17 @@
 
 import base64
 import json
+import logging
 import re
 from urllib.parse import unquote, quote
 
 import requests
 
 from odoo import api, fields, models, _
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools.float_utils import float_round
+
+_logger = logging.getLogger(__name__)
 
 # Campos que el grupo Revisor puede editar manualmente (relación/confirmación).
 # Todo lo demás del mapeo solo lo escribe el Administrador (importación/sistema).
@@ -17,6 +20,14 @@ REVIEWER_ALLOWED_FIELDS = {
     'product_id', 'relation_state', 'confidence', 'match_method',
     'review_notes', 'supply_classification', 'woo_name', 'woo_image',
     'odoo_name_edit',
+}
+
+# Captura de INVENTARIO INICIAL: la hace el almacen, no el administrador
+# de la integracion. Son campos de captura, no del vinculo Woo-Odoo, asi
+# que no llevan sello de revision.
+INICIAL_CAPTURE_FIELDS = {
+    'inicial_qty', 'inicial_lot_id', 'inicial_lot_name',
+    'inicial_expiration_date', 'inicial_nota',
 }
 
 SNAPSHOT_MAX_AGE_PARAM = 'amunet_woocommerce.snapshot_max_age_days'
@@ -388,7 +399,8 @@ class AmunetWooProductMapping(models.Model):
         incoming = set(vals)
         if not self.env.su and not self.env.user.has_group(
                 'amunet_woocommerce.group_woo_admin'):
-            forbidden = incoming - REVIEWER_ALLOWED_FIELDS
+            forbidden = incoming - REVIEWER_ALLOWED_FIELDS \
+                - INICIAL_CAPTURE_FIELDS
             if forbidden:
                 raise AccessError(_(
                     'Solo el grupo Administrador puede modificar estos campos '
@@ -1530,3 +1542,436 @@ class AmunetWooProductMapping(models.Model):
         else:
             existing.with_context(skip_review_stamp=True).write(values)
         return result
+
+    # ==================================================================
+    # INVENTARIO INICIAL (migracion de papel a digital)
+    # ==================================================================
+    # Hay material que el almacen tiene fisicamente desde antes de que
+    # existiera el sistema: se llevaba en papel. Ese material NO tiene orden
+    # de fabricacion ni liberacion de Calidad que citar, porque es anterior al
+    # proceso; exigirselas seria pedirle un papel que nunca existio. Lo que si
+    # se exige es constancia: quien lo capturo, cuando, cuanto, de que lote y
+    # con que caducidad, con el motivo escrito en el movimiento.
+    #
+    # La carga entra por la via normal de Odoo (ajuste de inventario sobre el
+    # anaquel de piezas de APT), no por una escritura directa: asi queda el
+    # movimiento, el asiento y el historial que pide ISO 13485, y de ahi la
+    # publicacion a la tienda sigue el mismo camino que todo lo demas.
+
+    inicial_qty = fields.Float(
+        string='Inventario inicial (pz)', copy=False,
+        help='Piezas que el almacen ya tiene fisicamente y que nunca pasaron '
+             'por el sistema. Se capturan una sola vez y se cargan al anaquel '
+             'de piezas de APT como ajuste de inventario.')
+    inicial_lot_id = fields.Many2one(
+        'stock.lot', string='Lote existente', copy=False,
+        domain="[('id', 'in', lote_opcion_ids)]",
+        help='Desplegable con los lotes que este producto YA tiene. Elige uno '
+             'para ajustarlo, o dejalo vacio para dar de alta uno nuevo.')
+    inicial_lot_name = fields.Char(
+        string='Lote nuevo', copy=False,
+        help='Solo si el material trae un numero de lote que aun no existe en '
+             'Odoo. Si el material no trae lote, dejalo vacio: el sistema pone '
+             'uno de inventario inicial para poder rastrearlo.')
+    inicial_expiration_date = fields.Date(
+        string='Caducidad', copy=False,
+        help='La tienda clasifica por caducidad (normal / corta / cortesia). '
+             'Sin caducidad el material se carga en Odoo pero NO se publica a '
+             'la tienda, salvo que el producto no maneje caducidad comercial.')
+    inicial_nota = fields.Char(
+        string='Observacion de la carga', copy=False,
+        help='De donde salio el dato: libreta, formato, conteo fisico, etc.')
+
+    lote_opcion_ids = fields.Many2many(
+        'stock.lot', string='Lotes del producto',
+        compute='_compute_lotes_producto')
+    lote_resumen = fields.Text(
+        string='Lotes y piezas en el anaquel', compute='_compute_lotes_producto')
+    inicial_cargado_qty = fields.Float(
+        string='Inventario inicial ya cargado (pz)',
+        compute='_compute_inicial_cargado')
+
+    # --- Inventario inicial por renglones (lote / caducidad / piezas) ---
+    inicial_line_ids = fields.One2many(
+        'amunet.woo.inicial.line', 'mapping_id',
+        string='Lotes de inventario inicial', copy=False)
+    inicial_pendientes = fields.Integer(
+        string='Lotes por cargar', compute='_compute_inicial_pendientes')
+    anaquel_quant_ids = fields.One2many(
+        'stock.quant', compute='_compute_anaquel',
+        string='Composicion del anaquel (lote / caducidad / piezas)')
+    anaquel_total_pz = fields.Float(
+        string='Piezas en anaquel', compute='_compute_anaquel')
+    anaquel_lotes = fields.Integer(
+        string='Lotes en anaquel', compute='_compute_anaquel')
+    anaquel_html = fields.Html(
+        string='Lotes', compute='_compute_anaquel', sanitize=False,
+        help='Los lotes del anaquel con su caducidad y piezas, desplegables '
+             'desde la lista sin abrir el producto.')
+
+
+    @api.depends('product_id')
+    def _compute_lotes_producto(self):
+        """Los lotes que el producto ya tiene, con sus piezas en el anaquel.
+
+        Es el desplegable que pidio el almacen: en vez de teclear el lote a
+        ciegas, el operador ve los que ya existen y ajusta el que corresponde.
+        """
+        Quant = self.env['stock.quant'].sudo()
+        Lot = self.env['stock.lot'].sudo()
+        for rec in self:
+            if not rec.product_id:
+                rec.lote_opcion_ids = [(5, 0, 0)]
+                rec.lote_resumen = False
+                continue
+            lotes = Lot.search(
+                [('product_id', '=', rec.product_id.id)],
+                order='id desc', limit=200)
+            rec.lote_opcion_ids = [(6, 0, lotes.ids)]
+            piezas = {}
+            ubicacion = rec._ubicacion_piezas()
+            if ubicacion:
+                for quant in Quant.search([
+                        ('product_id', '=', rec.product_id.id),
+                        ('location_id', 'child_of', ubicacion.id)]):
+                    if quant.lot_id:
+                        piezas[quant.lot_id.id] = piezas.get(
+                            quant.lot_id.id, 0.0) + quant.quantity
+            filas = []
+            for lote in lotes[:40]:
+                filas.append('%s  |  %s pz en anaquel  |  cad. %s' % (
+                    lote.name,
+                    int(piezas.get(lote.id, 0.0)),
+                    lote.expiration_date.strftime('%m/%Y')
+                    if lote.expiration_date else _('sin caducidad')))
+            rec.lote_resumen = '\n'.join(filas) or _(
+                'Este producto todavia no tiene lotes en Odoo.')
+
+    @api.depends('product_id')
+    def _compute_inicial_cargado(self):
+        """Cuanto de lo que hay en el anaquel entro como inventario inicial."""
+        Lot = self.env['stock.lot'].sudo()
+        Quant = self.env['stock.quant'].sudo()
+        marca = 'amunet_origen_inicial' in Lot._fields
+        for rec in self:
+            rec.inicial_cargado_qty = 0.0
+            if not rec.product_id or not marca:
+                continue
+            ubicacion = rec._ubicacion_piezas()
+            if not ubicacion:
+                continue
+            total = 0.0
+            for quant in Quant.search([
+                    ('product_id', '=', rec.product_id.id),
+                    ('location_id', 'child_of', ubicacion.id)]):
+                if quant.lot_id and quant.lot_id.amunet_origen_inicial:
+                    total += quant.quantity
+            rec.inicial_cargado_qty = total
+
+    def _ubicacion_piezas(self):
+        """Anaquel de piezas de APT de la tienda de este mapeo."""
+        self.ensure_one()
+        backend = self.backend_id.sudo()
+        if not backend:
+            return self.env['stock.location'].browse()
+        return backend._apt_pieces_location()
+
+    @api.onchange('inicial_lot_id')
+    def _onchange_inicial_lot_id(self):
+        """Al elegir un lote del desplegable se traen sus datos.
+
+        Se pregunta la caducidad SIEMPRE, pero si el lote ya la tiene se
+        propone la que tiene, para que el operador la confirme en vez de
+        teclearla de nuevo (y de paso vea si esta mal).
+        """
+        for rec in self:
+            if not rec.inicial_lot_id:
+                continue
+            rec.inicial_lot_name = False
+            if rec.inicial_lot_id.expiration_date:
+                rec.inicial_expiration_date = \
+                    rec.inicial_lot_id.expiration_date.date() \
+                    if hasattr(rec.inicial_lot_id.expiration_date, 'date') \
+                    else rec.inicial_lot_id.expiration_date
+
+    # ------------------------------------------------------------------
+    # Inventario inicial: renglones por lote y composicion del anaquel
+    # ------------------------------------------------------------------
+
+    def _cargar_inicial_una(self, qty, lote=None, lot_name=None, cad=None, nota=None):
+        """Carga UN lote al anaquel de piezas como inventario inicial.
+
+        Devuelve el stock.lot usado. Es el mismo camino de siempre (ajuste de
+        inventario con motivo), solo que ahora lo comparten la captura vieja
+        (campos sueltos del mapeo) y la nueva (renglones por lote).
+        """
+        self.ensure_one()
+        rec = self
+        Lot = self.env['stock.lot'].sudo()
+        if not rec.product_id:
+            raise UserError(_(
+                'El renglon %s no tiene producto Odoo vinculado; no se '
+                'puede cargar inventario inicial.') % (rec.woo_sku or ''))
+        if not qty or qty <= 0:
+            raise UserError(_(
+                'El inventario inicial de %s tiene que ser mayor que cero.'
+            ) % (rec.woo_sku or rec.product_id.display_name))
+        ubicacion = rec._ubicacion_piezas()
+        if not ubicacion:
+            raise UserError(_(
+                'No se encontro el anaquel de piezas de APT para la tienda '
+                '%s. Configuralo en la ficha de la tienda antes de cargar '
+                'inventario inicial.') % rec.backend_id.display_name)
+
+        if not lote:
+            nombre = (lot_name or '').strip()
+            if not nombre:
+                nombre = 'INI-%s-%s' % (
+                    (rec.product_id.default_code or rec.woo_sku or
+                     rec.product_id.id),
+                    fields.Date.context_today(rec).strftime('%Y%m%d'))
+            lote = Lot.search([
+                ('product_id', '=', rec.product_id.id),
+                ('name', '=', nombre),
+            ], limit=1)
+            if not lote:
+                vals = {
+                    'name': nombre,
+                    'product_id': rec.product_id.id,
+                    'company_id': rec.company_id.id,
+                }
+                if cad:
+                    vals['expiration_date'] = cad
+                if 'amunet_origen_inicial' in Lot._fields:
+                    vals['amunet_origen_inicial'] = True
+                lote = Lot.create(vals)
+        escribir = {}
+        if cad and not lote.expiration_date:
+            escribir['expiration_date'] = cad
+        if 'amunet_origen_inicial' in Lot._fields and not lote.amunet_origen_inicial:
+            escribir['amunet_origen_inicial'] = True
+        if escribir:
+            lote.write(escribir)
+
+        motivo = _('Inventario inicial - migracion de papel a digital')
+        if nota:
+            motivo = '%s (%s)' % (motivo, nota)
+        Quant = self.env['stock.quant'].sudo().with_context(
+            inventory_mode=True, inventory_name=motivo)
+        quant = Quant.search([
+            ('product_id', '=', rec.product_id.id),
+            ('location_id', '=', ubicacion.id),
+            ('lot_id', '=', lote.id),
+        ], limit=1)
+        if quant:
+            quant.write({
+                'inventory_quantity': quant.quantity + qty,
+                'inventory_quantity_set': True,
+            })
+        else:
+            quant = Quant.create({
+                'product_id': rec.product_id.id,
+                'location_id': ubicacion.id,
+                'lot_id': lote.id,
+                'inventory_quantity': qty,
+                'inventory_quantity_set': True,
+            })
+        quant.action_apply_inventory()
+
+        cuerpo = _(
+            '<b>INVENTARIO INICIAL cargado.</b> %(qty)s pza(s) al anaquel '
+            '%(ubi)s, lote <b>%(lote)s</b>, caducidad %(cad)s.<br/>'
+            'Capturado por %(user)s el %(fecha)s.<br/>'
+            'Motivo: %(motivo)s.<br/>'
+            'Este material es anterior al sistema: no tiene orden de '
+            'fabricacion ni liberacion de Calidad que citar. Queda '
+            'registrado como ajuste de inventario con su movimiento.',
+            qty=qty, ubi=ubicacion.complete_name, lote=lote.name,
+            cad=(lote.expiration_date and
+                 fields.Date.to_string(lote.expiration_date)) or _('sin capturar'),
+            user=self.env.user.display_name,
+            fecha=fields.Datetime.now(), motivo=motivo)
+        rec.message_post(body=cuerpo)
+        try:
+            lote.message_post(body=cuerpo)
+        except Exception:  # noqa: BLE001 - la bitacora nunca bloquea
+            _logger.exception('Aviso de inventario inicial en el lote fallo')
+        return lote
+
+    def action_cargar_inventario_inicial(self):
+        """Carga al anaquel todo lo que el almacen dejo por cargar.
+
+        Dos fuentes, mismo camino:
+        - los renglones por lote (pestana Inventario inicial), que es la
+          captura normal: uno por lote fisico, con su caducidad y piezas;
+        - los campos sueltos del mapeo (captura vieja de la lista), por
+          compatibilidad.
+        No se exige orden de fabricacion ni liberacion de Calidad: este
+        material es anterior al sistema. Lo que si queda es el movimiento
+        con nombre, fecha y motivo.
+        """
+        cargados = 0
+        sin_caducidad = []
+        for rec in self:
+            # 1) Renglones por lote
+            for linea in rec.inicial_line_ids.filtered(lambda l: l.state == 'pending'):
+                lote = rec._cargar_inicial_una(
+                    linea.qty, lot_name=linea.lot_name,
+                    cad=linea.expiration_date, nota=linea.nota)
+                linea.write({
+                    'state': 'done', 'lot_id': lote.id,
+                    'cargado_por': self.env.user.id,
+                    'cargado_en': fields.Datetime.now(),
+                })
+                if not lote.expiration_date:
+                    sin_caducidad.append('%s (%s)' % (
+                        rec.woo_sku or rec.product_id.display_name, lote.name))
+                cargados += 1
+            # 2) Campos sueltos (captura vieja)
+            if rec.inicial_qty:
+                lote = rec._cargar_inicial_una(
+                    rec.inicial_qty, lote=rec.inicial_lot_id or None,
+                    lot_name=rec.inicial_lot_name,
+                    cad=rec.inicial_expiration_date, nota=rec.inicial_nota)
+                if not lote.expiration_date:
+                    sin_caducidad.append('%s (%s)' % (
+                        rec.woo_sku or rec.product_id.display_name, lote.name))
+                cargados += 1
+                rec.with_context(skip_review_stamp=True).write({
+                    'inicial_qty': 0.0,
+                    'inicial_lot_id': False,
+                    'inicial_lot_name': False,
+                    'inicial_expiration_date': False,
+                    'inicial_nota': False,
+                })
+        if not cargados:
+            raise UserError(_(
+                'No hay nada por cargar. Agrega renglones (lote, caducidad, '
+                'piezas) en la pestana "Inventario inicial" del producto.'))
+        mensaje = _('Se cargaron %s lote(s) de inventario inicial al '
+                    'anaquel de piezas.') % cargados
+        if sin_caducidad:
+            mensaje += _(
+                '\n\nSIN CADUCIDAD (quedan en Odoo pero la tienda no los puede '
+                'clasificar, asi que no se publican): %s') % ', '.join(
+                sin_caducidad[:10])
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Inventario inicial cargado'),
+                'message': mensaje,
+                'type': 'success' if not sin_caducidad else 'warning',
+                'sticky': bool(sin_caducidad),
+                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
+            },
+        }
+
+    def action_abrir_inventario(self):
+        """Abre la ficha del producto (pestana de inventario inicial)."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.woo_name or self.woo_sku,
+            'res_model': 'amunet.woo.product.mapping',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    @api.depends('product_id', 'backend_id')
+    def _compute_anaquel(self):
+        """Composicion real del anaquel de piezas: lote, caducidad, piezas.
+
+        Una sola consulta por tienda (no una por renglon): la lista 1109
+        trae cientos de productos y se abre todos los dias.
+        """
+        Quant = self.env['stock.quant'].sudo()
+        for rec in self:
+            rec.anaquel_quant_ids = Quant.browse()
+            rec.anaquel_total_pz = 0.0
+            rec.anaquel_lotes = 0
+            rec.anaquel_html = '<span class="text-muted">sin lotes</span>'
+        por_backend = {}
+        for rec in self:
+            if rec.product_id and rec.backend_id:
+                por_backend.setdefault(rec.backend_id, self.browse()) 
+                por_backend[rec.backend_id] |= rec
+        for backend, recs in por_backend.items():
+            ubicacion = backend.sudo()._apt_pieces_location()
+            if not ubicacion:
+                continue
+            quants = Quant.search([
+                ('product_id', 'in', recs.mapped('product_id').ids),
+                ('location_id', 'child_of', ubicacion.id),
+                ('quantity', '!=', 0),
+            ], order='id desc')
+            por_producto = {}
+            for q in quants:
+                por_producto.setdefault(q.product_id.id, Quant.browse())
+                por_producto[q.product_id.id] |= q
+            for rec in recs:
+                qs = por_producto.get(rec.product_id.id, Quant.browse())
+                rec.anaquel_quant_ids = qs
+                rec.anaquel_total_pz = sum(qs.mapped('quantity'))
+                rec.anaquel_lotes = len(qs.filtered('lot_id').mapped('lot_id'))
+                rec.anaquel_html = self._html_lotes(qs)
+
+    @api.model
+    def _html_lotes(self, quants):
+        """Lotes SIEMPRE visibles en la columna de la lista: una linea por
+        lote con lote, caducidad y piezas. Sin clic: en la lista editable
+        cualquier clic mete el renglon en edicion y Odoo salta a la derecha,
+        con lo que el usuario dejaba de ver la columna. El HTML lo arma el
+        sistema (sanitize=False) y los textos van escapados.
+        """
+        from markupsafe import escape
+        import datetime
+        if not quants:
+            return '<span class="text-muted">sin lotes</span>'
+        hoy = datetime.date.today()
+        lineas = []
+        ordenados = quants.sorted(key=lambda x: (x.expiration_date or datetime.datetime.max, x.id))
+        for q in ordenados[:8]:
+            cad = q.expiration_date
+            if cad and hasattr(cad, 'date'):
+                cad = cad.date()
+            if cad:
+                color = 'text-danger' if cad < hoy else ('text-warning' if (cad - hoy).days <= 183 else 'text-success')
+                cad_txt = cad.strftime('%d/%m/%Y')
+            else:
+                color, cad_txt = 'text-muted', 'sin caducidad'
+            lineas.append(
+                '<div style="white-space:normal;line-height:1.4">'
+                '<span style="font-family:monospace">%s</span>'
+                ' &middot; <span class="%s">%s</span>'
+                ' &middot; <b>%g pz</b></div>' % (
+                    escape(q.lot_id.name if q.lot_id else '(sin lote)'),
+                    color, cad_txt, q.quantity))
+        if len(ordenados) > 8:
+            lineas.append('<div class="text-muted">&hellip; y %d lote(s) mas (abrir el producto)</div>' % (len(ordenados) - 8))
+        return '<div style="display:block;white-space:normal">%s</div>' % ''.join(lineas)
+
+    @api.depends('inicial_line_ids.state')
+    def _compute_inicial_pendientes(self):
+        for rec in self:
+            rec.inicial_pendientes = len(
+                rec.inicial_line_ids.filtered(lambda l: l.state == 'pending'))
+
+    @api.constrains('inicial_qty', 'inicial_lot_id', 'inicial_lot_name',
+                    'inicial_expiration_date', 'inicial_nota')
+    def _check_inicial_sueltos(self):
+        """Captura vieja (campos sueltos): si se llena algo, tiene que traer piezas.
+
+        Evita lo que paso el 1 y 2 de septiembre: renglones con caducidad
+        capturada y cero piezas, que nunca se cargaban y nadie avisaba.
+        """
+        for rec in self:
+            algo = rec.inicial_lot_id or rec.inicial_lot_name \
+                or rec.inicial_expiration_date or rec.inicial_nota
+            if algo and not rec.inicial_qty:
+                raise ValidationError(_(
+                    '%s: capturaste lote o caducidad de inventario inicial pero '
+                    'no las piezas. Pon las piezas, o usa la pestana '
+                    '"Inventario inicial" del producto (un renglon por lote).'
+                ) % (rec.woo_sku or rec.product_id.display_name))
