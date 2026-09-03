@@ -64,18 +64,15 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <field name="tiene_cambios" invisible="1"/>
                     <button name="%(amunet_plan_auditorias.action_report_plan_auditoria)d"
                         type="action" string="Imprimir" icon="fa-print"
                         class="btn-secondary"/>
-                    <button name="action_firmar_elaboracion" type="object"
-                        string="Firmar elaboración" class="btn-secondary"
-                        invisible="state != 'borrador' or elaboro_id"/>
-                    <button name="action_firmar_autorizacion" type="object"
-                        string="Firmar y emitir" class="btn-primary"
-                        invisible="state != 'borrador' or not elaboro_id or autorizo_id"/>
+                    <button name="action_registrar_cambio" type="object"
+                        string="Registrar cambio al plan" icon="fa-pencil"
+                        class="btn-secondary"
+                        invisible="state != 'emitido' or tiene_cambios"/>
                     <button name="action_cerrar" type="object" string="Cerrar plan"
-                        invisible="state != 'emitido'"/>
-                    <button name="action_borrador" type="object" string="Regresar a borrador"
                         invisible="state != 'emitido'"/>
                     <field name="state" widget="statusbar"
                         statusbar_visible="borrador,emitido,cerrado"/>
@@ -104,7 +101,9 @@
                                         readonly="state in ('emitido','cerrado')"/>
                                 </group>
                                 <group string="Convocatoria de referencia">
-                                    <field name="convocatoria_id" nolabel="1"
+                                    <field name="convocatoria_id"
+                                        string="Convocatoria"
+                                        placeholder="Selecciona la convocatoria de auditores..."
                                         readonly="state in ('emitido','cerrado')"/>
                                     <button name="action_cargar_equipo" type="object"
                                         string="Cargar equipo desde convocatoria"
@@ -167,8 +166,10 @@
                             <field name="criterio_ids" nolabel="1"
                                 readonly="state in ('emitido','cerrado')">
                                 <list editable="bottom">
-                                    <field name="nombre" string="Criterio"/>
-                                    <field name="descripcion" string="Descripción"/>
+                                    <field name="nombre" string="Criterio"
+                                        placeholder="ej. ISO 13485:2016, sección 4.2.4"/>
+                                    <field name="descripcion" string="Descripción"
+                                        placeholder="ej. Verificar que los documentos tengan versión, fecha y firma vigente"/>
                                 </list>
                             </field>
 
@@ -229,52 +230,71 @@
                             </group>
                         </page>
 
-                        <!-- ── Pestaña 4: Cambios ── -->
-                        <page string="Cambios al plan" name="cambios">
+                        <!-- ── Pestaña 4: Firmas ── -->
+                        <page string="Firmas" name="firmas">
+                            <group>
+                                <group string="Elaboró">
+                                    <field name="elaboro_id" nolabel="1" readonly="1"/>
+                                    <field name="fecha_elaboro" nolabel="1" readonly="1"/>
+                                    <button name="action_firmar_elaboracion" type="object"
+                                        string="Firmar con PIN" icon="fa-pen"
+                                        class="btn-secondary btn-sm"
+                                        invisible="state != 'borrador' or elaboro_id"/>
+                                </group>
+                                <group string="Demás integrantes del equipo auditor">
+                                    <field name="puede_firmar_equipo" invisible="1"/>
+                                    <field name="auditor_ids" nolabel="1"
+                                        widget="many2many_tags" readonly="1"/>
+                                    <field name="firma_equipo_ids" nolabel="1" readonly="1">
+                                        <list>
+                                            <field name="user_id" string="Integrante"/>
+                                            <field name="fecha" string="Fecha de firma"/>
+                                        </list>
+                                    </field>
+                                    <button name="action_firmar_equipo" type="object"
+                                        string="Firmar con PIN" icon="fa-pen"
+                                        class="btn-secondary btn-sm"
+                                        invisible="state != 'borrador' or not puede_firmar_equipo"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Auditor líder — Autorizó">
+                                    <field name="autorizo_id" nolabel="1" readonly="1"/>
+                                    <field name="fecha_autorizo" nolabel="1" readonly="1"/>
+                                    <button name="action_firmar_autorizacion" type="object"
+                                        string="Firmar y emitir" icon="fa-check"
+                                        class="btn-primary btn-sm"
+                                        invisible="state != 'borrador' or not elaboro_id or autorizo_id"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── Pestaña 5: Cambios al plan ── -->
+                        <page string="Cambios al plan" name="cambios"
+                              invisible="not tiene_cambios">
+                            <p class="text-muted" style="margin-bottom:12px;">
+                                Si después de emitir el plan necesitas registrar alguna modificación
+                                (cambio de fecha, de auditor, de alcance, etc.), descríbela aquí
+                                para mantener la trazabilidad del documento.
+                            </p>
                             <field name="cambios" nolabel="1" rows="6"
-                                placeholder="En caso de cualquier cambio al plan de auditoría, descríbelo aquí..."
+                                placeholder="Describe el cambio realizado al plan ya emitido..."
                                 readonly="state != 'emitido'"/>
+
+                            <separator string="Firmas del cambio"/>
+                            <group>
+                                <group string="Elaboró el cambio">
+                                    <field name="elaboro_id" nolabel="1" readonly="1"/>
+                                    <field name="fecha_elaboro" nolabel="1" readonly="1"/>
+                                </group>
+                                <group string="Auditor líder — Validó el cambio">
+                                    <field name="autorizo_id" nolabel="1" readonly="1"/>
+                                    <field name="fecha_autorizo" nolabel="1" readonly="1"/>
+                                </group>
+                            </group>
                         </page>
 
                     </notebook>
-
-                    <!-- ── Firmas ── -->
-                    <separator string="Firmas"/>
-                    <group>
-                        <group string="Elaboró">
-                            <field name="elaboro_id" nolabel="1" readonly="1"/>
-                            <field name="fecha_elaboro" nolabel="1" readonly="1"/>
-                            <button name="action_firmar_elaboracion" type="object"
-                                string="Firmar con PIN" icon="fa-pen"
-                                class="btn-secondary btn-sm"
-                                invisible="state != 'borrador' or elaboro_id"/>
-                        </group>
-                        <group string="Demás integrantes del equipo auditor">
-                            <field name="puede_firmar_equipo" invisible="1"/>
-                            <field name="auditor_ids" nolabel="1"
-                                widget="many2many_tags" readonly="1"/>
-                            <field name="firma_equipo_ids" nolabel="1" readonly="1">
-                                <list>
-                                    <field name="user_id" string="Integrante"/>
-                                    <field name="fecha" string="Fecha de firma"/>
-                                </list>
-                            </field>
-                            <button name="action_firmar_equipo" type="object"
-                                string="Firmar con PIN" icon="fa-pen"
-                                class="btn-secondary btn-sm"
-                                invisible="state != 'borrador' or not puede_firmar_equipo"/>
-                        </group>
-                    </group>
-                    <group>
-                        <group string="Auditor líder — Autorizó">
-                            <field name="autorizo_id" nolabel="1" readonly="1"/>
-                            <field name="fecha_autorizo" nolabel="1" readonly="1"/>
-                            <button name="action_firmar_autorizacion" type="object"
-                                string="Firmar y emitir" icon="fa-check"
-                                class="btn-primary btn-sm"
-                                invisible="state != 'borrador' or not elaboro_id or autorizo_id"/>
-                        </group>
-                    </group>
 
                 </sheet>
                 <chatter/>

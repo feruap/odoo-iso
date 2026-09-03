@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amunet_proveedor_list" model="ir.ui.view">
+        <field name="name">amunet.proveedor.list</field>
+        <field name="model">amunet.proveedor</field>
+        <field name="arch" type="xml">
+            <list string="Lista maestra de proveedores"
+                  decoration-success="estatus == 'calificado'"
+                  decoration-muted="estatus == 'na'">
+                <field name="name"/>
+                <field name="tipo_suministro"/>
+                <field name="ubicacion"/>
+                <field name="suministra"/>
+                <field name="impacto"/>
+                <field name="estatus"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amunet_proveedor_form" model="ir.ui.view">
+        <field name="name">amunet.proveedor.form</field>
+        <field name="model">amunet.proveedor</field>
+        <field name="arch" type="xml">
+            <form string="Proveedor">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="tipo_suministro"/>
+                            <field name="ubicacion"/>
+                            <field name="impacto"/>
+                            <field name="estatus"/>
+                        </group>
+                        <group>
+                            <field name="suministra"/>
+                            <field name="notas"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_amunet_proveedor_search" model="ir.ui.view">
+        <field name="name">amunet.proveedor.search</field>
+        <field name="model">amunet.proveedor</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="suministra"/>
+                <filter name="f_calificado" string="Calificados" domain="[('estatus','=','calificado')]"/>
+                <filter name="f_na" string="No aplica" domain="[('estatus','=','na')]"/>
+                <separator/>
+                <filter name="f_alto" string="Impacto alto" domain="[('impacto','=','alto')]"/>
+                <separator/>
+                <filter name="g_impacto" string="Por impacto" context="{'group_by':'impacto'}"/>
+                <filter name="g_estatus" string="Por estatus" context="{'group_by':'estatus'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_amunet_proveedor" model="ir.actions.act_window">
+        <field name="name">Proveedores calificados</field>
+        <field name="res_model">amunet.proveedor</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_amunet_proveedor_search"/>
+    </record>
+</odoo>

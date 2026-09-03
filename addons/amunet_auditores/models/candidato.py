@@ -31,6 +31,10 @@ class AmunetAuditorCandidato(models.Model):
         ('espera', 'Lista de espera'),
     ], default='pendiente', tracking=True)
 
+    evaluador_id = fields.Many2one(
+        'res.users', string='Evaluador',
+        default=lambda self: self.env.user)
+
     es_lider = fields.Boolean(string='Auditor líder')
     tipo_auditor = fields.Selection([
         ('formacion', 'En formación'),
@@ -51,7 +55,7 @@ class AmunetAuditorCandidato(models.Model):
                 self.env['amunet.auditor.evaluacion'].create([{
                     'candidato_id': rec.id,
                     'criterio_id': c.id,
-                    'evaluador_id': self.env.user.id,
+                    'evaluador_id': rec.evaluador_id.id or self.env.user.id,
                 } for c in criterios])
         return records
 
@@ -77,6 +81,12 @@ class AmunetAuditorCandidato(models.Model):
                 rec.tipo_auditor = 'interno'
             else:
                 rec.tipo_auditor = 'formacion'
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'evaluador_id' in vals and vals['evaluador_id']:
+            self.evaluacion_ids.write({'evaluador_id': vals['evaluador_id']})
+        return result
 
     def action_seleccionar(self):
         self.ensure_one()
@@ -205,3 +215,6 @@ class AmunetAuditorEvaluacion(models.Model):
             'target': 'new',
             'context': {'dialog_size': 'medium'},
         }
+
+    def action_guardar_y_cerrar(self):
+        return {'type': 'ir.actions.act_window_close'}

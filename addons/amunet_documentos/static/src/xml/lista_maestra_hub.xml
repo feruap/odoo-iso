@@ -157,6 +157,21 @@
                         </div>
                     </div>
 
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0 lm-card"
+                             t-on-click="() => this.openAction('amunet_proveedores.action_supplier_master')">
+                            <div class="card-body d-flex align-items-center gap-3 py-4 px-4">
+                                <i class="fa fa-truck fa-2x" style="color:#6f42c1"/>
+                                <div>
+                                    <h5 class="card-title mb-1">Proveedores calificados</h5>
+                                    <p class="card-text text-muted small mb-0">
+                                        Lista maestra de proveedores con estatus de calificación
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

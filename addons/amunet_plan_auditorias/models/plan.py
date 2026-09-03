@@ -47,6 +47,7 @@ class AmunetPlanAuditoria(models.Model):
     alcance = fields.Text(string='Alcance de la auditoría')
     limitaciones = fields.Text(string='Limitaciones / Exclusiones')
     cambios = fields.Text(string='Cambios al plan')
+    tiene_cambios = fields.Boolean(string='Con cambios registrados', default=False)
 
     # Metodología
     met_apertura = fields.Boolean(string='Reunión de apertura', default=True)
@@ -193,7 +194,47 @@ class AmunetPlanAuditoria(models.Model):
 
     # ── Acciones de estado ─────────────────────────────────────────────────────
 
+    def action_registrar_cambio(self):
+        self.ensure_one()
+        self.write({'tiene_cambios': True})
+
     def action_cerrar(self):
+        self.ensure_one()
+        errores = []
+
+        # Pestaña Datos generales — Equipo auditor
+        if not self.lider_id:
+            errores.append('• Equipo auditor: falta designar al Auditor líder.')
+        if not self.auditor_ids:
+            errores.append('• Equipo auditor: agrega al menos un Auditor.')
+
+        # Pestaña Datos generales — Metodología
+        metodos = [self.met_apertura, self.met_entrevistas, self.met_revision_doc,
+                   self.met_verificacion, self.met_muestreo, self.met_observacion, self.met_cierre]
+        if not any(metodos):
+            errores.append('• Metodología: selecciona al menos un método de auditoría.')
+
+        # Pestaña Datos generales — Alcance y criterios
+        if not self.alcance:
+            errores.append('• Alcance: el campo no puede quedar vacío.')
+        if not self.criterio_ids:
+            errores.append('• Criterios de auditoría: agrega al menos un criterio.')
+
+        # Pestaña Agenda
+        if not self.dia_ids:
+            errores.append('• Agenda: agrega al menos un día con actividades.')
+        else:
+            dias_sin_actividad = self.dia_ids.filtered(lambda d: not d.actividad_ids)
+            if dias_sin_actividad:
+                fechas = ', '.join(str(d.fecha) for d in dias_sin_actividad)
+                errores.append(f'• Agenda: el día {fechas} no tiene actividades capturadas.')
+
+        if errores:
+            raise ValidationError(
+                'No es posible cerrar el plan hasta completar lo siguiente:\n\n' +
+                '\n'.join(errores)
+            )
+
         self.write({'state': 'cerrado'})
 
     def action_borrador(self):

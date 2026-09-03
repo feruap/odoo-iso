@@ -15,7 +15,7 @@
     <template id="report_plan_auditoria">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="doc">
-                <t t-call="web.external_layout">
+                <t t-call="amunet_documentos.layout_amunet">
                     <div class="page">
                         <h2 class="text-center">Plan de Auditoría Interna</h2>
                         <hr/>
@@ -25,25 +25,25 @@
                             <tbody>
                                 <tr>
                                     <td style="width:25%; background:#f5f5f5"><strong>Clave</strong></td>
-                                    <td><t t-field="doc.clave"/></td>
+                                    <td><span t-field="doc.clave"/></td>
                                     <td style="width:25%; background:#f5f5f5"><strong>Estado</strong></td>
-                                    <td><t t-field="doc.state"/></td>
+                                    <td><span t-field="doc.state"/></td>
                                 </tr>
                                 <tr>
                                     <td style="background:#f5f5f5"><strong>Tipo</strong></td>
-                                    <td><t t-field="doc.tipo"/></td>
+                                    <td><span t-field="doc.tipo"/></td>
                                     <td style="background:#f5f5f5"><strong>Modalidad</strong></td>
-                                    <td><t t-field="doc.modalidad"/></td>
+                                    <td><span t-field="doc.modalidad"/></td>
                                 </tr>
                                 <tr>
                                     <td style="background:#f5f5f5"><strong>Fecha inicio</strong></td>
-                                    <td><t t-field="doc.fecha_inicio"/></td>
+                                    <td><span t-field="doc.fecha_inicio"/></td>
                                     <td style="background:#f5f5f5"><strong>Fecha fin</strong></td>
-                                    <td><t t-field="doc.fecha_fin"/></td>
+                                    <td><span t-field="doc.fecha_fin"/></td>
                                 </tr>
                                 <tr>
                                     <td style="background:#f5f5f5"><strong>Sitio</strong></td>
-                                    <td colspan="3"><t t-field="doc.sitio"/></td>
+                                    <td colspan="3"><span t-field="doc.sitio"/></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -88,17 +88,17 @@
                         <!-- Objetivos y alcance -->
                         <t t-if="doc.objetivos">
                             <h4 style="margin-top:14px; color:#333;">Objetivos</h4>
-                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;"><t t-field="doc.objetivos"/></p>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;"><span t-field="doc.objetivos"/></p>
                         </t>
 
                         <t t-if="doc.alcance">
                             <h4 style="margin-top:14px; color:#333;">Alcance</h4>
-                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;"><t t-field="doc.alcance"/></p>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;"><span t-field="doc.alcance"/></p>
                         </t>
 
                         <t t-if="doc.limitaciones">
                             <h4 style="margin-top:14px; color:#333;">Limitaciones / Exclusiones</h4>
-                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;"><t t-field="doc.limitaciones"/></p>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;"><span t-field="doc.limitaciones"/></p>
                         </t>
 
                         <!-- Metodología -->
@@ -139,7 +139,7 @@
                             <h4 style="margin-top:14px; color:#333;">Agenda</h4>
                             <t t-foreach="doc.dia_ids" t-as="dia">
                                 <p style="font-size:11px; font-weight:bold; margin-bottom:4px;">
-                                    <t t-field="dia.fecha"/> — <t t-esc="dia.sitio or ''"/>
+                                    <span t-field="dia.fecha"/> — <t t-esc="dia.sitio or ''"/>
                                 </p>
                                 <table class="table table-sm table-bordered" style="font-size:11px; margin-bottom:8px;">
                                     <thead style="background:#f5f5f5">
@@ -172,19 +172,19 @@
                             <tbody>
                                 <tr t-if="doc.plazo_preliminar">
                                     <td style="background:#f5f5f5; width:55%">Entrega de informe preliminar</td>
-                                    <td><t t-field="doc.plazo_preliminar"/> días</td>
+                                    <td><span t-field="doc.plazo_preliminar"/> días</td>
                                 </tr>
                                 <tr t-if="doc.plazo_revision_auditado">
                                     <td style="background:#f5f5f5">Revisión del auditado</td>
-                                    <td><t t-field="doc.plazo_revision_auditado"/> días</td>
+                                    <td><span t-field="doc.plazo_revision_auditado"/> días</td>
                                 </tr>
                                 <tr t-if="doc.plazo_informe_final">
                                     <td style="background:#f5f5f5">Emisión de informe final</td>
-                                    <td><t t-field="doc.plazo_informe_final"/> días</td>
+                                    <td><span t-field="doc.plazo_informe_final"/> días</td>
                                 </tr>
                                 <tr t-if="doc.plazo_plan_capa">
                                     <td style="background:#f5f5f5">Plan de acciones correctivas</td>
-                                    <td><t t-field="doc.plazo_plan_capa"/> días</td>
+                                    <td><span t-field="doc.plazo_plan_capa"/> días</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -196,7 +196,7 @@
                                     <strong>Elaboró</strong><br/>
                                     <t t-if="doc.elaboro_id">
                                         <t t-esc="doc.elaboro_id.name"/>
-                                        <t t-if="doc.fecha_elaboro"><br/><small><t t-field="doc.fecha_elaboro"/></small></t>
+                                        <t t-if="doc.fecha_elaboro"><br/><small><span t-field="doc.fecha_elaboro"/></small></t>
                                     </t>
                                 </div>
                             </div>
@@ -205,7 +205,7 @@
                                     <strong>Autorizó (Auditor Líder)</strong><br/>
                                     <t t-if="doc.autorizo_id">
                                         <t t-esc="doc.autorizo_id.name"/>
-                                        <t t-if="doc.fecha_autorizo"><br/><small><t t-field="doc.fecha_autorizo"/></small></t>
+                                        <t t-if="doc.fecha_autorizo"><br/><small><span t-field="doc.fecha_autorizo"/></small></t>
                                     </t>
                                 </div>
                             </div>

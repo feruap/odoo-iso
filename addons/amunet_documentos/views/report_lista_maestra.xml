@@ -24,7 +24,7 @@
 
     <template id="report_lista_maestra">
         <t t-call="web.html_container">
-            <t t-call="web.external_layout">
+            <t t-call="amunet_documentos.layout_amunet">
                 <div class="page">
                     <h2 style="text-align:center;">Lista Maestra de Documentos Controlados</h2>
                     <p style="text-align:center;">
@@ -68,7 +68,7 @@
     <template id="report_ficha_documento">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="d">
-                <t t-call="web.external_layout">
+                <t t-call="amunet_documentos.layout_amunet">
                     <div class="page">
                         <h2 style="text-align:center;">Ficha de Documento Controlado</h2>
                         <table class="table table-sm table-bordered" style="margin-top:20px;">
@@ -160,6 +160,55 @@
         <field name="binding_type">report</field>
         <field name="paperformat_id" ref="paperformat_documento_controlado"/>
     </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         Layout general para reportes de documentacion:
+         - Logo visible, SIN direccion ni RFC
+         - Numero de pagina en pie
+         ══════════════════════════════════════════════════════════════════ -->
+    <template id="layout_amunet">
+        <t t-if="not company" t-set="company" t-value="res_company"/>
+        <!-- ENCABEZADO: logo sin dirección -->
+        <div t-attf-class="header o_company_#{company.id}_layout {{report_type == 'pdf' and 'pt-5'}}">
+            <svg t-attf-class="o_shape_bubble_1 z-n1 {{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}}"
+                 width="1100" height="1100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="550" cy="550" r="550" t-att-fill="company.primary_color" fill-opacity=".1"/>
+            </svg>
+            <table class="o_ignore_layout_styling table table-borderless mb-0">
+                <tbody>
+                    <tr>
+                        <td t-if="company.report_header" class="o_company_tagline fw-bold p-0 pe-2">
+                            <span t-field="company.report_header">Tagline</span>
+                        </td>
+                        <td class="p-0 text-end">
+                            <img t-if="company.logo" class="o_company_logo mb-2"
+                                 t-att-src="image_data_uri(company.logo)" alt="Logo"/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- CUERPO -->
+        <div t-attf-class="article o_report_layout_bubble o_table_boxed-rounded o_company_#{company.id}_layout"
+             t-att-data-oe-model="o and o._name"
+             t-att-data-oe-id="o and o.id"
+             t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-out="0"/>
+        </div>
+        <!-- PIE: número de página -->
+        <div t-attf-class="footer o_company_#{company.id}_layout {{report_type != 'pdf' and 'position-relative mt-auto mx-n5'}}">
+            <svg t-attf-class="{{report_type == 'pdf' and 'position-fixed start-0'}}"
+                 width="500" height="228" viewBox="0 0 500 228" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M500 228H0V6.52743C26.3323 2.23278 53.3561 0 80.9008 0C256.522 0 410.969 90.7656 500 228Z"
+                      t-att-fill="company.secondary_color" fill-opacity=".1"/>
+            </svg>
+            <div t-attf-class="o_footer_content {{report_type != 'pdf' and 'position-absolute end-0 start-0 bottom-0 mx-5'}} pt-3 text-center">
+                <span t-if="report_type == 'pdf'" class="text-muted" style="font-size:9px;">
+                    Pagina <span class="page"/> / <span class="topage"/>
+                </span>
+            </div>
+        </div>
+    </template>
 
     <!-- ══════════════════════════════════════════════════════════════════
          Layout personalizado para documentos controlados:

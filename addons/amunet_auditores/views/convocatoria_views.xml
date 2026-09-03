@@ -128,6 +128,10 @@
                                         invisible="estado == 'seleccionado'"/>
                                     <button name="action_rechazar" type="object" string="Rechazar" icon="fa-times"
                                         invisible="estado in ('rechazado', 'seleccionado')"/>
+                                    <button name="action_designar_lider" type="object"
+                                        string="Designar líder" icon="fa-star"
+                                        invisible="estado != 'seleccionado' or es_lider"
+                                        title="Designar como auditor líder"/>
                                     <button name="action_abrir_evaluacion" type="object"
                                         string="Evaluar" icon="fa-pencil" title="Abrir evaluación"/>
                                 </list>
@@ -151,7 +155,7 @@
                         <h2><field name="criterio_id" readonly="1"/></h2>
                     </div>
                     <group>
-                        <field name="evaluador_id"/>
+                        <field name="evaluador_id" readonly="1"/>
                         <field name="fecha" readonly="1"/>
                     </group>
 
@@ -195,7 +199,7 @@
                     <field name="criterio_descripcion" invisible="1"/>
                 </sheet>
                 <footer>
-                    <button string="Guardar" special="save" class="btn-primary"/>
+                    <button string="Guardar" name="action_guardar_y_cerrar" type="object" class="btn-primary"/>
                     <button string="Cerrar" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
@@ -215,6 +219,7 @@
                     <group>
                         <group string="Datos generales">
                             <field name="convocatoria_id" readonly="1"/>
+                            <field name="evaluador_id"/>
                             <field name="estado"/>
                             <field name="es_lider"/>
                             <field name="tipo_auditor" readonly="1"/>
@@ -231,7 +236,6 @@
                             <field name="criterio_id" readonly="1"/>
                             <field name="criterio_tipo" column_invisible="1"/>
                             <field name="calificacion_int" string="Calificación" readonly="1"/>
-                            <field name="evaluador_id" readonly="1"/>
                             <button name="action_abrir_evaluacion_criterio" type="object"
                                 string="Evaluar" icon="fa-pencil" title="Abrir evaluación"/>
                         </list>
