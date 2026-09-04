@@ -81,26 +81,12 @@
                                 <span t-elif="record.amunet_supply_state.raw_value == 'in_progress'" class="badge text-bg-info">Almacen surtiendo</span>
                                 <span t-else="" class="badge text-bg-light">Pendiente (Almacen)</span>
                             </div>
-                            <!-- Botones de actividad normal (Iniciar/Pausar/Terminar) -->
+                            <!-- Solo "Terminar": el inicio se infiere (ver action_amunet_mi_finish) -->
                             <div class="mt-2 d-flex gap-1" t-if="!record.amunet_is_supply_workorder.raw_value">
-                                <button name="action_amunet_mi_start" type="object"
-                                        class="btn btn-primary btn-sm"
-                                        t-if="record.state.raw_value == 'ready'">
-                                    Iniciar
-                                </button>
-                                <button name="action_amunet_mi_start" type="object"
-                                        class="btn btn-primary btn-sm"
-                                        t-if="record.state.raw_value == 'progress' &amp;&amp; !record.is_user_working.raw_value">
-                                    Reanudar
-                                </button>
-                                <button name="action_amunet_mi_pause" type="object"
-                                        class="btn btn-warning btn-sm"
-                                        t-if="record.state.raw_value == 'progress' &amp;&amp; record.is_user_working.raw_value">
-                                    Pausar
-                                </button>
                                 <button name="action_amunet_mi_finish" type="object"
                                         class="btn btn-success btn-sm"
-                                        t-if="record.state.raw_value == 'progress'">
+                                        confirm="¿Terminaste esta actividad? Se registrara el tiempo desde que quedo lista o desde tu actividad anterior."
+                                        t-if="record.state.raw_value == 'ready' || record.state.raw_value == 'progress'">
                                     Terminar
                                 </button>
                             </div>
