@@ -65,6 +65,7 @@
                                     <field name="qty_history" string="Vendido"/>
                                     <field name="qty_daily" string="Diario" optional="hide"/>
                                     <field name="qty_need" string="Necesidad"/>
+                                    <field name="qty_pending_orders" string="Pedidos sin surtir" optional="show"/>
                                     <field name="qty_on_hand" string="Disponible"/>
                                     <field name="qty_free" string="Existencia total" optional="hide"/>
                                     <field name="qty_released" string="Liberado" optional="hide"/>

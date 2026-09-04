@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_woo_pending_line_list" model="ir.ui.view">
+        <field name="name">amunet.woo.pending.line.list</field>
+        <field name="model">amunet.woo.pending.line</field>
+        <field name="arch" type="xml">
+            <list string="Pedidos pendientes de surtir" create="0" edit="0" delete="0" default_order="order_date asc">
+                <field name="order_number"/>
+                <field name="order_date"/>
+                <field name="order_status"/>
+                <field name="customer"/>
+                <field name="item_name"/>
+                <field name="woo_sku" optional="show"/>
+                <field name="qty_ordered_units" optional="hide"/>
+                <field name="qty_pending_units"/>
+                <field name="pieces_per_unit" optional="hide"/>
+                <field name="qty_pending" sum="Total"/>
+                <field name="product_id"/>
+                <field name="source" optional="hide"/>
+                <field name="note" optional="show"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_woo_pending_line_search" model="ir.ui.view">
+        <field name="name">amunet.woo.pending.line.search</field>
+        <field name="model">amunet.woo.pending.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="order_number"/>
+                <field name="customer"/>
+                <field name="product_id"/>
+                <field name="woo_sku"/>
+                <filter name="f_sin_producto" string="Sin producto Odoo" domain="[('product_id','=',False)]"/>
+                <separator/>
+                <filter name="g_producto" string="Producto" context="{'group_by': 'product_id'}"/>
+                <filter name="g_pedido" string="Pedido" context="{'group_by': 'order_number'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_woo_pending_fetch" model="ir.actions.server">
+        <field name="name">Leer pendientes de la tienda</field>
+        <field name="model_id" ref="model_amunet_woo_pending_line"/>
+        <field name="binding_model_id" ref="model_amunet_woo_pending_line"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">model.action_fetch()</field>
+    </record>
+
+    <record id="action_woo_pending_line" model="ir.actions.act_window">
+        <field name="name">Pedidos pendientes de surtir</field>
+        <field name="res_model">amunet.woo.pending.line</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_woo_pending_line_search"/>
+        <field name="context">{'search_default_g_producto': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiley_face">No hay pedidos vendidos sin existencia</p>
+            <p>Aqui aparecen las partidas que la tienda acepto sin material (agente comprando como cliente). Se leen cada hora; usa Accion &gt; "Leer pendientes de la tienda" para actualizar ahora.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_woo_pending_line"
+              name="Pedidos pendientes de surtir"
+              parent="mrp.menu_mrp_manufacturing"
+              action="action_woo_pending_line"
+              sequence="92"
+              groups="amunet_production_plan.group_production_planner,stock.group_stock_user"/>
+
+    <record id="cron_woo_pending_fetch" model="ir.cron" forcecreate="True">
+        <field name="name">Amunet: leer pedidos pendientes de surtir (tienda)</field>
+        <field name="model_id" ref="model_amunet_woo_pending_line"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_fetch()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

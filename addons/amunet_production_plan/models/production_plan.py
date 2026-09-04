@@ -268,6 +268,11 @@ class ProductionPlan(models.Model):
                 a=self.date_from, b=self.date_to))
 
         days = self._window_days()
+        # Pedidos de la tienda vendidos sin existencia: demanda comprometida.
+        # Entran al plan aunque el producto no tenga historial de ventas.
+        pendientes = self.env['amunet.woo.pending.line'].pending_by_product()
+        for pid in pendientes:
+            demand.setdefault(pid, 0.0)
         products = self.env['product.product'].browse(list(demand)).exists()
         if self.categ_ids:
             products = products.filtered(lambda p: p.categ_id in self.categ_ids)
@@ -286,7 +291,8 @@ class ProductionPlan(models.Model):
         products = products.sorted(lambda p: demand.get(p.id, 0.0), reverse=True)
         for product in products:
             qty_hist = demand.get(product.id, 0.0)
-            if qty_hist <= 0:
+            comprometido = pendientes.get(product.id, 0.0)
+            if qty_hist <= 0 and comprometido <= 0:
                 continue
             bom = self.env['mrp.bom']._bom_find(
                 product, company_id=self.company_id.id).get(product)
@@ -306,6 +312,9 @@ class ProductionPlan(models.Model):
                 need = qty_hist + daily * self.safety_days
             else:
                 need = daily * (self.horizon_days + self.safety_days)
+            # Lo ya vendido sin existencia se suma completo: es un compromiso,
+            # no un pronostico.
+            need += comprometido
             free = self._en_compania(product).free_qty
             sellable = self._sellable_qty(product) if self._is_stock_tracked(product) else free
             sheet_mult = self._sheet_multiple(product, bom)
@@ -370,6 +379,7 @@ class ProductionPlan(models.Model):
                 'qty_history': qty_hist,
                 'qty_daily': daily,
                 'qty_need': need,
+                'qty_pending_orders': comprometido,
                 'qty_on_hand': on_hand,
                 'qty_free': free,
                 'qty_released': released,
@@ -745,6 +755,9 @@ class ProductionPlanLine(models.Model):
     qty_history = fields.Float(string='Vendido en la ventana', digits='Product Unit of Measure')
     qty_daily = fields.Float(string='Demanda diaria', digits='Product Unit of Measure')
     qty_need = fields.Float(string='Necesidad del horizonte', digits='Product Unit of Measure')
+    qty_pending_orders = fields.Float(
+        string='Pedidos sin surtir', digits='Product Unit of Measure',
+        help='Piezas vendidas en la tienda sin existencia (pedidos vivos). Se suman a la necesidad.')
     qty_on_hand = fields.Float(string='Disponible contado', digits='Product Unit of Measure')
     qty_free = fields.Float(string='Existencia libre total', digits='Product Unit of Measure')
     qty_released = fields.Float(string='Liberada por Calidad', digits='Product Unit of Measure')
