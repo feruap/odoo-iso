@@ -10,8 +10,8 @@ _RESPUESTA = [
 
 _SECCIONES = [
     ('cumplimiento_legal', 'Cumplimiento Legal'),
-    ('capacidad_area', 'Capacidad del Área'),
-    ('desempeno_area', 'Desempeño del Área'),
+    ('capacidad_area', 'Recursos del Área'),
+    ('desempeno_area', 'Resultados del Área'),
     ('personal', 'Personal'),
 ]
 

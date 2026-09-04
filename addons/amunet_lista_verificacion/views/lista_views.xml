@@ -75,7 +75,8 @@
                         <list editable="bottom">
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
-                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
+                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"
+                                placeholder="Ej: ¿Los documentos del área están vigentes y aprobados?"/>
                             <field name="respuesta" string="Respuesta"
                                 decoration-success="respuesta == '2'"
                                 decoration-warning="respuesta == '1'"
@@ -85,15 +86,16 @@
                         </list>
                     </field>
 
-                    <!-- ── 2. Capacidad del Área ── -->
-                    <separator string="2. Capacidad del Área para proporcionar resultados"/>
+                    <!-- ── 2. Recursos del Área ── -->
+                    <separator string="2. Recursos del Área"/>
                     <field name="item_capacidad_ids" nolabel="1"
                         context="{'default_seccion': 'capacidad_area'}"
                         readonly="state == 'firmado'">
                         <list editable="bottom">
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
-                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
+                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"
+                                placeholder="Ej: ¿El área cuenta con equipos, espacio, materiales y procedimientos disponibles?"/>
                             <field name="respuesta" string="Respuesta"
                                 decoration-success="respuesta == '2'"
                                 decoration-warning="respuesta == '1'"
@@ -103,15 +105,16 @@
                         </list>
                     </field>
 
-                    <!-- ── 3. Desempeño del Área ── -->
-                    <separator string="3. Desempeño del Área"/>
+                    <!-- ── 3. Resultados del Área ── -->
+                    <separator string="3. Resultados del Área"/>
                     <field name="item_desempeno_ids" nolabel="1"
                         context="{'default_seccion': 'desempeno_area'}"
                         readonly="state == 'firmado'">
                         <list editable="bottom">
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
-                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
+                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"
+                                placeholder="Ej: ¿El área ha cumplido sus indicadores y atendido los problemas previos?"/>
                             <field name="respuesta" string="Respuesta"
                                 decoration-success="respuesta == '2'"
                                 decoration-warning="respuesta == '1'"
@@ -129,7 +132,8 @@
                         <list editable="bottom">
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
-                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"/>
+                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"
+                                placeholder="Ej: ¿El personal cuenta con evidencia de capacitación vigente para su puesto?"/>
                             <field name="respuesta" string="Respuesta"
                                 decoration-success="respuesta == '2'"
                                 decoration-warning="respuesta == '1'"
