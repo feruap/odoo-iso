@@ -1,0 +1,63 @@
+--- custom-raw-material-stock-display.php.bak.20260903_posible	2026-05-24 02:39:33.464933168 -0600
++++ custom-raw-material-stock-display.php	2026-09-03 14:57:03.611153622 -0600
+@@ -318,8 +318,12 @@
+             return 0;
+         }
+ 
+-        // Use ATUM's stock if available, fallback to WC.
+-        if ( function_exists( 'ATUM' ) && ATUM()->stock() ) {
++        // 2026-09-03: si el producto lo administra Odoo (amunet-inventario), la
++        // existencia buena es la que calcula ese plugin por lotes (filtro de
++        // WooCommerce), no el total viejo de ATUM que arrastra el virtual.
++        if ( get_post_meta( $raw_material_id, '_amunet_inv_raiz', true ) ) {
++            $stock = (float) $raw_product->get_stock_quantity();
++        } elseif ( function_exists( 'ATUM' ) && ATUM()->stock() ) {
+             $stock = ATUM()->stock()->get_product_stock_quantity( $raw_product );
+         } else {
+             $stock = $raw_product->get_stock_quantity( 'edit' );
+@@ -333,13 +337,26 @@
+     }
+ 
+     // Determine the raw material to display and its stock.
++
++    // 2026-09-03: el inventario de producto terminado lo administra Odoo
++    // (plugin amunet-inventario, meta _amunet_inv_raiz). Para esos productos el
++    // "stock virtual" del APT viejo es un residuo: lo que Odoo publica ya es
++    // fisico. Sin esto la pagina restaba el virtual y mostraba "Posible" en
++    // lugar de "Inventario".
++    function crms_display_virtual_for( $product_id ) {
++        if ( get_post_meta( $product_id, '_amunet_inv_raiz', true ) ) {
++            return 0.0;
++        }
++        return (float) get_post_meta( $product_id, '_apt_virtual_stock', true );
++    }
++
+     function crms_display_get_display_stock( $product_id ) {
+         $raw_material_ids = crms_display_get_raw_material_ids( $product_id );
+         if ( ! empty( $raw_material_ids ) ) {
+             if ( count( $raw_material_ids ) === 1 ) {
+                 $raw_id = reset( $raw_material_ids );
+                 $total_stock = crms_display_get_raw_material_stock( $raw_id );
+-                $virtual = (float) get_post_meta( $raw_id, '_apt_virtual_stock', true );
++                $virtual = crms_display_virtual_for( $raw_id );
+                 $physical = max( 0, $total_stock - $virtual );
+                 return array( 'stock' => $physical, 'virtual' => $virtual, 'type' => 'single', 'raw_id' => $raw_id );
+             }
+@@ -353,7 +370,7 @@
+             asort( $stocks );
+             $lowest_raw_id = key( $stocks );
+             $lowest_total = reset( $stocks );
+-            $virtual = (float) get_post_meta( $lowest_raw_id, '_apt_virtual_stock', true );
++            $virtual = crms_display_virtual_for( $lowest_raw_id );
+             $physical = max( 0, $lowest_total - $virtual );
+             return array( 'stock' => $physical, 'virtual' => $virtual, 'type' => 'lowest', 'raw_id' => $lowest_raw_id );
+         }
+@@ -379,7 +396,7 @@
+             }
+         }
+ 
+-        $virtual = (float) get_post_meta( $product_id, '_apt_virtual_stock', true );
++        $virtual = crms_display_virtual_for( $product_id );
+         $physical = max( 0, $stock - $virtual );
+ 
+         return array( 'stock' => $physical, 'virtual' => $virtual, 'type' => 'woocommerce' );
