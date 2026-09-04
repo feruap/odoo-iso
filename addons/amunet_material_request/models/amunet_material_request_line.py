@@ -96,6 +96,18 @@ class AmunetMaterialRequestLine(models.Model):
         compute='_compute_stock_available',
         digits='Product Unit',
     )
+    amunet_falta_stock = fields.Boolean(
+        string='Falta en almacen',
+        compute='_compute_amunet_falta_stock',
+        help='Se pide mas de lo que hay en el almacen. La solicitud si se puede '
+             'enviar: el faltante se avisa a Compras.',
+    )
+    amunet_qty_faltante = fields.Float(
+        string='Faltante por comprar',
+        compute='_compute_amunet_falta_stock',
+        digits='Product Unit',
+    )
+
     lot_available_qty = fields.Float(
         string='Disponible en lote',
         compute='_compute_lot_available_qty',
@@ -221,6 +233,13 @@ class AmunetMaterialRequestLine(models.Model):
                 line.reception_status = 'complete'
             else:
                 line.reception_status = 'partial'
+
+    @api.depends('qty_requested', 'stock_available')
+    def _compute_amunet_falta_stock(self):
+        for line in self:
+            faltante = (line.qty_requested or 0.0) - (line.stock_available or 0.0)
+            line.amunet_qty_faltante = max(0.0, faltante)
+            line.amunet_falta_stock = faltante > 0
 
     @api.depends('product_id', 'request_id.warehouse_id')
     def _compute_stock_available(self):
