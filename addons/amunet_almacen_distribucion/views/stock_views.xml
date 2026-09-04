@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Boton para traspasar de Fabrica a Distribucion desde las existencias.
+         Se hace por seleccion: el almacenista marca lo que entrega y de ahi
+         sale el documento. -->
+    <record id="action_traspaso_distribucion_server" model="ir.actions.server">
+        <field name="name">Traspasar a Distribucion</field>
+        <field name="model_id" ref="stock.model_stock_quant"/>
+        <field name="binding_model_id" ref="stock.model_stock_quant"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_amunet_traspasar_a_distribucion()</field>
+    </record>
+
+    <!-- Marca visible en el documento, para distinguirlo de un traslado normal -->
+    <record id="view_picking_form_traspaso_distribucion" model="ir.ui.view">
+        <field name="name">stock.picking.form.traspaso.distribucion</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <field name="amunet_es_traspaso_distribucion" invisible="1"/>
+                <div class="alert alert-info text-center mb-0" role="status"
+                     invisible="not amunet_es_traspaso_distribucion">
+                    <b>Traspaso de Fabrica a Distribucion.</b>
+                    Al validarlo, el producto deja de ser inventario de fabrica
+                    y pasa a ser inventario vendible de Distribucion.
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
