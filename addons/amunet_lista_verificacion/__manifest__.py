@@ -8,6 +8,7 @@
     'depends': ['amunet_documentos', 'amunet_quality', 'amunet_plan_auditorias'],
     'data': [
         'security/ir.model.access.csv',
+        'security/ir.rules.xml',
         'data/sequences.xml',
         'reports/report_lista_verificacion.xml',
         'views/lista_views.xml',
