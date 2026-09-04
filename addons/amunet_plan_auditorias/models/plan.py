@@ -130,6 +130,7 @@ class AmunetPlanAuditoria(models.Model):
             '_signature_elaborar': _('Elaboración del plan de auditoría'),
             '_signature_firmar_equipo': _('Firma de integrante del equipo auditor'),
             '_signature_autorizar': _('Autorización del plan de auditoría (Auditor líder)'),
+            '_signature_cerrar': _('Cierre del plan de auditoría (Auditor líder)'),
         }
 
     def action_firmar_elaboracion(self):
@@ -205,8 +206,6 @@ class AmunetPlanAuditoria(models.Model):
         # Pestaña Datos generales — Equipo auditor
         if not self.lider_id:
             errores.append('• Equipo auditor: falta designar al Auditor líder.')
-        if not self.auditor_ids:
-            errores.append('• Equipo auditor: agrega al menos un Auditor.')
 
         # Pestaña Datos generales — Metodología
         metodos = [self.met_apertura, self.met_entrevistas, self.met_revision_doc,
@@ -235,7 +234,19 @@ class AmunetPlanAuditoria(models.Model):
                 '\n'.join(errores)
             )
 
+        if self.env.user.id != self.lider_id.id:
+            raise ValidationError(_('Solo el auditor líder puede cerrar el plan.'))
+
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_signature_cerrar',
+            _('Auditor Líder — Cierre'),
+            _('Cierre del plan de auditoría %s.') % self.clave,
+        )
+
+    def _signature_cerrar(self):
+        self.ensure_one()
         self.write({'state': 'cerrado'})
+        return {'type': 'ir.actions.act_window_close'}
 
     def action_borrador(self):
         self.write({
