@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Accion: generar orden de compra desde una Solicitud de Material -->
+    <record id="action_generar_oc" model="ir.actions.server">
+        <field name="name">Generar orden de compra</field>
+        <field name="model_id" ref="amunet_material_request.model_amunet_material_request"/>
+        <field name="binding_model_id" ref="amunet_material_request.model_amunet_material_request"/>
+        <field name="binding_type">action</field>
+        <field name="binding_view_types">list,form</field>
+        <field name="group_ids" eval="[(6, 0, [ref('amunet_material_request.group_material_manager')])]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+# Genera orden(es) de compra en borrador a partir de una Solicitud de Material.
+# NO escribe precios: el candado de amunet_price_visibility se respeta dejando
+# price_unit en 0, que es el comportamiento que Fernando definio a proposito.
+if not records:
+    raise UserError('Selecciona al menos una solicitud.')
+
+AMAZON = 541
+MELI = 552
+DIAS_ENTREGA = 5
+
+por_proveedor = {}
+sin_proveedor = []
+cubiertas = []
+
+for req in records:
+    for ln in req.line_ids:
+        prod = ln.product_id
+        pedido = ln.qty_requested or 0.0
+        surtido = ln.qty_supplied or 0.0
+        falta = pedido - surtido
+        if falta <= 0:
+            continue
+        existencia = prod.sudo().qty_available or 0.0
+        if existencia >= falta:
+            cubiertas.append('%s %s (piden %g, hay %g)' % (prod.default_code or '', prod.name, falta, existencia))
+            continue
+        comprar = falta - existencia
+        prov = False
+        sellers = prod.sudo().seller_ids
+        if sellers:
+            prov = sellers[0].partner_id.id
+        if not prov:
+            url = (prod.sudo().product_tmpl_id.marketplace_purchase_url or '').lower()
+            if 'amazon' in url:
+                prov = AMAZON
+            elif 'mercadolibre' in url or 'mercado libre' in url:
+                prov = MELI
+        if not prov:
+            sin_proveedor.append('%s %s' % (prod.default_code or '', prod.name))
+            continue
+        clave = (prov, req.id)
+        if clave not in por_proveedor:
+            por_proveedor[clave] = []
+        por_proveedor[clave].append((prod, comprar, ln.uom_id, req))
+
+if not por_proveedor:
+    detalle = ''
+    if cubiertas:
+        detalle = detalle + ' Se surten de almacen: ' + '; '.join(cubiertas) + '.'
+    if sin_proveedor:
+        detalle = detalle + ' Sin proveedor definido: ' + '; '.join(sin_proveedor) + '.'
+    raise UserError('No hay nada que comprar en esta solicitud.' + detalle)
+
+fecha = datetime.datetime.now() + datetime.timedelta(days=DIAS_ENTREGA)
+PO = env['purchase.order'].sudo()
+creadas = []
+
+for clave in por_proveedor:
+    partida = por_proveedor[clave]
+    req = partida[0][3]
+    lineas = []
+    for prod, cant, uom, r in partida:
+        lineas.append((0, 0, {
+            'product_id': prod.id,
+            'name': prod.display_name,
+            'product_qty': cant,
+            'product_uom_id': uom.id if uom else prod.uom_id.id,
+            'date_planned': fecha,
+        }))
+    oc = PO.create({
+        'partner_id': clave[0],
+        'origin': req.name,
+        'date_order': datetime.datetime.now(),
+        'date_planned': fecha,
+        'order_line': lineas,
+    })
+    creadas.append(oc)
+    req.sudo().message_post(body='Se genero la orden de compra <b>%s</b> con %d linea(s). Los precios los captura Fernando.' % (oc.name, len(lineas)))
+    oc.message_post(body='Generada desde la solicitud de material <b>%s</b>.' % req.name)
+
+nombres = ', '.join([o.name for o in creadas])
+aviso = 'Ordenes creadas: ' + nombres + '.'
+if cubiertas:
+    aviso = aviso + ' No se compraron (hay existencia): ' + '; '.join(cubiertas) + '.'
+if sin_proveedor:
+    aviso = aviso + ' SIN PROVEEDOR, revisar a mano: ' + '; '.join(sin_proveedor) + '.'
+
+action = {
+    'type': 'ir.actions.act_window',
+    'name': aviso[:120],
+    'res_model': 'purchase.order',
+    'view_mode': 'list,form',
+    'domain': [('id', 'in', [o.id for o in creadas])],
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <!-- Accion: aviso diario de recepciones esperadas -->
+    <record id="action_aviso_recepciones" model="ir.actions.server">
+        <field name="name">Aviso diario: recepciones esperadas</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+# Aviso diario de recepciones - Almacen Amunet
+# Mexico City = UTC-6 fijo (sin horario de verano desde 2022)
+ahora_utc = datetime.datetime.utcnow()
+local = ahora_utc - datetime.timedelta(hours=6)
+hoy = local.date()
+ini = datetime.datetime.combine(hoy, datetime.time(0, 0)) + datetime.timedelta(hours=6)
+fin = ini + datetime.timedelta(days=1)
+
+Picking = env['stock.picking'].sudo()
+base = [('picking_type_id.code', '=', 'incoming'), ('state', 'in', ['confirmed', 'assigned', 'waiting'])]
+de_hoy = Picking.search(base + [('scheduled_date', '>=', ini), ('scheduled_date', '<', fin)], order='scheduled_date')
+atrasadas = Picking.search(base + [('scheduled_date', '<', ini)], order='scheduled_date')
+sols = env['amunet.material.request'].sudo().search([('state', 'in', ['submitted', 'pending_approval'])], order='request_date')
+
+MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+DIAS = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+ETIQ = {'draft': 'Borrador', 'submitted': 'Enviada', 'pending_approval': 'Espera aprobacion', 'pending_reception': 'Espera acuse'}
+fecha_txt = '%s %d de %s de %d' % (DIAS[hoy.weekday()], hoy.day, MESES[hoy.month - 1], hoy.year)
+
+TD = 'padding:6px 10px;border-bottom:1px solid #eee'
+H = []
+H.append('<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#222;max-width:820px">')
+H.append('<h2 style="margin:0 0 4px">Recepciones esperadas hoy</h2>')
+H.append('<div style="color:#666;margin-bottom:18px">%s</div>' % fecha_txt)
+
+if de_hoy:
+    H.append('<table style="border-collapse:collapse;width:100%"><thead><tr style="background:#f3f4f6">'
+             '<th align="left" style="padding:6px 10px">Recepcion</th>'
+             '<th align="left" style="padding:6px 10px">Proveedor / origen</th>'
+             '<th align="left" style="padding:6px 10px">OC</th>'
+             '<th align="left" style="padding:6px 10px">Articulos</th></tr></thead><tbody>')
+    for p in de_hoy:
+        arts = ', '.join([c for c in p.move_ids.mapped('product_id.default_code') if c][:6]) or '-'
+        H.append('<tr><td style="%s">%s</td><td style="%s">%s</td><td style="%s">%s</td><td style="%s;color:#555">%s</td></tr>'
+                 % (TD, p.name, TD, p.partner_id.name or '-', TD, p.origin or '-', TD, arts))
+    H.append('</tbody></table>')
+else:
+    H.append('<p style="background:#f3f4f6;padding:12px;border-radius:6px">No hay recepciones programadas para hoy.</p>')
+
+if atrasadas:
+    H.append('<h3 style="margin:22px 0 6px">Atrasadas (%d)</h3>' % len(atrasadas))
+    H.append('<table style="border-collapse:collapse;width:100%"><tbody>')
+    for p in atrasadas[:12]:
+        dias = (ini.date() - p.scheduled_date.date()).days
+        H.append('<tr><td style="%s">%s</td><td style="%s">%s</td><td style="%s">%s</td><td style="%s;color:#b45309">%d dias</td></tr>'
+                 % (TD, p.name, TD, p.partner_id.name or '-', TD, p.origin or '-', TD, dias))
+    H.append('</tbody></table>')
+    if len(atrasadas) > 12:
+        H.append('<div style="color:#666;font-size:13px;margin-top:6px">... y %d mas.</div>' % (len(atrasadas) - 12))
+
+if sols:
+    H.append('<h3 style="margin:22px 0 6px">Solicitudes de material pendientes (%d)</h3>' % len(sols))
+    H.append('<table style="border-collapse:collapse;width:100%"><tbody>')
+    for s in sols:
+        H.append('<tr><td style="%s">%s</td><td style="%s">%s</td><td style="%s">%s</td><td style="%s">%d lineas</td></tr>'
+                 % (TD, s.name, TD, s.requester_id.name or '-', TD, ETIQ.get(s.state, s.state), TD, len(s.line_ids)))
+    H.append('</tbody></table>')
+
+H.append('<p style="color:#888;font-size:12px;margin-top:24px">Aviso automatico de Odoo, 8:30 am. '
+         'Los codigos de entrega de Amazon NO vienen aqui: llegan por separado en cuanto Amazon los emite.</p>')
+H.append('</div>')
+
+env['mail.mail'].sudo().create({
+    'subject': 'Recepciones de hoy: %d programadas, %d atrasadas' % (len(de_hoy), len(atrasadas)),
+    'body_html': ''.join(H),
+    'email_from': 'odoobot@amunet.com.mx',
+    'email_to': 'supalmacen@amunet.com.mx,almacen1@amunet.com.mx,almacen.mp@amunet.com.mx',
+    'auto_delete': False,
+}).send()
+]]></field>
+    </record>
+
+</odoo>
