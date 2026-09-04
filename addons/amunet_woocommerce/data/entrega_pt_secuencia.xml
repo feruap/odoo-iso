@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- noupdate=1 OBLIGATORIO: sin esto la secuencia se reinicia en cada
+         actualizacion del modulo y se repiten folios. -->
+    <data noupdate="1">
+        <record id="seq_amunet_entrega_pt" model="ir.sequence">
+            <field name="name">Entrega de Producto Terminado</field>
+            <field name="code">amunet.entrega.pt</field>
+            <field name="prefix">EPT/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

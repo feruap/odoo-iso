@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Usuarios normales: solo ven actas donde están en el equipo del plan o son el auditado -->
+    <record id="rule_acta_auditoria_equipo" model="ir.rule">
+        <field name="name">Acta auditoría: visible solo al equipo del plan y auditado</field>
+        <field name="model_id" ref="model_amunet_acta_auditoria"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">
+            ['|', '|', '|', '|',
+                ('plan_id.lider_id', '=', user.id),
+                ('plan_id.auditor_ids', 'in', [user.id]),
+                ('plan_id.observador_ids', 'in', [user.id]),
+                ('plan_id.experto_ids', 'in', [user.id]),
+                ('representante_auditado_id', '=', user.id)
+            ]
+        </field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Gestora de documentación: ve y gestiona todas las actas -->
+    <record id="rule_acta_auditoria_manager" model="ir.rule">
+        <field name="name">Acta auditoría: acceso total para documentación</field>
+        <field name="model_id" ref="model_amunet_acta_auditoria"/>
+        <field name="groups" eval="[(4, ref('amunet_documentos.group_documentos_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- noupdate: un ajuste manual del tiempo no se debe perder en cada -u -->
+    <data noupdate="1">
+        <record id="param_minutos_inactividad" model="ir.config_parameter">
+            <field name="key">amunet_soluciones_kiosco.minutos_inactividad</field>
+            <field name="value">10</field>
+        </record>
+    </data>
+</odoo>

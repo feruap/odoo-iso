@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Puesto de piso: estaciones donde trabaja la persona (alimenta "Mi dia") -->
+    <record id="view_amunet_mi_employee_form" model="ir.ui.view">
+        <field name="name">hr.employee.form.mi.estaciones</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Mi produccion" name="amunet_mi_produccion"
+                      groups="mrp.group_mrp_user,hr.group_hr_user">
+                    <group>
+                        <field name="amunet_mi_workcenter_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <p class="text-muted">
+                        En "Mi dia" esta persona solo ve las actividades de estas estaciones.
+                        Sin estaciones asignadas ve todas.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

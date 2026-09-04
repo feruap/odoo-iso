@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════ Acciones, todas filtradas a ADT ═══════════
+         El filtro va en el DOMINIO de cada accion, no solo en el contexto:
+         el contexto se puede quitar desde la barra de busqueda, el dominio no.
+         Asi Distribucion no ve inventario de fabrica ni por accidente. -->
+
+    <record id="action_distribucion_transferencias" model="ir.actions.act_window">
+        <field name="name">Transferencias</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('picking_type_id.warehouse_id.code','=','ADT')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aqui van las entradas y salidas de Distribucion</p>
+            <p>Lo que traspasa la fabrica, lo que se compra y lo que sale al cliente.</p>
+        </field>
+    </record>
+
+    <record id="action_distribucion_existencias" model="ir.actions.act_window">
+        <field name="name">Existencias</field>
+        <field name="res_model">stock.quant</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('location_id.warehouse_id.code','=','ADT')]</field>
+        <field name="context">{'search_default_internal_loc': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Todavia no hay existencia en Distribucion</p>
+            <p>Aparecera conforme la fabrica traspase producto o lleguen las compras.</p>
+        </field>
+    </record>
+
+    <record id="action_distribucion_conteo" model="ir.actions.act_window">
+        <field name="name">Conteo / ajuste</field>
+        <field name="res_model">stock.quant</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('location_id.warehouse_id.code','=','ADT')]</field>
+        <field name="context">{'inventory_mode': True}</field>
+    </record>
+
+    <!-- ═══════════ El menu de la aplicacion ═══════════ -->
+
+    <menuitem id="menu_distribucion_root"
+              name="Distribucion"
+              web_icon="stock,static/description/icon.png"
+              sequence="55"
+              groups="amunet_almacen_distribucion.group_distribucion_user"/>
+
+    <menuitem id="menu_distribucion_operaciones"
+              name="Operaciones"
+              parent="menu_distribucion_root"
+              sequence="10"/>
+
+    <menuitem id="menu_distribucion_transferencias"
+              name="Transferencias"
+              parent="menu_distribucion_operaciones"
+              action="action_distribucion_transferencias"
+              sequence="10"/>
+
+    <menuitem id="menu_distribucion_inventario"
+              name="Inventario"
+              parent="menu_distribucion_root"
+              sequence="20"/>
+
+    <menuitem id="menu_distribucion_existencias"
+              name="Existencias"
+              parent="menu_distribucion_inventario"
+              action="action_distribucion_existencias"
+              sequence="10"/>
+
+    <menuitem id="menu_distribucion_conteo"
+              name="Conteo / ajuste"
+              parent="menu_distribucion_inventario"
+              action="action_distribucion_conteo"
+              sequence="20"
+              groups="amunet_almacen_distribucion.group_distribucion_manager"/>
+
+</odoo>

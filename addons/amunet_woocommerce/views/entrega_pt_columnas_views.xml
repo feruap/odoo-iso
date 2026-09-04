@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Columnas del documento de Recepciones de PT.
+
+         Hereda de la vista de recepcion de materiales (que es quien agrega
+         "Lote de proveedor") con prioridad mayor, para acomodar SOLO los
+         documentos de PT. Las recepciones de materia prima quedan igual. -->
+    <record id="view_picking_form_ingreso_pt_columnas" model="ir.ui.view">
+        <field name="name">stock.picking.form.ingreso.pt.columnas</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="amunet_recepcion_materiales.view_picking_form_recepcion_materiales"/>
+        <field name="priority">120</field>
+        <field name="arch" type="xml">
+
+            <!-- Bandera para poder preguntar por ella desde las columnas -->
+            <xpath expr="//field[@name='amunet_es_recepcion_equipo']" position="after">
+                <field name="amunet_es_ingreso_pt" invisible="1"/>
+            </xpath>
+
+            <!-- No hay proveedor: el material lo fabricamos nosotros.
+
+                 El campo factory_lot_id aparece DOS veces en la lista: una
+                 oculta (la declara amunet_lot) y la visible que agrega
+                 amunet_recepcion_materiales. Se ancla a esta ultima por su
+                 posicion respecto a "Estado en Calidad", que es el campo justo
+                 antes. Buscarlo por su etiqueta no se puede: Odoo prohibe usar
+                 'string' como selector en herencia de vistas. -->
+            <xpath expr="//field[@name='move_line_ids']//field[@name='amunet_calidad_estado']/following-sibling::field[@name='factory_lot_id'][1]" position="attributes">
+                <attribute name="column_invisible">parent.amunet_es_ingreso_pt</attribute>
+            </xpath>
+
+            <!-- La cantidad editable se sustituye por el dato de solo lectura:
+                 aqui no se corrige, se valida o se rechaza. -->
+            <xpath expr="//field[@name='move_line_ids']//field[@name='qty_demanded']" position="attributes">
+                <attribute name="column_invisible">parent.amunet_es_ingreso_pt</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='move_line_ids']//field[@name='qty_demanded']" position="after">
+                <field name="amunet_pt_entregado"
+                       string="Entregado por Producción"
+                       readonly="1"
+                       column_invisible="not parent.amunet_es_ingreso_pt"/>
+            </xpath>
+
+            <!-- La cantidad recibida se escribe: es el conteo de quien recibe.
+                 De base esta bloqueada hasta que el traslado se apruebe, un
+                 candado de los traslados internos entre almacenes que aqui no
+                 aplica: la aprobacion de esta entrega ES este conteo. -->
+            <xpath expr="//field[@name='move_line_ids']//field[@name='quantity']" position="attributes">
+                <attribute name="readonly">not parent.transfer_approved and not parent.amunet_es_ingreso_pt</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Los botones de la entrega, TAMBIEN en el documento de Recepciones.
+
+         Por que: quien recibe llega naturalmente al documento (Inventario >
+         Recepciones), no a la pantalla de la entrega, que vive tres niveles
+         adentro (Inventario > Operaciones > Entregas de PT). Ahi capturaba su
+         conteo y se quedaba sin poder cerrar, porque los botones estaban en la
+         otra pantalla. Paso de verdad con Luis el 2026-09-02.
+
+         En vez de seguir explicando donde buscar, los botones se ponen donde la
+         gente ya esta. Son los MISMOS metodos: no hay dos caminos, hay un
+         camino con dos puertas. -->
+    <record id="view_picking_form_entrega_pt_botones" model="ir.ui.view">
+        <field name="name">stock.picking.form.entrega.pt.botones</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="priority">130</field>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='picking_type_id']" position="after">
+                <field name="amunet_entrega_pt_id" invisible="1"/>
+                <field name="amunet_entrega_pt_state" invisible="1"/>
+            </xpath>
+
+            <xpath expr="//header" position="inside">
+                <button name="action_entrega_pt_validar_desde_picking" type="object"
+                        string="Recibir e ingresar" class="btn-primary"
+                        invisible="not amunet_entrega_pt_id or amunet_entrega_pt_state != 'por_recibir'"
+                        groups="amunet_woocommerce.group_almacen_pt"/>
+                <button name="action_entrega_pt_rechazar_desde_picking" type="object"
+                        string="Rechazar entrega" class="btn-danger"
+                        invisible="not amunet_entrega_pt_id or amunet_entrega_pt_state != 'por_recibir'"
+                        groups="amunet_woocommerce.group_almacen_pt"
+                        confirm="¿Rechazar la entrega? El material REGRESA a producción y tendrán que volver a entregarlo."/>
+                <button name="action_entrega_pt_abrir" type="object"
+                        string="Ver la entrega" class="btn-secondary"
+                        invisible="not amunet_entrega_pt_id"/>
+            </xpath>
+
+            <!-- El Validar nativo se esconde aqui: si se usara, el material
+                 entraria a existencias pero la entrega se quedaria en "por
+                 recibir", sin firma de recepcion y sin liberar el lote. -->
+            <xpath expr="//button[@name='button_validate']" position="attributes">
+                <attribute name="invisible">amunet_entrega_pt_id and amunet_entrega_pt_state == 'por_recibir'</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
