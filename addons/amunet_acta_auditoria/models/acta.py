@@ -108,23 +108,14 @@ class AmunetActaAuditoria(models.Model):
     fecha_firma_sanitario = fields.Date(string='Fecha', readonly=True)
 
     puede_firmar_auditado = fields.Boolean(compute='_compute_puede_firmar_auditado')
-    puede_asistir_apertura = fields.Boolean(compute='_compute_puede_asistir')
-    puede_asistir_cierre = fields.Boolean(compute='_compute_puede_asistir')
 
+    @api.depends('representante_auditado_id', 'firma_auditado_id')
     def _compute_puede_firmar_auditado(self):
         uid = self.env.user.id
         for r in self:
             r.puede_firmar_auditado = (
                 uid == r.representante_auditado_id.id and not r.firma_auditado_id
             )
-
-    def _compute_puede_asistir(self):
-        uid = self.env.user.id
-        for r in self:
-            ya_apertura = uid in r.apertura_asistente_ids.mapped('user_id').ids
-            ya_cierre = uid in r.cierre_asistente_ids.mapped('user_id').ids
-            r.puede_asistir_apertura = not ya_apertura
-            r.puede_asistir_cierre = not ya_cierre
 
     # ── Secuencia ─────────────────────────────────────────────────────────
 
@@ -204,45 +195,31 @@ class AmunetActaAuditoria(models.Model):
 
     def action_asistir_apertura(self):
         self.ensure_one()
-        uid = self.env.user.id
-        if uid in self.apertura_asistente_ids.mapped('user_id').ids:
-            raise ValidationError(_('Ya registraste tu asistencia en la reunión de apertura.'))
-        return self.env['amunet.generic.signature.wizard'].open_for(
-            self, '_signature_asistencia_apertura',
-            _('Asistencia — Apertura'),
-            _('Registro de asistencia a la reunión de apertura del acta %s.') % self.clave,
-        )
-
-    def _signature_asistencia_apertura(self):
-        self.ensure_one()
-        self.env['amunet.acta.asistente'].create({
-            'acta_id': self.id,
-            'seccion': 'apertura',
-            'user_id': self.env.user.id,
-            'fecha': fields.Date.today(),
-        })
-        return {'type': 'ir.actions.act_window_close'}
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Registrar asistencia — Apertura'),
+            'res_model': 'amunet.acta.asistencia.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_acta_id': self.id,
+                'default_seccion': 'apertura',
+            },
+        }
 
     def action_asistir_cierre(self):
         self.ensure_one()
-        uid = self.env.user.id
-        if uid in self.cierre_asistente_ids.mapped('user_id').ids:
-            raise ValidationError(_('Ya registraste tu asistencia en la reunión de cierre.'))
-        return self.env['amunet.generic.signature.wizard'].open_for(
-            self, '_signature_asistencia_cierre',
-            _('Asistencia — Cierre'),
-            _('Registro de asistencia a la reunión de cierre del acta %s.') % self.clave,
-        )
-
-    def _signature_asistencia_cierre(self):
-        self.ensure_one()
-        self.env['amunet.acta.asistente'].create({
-            'acta_id': self.id,
-            'seccion': 'cierre',
-            'user_id': self.env.user.id,
-            'fecha': fields.Date.today(),
-        })
-        return {'type': 'ir.actions.act_window_close'}
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Registrar asistencia — Cierre'),
+            'res_model': 'amunet.acta.asistencia.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_acta_id': self.id,
+                'default_seccion': 'cierre',
+            },
+        }
 
     def action_borrador(self):
         self.write({

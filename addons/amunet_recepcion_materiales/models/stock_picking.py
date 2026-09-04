@@ -481,47 +481,40 @@ class StockPicking(models.Model):
         }
 
     def _amunet_crear_traslado_distribucion(self):
-        """Cuando una liberación de QC se valida y el producto es de categoría
-        Distribución/*, crea una recepción en APT para que Luis confirme físicamente
-        que recibió el equipo o material."""
+        """Cuando una liberación de QC se valida y el producto tiene
+        amunet_va_a_distribucion=True, crea un traslado interno en ADT
+        (ADT/Input → ADT/Stock) para que Luis confirme la recepción física.
+
+        El material ya fue redirigido a ADT/Input en el pre-step de _action_done;
+        este método crea el segundo paso (INT) para que Luis lo pase a ADT/Stock.
+        """
         self.ensure_one()
 
-        cat_raiz = self.env['product.category'].search(
-            [('name', '=', 'Distribución')], limit=1)
-        if not cat_raiz:
-            return
-        cat_ids = self.env['product.category'].search(
-            [('id', 'child_of', cat_raiz.id)]).ids
-
         lines = self.move_line_ids.filtered(
-            lambda l: l.product_id.categ_id.id in cat_ids and (l.quantity or 0) > 0
+            lambda l: l.product_id.product_tmpl_id.amunet_va_a_distribucion
+                      and (l.quantity or 0) > 0
         )
         if not lines:
             return
 
-        loc_apt = self.env['stock.location'].search([
-            ('name', '=', 'Existencias_Distribución'),
-            ('usage', '=', 'internal'),
-        ], limit=1)
-        if not loc_apt:
+        wh_adt = self.env['stock.warehouse'].search(
+            [('code', '=', 'ADT')], limit=1)
+        if not wh_adt:
             _logger.warning(
-                'amunet_recepcion: no se encontró Existencias_Distribución; '
+                'amunet_recepcion: almacén ADT no encontrado; '
                 'traslado automático no creado para picking %s', self.name)
             return
 
-        # Usar el tipo Traslados internos de APT (no Recepciones) para evitar
-        # que la ruta multi-paso de APT desvíe el material a QC intermedio.
-        # El material ya pasó QC en AMP; va directo a Existencias_Distribución.
-        wh_apt = self.env['stock.warehouse'].search(
-            [('code', '=', 'APT')], limit=1)
-        pt = wh_apt.int_type_id if wh_apt else False
-        if not pt:
+        loc_adt_input = wh_adt.wh_input_stock_loc_id   # ADT/Input
+        loc_adt_stock = wh_adt.lot_stock_id              # ADT/Stock
+        pt = wh_adt.int_type_id
+        if not pt or not loc_adt_input or not loc_adt_stock:
             _logger.warning(
-                'amunet_recepcion: no se encontró almacén APT o su tipo interno; '
+                'amunet_recepcion: ADT sin ubicación de entrada o tipo interno; '
                 'traslado automático no creado para picking %s', self.name)
             return
 
-        loc_src = lines[0].location_dest_id  # AMP/Existencias
+        loc_src = loc_adt_input  # el material ya está aquí tras el pre-step
 
         # Cantidad real aprobada: suma de quants en ubicaciones internas.
         # Si hubo split antes de la liberación, el picking de QC mueve la cantidad
@@ -540,23 +533,21 @@ class StockPicking(models.Model):
 
         move_vals = [(0, 0, {
             'product_id': l.product_id.id,
-            'product_uom_qty': _qty_real(l),
+            'product_uom_qty': l.quantity,
             'product_uom': l.product_id.uom_id.id,
             'location_id': loc_src.id,
-            'location_dest_id': loc_apt.id,
+            'location_dest_id': loc_adt_stock.id,
         }) for l in lines]
 
         traslado = self.env['stock.picking'].sudo().create({
             'picking_type_id': pt.id,
             'location_id': loc_src.id,
-            'location_dest_id': loc_apt.id,
-            'origin': 'Distribución desde QC: ' + self.name,
+            'location_dest_id': loc_adt_stock.id,
+            'origin': 'Distribución desde Calidad: ' + self.name,
             'move_ids': move_vals,
         })
         traslado.action_confirm()
-        # Forzar destino directo a Existencias_Distribución en todos los movimientos,
-        # evitando que la ruta multi-paso de APT desvíe a QC intermedio.
-        traslado.move_ids.write({'location_dest_id': loc_apt.id})
+        traslado.move_ids.write({'location_id': loc_src.id, 'location_dest_id': loc_adt_stock.id})
         traslado.action_assign()
 
         # Asignar lote y datos de proveedor en las líneas del traslado
@@ -627,17 +618,32 @@ class StockPicking(models.Model):
 
         self.message_post(
             body=(
-                f'Recepción en APT/Distribución generada: <b>{traslado.name}</b>. '
-                f'Luis (APT) recibirá aviso para confirmar.'
+                f'Traslado ADT generado: <b>{traslado.name}</b>. '
+                f'Luis recibirá aviso para confirmar físicamente.'
             ),
             message_type='notification',
             subtype_xmlid='mail.mt_note',
         )
 
     def _action_done(self):
+        # Pre-step: para liberaciones QC con productos de distribución,
+        # redirigir destino → ADT/Input ANTES de validar,
+        # para que el material vaya directo a ADT sin pasar por AMP/Existencias.
+        wh_adt = self.env['stock.warehouse'].search([('code', '=', 'ADT')], limit=1)
+        loc_adt_input = wh_adt.wh_input_stock_loc_id if wh_adt else False
+
+        if loc_adt_input:
+            for picking in self.filtered(lambda p: p.amunet_disposition_qc_id):
+                dist_moves = picking.move_ids.filtered(
+                    lambda m: m.product_id.product_tmpl_id.amunet_va_a_distribucion
+                )
+                if dist_moves:
+                    dist_moves.write({'location_dest_id': loc_adt_input.id})
+                    dist_moves.move_line_ids.write({'location_dest_id': loc_adt_input.id})
+
         res = super()._action_done()
-        # Liberaciones de QC con productos de categoría Distribución/* →
-        # crear traslado automático a APT/Existencias_Distribución
+
+        # Post-step: crear traslado ADT/INT (ADT/Input → ADT/Stock) para Luis
         for picking in self.filtered(
             lambda p: p.state == 'done' and p.amunet_disposition_qc_id
         ):

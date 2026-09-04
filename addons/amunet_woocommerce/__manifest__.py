@@ -20,12 +20,16 @@ fabricación, controles de calidad, BOM ni presentaciones de Odoo.
 - Tres grupos: Consulta, Revisor y Administrador, con reglas multiempresa.""",
     'author': 'Amunet',
     'category': 'Inventory',
-    'version': '19.0.14.0.0',
+    'version': '19.0.15.16.0',
     'depends': [
         'mail',
         'stock',
         'mrp',
         'amunet_packaging_planning',
+        # Para acomodar las columnas del documento de Recepciones de PT, que
+        # reusa el formulario de recepcion de materiales. Sin esta dependencia
+        # la vista no encuentra de quien heredar.
+        'amunet_recepcion_materiales',
     ],
     'data': [
         'security/security.xml',
@@ -41,7 +45,14 @@ fabricación, controles de calidad, BOM ni presentaciones de Odoo.
         'data/woo_stock_sync_cron.xml',
         'views/menu_views.xml',
         'views/woo_reception_views.xml',
+        'data/entrega_pt_gracia.xml',
+        'wizard/amunet_entrega_pt_wizard_views.xml',
         'views/woo_delivery_views.xml',
+        'data/entrega_pt_secuencia.xml',
+        'views/amunet_entrega_pt_views.xml',
+        'views/entrega_pt_columnas_views.xml',
+        'wizard/amunet_recibir_pt_wizard_views.xml',
+        'views/entrega_pt_picking_views.xml',
     ],
     'installable': True,
     'application': True,

@@ -8,6 +8,10 @@ from . import woo_long_process
 from . import woo_sync_log
 from . import woo_stock_delivery
 from . import woo_delivery
+# Movimiento de inventario de la entrega a PT
+from . import amunet_entrega_pt
+from . import woo_entrega_pt
+from . import entrega_pt_columnas
 from . import woo_reception
 from . import mrp_production
 from . import stock_lot

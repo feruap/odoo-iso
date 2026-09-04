@@ -39,6 +39,9 @@
         <field name="arch" type="xml">
             <form string="Entrega de material">
                 <header>
+                    <!-- Validar mueve el material de APT/Entrada a existencias.
+                         Rechazar lo REGRESA a produccion: no se acepta a medias,
+                         se aclara y Produccion vuelve a entregar. -->
                     <button name="action_recibir" type="object"
                             string="Confirmar recepción" class="btn-primary"
                             invisible="state != 'por_recibir'"
@@ -189,22 +192,5 @@
               parent="menu_amunet_woo_root"
               action="action_woo_delivery"
               sequence="11"/>
-
-    <!-- Botones de Acondicionado en la orden de fabricación -->
-    <record id="view_mrp_production_form_woo_entrega" model="ir.ui.view">
-        <field name="name">mrp.production.form.woo.entrega</field>
-        <field name="model">mrp.production</field>
-        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
-        <field name="arch" type="xml">
-            <xpath expr="//header" position="inside">
-                <button name="action_amunet_entrega_completa" type="object"
-                        string="Entrega completa" class="btn-primary"
-                        groups="amunet_woocommerce.group_woo_acondicionado"/>
-                <button name="action_amunet_entrega_parcial" type="object"
-                        string="Entrega parcial" class="btn-secondary"
-                        groups="amunet_woocommerce.group_woo_acondicionado"/>
-            </xpath>
-        </field>
-    </record>
 
 </odoo>

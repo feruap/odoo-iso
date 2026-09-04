@@ -45,7 +45,8 @@
 
     <menuitem id="menu_proveedores_root" name="Proveedores" sequence="58"
               web_icon="amunet_proveedores,static/description/icon.png"
-              groups="amunet_quality.group_quality_manager"/>
+              groups="amunet_documentos.group_documentos_manager"
+              active="0"/>
     <menuitem id="menu_proveedores_master" name="Lista maestra" parent="menu_proveedores_root"
               action="action_supplier_master" sequence="10"/>
 </odoo>

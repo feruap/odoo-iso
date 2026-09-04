@@ -12,6 +12,13 @@ class ProductTemplate(models.Model):
              'de la categoría del producto.',
     )
 
+    amunet_va_a_distribucion = fields.Boolean(
+        'Va a distribución ADT',
+        help='Si está activo, al validar la liberación de Calidad el material va '
+             'directo a ADT/Input y se crea automáticamente un traslado ADT/INT '
+             'para que Luis confirme la recepción física.',
+    )
+
     @api.onchange('categ_id')
     def _onchange_categ_quarantine(self):
         if self.categ_id and not self.amunet_requires_quarantine:
