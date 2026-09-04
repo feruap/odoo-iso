@@ -97,6 +97,12 @@
               action="action_amunet_catalogo_firma" sequence="20"
               groups="group_documentos_manager"/>
 
+    <!-- ── Submenú: Auditorías a proveedores ── -->
+    <menuitem id="menu_auditorias_proveedores" name="Auditorías a proveedores"
+              parent="menu_amunet_documentos_root"
+              sequence="45"
+              groups="amunet_documentos.group_documentos_manager"/>
+
     <!-- ── Configuración (managers) ── -->
     <menuitem id="menu_amunet_documentos_config" name="Configuracion"
               parent="menu_amunet_documentos_root"

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_expediente_list" model="ir.ui.view">
+        <field name="name">amunet.expediente.auditoria.list</field>
+        <field name="model">amunet.expediente.auditoria</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0"
+                decoration-muted="plan_state == 'cerrado'"
+                decoration-info="plan_state == 'emitido'">
+
+                <field name="plan_clave" string="No. Auditoría"
+                    optional="show"/>
+                <field name="convocatoria" string="Convocatoria"
+                    optional="show"/>
+                <field name="fecha_inicio" string="Fecha"
+                    optional="show"/>
+                <field name="lider_id" string="Auditor Líder"
+                    optional="show"/>
+
+                <field name="acta_clave" string="Acta"
+                    optional="show"/>
+                <field name="acta_state" string="Estado acta" widget="badge"
+                    decoration-success="acta_state == 'firmado'"
+                    decoration-warning="acta_state == 'borrador'"
+                    optional="show"/>
+
+                <field name="lista_clave" string="Lista de verificación"
+                    optional="show"/>
+                <field name="lista_state" string="Estado lista" widget="badge"
+                    decoration-success="lista_state == 'firmado'"
+                    decoration-warning="lista_state == 'borrador'"
+                    optional="show"/>
+
+                <field name="informe_clave" string="Informe"
+                    optional="show"/>
+                <field name="informe_state" string="Estado informe" widget="badge"
+                    decoration-success="informe_state == 'firmado'"
+                    decoration-warning="informe_state == 'borrador'"
+                    optional="show"/>
+
+                <field name="plan_state" string="Estado plan" widget="badge"
+                    decoration-success="plan_state == 'cerrado'"
+                    decoration-info="plan_state == 'emitido'"
+                    decoration-warning="plan_state == 'borrador'"
+                    optional="show"/>
+
+                <!-- Campos invisibles para enlaces -->
+                <field name="plan_id" column_invisible="1"/>
+                <field name="acta_id" column_invisible="1"/>
+                <field name="lista_id" column_invisible="1"/>
+                <field name="informe_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_expediente_auditoria" model="ir.actions.act_window">
+        <field name="name">Expediente de Auditorías</field>
+        <field name="res_model">amunet.expediente.auditoria</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aún no hay auditorías registradas
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_expediente_auditoria"
+        name="Expediente de Auditorías"
+        parent="amunet_plan_auditorias.menu_auditorias_root"
+        action="action_expediente_auditoria"
+        sequence="50"/>
+
+</odoo>

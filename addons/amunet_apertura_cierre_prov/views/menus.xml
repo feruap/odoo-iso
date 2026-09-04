@@ -2,7 +2,7 @@
 <odoo>
     <menuitem id="menu_apertura_cierre_prov"
               name="Registros de Apertura y Cierre"
-              parent="amunet_documentos.menu_amunet_gestion"
+              parent="amunet_documentos.menu_auditorias_proveedores"
               action="action_apertura_cierre_prov"
               sequence="51"
               groups="amunet_documentos.group_documentos_manager"/>
