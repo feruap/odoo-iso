@@ -186,7 +186,8 @@
                         </page>
 
                         <!-- ── Pestaña Firmas ── -->
-                        <page string="Firmas de cierre" name="firmas">
+                        <page string="Firmas de cierre" name="firmas"
+                            invisible="not cierre_con_asistentes">
                             <field name="puede_firmar_auditado" invisible="1"/>
                             <group>
                                 <group string="Auditor Líder">

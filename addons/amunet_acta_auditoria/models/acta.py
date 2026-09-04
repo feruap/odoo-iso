@@ -108,6 +108,12 @@ class AmunetActaAuditoria(models.Model):
     fecha_firma_sanitario = fields.Date(string='Fecha', readonly=True)
 
     puede_firmar_auditado = fields.Boolean(compute='_compute_puede_firmar_auditado')
+    cierre_con_asistentes = fields.Boolean(compute='_compute_cierre_con_asistentes')
+
+    @api.depends('cierre_asistente_ids')
+    def _compute_cierre_con_asistentes(self):
+        for r in self:
+            r.cierre_con_asistentes = bool(r.cierre_asistente_ids)
 
     @api.depends('representante_auditado_id', 'firma_auditado_id')
     def _compute_puede_firmar_auditado(self):
