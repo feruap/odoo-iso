@@ -43,15 +43,9 @@ class AmunetListaVerificacion(models.Model):
     supervisor_id = fields.Many2one('res.users', string='Supervisor del área',
         domain=[('share', '=', False)])
 
-    # ── Ítems por sección ─────────────────────────────────────────────────
-    item_legal_ids = fields.One2many('amunet.lista.verificacion.item', 'lista_id',
-        domain=[('seccion', '=', 'cumplimiento_legal')], string='Cumplimiento Legal')
-    item_capacidad_ids = fields.One2many('amunet.lista.verificacion.item', 'lista_id',
-        domain=[('seccion', '=', 'capacidad_area')], string='Capacidad del Área')
-    item_desempeno_ids = fields.One2many('amunet.lista.verificacion.item', 'lista_id',
-        domain=[('seccion', '=', 'desempeno_area')], string='Desempeño del Área')
-    item_personal_ids = fields.One2many('amunet.lista.verificacion.item', 'lista_id',
-        domain=[('seccion', '=', 'personal')], string='Personal')
+    # ── Ítems ─────────────────────────────────────────────────────────────
+    item_ids = fields.One2many('amunet.lista.verificacion.item', 'lista_id',
+        string='Puntos a evaluar')
 
     puntos_fijos = fields.Boolean(string='Puntos fijos', default=False)
 
@@ -154,7 +148,7 @@ class AmunetListaVerificacionItem(models.Model):
     _order = 'lista_id, seccion, sequence, id'
 
     lista_id = fields.Many2one('amunet.lista.verificacion', required=True, ondelete='cascade')
-    seccion = fields.Selection(_SECCIONES, required=True)
+    seccion = fields.Selection(_SECCIONES)
     sequence = fields.Integer(default=10)
     punto = fields.Char(string='Punto a evaluar', required=True)
     respuesta = fields.Selection(_RESPUESTA, string='Respuesta')
