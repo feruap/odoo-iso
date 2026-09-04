@@ -60,6 +60,7 @@ class AmunetListaVerificacion(models.Model):
     fecha_firma_auditor = fields.Date(string='Fecha', readonly=True)
 
     puede_firmar_supervisor = fields.Boolean(compute='_compute_puede_firmar_supervisor')
+    es_lider = fields.Boolean(compute='_compute_es_lider')
 
     def _compute_puede_firmar_supervisor(self):
         uid = self.env.user.id
@@ -67,6 +68,12 @@ class AmunetListaVerificacion(models.Model):
             r.puede_firmar_supervisor = (
                 uid == r.supervisor_id.id and not r.firma_supervisor_id
             )
+
+    @api.depends('lider_id')
+    def _compute_es_lider(self):
+        uid = self.env.user.id
+        for r in self:
+            r.es_lider = (uid == r.lider_id.id)
 
     # ── Secuencia ─────────────────────────────────────────────────────────
 
@@ -127,10 +134,14 @@ class AmunetListaVerificacion(models.Model):
 
     def action_fijar_puntos(self):
         self.ensure_one()
+        if self.env.user.id != self.lider_id.id:
+            raise ValidationError(_('Solo el auditor líder puede fijar los puntos de evaluación.'))
         self.puntos_fijos = True
 
     def action_desbloquear_puntos(self):
         self.ensure_one()
+        if self.env.user.id != self.lider_id.id:
+            raise ValidationError(_('Solo el auditor líder puede desbloquear los puntos de evaluación.'))
         self.puntos_fijos = False
 
     def action_borrador(self):
@@ -153,3 +164,11 @@ class AmunetListaVerificacionItem(models.Model):
     punto = fields.Char(string='Punto a evaluar', required=True)
     respuesta = fields.Selection(_RESPUESTA, string='Respuesta')
     observaciones = fields.Char(string='Observaciones')
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            lista = self.env['amunet.lista.verificacion'].browse(vals.get('lista_id'))
+            if lista.puntos_fijos:
+                raise ValidationError(_('Los puntos están fijos. Desbloquéalos antes de agregar nuevos.'))
+        return super().create(vals_list)

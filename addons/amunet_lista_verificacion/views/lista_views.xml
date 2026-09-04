@@ -32,10 +32,10 @@
                         class="btn-secondary"/>
                     <button name="action_fijar_puntos" type="object"
                         string="Fijar puntos para evaluación" class="btn-secondary"
-                        invisible="puntos_fijos or state == 'firmado'"/>
+                        invisible="puntos_fijos or state == 'firmado' or not es_lider"/>
                     <button name="action_desbloquear_puntos" type="object"
                         string="Desbloquear puntos" class="btn-secondary"
-                        invisible="not puntos_fijos or state == 'firmado'"/>
+                        invisible="not puntos_fijos or state == 'firmado' or not es_lider"/>
                     <button name="action_firmar_supervisor" type="object"
                         string="Firmar como Supervisor" class="btn-secondary"
                         invisible="firma_supervisor_id or not puede_firmar_supervisor"/>
@@ -50,6 +50,7 @@
                 </header>
                 <sheet>
                     <field name="puntos_fijos" invisible="1"/>
+                    <field name="es_lider" invisible="1"/>
                     <div class="oe_title">
                         <h1><field name="clave" readonly="1"/></h1>
                     </div>
@@ -69,11 +70,30 @@
 
                     <!-- ── Puntos a evaluar ── -->
                     <separator string="Puntos a evaluar"/>
-                    <field name="item_ids" nolabel="1" readonly="state == 'firmado'">
+
+                    <!-- Puntos fijos: solo calificación y observaciones editables -->
+                    <field name="item_ids" nolabel="1" invisible="not puntos_fijos">
+                        <list editable="bottom" create="0" delete="0">
+                            <field name="seccion" column_invisible="1"/>
+                            <field name="sequence" column_invisible="1"/>
+                            <field name="punto" string="Punto a evaluar" readonly="1"/>
+                            <field name="respuesta" string="Calificación"
+                                decoration-success="respuesta == '2'"
+                                decoration-warning="respuesta == '1'"
+                                decoration-danger="respuesta == '0'"
+                                decoration-muted="respuesta == 'na'"/>
+                            <field name="observaciones" string="Observaciones"/>
+                        </list>
+                    </field>
+
+                    <!-- Puntos no fijos: lista completamente editable -->
+                    <field name="item_ids" nolabel="1"
+                        readonly="state == 'firmado'"
+                        invisible="puntos_fijos">
                         <list editable="bottom">
                             <field name="seccion" column_invisible="1"/>
                             <field name="sequence" column_invisible="1"/>
-                            <field name="punto" string="Punto a evaluar" readonly="parent.puntos_fijos"
+                            <field name="punto" string="Punto a evaluar"
                                 placeholder="Ej: ¿Los documentos del área están vigentes y aprobados?"/>
                             <field name="respuesta" string="Calificación"
                                 decoration-success="respuesta == '2'"
