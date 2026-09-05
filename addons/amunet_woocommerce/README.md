@@ -84,6 +84,78 @@ inventario existente y capacidad potencial siempre por separado. Si se exige
 calidad, solo cuentan los lotes liberados; si el campo regulatorio
 `amunet_lot_release_state` no existe, el dato es "No calculable".
 
+## Entrega y recepción de material (Acondicionado -> almacén de venta)
+
+El material llega al almacén que surte a la tienda en **dos pasos y con dos
+personas** (control de dos partes, ISO 13485), reproduciendo en Odoo lo que
+antes hacía el plugin AlmacenPT ("alguien entrega y el almacén acepta"):
+
+1. **ACONDICIONADO ENTREGA** (`amunet.woo.delivery`, grupo
+   `group_woo_acondicionado`). Se registra **desde la orden de fabricación**:
+   por convención de Amunet la orden **ES** el lote (la orden `0826/01/PSS`
+   produce el lote `0826/01/PSS`), así que producto, lote y caducidad salen de
+   ahí. Dos botones: **Entrega completa** (todo lo pendiente) y **Entrega
+   parcial** (la cantidad que se capture). Odoo 19 no tiene
+   `lot_producing_id`: el lote se resuelve por `lot_producing_ids`, luego por
+   los movimientos de producto terminado y, por último, por nombre de la orden.
+2. **EL ALMACÉN RECIBE**: cuenta físicamente y captura las piezas. Si
+   **coincide**, la entrega queda recibida y genera la `amunet.woo.reception`.
+   Si **no coincide**, se **RECHAZA COMPLETA** para aclararla — no se acepta a
+   medias, porque una diferencia sin resolver es justo lo que después aparece
+   como existencia fantasma en la tienda.
+
+### Recibir no es lo mismo que poder vender
+
+Recibir material que Calidad todavía no ha liberado **SÍ está permitido**: pasa
+cuando el material urge. Lo que no está permitido es **venderlo**. El candado
+no está en recibir sino en **publicar**:
+
+| Situación | Resultado |
+| --- | --- |
+| Lote liberado por Calidad | Vendible, se publica |
+| Lote sin liberar, **con autorización** | Vendible **bajo concesión**, con el autorizante registrado |
+| Lote sin liberar, sin autorización | **RETENIDO**: se recibe, pero no se publica |
+
+La autorización es una **liberación bajo concesión** (ISO 13485 8.3), no un
+salto silencioso del control: queda con nombre y fecha, se avisa en el chatter
+para que Calidad se entere, y se muestra en rojo/ámbar en lista y formulario.
+Solo la puede dar el grupo restringido `group_woo_autoriza_concesion`
+(PM/Mery y Calidad); la membresía se asigna a mano, nunca por datos del módulo.
+
+### Regularización de material histórico
+
+El material que entró **antes** de existir este flujo no tiene entrega a la
+cual autorizar. Por eso la concesión también vive en la **recepción**
+(`authorized_by` propio): PM o Calidad pueden regularizar esas recepciones
+retenidas una por una **o varias a la vez** desde la lista, con el filtro
+**"Requiere regularización (PM/Calidad)"**. Al autorizarlas, lo que estaba
+retenido se publica.
+
+### Cantidades: no se puede recibir más de lo que existe
+
+Tanto la entrega como la recepción descuentan lo ya entregado/recibido del lote
+contra la existencia libre en la ubicación de piezas de APT. Sin ese candado,
+aceptar la recepción del mismo lote varias veces "recibía" 795 pz de un lote de
+265 (error real detectado en pruebas). La recepción directa desde el lote
+("Aceptar recepción (venta)") queda como vía secundaria y también descuenta lo
+ya recibido.
+
+### Publicación
+
+La publicación a la tienda la dispara la aceptación de la recepción, ya **no**
+la liberación del lote ni el cierre de la orden de fabricación
+(`stock_lot`/`mrp_production` ya no auto-publican). La acción legada
+`action_publish_stock` delega en `action_publicar_recepciones` para no duplicar
+existencias por dos caminos. Todo sigue tras el candado `allow_stock_publish` y
+el Application Password de la tienda; deja bitácora en `woo_sync_log` y ledger
+de idempotencia **por recepción** en `amunet.woo.stock.delivery`.
+
+Nota de permisos: los campos de configuración de la tienda
+(`apt_pieces_location_id`, `allow_stock_publish`, credenciales) están
+reservados a `group_woo_admin`. Todo acceso interno desde código que corre como
+almacén o Acondicionado usa `.sudo()`; si no, el usuario recibe un "Error de
+acceso" al usar el botón.
+
 ## Integraciones y degradación segura
 
 El módulo depende de `amunet_packaging_planning` para usar el catálogo

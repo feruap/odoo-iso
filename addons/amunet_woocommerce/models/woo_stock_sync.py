@@ -166,26 +166,54 @@ class AmunetWooBackend(models.Model):
         ])
         salida = []
         for mapeo in mapeos:
+            # Un vortex, una gradilla o unas puntas NO caducan, y Odoo ya lo
+            # sabe: el producto trae use_expiration_date apagado. Antes se les
+            # exigia caducidad igual que a una prueba rapida y por eso NUNCA
+            # subian a la tienda -no por falta de captura, sino porque el dato
+            # no aplica-. Ahora se mandan con mes y anio en cero y con la
+            # bandera 'sin_caducidad', y la tienda los cuenta como normales.
+            sin_cad = not self._maneja_caducidad(mapeo.product_id)
             lotes = []
             for fila in self._lectura_anaquel(mapeo):
-                if not fila.get('expiration_month') or not fila.get('expiration_year'):
-                    # sin caducidad no se puede clasificar en la tienda: se omite
-                    # y se deja constancia, en vez de mandar una fecha inventada.
-                    _logger.warning(
-                        'Puente: lote %s de %s no tiene caducidad; no se publica.',
-                        fila.get('lot_number'), mapeo.product_id.default_code)
-                    continue
+                mes = fila.get('expiration_month')
+                anio = fila.get('expiration_year')
+                if not mes or not anio:
+                    if not sin_cad:
+                        # Este producto SI caduca y al lote le falta la fecha:
+                        # eso es un dato faltante de verdad. Se omite y se
+                        # avisa, en vez de inventar una fecha.
+                        _logger.warning(
+                            'Puente: lote %s de %s no tiene caducidad; no se publica.',
+                            fila.get('lot_number'), mapeo.product_id.default_code)
+                        continue
+                    mes, anio = 0, 0
                 lotes.append({
                     'lote': fila['lot_number'],
                     'cantidad': round(float(fila['quantity']), 2),
-                    'mes': int(fila['expiration_month']),
-                    'anio': int(fila['expiration_year']),
+                    'mes': int(mes),
+                    'anio': int(anio),
                 })
             salida.append({
                 'product_id': int(mapeo.woo_product_id),
                 'lotes': lotes,
+                'sin_caducidad': sin_cad,
             })
         return salida
+
+    def _maneja_caducidad(self, producto):
+        """El producto vende por caducidad o no.
+
+        Se lee de Odoo (use_expiration_date), que es donde ya vive la verdad:
+        las pruebas rapidas lo traen encendido y el equipo de laboratorio
+        apagado. Si el campo no existe (modulo de caducidad no instalado) se
+        asume que SI caduca, que es el criterio prudente.
+        """
+        if not producto:
+            return True
+        plantilla = producto.product_tmpl_id
+        if 'use_expiration_date' not in plantilla._fields:
+            return True
+        return bool(plantilla.use_expiration_date)
 
     def _lectura_anaquel(self, mapeo):
         """Lo que hay en el anaquel de piezas, con el criterio que eligio la casa.

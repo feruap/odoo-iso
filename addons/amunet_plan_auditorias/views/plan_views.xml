@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════ LISTA de planes ════════════ -->
+    <record id="view_plan_list" model="ir.ui.view">
+        <field name="name">amunet.plan.auditoria.list</field>
+        <field name="model">amunet.plan.auditoria</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state=='emitido'" decoration-muted="state=='cerrado'">
+                <field name="clave"/>
+                <field name="tipo" widget="badge"
+                    decoration-success="tipo == 'programada'"
+                    decoration-warning="tipo == 'reprogramada'"
+                    decoration-danger="tipo == 'no_programada'"/>
+                <field name="modalidad"/>
+                <field name="fecha_inicio" string="Fecha"/>
+                <field name="alcance" string="Alcance"/>
+                <field name="lider_id" string="Auditor líder"/>
+                <field name="state" widget="badge"
+                    decoration-warning="state == 'borrador'"
+                    decoration-success="state == 'emitido'"
+                    decoration-muted="state == 'cerrado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ════════════ FORMULARIO de día (agenda) ════════════ -->
+    <record id="view_dia_form" model="ir.ui.view">
+        <field name="name">amunet.plan.auditoria.dia.form</field>
+        <field name="model">amunet.plan.auditoria.dia</field>
+        <field name="arch" type="xml">
+            <form string="Agenda del día">
+                <sheet>
+                    <field name="plan_id" invisible="1"/>
+                    <group>
+                        <field name="fecha"/>
+                        <field name="sitio"/>
+                    </group>
+                    <separator string="Actividades"/>
+                    <field name="actividad_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="equipo_ids" column_invisible="1"/>
+                            <field name="hora_inicio" string="Inicio"/>
+                            <field name="hora_fin" string="Fin"/>
+                            <field name="auditor_id" string="Auditor"
+                                domain="[('id', 'in', equipo_ids)]"/>
+                            <field name="que_auditar" string="¿Qué se va a auditar?"/>
+                            <field name="auditado_id" string="Auditado"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button string="Guardar" special="save" class="btn-primary"/>
+                    <button string="Cerrar" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ════════════ FORMULARIO de plan ════════════ -->
+    <record id="view_plan_form" model="ir.ui.view">
+        <field name="name">amunet.plan.auditoria.form</field>
+        <field name="model">amunet.plan.auditoria</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="tiene_cambios" invisible="1"/>
+                    <button name="%(amunet_plan_auditorias.action_report_plan_auditoria)d"
+                        type="action" string="Imprimir" icon="fa-print"
+                        class="btn-secondary"/>
+                    <button name="action_registrar_cambio" type="object"
+                        string="Registrar cambio al plan" icon="fa-pencil"
+                        class="btn-secondary"
+                        invisible="state != 'emitido' or tiene_cambios"/>
+                    <button name="action_cerrar" type="object" string="Cerrar plan"
+                        invisible="state != 'emitido'"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="borrador,emitido,cerrado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="clave" readonly="1"/></h1>
+                    </div>
+
+                    <notebook>
+
+                        <!-- ── Pestaña 1: Datos generales ── -->
+                        <page string="Datos generales" name="datos">
+
+                            <group>
+                                <group string="Datos de la auditoría">
+                                    <field name="tipo"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="modalidad"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="fecha_inicio"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="fecha_fin"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="sitio"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                </group>
+                                <group string="Convocatoria de referencia">
+                                    <field name="convocatoria_id"
+                                        string="Convocatoria"
+                                        placeholder="Selecciona la convocatoria de auditores..."
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <button name="action_cargar_equipo" type="object"
+                                        string="Cargar equipo desde convocatoria"
+                                        icon="fa-users" class="btn-secondary"
+                                        invisible="not convocatoria_id or state in ('emitido','cerrado')"/>
+                                </group>
+                            </group>
+
+                            <separator string="Metodología"/>
+                            <group>
+                                <group>
+                                    <field name="met_apertura"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="met_entrevistas"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="met_revision_doc"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="met_verificacion"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                </group>
+                                <group>
+                                    <field name="met_muestreo"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="met_observacion"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="met_cierre"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                </group>
+                            </group>
+
+                            <separator string="Equipo auditor"/>
+                            <group>
+                                <group>
+                                    <field name="lider_id" string="Auditor líder"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="auditor_ids" widget="many2many_tags"
+                                        string="Auditores"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                </group>
+                                <group>
+                                    <field name="observador_ids" widget="many2many_tags"
+                                        string="Observadores"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                    <field name="experto_ids" widget="many2many_tags"
+                                        string="Expertos técnicos"
+                                        readonly="state in ('emitido','cerrado')"/>
+                                </group>
+                            </group>
+
+                            <separator string="Alcance"/>
+                            <field name="alcance" nolabel="1" rows="3"
+                                placeholder="Describe el alcance de esta auditoría..."
+                                readonly="state in ('emitido','cerrado')"/>
+                            <field name="limitaciones" string="Limitaciones / Exclusiones"
+                                rows="2"
+                                placeholder="Indicar qué queda fuera del alcance (si aplica)..."
+                                readonly="state in ('emitido','cerrado')"/>
+
+                            <separator string="Criterios de auditoría"/>
+                            <field name="criterio_ids" nolabel="1"
+                                readonly="state in ('emitido','cerrado')">
+                                <list editable="bottom">
+                                    <field name="nombre" string="Criterio"
+                                        placeholder="ej. ISO 13485:2016, sección 4.2.4"/>
+                                    <field name="descripcion" string="Descripción"
+                                        placeholder="ej. Verificar que los documentos tengan versión, fecha y firma vigente"/>
+                                </list>
+                            </field>
+
+                            <separator string="Objetivos"/>
+                            <field name="objetivos" nolabel="1" rows="3"
+                                placeholder="Describe los objetivos de esta auditoría..."
+                                readonly="state in ('emitido','cerrado')"/>
+
+                        </page>
+
+                        <!-- ── Pestaña 2: Agenda por días ── -->
+                        <page string="Agenda" name="agenda">
+                            <field name="dia_ids" nolabel="1"
+                                readonly="state in ('emitido','cerrado')">
+                                <list>
+                                    <field name="fecha" string="Fecha"/>
+                                    <field name="sitio" string="Sitio"/>
+                                    <field name="que_auditar_resumen" string="¿Qué se va a auditar?"/>
+                                    <field name="actividad_count" string="Actividades"/>
+                                </list>
+                                <form string="Agenda del día">
+                                    <field name="plan_id" invisible="1"/>
+                                    <group>
+                                        <field name="fecha"/>
+                                        <field name="sitio"/>
+                                    </group>
+                                    <separator string="Actividades"/>
+                                    <field name="actividad_ids" nolabel="1">
+                                        <list editable="bottom">
+                                            <field name="equipo_ids" column_invisible="1"/>
+                                            <field name="hora_inicio" string="Inicio"/>
+                                            <field name="hora_fin" string="Fin"/>
+                                            <field name="auditor_id" string="Auditor"
+                                                domain="[('id', 'in', equipo_ids)]"/>
+                                            <field name="que_auditar" string="¿Qué se va a auditar?"/>
+                                            <field name="auditado_id" string="Auditado"/>
+                                        </list>
+                                    </field>
+                                </form>
+                            </field>
+                        </page>
+
+                        <!-- ── Pestaña 3: Plazos del informe ── -->
+                        <page string="Plazos del informe" name="plazos">
+                            <group string="Días hábiles tras la auditoría">
+                                <field name="plazo_preliminar"
+                                    string="Entrega informe preliminar"
+                                    readonly="state in ('emitido','cerrado')"/>
+                                <field name="plazo_revision_auditado"
+                                    string="Revisión del auditado"
+                                    readonly="state in ('emitido','cerrado')"/>
+                                <field name="plazo_informe_final"
+                                    string="Emisión informe final"
+                                    readonly="state in ('emitido','cerrado')"/>
+                                <field name="plazo_plan_capa"
+                                    string="Plan de acciones correctivas"
+                                    readonly="state in ('emitido','cerrado')"/>
+                            </group>
+                        </page>
+
+                        <!-- ── Pestaña 4: Firmas ── -->
+                        <page string="Firmas" name="firmas">
+                            <group>
+                                <group string="Elaboró">
+                                    <field name="elaboro_id" nolabel="1" readonly="1"/>
+                                    <field name="fecha_elaboro" nolabel="1" readonly="1"/>
+                                    <button name="action_firmar_elaboracion" type="object"
+                                        string="Firmar con PIN" icon="fa-pen"
+                                        class="btn-secondary btn-sm"
+                                        invisible="state != 'borrador' or elaboro_id"/>
+                                </group>
+                                <group string="Demás integrantes del equipo auditor">
+                                    <field name="puede_firmar_equipo" invisible="1"/>
+                                    <field name="auditor_ids" nolabel="1"
+                                        widget="many2many_tags" readonly="1"/>
+                                    <field name="firma_equipo_ids" nolabel="1" readonly="1">
+                                        <list>
+                                            <field name="user_id" string="Integrante"/>
+                                            <field name="fecha" string="Fecha de firma"/>
+                                        </list>
+                                    </field>
+                                    <button name="action_firmar_equipo" type="object"
+                                        string="Firmar con PIN" icon="fa-pen"
+                                        class="btn-secondary btn-sm"
+                                        invisible="state != 'borrador' or not puede_firmar_equipo"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Auditor líder — Autorizó">
+                                    <field name="autorizo_id" nolabel="1" readonly="1"/>
+                                    <field name="fecha_autorizo" nolabel="1" readonly="1"/>
+                                    <button name="action_firmar_autorizacion" type="object"
+                                        string="Firmar y emitir" icon="fa-check"
+                                        class="btn-primary btn-sm"
+                                        invisible="state != 'borrador' or not elaboro_id or autorizo_id"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── Pestaña 5: Cambios al plan ── -->
+                        <page string="Cambios al plan" name="cambios"
+                              invisible="not tiene_cambios">
+                            <p class="text-muted" style="margin-bottom:12px;">
+                                Si después de emitir el plan necesitas registrar alguna modificación
+                                (cambio de fecha, de auditor, de alcance, etc.), descríbela aquí
+                                para mantener la trazabilidad del documento.
+                            </p>
+                            <field name="cambios" nolabel="1" rows="6"
+                                placeholder="Describe el cambio realizado al plan ya emitido..."
+                                readonly="state != 'emitido'"/>
+
+                            <separator string="Firmas del cambio"/>
+                            <group>
+                                <group string="Elaboró el cambio">
+                                    <field name="elaboro_id" nolabel="1" readonly="1"/>
+                                    <field name="fecha_elaboro" nolabel="1" readonly="1"/>
+                                </group>
+                                <group string="Auditor líder — Validó el cambio">
+                                    <field name="autorizo_id" nolabel="1" readonly="1"/>
+                                    <field name="fecha_autorizo" nolabel="1" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_plan_auditoria" model="ir.actions.act_window">
+        <field name="name">Planes de Auditoría</field>
+        <field name="res_model">amunet.plan.auditoria</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea el primer plan de auditoría interna
+            </p>
+        </field>
+    </record>
+
+</odoo>

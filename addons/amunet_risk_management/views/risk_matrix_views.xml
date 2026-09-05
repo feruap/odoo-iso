@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_risk_matrix_list" model="ir.ui.view">
+        <field name="name">amunet.risk.matrix.list</field>
+        <field name="model">amunet.risk.matrix</field>
+        <field name="arch" type="xml">
+            <list string="Criterios NPR" create="0" delete="0" editable="bottom"
+                  decoration-danger="nivel == 'alto'"
+                  decoration-warning="nivel == 'medio'"
+                  decoration-info="nivel == 'bajo'"
+                  decoration-muted="nivel == 'ninguno'">
+                <field name="name" string="Clasificación"/>
+                <field name="nivel" widget="badge"
+                       decoration-danger="nivel == 'alto'"
+                       decoration-warning="nivel == 'medio'"
+                       decoration-info="nivel == 'bajo'"
+                       decoration-success="nivel == 'bajo' or nivel == 'ninguno'"/>
+                <field name="npr_min" string="NPR mín."/>
+                <field name="npr_max" string="NPR máx."/>
+                <field name="descripcion" string="Descripción"/>
+                <field name="accion_requerida" string="Acción"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_risk_matrix" model="ir.actions.act_window">
+        <field name="name">Criterios NPR</field>
+        <field name="res_model">amunet.risk.matrix</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tabla de criterios de clasificación NPR (S × O × D).
+            </p>
+        </field>
+    </record>
+
+</odoo>

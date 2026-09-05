@@ -32,3 +32,5 @@ access_amunet_seccion_documento_manager,amunet.seccion.documento.manager,model_a
 access_amunet_sugerencia_linea_all,amunet.sugerencia.linea.all,model_amunet_sugerencia_linea,base.group_user,1,1,1,1
 access_amunet_sugerencia_linea_user,amunet.sugerencia.linea.user,model_amunet_sugerencia_linea,group_documentos_user,1,1,1,1
 access_amunet_sugerencia_linea_manager,amunet.sugerencia.linea.manager,model_amunet_sugerencia_linea,group_documentos_manager,1,1,1,1
+access_amunet_proveedor_user,amunet.proveedor.user,model_amunet_proveedor,group_documentos_user,1,0,0,0
+access_amunet_proveedor_manager,amunet.proveedor.manager,model_amunet_proveedor,group_documentos_manager,1,1,1,1

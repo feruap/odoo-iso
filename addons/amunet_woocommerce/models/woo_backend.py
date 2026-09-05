@@ -347,7 +347,14 @@ class AmunetWooBackend(models.Model):
         by_lot = {}
         for quant in quants:
             lot = quant.lot_id
-            if not lot or lot.amunet_lot_release_state != 'released':
+            if not lot:
+                continue
+            # El material de INVENTARIO INICIAL es anterior al sistema: no tiene
+            # liberacion de Calidad que citar porque nunca paso por el proceso.
+            # Exigirsela lo dejaria fuera para siempre. Su constancia es el
+            # ajuste de inventario con usuario, fecha y motivo.
+            inicial = bool(getattr(lot, 'amunet_origen_inicial', False))
+            if not inicial and lot.amunet_lot_release_state != 'released':
                 continue
             reserved = getattr(quant, 'reserved_quantity', 0.0)
             free = quant.quantity - reserved
@@ -416,97 +423,15 @@ class AmunetWooBackend(models.Model):
             return {}
 
     def action_publish_stock(self):
-        """Publica a la tienda las existencias liberadas de los mapeos confirmados.
+        """Publica a la tienda (legado -> ahora RECEPCIÓN-céntrico).
 
-        Idempotente: un lote ya publicado no se reenvía (ledger
-        ``amunet.woo.stock.delivery``). Deja bitácora en ``woo_sync_log``.
+        Antes publicaba directamente todo lote liberado. Ahora la publicación
+        se dispara desde la RECEPCIÓN aceptada por el almacén (el producto se
+        vuelve vendible solo cuando el almacén lo recibe). Se conserva el nombre
+        por compatibilidad, pero delega en ``action_publicar_recepciones`` para
+        no publicar por dos caminos distintos (evita duplicar existencias).
         """
-        self.ensure_one()
-        if not self.allow_stock_publish:
-            raise UserError(_(
-                'La publicación de existencias no está habilitada para esta '
-                'tienda.'))
-        Delivery = self.env['amunet.woo.stock.delivery']
-        mappings = self.env['amunet.woo.product.mapping'].search([
-            ('backend_id', '=', self.id),
-            ('relation_state', '=', 'confirmed'),
-            ('product_id', '!=', False),
-        ])
-        published = skipped = failed = 0
-        messages = []
-        for mapping in mappings:
-            woo_pid = mapping.woo_product_id
-            for lot_data in self._read_released_piece_stock(mapping):
-                lot_number = lot_data['lot_number']
-                if Delivery._already_published(self.id, woo_pid, lot_number):
-                    skipped += 1
-                    continue
-                payload = {
-                    'product_id': woo_pid,
-                    'quantity': lot_data['quantity'],
-                    'expiration_month': lot_data['expiration_month'],
-                    'expiration_year': lot_data['expiration_year'],
-                    'lot_number': lot_number,
-                    'notes': 'Publicado desde Odoo APT (mapeo %s)' % mapping.id,
-                }
-                digest = Delivery._build_hash(self.id, woo_pid, lot_number)
-                try:
-                    result = self._apt_deliver(payload)
-                except UserError as exc:
-                    failed += 1
-                    messages.append(_('Lote %(lot)s (%(sku)s): %(err)s', lot=lot_number,
-                                      sku=mapping.woo_sku or '', err=str(exc)))
-                    Delivery.create({
-                        'backend_id': self.id,
-                        'company_id': self.company_id.id,
-                        'mapping_id': mapping.id,
-                        'product_id': mapping.product_id.id,
-                        'woo_product_id': woo_pid,
-                        'lot_id': lot_data['lot'].id,
-                        'lot_number': lot_number,
-                        'quantity': lot_data['quantity'],
-                        'expiration_month': lot_data['expiration_month'] or 0,
-                        'expiration_year': lot_data['expiration_year'] or 0,
-                        'delivery_hash': '%s-failed-%s' % (digest, mapping.id),
-                        'state': 'failed',
-                        'response_message': str(exc)[:200],
-                    })
-                    continue
-                Delivery.create({
-                    'backend_id': self.id,
-                    'company_id': self.company_id.id,
-                    'mapping_id': mapping.id,
-                    'product_id': mapping.product_id.id,
-                    'woo_product_id': woo_pid,
-                    'lot_id': lot_data['lot'].id,
-                    'lot_number': lot_number,
-                    'quantity': lot_data['quantity'],
-                    'expiration_month': lot_data['expiration_month'] or 0,
-                    'expiration_year': lot_data['expiration_year'] or 0,
-                    'delivery_hash': digest,
-                    'state': 'published',
-                    'response_message': (result or {}).get('message') if isinstance(result, dict) else False,
-                })
-                published += 1
-        state = 'success' if not failed else ('partial' if published else 'error')
-        log = self.env['amunet.woo.sync.log'].create({
-            'backend_id': self.id,
-            'company_id': self.company_id.id,
-            'operation': 'stock_publish',
-            'state': state,
-            'date_end': fields.Datetime.now(),
-            'total_count': published + skipped + failed,
-            'done_count': published,
-            'failed_count': failed,
-            'message': '\n'.join(messages) or _(
-                'Publicados %(pub)s lotes, %(skip)s ya estaban publicados.',
-                pub=published, skip=skipped),
-        })
-        self.message_post(body=_(
-            'Publicación de existencias APT -> tienda: %(pub)s nuevos, '
-            '%(skip)s idempotentes, %(fail)s con error.',
-            pub=published, skip=skipped, fail=failed))
-        return log._action_open()
+        return self.action_publicar_recepciones()
 
     # ------------------------------------------------------------------
     # Acciones
@@ -600,6 +525,167 @@ class AmunetWooBackend(models.Model):
                 })
                 published += 1
         return published
+
+    # ------------------------------------------------------------------
+    # Publicacion RECEPCION-centrica (disparada por la aceptacion del almacen)
+    # ------------------------------------------------------------------
+
+    def _apt_released_qty_for_lot(self, lot):
+        """Piezas LIBRES de un lote en la ubicacion de piezas de APT.
+
+        Es la cantidad candidata a recibir para venta. No filtra por liberacion
+        (ese candado vive en la recepcion): devuelve la existencia fisica libre.
+        """
+        self.ensure_one()
+        location = self._apt_pieces_location()
+        if not lot or not location:
+            return 0.0
+        quants = self.env['stock.quant'].search([
+            ('lot_id', '=', lot.id),
+            ('location_id', 'child_of', location.id),
+            ('company_id', '=', self.company_id.id),
+        ])
+        total = 0.0
+        for quant in quants:
+            total += quant.quantity - getattr(quant, 'reserved_quantity', 0.0)
+        return total
+
+    def _publicar_una_recepcion(self, reception):
+        """Publica UNA recepción aceptada a la tienda (idempotente por recepción).
+
+        Devuelve una tupla ``(publicado, error)``:
+        - ``(True, None)``  publicada ahora,
+        - ``(False, None)`` ya estaba publicada (idempotente, se omite),
+        - ``(False, msg)``  falló (se registra en el ledger como 'failed').
+        """
+        self.ensure_one()
+        Delivery = self.env['amunet.woo.stock.delivery']
+        # Candado regulatorio: solo se publica material VENDIBLE (liberado por
+        # Calidad, o autorizado bajo concesion). El material RETENIDO se puede
+        # haber recibido fisicamente, pero jamas sale a la tienda.
+        if not reception.vendible:
+            return False, _(
+                'Lote %s RETENIDO: sin liberacion de Calidad ni autorizacion.'
+            ) % (reception.lot_number or '')
+        mapping = reception.mapping_id or self.env['amunet.woo.product.mapping'].search([
+            ('backend_id', '=', self.id),
+            ('relation_state', '=', 'confirmed'),
+            ('product_id', '=', reception.product_id.id),
+        ], limit=1)
+        if not mapping:
+            return False, _('Sin mapeo confirmado para %s') % (
+                reception.product_id.display_name)
+        woo_pid = mapping.woo_product_id
+        lot_number = reception.lot_number
+        if Delivery._already_published(
+                self.id, woo_pid, lot_number, reception_id=reception.id):
+            if reception.state != 'publicada':
+                reception.sudo().write({'state': 'publicada'})
+            return False, None
+        payload = {
+            'product_id': woo_pid,
+            'quantity': reception.quantity,
+            'expiration_month': reception.expiration_month,
+            'expiration_year': reception.expiration_year,
+            'lot_number': lot_number,
+            'notes': 'Recepción para venta aceptada en Odoo APT (recepción %s)'
+                     % reception.id,
+        }
+        digest = Delivery._build_hash(
+            self.id, woo_pid, lot_number, reception_id=reception.id)
+        base_vals = {
+            'backend_id': self.id,
+            'company_id': self.company_id.id,
+            'mapping_id': mapping.id,
+            'product_id': reception.product_id.id,
+            'woo_product_id': woo_pid,
+            'lot_id': reception.lot_id.id,
+            'lot_number': lot_number,
+            'quantity': reception.quantity,
+            'expiration_month': reception.expiration_month or 0,
+            'expiration_year': reception.expiration_year or 0,
+        }
+        try:
+            result = self._apt_deliver(payload)
+        except UserError as exc:
+            Delivery.create(dict(base_vals, **{
+                'delivery_hash': '%s-failed-%s' % (digest, reception.id),
+                'state': 'failed',
+                'response_message': str(exc)[:200],
+            }))
+            return False, str(exc)
+        delivery = Delivery.create(dict(base_vals, **{
+            'delivery_hash': digest,
+            'state': 'published',
+            'response_message': (result or {}).get('message')
+            if isinstance(result, dict) else False,
+        }))
+        reception.sudo().write({'state': 'publicada'})
+        return True, None
+
+    def _publicar_recepciones(self, receptions):
+        """Publica un conjunto de recepciones y deja UNA bitácora resumen.
+
+        Devuelve la bitácora (``amunet.woo.sync.log``). No lanza excepción por
+        fallos de la tienda: cada fallo queda anotado en el ledger y en el
+        resumen. Reutilizado por la acción manual y por la auto-publicación.
+        """
+        self.ensure_one()
+        published = skipped = failed = 0
+        messages = []
+        for reception in receptions:
+            if reception.state not in ('aceptada', 'publicada'):
+                continue
+            ok, err = self._publicar_una_recepcion(reception)
+            if ok:
+                published += 1
+            elif err:
+                failed += 1
+                messages.append(_('Lote %(lot)s: %(err)s',
+                                  lot=reception.lot_number or '', err=err))
+            else:
+                skipped += 1
+        state = 'success' if not failed else ('partial' if published else 'error')
+        log = self.env['amunet.woo.sync.log'].create({
+            'backend_id': self.id,
+            'company_id': self.company_id.id,
+            'operation': 'stock_publish',
+            'state': state,
+            'date_end': fields.Datetime.now(),
+            'total_count': published + skipped + failed,
+            'done_count': published,
+            'failed_count': failed,
+            'message': '\n'.join(messages) or _(
+                'Publicadas %(pub)s recepciones, %(skip)s ya estaban publicadas.',
+                pub=published, skip=skipped),
+        })
+        receptions.filtered(lambda r: r.state == 'publicada' and not r.sync_log_id)\
+            .sudo().write({'sync_log_id': log.id})
+        return log
+
+    def action_publicar_recepciones(self):
+        """Publica a la tienda todas las recepciones ACEPTADAS pendientes.
+
+        Idempotente: una recepción ya publicada no se reenvía. Va tras el
+        candado ``allow_stock_publish`` y deja bitácora en ``woo_sync_log``.
+        """
+        self.ensure_one()
+        if not self.allow_stock_publish:
+            raise UserError(_(
+                'La publicación de existencias no está habilitada para esta '
+                'tienda. Un administrador debe activar "Permitir publicar '
+                'existencias a la tienda" (solo contra la tienda de pruebas).'))
+        receptions = self.env['amunet.woo.reception'].search([
+            ('backend_id', '=', self.id),
+            ('state', '=', 'aceptada'),
+            ('product_id', '!=', False),
+        ])
+        log = self._publicar_recepciones(receptions)
+        self.message_post(body=_(
+            'Publicación de recepciones APT -> tienda: %(pub)s publicadas, '
+            '%(fail)s con error.',
+            pub=log.done_count, fail=log.failed_count))
+        return log._action_open()
 
     def action_test_connection(self):
         self.ensure_one()

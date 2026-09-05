@@ -6,3 +6,6 @@ access_production_plan_mrpuser,plan produccion lectura mrp,model_amunet_producti
 access_production_plan_line_mrpuser,linea plan lectura mrp,model_amunet_production_plan_line,mrp.group_mrp_user,1,0,0,0
 access_production_plan_shortage_mrpuser,faltante lectura mrp,model_amunet_production_plan_shortage,mrp.group_mrp_user,1,0,0,0
 access_production_plan_shortage_purchase,faltante lectura compras,model_amunet_production_plan_shortage,purchase.group_purchase_user,1,0,0,0
+access_woo_pending_planner,pendientes woo planeador,model_amunet_woo_pending_line,group_production_planner,1,1,1,1
+access_woo_pending_stock,pendientes woo almacen,model_amunet_woo_pending_line,stock.group_stock_user,1,0,0,0
+access_woo_pending_mrp,pendientes woo mrp,model_amunet_woo_pending_line,mrp.group_mrp_user,1,0,0,0

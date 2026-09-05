@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_informe_auditoria" model="ir.actions.report">
+        <field name="name">Informe de Auditoría Interna</field>
+        <field name="model">amunet.informe.auditoria</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_informe_auditoria.report_informe_auditoria</field>
+        <field name="report_file">amunet_informe_auditoria.report_informe_auditoria</field>
+        <field name="binding_model_id" ref="model_amunet_informe_auditoria"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <template id="report_informe_auditoria">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.internal_layout">
+                    <div class="page" style="padding-top:0; margin-top:0;">
+
+                        <!-- Encabezado compacto -->
+                        <div style="background:#1a3a5c; color:#fff; padding:10px 14px; border-radius:4px; margin-bottom:12px;">
+                            <div style="font-size:9px; text-transform:uppercase; letter-spacing:1px; opacity:0.75;">Amunet · Sistema de Calidad ISO 13485</div>
+                            <div style="font-size:16px; font-weight:bold; margin-top:2px;">Informe de Auditoría Interna</div>
+                        </div>
+
+                        <!-- Identificación -->
+                        <table class="table table-sm table-bordered" style="font-size:12px">
+                            <tbody>
+                                <tr>
+                                    <td style="width:25%; background:#f5f5f5"><strong>Clave</strong></td>
+                                    <td><span t-field="doc.clave"/></td>
+                                    <td style="width:25%; background:#f5f5f5"><strong>No. de Auditoría</strong></td>
+                                    <td><span t-field="doc.no_auditoria"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Plan de auditoría</strong></td>
+                                    <td><t t-if="doc.plan_id"><t t-esc="doc.plan_id.clave"/></t></td>
+                                    <td style="background:#f5f5f5"><strong>Tipo</strong></td>
+                                    <td><span t-field="doc.tipo"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Fecha</strong></td>
+                                    <td><span t-field="doc.fecha"/></td>
+                                    <td style="background:#f5f5f5"><strong>Norma de referencia</strong></td>
+                                    <td><span t-field="doc.norma"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Auditor Líder</strong></td>
+                                    <td><t t-if="doc.lider_id"><t t-esc="doc.lider_id.name"/></t></td>
+                                    <td style="background:#f5f5f5"><strong>Auditores</strong></td>
+                                    <td>
+                                        <t t-foreach="doc.auditor_ids" t-as="aud">
+                                            <t t-esc="aud.name"/><t t-if="not aud_last">, </t>
+                                        </t>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Área / Proceso auditado</strong></td>
+                                    <td><span t-field="doc.area_proceso"/></td>
+                                    <td style="background:#f5f5f5"><strong>Quien atendió</strong></td>
+                                    <td>
+                                        <t t-if="doc.quien_atiende_id"><t t-esc="doc.quien_atiende_id.name"/></t>
+                                        <t t-if="doc.cargo_quien_atiende"> — <t t-esc="doc.cargo_quien_atiende"/></t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Objetivo y alcance del plan -->
+                        <t t-if="doc.objetivos">
+                            <h4 style="margin-top:10px; margin-bottom:4px; color:#333;">Objetivo de la Auditoría</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                                <span t-field="doc.objetivos"/>
+                            </p>
+                        </t>
+
+                        <t t-if="doc.alcance">
+                            <h4 style="margin-top:10px; margin-bottom:4px; color:#333;">Alcance de la Auditoría</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                                <span t-field="doc.alcance"/>
+                            </p>
+                        </t>
+
+                        <!-- Criterios -->
+                        <t t-if="doc.criterios_descripcion">
+                            <h4 style="margin-top:10px; margin-bottom:4px; color:#333;">Criterios de la Auditoría</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                                <span t-field="doc.criterios_descripcion"/>
+                            </p>
+                        </t>
+
+                        <!-- Observaciones -->
+                        <t t-if="doc.observaciones">
+                            <h4 style="margin-top:10px; margin-bottom:4px; color:#333;">Observaciones</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                                <span t-field="doc.observaciones"/>
+                            </p>
+                        </t>
+
+                        <!-- Hallazgos -->
+                        <t t-if="doc.hallazgos">
+                            <h4 style="margin-top:10px; margin-bottom:4px; color:#333;">Descripción de los Hallazgos</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                                <span t-field="doc.hallazgos"/>
+                            </p>
+                        </t>
+
+                        <!-- Conclusiones -->
+                        <t t-if="doc.conclusiones">
+                            <h4 style="margin-top:10px; margin-bottom:4px; color:#333;">Conclusiones</h4>
+                            <p style="font-size:12px; white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                                <span t-field="doc.conclusiones"/>
+                            </p>
+                        </t>
+
+                        <!-- Firma del líder -->
+                        <div class="row mt-4" style="margin-top:40px;">
+                            <div class="col-6 offset-3 text-center">
+                                <div style="border-top:1px solid #000; margin-top:50px; padding-top:6px;">
+                                    <strong>Auditor Líder</strong><br/>
+                                    <t t-if="doc.firma_lider_id">
+                                        <t t-esc="doc.firma_lider_id.name"/>
+                                        <t t-if="doc.fecha_firma_lider"><br/><small><span t-field="doc.fecha_firma_lider"/></small></t>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nota de pie -->
+                        <p style="font-size:10px; color:#888; margin-top:20px; text-align:center;">
+                            Documento generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/> — Copia no controlada
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

@@ -33,6 +33,11 @@
               parent="menu_amunet_lista_maestra_root"
               action="action_amunet_prueba_rapida" sequence="40"/>
 
+    <menuitem id="menu_amunet_proveedores_calificados" name="Proveedores calificados"
+              parent="menu_amunet_lista_maestra_root"
+              action="action_amunet_proveedor" sequence="50"/>
+
+
     <!-- ── Submenú: Mis pendientes ── -->
     <menuitem id="menu_amunet_mis_pendientes" name="Mis pendientes"
               parent="menu_amunet_documentos_root"
@@ -85,12 +90,18 @@
     <menuitem id="menu_amunet_formato_solicitudes_pendientes" name="Solicitudes de impresión"
               parent="menu_amunet_gestion"
               action="action_amunet_formato_solicitudes_pendientes" sequence="10"
-              groups="group_documentos_manager"/>
+              groups="group_documentos_manager" active="0"/>
 
     <menuitem id="menu_amunet_catalogo_firma" name="Catálogo de firmas"
               parent="menu_amunet_gestion"
               action="action_amunet_catalogo_firma" sequence="20"
               groups="group_documentos_manager"/>
+
+    <!-- ── Submenú: Auditorías a proveedores ── -->
+    <menuitem id="menu_auditorias_proveedores" name="Auditorías a proveedores"
+              parent="menu_amunet_documentos_root"
+              sequence="45"
+              groups="amunet_documentos.group_documentos_manager"/>
 
     <!-- ── Configuración (managers) ── -->
     <menuitem id="menu_amunet_documentos_config" name="Configuracion"

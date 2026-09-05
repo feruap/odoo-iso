@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Anida Planes, Registros y Checklists de proveedores bajo
+         "Auditoría Técnicas de Proveedores", igual que Informes de Auditoría. -->
+    <record id="amunet_plan_auditoria_proveedores.menu_plan_audit_prov" model="ir.ui.menu">
+        <field name="parent_id" ref="amunet_programa_auditoria_proveedores.menu_prog_proveedor"/>
+    </record>
+
+    <record id="amunet_apertura_cierre_prov.menu_apertura_cierre_prov" model="ir.ui.menu">
+        <field name="parent_id" ref="amunet_programa_auditoria_proveedores.menu_prog_proveedor"/>
+    </record>
+
+    <record id="amunet_checklist_auditoria_prov.menu_checklist_audit_prov" model="ir.ui.menu">
+        <field name="parent_id" ref="amunet_programa_auditoria_proveedores.menu_prog_proveedor"/>
+    </record>
+
+    <!-- Oculta el menú de Auditoría Técnicas de Proveedores de Gestión;
+         el acceso queda en el hub del tablero. -->
+    <record id="amunet_programa_auditoria_proveedores.menu_prog_proveedor" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+</odoo>

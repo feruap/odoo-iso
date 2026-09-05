@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Lista: equipo del plan vinculado -->
+    <record id="rule_lista_verificacion_equipo" model="ir.rule">
+        <field name="name">Lista verificación: visible solo al equipo del plan</field>
+        <field name="model_id" ref="model_amunet_lista_verificacion"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">
+            ['|', '|', '|',
+                ('plan_id.lider_id', '=', user.id),
+                ('plan_id.auditor_ids', 'in', [user.id]),
+                ('plan_id.observador_ids', 'in', [user.id]),
+                ('plan_id.experto_ids', 'in', [user.id])
+            ]
+        </field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Lista: acceso total para gestora de documentación -->
+    <record id="rule_lista_verificacion_manager" model="ir.rule">
+        <field name="name">Lista verificación: acceso total para documentación</field>
+        <field name="model_id" ref="model_amunet_lista_verificacion"/>
+        <field name="groups" eval="[(4, ref('amunet_documentos.group_documentos_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Ítems: mismo acceso que la lista padre -->
+    <record id="rule_lista_item_equipo" model="ir.rule">
+        <field name="name">Ítem lista verificación: visible solo al equipo del plan</field>
+        <field name="model_id" ref="model_amunet_lista_verificacion_item"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">
+            ['|', '|', '|',
+                ('lista_id.plan_id.lider_id', '=', user.id),
+                ('lista_id.plan_id.auditor_ids', 'in', [user.id]),
+                ('lista_id.plan_id.observador_ids', 'in', [user.id]),
+                ('lista_id.plan_id.experto_ids', 'in', [user.id])
+            ]
+        </field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Ítems: acceso total para gestora de documentación -->
+    <record id="rule_lista_item_manager" model="ir.rule">
+        <field name="name">Ítem lista verificación: acceso total para documentación</field>
+        <field name="model_id" ref="model_amunet_lista_verificacion_item"/>
+        <field name="groups" eval="[(4, ref('amunet_documentos.group_documentos_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+</odoo>

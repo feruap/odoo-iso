@@ -42,17 +42,27 @@ Notas
 -----
 - Todo se maneja en PIEZAS. Las cajas son presentaciones
   (`amunet.packaging.presentation`), no inventario propio.
+- 19.0.8.0.0 (02-sep-2026, reglas de Direccion): (a) fuente de demanda "mismo
+  periodo del ano anterior" (lo vendido entonces es el pronostico, sin dividir
+  por dias); (b) base de existencia "vendible": solo lotes en APT/Existencias
+  con caducidad >= N meses (parametro amunet_production_plan.min_shelf_months,
+  6 por omision) y sin condicion de caducidad corta; (c) las cantidades se
+  redondean a hojas maestras completas (70 piezas por hoja) para los productos
+  cuya BoM consume hoja SPHMC*; (d) columna "Vendible" en la pantalla de mapeos
+  Woo (1109) con el mismo calculo.
 - El plan no lee ni muestra un solo importe. Es compatible con la politica de
   amunet_price_visibility / amunet_sale_confidential.
     """,
     'author': 'Amunet',
     'category': 'Manufacturing',
-    'version': '19.0.7.0.0',
-    'depends': ['mrp', 'stock', 'product', 'purchase'],
+    'version': '19.0.9.0.0',
+    'depends': ['mrp', 'stock', 'product', 'purchase', 'amunet_woocommerce'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
         'views/production_plan_views.xml',
+        'views/woo_mapping_views.xml',
+        'views/woo_pending_views.xml',
         'views/menus.xml',
     ],
     'installable': True,

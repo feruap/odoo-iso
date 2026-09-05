@@ -29,23 +29,30 @@ class ProductionPlan(models.Model):
     ], default='draft', string='Estado', tracking=True)
 
     demand_source = fields.Selection([
-        ('woo', 'Tendencia WooCommerce (piezas vendidas)'),
+        ('woo_same_period', 'Ventas WooCommerce del mismo periodo del ano anterior '
+                            '(lo vendido entonces ES el pronostico)'),
+        ('woo', 'Tendencia WooCommerce (piezas vendidas / dia)'),
         ('sale', 'Pedidos de venta de Odoo'),
         ('stock', 'Salidas de almacen a cliente'),
-    ], string='Fuente de demanda', default='stock', required=True, tracking=True,
-        help='De donde se lee el historico. Ninguna opcion trae importes, solo cantidades.')
+    ], string='Fuente de demanda', default='woo_same_period', required=True, tracking=True,
+        help='De donde se lee el historico. Ninguna opcion trae importes, solo cantidades.\n'
+             'Mismo periodo del ano anterior: la ventana de fechas se pone un ano atras y '
+             'lo vendido en ella se toma tal cual como necesidad (regla de Direccion, '
+             'sep-2026). Las otras tres convierten el historico a demanda diaria y la '
+             'multiplican por los dias a cubrir.')
 
     date_from = fields.Date(
         string='Historico desde', required=True,
-        default=lambda self: fields.Date.context_today(self) - timedelta(days=90))
+        default=lambda self: fields.Date.context_today(self) - timedelta(days=365))
     date_to = fields.Date(
         string='Historico hasta', required=True,
-        default=lambda self: fields.Date.context_today(self))
+        default=lambda self: fields.Date.context_today(self) - timedelta(days=365 - 91))
     horizon_days = fields.Integer(
-        string='Dias a cubrir', default=30, required=True,
-        help='Cuantos dias de demanda debe cubrir la produccion sugerida.')
+        string='Dias a cubrir', default=90, required=True,
+        help='Cuantos dias de demanda debe cubrir la produccion sugerida. '
+             'No aplica con "mismo periodo del ano anterior": ahi la ventana ya es el horizonte.')
     safety_days = fields.Integer(
-        string='Stock de seguridad (dias)', default=15,
+        string='Stock de seguridad (dias)', default=0,
         help='Colchon adicional expresado en dias de demanda.')
 
     categ_ids = fields.Many2many(
@@ -55,12 +62,35 @@ class ProductionPlan(models.Model):
         string='Solo productos con BoM', default=False,
         help='Si se activa, ignora los productos de compra-reventa (sin BoM).')
     stock_basis = fields.Selection([
+        ('sellable', 'Vendible: lotes con caducidad de al menos N meses'),
         ('released', 'Solo existencia liberada por Calidad'),
         ('free', 'Toda la existencia libre'),
-    ], string='Que cuenta como disponible', default='released', required=True,
-        help='Lo que no ha liberado Calidad no es vendible. Con "liberada" el plan '
-             'no lo cuenta como oferta, pero lo reporta aparte para que se vea que '
-             'el cuello de botella es liberacion, no compra ni produccion.')
+    ], string='Que cuenta como disponible', default='sellable', required=True,
+        help='Vendible: piezas en el anaquel de producto terminado cuyo lote caduca en '
+             'al menos N meses y no esta marcado como caducidad corta / cortesia / '
+             'retirar. Lo que caduca antes se considera CERO para planear (regla de '
+             'Direccion, sep-2026), aunque la tienda lo muestre disponible.\n'
+             'Liberada: lo que no ha liberado Calidad no cuenta.')
+    min_shelf_months = fields.Integer(
+        string='Meses minimos de caducidad', default=lambda self: self._default_min_shelf_months(),
+        help='Un lote que caduque antes de hoy + estos meses no cuenta como vendible.')
+    sellable_location_ids = fields.Many2many(
+        'stock.location', string='Anaqueles vendibles',
+        default=lambda self: self._default_sellable_locations(),
+        domain=[('usage', '=', 'internal')],
+        help='Ubicaciones cuyo contenido cuenta como vendible. Vacio = todas las '
+             'ubicaciones internas. Por omision: APT/Existencias*, que es lo que '
+             'la tienda publica. El Almacen Temporal PT (esperando analisis) NO cuenta.')
+    round_to_sheet = fields.Boolean(
+        string='Ordenes en hojas completas', default=True,
+        help='Una hoja maestra abierta se usa entera: las cantidades a fabricar se '
+             'redondean a multiplos de las piezas por hoja para los productos cuya '
+             'lista de materiales consume hoja maestra (clave SPHMC*).')
+    sheet_pieces = fields.Integer(
+        string='Piezas por hoja', default=70,
+        help='Pruebas brutas que salen de una hoja maestra. Lo vendible sera menos: '
+             'muestreo de Calidad, museo de retencion y retrabajo se descuentan al '
+             'cerrar la orden, no aqui.')
 
     mp_basis = fields.Selection([
         ('free', 'Toda la existencia libre'),
@@ -193,7 +223,7 @@ class ProductionPlan(models.Model):
 
     def _get_demand(self):
         self.ensure_one()
-        if self.demand_source == 'woo':
+        if self.demand_source in ('woo', 'woo_same_period'):
             return self._demand_from_woo()
         if self.demand_source == 'sale':
             return self._demand_from_sale()
@@ -238,6 +268,11 @@ class ProductionPlan(models.Model):
                 a=self.date_from, b=self.date_to))
 
         days = self._window_days()
+        # Pedidos de la tienda vendidos sin existencia: demanda comprometida.
+        # Entran al plan aunque el producto no tenga historial de ventas.
+        pendientes = self.env['amunet.woo.pending.line'].pending_by_product()
+        for pid in pendientes:
+            demand.setdefault(pid, 0.0)
         products = self.env['product.product'].browse(list(demand)).exists()
         if self.categ_ids:
             products = products.filtered(lambda p: p.categ_id in self.categ_ids)
@@ -256,7 +291,8 @@ class ProductionPlan(models.Model):
         products = products.sorted(lambda p: demand.get(p.id, 0.0), reverse=True)
         for product in products:
             qty_hist = demand.get(product.id, 0.0)
-            if qty_hist <= 0:
+            comprometido = pendientes.get(product.id, 0.0)
+            if qty_hist <= 0 and comprometido <= 0:
                 continue
             bom = self.env['mrp.bom']._bom_find(
                 product, company_id=self.company_id.id).get(product)
@@ -270,20 +306,34 @@ class ProductionPlan(models.Model):
                 supply_mode = 'unknown'
 
             daily = qty_hist / days
-            need = daily * (self.horizon_days + self.safety_days)
+            if self.demand_source == 'woo_same_period':
+                # La ventana (un ano atras) ES el horizonte: se necesita lo que se
+                # vendio entonces, mas el colchon en dias si se pidio.
+                need = qty_hist + daily * self.safety_days
+            else:
+                need = daily * (self.horizon_days + self.safety_days)
+            # Lo ya vendido sin existencia se suma completo: es un compromiso,
+            # no un pronostico.
+            need += comprometido
             free = self._en_compania(product).free_qty
+            sellable = self._sellable_qty(product) if self._is_stock_tracked(product) else free
+            sheet_mult = self._sheet_multiple(product, bom)
             # La liberacion por Calidad se lleva por lote. Un producto que no se
             # rastrea por lote nunca tendria existencia liberada y el plan pediria
             # fabricar de nuevo todo lo que ya hay en almacen.
             aplica_liberacion = self._release_applies(product)
             released = self._released_qty(product) if aplica_liberacion else free
             pending_qc = max(0.0, free - released) if aplica_liberacion else 0.0
-            on_hand = released if (self.stock_basis == 'released'
-                                   and aplica_liberacion) else free
+            if self.stock_basis == 'sellable':
+                on_hand = sellable
+            elif self.stock_basis == 'released' and aplica_liberacion:
+                on_hand = released
+            else:
+                on_hand = free
             wip = self._wip_qty(product)
             entrante = self._incoming_qty(product)
             suggested = max(0.0, need - on_hand - wip - entrante)
-            suggested = float_round(suggested, precision_rounding=1.0, rounding_method='UP')
+            suggested = self._round_multiple(suggested, sheet_mult, up=True)
 
             to_produce = to_buy = 0.0
             coverage, missing, needs = 1.0, {}, {}
@@ -292,8 +342,7 @@ class ProductionPlan(models.Model):
                 coverage, missing, needs = self._bom_coverage(
                     product, bom, suggested, mp_pool, mp_total)
                 error_bom = needs is None
-                to_produce = float_round(
-                    suggested * coverage, precision_rounding=1.0, rounding_method='DOWN')
+                to_produce = self._round_multiple(suggested * coverage, sheet_mult, up=False)
                 # Se aparta la materia prima de lo que REALMENTE se va a fabricar.
                 # Apartarla en proporcion a la cobertura dejaba comprometida MP de
                 # una fabricacion fraccionaria que al redondear hacia abajo nunca
@@ -330,9 +379,12 @@ class ProductionPlan(models.Model):
                 'qty_history': qty_hist,
                 'qty_daily': daily,
                 'qty_need': need,
+                'qty_pending_orders': comprometido,
                 'qty_on_hand': on_hand,
                 'qty_free': free,
                 'qty_released': released,
+                'qty_sellable': sellable,
+                'sheet_multiple': sheet_mult,
                 'qty_pending_qc': pending_qc,
                 'qty_wip': wip,
                 'qty_incoming': entrante,
@@ -362,6 +414,108 @@ class ProductionPlan(models.Model):
             n=len(self.line_ids), p=self.to_produce_count,
             c=self.to_buy_count, b=self.blocked_count, u=self.unknown_count))
         return True
+
+    SHEET_PREFIX = 'SPHMC'
+    PARAM_MONTHS = 'amunet_production_plan.min_shelf_months'
+
+    @api.model
+    def _default_min_shelf_months(self):
+        val = self.env['ir.config_parameter'].sudo().get_param(self.PARAM_MONTHS, '6')
+        try:
+            return max(0, int(val))
+        except (TypeError, ValueError):
+            return 6
+
+    @api.model
+    def _default_sellable_locations(self):
+        return self.env['stock.location'].search([
+            ('usage', '=', 'internal'),
+            ('complete_name', '=ilike', 'APT/Existencias%'),
+        ])
+
+    @api.model
+    def _sellable_qty_for(self, product, months=None, locations=None, company=None):
+        """Piezas vendibles de un producto: lotes que caducan en >= `months` meses,
+        sin condicion de caducidad corta / cortesia / retirar, en `locations`
+        (o todas las internas). Se descuenta la reserva viva sobre esos lotes.
+
+        Es un @api.model para que la pantalla de mapeos Woo (1109) muestre el
+        mismo numero que usa el plan."""
+        company = company or self.env.company
+        if months is None:
+            months = self._default_min_shelf_months()
+        if locations is None:
+            locations = self._default_sellable_locations()
+        limite = fields.Date.context_today(self) + timedelta(days=int(months * 30.4375))
+        Quant = self.env['stock.quant'].sudo()
+        dominio = [
+            ('product_id', '=', product.id),
+            ('location_id.usage', '=', 'internal'),
+            ('company_id', '=', company.id),
+            ('quantity', '>', 0),
+        ]
+        if locations:
+            dominio.append(('location_id', 'in', locations.ids))
+        quants = Quant.search(dominio)
+        Lot = self.env['stock.lot']
+        con_condicion = 'amunet_condicion_caducidad' in Lot._fields
+        lotes_ok = Lot.browse()
+        total = 0.0
+        for q in quants:
+            lot = q.lot_id
+            if not lot:
+                # Sin lote no hay caducidad que evaluar: solo cuenta si el producto
+                # no se rastrea por lote (si se rastrea, un quant sin lote es basura).
+                if product.tracking == 'none':
+                    total += q.quantity
+                continue
+            if lot.expiration_date and lot.expiration_date.date() < limite:
+                continue
+            if con_condicion and (lot.amunet_condicion_caducidad or 'normal') != 'normal':
+                continue
+            total += q.quantity
+            lotes_ok |= lot
+        if not total:
+            return 0.0
+        reserved = 0.0
+        if lotes_ok:
+            MoveLine = self.env['stock.move.line'].sudo()
+            campo = 'quantity_product_uom' if 'quantity_product_uom' in MoveLine._fields else 'quantity'
+            dom_res = [
+                ('product_id', '=', product.id),
+                ('lot_id', 'in', lotes_ok.ids),
+                ('state', 'not in', ('done', 'cancel')),
+                ('location_id.usage', '=', 'internal'),
+                ('company_id', '=', company.id),
+            ]
+            if locations:
+                dom_res.append(('location_id', 'in', locations.ids))
+            reserved = sum((ml[campo] or 0.0) for ml in MoveLine.search(dom_res))
+        return max(0.0, total - reserved)
+
+    def _sellable_qty(self, product):
+        self.ensure_one()
+        return self._sellable_qty_for(
+            product, months=self.min_shelf_months,
+            locations=self.sellable_location_ids, company=self.company_id)
+
+    def _sheet_multiple(self, product, bom):
+        """Multiplo de redondeo: piezas por hoja si la BoM consume hoja maestra."""
+        if not self.round_to_sheet or not bom or self.sheet_pieces <= 1:
+            return 1
+        for line in bom.bom_line_ids:
+            code = line.product_id.default_code or ''
+            if code.upper().startswith(self.SHEET_PREFIX):
+                return int(self.sheet_pieces)
+        return 1
+
+    @staticmethod
+    def _round_multiple(qty, multiple, up=True):
+        if multiple <= 1 or qty <= 0:
+            return float_round(qty, precision_rounding=1.0,
+                               rounding_method='UP' if up else 'DOWN')
+        return float_round(qty, precision_rounding=float(multiple),
+                           rounding_method='UP' if up else 'DOWN')
 
     def _wip_qty(self, product):
         mos = self.env['mrp.production'].sudo().search([
@@ -601,9 +755,18 @@ class ProductionPlanLine(models.Model):
     qty_history = fields.Float(string='Vendido en la ventana', digits='Product Unit of Measure')
     qty_daily = fields.Float(string='Demanda diaria', digits='Product Unit of Measure')
     qty_need = fields.Float(string='Necesidad del horizonte', digits='Product Unit of Measure')
+    qty_pending_orders = fields.Float(
+        string='Pedidos sin surtir', digits='Product Unit of Measure',
+        help='Piezas vendidas en la tienda sin existencia (pedidos vivos). Se suman a la necesidad.')
     qty_on_hand = fields.Float(string='Disponible contado', digits='Product Unit of Measure')
     qty_free = fields.Float(string='Existencia libre total', digits='Product Unit of Measure')
     qty_released = fields.Float(string='Liberada por Calidad', digits='Product Unit of Measure')
+    qty_sellable = fields.Float(
+        string='Vendible (caducidad >= N meses)', digits='Product Unit of Measure',
+        help='Piezas en anaquel cuyo lote caduca en al menos los meses minimos del plan.')
+    sheet_multiple = fields.Integer(
+        string='Multiplo (hoja)', default=1,
+        help='1 = sin redondeo; 70 = la cantidad se redondeo a hojas completas.')
     qty_pending_qc = fields.Float(string='Esperando liberacion', digits='Product Unit of Measure')
     qty_incoming = fields.Float(
         string='En camino', digits='Product Unit of Measure',

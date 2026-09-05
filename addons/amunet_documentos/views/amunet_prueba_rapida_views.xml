@@ -56,7 +56,7 @@
         </field>
     </record>
 
-    <!-- ── Acción ──────────────────────────────────────────────── -->
+    <!-- ── Acciones ─────────────────────────────────────────────── -->
     <record id="action_amunet_prueba_rapida" model="ir.actions.act_window">
         <field name="name">Datos de pruebas rápidas</field>
         <field name="res_model">amunet.prueba.rapida</field>
@@ -66,5 +66,34 @@
                 Agrega el primer registro de prueba rápida.
             </p>
         </field>
+    </record>
+
+    <record id="action_prueba_rapida_con_rs" model="ir.actions.act_window">
+        <field name="name">Pruebas rápidas con registro sanitario</field>
+        <field name="res_model">amunet.prueba.rapida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('registro_sanitario', '!=', False), ('registro_sanitario', '!=', ''), ('registro_sanitario', '!=', 'No aplica')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay pruebas con registro sanitario registradas.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_prueba_rapida_sin_rs" model="ir.actions.act_window">
+        <field name="name">Pruebas rápidas sin registro sanitario</field>
+        <field name="res_model">amunet.prueba.rapida</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">['|', '|', '|', ('registro_sanitario', '=', False), ('registro_sanitario', '=', ''), ('registro_sanitario', '=', 'No aplica'), ('registro_sanitario', '=', 'no aplica')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay pruebas sin registro sanitario registradas.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_pruebas_rapidas_hub" model="ir.actions.client">
+        <field name="name">Pruebas rápidas</field>
+        <field name="tag">amunet_documentos.pruebas_rapidas_hub</field>
     </record>
 </odoo>

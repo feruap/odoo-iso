@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_checklist_audit_prov"
+              name="Checklists de Auditoría Técnica"
+              parent="amunet_documentos.menu_auditorias_proveedores"
+              action="action_checklist_audit_prov"
+              sequence="52"
+              groups="amunet_documentos.group_documentos_manager"/>
+</odoo>

@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_asistencia_wizard_user,Asistencia Wizard,model_amunet_acta_asistencia_wizard,base.group_user,1,1,1,1
+access_acta_user,Acta Usuario,model_amunet_acta_auditoria,base.group_user,1,0,0,0
+access_acta_doc,Acta Documentacion,model_amunet_acta_auditoria,amunet_documentos.group_documentos_manager,1,1,1,1
+access_asistente_user,Asistente Usuario,model_amunet_acta_asistente,base.group_user,1,0,0,0
+access_asistente_doc,Asistente Documentacion,model_amunet_acta_asistente,amunet_documentos.group_documentos_manager,1,1,1,1
+access_compromiso_user,Compromiso Usuario,model_amunet_acta_compromiso,base.group_user,1,0,0,0
+access_compromiso_doc,Compromiso Documentacion,model_amunet_acta_compromiso,amunet_documentos.group_documentos_manager,1,1,1,1

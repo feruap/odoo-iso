@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_amef_list" model="ir.ui.view">
+        <field name="name">amunet.amef.list</field>
+        <field name="model">amunet.amef</field>
+        <field name="arch" type="xml">
+            <list string="Análisis de riesgo (AMEF)"
+                  decoration-success="state == 'approved'"
+                  decoration-danger="inaceptable_count &gt; 0"
+                  decoration-muted="state == 'archived'">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="tipo"/>
+                <field name="area"/>
+                <field name="version"/>
+                <field name="line_count"/>
+                <field name="inaceptable_count"/>
+                <field name="riesgo_global_residual"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_amef_line_form" model="ir.ui.view">
+        <field name="name">amunet.amef.line.form</field>
+        <field name="model">amunet.amef.line</field>
+        <field name="arch" type="xml">
+            <form string="Línea de riesgo">
+                <group>
+                    <field name="name"/>
+                    <field name="sequence"/>
+                </group>
+                <group string="Análisis (ISO 14971)">
+                    <field name="hazard"/>
+                    <field name="harm"/>
+                    <field name="situacion_peligrosa"/>
+                    <field name="secuencia_eventos"/>
+                </group>
+                <group>
+                    <group string="Riesgo inicial">
+                        <field name="severidad_inicial"/>
+                        <field name="probabilidad_inicial"/>
+                        <field name="indice_inicial"/>
+                        <field name="aceptabilidad_inicial"/>
+                    </group>
+                    <group string="AMEF (secundario)">
+                        <field name="amef_sev"/>
+                        <field name="amef_occ"/>
+                        <field name="amef_det"/>
+                        <field name="rpn"/>
+                    </group>
+                </group>
+                <field name="control_ids">
+                    <list editable="bottom">
+                        <field name="sequence" widget="handle"/>
+                        <field name="descripcion"/>
+                        <field name="tipo_control"/>
+                        <field name="document_id"/>
+                        <field name="verif_implementacion"/>
+                        <field name="verif_efectividad"/>
+                    </list>
+                </field>
+                <group>
+                    <group string="Riesgo residual">
+                        <field name="severidad_residual"/>
+                        <field name="probabilidad_residual"/>
+                        <field name="indice_residual"/>
+                        <field name="aceptabilidad_residual"/>
+                    </group>
+                    <group>
+                        <field name="estado_linea"/>
+                        <field name="justificacion"
+                               placeholder="Requerida si el riesgo residual es inaceptable."/>
+                    </group>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_amef_form" model="ir.ui.view">
+        <field name="name">amunet.amef.form</field>
+        <field name="model">amunet.amef</field>
+        <field name="arch" type="xml">
+            <form string="Análisis de riesgo">
+                <header>
+                    <button name="action_submit_review" type="object" string="Enviar a revisión"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_open_sign_wizard" type="object" string="Firmar (revisa/aprueba)"
+                            class="btn-primary" invisible="state != 'in_review'"/>
+                    <button name="action_escalate_capa" type="object" string="Escalar a CAPA"
+                            class="btn-warning" invisible="inaceptable_count == 0"
+                            groups="amunet_amef.group_amef_approver"/>
+                    <button name="action_new_revision" type="object" string="Nueva revisión"
+                            invisible="state != 'approved'"
+                            groups="amunet_amef.group_amef_approver"/>
+                    <button name="action_archive_amef" type="object" string="Archivar"
+                            invisible="state == 'archived'"
+                            groups="amunet_amef.group_amef_approver"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_review,approved"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="inaceptable_count == 0">
+                        Hay líneas con riesgo residual INACEPTABLE. Requieren control adicional o
+                        justificación beneficio/riesgo antes de aprobar.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="version"/>
+                            <field name="tipo"/>
+                            <field name="metodologia"/>
+                        </group>
+                        <group>
+                            <field name="product_id"/>
+                            <field name="product_proceso"/>
+                            <field name="area"/>
+                            <field name="document_id"/>
+                            <field name="responsable_id"/>
+                            <field name="fecha"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Líneas de riesgo">
+                            <field name="line_ids" mode="list">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="hazard"/>
+                                    <field name="harm"/>
+                                    <field name="indice_inicial"/>
+                                    <field name="aceptabilidad_inicial"/>
+                                    <field name="indice_residual"/>
+                                    <field name="aceptabilidad_residual"/>
+                                    <field name="rpn"/>
+                                    <field name="estado_linea"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Contexto (ISO 14971)">
+                            <group>
+                                <field name="uso_previsto"/>
+                                <field name="mal_uso_previsible"/>
+                                <field name="alcance"/>
+                                <field name="equipo"/>
+                            </group>
+                        </page>
+                        <page string="Evaluación global y revisión">
+                            <group>
+                                <field name="riesgo_global_residual"/>
+                                <field name="beneficio_riesgo"/>
+                                <field name="fecha_proxima_revision"/>
+                                <field name="gatillos_revision"/>
+                            </group>
+                            <group string="Firmas">
+                                <field name="revisa_id"/>
+                                <field name="fecha_revisa"/>
+                                <field name="aprueba_id"/>
+                                <field name="fecha_aprueba"/>
+                                <field name="snapshot_hash"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_amef" model="ir.actions.act_window">
+        <field name="name">Análisis de riesgo (AMEF)</field>
+        <field name="res_model">amunet.amef</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

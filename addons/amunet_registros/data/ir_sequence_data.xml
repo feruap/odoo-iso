@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="seq_entrega_vest" model="ir.sequence">
+        <field name="name">Entrega de Indumentaria</field>
+        <field name="code">amunet.reg.entrega.vest</field>
+        <field name="prefix">EV-%(year)s%(month)s-</field>
+        <field name="padding">3</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+    <record id="seq_revision_vest" model="ir.sequence">
+        <field name="name">Revisión de Indumentaria</field>
+        <field name="code">amunet.reg.revision.vest</field>
+        <field name="prefix">RV-%(year)s%(month)s-</field>
+        <field name="padding">3</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+</odoo>

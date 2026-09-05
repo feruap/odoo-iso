@@ -1,0 +1,197 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="seed_product_template_2329" model="product.template">
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_27"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_7"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="default_code">SPHMT07</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="marketplace_flow">general</field>
+            <field name="marketplace_sequence">0</field>
+            <field name="marketplace_reference_price">0.0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_2330" model="product.template">
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_27"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_7"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="default_code">SPHMT08</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="marketplace_flow">general</field>
+            <field name="marketplace_sequence">0</field>
+            <field name="marketplace_reference_price">0.0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_2331" model="product.template">
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_27"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_7"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="default_code">SPHMT09</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="marketplace_flow">general</field>
+            <field name="marketplace_sequence">0</field>
+            <field name="marketplace_reference_price">0.0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_2332" model="product.template">
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_27"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_7"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="default_code">SPHMT10</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="marketplace_flow">general</field>
+            <field name="marketplace_sequence">0</field>
+            <field name="marketplace_reference_price">0.0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_2333" model="product.template">
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_27"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_7"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="default_code">SPHMT11</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="marketplace_flow">general</field>
+            <field name="marketplace_sequence">0</field>
+            <field name="marketplace_reference_price">0.0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+        <record id="seed_product_template_2334" model="product.template">
+            <field name="sequence">0</field>
+            <field name="type">consu</field>
+            <field name="service_tracking">no</field>
+            <field name="categ_id" ref="seed_product_category_27"/>
+            <field name="list_price">0.0</field>
+            <field name="volume">0.0</field>
+            <field name="weight">0.0</field>
+            <field name="purchase_ok" eval="True"/>
+            <field name="uom_id" ref="seed_uom_uom_7"/>
+            <field name="active" eval="True"/>
+            <field name="color">0</field>
+            <field name="default_code">SPHMT12</field>
+            <field name="property_stock_production" ref="seed_stock_location_12"/>
+            <field name="property_stock_inventory" ref="seed_stock_location_11"/>
+            <field name="sale_delay">0</field>
+            <field name="tracking">lot</field>
+            <field name="expiration_time">0</field>
+            <field name="use_time">0</field>
+            <field name="removal_time">0</field>
+            <field name="alert_time">0</field>
+            <field name="marketplace_flow">general</field>
+            <field name="marketplace_sequence">0</field>
+            <field name="marketplace_reference_price">0.0</field>
+            <field name="qc_parameter_count">0</field>
+            <field name="report_version">0</field>
+            <field name="report_replaces_version">0</field>
+            <field name="reanalysis_extension_months">0</field>
+            <field name="certificate_version">0</field>
+            <field name="certificate_replaces_version">0</field>
+            <field name="amunet_initial_ph">0.0</field>
+        </record>
+    </data>
+</odoo>

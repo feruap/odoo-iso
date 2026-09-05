@@ -159,6 +159,7 @@ class AmunetCCGeneral(models.Model):
 
     # ── Sección 1: Tipo y descripción ────────────────────────────
     nombre_documento   = fields.Char(string='Asunto')
+    tipo_pno           = fields.Boolean(string='PNO')
     tipo_procedimiento = fields.Boolean(string='Instrucciones')
     tipo_formula       = fields.Boolean(string='Fórmula / Insumo')
     tipo_proveedor     = fields.Boolean(string='Proveedor')
@@ -240,10 +241,11 @@ class AmunetCCGeneral(models.Model):
         compute='_compute_tipo_display',
     )
 
-    @api.depends('tipo_procedimiento', 'tipo_formula', 'tipo_proveedor', 'tipo_instalacion',
+    @api.depends('tipo_pno', 'tipo_procedimiento', 'tipo_formula', 'tipo_proveedor', 'tipo_instalacion',
                  'tipo_equipo', 'tipo_manual', 'tipo_formato', 'tipo_otro', 'tipo_otro_desc')
     def _compute_tipo_display(self):
         tipos = [
+            ('tipo_pno',           'PNO'),
             ('tipo_procedimiento', 'Instrucciones'),
             ('tipo_formula',       'Fórmula / Insumo'),
             ('tipo_proveedor',     'Proveedor'),
@@ -357,6 +359,7 @@ class AmunetCCGeneral(models.Model):
                 display = '%s — %s' % (display, rec.nombre_documento)
             rec.display_name = display
 
+    @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':

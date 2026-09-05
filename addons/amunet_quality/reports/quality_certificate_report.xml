@@ -100,7 +100,15 @@
                                 </t>
                             </div>
                         </div>
-                        <t t-if="o.product_description">
+                        <t t-if="o.prueba_rapida_id and o.prueba_rapida_id.descripcion">
+                            <div class="row mb32">
+                                <div class="col-12">
+                                    <strong>Descripción (Denominación genérica):</strong>
+                                    <span t-out="o.prueba_rapida_id.descripcion"/>
+                                </div>
+                            </div>
+                        </t>
+                        <t t-elif="o.product_description">
                             <div class="row mb32">
                                 <div class="col-12">
                                     <strong>Descripción:</strong>

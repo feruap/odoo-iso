@@ -19,7 +19,8 @@ class TestWooStockPublish(AmunetWooCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.piece = cls.env['product.product'].create({
+        cls.piece = cls.env['product.product'].with_context(
+            amunet_alta_autorizada=True).create({
             'name': 'Prueba pieza APT', 'default_code': 'APT-PZ01',
             'type': 'consu', 'is_storable': True,
         })
@@ -35,6 +36,16 @@ class TestWooStockPublish(AmunetWooCommon):
             'name': 'LOTE-APT-001',
             'product_id': cls.piece.id,
         })
+        # En una BD con el modulo de Calidad instalado, el lote debe estar
+        # LIBERADO para poder recibirse: ese es el candado del flujo. Los
+        # casos que prueban el candado lo ponen en pendiente explicitamente.
+        if "amunet_lot_release_state" in cls.env["stock.lot"]._fields:
+            cls.lot.amunet_lot_release_state = "released"
+        # Ubicacion de piezas fijada y con existencia: no se puede recibir mas
+        # de lo que hay fisicamente, asi que la prueba necesita stock real.
+        cls.backend.apt_pieces_location_id = cls.location_stock.id
+        cls.env['stock.quant']._update_available_quantity(
+            cls.piece, cls.location_stock, 1000.0, lot_id=cls.lot)
         cls.Delivery = cls.env['amunet.woo.stock.delivery']
 
     def _fake_lot_stock(self):
@@ -68,24 +79,31 @@ class TestWooStockPublish(AmunetWooCommon):
         with self.assertRaises(UserError):
             self.backend._apt_deliver({'product_id': 1, 'quantity': 1})
 
+    def _make_reception(self, qty=40.0):
+        """Recepción aceptada del lote de prueba (dispara la publicación)."""
+        return self.env['amunet.woo.reception'].create({
+            'backend_id': self.backend.id,
+            'company_id': self.backend.company_id.id,
+            'mapping_id': self.mapping.id,
+            'product_id': self.piece.id,
+            'lot_id': self.lot.id,
+            'quantity': qty,
+        })
+
     def test_publish_creates_ledger_and_log(self):
-        """Publica un lote liberado: ledger + bitácora, sin HTTP real."""
+        """Publica una recepción aceptada: ledger + bitácora, sin HTTP real."""
         self._enable_publish()
         with mock.patch.object(
-                type(self.backend), '_read_released_piece_stock',
-                return_value=self._fake_lot_stock()), \
-             mock.patch.object(
                 type(self.backend), '_apt_deliver',
                 return_value={'message': 'ok'}) as m_deliver:
-            self.backend.action_publish_stock()
+            self._make_reception(qty=40.0)
         self.assertEqual(m_deliver.call_count, 1)
         payload = m_deliver.call_args[0][0]
         self.assertEqual(payload['product_id'], 9001)
-        self.assertEqual(payload['expiration_month'], 12)
-        self.assertEqual(payload['expiration_year'], 2027)
-        deliveries = self.Delivery.search([('backend_id', '=', self.backend.id)])
+        self.assertEqual(payload['quantity'], 40.0)
+        deliveries = self.Delivery.search([
+            ('backend_id', '=', self.backend.id), ('state', '=', 'published')])
         self.assertEqual(len(deliveries), 1)
-        self.assertEqual(deliveries.state, 'published')
         self.assertEqual(deliveries.quantity, 40.0)
         log = self.env['amunet.woo.sync.log'].search([
             ('backend_id', '=', self.backend.id),
@@ -95,17 +113,14 @@ class TestWooStockPublish(AmunetWooCommon):
         self.assertEqual(log.done_count, 1)
 
     def test_publish_is_idempotent(self):
-        """Reejecutar no reenvía el lote ya publicado (idempotencia)."""
+        """Reejecutar no reenvía la recepción ya publicada (idempotencia)."""
         self._enable_publish()
         with mock.patch.object(
-                type(self.backend), '_read_released_piece_stock',
-                return_value=self._fake_lot_stock()), \
-             mock.patch.object(
                 type(self.backend), '_apt_deliver',
                 return_value={'message': 'ok'}) as m_deliver:
+            self._make_reception(qty=40.0)          # auto-publica una vez
+            self.backend.action_publish_stock()      # delegación -> nada nuevo
             self.backend.action_publish_stock()
-            self.backend.action_publish_stock()
-        # El segundo llamado no vuelve a hacer POST del mismo lote.
         self.assertEqual(m_deliver.call_count, 1)
         deliveries = self.Delivery.search([
             ('backend_id', '=', self.backend.id),

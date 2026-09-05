@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Gestión de Riesgos bajo Registros de Formatos -->
+    <menuitem id="menu_risk_root"
+              name="Gestión de riesgos"
+              parent="amunet_registros.menu_registros_root"
+              sequence="20"
+              groups="amunet_documentos.group_documentos_user"/>
+
+    <menuitem id="menu_risk_analisis"
+              name="Análisis AMEF"
+              parent="menu_risk_root"
+              action="action_risk_analysis"
+              sequence="10"/>
+
+    <menuitem id="menu_risk_reanalisis"
+              name="Re-análisis"
+              parent="menu_risk_root"
+              action="action_risk_reanalysis"
+              sequence="20"/>
+
+    <menuitem id="menu_risk_seguimiento"
+              name="Seguimiento"
+              parent="menu_risk_root"
+              action="action_risk_seguimiento"
+              sequence="30"/>
+
+
+</odoo>

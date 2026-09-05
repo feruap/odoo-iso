@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_supplier_master_list" model="ir.ui.view">
+        <field name="name">res.partner.supplier.master.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Lista maestra de proveedores"
+                  decoration-danger="reevaluacion_vencida == True"
+                  decoration-muted="quality_status == 'rejected'">
+                <field name="name"/>
+                <field name="quality_status"/>
+                <field name="last_audit_date"/>
+                <field name="next_audit_date"/>
+                <field name="dias_para_reevaluacion"/>
+                <field name="reevaluacion_vencida"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_supplier_master_search" model="ir.ui.view">
+        <field name="name">res.partner.supplier.master.search</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="f_aprobado" string="Aprobados" domain="[('quality_status','=','approved')]"/>
+                <filter name="f_condicional" string="Condicionales" domain="[('quality_status','=','conditional')]"/>
+                <filter name="f_rechazado" string="Rechazados" domain="[('quality_status','=','rejected')]"/>
+                <separator/>
+                <filter name="f_vencida" string="Reevaluación vencida" domain="[('reevaluacion_vencida','=',True)]"/>
+                <separator/>
+                <filter name="g_status" string="Estatus de calidad" context="{'group_by':'quality_status'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_supplier_master" model="ir.actions.act_window">
+        <field name="name">Lista maestra de proveedores</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('supplier_rank','>',0)]</field>
+        <field name="search_view_id" ref="view_supplier_master_search"/>
+        <field name="context">{'search_default_f_vencida': 0}</field>
+    </record>
+
+    <menuitem id="menu_proveedores_root" name="Proveedores" sequence="58"
+              web_icon="amunet_proveedores,static/description/icon.png"
+              groups="amunet_quality.group_quality_manager"/>
+    <menuitem id="menu_proveedores_master" name="Lista maestra" parent="menu_proveedores_root"
+              action="action_supplier_master" sequence="10"/>
+</odoo>

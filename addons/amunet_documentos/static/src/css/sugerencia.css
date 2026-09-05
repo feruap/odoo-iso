@@ -21,7 +21,6 @@
     box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
     transform: translateY(-2px);
 }
-
 /* Celdas */
 .o_field_one2many[name="cambios_ids"] tbody [name="texto_actual"] {
     background-color: #fff5f5 !important;

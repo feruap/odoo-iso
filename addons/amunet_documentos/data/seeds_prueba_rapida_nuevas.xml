@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="prueba_rapida_12kras" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0">12KRAS-NET</div>]]></field>
+        <field name="nombre_texto">12KRAS-NET</field>
+        <field name="codigo">KRA</field>
+        <field name="referencia">DLKRS01</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+    <record id="prueba_rapida_aureus_adn" model="amunet.prueba.rapida">
+        <field name="nombre">AUREUS-ADN</field>
+        <field name="nombre_texto">AUREUS-ADN</field>
+        <field name="codigo">AUR</field>
+        <field name="referencia">DLARU01</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+    <record id="prueba_rapida_campy_adn" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0">CAMPY-ADN</div>]]></field>
+        <field name="nombre_texto">CAMPY-ADN</field>
+        <field name="codigo">CAD</field>
+        <field name="referencia">DLCPY01</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+    <record id="prueba_rapida_chamlygo" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0">ChlamyGo</div>]]></field>
+        <field name="nombre_texto">ChlamyGo</field>
+        <field name="codigo">CLG</field>
+        <field name="referencia">DLCAM01</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+    <record id="prueba_rapida_ecohem_adn" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0">ECOHEM-ADN</div>]]></field>
+        <field name="nombre_texto">ECOHEM-ADN</field>
+        <field name="codigo">ECH</field>
+        <field name="referencia">DLECO01</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+    <record id="prueba_rapida_enteronet_adn" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0">ENTERONET-ADN</div>]]></field>
+        <field name="nombre_texto">ENTERONET-ADN</field>
+        <field name="codigo">ENA</field>
+        <field name="referencia">DLENT01</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+    <record id="prueba_rapida_factor_reumatoide" model="amunet.prueba.rapida">
+        <field name="nombre">FACTOR REUMATOIDE</field>
+        <field name="nombre_texto">FACTOR REUMATOIDE</field>
+        <field name="codigo">FRE</field>
+        <field name="referencia">DMFRE</field>
+        <field name="muestra">Suero o plasma</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">24 meses</field>
+    </record>
+
+    <record id="prueba_rapida_fetalamp" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0">FETALAMP</div>]]></field>
+        <field name="nombre_texto">FETALAMP</field>
+        <field name="codigo">FLA</field>
+        <field name="referencia">DLSFE01</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+    <record id="prueba_rapida_isolister_adn" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0">ISOLISTER-ADN</div>]]></field>
+        <field name="nombre_texto">ISOLISTER-ADN</field>
+        <field name="codigo">ISL</field>
+        <field name="referencia">DLISL01</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+    <record id="prueba_rapida_mycoplasma" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0"><em>Mycoplasma pneumoniae</em></div>]]></field>
+        <field name="nombre_texto">Mycoplasma pneumoniae</field>
+        <field name="codigo">BMN</field>
+        <field name="referencia">DMMYC01</field>
+        <field name="muestra">Exudado orofaríngeo</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">24 meses</field>
+    </record>
+
+    <record id="prueba_rapida_tb_dxnet" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0">TB-DxNET</div>]]></field>
+        <field name="nombre_texto">TB-DxNET</field>
+        <field name="codigo">TBX</field>
+        <field name="referencia">DLTB02</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+    <record id="prueba_rapida_vihlamp_net" model="amunet.prueba.rapida">
+        <field name="nombre"><![CDATA[<div data-oe-version="2.0">VIHLAMP-NET</div>]]></field>
+        <field name="nombre_texto">VIHLAMP-NET</field>
+        <field name="codigo">VLA</field>
+        <field name="referencia">DLVIH01</field>
+        <field name="muestra">Sangre total</field>
+        <field name="registro_sanitario">No aplica</field>
+        <field name="caducidad_autorizada">6 meses</field>
+    </record>
+
+</odoo>

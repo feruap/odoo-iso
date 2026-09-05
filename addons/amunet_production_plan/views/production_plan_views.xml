@@ -30,9 +30,14 @@
                             <field name="date_to"/>
                         </group>
                         <group string="Que quiero cubrir">
-                            <field name="horizon_days"/>
+                            <field name="horizon_days" invisible="demand_source == 'woo_same_period'"/>
                             <field name="safety_days"/>
                             <field name="stock_basis"/>
+                            <field name="min_shelf_months" invisible="stock_basis != 'sellable'"/>
+                            <field name="sellable_location_ids" widget="many2many_tags"
+                                   invisible="stock_basis != 'sellable'"/>
+                            <field name="round_to_sheet"/>
+                            <field name="sheet_pieces" invisible="not round_to_sheet"/>
                             <field name="mp_basis"/>
                             <field name="only_with_bom"/>
                             <field name="categ_ids" widget="many2many_tags"/>
@@ -60,9 +65,12 @@
                                     <field name="qty_history" string="Vendido"/>
                                     <field name="qty_daily" string="Diario" optional="hide"/>
                                     <field name="qty_need" string="Necesidad"/>
+                                    <field name="qty_pending_orders" string="Pedidos sin surtir" optional="show"/>
                                     <field name="qty_on_hand" string="Disponible"/>
                                     <field name="qty_free" string="Existencia total" optional="hide"/>
                                     <field name="qty_released" string="Liberado" optional="hide"/>
+                                    <field name="qty_sellable" string="Vendible" optional="show"/>
+                                    <field name="sheet_multiple" string="Hoja" optional="hide"/>
                                     <field name="qty_pending_qc" string="Sin liberar"/>
                                     <field name="qty_wip" string="En produccion"/>
                                     <field name="qty_suggested" string="Sugerido"/>

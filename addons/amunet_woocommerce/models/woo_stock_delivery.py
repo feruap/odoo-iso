@@ -55,20 +55,30 @@ class AmunetWooStockDelivery(models.Model):
     ]
 
     @api.model
-    def _build_hash(self, backend_id, woo_product_id, lot_number):
-        """Huella única por (tienda, producto Woo, lote).
+    def _build_hash(self, backend_id, woo_product_id, lot_number,
+                    reception_id=None):
+        """Huella única por (tienda, producto Woo, lote[, recepción]).
 
         No incluye la cantidad a propósito: el endpoint de la tienda AGREGA
-        existencias, así que un lote se publica una sola vez aunque su
-        cantidad cambie. Reenviarlo duplicaría el stock en la tienda.
+        existencias, así que una publicación se envía una sola vez aunque su
+        cantidad cambie. Reenviarla duplicaría el stock en la tienda.
+
+        ``reception_id``: cuando la publicación es RECEPCIÓN-céntrica (entregas
+        parciales del mismo lote), cada recepción tiene su propia huella para
+        que cada parcial se publique una sola vez, sin colisionar con otra
+        recepción del mismo lote.
         """
         raw = '%s|%s|%s' % (
             backend_id or 0, woo_product_id or 0, (lot_number or '').strip())
+        if reception_id:
+            raw = '%s|rec%s' % (raw, reception_id)
         return hashlib.sha256(raw.encode('utf-8')).hexdigest()
 
     @api.model
-    def _already_published(self, backend_id, woo_product_id, lot_number):
-        digest = self._build_hash(backend_id, woo_product_id, lot_number)
+    def _already_published(self, backend_id, woo_product_id, lot_number,
+                           reception_id=None):
+        digest = self._build_hash(
+            backend_id, woo_product_id, lot_number, reception_id=reception_id)
         return self.search_count([
             ('delivery_hash', '=', digest),
             ('state', '=', 'published'),

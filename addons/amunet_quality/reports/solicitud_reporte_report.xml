@@ -135,9 +135,16 @@
                             </t>
                         </tr>
                         <tr style="border: 0 !important;">
-                            <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Descripción:</strong>
-                                <span t-if="o.product_description" t-field="o.product_description"/>
-                                <span t-elif="o.product_id.description" t-field="o.product_id.description"/>
+                            <td class="no-border" colspan="2" style="border: 0px none transparent !important; padding: 2px 0;"><strong>Descripción (Denominación genérica):</strong>
+                                <t t-if="o.prueba_rapida_id and o.prueba_rapida_id.descripcion">
+                                    <span t-out="o.prueba_rapida_id.descripcion"/>
+                                </t>
+                                <t t-elif="o.product_description">
+                                    <span t-field="o.product_description"/>
+                                </t>
+                                <t t-elif="o.product_id.description">
+                                    <span t-field="o.product_id.description"/>
+                                </t>
                             </td>
                         </tr>
                     </table>

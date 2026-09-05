@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_informe_auditoria"
+        name="Informes de Auditoría"
+        parent="amunet_auditores.menu_auditores_root"
+        action="action_informe_auditoria"
+        sequence="40"/>
+</odoo>

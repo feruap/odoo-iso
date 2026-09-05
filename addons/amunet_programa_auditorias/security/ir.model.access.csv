@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_programa_user,Programa Usuario,model_amunet_programa_auditoria,base.group_user,1,0,0,0
+access_programa_doc,Programa Documentacion,model_amunet_programa_auditoria,amunet_documentos.group_documentos_manager,1,1,1,1
+access_linea_user,Linea Usuario,model_amunet_programa_auditoria_linea,base.group_user,1,0,0,0
+access_linea_doc,Linea Documentacion,model_amunet_programa_auditoria_linea,amunet_documentos.group_documentos_manager,1,1,1,1
+access_reprogramar_wizard,Reprogramar Wizard,model_amunet_programa_reprogramar_wizard,base.group_user,1,1,1,1

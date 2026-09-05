@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_convocatoria" model="ir.actions.report">
+        <field name="name">Convocatoria de Auditores Internos</field>
+        <field name="model">amunet.auditor.convocatoria</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_auditores.report_convocatoria</field>
+        <field name="report_file">amunet_auditores.report_convocatoria</field>
+        <field name="binding_model_id" ref="model_amunet_auditor_convocatoria"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <template id="report_convocatoria">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="amunet_documentos.layout_amunet">
+                    <div class="page">
+                        <h2 class="text-center">Convocatoria de Auditores Internos</h2>
+                        <hr/>
+
+                        <!-- Datos principales -->
+                        <table class="table table-sm table-bordered" style="font-size:12px">
+                            <tbody>
+                                <tr>
+                                    <td style="width:30%; background:#f5f5f5"><strong>Folio / Nombre</strong></td>
+                                    <td><span t-field="doc.name"/></td>
+                                    <td style="width:25%; background:#f5f5f5"><strong>Estado</strong></td>
+                                    <td><span t-field="doc.state"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Fecha de emisión</strong></td>
+                                    <td><span t-field="doc.fecha_emision"/></td>
+                                    <td style="background:#f5f5f5"><strong>Fecha límite de postulación</strong></td>
+                                    <td><span t-field="doc.fecha_limite"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Fecha de entrevista</strong></td>
+                                    <td><span t-field="doc.fecha_entrevista"/></td>
+                                    <td style="background:#f5f5f5"><strong>Vacantes</strong></td>
+                                    <td><span t-field="doc.vacantes"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f5f5f5"><strong>Horario de entrevista</strong></td>
+                                    <td>
+                                        <t t-if="doc.hora_inicio_entrevista">
+                                            <t t-esc="doc.hora_inicio_entrevista"/>
+                                        </t>
+                                        <t t-if="doc.hora_inicio_entrevista and doc.hora_fin_entrevista"> – </t>
+                                        <t t-if="doc.hora_fin_entrevista">
+                                            <t t-esc="doc.hora_fin_entrevista"/>
+                                        </t>
+                                    </td>
+                                    <td style="background:#f5f5f5"><strong>Lugar de entrevista</strong></td>
+                                    <td><span t-field="doc.lugar_entrevista"/></td>
+                                </tr>
+                                <tr t-if="doc.area_ids">
+                                    <td style="background:#f5f5f5"><strong>Áreas auditables</strong></td>
+                                    <td colspan="3">
+                                        <t t-foreach="doc.area_ids" t-as="area">
+                                            <span class="badge badge-secondary me-1"><t t-esc="area.name"/></span>
+                                        </t>
+                                    </td>
+                                </tr>
+                                <tr t-if="doc.correo_contacto">
+                                    <td style="background:#f5f5f5"><strong>Correo de contacto</strong></td>
+                                    <td colspan="3"><span t-field="doc.correo_contacto"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Secciones de texto -->
+                        <t t-if="doc.objetivo">
+                            <h4 style="margin-top:16px; color:#333;">Objetivo</h4>
+                            <div style="font-size:12px; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                                <span t-field="doc.objetivo"/>
+                            </div>
+                        </t>
+
+                        <t t-if="doc.formacion_academica">
+                            <h4 style="margin-top:14px; color:#333;">Formación Académica Requerida</h4>
+                            <p style="font-size:12px; white-space:pre-wrap;"><span t-field="doc.formacion_academica"/></p>
+                        </t>
+
+                        <t t-if="doc.funciones">
+                            <h4 style="margin-top:14px; color:#333;">Funciones y Responsabilidades</h4>
+                            <p style="font-size:12px; white-space:pre-wrap;"><span t-field="doc.funciones"/></p>
+                        </t>
+
+                        <t t-if="doc.beneficios">
+                            <h4 style="margin-top:14px; color:#333;">Beneficios</h4>
+                            <p style="font-size:12px; white-space:pre-wrap;"><span t-field="doc.beneficios"/></p>
+                        </t>
+
+                        <!-- Destinatarios -->
+                        <t t-if="doc.destinatario_ids">
+                            <h4 style="margin-top:14px; color:#333;">Destinatarios</h4>
+                            <table class="table table-sm table-bordered" style="font-size:12px">
+                                <thead style="background:#f5f5f5">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nombre</th>
+                                        <th>Correo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.destinatario_ids" t-as="dest">
+                                        <tr>
+                                            <td><t t-esc="dest_index + 1"/></td>
+                                            <td><t t-esc="dest.name"/></td>
+                                            <td><t t-esc="dest.email"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- Nota de pie -->
+                        <p style="font-size:10px; color:#888; margin-top:20px; text-align:center;">
+                            Documento generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/> — Copia no controlada
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

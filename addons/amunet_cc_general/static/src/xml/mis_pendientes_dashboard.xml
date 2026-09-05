@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="amunet_cc_general.MisPendientesDashboard">
+    <div class="o_action o_amunet_mis_pendientes">
+
+        <!-- Accesos rápidos — sección destacada -->
+        <div class="o_amunet_dash_section_title">Accesos rápidos</div>
+        <div class="o_amunet_dash_cards o_amunet_dash_cards_hub">
+
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_amunet_documento_lista_maestra')">
+                <i class="fa fa-file-text-o fa-2x text-primary mb-2"/>
+                <span class="o_amunet_hub_label">PNOs vigentes</span>
+            </div>
+
+
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_documentos.action_pruebas_rapidas_hub')">
+                <i class="fa fa-flask fa-2x text-info mb-2"/>
+                <span class="o_amunet_hub_label">Pruebas rápidas</span>
+            </div>
+
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_cc_general.action_cc_general')">
+                <i class="fa fa-exchange fa-2x mb-2" style="color:#6f42c1"/>
+                <span class="o_amunet_hub_label">Control de cambios</span>
+            </div>
+
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_desviaciones.action_desviacion')">
+                <i class="fa fa-exclamation-triangle fa-2x text-danger mb-2"/>
+                <span class="o_amunet_hub_label">Desviaciones / NC</span>
+            </div>
+
+            <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_cc_general.action_programas_hub')">
+                <i class="fa fa-calendar fa-2x mb-2" style="color:#198754"/>
+                <span class="o_amunet_hub_label">Programas anuales</span>
+            </div>
+
+            <div t-if="state.isAuditor || state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_cc_general.action_auditorias_hub')">
+                <i class="fa fa-search fa-2x mb-2" style="color:#0d6efd"/>
+                <span class="o_amunet_hub_label">Auditorías internas</span>
+            </div>
+
+            <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_cc_general.action_audit_prov_hub')">
+                <i class="fa fa-handshake-o fa-2x mb-2" style="color:#6f42c1"/>
+                <span class="o_amunet_hub_label">Auditoría técnica de proveedores</span>
+            </div>
+
+            <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_copias_controladas.action_copia_controlada')">
+                <i class="fa fa-copy fa-2x mb-2" style="color:#c53030"/>
+                <span class="o_amunet_hub_label">Copias Controladas</span>
+            </div>
+
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_registros.action_registros_hub')">
+                <i class="fa fa-folder-open-o fa-2x mb-2" style="color:#fd7e14"/>
+                <span class="o_amunet_hub_label">Registros de formatos</span>
+            </div>
+
+        </div>
+
+        <!-- Pendientes — sección compacta -->
+        <div class="o_amunet_dash_section_title o_amunet_section_pendientes">Mis pendientes</div>
+
+        <t t-if="state.loading">
+            <div class="o_amunet_dash_loading">
+                <i class="fa fa-spinner fa-spin me-2"/>Cargando...
+            </div>
+        </t>
+
+        <t t-else="">
+            <div class="o_amunet_pendientes_row">
+
+                <div t-attf-class="o_amunet_mini_card {{ state.corregir > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => this.abrirAccion(969)">
+                    <div class="o_amunet_mini_count"><t t-esc="state.corregir"/></div>
+                    <div class="o_amunet_mini_label">A corregir</div>
+                </div>
+
+                <div t-attf-class="o_amunet_mini_card {{ state.revisar > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => this.abrirAccion(967)">
+                    <div class="o_amunet_mini_count"><t t-esc="state.revisar"/></div>
+                    <div class="o_amunet_mini_label">Por revisar</div>
+                </div>
+
+                <div t-attf-class="o_amunet_mini_card {{ state.autorizar > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => this.abrirAccion(968)">
+                    <div class="o_amunet_mini_count"><t t-esc="state.autorizar"/></div>
+                    <div class="o_amunet_mini_label">Por autorizar</div>
+                </div>
+
+                <div t-attf-class="o_amunet_mini_card {{ state.acusar > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => this.abrirAccion(1104)">
+                    <div class="o_amunet_mini_count"><t t-esc="state.acusar"/></div>
+                    <div class="o_amunet_mini_label">Acuse recibo</div>
+                </div>
+
+                <div t-attf-class="o_amunet_mini_card {{ state.cc_firma > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => this.abrirAccion(1127)">
+                    <div class="o_amunet_mini_count"><t t-esc="state.cc_firma"/></div>
+                    <div class="o_amunet_mini_label">CC por firmar</div>
+                </div>
+
+                <div t-attf-class="o_amunet_mini_card {{ state.acciones_desviacion > 0 ? 'has-pending' : 'empty' }}"
+                     t-on-click="() => this.abrirAccionXml('amunet_desviaciones.action_mis_acciones_desviacion')">
+                    <div class="o_amunet_mini_count"><t t-esc="state.acciones_desviacion"/></div>
+                    <div class="o_amunet_mini_label">Acciones cort./prev.</div>
+                </div>
+
+            </div>
+        </t>
+
+    </div>
+</t>
+</templates>

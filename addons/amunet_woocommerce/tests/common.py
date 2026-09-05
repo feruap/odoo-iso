@@ -33,7 +33,11 @@ class AmunetWooCommon(TransactionCase):
             cls.manu_type.default_location_src_id = cls.location_stock.id
 
     def _make_product(self, name, code):
-        return self.env['product.product'].create({
+        # amunet_warehouse_access bloquea el alta de productos por procesos
+        # automaticos salvo alta EXPLICITA autorizada; las pruebas son ese
+        # caso, asi que usan el flag de contexto que el propio candado define.
+        return self.env['product.product'].with_context(
+            amunet_alta_autorizada=True).create({
             'name': name,
             'default_code': code,
             'type': 'consu',

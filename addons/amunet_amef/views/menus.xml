@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_amef_root" name="Gestión de Riesgo" sequence="56"
+              web_icon="amunet_amef,static/description/icon.png"
+              groups="amunet_amef.group_amef_user"/>
+
+    <menuitem id="menu_amef_analisis" name="Análisis de riesgo (AMEF)" parent="menu_amef_root"
+              action="action_amef" sequence="10"/>
+
+    <menuitem id="menu_amef_config" name="Configuración" parent="menu_amef_root"
+              sequence="90" groups="amunet_amef.group_amef_approver"/>
+
+    <menuitem id="menu_amef_audit" name="Auditoría" parent="menu_amef_config"
+              action="action_amef_audit_log" sequence="10"/>
+</odoo>

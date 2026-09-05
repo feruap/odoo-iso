@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="area_acondicionado1" model="amunet.desviacion.area"><field name="name">Acondicionado 1</field></record>
+    <record id="area_acondicionado2" model="amunet.desviacion.area"><field name="name">Acondicionado 2</field></record>
+    <record id="area_administracion" model="amunet.desviacion.area"><field name="name">Administración</field></record>
+    <record id="area_almacen_mp" model="amunet.desviacion.area"><field name="name">Almacén Materia Prima</field></record>
+    <record id="area_almacen_pt" model="amunet.desviacion.area"><field name="name">Almacén de Producto Terminado</field></record>
+    <record id="area_almacen_temp" model="amunet.desviacion.area"><field name="name">Almacén Temporal de Producto Terminado</field></record>
+    <record id="area_calidad" model="amunet.desviacion.area"><field name="name">Control de Calidad</field></record>
+    <record id="area_desarrollo" model="amunet.desviacion.area"><field name="name">Desarrollo</field></record>
+    <record id="area_direccion" model="amunet.desviacion.area"><field name="name">Dirección General de Fábrica</field></record>
+    <record id="area_documentacion" model="amunet.desviacion.area"><field name="name">Documentación</field></record>
+    <record id="area_encartuchado" model="amunet.desviacion.area"><field name="name">Encartuchado</field></record>
+    <record id="area_estabilidad" model="amunet.desviacion.area"><field name="name">Estabilidad</field></record>
+    <record id="area_inyeccion" model="amunet.desviacion.area"><field name="name">Inyección</field></record>
+    <record id="area_laminado" model="amunet.desviacion.area"><field name="name">Laminado, Secado y Corte</field></record>
+    <record id="area_lectura" model="amunet.desviacion.area"><field name="name">Lectura y Secado</field></record>
+    <record id="area_mantenimiento" model="amunet.desviacion.area"><field name="name">Mantenimiento</field></record>
+    <record id="area_produccion" model="amunet.desviacion.area"><field name="name">Producción</field></record>
+    <record id="area_produccion_dm" model="amunet.desviacion.area"><field name="name">Producción de Desarrollo Molecular</field></record>
+    <record id="area_rrhh" model="amunet.desviacion.area"><field name="name">Recursos Humanos</field></record>
+    <record id="area_resp_sanitario" model="amunet.desviacion.area"><field name="name">Responsable Sanitario</field></record>
+    <record id="area_soluciones" model="amunet.desviacion.area"><field name="name">Soluciones</field></record>
+    <record id="area_validacion" model="amunet.desviacion.area"><field name="name">Validación</field></record>
+</odoo>
