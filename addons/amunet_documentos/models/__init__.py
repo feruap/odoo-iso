@@ -6,3 +6,4 @@ from . import amunet_sugerencia
 from . import amunet_catalogo_firma
 from . import amunet_prueba_rapida
 from . import amunet_proveedor
+from . import amunet_quality_check

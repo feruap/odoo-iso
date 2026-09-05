@@ -185,21 +185,8 @@ class AmunetQualityCheck(models.Model):
         help='Descripción del producto para este análisis. Se pre-carga del catálogo pero puede editarse por inspección.'
     )
 
-    prueba_rapida_id = fields.Many2one(
-        'amunet.prueba.rapida',
-        string='Ficha de prueba rápida',
-        compute='_compute_prueba_rapida_id',
-        store=False,
-    )
-
-    @api.depends('product_id')
-    def _compute_prueba_rapida_id(self):
-        PruebaRapida = self.env['amunet.prueba.rapida']
-        for rec in self:
-            code = rec.product_id.default_code or ''
-            rec.prueba_rapida_id = PruebaRapida.search(
-                [('referencia', '=', code)], limit=1
-            ) if code else PruebaRapida
+    # prueba_rapida_id se define en amunet_documentos (modelo amunet.prueba.rapida):
+    # ese modulo depende de este, no al reves.
 
     # ========================================================================
     # NUMERAL 2: SOLICITUD DE ANÁLISIS

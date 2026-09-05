@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Control de Calidad',
-    'version': '19.0.3.36.0',
+    'version': '19.0.3.38.0',
     'category': 'Quality',
     'summary': 'Sistema de Control de Calidad con Parámetros Jerárquicos',
     'description': """Sistema completo de Control de Calidad para la manufactura de
