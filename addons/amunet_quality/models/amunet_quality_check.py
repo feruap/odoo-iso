@@ -1401,10 +1401,16 @@ class AmunetQualityCheck(models.Model):
         """Registra las fechas de firma automáticamente"""
         now = fields.Datetime.now()
         for record in self:
-            # Lógica simplificada - en implementación real sería más robusta
-            record.realized_date = now if record.user_realized_id else False
-            record.verified_date = now if record.user_verified_id else False
-            record.authorized_date = now if record.user_authorized_id else False
+            # La fecha de cada firma se fija UNA vez (cuando aparece el firmante)
+            # y se conserva mientras la firma exista. Antes se reescribian las
+            # tres fechas con "ahora" en cada firma posterior, y el certificado
+            # mostraba fechas de Realizo/Verifico distintas a las reales.
+            record.realized_date = (
+                (record.realized_date or now) if record.user_realized_id else False)
+            record.verified_date = (
+                (record.verified_date or now) if record.user_verified_id else False)
+            record.authorized_date = (
+                (record.authorized_date or now) if record.user_authorized_id else False)
 
     @api.depends('product_id')
     def _compute_test_destructiveness(self):

@@ -171,7 +171,9 @@ class StockPicking(models.Model):
                                 lambda m: m.product_id == qc.product_id
                                 and m.state not in ('done', 'cancel')
                             )
-                            qc_lot_name = qc.lot_id.name if qc.lot_id else qc.lot_name
+                            # amunet.quality.check no tiene campo lot_name:
+                            # sin lote asignado no se filtra por lote.
+                            qc_lot_name = qc.lot_id.name if qc.lot_id else False
                             
                             # Recorrer lineas exactas de movimiento para respetar multimples destinos por producto
                             for move in product_moves:

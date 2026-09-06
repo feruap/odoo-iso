@@ -8,7 +8,9 @@
         'sube el archivo adjunto a la carpeta de Nextcloud configurada en '
         'los parametros del sistema (nextcloud.manuales.*).'
     ),
-    'depends': ['amunet_documentos'],
+    # Extiende amunet.doc.compartida (vistas, cron y modelo): sin esta dependencia
+    # el orden de carga decide si el modulo instala o truena.
+    'depends': ['amunet_documentos', 'amunet_documentacion_compartida'],
     'data': [
         'data/cron_recordatorio.xml',
         'views/doc_compartida_views.xml',

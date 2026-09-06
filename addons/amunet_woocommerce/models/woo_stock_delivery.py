@@ -49,10 +49,13 @@ class AmunetWooStockDelivery(models.Model):
     ], string='Resultado', default='published', required=True)
     response_message = fields.Char(string='Respuesta de la tienda')
 
-    _sql_constraints = [
-        ('delivery_hash_uniq', 'unique(delivery_hash)',
-         'La publicación de ese lote ya está registrada (idempotencia).'),
-    ]
+    # Odoo 19 ignora _sql_constraints (solo avisa en el log y NO crea la
+    # restriccion): sin esto la idempotencia de la publicacion era solo
+    # una intencion. Con models.Constraint si se crea el UNIQUE.
+    _delivery_hash_uniq = models.Constraint(
+        'unique(delivery_hash)',
+        'La publicación de ese lote ya está registrada (idempotencia).',
+    )
 
     @api.model
     def _build_hash(self, backend_id, woo_product_id, lot_number,

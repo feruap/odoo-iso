@@ -7,6 +7,9 @@
             <field name="implied_ids" eval="[(4, ref('mrp.group_mrp_user'))]"/>
         </record>
 
+    </data>
+    <!-- La secuencia va en noupdate="1": cada -u reiniciaba el folio PLAN/... -->
+    <data noupdate="1">
         <record id="seq_production_plan" model="ir.sequence">
             <field name="name">Plan de produccion</field>
             <field name="code">amunet.production.plan</field>

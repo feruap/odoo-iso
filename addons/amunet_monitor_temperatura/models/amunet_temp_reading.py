@@ -398,10 +398,12 @@ class AmunetTempDaySignoff(models.Model):
     n_deviation_open = fields.Integer(compute='_compute_readings')
     amunet_can_sign = fields.Boolean(compute='_compute_amunet_can_sign')
 
-    _sql_constraints = [
-        ('area_date_uniq', 'unique(area_id, date)',
-         'Ya existe un cierre diario para esta area y fecha.'),
-    ]
+    # Odoo 19 ignora _sql_constraints (solo avisa en el log y NO crea la
+    # restriccion); con models.Constraint si se crea el UNIQUE en la tabla.
+    _area_date_uniq = models.Constraint(
+        'unique(area_id, date)',
+        'Ya existe un cierre diario para esta area y fecha.',
+    )
 
     @api.model
     def _search(self, domain, **kwargs):

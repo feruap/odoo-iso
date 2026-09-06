@@ -16,7 +16,8 @@ class AmunetRegistroAlertas(models.Model):
         grupo = self.env.ref('amunet_competencias.group_competencias_manager', False)
         if not grupo:
             return self.env['res.users']
-        return grupo.sudo().users.filtered('active')
+        # Odoo 19: res.groups ya no tiene `users`; el campo es `user_ids`
+        return grupo.sudo().user_ids.filtered('active')
 
     @api.model
     def _enviar_correo(self, asunto, html, destinatarios):

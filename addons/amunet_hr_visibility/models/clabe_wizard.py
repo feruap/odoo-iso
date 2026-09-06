@@ -21,7 +21,10 @@ class ClabeWizard(models.TransientModel):
         clabe = (self.clabe or '').strip()
         if not clabe:
             raise ValidationError(_("Escribe el número CLABE."))
-        partner = emp.work_contact_id or emp.address_home_id
+        # hr.employee.address_home_id no existe desde Odoo 17: tronaba con
+        # AttributeError justo en el caso que este wizard atiende (empleado
+        # nuevo sin contacto de trabajo).
+        partner = emp.work_contact_id
         if not partner:
             raise ValidationError(_(
                 "El empleado no tiene un contacto de trabajo asignado. "

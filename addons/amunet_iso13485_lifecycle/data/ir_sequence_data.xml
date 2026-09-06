@@ -1,4 +1,7 @@
 <odoo>
+    <!-- noupdate="1": la secuencia se crea UNA vez. Sin esto, cada -u del
+         modulo reescribia number_next=1 y reiniciaba el folio (duplicados). -->
+    <data noupdate="1">
     <record id="seq_amunet_quality_complaint" model="ir.sequence">
         <field name="name">Queja ISO 13485</field><field name="code">amunet.quality.complaint</field>
         <field name="prefix">QUE-%(year)s-</field><field name="padding">5</field>
@@ -11,4 +14,5 @@
         <field name="name">Análisis de riesgos</field><field name="code">amunet.risk.analysis</field>
         <field name="prefix">RISK-%(year)s-</field><field name="padding">4</field>
     </record>
+    </data>
 </odoo>

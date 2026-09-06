@@ -41,8 +41,20 @@ class SalaryChangeRequest(models.Model):
         return self.env["amunet.generic.signature.wizard"].open_for(
             self, "action_approve", _("Aprobacion de cambio de sueldo"), self.reason or "")
 
+    def _check_can_approve(self):
+        """Mismas reglas que el boton: se re-validan aqui porque el metodo
+        final es publico (RPC) y usa sudo() para escribir el sueldo."""
+        self.ensure_one()
+        if not self.env.user.has_group("amunet_nomina_control.group_nomina_autorizador"):
+            raise AccessError(_("Solo un Autorizador puede aprobar."))
+        if self.env.user == self.requested_by_id:
+            raise AccessError(_("No puede aprobar su propia solicitud (segregacion de funciones)."))
+        if self.state != "pendiente":
+            raise ValidationError(_("La solicitud ya no esta pendiente."))
+
     def action_approve(self):
         self.ensure_one()
+        self._check_can_approve()
         ver = self.employee_id.current_version_id
         ver.sudo().with_context(nomina_approved=True).write({"wage": self.new_wage})
         self.write({

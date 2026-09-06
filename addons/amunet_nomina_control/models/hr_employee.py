@@ -23,6 +23,14 @@ class HrEmployee(models.Model):
             self, "action_aprobar_nomina", _("Aprobacion de alta de empleado"), self.name)
 
     def action_aprobar_nomina(self):
+        # Se re-valida aqui (no solo en action_open_aprobar_nomina) porque el
+        # metodo es publico y escribe con sudo(): sin esto cualquier usuario
+        # interno aprobaba a cualquier empleado por RPC.
+        self.ensure_one()
+        if not self.env.user.has_group("amunet_nomina_control.group_nomina_autorizador"):
+            raise AccessError(_("Solo un Autorizador puede aprobar el alta del empleado."))
+        if self.env.user == self.create_uid:
+            raise AccessError(_("No puede aprobar un empleado que usted mismo dio de alta (segregacion)."))
         self.sudo().write({
             "nomina_aprobado": True,
             "nomina_aprobado_por_id": self.env.user.id,

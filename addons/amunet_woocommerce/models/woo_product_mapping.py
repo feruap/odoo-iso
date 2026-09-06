@@ -1689,6 +1689,13 @@ class AmunetWooProductMapping(models.Model):
           material es anterior al sistema. Lo que si queda es el movimiento
           con nombre, fecha y motivo.
         """
+        # Todo lo de abajo corre con sudo(): el candado de rol va aqui, no
+        # solo en la vista. Consulta puede leer el mapeo pero no cargar stock.
+        if not (self.env.user.has_group('amunet_woocommerce.group_woo_revisor')
+                or self.env.user.has_group('amunet_woocommerce.group_woo_admin')):
+            raise AccessError(_(
+                'Solo un Revisor o Administrador de la tienda puede cargar '
+                'inventario inicial.'))
         Lot = self.env['stock.lot'].sudo()
         cargados = 0
         sin_caducidad = []

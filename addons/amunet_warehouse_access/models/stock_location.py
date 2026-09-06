@@ -21,16 +21,18 @@ class StockLocation(models.Model):
 
     # ========== OVERRIDE METHODS ==========
 
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         """Override para validar acceso al crear ubicación."""
-        # Crear primero para tener acceso a campos relacionados
-        location = super().create(vals)
+        # En Odoo 19 `create` siempre recibe una lista de diccionarios;
+        # con @api.model + ensure_one() la creacion en lote tronaba.
+        locations = super().create(vals_list)
 
         # Validar acceso después de creación
-        location._check_warehouse_access_permission(operation='crear', raise_warning=False)
+        for location in locations:
+            location._check_warehouse_access_permission(operation='crear', raise_warning=False)
 
-        return location
+        return locations
 
     def write(self, vals):
         """Override para validar acceso al modificar ubicación."""

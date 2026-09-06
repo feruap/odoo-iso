@@ -113,6 +113,9 @@ class MrpProduction(models.Model):
         for rec in records:
             if rec.route_type == 'short' and not rec.amunet_lc_gating:
                 rec.amunet_lc_gating = True
+        # Antes habia un segundo `create` mas abajo en esta misma clase que
+        # pisaba a este: el gating de Linea Corta nunca se activaba.
+        records._amunet_check_solution_maker()
         return records
 
     # ============================
@@ -202,12 +205,6 @@ class MrpProduction(models.Model):
                 'Sube certificados de calibracion vigentes o reactiva los '
                 'equipos antes de producir.'
             ) % '\n'.join(problemas))
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super().create(vals_list)
-        records._amunet_check_solution_maker()
-        return records
 
     def button_mark_done(self):
         self._amunet_check_solution_maker()

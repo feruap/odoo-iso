@@ -40,8 +40,9 @@ class ResPartner(models.Model):
         ])
         manager = self.env.ref('amunet_quality.group_quality_manager', raise_if_not_found=False)
         user = self.env.user
-        if manager and manager.users:
-            user = manager.users[0]
+        # Odoo 19: res.groups ya no tiene `users`; el campo es `user_ids`
+        if manager and manager.user_ids:
+            user = manager.user_ids[0]
         for p in proveedores:
             ya = self.env['mail.activity'].search_count([
                 ('res_model', '=', 'res.partner'), ('res_id', '=', p.id),

@@ -308,7 +308,8 @@ class AmunetRegistroCapacitacion(models.Model):
             'amunet_competencias.group_competencias_manager',
             raise_if_not_found=False)
         if grupo:
-            gestor = grupo.sudo().users.filtered('active')[:1]
+            # Odoo 19: res.groups ya no tiene `users`; el campo es `user_ids`
+            gestor = grupo.sudo().user_ids.filtered('active')[:1]
             if gestor:
                 return gestor
         return self.env.user

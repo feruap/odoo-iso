@@ -126,6 +126,9 @@ class AmunetQualitySignatureWizard(models.TransientModel):
             # COFEPRIS/NOM-240 expect individual accountability
             self._enforce_nominal_user(check)
 
+            # Los roles se verifican AQUI (servidor), no solo en el boton que
+            # abre el wizard: el wizard se puede crear por RPC con cualquier
+            # signature_type. Mismos grupos que action_sign_* del check.
             if self.signature_type == 'finalize':
                 if not (self.env.user.has_group('amunet_quality.group_quality_sanitary') or
                         self.env.user.has_group('amunet_quality.group_quality_supervisor') or
@@ -133,10 +136,18 @@ class AmunetQualitySignatureWizard(models.TransientModel):
                     raise AccessDenied("Solo el Responsable Sanitario puede finalizar el QC.")
                 check._action_finalize_logic()
             elif self.signature_type == 'realized':
+                if not (self.env.user.has_group('amunet_quality.group_quality_user') or
+                        self.env.user.has_group('amunet_quality.group_quality_supervisor')):
+                    raise AccessDenied("No tiene permisos de Analista o Supervisor.")
                 check._action_sign_realized_logic()
             elif self.signature_type == 'verified':
+                if not self.env.user.has_group('amunet_quality.group_quality_supervisor'):
+                    raise AccessDenied("No tiene permisos de Supervisor.")
                 check._action_sign_verified_logic()
             elif self.signature_type == 'authorized':
+                if not (self.env.user.has_group('amunet_quality.group_quality_sanitary') or
+                        self.env.user.has_group('amunet_quality.group_quality_supervisor')):
+                    raise AccessDenied("No tiene permisos de Responsable Sanitario o Supervisor.")
                 check._action_sign_authorized_logic()
             
             # Registrar éxito en log

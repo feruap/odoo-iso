@@ -8,7 +8,7 @@ operacionalmente, controla disposicion/reproceso, material adicional,
 ejecucion de Produccion, reanalisis y cierre.""",
     'author': 'Amunet',
     'category': 'Quality',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
     'depends': [
         'mail',
         'mrp',

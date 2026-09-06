@@ -36,7 +36,14 @@ class MrpProduction(models.Model):
         lote = self.move_finished_ids.move_line_ids.filtered(
             lambda ml: ml.lot_id and ml.product_id == prod
         ).mapped('lot_id')[:1]
-        lot_name = lote.name if lote else self.name
+        if not lote:
+            # Antes se imprimia el nombre de la ORDEN como si fuera el lote:
+            # una etiqueta Cofepris con lote falso. Mejor detenerse.
+            raise UserError(_(
+                'La orden %s todavia no tiene lote asignado al producto '
+                'terminado. Asigna el lote antes de generar las etiquetas.'
+            ) % self.name)
+        lot_name = lote.name
         # Caducidad = la de la ORDEN (amunet_expiration_text, ej "2028-05"), que es
         # la real y la que se ve en el plan. NO la expiration_date del lote, que a
         # veces trae la fecha de creacion del lote (bug observado en Calprotectina:

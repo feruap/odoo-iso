@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- noupdate="1": la secuencia se crea UNA vez. Sin esto, cada -u del
+         modulo reescribia number_next=1 y reiniciaba el folio (duplicados). -->
+    <data noupdate="1">
     <record id="seq_amunet_packaging_plan" model="ir.sequence">
         <field name="name">Plan de Empaque Amunet</field>
         <field name="code">amunet.packaging.plan</field>
@@ -17,4 +20,5 @@
         <field name="number_next">1</field>
         <field name="number_increment">1</field>
     </record>
+    </data>
 </odoo>
