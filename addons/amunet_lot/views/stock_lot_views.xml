@@ -38,6 +38,12 @@
                 <!-- <field name="amunet_auto_generated"/> -->
                 <field name="factory_lot_id" string="Número de serie/lote de fábrica"/>
                 <field name="analysis_number"/>
+                <!-- La fecha de fabricación solo se capturaba en la pantalla de
+                     recepción. Los lotes cargados por ajuste de inventario se
+                     quedaban sin ella y no habia forma de verla ni corregirla
+                     desde el lote. El campo lleva tracking=True: cada cambio
+                     queda asentado en el historial del lote. -->
+                <field name="manufacturing_date"/>
             </xpath>
         </field>
     </record>

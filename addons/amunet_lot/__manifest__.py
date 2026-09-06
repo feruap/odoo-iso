@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Lotes',
-    'version': '19.0.1.0.8',
+    'version': '19.0.1.0.9',
     'summary': 'Generación automática de secuencias de lotes',
     'description': """
 Módulo de gestión de lotes simplificado que utiliza stock.lot nativo de Odoo con denominación secuencial automática por producto.
@@ -18,6 +18,7 @@ Diferencia clave con amunet_lot_sequence:
         'mail',
         'product_expiry',
         'amunet_material_request',
+        'mrp',
     ],
     'data': [
         'security/ir.model.access.csv',

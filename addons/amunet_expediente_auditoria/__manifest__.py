@@ -6,6 +6,7 @@
     'author': 'Amunet',
     'license': 'LGPL-3',
     'depends': [
+        'amunet_documentos',
         'amunet_plan_auditorias',
         'amunet_acta_auditoria',
         'amunet_lista_verificacion',

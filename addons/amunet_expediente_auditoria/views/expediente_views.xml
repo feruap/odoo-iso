@@ -71,4 +71,10 @@
         action="action_expediente_auditoria"
         sequence="50"/>
 
+    <menuitem id="menu_expediente_auditoria_lista_maestra"
+        name="Auditorías internas"
+        parent="amunet_documentos.menu_amunet_lista_maestra_root"
+        action="action_expediente_auditoria"
+        sequence="50"/>
+
 </odoo>

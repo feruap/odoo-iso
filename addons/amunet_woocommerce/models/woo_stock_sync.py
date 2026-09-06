@@ -94,6 +94,7 @@ class AmunetWooStockConsumo(models.Model):
         ('sin_existencia', 'Sin existencia suficiente'),
         ('lote_retenido', 'Lote no liberado por Calidad'),
         ('sin_destino', 'Falta la ubicacion de Clientes'),
+        ('no_es_venta', 'No es una venta (entrada de la tienda)'),
         ('error_tecnico', 'Fallo tecnico'),
     ], default='aplicado', required=True, string='Resultado',
         help='Solo "Descontado" es definitivo. Todos los demas se vuelven a '
@@ -602,11 +603,39 @@ class AmunetWooBackend(models.Model):
             return fila
         return Consumo.create(valores)
 
+    @staticmethod
+    def _es_salida_de_la_tienda(mov):
+        """True solo si el movimiento SACO piezas de la tienda.
+
+        La tienda lleva un solo cuaderno con dos clases de renglon:
+          - tipo 'sale'     : alguien compro. La cantidad viene en NEGATIVO.
+          - tipo 'delivery' : entraron piezas a la tienda, normalmente porque
+                              Odoo le publico su propio anaquel. Viene POSITIVO.
+
+        Descontar un 'delivery' seria quitarle a Odoo piezas que nunca salieron
+        del anaquel: publicar no gasta material, solo informa. Por eso aqui se
+        miran las DOS cosas, el tipo y el signo, y solo pasa lo que resta.
+        """
+        tipo = (mov.get('tipo') or '').strip().lower()
+        cantidad = float(mov.get('cantidad') or 0.0)
+        if tipo and tipo != 'sale':
+            return False
+        # Sin tipo (tiendas viejas) el signo decide. Cero no mueve nada.
+        return cantidad < 0
+
     def _descontar_venta(self, mov, fila=None):
         """Un movimiento de la tienda -> un movimiento de existencias en Odoo."""
         self.ensure_one()
         empresa = self.company_id
         comun = self._datos_comunes(mov)
+
+        if not self._es_salida_de_la_tienda(mov):
+            return self._guardar_resultado(
+                mov, fila, 'no_es_venta',
+                _('Movimiento de tipo "%(t)s" con cantidad %(c)s: no saco piezas '
+                  'de la tienda, asi que no se descuenta de Odoo.') % {
+                      't': mov.get('tipo') or _('sin tipo'),
+                      'c': mov.get('cantidad')})
 
         mapeo = self.env['amunet.woo.product.mapping'].search([
             ('backend_id', '=', self.id),

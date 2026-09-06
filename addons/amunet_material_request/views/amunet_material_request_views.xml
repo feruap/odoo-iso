@@ -156,6 +156,15 @@
                                     <field name="tracking" optional="hide"/>
                                     <field name="qty_requested"
                                            readonly="parent.state not in ('draft', 'in_picking')"/>
+                                    <!-- Cuanto falta por comprar. Se ve en
+                                         borrador para que el solicitante sepa
+                                         antes de enviar que ese material no
+                                         esta y va a requerir compra. -->
+                                    <field name="amunet_falta_stock" column_invisible="1"/>
+                                    <field name="amunet_qty_faltante"
+                                           string="Falta comprar" readonly="1"
+                                           optional="show"
+                                           decoration-warning="amunet_falta_stock"/>
                                     <field name="qty_supplied"
                                            readonly="parent.state != 'in_picking'"
                                            column_invisible="parent.state == 'draft'"/>

@@ -321,6 +321,12 @@ class AmunetWooDelivery(models.Model):
 
     def _check_no_sobreentrega(self):
         """Impide entregar más piezas de las que quedan pendientes del lote."""
+        # El flujo nuevo de "Entrega de PT" trae su propio calculo: lo que se
+        # puede entregar es lo que hay FISICAMENTE en Temporal PT, no lo que ya
+        # esta en existencias vendibles. Este chequeo se escribio cuando la
+        # entrega no movia inventario y medirlo asi era la unica aproximacion.
+        if self.env.context.get('amunet_entrega_pt'):
+            return
         for rec in self:
             if rec.state in ('rechazada', 'cancelada') or not rec.lot_id:
                 continue
