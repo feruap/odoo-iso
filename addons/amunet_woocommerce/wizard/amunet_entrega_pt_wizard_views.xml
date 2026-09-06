@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_amunet_entrega_pt_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.entrega.pt.wizard.form</field>
+        <field name="model">amunet.entrega.pt.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Entrega de PT">
+                <field name="qty_pendiente" invisible="1"/>
+                <group>
+                    <group>
+                        <field name="production_id"/>
+                        <field name="product_id"/>
+                        <field name="lot_id"/>
+                    </group>
+                    <group>
+                        <label for="qty_pendiente" string="Pendiente por entregar"/>
+                        <div>
+                            <field name="qty_pendiente" nolabel="1" readonly="1"
+                                   class="oe_inline"/>
+                            <span class="text-muted"> pza(s)</span>
+                        </div>
+                        <field name="tipo" widget="radio"/>
+                        <field name="quantity"/>
+                    </group>
+                </group>
+
+                <!-- Aviso, no bloqueo: se puede entregar sin liberacion de
+                     Calidad durante el periodo de gracia. -->
+                <div class="alert alert-warning" role="alert"
+                     invisible="not aviso_liberacion">
+                    <field name="aviso_liberacion" nolabel="1" readonly="1"/>
+                </div>
+
+                <!-- Los datos del lote a la vista. Aqui es donde se cachan las
+                     caducidades mal: quien entrega tiene el producto fisico en
+                     la mano y puede comparar contra la etiqueta impresa.
+                     Corregirlo aqui es facil; despues de liberado el lote, no. -->
+                <div class="alert alert-danger" role="alert"
+                     invisible="not aviso_caducidad">
+                    <field name="aviso_caducidad" nolabel="1" readonly="1"/>
+                </div>
+
+                <group string="Revisa estos datos contra el producto físico">
+                    <group>
+                        <field name="lote_caducidad" readonly="1"/>
+                        <field name="lote_fabricacion" readonly="1"/>
+                    </group>
+                    <group>
+                        <label for="lote_orden_dice" string="Caducidad en la orden"/>
+                        <div>
+                            <field name="lote_orden_dice" nolabel="1" readonly="1"
+                                   class="oe_inline"/>
+                            <span class="text-muted"> (es la que va impresa en la etiqueta)</span>
+                        </div>
+                    </group>
+                </group>
+                <div class="text-muted mb-2">
+                    Si algo no coincide con la etiqueta impresa, <b>no entregues</b>:
+                    avisa para corregirlo antes.
+                </div>
+                <group>
+                    <field name="datos_correctos"/>
+                </group>
+
+                <group string="Firma">
+                    <field name="pin" password="True"
+                           placeholder="Escribe tu PIN"/>
+                </group>
+                <div class="text-muted">
+                    El PIN confirma que eres tú: la entrega queda a nombre del
+                    usuario con el que iniciaste sesión.
+                </div>
+
+                <footer>
+                    <!-- La confirmacion la da el propio boton: no hace falta
+                         una segunda ventana. -->
+                    <button name="action_confirmar" type="object"
+                            string="Aceptar" class="btn-primary"
+                            confirm="¿Seguro que quieres entregar esta cantidad de este lote al almacén de Producto Terminado?"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

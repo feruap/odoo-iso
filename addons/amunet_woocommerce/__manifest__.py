@@ -18,10 +18,10 @@ fabricación, controles de calidad, BOM ni presentaciones de Odoo.
 - Perfiles de proceso largo por hoja maestra (equivalencias, rendimiento, merma).
 - Importación idempotente del CSV de mapeo de SKU.
 - Tres grupos: Consulta, Revisor y Administrador, con reglas multiempresa.""",
+    'version': '19.0.16.0.0',
     'author': 'Amunet',
-    'category': 'Inventory',
-    'version': '19.0.14.0.0',
-    'depends': [
+    'category': 'Inventory',    'depends': [
+        'amunet_recepcion_materiales',
         'mail',
         'stock',
         'mrp',
@@ -42,6 +42,13 @@ fabricación, controles de calidad, BOM ni presentaciones de Odoo.
         'views/menu_views.xml',
         'views/woo_reception_views.xml',
         'views/woo_delivery_views.xml',
+        'data/entrega_pt_gracia.xml',
+        'data/entrega_pt_secuencia.xml',
+        'wizard/amunet_entrega_pt_wizard_views.xml',
+        'views/amunet_entrega_pt_views.xml',
+        'views/entrega_pt_columnas_views.xml',
+        'wizard/amunet_recibir_pt_wizard_views.xml',
+        'views/entrega_pt_picking_views.xml',
     ],
     'installable': True,
     'application': True,

@@ -128,6 +128,13 @@
             <field name="domain_force">[('company_id', 'in', company_ids)]</field>
             <field name="global" eval="True"/>
         </record>
+    <!-- Quien valida la llegada del producto terminado al almacen.
+         Se crea un grupo propio en lugar de reusar uno amplio: validar un
+         ingreso mueve inventario y define lo que se puede vender, asi que debe
+         quedar claro y por escrito quien puede hacerlo. Hoy: Luis y Michel. -->
+    <record id="group_almacen_pt" model="res.groups">
+        <field name="name">Almacen PT / Valida ingresos</field>
+    </record>
 
     </data>
 </odoo>

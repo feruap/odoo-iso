@@ -2,5 +2,4 @@
 from . import mrp_workcenter
 from . import mrp_workorder
 from . import amunet_mi_supervision_wizard
-# TEMPORAL: hr_employee.py no existe en staging — desarrollo debe subirlo
-# from . import hr_employee
+from . import hr_employee

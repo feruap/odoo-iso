@@ -87,6 +87,12 @@
                 <field name="woo_name" optional="hide"/>
                 <field name="product_id"/>
                 <field name="default_code"/>
+                <button name="action_abrir_inventario" type="object" icon="fa-cubes"
+                        title="Ver lotes del anaquel y capturar inventario inicial"/>
+                <field name="anaquel_total_pz" optional="show" sum="Piezas"/>
+                <field name="anaquel_lotes" optional="show"/>
+                <field name="anaquel_html" widget="html" optional="show" width="420px" string="Lotes (lote · caducidad · piezas)"/>
+                <field name="inicial_pendientes" optional="show"/>
                 <field name="relation_state" widget="badge"
                        decoration-success="relation_state == 'confirmed'"
                        decoration-danger="relation_state == 'rejected'"
@@ -120,12 +126,12 @@
                      producto YA tiene, para ajustar en vez de duplicar. -->
                 <field name="lote_opcion_ids" column_invisible="True"/>
                 <field name="inicial_cargado_qty" optional="hide"/>
-                <field name="inicial_qty" optional="show"
+                <field name="inicial_qty" optional="hide"
                        sum="Piezas por cargar"/>
-                <field name="inicial_lot_id" optional="show"
+                <field name="inicial_lot_id" optional="hide"
                        options="{'no_create': True, 'no_open': True}"/>
-                <field name="inicial_lot_name" optional="show"/>
-                <field name="inicial_expiration_date" optional="show"/>
+                <field name="inicial_lot_name" optional="hide"/>
+                <field name="inicial_expiration_date" optional="hide"/>
                 <field name="inicial_nota" optional="hide"/>
                 <field name="stock_existencias" string="Existencia total" optional="show"/>
                 <field name="stock_entrada" optional="hide"/>
@@ -453,7 +459,11 @@
         </field>
     </record>
 
-    <!-- Captura de inventario inicial desde la ficha del producto -->
+    <!-- Captura de inventario inicial desde la ficha del producto:
+         una pestana con la composicion real del anaquel (lote, caducidad,
+         piezas) y una lista donde el almacen agrega los lotes que faltan.
+         Todo lo que se captura aqui es inventario inicial: sin orden de
+         fabricacion y sin liberacion de Calidad. -->
     <record id="view_woo_product_mapping_form_inicial" model="ir.ui.view">
         <field name="name">amunet.woo.product.mapping.form.inicial</field>
         <field name="model">amunet.woo.product.mapping</field>
@@ -462,39 +472,64 @@
             <xpath expr="//form/header" position="inside">
                 <button name="action_cargar_inventario_inicial" type="object"
                         string="Cargar inventario inicial" class="btn-primary"
-                        invisible="not inicial_qty"/>
+                        invisible="not inicial_pendientes and not inicial_qty"/>
             </xpath>
-            <xpath expr="//sheet" position="inside">
-                <group string="Inventario inicial (migracion de papel a digital)"
-                       name="inventario_inicial">
-                    <div class="text-muted" colspan="2">
-                        Material que el almacen ya tiene fisicamente y que nunca
-                        paso por el sistema porque se llevaba en papel. No lleva
-                        orden de fabricacion ni liberacion de Calidad: es
-                        anterior al sistema. Si queda el registro de quien lo
-                        capturo, cuando y por que.
-                        <br/>
-                        El numero de lote y la caducidad son opcionales: los
-                        decide el operador. Sin caducidad el material se carga
-                        en Odoo, pero la tienda no lo puede clasificar y por eso
-                        no se publica.
-                    </div>
+            <xpath expr="//notebook" position="inside">
+                <page string="Inventario inicial" name="inventario_inicial">
                     <group>
+                        <group string="Lo que hay en el anaquel de piezas">
+                            <field name="anaquel_total_pz"/>
+                            <field name="anaquel_lotes"/>
+                            <field name="inicial_cargado_qty" string="De inventario inicial"/>
+                        </group>
+                        <group string="Por cargar">
+                            <field name="inicial_pendientes"/>
+                        </group>
+                    </group>
+                    <separator string="Composicion del anaquel (lote / caducidad / piezas)"/>
+                    <field name="anaquel_quant_ids" readonly="1" nolabel="1">
+                        <list create="0" delete="0" edit="0">
+                            <field name="lot_id" string="Lote"/>
+                            <field name="expiration_date" string="Caducidad" widget="date"/>
+                            <field name="quantity" string="Piezas" sum="Total"/>
+                            <field name="reserved_quantity" string="Apartadas" optional="hide"/>
+                            <field name="location_id" optional="hide"/>
+                        </list>
+                    </field>
+                    <separator string="Agregar lotes (inventario inicial)"/>
+                    <div class="text-muted">
+                        Un renglon por cada lote fisico: numero de lote, caducidad y
+                        piezas. Cuando termines, aprieta <b>Cargar inventario inicial</b>
+                        (arriba). Lo cargado no se edita: si un dato salio mal, agrega
+                        otro renglon con la diferencia.
+                    </div>
+                    <field name="inicial_line_ids" nolabel="1"
+                           context="{'default_mapping_id': id}">
+                        <list editable="bottom"
+                              decoration-success="state == 'done'"
+                              decoration-info="state == 'pending'">
+                            <field name="lot_name" readonly="state == 'done'"/>
+                            <field name="expiration_date" readonly="state == 'done'"/>
+                            <field name="qty" readonly="state == 'done'" sum="Piezas"/>
+                            <field name="nota" readonly="state == 'done'" optional="show"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'done'"
+                                   decoration-info="state == 'pending'"/>
+                            <field name="lot_id" optional="show"/>
+                            <field name="cargado_por" optional="hide"/>
+                            <field name="cargado_en" optional="hide"/>
+                        </list>
+                    </field>
+                    <group string="Captura rapida (un solo lote)" name="inventario_inicial"
+                           invisible="not inicial_qty and not inicial_lot_id and not inicial_lot_name and not inicial_expiration_date">
                         <field name="inicial_qty"/>
                         <field name="lote_opcion_ids" invisible="1"/>
-                        <field name="inicial_lot_id"
-                               options="{'no_create': True}"/>
-                        <field name="inicial_lot_name"
-                               invisible="inicial_lot_id"/>
+                        <field name="inicial_lot_id" options="{'no_create': True}"/>
+                        <field name="inicial_lot_name" invisible="inicial_lot_id"/>
                         <field name="inicial_expiration_date"/>
                         <field name="inicial_nota"/>
                     </group>
-                    <group>
-                        <field name="inicial_cargado_qty" readonly="1"/>
-                        <field name="lote_resumen" readonly="1"
-                               string="Lotes que ya tiene este producto"/>
-                    </group>
-                </group>
+                </page>
             </xpath>
         </field>
     </record>

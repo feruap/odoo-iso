@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Periodo de gracia para entregar producto terminado SIN liberacion de
+         Calidad.
+
+         Decision de Mery (2026-09-01): se permite entregar material no liberado
+         mientras se pule esa parte del proceso. Vencida la fecha, la entrega se
+         BLOQUEA y Calidad tiene que liberar antes.
+
+         noupdate=1: la fecha se administra desde Ajustes > Parametros del
+         sistema. Sin esto, cada actualizacion del modulo la regresaria al valor
+         original y una prorroga acordada se perderia en silencio.
+
+         Ojo con las prorrogas: la gracia de calibracion lleva tres y sigue en
+         cero certificados. Si esta se va a extender, que sea una decision
+         escrita y no una inercia. -->
+    <data noupdate="1">
+        <record id="param_entrega_pt_gracia" model="ir.config_parameter">
+            <field name="key">amunet_woocommerce.entrega_pt.gracia_sin_liberacion</field>
+            <field name="value">2026-11-01</field>
+        </record>
+    </data>
+
+</odoo>
