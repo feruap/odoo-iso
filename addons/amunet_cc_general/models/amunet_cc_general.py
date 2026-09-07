@@ -452,8 +452,8 @@ class AmunetCCGeneral(models.Model):
     # ── Acciones de flujo ────────────────────────────────────────
     def action_enviar(self):
         TIPOS = [
-            'tipo_procedimiento', 'tipo_formula', 'tipo_proveedor', 'tipo_instalacion',
-            'tipo_equipo', 'tipo_manual', 'tipo_formato', 'tipo_otro',
+            'tipo_pno', 'tipo_procedimiento', 'tipo_formula', 'tipo_proveedor',
+            'tipo_instalacion', 'tipo_equipo', 'tipo_manual', 'tipo_formato', 'tipo_otro',
         ]
         for r in self:
             if r.state != 'borrador':
