@@ -22,3 +22,4 @@ from . import amunet_entrega_pt
 from . import woo_entrega_pt
 from . import entrega_pt_columnas
 from . import mrp_production_entrega_pt
+from . import woo_auto_mapeo
