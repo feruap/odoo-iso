@@ -5,9 +5,12 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
-            <!-- Campo exento_retenciones en la pestaña de Información Privada / Nómina -->
+            <!-- Campo exento_retenciones en la pestaña de Información Privada / Nómina.
+                 groups: dato de nómina, solo RRHH. El campo está declarado también en
+                 hr.employee.public (models/hr_employee_exento.py) para que el perfil
+                 público del empleado no truene. -->
             <xpath expr="//page[@name='payroll_information']" position="inside">
-                <group string="Nómina especial">
+                <group string="Nómina especial" groups="hr.group_hr_user">
                     <field name="exento_retenciones"/>
                 </group>
             </xpath>

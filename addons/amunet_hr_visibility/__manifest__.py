@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Visibilidad de Empleados',
-    'version': '19.0.2.2.0',
+    'version': '19.0.2.2.1',
     'category': 'Human Resources',
     'summary': 'Restringe la visibilidad del menu raiz de Empleados (hr)',
     'description': """
