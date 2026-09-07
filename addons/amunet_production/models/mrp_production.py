@@ -134,6 +134,73 @@ class MrpProduction(models.Model):
         ('rejected', 'Rechazado')
     ], string='Integración de Calidad', default='none', tracking=True, compute='_compute_quality_params', store=True, readonly=False)
 
+    # Alta manual de inventario hecha ANTES de cerrar la orden. Sirve de
+    # candado: si alguien cierra la orden despues, el terminado entraria una
+    # segunda vez y quedarian piezas fantasma. Ya paso con 12 equipos el
+    # 01-sep-2026 (~378 pz duplicadas por un alta inicial sobre material que
+    # ya existia); esto impide que se repita.
+    amunet_alta_manual_qty = fields.Float(
+        string='Piezas dadas de alta a mano', readonly=True, copy=False,
+        help='Piezas de este lote ingresadas al inventario por ajuste, antes '
+             'de cerrar la orden. Mientras haya un valor aquí, la orden no se '
+             'puede cerrar: se duplicaría la existencia.')
+    amunet_alta_manual_nota = fields.Char(
+        string='Motivo del alta manual', readonly=True, copy=False)
+
+    def action_amunet_liberar_alta_manual(self):
+        """Quita el candado, una vez resuelta la duplicidad. Deja constancia."""
+        self.ensure_one()
+        qty = self.amunet_alta_manual_qty
+        self.sudo().write({'amunet_alta_manual_qty': 0.0})
+        self.message_post(body=_(
+            'Se retiró el candado de alta manual (%(qty)s pz) por %(user)s. '
+            'La orden ya se puede cerrar.'
+        ) % {'qty': qty, 'user': self.env.user.name})
+
+    # Analisis de Calidad generados por esta orden. Antes la orden no sabia
+    # nada de ellos: solo tenia la etiqueta quality_analysis_status y Calidad
+    # aprobaba con un boton simple, sin documento detras.
+    amunet_qc_check_ids = fields.One2many(
+        'amunet.quality.check', 'amunet_production_id',
+        string='Análisis de Calidad', readonly=True)
+    amunet_qc_check_count = fields.Integer(
+        string='Análisis', compute='_compute_amunet_qc_check_count')
+
+    amunet_pt_qty_sin_analizar = fields.Float(
+        string='Piezas sin analizar', compute='_compute_amunet_pt_qty_sin_analizar',
+        help='Piezas fabricadas que todavia no cubre ningun analisis. Mientras '
+             'sea mayor a cero se puede pedir otro analisis parcial.')
+
+    @api.depends('amunet_qc_check_ids.amunet_qty_analizada', 'qty_producing',
+                 'amunet_pt_qty_solicitada')
+    def _compute_amunet_pt_qty_sin_analizar(self):
+        for rec in self:
+            fabricadas = rec.amunet_pt_qty_solicitada or rec.qty_producing or 0.0
+            cubiertas = sum(rec.amunet_qc_check_ids.mapped('amunet_qty_analizada'))
+            rec.amunet_pt_qty_sin_analizar = max(0.0, fabricadas - cubiertas)
+
+    @api.depends('amunet_qc_check_ids')
+    def _compute_amunet_qc_check_count(self):
+        for rec in self:
+            rec.amunet_qc_check_count = len(rec.amunet_qc_check_ids)
+
+    def action_amunet_ver_analisis(self):
+        """Abre el analisis de Calidad de esta orden."""
+        self.ensure_one()
+        checks = self.amunet_qc_check_ids
+        accion = {
+            'type': 'ir.actions.act_window',
+            'name': _('Análisis de Calidad'),
+            'res_model': 'amunet.quality.check',
+            'domain': [('amunet_production_id', '=', self.id)],
+            'context': {'default_amunet_production_id': self.id},
+        }
+        if len(checks) == 1:
+            accion.update({'view_mode': 'form', 'res_id': checks.id})
+        else:
+            accion.update({'view_mode': 'list,form'})
+        return accion
+
     # Piezas realmente fabricadas con las que se solicitó el análisis de PT.
     # Se captura en el wizard de solicitud y es la cantidad que se produce al
     # cerrar la orden. Sirve para que Calidad sepa cuántas piezas cubre el
@@ -2117,6 +2184,23 @@ class MrpProduction(models.Model):
     def button_mark_done(self):
         """Bloqueo del flujo nativo de la orden de producción"""
         for record in self:
+            # Candado de alta manual: si el lote ya se ingreso al inventario
+            # por ajuste, cerrar produciria el terminado OTRA VEZ y quedarian
+            # piezas fantasma (paso con 12 equipos el 01-sep-2026).
+            if record.amunet_alta_manual_qty and not self.env.context.get(
+                    'amunet_permitir_cierre_con_alta_manual'):
+                raise UserError(_(
+                    'Esta orden NO se puede cerrar todavía.\n\n'
+                    'El lote ya tiene %(qty)s pieza(s) dadas de alta a mano en '
+                    'el inventario%(nota)s. Si cierras la orden, el producto '
+                    'entraría por segunda vez y quedarían piezas fantasma.\n\n'
+                    'Antes de cerrar hay que decidir cuál registro vale: o se '
+                    'retira el alta manual, o se cierra la orden en cero. '
+                    'Habla con Almacén y con Calidad.'
+                ) % {
+                    'qty': record.amunet_alta_manual_qty,
+                    'nota': ' (%s)' % record.amunet_alta_manual_nota if record.amunet_alta_manual_nota else '',
+                })
             # Gate de supervisión: una SOLUCION no se puede producir sin la
             # firma del jefe directo (para Flujo B sin analisis; en Flujo A la
             # supervision ya se exigio antes de solicitar analisis).

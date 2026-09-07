@@ -5,7 +5,7 @@
         <field name="model">amunet.production.analysis.wizard</field>
         <field name="arch" type="xml">
             <form string="Solicitar análisis de producto terminado">
-                <alert message="Vas a solicitar el análisis del producto terminado. Indica con cuántas piezas fabricadas lo solicitas; esa cantidad es la que se produce al cerrar la orden." type="info"/>
+                <alert message="Elige el alcance. Si mandas a analizar solo una parte del lote, indica únicamente esas piezas: el total del lote se va acumulando y el último parcial queda como el total. El análisis completo sí pide el total fabricado." type="info"/>
 
                 <sheet>
                     <group>
@@ -16,8 +16,18 @@
                             <field name="product_qty"/>
                             <field name="amunet_expiration_text"/>
                         </group>
-                        <group>
-                            <field name="qty_fabricada"/>
+                        <group string="Alcance">
+                            <field name="tipo_analisis" widget="radio"/>
+                            <field name="qty_ya_analizada"
+                                   invisible="qty_ya_analizada == 0"/>
+                            <field name="qty_fabricada"
+                                   invisible="tipo_analisis != 'completo'"
+                                   required="tipo_analisis == 'completo'"/>
+                            <field name="qty_analizada"
+                                   invisible="tipo_analisis != 'parcial'"
+                                   required="tipo_analisis == 'parcial'"/>
+                            <field name="qty_acumulada"
+                                   invisible="tipo_analisis != 'parcial'"/>
                         </group>
                     </group>
                 </sheet>

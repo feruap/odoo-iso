@@ -46,14 +46,23 @@
                     <button name="action_amunet_do_supervision" string="Firmar supervisión" type="object" class="oe_highlight"
                             invisible="not amunet_is_solution_product or amunet_supervision_state != 'requested' or not amunet_is_supervisor"/>
                     <button name="action_request_analysis" string="Solicitar análisis" type="object" class="oe_highlight"
-                            invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or quality_analysis_status in ('requested', 'approved')"
+                            invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or (quality_analysis_status in ('requested', 'approved') and amunet_pt_qty_sin_analizar &lt;= 0)"
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>
-                    <!-- Aprobación / rechazo SIMPLE del análisis de PT por Calidad (con PIN) -->
+                    <!-- Abre el analisis real, donde Calidad captura y firma. -->
+                    <button name="action_amunet_ver_analisis" string="Ver análisis de Calidad" type="object"
+                            class="oe_highlight" invisible="amunet_qc_check_count == 0"/>
+                    <button name="action_amunet_liberar_alta_manual" string="Retirar candado de alta manual"
+                            type="object" class="btn-warning" invisible="amunet_alta_manual_qty == 0"
+                            confirm="Vas a retirar el candado que impide cerrar esta orden. Solo hazlo si ya se resolvió cuál registro vale: el alta manual o la producción. ¿Continuar?"
+                            groups="amunet_production.group_production_supervisor"/>
+                    <!-- Aprobación / rechazo SIMPLE del análisis de PT por Calidad (con PIN).
+                         Se ocultan cuando la orden YA tiene analisis real: aprobar por aqui
+                         saltaria la captura de parametros, el anexo y el certificado. -->
                     <button name="action_amunet_qc_aprobar" string="Aprobar análisis" type="object" class="btn-success"
-                            invisible="quality_analysis_status != 'requested'"
+                            invisible="quality_analysis_status != 'requested' or amunet_qc_check_count &gt; 0"
                             groups="amunet_quality.group_quality_supervisor"/>
                     <button name="action_amunet_qc_rechazar" string="Rechazar análisis" type="object" class="btn-danger"
-                            invisible="quality_analysis_status != 'requested'"
+                            invisible="quality_analysis_status != 'requested' or amunet_qc_check_count &gt; 0"
                             groups="amunet_quality.group_quality_supervisor"/>
                     <!-- Baja de lote NO CONFORME (rechazado): solo Responsable Sanitario -->
                     <button name="action_amunet_baja_rechazada" string="Dar de baja lote rechazado" type="object" class="btn-danger"

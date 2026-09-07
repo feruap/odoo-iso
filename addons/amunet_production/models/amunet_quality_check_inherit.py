@@ -5,6 +5,15 @@ class AmunetQualityCheck(models.Model):
     _inherit = 'amunet.quality.check'
 
     amunet_production_id = fields.Many2one('mrp.production', string='Orden de Producción Vinculada', readonly=True)
+    # Piezas del lote que ampara ESTE analisis. Permite analizar un lote por
+    # partes: varias solicitudes sobre la misma orden, cada una con su tramo.
+    amunet_qty_analizada = fields.Float(
+        string='Piezas que ampara', readonly=True,
+        help='Cuantas piezas del lote cubre este analisis. La suma de todos '
+             'los analisis de la orden no puede pasar de las piezas fabricadas.')
+    amunet_analisis_parcial = fields.Boolean(
+        string='Análisis parcial', readonly=True,
+        help='Marcado cuando el analisis cubre solo una parte del lote.')
 
     def write(self, vals):
         res = super(AmunetQualityCheck, self).write(vals)
