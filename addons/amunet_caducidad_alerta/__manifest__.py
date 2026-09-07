@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Semaforo de caducidad en lotes',
-    'version': '19.0.3.3.1',
+    'version': '19.0.3.4.0',
     'summary': 'Marca cada lote como normal, caducidad corta, cortesia o retirar, '
                'para que almacen sepa que mover a promociones y cuando.',
     'description': """Semaforo de caducidad para el almacen de producto terminado.
@@ -10,8 +10,8 @@ Calcula, para cada lote con fecha de caducidad, en que condicion comercial esta:
 
   * Normal          - le quedan mas de 6 meses
   * Caducidad corta - entre 4 y 6 meses (se vende con descuento)
-  * Cortesia        - entre 0 y 4 meses (se vende a precio simbolico)
-  * Retirar         - por debajo del umbral de retiro (hoy 0): ya no se vende
+  * Cortesia        - entre 1 y 4 meses (se vende a precio simbolico)
+  * Retirar         - por debajo del umbral de retiro (hoy 1 mes): ya no se vende
   * Vencido         - la fecha ya paso
 
 Los umbrales se ajustan en Ajustes tecnicos sin tocar codigo. Un proceso diario
