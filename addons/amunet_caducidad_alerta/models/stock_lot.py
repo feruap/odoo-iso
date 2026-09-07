@@ -9,7 +9,12 @@ UMBRAL_CORTA = 'amunet_caducidad.meses_corta'        # por debajo de esto: caduc
 UMBRAL_CORTESIA = 'amunet_caducidad.meses_cortesia'  # por debajo de esto: cortesia
 UMBRAL_RETIRO = 'amunet_caducidad.meses_retiro'      # por debajo de esto: retirar
 
-DEFAULTS = {UMBRAL_CORTA: 6, UMBRAL_CORTESIA: 4, UMBRAL_RETIRO: 2}
+# 07-sep-2026: el umbral de retiro paso de 2 meses a 0 (decision de Fernando).
+# Las cortesias llegan hasta el final de la vida del lote: se vende como
+# cortesia hasta que caduca, y lo que se aparta del anaquel es lo VENCIDO. El
+# cubo 'retirar' se conserva porque es un parametro, no codigo: subir
+# amunet_caducidad.meses_retiro lo reactiva sin tocar nada.
+DEFAULTS = {UMBRAL_CORTA: 6, UMBRAL_CORTESIA: 4, UMBRAL_RETIRO: 0}
 
 # Los anaqueles de promociones solo existen para producto terminado. Una materia
 # prima con caducidad corta no se vende con descuento: se usa antes o se da de
