@@ -31,6 +31,37 @@ def migrate(cr, version):
 
     ph = ','.join(['%s'] * len(GOTEROS))
 
+    # 0. CONVERTIR las lineas que la mig 39.0 ya reutilizo, ANTES de borrar.
+    #
+    # La 39.0 no crea una linea MAVI-17 nueva: reaprovecha la linea VAMA-038 y le
+    # cambia el contenido a 'Conteo de gotas' con el rango del gotero. La linea
+    # sigue apuntando al parametro viejo, asi que los borrados de 1a/1b se la
+    # llevan y el analisis se queda SIN medicion de volumen (verificado sobre
+    # clon de produccion: los 4 analisis abiertos perdian la linea completa).
+    #
+    # Aqui se repunta al parametro correcto y se renombra. Lo que quede con
+    # VAMA-038 despues de esto si es residuo real y lo borran 1a/1b.
+    cr.execute(f"""
+        UPDATE amunet_quality_test_line tl
+        SET parameter_id = (SELECT id FROM amunet_quality_check_parameter
+                            WHERE code = 'MAVI-17' LIMIT 1),
+            name         = 'Determinación de volumen',
+            code         = 'MAVI-17',
+            write_date   = NOW()
+        FROM amunet_quality_check qc
+        JOIN product_product pp ON pp.id = qc.product_id
+        JOIN product_template pt ON pt.id = pp.product_tmpl_id,
+             amunet_quality_check_parameter p
+        WHERE tl.check_id = qc.id
+          AND p.id = tl.parameter_id
+          AND p.code = 'VAMA-038'
+          AND pt.default_code IN ({ph})
+          AND qc.state NOT IN ('approved', 'rejected', 'done')
+          AND EXISTS (SELECT 1 FROM amunet_quality_test_line_detail d
+                      WHERE d.test_line_id = tl.id AND d.name = 'Conteo de gotas')
+    """, GOTEROS)
+    _logger.info("Goteros: lineas VAMA-038 convertidas a MAVI-17: %d", cr.rowcount)
+
     # 1a. Borrar detalles de VAMA-038 en análisis activos (en_curso, borrador)
     cr.execute(f"""
         DELETE FROM amunet_quality_test_line_detail d
