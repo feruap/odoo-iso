@@ -13,5 +13,9 @@
             <field name="key">amunet_caducidad.meses_retiro</field>
             <field name="value">2</field>
         </record>
+        <record id="param_aviso_retiro_dias" model="ir.config_parameter">
+            <field name="key">amunet_caducidad.aviso_retiro_dias</field>
+            <field name="value">7</field>
+        </record>
     </data>
 </odoo>
