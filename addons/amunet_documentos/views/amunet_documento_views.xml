@@ -51,6 +51,12 @@
                             string="Control de cambios" type="object"
                             invisible="state != 'vigente'"
                             icon="fa-lightbulb-o"/>
+                    <button name="action_nueva_version"
+                            string="Generar nueva versión" type="object"
+                            class="btn-primary"
+                            invisible="state != 'vigente'"
+                            icon="fa-plus-circle"
+                            confirm="¿Confirmas que deseas generar una nueva versión de este documento? La versión actual quedará en el historial."/>
                     <button name="action_print_documento"
                             string="Imprimir / Descargar"
                             type="object" class="btn-secondary"
@@ -361,6 +367,23 @@
                                 <field name="firmas_snapshot" nolabel="1" readonly="1"/>
                             </group>
                         </page>
+                        <page string="Nueva versión" invisible="state != 'vigente'">
+                            <div class="alert alert-info mb8" role="alert">
+                                Antes de generar una nueva versión, captura aquí qué cambia y por qué.
+                                Cuando esté listo presiona el botón <b>"Generar nueva versión"</b> del encabezado.
+                            </div>
+                            <group>
+                                <field name="cc_referencia_pendiente"
+                                       string="No. de control de cambios"
+                                       placeholder="Ej. CC-001"/>
+                                <field name="descripcion_cambio_pendiente"
+                                       string="Descripción del cambio"
+                                       placeholder="¿Qué secciones o puntos van a cambiar?"/>
+                                <field name="justificacion_pendiente"
+                                       string="Justificación"
+                                       placeholder="¿Por qué se hace el cambio?"/>
+                            </group>
+                        </page>
                         <page string="Historial de versiones">
                             <field name="version_ids" readonly="1">
                                 <list>
@@ -370,6 +393,7 @@
                                     <field name="fecha_obsolescencia"/>
                                     <field name="elaboro_id"/>
                                     <field name="aprobado_por_id"/>
+                                    <field name="cc_referencia" string="No. CC" optional="show"/>
                                     <field name="descripcion_cambio"/>
                                     <field name="state_historico" widget="badge"/>
                                 </list>
@@ -390,6 +414,7 @@
                                             </group>
                                         </group>
                                         <group>
+                                            <field name="cc_referencia" string="No. de control de cambios"/>
                                             <field name="descripcion_cambio"/>
                                             <field name="justificacion"/>
                                         </group>

@@ -262,6 +262,7 @@ class AmunetDocumento(models.Model):
     # Campos transitorios
     descripcion_cambio_pendiente = fields.Text(string='Descripcion del cambio')
     justificacion_pendiente = fields.Text(string='Justificacion del cambio')
+    cc_referencia_pendiente = fields.Char(string='No. de control de cambios')
     motivo_devolucion = fields.Text(string='Motivo para devolver')
 
     _codigo_uniq = models.Constraint(
@@ -726,11 +727,10 @@ class AmunetDocumento(models.Model):
         for r in self:
             if r.state != 'vigente':
                 raise UserError(_('Solo puedes generar nueva version desde un documento Vigente.'))
-            if not (r.descripcion_cambio_pendiente or '').strip() or \
-               not (r.justificacion_pendiente or '').strip():
+            if not (r.cc_referencia_pendiente or '').strip():
                 raise UserError(_(
-                    'Para publicar una nueva version necesitas capturar la descripcion del cambio '
-                    'y la justificacion en la pestana "Nueva version".'))
+                    'Para generar una nueva versión debes capturar el número de control de cambios '
+                    'autorizado en la pestaña "Nueva versión" (campo "No. de control de cambios").'))
             today = fields.Date.today()
             def _h(label, html):
                 if not (html or '').strip():
@@ -779,6 +779,7 @@ class AmunetDocumento(models.Model):
                 'aprobado_por_id': r.firma_aprueba_id.id if r.firma_aprueba_id else False,
                 'descripcion_cambio': r.descripcion_cambio_pendiente,
                 'justificacion': r.justificacion_pendiente,
+                'cc_referencia': r.cc_referencia_pendiente,
                 'state_historico': 'obsoleto',
             })
             try:
@@ -796,6 +797,7 @@ class AmunetDocumento(models.Model):
                 'fecha_emision': False,
                 'descripcion_cambio_pendiente': False,
                 'justificacion_pendiente': False,
+                'cc_referencia_pendiente': False,
             })
 
     @api.model
@@ -841,6 +843,7 @@ class AmunetDocumentoVersion(models.Model):
     contenido_html = fields.Html(string='Contenido', sanitize=True, sanitize_tags=False)
     descripcion_cambio = fields.Text(string='Descripcion del cambio')
     justificacion = fields.Text(string='Justificacion')
+    cc_referencia = fields.Char(string='No. de control de cambios')
     elaboro_id = fields.Many2one('res.users', string='Elaboro')
     reviso_id = fields.Many2one('res.users', string='Reviso')
     aprobado_por_id = fields.Many2one('res.users', string='Aprobado por')
