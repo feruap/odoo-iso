@@ -292,7 +292,9 @@ class AmunetCCGeneral(models.Model):
 
     @api.depends(
         'state',
+        'solicitante_id', 'firma_solicitante_id',
         'reviso_id', 'firma_reviso_id',
+        'aprobo_id', 'firma_aprobo_id',
         'cierre_realizo_id', 'firma_cierre_realizo_id',
         'cierre_reviso_id',  'firma_cierre_reviso_id',
         'cierre_aprobo_id',  'firma_cierre_aprobo_id',
@@ -305,14 +307,10 @@ class AmunetCCGeneral(models.Model):
                 rec.pendientes_para_ids = [(5,)]
                 continue
             user_ids = set()
-            if rec.reviso_id and not rec.firma_reviso_id:
-                user_ids.add(rec.reviso_id.id)
-            for act in rec.actividades_ids:
-                if act.responsable_id and not act.firma_enterado_id:
-                    user_ids.add(act.responsable_id.id)
-                if act.verifico_id and not act.firma_verifico_id:
-                    user_ids.add(act.verifico_id.id)
             for campo, firma in [
+                ('solicitante_id', 'firma_solicitante_id'),
+                ('reviso_id',      'firma_reviso_id'),
+                ('aprobo_id',      'firma_aprobo_id'),
                 ('cierre_realizo_id', 'firma_cierre_realizo_id'),
                 ('cierre_reviso_id',  'firma_cierre_reviso_id'),
                 ('cierre_aprobo_id',  'firma_cierre_aprobo_id'),
@@ -320,6 +318,11 @@ class AmunetCCGeneral(models.Model):
                 user = rec[campo]
                 if user and not rec[firma]:
                     user_ids.add(user.id)
+            for act in rec.actividades_ids:
+                if act.responsable_id and not act.firma_enterado_id:
+                    user_ids.add(act.responsable_id.id)
+                if act.verifico_id and not act.firma_verifico_id:
+                    user_ids.add(act.verifico_id.id)
             rec.pendientes_para_ids = [(6, 0, list(user_ids))]
 
     @api.depends('reviso_id', 'firma_reviso_id',
