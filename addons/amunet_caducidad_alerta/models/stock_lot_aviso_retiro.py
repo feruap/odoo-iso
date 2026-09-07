@@ -117,10 +117,15 @@ class StockLotAvisoRetiro(models.Model):
 
         # Primero se limpian los avisos que ya no dicen la verdad: los de lotes
         # que ya se movieron, y los que quedaron con el texto de otra condicion.
-        self._amunet_limpiar_avisos(pendientes)
+        # Los lotes a los que se les borro un aviso y siguen pendientes se
+        # vuelven a avisar AHORA aunque no toque por calendario: si no, se
+        # quedarian sin ningun aviso hasta que venza el intervalo, que es peor
+        # que el aviso viejo.
+        reavisar = self._amunet_limpiar_avisos(pendientes)
 
         lotes = pendientes.filtered(
             lambda l: not l.amunet_aviso_retiro_fecha or l.amunet_aviso_retiro_fecha <= limite)
+        lotes |= reavisar
         if not lotes:
             return lotes
 
@@ -159,6 +164,9 @@ class StockLotAvisoRetiro(models.Model):
         Dos casos: el lote ya se movio (ya no esta pendiente) o su condicion
         cambio y el texto quedo viejo. Un aviso que dice algo que ya no es
         cierto es peor que no avisar: enseña a ignorar los avisos.
+
+        Devuelve los lotes que siguen pendientes y se quedaron sin aviso, para
+        que se les vuelva a avisar de inmediato.
         """
         Activity = self.env['mail.activity'].sudo()
         modelo = self.env['ir.model']._get_id('stock.lot')
@@ -167,11 +175,14 @@ class StockLotAvisoRetiro(models.Model):
         for lote in pendientes:
             vigentes[lote.id] = lote._amunet_resumen_movimiento()[0]
         borrar = Activity.browse()
+        reavisar_ids = set()
         for act in abiertas:
             if not act.summary or not act.summary.startswith(PREFIJOS_AVISO):
                 continue
             if vigentes.get(act.res_id) != act.summary:
                 borrar |= act
+                if act.res_id in vigentes:
+                    reavisar_ids.add(act.res_id)   # sigue pendiente: hay que re-avisar
         if borrar:
             borrar.unlink()
         # y el sello de "ya avise" de los lotes que dejaron de estar pendientes
@@ -181,7 +192,7 @@ class StockLotAvisoRetiro(models.Model):
         ])
         if movidos:
             movidos.sudo().write({'amunet_aviso_retiro_fecha': False})
-        return True
+        return pendientes.filtered(lambda l: l.id in reavisar_ids)
 
     @api.model
     def _amunet_correo_retiro(self, usuarios, filas):
