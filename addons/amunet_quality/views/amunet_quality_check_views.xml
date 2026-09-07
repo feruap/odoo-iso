@@ -1064,8 +1064,20 @@
                                 <field name="multi_check_results_json" invisible="1" force_save="1"/>
                                 <field name="id" invisible="1"/>
                                 <field name="name" invisible="1"/>
-                                <field name="text_phrase_mapping" 
-                                       widget="vama_multi_check_widget" 
+                                <field name="text_phrase_mapping"
+                                       widget="vama_multi_check_widget"
+                                       nolabel="1"/>
+                            </group>
+                        </page>
+
+                        <!-- VAMA Multi-Check (selector de patrón) -->
+                        <page string="Verificación Visual" name="vama_multi_check"
+                              invisible="evaluation_type != 'vama_multi_check'">
+                            <group>
+                                <field name="multi_check_results_json" invisible="1" force_save="1"/>
+                                <field name="result_text_pattern" invisible="1"/>
+                                <field name="text_phrase_mapping"
+                                       widget="vama_multi_check_widget"
                                        nolabel="1"/>
                             </group>
                         </page>
