@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Análisis de PRODUCTO TERMINADO: mostrar las piezas que declaró Producción.
+
+        El formulario de Calidad muestra "Cantidad del lote" (lot_qty_available),
+        que es el stock existente del lote. Para un análisis de producto comprado
+        eso es correcto: el material ya está recibido. Para uno de producto
+        FABRICADO no sirve — la orden todavía no se cierra, el producto aún no
+        entra a existencias, y el campo sale en 0. Calidad no veía con cuántas
+        piezas se solicitó el análisis.
+    -->
+    <record id="view_quality_check_form_pt_cantidad" model="ir.ui.view">
+        <field name="name">amunet.quality.check.form.pt.cantidad</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="inherit_id" ref="amunet_quality.view_amunet_quality_check_form"/>
+        <field name="arch" type="xml">
+            <field name="lot_qty_available" position="before">
+                <field name="amunet_production_id" invisible="1"/>
+                <field name="amunet_analisis_parcial" invisible="1"/>
+                <field name="amunet_qty_analizada"
+                       string="Piezas declaradas por Producción"
+                       invisible="not amunet_production_id"
+                       readonly="1"/>
+                <field name="amunet_production_id"
+                       string="Orden de producción"
+                       invisible="not amunet_production_id"
+                       readonly="1"/>
+            </field>
+            <!-- La "Cantidad del lote" solo tiene sentido cuando hay stock:
+                 en un análisis de producto fabricado confunde, porque marca 0
+                 hasta que se cierra la orden. -->
+            <field name="lot_qty_available" position="attributes">
+                <attribute name="invisible">amunet_production_id != False</attribute>
+            </field>
+        </field>
+    </record>
+
+</odoo>
