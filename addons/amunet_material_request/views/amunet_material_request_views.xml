@@ -250,8 +250,13 @@
                 <filter name="state_cancelled" string="Cancelada"
                         domain="[('state','=','cancelled')]"/>
                 <separator/>
+                <!-- pending_approval va incluido: es el primer paso del flujo y
+                     sin el la solicitud queda invisible para el jefe que debe
+                     autorizarla, para almacen y para el administrador. -->
                 <filter name="filter_active" string="Activas"
-                        domain="[('state','in',['draft','submitted','in_picking','pending_reception'])]"/>
+                        domain="[('state','in',['draft','pending_approval','submitted','in_picking','pending_reception'])]"/>
+                <filter name="filter_to_approve" string="Por autorizar"
+                        domain="[('state','=','pending_approval')]"/>
                 <filter name="filter_to_validate" string="Por validar recepcion"
                         domain="[('state','=','pending_reception')]"/>
 
