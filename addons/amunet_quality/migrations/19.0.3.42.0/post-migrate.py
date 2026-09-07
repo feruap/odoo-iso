@@ -3,7 +3,8 @@
 Goteros STGOT01-07:
 1. Elimina test_lines VAMA-038 en análisis ABIERTOS (no done/approved/rejected)
    — ya fueron reemplazadas por MAVI-17 en la mig 39.0.
-2. Pone la descripción del material en análisis abiertos y en el producto.
+2. Pone la descripción del material en análisis abiertos y en el producto
+   (goteros STGOT01-07 y buffers STBBM01/STBBM02).
 """
 import json
 
@@ -17,6 +18,8 @@ DESCRIPCIONES = {
     'STGOT05': 'Gotero usado para la transferencia de muestra de 40 µl',
     'STGOT06': 'Gotero usado para la transferencia de muestra de 40 µl',
     'STGOT07': 'Gotero usado para la transferencia de muestra de 20 µl',
+    'STBBM01': 'Vial de Solución de corrimiento usado para pruebas de BIONET MULTI en PCR rápida, con volumen de 90-120 microlitros',
+    'STBBM02': 'Vial de Solución de corrimiento usado para pruebas de BIONET MULTI en PCR rápida, con volumen de 250 microlitros',
 }
 
 ESTADOS_ABIERTOS = ('approved', 'rejected', 'done')
