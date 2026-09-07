@@ -84,17 +84,63 @@ def migrate(cr, version):
 
     # 3b. Activar has_details en test-lines MAVI-17 de análisis abiertos
     cr.execute(f"""
+        -- Postgres NO permite referenciar la tabla del UPDATE (tl) dentro de
+        -- un JOIN del FROM; la condicion p.id = tl.parameter_id va en el WHERE.
         UPDATE amunet_quality_test_line tl
         SET has_details = true, write_date = NOW()
         FROM amunet_quality_check qc
         JOIN product_product pp ON pp.id = qc.product_id
-        JOIN product_template pt ON pt.id = pp.product_tmpl_id
-        JOIN amunet_quality_check_parameter p ON p.id = tl.parameter_id
-          AND p.code = 'MAVI-17'
+        JOIN product_template pt ON pt.id = pp.product_tmpl_id,
+             amunet_quality_check_parameter p
         WHERE tl.check_id = qc.id
+          AND p.id = tl.parameter_id
+          AND p.code = 'MAVI-17'
           AND pt.default_code IN ({placeholders})
           AND qc.state NOT IN ('approved', 'rejected')
           AND (tl.has_details IS NULL OR tl.has_details = false)
+    """, GOTEROS)
+
+    # 3c. Quitar los 'Conteo de gotas' duplicados que quedan en una misma
+    # test-line (arrastre historico: 4 copias por linea). Se conserva el de
+    # id mas bajo. Sin esto el analista captura la misma medicion 4 veces.
+    cr.execute(f"""
+        DELETE FROM amunet_quality_test_line_detail d
+        USING amunet_quality_test_line tl,
+              amunet_quality_check qc,
+              product_product pp,
+              product_template pt
+        WHERE d.test_line_id = tl.id
+          AND tl.check_id = qc.id
+          AND pp.id = qc.product_id
+          AND pt.id = pp.product_tmpl_id
+          AND pt.default_code IN ({placeholders})
+          AND qc.state NOT IN ('approved', 'rejected')
+          AND d.name = 'Conteo de gotas'
+          AND d.id > (
+              SELECT MIN(d2.id) FROM amunet_quality_test_line_detail d2
+              WHERE d2.test_line_id = d.test_line_id
+                AND d2.name = 'Conteo de gotas'
+          )
+    """, GOTEROS)
+
+    # 3d. detail_count es un campo calculado ALMACENADO: no se refresca solo
+    # cuando se borran detalles por SQL. Se recalcula o las lineas quedan
+    # anunciando detalles que ya no existen.
+    cr.execute(f"""
+        UPDATE amunet_quality_test_line tl
+        SET detail_count = s.n
+        FROM (
+            SELECT tl2.id, COUNT(d.id) AS n
+            FROM amunet_quality_test_line tl2
+            JOIN amunet_quality_check qc ON qc.id = tl2.check_id
+            JOIN product_product pp ON pp.id = qc.product_id
+            JOIN product_template pt ON pt.id = pp.product_tmpl_id
+            LEFT JOIN amunet_quality_test_line_detail d ON d.test_line_id = tl2.id
+            WHERE pt.default_code IN ({placeholders})
+              AND qc.state NOT IN ('approved', 'rejected')
+            GROUP BY tl2.id
+        ) s
+        WHERE tl.id = s.id AND tl.detail_count IS DISTINCT FROM s.n
     """, GOTEROS)
 
     # 4. Aplicar ANEXO GOTERO a análisis abiertos sin anexo configurado
