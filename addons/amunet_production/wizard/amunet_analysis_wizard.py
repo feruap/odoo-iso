@@ -157,7 +157,11 @@ class AmunetAnalysisWizard(models.TransientModel):
                 'análisis de esta orden.'
             ) % {'prod': producto.display_name})
 
-        QC = self.env['amunet.quality.check']
+        # El analisis lo crea el SISTEMA, no quien oprime el boton. Produccion
+        # pide el analisis pero no tiene —ni debe tener— permiso para crear
+        # registros de Calidad: sin sudo la solicitud revienta con AccessError
+        # y la orden se queda como estaba, sin que nadie entienda por que.
+        QC = self.env['amunet.quality.check'].sudo()
         vals = {
             'product_id': producto.id,
             'amunet_production_id': prod.id,
