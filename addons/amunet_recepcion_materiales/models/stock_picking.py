@@ -209,7 +209,16 @@ class StockPicking(models.Model):
         y se capturo en lotes separados por error (deberia ser UN solo lote).
         Se avisa para que revisen/consoliden antes de validar. Solo se dispara
         cuando el lote de proveedor coincide -> sin falsos positivos si de verdad
-        son lotes distintos."""
+        son lotes distintos.
+
+        El mensaje dice CUANTAS piezas tiene cada lote y DONDE esta el renglon
+        que no se ve. En AMP/IN/00338 (08-sep-2026) el aviso nombraba dos lotes
+        y nadie entendia de donde salian: uno se acababa de crear vacio y el
+        otro era solo un nombre escrito, todavia sin existir. Y el renglon
+        culpable era de 1 pieza contra 2,999, invisible desde la pantalla
+        principal porque el tipo Recepciones tiene apagado 'Mostrar
+        operaciones detalladas'. Con la cantidad a la vista, el renglon
+        accidental se reconoce de inmediato."""
         Prod = self.env['product.product']
         for p in self.filtered(lambda x: x.picking_type_code == 'incoming'):
             grupos = {}
@@ -218,23 +227,51 @@ class StockPicking(models.Model):
                 if not sup:
                     continue
                 key = (line.product_id.id, sup)
-                lote = line.lot_id.name or line.lot_name or ''
-                grupos.setdefault(key, set()).add(lote)
+                lote = line.lot_id.name or line.lot_name or '(sin lote)'
+                info = grupos.setdefault(key, {}).setdefault(
+                    lote, {'qty': 0.0, 'creado': False})
+                info['qty'] += line.quantity
+                if line.lot_id:
+                    info['creado'] = True
             dups = {k: v for k, v in grupos.items() if len(v) > 1}
             if dups:
-                lineas = []
+                bloques = []
                 for (prod_id, sup), lotes in dups.items():
-                    lineas.append('  - %s: lote de proveedor "%s" en %s lotes distintos (%s)'
-                                  % (Prod.browse(prod_id).display_name, sup,
-                                     len(lotes), ', '.join(sorted(lotes))))
+                    filas = []
+                    for nombre in sorted(lotes):
+                        dato = lotes[nombre]
+                        filas.append('        %s  %s pz%s' % (
+                            nombre.ljust(16),
+                            ('%g' % dato['qty']).rjust(8),
+                            '' if dato['creado'] else '   (aun no existe)'))
+                    total = sum(d['qty'] for d in lotes.values())
+                    bloques.append(
+                        '  %s\n'
+                        '     lote de proveedor "%s", repartido en %s lotes Amunet:\n'
+                        '%s\n'
+                        '     total capturado: %g pz'
+                        % (Prod.browse(prod_id).display_name, sup, len(lotes),
+                           '\n'.join(filas), total))
                 raise UserError(_(
                     'AVISO — revisa la informacion antes de validar.\n\n'
-                    'Hay lotes duplicados con el MISMO lote de proveedor:\n%s\n\n'
-                    'Si es el MISMO lote (llego de mas), captura todo en UN solo '
-                    'lote (sube la cantidad en la misma linea). Si de verdad son '
-                    'lotes distintos del proveedor, deben tener numeros de lote de '
-                    'proveedor distintos. Corrige y vuelve a validar.'
-                ) % '\n'.join(lineas))
+                    'Un mismo lote del proveedor quedo capturado en dos o mas '
+                    'lotes Amunet. Asi no se puede validar: si despues hay que '
+                    'rastrear ese material, no habria forma de saber cual es cual.\n\n'
+                    '%s\n\n'
+                    'DONDE ESTA EL RENGLON QUE NO VES\n'
+                    '  La pantalla muestra UN solo renglon por producto, con el '
+                    'total. Los renglones de lote estan adentro: en la fila del '
+                    'producto, abre la ventana de lotes (el icono al final del '
+                    'renglon). Ahi vas a ver el reparto de arriba.\n\n'
+                    'COMO SE CORRIGE\n'
+                    '  Si es el MISMO lote y llego de mas: deja UN solo renglon '
+                    'con toda la cantidad y borra los demas.\n'
+                    '  Si de verdad son lotes distintos del proveedor: cada uno '
+                    'debe llevar su propio numero de lote de proveedor.\n\n'
+                    'Un renglon con muy pocas piezas frente a otro con casi todo '
+                    'suele ser una captura que se partio sin querer.\n\n'
+                    'Corrige y vuelve a validar.'
+                ) % '\n\n'.join(bloques))
 
     def _amunet_check_datos_recepcion(self):
         """Bloquea la validación si falta lote de proveedor, fecha de fabricación
