@@ -30,6 +30,7 @@ de firmas configurables.""",
         'views/amunet_catalogo_firma_views.xml',
         'views/amunet_prueba_rapida_views.xml',
         'views/report_lista_maestra.xml',
+        'views/report_version_historica.xml',
         'views/menus.xml',
     ],
     'assets': {

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_version_historica" model="ir.actions.report">
+        <field name="name">Versión histórica (OBSOLETO)</field>
+        <field name="model">amunet.documento.version</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">amunet_documentos.report_version_historica</field>
+        <field name="report_file">amunet_documentos.report_version_historica</field>
+        <field name="print_report_name">'%s_v%s_OBSOLETO' % (object.documento_id.codigo, object.version)</field>
+    </record>
+
+    <template id="report_version_historica">
+        <t t-call="web.html_container">
+            <t t-call="amunet_documentos.layout_amunet">
+                <t t-foreach="docs" t-as="ver">
+                    <div class="page">
+
+                        <!-- Marca de agua OBSOLETO -->
+                        <div style="position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+                                    font-size:90px;font-weight:900;color:rgba(180,0,0,0.10);
+                                    pointer-events:none;white-space:nowrap;z-index:0;">
+                            DOCUMENTO OBSOLETO
+                        </div>
+
+                        <!-- Encabezado -->
+                        <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:11px;" border="1">
+                            <tr>
+                                <td style="width:60%;padding:6px;vertical-align:middle;">
+                                    <strong style="font-size:13px;">
+                                        <t t-esc="ver.documento_id.codigo"/> — <t t-esc="ver.documento_id.name"/>
+                                    </strong>
+                                </td>
+                                <td style="padding:6px;text-align:center;background:#fee2e2;">
+                                    <strong style="color:#991b1b;font-size:12px;">VERSIÓN OBSOLETA</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 6px;font-size:10px;">
+                                    <strong>Versión:</strong> <t t-esc="ver.version"/> &nbsp;|&nbsp;
+                                    <strong>Fecha de emisión:</strong>
+                                    <span t-if="ver.fecha_emision" t-esc="ver.fecha_emision.strftime('%d/%m/%Y')"/>
+                                    <span t-else="">—</span>
+                                </td>
+                                <td style="padding:4px 6px;font-size:10px;text-align:center;">
+                                    <strong>Obsoleta desde:</strong>
+                                    <span t-if="ver.fecha_obsolescencia" t-esc="ver.fecha_obsolescencia.strftime('%d/%m/%Y')"/>
+                                    <span t-else="">—</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="padding:4px 6px;font-size:10px;">
+                                    <strong>Elaboró:</strong>
+                                    <span t-if="ver.elaboro_id" t-esc="ver.elaboro_id.name"/>
+                                    <span t-else="">—</span>
+                                    &nbsp;|&nbsp;
+                                    <strong>Revisó:</strong>
+                                    <span t-if="ver.reviso_id" t-esc="ver.reviso_id.name"/>
+                                    <span t-else="">—</span>
+                                    &nbsp;|&nbsp;
+                                    <strong>Aprobó:</strong>
+                                    <span t-if="ver.aprobado_por_id" t-esc="ver.aprobado_por_id.name"/>
+                                    <span t-else="">—</span>
+                                </td>
+                            </tr>
+                            <t t-if="ver.cc_referencia">
+                                <tr>
+                                    <td colspan="2" style="padding:4px 6px;font-size:10px;">
+                                        <strong>Control de cambios:</strong> <t t-esc="ver.cc_referencia"/>
+                                        <t t-if="ver.descripcion_cambio">
+                                            — <t t-esc="ver.descripcion_cambio"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </t>
+                        </table>
+
+                        <!-- Contenido del snapshot -->
+                        <t t-if="ver.contenido_html">
+                            <div style="font-size:11px;" t-raw="ver.contenido_html"/>
+                        </t>
+                        <t t-else="">
+                            <p style="color:#6b7280;font-style:italic;text-align:center;margin-top:40px;">
+                                Esta versión no tiene contenido guardado en el sistema.
+                            </p>
+                        </t>
+
+                        <!-- Pie de página -->
+                        <div style="margin-top:24px;padding:8px;border-top:1px solid #ccc;font-size:9px;color:#666;text-align:center;">
+                            Este documento es una versión histórica OBSOLETA de <t t-esc="ver.documento_id.codigo"/>.
+                            La versión vigente es la v<t t-esc="ver.documento_id.version_actual"/>.
+                            No debe usarse como referencia de trabajo.
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

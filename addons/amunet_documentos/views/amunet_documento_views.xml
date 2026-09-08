@@ -397,6 +397,13 @@
                                 </list>
                                 <form>
                                     <sheet>
+                                        <div class="mb8">
+                                            <button name="action_print_version_historica"
+                                                    string="Descargar PDF (OBSOLETO)"
+                                                    type="object"
+                                                    icon="fa-file-pdf-o"
+                                                    class="btn btn-secondary"/>
+                                        </div>
                                         <group>
                                             <group>
                                                 <field name="version"/>

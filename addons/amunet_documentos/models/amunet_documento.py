@@ -562,8 +562,8 @@ class AmunetDocumento(models.Model):
                 raise UserError(_(
                     'Solo el revisor asignado (%s) puede firmar la revision.'
                 ) % r.revisor_id.name)
-            # if r.elabora_id and r.elabora_id.id == self.env.user.id:
-            #     raise UserError(_('La misma persona no puede elaborar y revisar (PNOGE-001).'))
+            if r.elabora_id and r.elabora_id.id == self.env.user.id:
+                raise UserError(_('La misma persona no puede elaborar y revisar (PNOGE-001).'))
 
     def _signature_aprobar_revision(self):
         self.ensure_one()
@@ -612,12 +612,12 @@ class AmunetDocumento(models.Model):
                 raise UserError(_(
                     'Solo el autorizador asignado (%s) puede firmar la autorizacion.'
                 ) % r.autorizador_id.name)
-            # if r.elabora_id and r.elabora_id.id == self.env.user.id:
-            #     raise UserError(_(
-            #         'El usuario que elaboro el documento (%s) no puede autorizarlo (PNOGE-001).'
-            #     ) % r.elabora_id.name)
-            # if r.firma_revisa_id and r.firma_revisa_id == self.env.user:
-            #     raise UserError(_('La misma persona no puede revisar y autorizar.'))
+            if r.elabora_id and r.elabora_id.id == self.env.user.id:
+                raise UserError(_(
+                    'El usuario que elaboro el documento (%s) no puede autorizarlo (PNOGE-001).'
+                ) % r.elabora_id.name)
+            if r.firma_revisa_id and r.firma_revisa_id == self.env.user:
+                raise UserError(_('La misma persona no puede revisar y autorizar.'))
 
     def _signature_aprobar(self):
         self.ensure_one()
@@ -896,9 +896,21 @@ class AmunetDocumentoVersion(models.Model):
                 ) % prev.version
                 continue
             matcher = SequenceMatcher(None, old_lines, new_lines, autojunk=False)
-            parts = ['<div style="font-size:0.95em;line-height:1.6">']
+            opcodes = matcher.get_opcodes()
+            inserts = sum(j2 - j1 for op, i1, i2, j1, j2 in opcodes if op in ('insert', 'replace'))
+            deletes = sum(i2 - i1 for op, i1, i2, j1, j2 in opcodes if op in ('delete', 'replace'))
+            header = (
+                '<div style="margin-bottom:12px;padding:8px 12px;background:#f1f5f9;'
+                'border-radius:6px;font-size:0.9em;border:1px solid #e2e8f0">'
+                'Comparando <strong>v%s</strong> con <strong>v%s</strong> &nbsp;·&nbsp; '
+                '<span style="color:#166534;font-weight:600">+%d línea(s) agregada(s)</span>'
+                ' &nbsp;·&nbsp; '
+                '<span style="color:#991b1b;font-weight:600">−%d línea(s) eliminada(s)</span>'
+                '</div>'
+            ) % (record.version, prev.version, inserts, deletes)
+            parts = ['<div style="font-size:0.95em;line-height:1.6">', header]
 
-            for op, i1, i2, j1, j2 in matcher.get_opcodes():
+            for op, i1, i2, j1, j2 in opcodes:
                 if op == 'equal':
                     for line in new_lines[j1:j2]:
                         parts.append('<p style="margin:2px 0">%s</p>' % esc(line))
@@ -993,6 +1005,10 @@ class AmunetDocumentoDistribucion(models.Model):
             raise UserError(_('Solo puedes firmar tu propio acuse.'))
         self.with_context(amunet_documento_workflow_write=True).write(
             {'acuse': True, 'fecha_acuse': fields.Date.today()})
+
+    def action_print_version_historica(self):
+        self.ensure_one()
+        return self.env.ref('amunet_documentos.action_report_version_historica').report_action(self)
 
     def action_abrir_documento(self):
         self.ensure_one()
