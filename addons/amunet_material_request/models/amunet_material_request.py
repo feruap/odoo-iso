@@ -83,6 +83,54 @@ class AmunetMaterialRequest(models.Model):
     )
     picking_state = fields.Selection(related='picking_id.state', string='Estado transferencia')
 
+    amunet_requiere_compra = fields.Boolean(
+        string='Requiere compra',
+        compute='_compute_amunet_requiere_compra',
+        store=True,
+        help='Alguna linea pide mas de lo que hay en el almacen. El faltante '
+             'necesita una compra a proveedor.',
+    )
+
+    @api.depends('line_ids.amunet_falta_stock')
+    def _compute_amunet_requiere_compra(self):
+        for req in self:
+            req.amunet_requiere_compra = any(req.line_ids.mapped('amunet_falta_stock'))
+
+    def _amunet_avisar_compras(self):
+        """Avisa a Compras del material que el almacen no puede surtir.
+
+        Solo avisa: NO genera orden de compra ni toca precios. Comprar es
+        decision de Compras, y los importes son de su competencia.
+        """
+        self.ensure_one()
+        faltantes = self.line_ids.filtered('amunet_falta_stock')
+        if not faltantes:
+            return
+        detalle = ''.join(
+            '<li>%s: faltan <b>%s</b> (pedido %s, en almacen %s)</li>' % (
+                l.product_id.display_name, l.amunet_qty_faltante,
+                l.qty_requested, l.stock_available)
+            for l in faltantes)
+        self.message_post(
+            body=_(
+                'Esta solicitud necesita <b>compra</b>: el almacen no tiene con '
+                'que surtirla completa.<ul>%s</ul>'
+                'Se envio de todas formas para que no se detenga el trabajo. '
+                'Compras decide que se pide y a quien.'
+            ) % detalle,
+            subtype_xmlid='mail.mt_comment',
+            partner_ids=self._amunet_destinatarios_compras().ids,
+        )
+
+    def _amunet_destinatarios_compras(self):
+        """A quien se avisa: los usuarios con permiso de compras."""
+        grupo = self.env.ref('purchase.group_purchase_manager',
+                             raise_if_not_found=False)
+        if not grupo:
+            return self.env['res.partner']
+        usuarios = grupo.sudo().user_ids.filtered(lambda u: u.active and not u.share)
+        return usuarios.mapped('partner_id')
+
     note = fields.Text(string='Notas')
 
     line_ids = fields.One2many(
@@ -546,16 +594,11 @@ class AmunetMaterialRequest(models.Model):
                 raise UserError(_(
                     'La cantidad solicitada de %s debe ser mayor a 0.'
                 ) % line.product_id.display_name)
-            if line.qty_requested > line.stock_available:
-                raise UserError(_(
-                    'No hay stock suficiente de %(prod)s en %(wh)s. '
-                    'Solicitado: %(req)s, disponible: %(avail)s.'
-                ) % {
-                    'prod': line.product_id.display_name,
-                    'wh': self.warehouse_id.name,
-                    'req': line.qty_requested,
-                    'avail': line.stock_available,
-                })
+            # La falta de stock YA NO BLOQUEA (decision de Mery, 2026-09-01).
+            # Antes la solicitud no se podia ni enviar, y quien la pedia se
+            # quedaba sin camino: el modulo surte del almacen y no sabe comprar.
+            # Ahora se envia igual, queda marcada como pendiente de compra y se
+            # avisa a Compras. Ver _amunet_avisar_compras().
 
     def action_submit(self):
         self.ensure_one()
@@ -569,6 +612,8 @@ class AmunetMaterialRequest(models.Model):
     def _signature_action_submit(self):
         self.ensure_one()
         self._check_can_submit()
+        # Si el almacen no puede surtirla completa, avisar a Compras al enviar.
+        self._amunet_avisar_compras()
         requester = self.requester_id
         head = requester.amunet_material_head_id
         needs_approval = bool(
