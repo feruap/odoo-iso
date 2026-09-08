@@ -35,6 +35,13 @@ QUE HACE
 
   Los parametros y especificaciones se resuelven por CODIGO y NOMBRE, nunca por
   id fijo: los ids difieren entre bases y eso ya tumbo la migracion 49.0.
+
+  LOS VALORES (opciones binarias, rangos, criterios) van EXPLICITOS aqui, tomados
+  del analisis que Diana aprobo. No se heredan de la especificacion del catalogo
+  porque varias estan incompletas en produccion: INC-002 no tiene opciones binarias
+  --nace sin nada que seleccionar-- y MAVI-09 trae los rangos en 0-0 aunque su
+  criterio diga '1 a 30 segundos'. Heredar de ahi habria replicado el hueco en los
+  tres productos.
 """
 import logging
 
@@ -46,29 +53,57 @@ PRODUCTOS = ('DMPSA01', 'DMTSH02', 'DMFRT02')
 #  [(nombre_de_la_especificacion, etiqueta_a_mostrar), ...])
 ESTRUCTURA = [
     ('MAVI-04', 'Aspectos Visuales', 'Aspectos de Empaque', 10, [
-        ('Polvo',                  'Polvo — Empaque'),
-        ('Manchas y/o suciedad',   'Manchas y/o suciedad — Empaque'),
-        ('Rasgaduras',             'Rasgaduras — Empaque'),
-        ('Deformidad o deterioro', 'Deformidad o deterioro — Empaque'),
-        ('Letra adecuada',         'Letra adecuada — Empaque'),
+        ('Polvo', 'Polvo — Empaque',
+         {'binary_option_pass': 'Sin polvo', 'binary_option_fail': 'Con polvo',
+          'acceptance_criteria': 'Sin polvo'}),
+        ('Manchas y/o suciedad', 'Manchas y/o suciedad — Empaque',
+         {'binary_option_pass': 'Sin manchas y/o suciedad',
+          'binary_option_fail': 'Con manchas y/o suciedad',
+          'acceptance_criteria': 'Sin manchas y/o suciedad'}),
+        ('Rasgaduras', 'Rasgaduras — Empaque',
+         {'binary_option_pass': 'Sin rasgaduras', 'binary_option_fail': 'Con rasgaduras',
+          'acceptance_criteria': 'Sin rasgaduras'}),
+        ('Deformidad o deterioro', 'Deformidad o deterioro — Empaque',
+         {'binary_option_pass': 'Sin deformidad o deterioro',
+          'binary_option_fail': 'Con deformidad o deterioro',
+          'acceptance_criteria': 'Sin deformidad o deterioro'}),
+        ('Letra adecuada', 'Letra adecuada — Empaque',
+         {'binary_option_pass': 'Letra adecuada', 'binary_option_fail': 'Letra inadecuada',
+          'acceptance_criteria': 'Letra adecuada'}),
     ]),
     ('MAVI-04', 'Aspectos Visuales', 'Aspectos de Prueba', 20, [
-        ('Rasgaduras',             'Sin rasgaduras — Prueba'),
-        ('Deformidad o deterioro', 'Sin deformidad o deterioro — Prueba'),
+        ('Rasgaduras', 'Sin rasgaduras — Prueba',
+         {'binary_option_pass': 'Sin rasgaduras', 'binary_option_fail': 'Con rasgaduras',
+          'acceptance_criteria': 'Sin rasgaduras — Prueba'}),
+        ('Deformidad o deterioro', 'Sin deformidad o deterioro — Prueba',
+         {'binary_option_pass': 'Sin deformidad', 'binary_option_fail': 'Con deformidad',
+          'acceptance_criteria': 'Sin deformidad o deterioro — Prueba'}),
     ]),
     ('MAVI-09', None, None, 30, [
-        ('Liberación de conjugado', 'Liberación de conjugado'),
-        ('Migración de conjugado',  'Migración de conjugado'),
+        ('Liberación de conjugado', 'Liberación de conjugado',
+         {'min_value': 1, 'max_value': 30,
+          'acceptance_criteria': 'Liberación de conjugado: 1 a 30 segundos'}),
+        ('Migración de conjugado', 'Migración de conjugado',
+         {'min_value': 30, 'max_value': 180,
+          'acceptance_criteria': 'Migración de conjugado: 30 a 180 segundos'}),
     ]),
     ('MGA-0486', None, None, 40, [
-        ('Prueba de colorante', 'Prueba de colorante'),
+        ('Prueba de colorante', 'Prueba de colorante',
+         {'binary_option_pass': 'Ausencia de colorante',
+          'binary_option_fail': 'Presencia de colorante',
+          'acceptance_criteria': 'Ausencia de colorante'}),
     ]),
     ('INC-002', None, None, 50, [
-        ('Verificación de contenido de empaque', 'Verificación de contenido de empaque'),
+        ('Verificación de contenido de empaque', 'Verificación de contenido de empaque',
+         {'binary_option_pass': 'Contenido coincide con el especificado en el manual vigente',
+          'binary_option_fail': 'No coincide con contenido especificado en el manual vigente',
+          'acceptance_criteria': ('Coincidencia con el contenido especificado en el manual '
+                                  'vigente. Presencia del dispositivo de prueba y desecante '
+                                  'en empaque primario.')}),
     ]),
     ('MAVI-15', None, None, 60, [
-        ('Control negativo', 'Control negativo'),
-        ('Control positivo', 'Control positivo'),
+        ('Control negativo', 'Control negativo', {}),
+        ('Control positivo', 'Control positivo', {}),
     ]),
 ]
 
@@ -147,7 +182,7 @@ def migrate(cr, version):
                     (tmpl_id, param_id, p_code, display, seq))
                 rel_id = cr.fetchone()[0]
 
-            for i, (spec_nombre, mostrar) in enumerate(specs, start=1):
+            for i, (spec_nombre, mostrar, valores) in enumerate(specs, start=1):
                 spec_id = _spec(cr, param_id, spec_nombre)
                 cr.execute("""SELECT id FROM amunet_quality_parameter_specification_config
                               WHERE product_parameter_rel_id=%s AND specification_id=%s""",
@@ -156,8 +191,15 @@ def migrate(cr, version):
                 if g:
                     cr.execute("""UPDATE amunet_quality_parameter_specification_config
                                   SET active=true, specification_name=%s, sequence=%s,
+                                      acceptance_criteria=COALESCE(%s, acceptance_criteria),
+                                      binary_option_pass=COALESCE(%s, binary_option_pass),
+                                      binary_option_fail=COALESCE(%s, binary_option_fail),
+                                      min_value=COALESCE(%s, min_value),
+                                      max_value=COALESCE(%s, max_value),
                                       write_date=NOW() WHERE id=%s""",
-                               (mostrar, i * 10, g[0]))
+                               (mostrar, i * 10, valores.get('acceptance_criteria'),
+                                valores.get('binary_option_pass'), valores.get('binary_option_fail'),
+                                valores.get('min_value'), valores.get('max_value'), g[0]))
                 else:
                     cr.execute("""SELECT evaluation_type, acceptance_criteria,
                                          binary_option_pass, binary_option_fail,
@@ -173,8 +215,13 @@ def migrate(cr, version):
                              create_date, write_date, create_uid, write_uid)
                             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,true,%s,%s,%s,
                                     NOW(),NOW(),1,1)""",
-                        (rel_id, spec_id, mostrar, base[0], base[1], base[2], base[3],
-                         base[4], base[5], base[6], i * 10, tmpl_id, param_id))
+                        (rel_id, spec_id, mostrar, base[0],
+                         valores.get('acceptance_criteria', base[1]),
+                         valores.get('binary_option_pass', base[2]),
+                         valores.get('binary_option_fail', base[3]),
+                         valores.get('min_value', base[4]),
+                         valores.get('max_value', base[5]),
+                         base[6], i * 10, tmpl_id, param_id))
                 creadas += 1
 
             cr.execute("""UPDATE amunet_quality_parameter_product_rel
