@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- En el PDF de Orden de Compra: envolver la tabla de precios con t-if -->
+    <!--
+      Candado de precios en el PDF de compras.
+      Regla: SOLO el grupo amunet_price_visibility.group_price_viewer (Direccion)
+      ve importes. Para todos los demas el PDF debe salir COMPLETO pero sin
+      precios: nunca debe reventar.
+
+      Lo importante: no basta ocultar las celdas. Cualquier expresion que LEA
+      un campo de precio (aunque sea para decidir si oculta algo) dispara
+      AccessError para el usuario sin grupo y tumba el reporte entero.
+      Por eso aqui no se lee ningun precio fuera de un bloque protegido.
+    -->
     <template id="report_purchaseorder_document_hide_prices" inherit_id="purchase.report_purchaseorder_document">
+        <!-- encabezados de columna -->
         <xpath expr="//th[@name='th_price_unit']" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
@@ -14,6 +25,7 @@
         <xpath expr="//th[@name='th_subtotal']" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
+        <!-- celdas de cada linea -->
         <xpath expr="//span[@t-field='line.price_unit']/ancestor::td[1]" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
@@ -26,14 +38,32 @@
         <xpath expr="//span[@t-field='line.price_subtotal']/ancestor::td[1]" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
+        <!-- bloque de totales al pie -->
         <xpath expr="//div[@id='total']" position="attributes">
+            <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+        </xpath>
+        <!--
+          El subtotal corrido por seccion: la plantilla estandar acumula
+          line.price_subtotal en un t-set que corre SIEMPRE, fuera de las celdas
+          ocultas. Sin proteger, ese t-set es el que revienta el PDF de almacen.
+          Se protege con el atributo groups y NO con user_has_group(): ese helper
+          no existe en el contexto de render de QWeb en Odoo 19 y tumba el PDF
+          para todo el mundo, Direccion incluida (probado en staging 8-sep).
+        -->
+        <xpath expr="//t[@t-set='current_subtotal' and contains(@t-value, 'price_subtotal')]" position="attributes">
+            <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+        </xpath>
+        <xpath expr="//td[@id='subtotal']" position="attributes">
             <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
         </xpath>
     </template>
 
-    <template id="report_purchasequotation_document_hide" inherit_id="purchase.report_purchasequotation_document">
-        <xpath expr="//table" position="attributes">
-            <attribute name="t-if">user_has_group('amunet_price_visibility.group_price_viewer') or not any(line.price_unit for line in o.order_line)</attribute>
-        </xpath>
-    </template>
+    <!--
+      El PDF de Solicitud de Cotizacion (RFQ) de Odoo NO lleva precios: sus
+      columnas son Descripcion, Fecha prevista y Cantidad. No hay nada que
+      ocultar ahi. La version anterior le ponia a la tabla un
+      t-if "... or not any(line.price_unit for line in o.order_line)", y esa
+      condicion LEE price_unit: tumbaba el reporte para todo el que no fuera
+      Direccion, sin tapar ningun importe (no habia ninguno). Se elimina.
+    -->
 </odoo>
