@@ -22,6 +22,15 @@ DEFAULTS = {UMBRAL_CORTA: 6, UMBRAL_CORTESIA: 4, UMBRAL_RETIRO: 1}
 # baja, y eso lo decide produccion, no almacen de producto terminado.
 CATEGORIA_PT = 'Producto terminado'
 
+# El sistema de caducidad comercial (corta / cortesias) NO aplica a todo el
+# producto terminado: solo a las pruebas rapidas inmunologicas. Las de PCR nacen
+# con vida util corta y con la regla general acabarian en el anaquel de
+# promociones recien fabricadas. Es un parametro, igual que los umbrales:
+# categorias separadas por coma, se comparan por nombre completo (una categoria
+# incluye a sus hijas).
+PARAM_CATEGORIAS = 'amunet_caducidad.categorias_promocion'
+CATEGORIAS_PROMOCION = 'Producto terminado / Pruebas rápidas inmunológicas'
+
 # Las HOJAS MAESTRAS (semiprocesado) tienen su propio anaquel "Caducidad corta"
 # bajo AMP/Existencias. Como no se producen pruebas con hojas de <6 meses de vida,
 # a los 6 meses o menos se apartan ahi (NO se dan de baja: se siguen usando).
@@ -155,6 +164,26 @@ class StockLot(models.Model):
         nombre = self.product_id.categ_id.complete_name or ''
         return nombre == CATEGORIA_PT or nombre.startswith(CATEGORIA_PT + ' /')
 
+    def _amunet_aplica_promocion(self):
+        """Si este lote participa del sistema de caducidad comercial.
+
+        Es distinto de "es producto terminado": todo el PT se produce y se
+        vende, pero solo las pruebas rapidas inmunologicas se mueven a los
+        anaqueles de caducidad corta y cortesias. Un PCR con 5 meses de vida
+        esta recien hecho, no en promocion.
+        """
+        self.ensure_one()
+        crudo = (self.env['ir.config_parameter'].sudo()
+                 .get_param(PARAM_CATEGORIAS, CATEGORIAS_PROMOCION) or '').strip()
+        if not crudo:
+            # Sin lista configurada se comporta como antes: todo el PT aplica.
+            return self._amunet_es_producto_terminado()
+        nombre = self.product_id.categ_id.complete_name or ''
+        for cat in [c.strip() for c in crudo.split(',') if c.strip()]:
+            if nombre == cat or nombre.startswith(cat + ' /'):
+                return True
+        return False
+
     def _amunet_es_hoja_maestra(self):
         """Las hojas maestras usan su propio anaquel de caducidad corta."""
         self.ensure_one()
@@ -246,7 +275,7 @@ class StockLot(models.Model):
                     'vencido': 'retenido',
                 }.get(condicion, 'normal')
             if donde == 'sin_stock' or not (
-                    lote._amunet_es_producto_terminado()
+                    lote._amunet_aplica_promocion()
                     or lote._amunet_es_hoja_maestra()):
                 mover = False
             else:
