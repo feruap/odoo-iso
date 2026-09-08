@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nueva_version_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.nueva.version.wizard.form</field>
+        <field name="model">amunet.nueva.version.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generar nueva versión">
+                <sheet>
+                    <group>
+                        <field name="documento_id" invisible="1"/>
+                        <field name="documento_codigo" invisible="1"/>
+                        <field name="documento_nombre" invisible="1"/>
+                    </group>
+                    <div class="alert alert-info mb16" role="alert">
+                        Al confirmar, la versión actual del documento pasará al historial
+                        y el documento quedará en borrador para que captures los cambios.
+                    </div>
+                    <group>
+                        <field name="cc_id"
+                               string="Control de cambios autorizado"
+                               placeholder="Busca por folio o asunto…"
+                               options="{'no_create': True}"/>
+                        <field name="descripcion_cambio"
+                               placeholder="Se completa al seleccionar el CC"/>
+                        <field name="justificacion"
+                               placeholder="Se completa al seleccionar el CC"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirmar" string="Generar nueva versión"
+                            type="object" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
