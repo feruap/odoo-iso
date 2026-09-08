@@ -156,6 +156,15 @@
                                     <field name="tracking" optional="hide"/>
                                     <field name="qty_requested"
                                            readonly="parent.state not in ('draft', 'in_picking')"/>
+                                    <!-- Cuanto falta por comprar. Se ve en
+                                         borrador para que el solicitante sepa
+                                         antes de enviar que ese material no
+                                         esta y va a requerir compra. -->
+                                    <field name="amunet_falta_stock" column_invisible="1"/>
+                                    <field name="amunet_qty_faltante"
+                                           string="Falta comprar" readonly="1"
+                                           optional="show"
+                                           decoration-warning="amunet_falta_stock"/>
                                     <field name="qty_supplied"
                                            readonly="parent.state != 'in_picking'"
                                            column_invisible="parent.state == 'draft'"/>
@@ -250,13 +259,8 @@
                 <filter name="state_cancelled" string="Cancelada"
                         domain="[('state','=','cancelled')]"/>
                 <separator/>
-                <!-- pending_approval va incluido: es el primer paso del flujo y
-                     sin el la solicitud queda invisible para el jefe que debe
-                     autorizarla, para almacen y para el administrador. -->
                 <filter name="filter_active" string="Activas"
-                        domain="[('state','in',['draft','pending_approval','submitted','in_picking','pending_reception'])]"/>
-                <filter name="filter_to_approve" string="Por autorizar"
-                        domain="[('state','=','pending_approval')]"/>
+                        domain="[('state','in',['draft','submitted','in_picking','pending_reception'])]"/>
                 <filter name="filter_to_validate" string="Por validar recepcion"
                         domain="[('state','=','pending_reception')]"/>
 
