@@ -3,6 +3,14 @@
     <t t-name="amunet_quality.VAMAMultiCheckWidget" owl="1">
         <div class="o_vama_multi_check_widget p-3 border rounded bg-light">
 
+            <!-- Encabezado de tipo de control (negativo / positivo) -->
+            <div t-if="state.sampleType and props.record.data.name" class="mb-3">
+                <span t-attf-class="badge fs-6 px-3 py-2 {{ state.sampleType === 'negative' ? 'bg-primary' : state.sampleType === 'positive' ? 'bg-success' : 'bg-secondary' }}">
+                    <i t-attf-class="fa me-2 {{ state.sampleType === 'negative' ? 'fa-minus-circle' : state.sampleType === 'positive' ? 'fa-plus-circle' : 'fa-circle' }}"/>
+                    <t t-esc="props.record.data.name"/>
+                </span>
+            </div>
+
             <t t-foreach="state.positions" t-as="pos" t-key="pos.index">
                 <div class="card mb-2 shadow-sm">
                     <div class="card-body py-2">

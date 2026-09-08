@@ -41,26 +41,33 @@ JSON_NEG = {
 
 JSON_POS = {
     "fixed_sample_type": "positive",
-    "positions": [{"index": 0, "type": "select",
-        "label": "Intensidad observada (PRS-01)",
-        "instruction": "Seleccione el nivel de la línea T respecto a la línea R.",
-        "options": [
-            {"label": "Bajo: C+R visibles, T no visible", "value": "bajo"},
-            {"label": "Intermedio: C+R+T visibles, T≈R",  "value": "intermedio"},
-            {"label": "Alto: C+T visibles, T>R",           "value": "alto"},
-        ]}],
-    "phrase_template": "Control positivo: {0}",
-    "evaluation": {"rules": [
-        {"sample_type": "positive", "result": "bajo",
-         "verdict": "fail",
-         "message": "Control positivo: Bajo (T no visible) — NO CUMPLE"},
-        {"sample_type": "positive", "result": "intermedio",
-         "verdict": "pass",
-         "message": "Control positivo: Intermedio (T≈R) — CUMPLE"},
-        {"sample_type": "positive", "result": "alto",
-         "verdict": "pass",
-         "message": "Control positivo: Alto (T>R) — CUMPLE"},
-    ]},
+    "positions": [
+        {
+            "index": 0, "type": "select",
+            "label": "Positivo bajo — intensidad de la línea T",
+            "instruction": "Seleccione el nivel de la línea T respecto a la línea R.",
+            "pass_value": "intermedio",
+            "options": [
+                {"label": "Bajo: C+R visibles, T no visible", "value": "bajo"},
+                {"label": "Intermedio: C+R+T visibles, T≈R",  "value": "intermedio"},
+                {"label": "Alto: C+T visibles, T>R",           "value": "alto"},
+            ]
+        },
+        {
+            "index": 1, "type": "select",
+            "label": "Positivo alto — intensidad de la línea T",
+            "instruction": "Seleccione el nivel de la línea T respecto a la línea R.",
+            "pass_value": "alto",
+            "options": [
+                {"label": "Bajo: C+R visibles, T no visible", "value": "bajo"},
+                {"label": "Intermedio: C+R+T visibles, T≈R",  "value": "intermedio"},
+                {"label": "Alto: C+T visibles, T>R",           "value": "alto"},
+            ]
+        }
+    ],
+    "phrase_template": "Control positivo bajo: {0} / Control positivo alto: {1}",
+    "success_message": "Control positivo: Positivo bajo=Intermedio y Positivo alto=Alto — CUMPLE",
+    "error_prefix": "Control positivo NO CUMPLE:",
 }
 
 
@@ -99,21 +106,19 @@ def migrate(cr, version):
     spec_pos_id = _get_or_create_spec_template(cr, _logger, MAVI15_PARAM_ID,
                                                'Control positivo', JSON_POS)
 
-    # 2. Desactivar MAVI-07 mavi_07_ternary (Muestra negativa/positiva)
+    # 2. Desactivar rel MAVI-07 completo y rels VAMA para las 3 semicuantitativas
     cr.execute(f"""
-        UPDATE amunet_quality_parameter_specification_config sc
+        UPDATE amunet_quality_parameter_product_rel r
         SET active = false, write_date = NOW()
-        FROM amunet_quality_parameter_product_rel r
-        JOIN amunet_quality_check_parameter p ON p.id = r.parameter_id
-        JOIN product_template pt ON pt.id = r.product_tmpl_id
-        WHERE sc.product_parameter_rel_id = r.id
-          AND p.code = 'MAVI-07'
-          AND sc.evaluation_type = 'mavi_07_ternary'
-          AND sc.specification_name IN ('Muestra negativa', 'Muestra positiva')
-          AND sc.active = true
+        FROM amunet_quality_check_parameter p,
+             product_template pt
+        WHERE p.id = r.parameter_id
+          AND pt.id = r.product_tmpl_id
+          AND p.code IN ('MAVI-07','VAMA-034','VAMA-036','VAMA-064','VAMA-091')
           AND pt.default_code IN ({ph})
+          AND r.active = true
     """, PRODUCTOS)
-    _logger.info("MAVI-07 ternary desactivados: %d", cr.rowcount)
+    _logger.info("Rels MAVI-07 y VAMA desactivados: %d", cr.rowcount)
 
     # 3. Para cada producto: vincular MAVI-15 y crear specs
     cr.execute(f"SELECT id, default_code FROM product_template WHERE default_code IN ({ph})",
@@ -133,9 +138,11 @@ def migrate(cr, version):
             cr.execute("""
                 INSERT INTO amunet_quality_parameter_product_rel
                     (product_tmpl_id, parameter_id, parameter_code, display_name,
+                     active, sequence, active_spec_count,
                      create_date, write_date, create_uid, write_uid)
                 VALUES (%s, %s, 'MAVI-15',
                         '[MAVI-15] Visualización de líneas semicuantitativas',
+                        true, 10, 2,
                         NOW(), NOW(), 1, 1)
                 RETURNING id
             """, (tmpl_id, MAVI15_PARAM_ID))
