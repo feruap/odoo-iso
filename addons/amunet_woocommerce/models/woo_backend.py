@@ -19,6 +19,11 @@ WOO_BATCH_SIZE = 100
 WOO_MAX_PAGES = 50
 
 
+# La entrega viaja por el puente firmado, igual que la sincronizacion del
+# anaquel y la lectura de ventas (ver woo_stock_sync.RUTA_SINCRONIZAR).
+RUTA_ENTREGAR = '/wp-json/amunet-inv/v1/entregar'
+
+
 class AmunetWooBackend(models.Model):
     """Conexión con WooCommerce.
 
@@ -378,16 +383,25 @@ class AmunetWooBackend(models.Model):
         return results
 
     def _apt_deliver(self, payload):
-        """POST autenticado al endpoint de existencias del plugin AlmacenPT.
+        """Publica un lote en la tienda, FIRMANDO en vez de con contraseña.
 
-        Endpoint: ``POST {store}/wp-json/apt/v1/inventory/deliver`` (crea/agrega
-        existencias por pieza). Va tras el candado ``allow_stock_publish`` y se
-        autentica con el Application Password dedicado de la tienda. La bitácora
-        nunca registra credenciales.
+        Endpoint: ``POST {store}/wp-json/amunet-inv/v1/entregar`` (crea/agrega
+        existencias por pieza). Va tras el candado ``allow_stock_publish``.
 
-        NOTA (a confirmar con Fernando al aprovisionar credenciales): AlmacenPT
-        usa Application Password; si se decide enrutar por el puente HMAC
-        (amunet-odoo/v1), aquí se cambia el mecanismo de autenticación.
+        08-sep-2026: antes esto iba a ``apt/v1/inventory/deliver`` con Basic
+        Auth y un Application Password de WordPress guardado aquí. El puente
+        firmado ya existía y ya se usaba para las otras dos conversaciones con
+        la tienda -sincronizar el anaquel y traer las ventas-, así que la
+        entrega se mudó ahí: es una credencial menos que rotar, que caducar y
+        que se pueda filtrar en un log, y además va firmado el CUERPO, así que
+        nadie puede cambiar la cantidad por el camino.
+
+        La tienda conserva ``apt/v1/inventory/deliver`` respondiendo igual, de
+        modo que la vuelta atrás es revertir este cambio y nada más. Los campos
+        ``apt_wp_user`` / ``apt_wp_app_password`` se conservan por eso mismo.
+
+        Devuelve el JSON de la tienda; lanza UserError si rechaza. Mismo
+        contrato que antes, para que quien lo llama no cambie.
         """
         self.ensure_one()
         if not self.allow_stock_publish:
@@ -395,32 +409,7 @@ class AmunetWooBackend(models.Model):
                 'La publicación de existencias no está habilitada para esta '
                 'tienda. Un administrador debe activar "Permitir publicar '
                 'existencias a la tienda" (solo contra la tienda de pruebas).'))
-        if not self.apt_wp_user or not self.apt_wp_app_password:
-            raise UserError(_(
-                'Falta el usuario WordPress y su Application Password dedicado '
-                'para publicar existencias (los provee Fernando).'))
-        url = '%s/wp-json/apt/v1/inventory/deliver' % (
-            (self.store_url or '').strip().rstrip('/'))
-        try:
-            response = requests.post(
-                url, json=payload,
-                auth=(self.apt_wp_user, self.apt_wp_app_password),
-                timeout=WOO_TIMEOUT, verify=True,
-            )
-        except requests.RequestException as exc:
-            raise UserError(_('No se pudo publicar en la tienda: %s') % exc)
-        if response.status_code >= 400:
-            try:
-                detail = response.json().get('message') or response.text[:300]
-            except ValueError:
-                detail = response.text[:300]
-            raise UserError(_(
-                'La tienda rechazó la publicación (%(code)s): %(detail)s') % {
-                'code': response.status_code, 'detail': detail})
-        try:
-            return response.json()
-        except ValueError:
-            return {}
+        return self._puente_llamar('POST', RUTA_ENTREGAR, payload=payload)
 
     def action_publish_stock(self):
         """Publica a la tienda (legado -> ahora RECEPCIÓN-céntrico).
