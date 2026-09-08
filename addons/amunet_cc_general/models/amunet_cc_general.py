@@ -104,6 +104,8 @@ class AmunetCCGeneralActividad(models.Model):
         es_manager = self.env.user.has_group('amunet_cc_general.group_cc_general_manager')
         if not es_manager and self.responsable_id and self.responsable_id == self.env.user:
             raise UserError(_('El responsable de realizar la actividad no puede firmar su propia verificación.'))
+        if self.responsable_id and not self.firma_enterado_id:
+            raise UserError(_('El responsable (%s) aún no ha firmado de enterado. Debe firmar primero.') % self.responsable_id.name)
         if self.verifico_id and self.verifico_id != self.env.user:
             raise UserError(_('Solo %s puede verificar esta actividad.') % self.verifico_id.name)
         return self.env['amunet.generic.signature.wizard'].open_for(

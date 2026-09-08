@@ -373,9 +373,7 @@
                                 Cuando esté listo presiona el botón <b>"Generar nueva versión"</b> del encabezado.
                             </div>
                             <group>
-                                <field name="cc_referencia_pendiente"
-                                       string="No. de control de cambios"
-                                       placeholder="Ej. CC-001"/>
+                                <field name="cc_referencia_pendiente" invisible="1"/>
                                 <field name="descripcion_cambio_pendiente"
                                        string="Descripción del cambio"
                                        placeholder="¿Qué secciones o puntos van a cambiar?"/>

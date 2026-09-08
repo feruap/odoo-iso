@@ -452,7 +452,6 @@ class AmunetDocumento(models.Model):
                 ('seccion_responsabilidades', 'Responsabilidades'),
                 ('seccion_terminos_definiciones', 'Terminos y definiciones'),
                 ('seccion_condiciones_generales', 'Condiciones generales'),
-                ('seccion_formatos_derivados', 'Formatos derivados'),
                 ('seccion_referencias', 'Referencias bibliograficas'),
             ]
         elif self.tipo == 'manual':
@@ -469,7 +468,6 @@ class AmunetDocumento(models.Model):
                 ('seccion_alcance', 'Alcance'),
                 ('seccion_responsabilidades', 'Responsabilidades'),
                 ('seccion_terminos_definiciones', 'Terminos y definiciones'),
-                ('seccion_formatos_derivados', 'Formatos derivados'),
                 ('seccion_referencias', 'Referencias bibliograficas'),
             ]
         else:
@@ -564,8 +562,8 @@ class AmunetDocumento(models.Model):
                 raise UserError(_(
                     'Solo el revisor asignado (%s) puede firmar la revision.'
                 ) % r.revisor_id.name)
-            if r.elabora_id and r.elabora_id.id == self.env.user.id:
-                raise UserError(_('La misma persona no puede elaborar y revisar (PNOGE-001).'))
+            # if r.elabora_id and r.elabora_id.id == self.env.user.id:
+            #     raise UserError(_('La misma persona no puede elaborar y revisar (PNOGE-001).'))
 
     def _signature_aprobar_revision(self):
         self.ensure_one()
@@ -614,12 +612,12 @@ class AmunetDocumento(models.Model):
                 raise UserError(_(
                     'Solo el autorizador asignado (%s) puede firmar la autorizacion.'
                 ) % r.autorizador_id.name)
-            if r.elabora_id and r.elabora_id.id == self.env.user.id:
-                raise UserError(_(
-                    'El usuario que elaboro el documento (%s) no puede autorizarlo (PNOGE-001).'
-                ) % r.elabora_id.name)
-            if r.firma_revisa_id and r.firma_revisa_id == self.env.user:
-                raise UserError(_('La misma persona no puede revisar y autorizar.'))
+            # if r.elabora_id and r.elabora_id.id == self.env.user.id:
+            #     raise UserError(_(
+            #         'El usuario que elaboro el documento (%s) no puede autorizarlo (PNOGE-001).'
+            #     ) % r.elabora_id.name)
+            # if r.firma_revisa_id and r.firma_revisa_id == self.env.user:
+            #     raise UserError(_('La misma persona no puede revisar y autorizar.'))
 
     def _signature_aprobar(self):
         self.ensure_one()
@@ -858,14 +856,21 @@ class AmunetDocumentoVersion(models.Model):
         import re
         from difflib import SequenceMatcher
 
-        def strip_html(html_text):
+        def html_to_lines(html_text):
             if not html_text:
-                return ''
-            text = re.sub(r'<[^>]+>', ' ', html_text)
-            text = re.sub(r'&nbsp;', ' ', text)
+                return []
+            text = re.sub(r'</td>\s*<td[^>]*>', ' | ', html_text, flags=re.IGNORECASE)
+            text = re.sub(r'</th>\s*<th[^>]*>', ' | ', text, flags=re.IGNORECASE)
+            text = re.sub(r'</?(h[1-6]|p|br|li|tr|div|blockquote|thead|tbody)[^>]*>', '\n', text, flags=re.IGNORECASE)
+            text = re.sub(r'<[^>]+>', '', text)
+            text = text.replace('&nbsp;', ' ').replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
             text = re.sub(r'&[a-z]+;', '', text)
-            text = re.sub(r'\s+', ' ', text)
-            return text.strip()
+            text = re.sub(r'[ \t]+', ' ', text)
+            lines = [l.strip() for l in text.splitlines()]
+            return [l for l in lines if l]
+
+        def esc(t):
+            return t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
         for record in self:
             prev = self.env['amunet.documento.version'].search([
@@ -880,34 +885,53 @@ class AmunetDocumentoVersion(models.Model):
                 )
                 continue
 
-            old_words = strip_html(prev.contenido_html).split()
-            new_words = strip_html(record.contenido_html).split()
-            matcher = SequenceMatcher(None, old_words, new_words, autojunk=False)
-            parts = []
+            old_lines = html_to_lines(prev.contenido_html)
+            new_lines = html_to_lines(record.contenido_html)
+
+            if not old_lines:
+                record.diff_html = (
+                    '<p style="color:#6b7280;font-style:italic">'
+                    'La versión anterior (v%s) no tiene contenido guardado en el sistema — '
+                    'el comparativo solo estará disponible en versiones generadas desde Odoo.</p>'
+                ) % prev.version
+                continue
+            matcher = SequenceMatcher(None, old_lines, new_lines, autojunk=False)
+            parts = ['<div style="font-size:0.95em;line-height:1.6">']
 
             for op, i1, i2, j1, j2 in matcher.get_opcodes():
                 if op == 'equal':
-                    parts.append(' '.join(new_words[j1:j2]))
+                    for line in new_lines[j1:j2]:
+                        parts.append('<p style="margin:2px 0">%s</p>' % esc(line))
                 elif op == 'insert':
-                    chunk = ' '.join(new_words[j1:j2])
-                    parts.append(
-                        '<strong style="background:#dcfce7;color:#166534;padding:0 2px">%s</strong>' % chunk
-                    )
+                    for line in new_lines[j1:j2]:
+                        parts.append(
+                            '<p style="margin:2px 0;background:#dcfce7;color:#166534;'
+                            'padding:2px 6px;border-left:3px solid #16a34a">'
+                            '<strong>+ %s</strong></p>' % esc(line)
+                        )
                 elif op == 'delete':
-                    chunk = ' '.join(old_words[i1:i2])
-                    parts.append(
-                        '<del style="background:#fee2e2;color:#991b1b;padding:0 2px">%s</del>' % chunk
-                    )
+                    for line in old_lines[i1:i2]:
+                        parts.append(
+                            '<p style="margin:2px 0;background:#fee2e2;color:#991b1b;'
+                            'padding:2px 6px;border-left:3px solid #dc2626">'
+                            '<del>− %s</del></p>' % esc(line)
+                        )
                 elif op == 'replace':
-                    old_chunk = ' '.join(old_words[i1:i2])
-                    new_chunk = ' '.join(new_words[j1:j2])
-                    parts.append(
-                        '<del style="background:#fee2e2;color:#991b1b;padding:0 2px">%s</del> '
-                        '<strong style="background:#dcfce7;color:#166534;padding:0 2px">%s</strong>'
-                        % (old_chunk, new_chunk)
-                    )
+                    for line in old_lines[i1:i2]:
+                        parts.append(
+                            '<p style="margin:2px 0;background:#fee2e2;color:#991b1b;'
+                            'padding:2px 6px;border-left:3px solid #dc2626">'
+                            '<del>− %s</del></p>' % esc(line)
+                        )
+                    for line in new_lines[j1:j2]:
+                        parts.append(
+                            '<p style="margin:2px 0;background:#dcfce7;color:#166534;'
+                            'padding:2px 6px;border-left:3px solid #16a34a">'
+                            '<strong>+ %s</strong></p>' % esc(line)
+                        )
 
-            record.diff_html = '<div style="line-height:2;font-size:0.95em">%s</div>' % ' '.join(parts)
+            parts.append('</div>')
+            record.diff_html = ''.join(parts)
 
     def _check_version_workflow_write(self):
         if (
