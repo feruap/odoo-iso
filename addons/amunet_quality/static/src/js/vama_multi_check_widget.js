@@ -32,7 +32,8 @@ export class VAMAMultiCheckWidget extends Component {
         this.notification = useService("notification");
         this.state = useState({
             positions: [],
-            results: {}
+            results: {},
+            sampleType: null,
         });
         
         onWillStart(async () => {
@@ -63,6 +64,7 @@ export class VAMAMultiCheckWidget extends Component {
             if (rawMapping) {
                 const mapping = JSON.parse(rawMapping);
                 this.state.positions = mapping.positions || [];
+                this.state.sampleType = mapping.fixed_sample_type || null;
             }
         } catch (e) {
             console.error("VAMA Widget: Error parsing mapping", e);
