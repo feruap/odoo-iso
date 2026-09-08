@@ -75,7 +75,10 @@ class StockLotAvisoRetiro(models.Model):
     def _amunet_lotes_por_mover(self):
         """Lotes de producto terminado que deben cambiar de anaquel y no lo han hecho."""
         lotes = self.search([('amunet_requiere_movimiento', '=', True)])
-        return lotes.filtered(lambda l: l._amunet_es_producto_terminado())
+        # Solo lo que participa del sistema de caducidad comercial: un PCR no se
+        # mueve a los anaqueles de promocion, asi que tampoco se avisa de el.
+        return lotes.filtered(lambda l: l._amunet_aplica_promocion()
+                              or l._amunet_es_hoja_maestra())
 
     # compatibilidad con el nombre anterior
     @api.model
