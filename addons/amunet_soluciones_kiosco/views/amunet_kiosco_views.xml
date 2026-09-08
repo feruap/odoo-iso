@@ -103,12 +103,21 @@
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
                 <field name="kiosco_es_dispositivo" invisible="1"/>
-                <field name="kiosco_operador_id" invisible="1"/>
+                <!--
+                    Todo lo que menciona kiosco_operador_id lleva el mismo
+                    groups= que el campo. Si no, para un usuario de almacen el
+                    campo desaparece pero la condicion que lo nombra se queda,
+                    y la vista truena por referirse a algo que no existe.
+                -->
+                <field name="kiosco_operador_id" invisible="1"
+                       groups="amunet_production.group_solution_maker,amunet_soluciones_kiosco.group_kiosco_soluciones"/>
                 <button name="action_kiosco_iniciar" type="object"
                         string="Iniciar elaboracion (PIN)" class="btn-primary"
+                        groups="amunet_production.group_solution_maker,amunet_soluciones_kiosco.group_kiosco_soluciones"
                         invisible="not kiosco_es_dispositivo or not amunet_is_solution_product or kiosco_operador_id"/>
                 <button name="action_kiosco_supervision" type="object"
                         string="Enviar a supervision (PIN)" class="btn-primary"
+                        groups="amunet_production.group_solution_maker,amunet_soluciones_kiosco.group_kiosco_soluciones"
                         invisible="not kiosco_es_dispositivo or not amunet_is_solution_product or not kiosco_operador_id"/>
                 <button name="action_kiosco_analisis" type="object"
                         string="Solicitar analisis (PIN)"
@@ -121,6 +130,7 @@
             <xpath expr="//sheet" position="before">
                 <div class="alert alert-info text-center mb-0"
                      role="status"
+                     groups="amunet_production.group_solution_maker,amunet_soluciones_kiosco.group_kiosco_soluciones"
                      invisible="not kiosco_es_dispositivo or not kiosco_operador_id">
                     <h3 class="mb-0">
                         Trabajando: <field name="kiosco_operador_id" readonly="1" nolabel="1"/>

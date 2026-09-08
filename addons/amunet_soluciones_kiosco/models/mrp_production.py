@@ -7,11 +7,27 @@ from odoo.exceptions import UserError
 class MrpProduction(models.Model):
     _inherit = 'mrp.production'
 
+    # Estos dos campos leen amunet.kiosco.sesion, que solo pueden ver los
+    # grupos del kiosco. Sin groups= aqui, CUALQUIER usuario que abriera una
+    # orden de produccion los cargaba y reventaba con AccessError: le paso a
+    # Almacen de MP (Patricia y Karla) al ir a surtir, 08-sep-2026, y las dejo
+    # fuera de la orden por completo. El campo invisible="1" de la vista NO
+    # evita la lectura: Odoo lo trae igual.
+    #
+    # La restriccion va en el CAMPO, no en el modelo: dar lectura de las
+    # sesiones a todo el mundo taparia el error pero abriria datos que no les
+    # tocan. Con groups= el campo simplemente no existe para quien no es del
+    # kiosco, y la orden abre normal.
+    _KIOSCO_GROUPS = ('amunet_production.group_solution_maker,'
+                      'amunet_soluciones_kiosco.group_kiosco_soluciones')
+
     kiosco_sesion_ids = fields.One2many(
-        'amunet.kiosco.sesion', 'production_id', string='Sesiones de kiosco')
+        'amunet.kiosco.sesion', 'production_id', string='Sesiones de kiosco',
+        groups=_KIOSCO_GROUPS)
     kiosco_operador_id = fields.Many2one(
         'res.users', string='Elaborando ahora',
         compute='_compute_kiosco_operador', store=False,
+        groups=_KIOSCO_GROUPS,
         help='Persona que tiene abierta esta elaboracion en la tablet.')
     kiosco_es_dispositivo = fields.Boolean(
         string='Estoy en una tablet de kiosco',
