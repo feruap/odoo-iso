@@ -51,4 +51,112 @@
             </field>
         </field>
     </record>
+
+    <!--
+      2026-09-09: el costo (standard_price) se seguia viendo pese a los parches
+      de arriba. Verificado en produccion con almacen.mp@ y desarrollo@: la
+      columna "Costo" salia en las LISTAS de producto (optional="show", o sea
+      visible por defecto) y las etiquetas del formulario quedaban colgando.
+      Las listas nunca se habian parchado: solo se parcho list_price/lst_price.
+    -->
+    <record id="product_template_tree_hide_cost" model="ir.ui.view">
+        <field name="name">product.template.tree.hide.cost</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="standard_price" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </field>
+        </field>
+    </record>
+
+    <record id="product_product_tree_hide_cost" model="ir.ui.view">
+        <field name="name">product.product.tree.hide.cost</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="standard_price" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </field>
+            <field name="avg_cost" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </field>
+        </field>
+    </record>
+
+    <!-- etiquetas y contenedores del costo en el formulario, para que no quede
+         un rotulo "Costo" sin valor -->
+    <record id="product_product_form_hide_cost_label" model="ir.ui.view">
+        <field name="name">product.product.form.hide.cost.label</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//label[@id='standard_price_label']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+            <xpath expr="//div[@name='standard_price_uom']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_form_hide_cost_label" model="ir.ui.view">
+        <field name="name">product.template.form.hide.cost.label</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//label[@id='standard_price_label']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+            <xpath expr="//div[@name='standard_price_uom']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 2026-09-09: tambien el precio de VENTA. Quedaba visible para almacen y
+         desarrollo en el kanban, en el formulario de variante (lst_price) y como
+         etiqueta suelta en el formulario de plantilla. Regla de Direccion: nadie
+         mas ve precios, ni de compra ni de venta. -->
+    <record id="product_template_kanban_hide_price" model="ir.ui.view">
+        <field name="name">product.template.kanban.hide.price</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_kanban_view"/>
+        <field name="arch" type="xml">
+            <field name="list_price" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </field>
+        </field>
+    </record>
+
+    <record id="product_product_form_hide_lst_price" model="ir.ui.view">
+        <field name="name">product.product.form.hide.lst.price</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <field name="lst_price" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </field>
+            <xpath expr="//label[@for='lst_price']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+            <xpath expr="//div[@name='list_price_uom']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_form_hide_price_label" model="ir.ui.view">
+        <field name="name">product.template.form.hide.price.label</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//label[@for='list_price']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+            <xpath expr="//div[@name='list_price_uom']" position="attributes">
+                <attribute name="groups">amunet_price_visibility.group_price_viewer</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>
