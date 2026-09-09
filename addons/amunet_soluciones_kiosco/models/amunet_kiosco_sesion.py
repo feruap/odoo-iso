@@ -153,6 +153,10 @@ class AmunetKioscoSesion(models.Model):
             '(%(tablet)s).',
             quien=operador.name, tablet=self.env.user.name,
         ))
+        # El responsable de la solucion es quien la elabora, no quien la creo
+        # ni la tableta. Aqui es donde se sabe con certeza: la persona acaba
+        # de identificarse con su PIN.
+        production._amunet_set_responsable_solucion(operador)
         return sesion
 
     def latir(self):

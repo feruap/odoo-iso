@@ -767,11 +767,20 @@ class MrpProduction(models.Model):
         temporal = self._amunet_apt_temporal_location()
         if not temporal:
             return
+        aru = self.env['stock.warehouse'].sudo().search([('code', '=', 'ARU')], limit=1)
         for production in self:
             categ = ((production.product_id.categ_id.complete_name or '')
                      if production.product_id else '')
             if categ.startswith('Producto terminado'):
                 production.location_dest_id = temporal.id
+                continue
+            # Soluciones de uso interno (ajuste de pH y pie para otra solucion):
+            # no salen del area, se quedan en el inventario interno de reactivos
+            # en uso. Las demas soluciones siguen a AMP, que es de donde se
+            # entregan a Materia Prima. Clasificacion de Mery, 08-sep-2026.
+            if (aru and production.product_id
+                    and production.product_id.product_tmpl_id.amunet_solucion_interna):
+                production.location_dest_id = aru.lot_stock_id.id
 
     @api.depends('product_id', 'date_start')
     def _amunet_compute_expiration(self, product, base_date):

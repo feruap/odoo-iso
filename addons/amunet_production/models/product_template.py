@@ -36,6 +36,34 @@ class ProductTemplate(models.Model):
     amunet_es_desarrollo = fields.Boolean(
         string='Producto de desarrollo', default=False)
 
+    # Soluciones que NO salen del area: ajuste de pH y las que sirven de pie
+    # para otra solucion. Se fabrican con su orden, su lote y su receta, pero
+    # no se analizan ni se entregan a almacen -- se quedan en el inventario
+    # interno del area (ARU/Stock). Clasificacion de Mery, 08-sep-2026.
+    #
+    # Que NO lleven analisis se controla aparte, apagando qc_required del
+    # producto: los candados del sistema ya respetan esa bandera. Este campo
+    # sirve para el DESTINO.
+    amunet_solucion_interna = fields.Boolean(
+        string='Solución de uso interno',
+        default=False,
+        help='La solución se queda en el área (ARU/Stock): no se entrega a '
+             'Materia Prima. Se sigue fabricando con orden, lote y receta.')
+
+    # Excepcion al enrutamiento a ARU. Por categoria, todos los reactivos se
+    # consumen desde el almacen de reactivos en uso, porque el area los tiene
+    # en su resguardo. Pero hay reactivos que NO se resguardan y se piden a
+    # Materia Prima en cada orden -- el acido cloroaurico es el caso: es el
+    # oro de las nanoparticulas (Mery, 08-sep-2026).
+    #
+    # Sin esta bandera el sistema los buscaria en ARU, no los encontraria, y la
+    # orden se quedaria sin material aunque haya existencia en Materia Prima.
+    amunet_surtir_desde_mp = fields.Boolean(
+        string='Se surte desde Materia Prima',
+        default=False,
+        help='Este reactivo NO se resguarda en el área: se pide a Materia Prima '
+             'en cada orden. Marca la excepción al consumo desde ARU.')
+
     # Parametros Adicionales extraidos del Excel
     amunet_solution_dependency_id = fields.Many2one('product.product', string='Solución Requerida Previamente', help='Si requiere que otra solución se prepare primero (para lanzar la advertencia).')
     amunet_initial_ph = fields.Float(string='pH Inicial', help='El pH por defecto esperado para la solución (ej. 7.4)')
