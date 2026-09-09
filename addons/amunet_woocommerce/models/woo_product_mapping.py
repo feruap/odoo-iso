@@ -1633,7 +1633,7 @@ class AmunetWooProductMapping(models.Model):
             if ubicacion:
                 for quant in Quant.search([
                         ('product_id', '=', rec.product_id.id),
-                        ('location_id', 'child_of', ubicacion.id)]):
+                        ('location_id', 'child_of', ubicacion.ids)]):
                     if quant.lot_id:
                         piezas[quant.lot_id.id] = piezas.get(
                             quant.lot_id.id, 0.0) + quant.quantity
@@ -1663,7 +1663,7 @@ class AmunetWooProductMapping(models.Model):
             total = 0.0
             for quant in Quant.search([
                     ('product_id', '=', rec.product_id.id),
-                    ('location_id', 'child_of', ubicacion.id)]):
+                    ('location_id', 'child_of', ubicacion.ids)]):
                 if quant.lot_id and quant.lot_id.amunet_origen_inicial:
                     total += quant.quantity
             rec.inicial_cargado_qty = total
@@ -1674,7 +1674,10 @@ class AmunetWooProductMapping(models.Model):
         backend = self.backend_id.sudo()
         if not backend:
             return self.env['stock.location'].browse()
-        return backend._apt_pieces_location()
+        # Las MISMAS ubicaciones que publica el puente. Si el panel mirara solo
+        # el anaquel de PT y el puente mirara tambien Distribucion, el panel
+        # diria 0 para el material ya traspasado mientras la tienda lo vende.
+        return backend._ubicaciones_a_publicar()
 
     @api.onchange('inicial_lot_id')
     def _onchange_inicial_lot_id(self):
@@ -1904,12 +1907,12 @@ class AmunetWooProductMapping(models.Model):
                 por_backend.setdefault(rec.backend_id, self.browse()) 
                 por_backend[rec.backend_id] |= rec
         for backend, recs in por_backend.items():
-            ubicacion = backend.sudo()._apt_pieces_location()
+            ubicacion = backend.sudo()._ubicaciones_a_publicar()
             if not ubicacion:
                 continue
             quants = Quant.search([
                 ('product_id', 'in', recs.mapped('product_id').ids),
-                ('location_id', 'child_of', ubicacion.id),
+                ('location_id', 'child_of', ubicacion.ids),
                 ('quantity', '!=', 0),
             ], order='id desc')
             por_producto = {}

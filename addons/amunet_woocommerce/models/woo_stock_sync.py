@@ -95,16 +95,27 @@ class AmunetWooStockConsumo(models.Model):
         ('lote_retenido', 'Lote no liberado por Calidad'),
         ('sin_destino', 'Falta la ubicacion de Clientes'),
         ('error_tecnico', 'Fallo tecnico'),
+        ('no_es_venta', 'No es una venta (entrada)'),
     ], default='aplicado', required=True, string='Resultado',
-        help='Solo "Descontado" es definitivo. Todos los demas se vuelven a '
-             'intentar en la siguiente corrida hasta que alguien los resuelva.')
+        help='"Descontado" y "No es una venta" son definitivos. Los demas se '
+             'vuelven a intentar en la siguiente corrida hasta que alguien los '
+             'resuelva.')
+    tipo_tienda = fields.Char(
+        'Tipo en la tienda', readonly=True,
+        help='Tal como lo mando la tienda: "sale" es venta, "delivery" es '
+             'entrada. Se guarda para poder auditar por que se descontó o no.')
     intentos = fields.Integer('Intentos', default=1, readonly=True)
     ultimo_intento = fields.Datetime('Ultimo intento', readonly=True)
     nota = fields.Char('Nota')
 
     # Los estados que NO son definitivos: se reintentan.
+    # 'no_es_venta' NO va aqui: una entrada nunca se va a convertir en venta,
+    # reintentarla seria darle vueltas para siempre.
     PENDIENTES = ('sin_lote', 'sin_producto', 'sin_existencia',
                   'lote_retenido', 'sin_destino', 'error_tecnico')
+
+    # Tipos de movimiento de la tienda que son ENTRADA, no venta.
+    TIPOS_ENTRADA = ('delivery', 'entrada', 'restock', 'devolucion', 'return')
 
     # En Odoo 19 las restricciones de tabla se declaran asi. Con _sql_constraints
     # el servidor solo avisa y NO crea la restriccion, y sin ella una venta se
@@ -142,6 +153,16 @@ class AmunetWooBackend(models.Model):
              'listo para vender: para llegar ahi el lote tuvo que pasar por el '
              'proceso. La otra opcion es mas estricta y solo publica los lotes '
              'que ademas traen la marca de liberacion puesta en Odoo.')
+    apt_ubicaciones_extra_ids = fields.Many2many(
+        'stock.location', 'amunet_woo_backend_extra_loc_rel',
+        'backend_id', 'location_id',
+        string='Tambien publicar desde estas ubicaciones',
+        domain=[('usage', '=', 'internal')],
+        help='Ademas del anaquel de piezas de PT, el puente lee estas ubicaciones. '
+             'Sirve para el Almacen de Distribucion: mientras el material se pasa de '
+             'PT a Distribucion, la tienda tiene que seguir viendo las dos, o se '
+             'quedaria sin existencia el dia del traspaso.')
+
     apt_venta_cliente_location_id = fields.Many2one(
         'stock.location', string='Destino de las ventas de la tienda',
         domain="[('usage','in',('customer','inventory','production'))]",
@@ -215,6 +236,26 @@ class AmunetWooBackend(models.Model):
             return True
         return bool(plantilla.use_expiration_date)
 
+    def _ubicaciones_a_publicar(self):
+        """Todas las ubicaciones cuyo material debe verse en la tienda.
+
+        Siempre incluye el anaquel de piezas de PT, el de toda la vida. Y ademas
+        las que el administrador haya marcado en el backend.
+
+        Existe por el traspaso al Almacen de Distribucion: el material se mueve
+        de PT a Distribucion poco a poco, y si el puente solo mirara PT, cada
+        producto traspasado desapareceria de la tienda ese mismo dia. Con las
+        dos ubicaciones activas, el traspaso es invisible para el cliente.
+
+        No suma dos veces: son ubicaciones distintas y una pieza solo puede
+        estar en una.
+        """
+        self.ensure_one()
+        base = self._apt_pieces_location()
+        extras = self.apt_ubicaciones_extra_ids.filtered(
+            lambda l: l.usage == 'internal')
+        return (base | extras) if base else extras
+
     def _lectura_anaquel(self, mapeo):
         """Lo que hay en el anaquel de piezas, con el criterio que eligio la casa.
 
@@ -233,12 +274,12 @@ class AmunetWooBackend(models.Model):
         if self.apt_base_publicacion == 'liberado':
             return self._read_released_piece_stock(mapeo)
 
-        ubicacion = self._apt_pieces_location()
-        if not mapeo.product_id or not ubicacion:
+        ubicaciones = self._ubicaciones_a_publicar()
+        if not mapeo.product_id or not ubicaciones:
             return []
         quants = self.env['stock.quant'].search([
             ('product_id', '=', mapeo.product_id.id),
-            ('location_id', 'child_of', ubicacion.id),
+            ('location_id', 'child_of', ubicaciones.ids),
             ('company_id', '=', self.company_id.id),
         ])
         por_lote = {}
@@ -546,10 +587,42 @@ class AmunetWooBackend(models.Model):
                 'cantidad': fila.cantidad,
                 'order_id': fila.pedido_tienda,
                 'fecha': fields.Datetime.to_string(fila.fecha_tienda) if fila.fecha_tienda else None,
+                # Sin el tipo, al reintentar una linea guardada el filtro solo
+                # tendria el signo, y la cantidad se guarda en absoluto.
+                'tipo': fila.tipo_tienda or '',
             }
             if self._intentar_movimiento(mov, fila) == 'aplicado':
                 hechos += 1
         return hechos
+
+    @staticmethod
+    def _es_salida_de_la_tienda(mov):
+        """True si el movimiento de la tienda es una VENTA, no una entrada.
+
+        La tienda lleva UN SOLO cuaderno con las dos clases de movimiento:
+            tipo 'sale'      alguien compro    -> cantidad NEGATIVA
+            tipo 'delivery'  entraron piezas   -> cantidad POSITIVA
+
+        Antes se hacia abs() de la cantidad sin mirar el tipo, asi que una
+        ENTRADA se habria descontado igual que una venta. Medido contra los
+        movimientos reales del 20-ago al 8-sep: sin este filtro se habrian
+        restado 14,790 pz en vez de 4,799, o sea 9,991 de mas (Luis, 08-sep-2026).
+
+        Se mira primero el TIPO, que es lo explicito. Si el movimiento no lo
+        trae, se cae al SIGNO como respaldo: negativo es salida.
+        """
+        tipo = (mov.get('tipo') or mov.get('type') or '').strip().lower()
+        if tipo:
+            if tipo in AmunetWooStockConsumo.TIPOS_ENTRADA:
+                return False
+            if tipo in ('sale', 'venta', 'salida'):
+                return True
+        try:
+            cantidad = float(mov.get('cantidad') or 0.0)
+        except (TypeError, ValueError):
+            return False
+        # Sin tipo reconocible: negativo es salida. Cero nunca descuenta.
+        return cantidad < 0
 
     def _intentar_movimiento(self, mov, fila=None):
         """Un movimiento de la tienda, aislado.
@@ -558,6 +631,21 @@ class AmunetWooBackend(models.Model):
         dejar constancia (y entonces quien llama debe detenerse).
         """
         self.ensure_one()
+        # Una ENTRADA de la tienda no descuenta nada. Se deja constancia con su
+        # razon en vez de que desaparezca en silencio, y no se reintenta: nunca
+        # se va a convertir en venta.
+        if not self._es_salida_de_la_tienda(mov):
+            try:
+                with self.env.cr.savepoint():
+                    return self._guardar_resultado(
+                        mov, fila, 'no_es_venta',
+                        _('Movimiento de tipo "%s": es una entrada a la tienda, '
+                          'no una venta. No descuenta inventario.')
+                        % (mov.get('tipo') or mov.get('type') or 'sin tipo')).estado
+            except Exception:  # noqa: BLE001
+                _logger.exception('Puente: no se pudo registrar la entrada %s',
+                                  mov.get('id'))
+                return None
         try:
             with self.env.cr.savepoint():
                 return self._descontar_venta(mov, fila).estado
@@ -581,6 +669,7 @@ class AmunetWooBackend(models.Model):
             'woo_product_id': int(mov.get('product_id') or 0),
             'lote_texto': mov.get('lote') or '',
             'cantidad': abs(float(mov.get('cantidad') or 0.0)),
+            'tipo_tienda': (mov.get('tipo') or mov.get('type') or '')[:32],
             'pedido_tienda': int(mov.get('order_id') or 0),
             'ultimo_intento': fields.Datetime.now(),
         }
