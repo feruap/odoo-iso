@@ -2073,35 +2073,51 @@ class AmunetQualityCheck(models.Model):
             self.qty_sampling,
             self.sampling_uom_id
         )
-        if qty_in_product_uom > self.lot_qty_available:
-            # Relaxed validation for Quality Analyst to allow Happy Path simulation
-            # We check group, login 'analyst' or name 'QC Analyst' as fallbacks.
-            user = self.env.user
-            is_quality_analyst = (
-                user.has_group('amunet_quality.group_quality_user') or 
-                user.login == 'analyst' or 
-                user.name == 'QC Analyst'
-            )
-            
-            if not is_quality_analyst:
-                raise ValidationError(
-                    f'La cantidad muestreada ({self.qty_sampling} {self.sampling_uom_id.name}) '
-                    f'excede el stock disponible del lote ({self.lot_qty_available} '
-                    f'{self.product_id.uom_id.name})'
-                )
-            else:
-                _logger.warning(
-                    "Stock validation bypassed for user %s (%s) on QC %s",
-                    user.name, user.login, self.name
-                )
+        # lot_qty_available es un campo ALMACENADO que se calcula desde el
+        # stock, pero su @api.depends NO incluye el stock: una vez creado el
+        # analisis el valor se queda congelado. En los analisis de PRODUCCION
+        # nacia en 0 -- el terminado todavia no existia -- y ese 0 hacia que el
+        # muestreo se saltara el movimiento de inventario EN SILENCIO: Calidad
+        # se llevaba las piezas y el sistema las seguia contando.
+        # Detectado con PSA QC/2026/00146 (60 pz) el 09-sep-2026.
+        # Se recalcula aqui contra el stock de ESTE momento, que es el unico
+        # dato valido para decidir.
+        self._compute_lot_qty_available()
+        disponible = self.lot_qty_available
 
-        # Generar movimiento de inventario: Origen → Control de Calidad
-        # Skip move if stock is insufficient but we allowed bypass (simulation mode)
-        sampling_move = False
-        if qty_in_product_uom <= self.lot_qty_available:
-            sampling_move = self._create_sampling_move()
-        else:
-            _logger.info("Skipping sampling move for QC %s due to insufficient stock (Bypass active)", self.name)
+        if qty_in_product_uom > disponible:
+            # Aqui habia un bypass "de simulacion" que dejaba pasar a cualquiera
+            # del grupo de Calidad y, peor, NO creaba el movimiento y solo lo
+            # anotaba en el log. Se retira: un muestreo que no descuenta
+            # inventario es peor que uno bloqueado, porque nadie se entera.
+            raise ValidationError(_(
+                'No se puede confirmar el muestreo de %(pide)s: el lote %(lote)s '
+                'tiene %(hay)s %(uom)s disponibles en el sistema.\n\n'
+                'Si el producto YA existe fisicamente, lo que falta es '
+                'ingresarlo al almacen. En la orden de fabricacion se hace con '
+                'la actividad de resguardo, o con el boton "Ingresar resguardo '
+                'al almacen" si la actividad ya se termino.'
+            ) % {
+                'pide': ' '.join(filter(None, [
+                    str(self.qty_sampling), self.sampling_uom_id.name])),
+                'lote': self.lot_id.name or '-',
+                'hay': disponible,
+                'uom': self.product_id.uom_id.name or '',
+            })
+
+        # Generar movimiento de inventario: Origen -> Control de Calidad
+        sampling_move = self._create_sampling_move()
+        if not sampling_move:
+            # Que no se cree el movimiento ya no puede pasar callado: sin el,
+            # el inventario no refleja lo que Calidad se llevo.
+            _logger.warning(
+                'QC %s: el muestreo NO genero movimiento de inventario.',
+                self.name)
+            self.sudo().message_post(body=_(
+                'ATENCION: el muestreo de %(qty)s se confirmo pero NO se genero '
+                'el movimiento de inventario. Las piezas que Calidad se llevo '
+                'siguen contadas en el almacen. Avisar a Desarrollo.'
+            ) % {'qty': self.qty_sampling})
 
         self.write({
             'sampling_confirmed': True,
