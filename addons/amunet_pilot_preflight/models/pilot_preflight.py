@@ -356,6 +356,26 @@ class AmunetPilotPreflight(models.Model):
         for rec in self:
             bom = rec.bom_id
             if not bom:
+                # Las soluciones de DESARROLLO no llevan receta fija: se les
+                # carga una receta base por orden (ver amunet_es_desarrollo en
+                # product.template). Bloquearlas por "sin BOM" les impide
+                # arrancar por diseno, no por falta. El campo lo agrega
+                # amunet_production, que no es dependencia de este modulo: se
+                # consulta con guarda.
+                prod = rec.product_id.product_tmpl_id if rec.product_id else False
+                es_desarrollo = bool(
+                    prod and 'amunet_es_desarrollo' in prod._fields
+                    and prod.amunet_es_desarrollo)
+                if es_desarrollo:
+                    rec._add_line(
+                        'bom',
+                        'BOM de fabricacion',
+                        'pass',
+                        'Solucion de desarrollo: la receta se carga por orden, '
+                        'no lleva BOM fija.',
+                        sequence=100,
+                    )
+                    continue
                 rec._add_line(
                     'bom',
                     'BOM de fabricacion',

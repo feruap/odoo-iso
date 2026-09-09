@@ -162,6 +162,21 @@
         <field name="arch" type="xml">
             <field name="route_type" position="attributes">
                 <attribute name="readonly">kiosco_es_dispositivo</attribute>
+                <!-- force_save: en Odoo, el valor de un campo READONLY no se
+                     envia al guardar. El onchange del producto SI ponia
+                     'solution' al elegir una solucion, pero como aqui el campo
+                     esta bloqueado para el dispositivo, ese valor se descartaba
+                     y la orden quedaba con el default 'short'. Resultado: la
+                     tableta creaba la orden en LINEA CORTA y despues no la veia
+                     (la regla de registro filtra por route_type).
+                     Con force_save el operador sigue SIN poder cambiar la
+                     linea (que era la intencion) pero el valor que calcula
+                     el sistema si se conserva.
+                     Reportado por Mery, 09-sep-2026: "al hacer una nueva la
+                     manda a linea corta". Solo pasaba al crear desde el menu de
+                     Fabricacion; desde el kiosco no, porque ahi el contexto ya
+                     trae default_route_type=solution. -->
+                <attribute name="force_save">1</attribute>
             </field>
         </field>
     </record>
