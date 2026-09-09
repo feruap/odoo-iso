@@ -18,7 +18,7 @@ fabricación, controles de calidad, BOM ni presentaciones de Odoo.
 - Perfiles de proceso largo por hoja maestra (equivalencias, rendimiento, merma).
 - Importación idempotente del CSV de mapeo de SKU.
 - Tres grupos: Consulta, Revisor y Administrador, con reglas multiempresa.""",
-    'version': '19.0.16.3.1',
+    'version': '19.0.16.3.2',
     'author': 'Amunet',
     'category': 'Inventory',    'depends': [
         'amunet_recepcion_materiales',
