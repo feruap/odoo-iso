@@ -78,6 +78,35 @@ class StockPickingEntregaPt(models.Model):
             rec.amunet_entrega_pt_id = Entrega.search(
                 [('picking_ingreso_id', '=', rec.id)], limit=1)
 
+    def button_validate(self):
+        """Validar el ingreso desde Inventario tambien cierra la ENTREGA.
+
+        Antes, si alguien validaba el traslado desde Inventario en vez de usar
+        el boton "Recibir" de la entrega, el inventario se movia y el lote se
+        liberaba, pero el documento que registra la entrega se quedaba en "por
+        recibir" para siempre. Y el camino normal ya no podia corregirlo: el
+        boton "Recibir" empieza rechazando un ingreso que ya esta validado.
+        Paso con EPT/2026/0013 el 09-sep-2026 y hubo que arreglarlo a mano.
+        """
+        res = super().button_validate()
+        # Se hace aqui y NO en _action_done: escribir el estado de la entrega
+        # dentro del posteo dispara el recalculo de amunet_entrega_pt_state,
+        # que es related de un campo NO almacenado, y Odoo revienta al intentar
+        # buscar por el. El flujo normal tambien lo escribe despues de validar.
+        Entrega = self.env['amunet.entrega.pt'].sudo()
+        for picking in self:
+            entrega = Entrega.search([
+                ('picking_ingreso_id', '=', picking.id),
+                ('state', '=', 'por_recibir'),
+            ], limit=1)
+            if not entrega:
+                continue
+            entrega.state = 'recibida'
+            entrega.message_post(body=_(
+                'Entrega cerrada automáticamente al validarse su ingreso '
+                '<b>%s</b>.') % picking.name)
+        return res
+
     def _amunet_entrega_pt_o_error(self):
         self.ensure_one()
         if not self.amunet_entrega_pt_id:
