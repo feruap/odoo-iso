@@ -302,6 +302,29 @@ class MrpWorkorder(models.Model):
                 )
         return True
 
+    def button_finish(self):
+        """Al terminar la actividad de RESGUARDO, el terminado entra al almacen.
+
+        El inventario se mueve donde ocurre el hecho fisico, no al cerrar la
+        orden. Ver _amunet_ingresar_resguardo_pt en mrp.production.
+        """
+        res = super().button_finish()
+        for wo in self:
+            if wo.workcenter_id.amunet_es_resguardo_pt and wo.production_id:
+                # Un fallo aqui NO debe impedir terminar la actividad: se avisa
+                # en la orden y el boton manual queda disponible.
+                try:
+                    wo.production_id.sudo()._amunet_ingresar_resguardo_pt(
+                        qty=wo.qty_produced or False,
+                        origen=_('actividad %s') % wo.display_name,
+                        silencioso=True)
+                except UserError as e:
+                    wo.production_id.sudo().message_post(body=_(
+                        'El producto terminado NO entró al almacén al '
+                        'resguardar: %s Usa el botón "Ingresar resguardo al '
+                        'almacén" cuando esté resuelto.') % e)
+        return res
+
     def action_amunet_open_production(self):
         self.ensure_one()
         view = self.env.ref(

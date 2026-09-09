@@ -157,6 +157,106 @@ class MrpProduction(models.Model):
             'La orden ya se puede cerrar.'
         ) % {'qty': qty, 'user': self.env.user.name})
 
+    # ------------------------------------------------------------------
+    # Ingreso del terminado al resguardar (etapa 1 del rediseno de flujo)
+    # ------------------------------------------------------------------
+    amunet_resguardo_pendiente = fields.Boolean(
+        string='Resguardo sin ingresar',
+        compute='_compute_amunet_resguardo_pendiente')
+
+    @api.depends('state', 'move_finished_ids.state', 'workorder_ids.state')
+    def _compute_amunet_resguardo_pendiente(self):
+        """La actividad de resguardo ya se hizo pero el terminado sigue sin
+        entrar al almacen. Pasa con las ordenes que venian del flujo anterior."""
+        for mo in self:
+            pendiente = False
+            if mo.state not in ('done', 'cancel'):
+                resguardo = mo.workorder_ids.filtered(
+                    lambda w: w.workcenter_id.amunet_es_resguardo_pt)
+                if resguardo and all(w.state == 'done' for w in resguardo):
+                    pendiente = bool(mo.move_finished_ids.filtered(
+                        lambda m: m.product_id == mo.product_id
+                        and m.state not in ('done', 'cancel')))
+            mo.amunet_resguardo_pendiente = pendiente
+
+    def _amunet_ingresar_resguardo_pt(self, qty=None, origen=None,
+                                      silencioso=False):
+        """Aplica la ENTRADA del producto terminado al almacen de resguardo.
+
+        Odoo lo soporta de fabrica: _post_inventory salta los movimientos que
+        ya estan en 'done' ("the finish move can already be completed by the
+        workorder"). Por eso adelantar el ingreso NO duplica nada al cerrar.
+
+        Devuelve True si ingreso algo, False si no habia nada que ingresar.
+        """
+        self.ensure_one()
+        if self.state in ('done', 'cancel'):
+            return False
+        move = self.move_finished_ids.filtered(
+            lambda m: m.product_id == self.product_id
+            and m.state not in ('done', 'cancel'))
+        if not move:
+            return False
+        move = move[0]
+        # La cantidad la manda la ORDEN (qty_producing): es lo que Produccion
+        # declara como fabricado, y es exactamente lo que el cierre habria
+        # ingresado. Esta etapa cambia CUANDO entra el inventario, no CUANTO.
+        # Solo si la orden no lo trae se cae a lo declarado en la actividad.
+        cantidad = self.qty_producing or qty or self.product_qty
+        if not cantidad or cantidad <= 0:
+            return False
+        # Sin lote no hay trazabilidad: el producto no se podria analizar ni
+        # liberar despues. Mejor detenerse aqui que ingresar a ciegas.
+        if move.has_tracking != 'none':
+            if not self.lot_producing_ids:
+                # En el camino AUTOMATICO no se levanta: dejaria a la persona
+                # de piso sin poder terminar su actividad por un dato que no le
+                # toca capturar. Se avisa en la orden y el boton manual queda
+                # visible para que Produccion lo ingrese al asignar el lote.
+                if silencioso:
+                    self.message_post(body=_(
+                        'El producto terminado NO entró al almacén al '
+                        'resguardar: la orden todavía no tiene lote asignado. '
+                        'Asigna el lote y usa el botón "Ingresar resguardo al '
+                        'almacén".'))
+                    return False
+                raise UserError(_(
+                    'No se puede ingresar el resguardo: la orden todavía no '
+                    'tiene lote asignado. Asigna el lote y vuelve a intentar.'))
+            move.lot_ids = self.lot_producing_ids.ids
+        self.qty_producing = cantidad
+        move.quantity = cantidad
+        move.picked = True
+        # cancel_backorder=True es OBLIGATORIO. Sin el, aplicar 246 de un
+        # movimiento planeado de 250 PARTE el movimiento y deja un residual
+        # vivo; al cerrar la orden, el motor nativo infla ese residual y vuelve
+        # a ingresar el terminado completo. Probado en clon: 496 pz en vez de
+        # 246. Con cancel_backorder el sobrante se cancela y no queda nada que
+        # el cierre pueda re-ingresar.
+        move._action_done(cancel_backorder=True)
+        self.message_post(body=Markup(_(
+            'Ingresadas <b>%(qty)s</b> pieza(s) a <b>%(loc)s</b> por el '
+            'resguardo de producto terminado%(orig)s.<br/>'
+            'El inventario ya refleja el producto. El cierre de la orden '
+            'no lo volverá a ingresar.'
+        )) % {
+            'qty': cantidad,
+            'loc': move.location_dest_id.complete_name,
+            'orig': ' (%s)' % origen if origen else '',
+        })
+        return True
+
+    def action_amunet_ingresar_resguardo(self):
+        """Boton manual, para ordenes cuyo resguardo se hizo antes de que
+        existiera el ingreso automatico."""
+        self.ensure_one()
+        if not self._amunet_ingresar_resguardo_pt(origen=_('ingreso manual')):
+            raise UserError(_(
+                'No hay nada que ingresar: el producto terminado de esta orden '
+                'ya está en el almacén, o la orden no tiene un movimiento de '
+                'terminado pendiente.'))
+        return True
+
     # Analisis de Calidad generados por esta orden. Antes la orden no sabia
     # nada de ellos: solo tenia la etiqueta quality_analysis_status y Calidad
     # aprobaba con un boton simple, sin documento detras.
