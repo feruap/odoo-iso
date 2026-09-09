@@ -233,6 +233,37 @@ class AmunetWooProductMappingManual(models.Model):
         }
 
     # ------------------------------------------------------------------
+    # Barrido diario: red de seguridad del enganche a la aprobacion
+    # ------------------------------------------------------------------
+    @api.model
+    def _cron_publicar_manuales_pendientes(self):
+        """Publica los manuales que quedaron pendientes.
+
+        El disparo normal es la aprobacion del manual por Calidad. Este barrido
+        recoge lo que se quedo atras porque la tienda no respondio, porque el
+        candado estaba apagado ese dia, o porque el manual se cargo antes de que
+        existiera el mapeo.
+        """
+        backend = self.env['amunet.woo.backend'].search(
+            [('allow_manual_publish', '=', True)], limit=1)
+        if not backend:
+            return
+        pendientes = self.search([
+            ('backend_id', '=', backend.id),
+            ('manual_sincronizado', '=', False),
+            ('has_quality_manual', '=', True),
+        ])
+        for rec in pendientes:
+            try:
+                rec.action_sincronizar_manual()
+                self.env.cr.commit()
+            except Exception as exc:  # noqa: BLE001
+                self.env.cr.rollback()
+                _logger.warning(
+                    'amunet_woocommerce: el barrido no pudo publicar el manual '
+                    'de %s: %s', rec.woo_sku or rec.id, exc)
+
+    # ------------------------------------------------------------------
     # Si el manual cambia en Nextcloud, "sincronizado" deja de ser cierto
     # ------------------------------------------------------------------
     def action_refresh_manuals(self):

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Red de seguridad. El disparo normal del manual es la aprobacion de
+         Calidad (amunet_manuales_nextcloud); esto recoge lo que quedo pendiente. -->
+    <record id="cron_publicar_manuales_pendientes" model="ir.cron">
+        <field name="name">Tienda: publicar manuales pendientes</field>
+        <field name="model_id" ref="model_amunet_woo_product_mapping"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_publicar_manuales_pendientes()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>
