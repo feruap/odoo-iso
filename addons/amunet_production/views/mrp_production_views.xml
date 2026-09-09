@@ -51,6 +51,10 @@
                     <!-- Abre el analisis real, donde Calidad captura y firma. -->
                     <button name="action_amunet_ver_analisis" string="Ver análisis de Calidad" type="object"
                             class="oe_highlight" invisible="amunet_qc_check_count == 0"/>
+                    <button name="action_amunet_ingresar_resguardo" string="Ingresar resguardo al almacén"
+                            type="object" class="btn-primary" invisible="not amunet_resguardo_pendiente"
+                            confirm="El producto terminado de esta orden ya se resguardó pero no entró al inventario. Se va a ingresar al almacén de resguardo. ¿Continuar?"
+                            groups="amunet_production.group_production_supervisor"/>
                     <button name="action_amunet_liberar_alta_manual" string="Retirar candado de alta manual"
                             type="object" class="btn-warning" invisible="amunet_alta_manual_qty == 0"
                             confirm="Vas a retirar el candado que impide cerrar esta orden. Solo hazlo si ya se resolvió cuál registro vale: el alta manual o la producción. ¿Continuar?"

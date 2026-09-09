@@ -66,6 +66,22 @@ class MrpWorkcenter(models.Model):
             else:
                 wc.amunet_area_name = wc.name
 
+    # Marca el centro de trabajo donde Produccion RESGUARDA el producto
+    # terminado mientras espera analisis. Al terminar una actividad que corre
+    # en este centro, el terminado ENTRA de verdad al almacen.
+    #
+    # Antes, el inventario del terminado solo se movia al CERRAR la orden:
+    # producto que fisicamente ya estaba en el almacen temporal no existia para
+    # el sistema. De ahi salian las altas manuales para poder venderlo o
+    # analizarlo, y de ahi las piezas duplicadas (PSA y ToRCH, 08-sep-2026).
+    amunet_es_resguardo_pt = fields.Boolean(
+        string='Resguardo de PT (ingresa el terminado al almacén)',
+        default=False,
+        help='Al terminar una actividad en este centro de trabajo, el producto '
+             'terminado se ingresa al almacén. Así el inventario se mueve donde '
+             'ocurre el hecho físico, y el cierre de la orden queda como acto '
+             'administrativo.')
+
     amunet_equipment_ids = fields.Many2many(
         comodel_name='amunet.equipment',
         relation='amunet_workcenter_equipment_rel',
