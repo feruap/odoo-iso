@@ -968,6 +968,10 @@ class AmunetDocumentoVersion(models.Model):
         self._check_version_workflow_write()
         return super().unlink()
 
+    def action_print_version_historica(self):
+        self.ensure_one()
+        return self.env.ref('amunet_documentos.action_report_version_historica').report_action(self)
+
 
 class AmunetDocumentoDistribucion(models.Model):
     _name = 'amunet.documento.distribucion'
@@ -1005,10 +1009,6 @@ class AmunetDocumentoDistribucion(models.Model):
             raise UserError(_('Solo puedes firmar tu propio acuse.'))
         self.with_context(amunet_documento_workflow_write=True).write(
             {'acuse': True, 'fecha_acuse': fields.Date.today()})
-
-    def action_print_version_historica(self):
-        self.ensure_one()
-        return self.env.ref('amunet_documentos.action_report_version_historica').report_action(self)
 
     def action_abrir_documento(self):
         self.ensure_one()
