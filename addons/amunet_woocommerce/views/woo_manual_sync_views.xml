@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Publicar el manual aprobado en la tienda, desde el engrane de la lista. -->
+    <record id="action_publicar_manual_server" model="ir.actions.server">
+        <field name="name">Sincronizar manual a la tienda</field>
+        <field name="model_id" ref="model_amunet_woo_product_mapping"/>
+        <field name="binding_model_id" ref="model_amunet_woo_product_mapping"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_sincronizar_manual()</field>
+    </record>
+
+    <!-- Candado en la tienda -->
+    <record id="view_woo_backend_form_manual" model="ir.ui.view">
+        <field name="name">amunet.woo.backend.form.manual</field>
+        <field name="model">amunet.woo.backend</field>
+        <field name="inherit_id" ref="amunet_woocommerce.view_woo_backend_form"/>
+        <field name="arch" type="xml">
+            <field name="active" position="after">
+                <field name="allow_manual_publish"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Columnas de la pantalla de mapeos (acción "Mapeos y consulta de productos") -->
+    <record id="view_woo_product_mapping_list_manual" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.list.manual</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="inherit_id" ref="amunet_woocommerce.view_woo_product_mapping_list"/>
+        <field name="arch" type="xml">
+            <field name="has_quality_manual" position="attributes">
+                <attribute name="string">Manual disponible</attribute>
+                <attribute name="widget">boolean_toggle</attribute>
+                <attribute name="readonly">1</attribute>
+            </field>
+            <field name="has_quality_manual" position="after">
+                <field name="manual_sincronizado" string="Manual sincronizado"
+                       widget="boolean_toggle" readonly="1" optional="show"/>
+                <field name="manual_sync_date" string="Sincronizado el" optional="hide"/>
+                <field name="manual_sync_url" widget="url" string="Manual en la tienda"
+                       optional="hide"/>
+                <field name="manual_sync_productos" string="Fichas actualizadas"
+                       optional="hide"/>
+                <field name="manual_sync_msg" string="Resultado del manual" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Filtros -->
+    <record id="view_woo_product_mapping_search_manual" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.search.manual</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="inherit_id" ref="amunet_woocommerce.view_woo_product_mapping_search"/>
+        <field name="arch" type="xml">
+            <search position="inside">
+                <separator/>
+                <filter name="filter_manual_disponible" string="Con manual disponible"
+                        domain="[('has_quality_manual', '=', True)]"/>
+                <filter name="filter_manual_por_publicar" string="Manual por sincronizar"
+                        domain="['&amp;', ('has_quality_manual', '=', True), ('manual_sincronizado', '=', False)]"/>
+                <filter name="filter_manual_sincronizado" string="Manual sincronizado"
+                        domain="[('manual_sincronizado', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Ficha del mapeo -->
+    <record id="view_woo_product_mapping_form_manual" model="ir.ui.view">
+        <field name="name">amunet.woo.product.mapping.form.manual</field>
+        <field name="model">amunet.woo.product.mapping</field>
+        <field name="inherit_id" ref="amunet_woocommerce.view_woo_product_mapping_form"/>
+        <field name="arch" type="xml">
+            <sheet position="inside">
+                <group string="Manual del producto">
+                    <group>
+                        <field name="has_quality_manual" string="Manual disponible"
+                               readonly="1"/>
+                        <field name="manual_pdf_url" widget="url"
+                               string="Manual aprobado (Nextcloud)" readonly="1"/>
+                        <field name="manual_sync_archivo" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="manual_sincronizado" widget="boolean_toggle"
+                               readonly="1"/>
+                        <field name="manual_sync_url" widget="url" readonly="1"/>
+                        <field name="manual_sync_date" readonly="1"/>
+                        <field name="manual_sync_productos" readonly="1"/>
+                        <field name="manual_sync_msg" readonly="1"/>
+                    </group>
+                    <button name="action_sincronizar_manual" type="object"
+                            string="Sincronizar manual a la tienda"
+                            class="btn-primary"
+                            invisible="not has_quality_manual"/>
+                </group>
+            </sheet>
+        </field>
+    </record>
+
+</odoo>
