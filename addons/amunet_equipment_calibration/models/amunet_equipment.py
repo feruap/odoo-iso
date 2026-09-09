@@ -744,7 +744,10 @@ class AmunetEquipment(models.Model):
             op_procedures = self.procedure_ids
 
         # Para cada PNO, buscar usuarios con registro vigente
-        Registro = self.env['amunet.registro.capacitacion']
+        # sudo(): saber QUIEN esta autorizado para un equipo es una consulta
+        # del sistema, no navegacion del usuario. Sin esto, cualquiera que abra
+        # un equipo sin grupo de Competencias recibe un AccessError.
+        Registro = self.env['amunet.registro.capacitacion'].sudo()
         authorized = None
         for proc in op_procedures:
             regs = Registro.search([
