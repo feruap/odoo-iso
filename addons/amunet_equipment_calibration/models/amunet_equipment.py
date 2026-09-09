@@ -537,19 +537,11 @@ class AmunetEquipment(models.Model):
                 eq.calibration_work_status = 'no_required'
                 eq.calibration_next_step = 'Sin accion metrologica'
             elif not eq.next_calibration_date:
-                if in_grace:
-                    eq.calibration_work_status = 'due_soon'
-                    eq.calibration_next_step = f'Sin certificado — cargar antes del {grace_deadline} para no bloquear'
-                else:
-                    eq.calibration_work_status = 'missing'
-                    eq.calibration_next_step = 'Registrar certificado o reconciliar FVA'
+                eq.calibration_work_status = 'missing'
+                eq.calibration_next_step = 'Sin certificado — cargar conforme al programa de calibración'
             elif eq.next_calibration_date < today:
-                if in_grace:
-                    eq.calibration_work_status = 'due_soon'
-                    eq.calibration_next_step = f'Calibracion vencida — cargar antes del {grace_deadline} para no bloquear'
-                else:
-                    eq.calibration_work_status = 'expired'
-                    eq.calibration_next_step = 'Bloquear equipo y cargar calibracion vigente'
+                eq.calibration_work_status = 'expired'
+                eq.calibration_next_step = 'Certificado por renovar — gestionar conforme al programa de calibración'
             elif eq.next_calibration_date <= warning_limit:
                 eq.calibration_work_status = 'due_soon'
                 eq.calibration_next_step = 'Programar calibracion antes del vencimiento'
@@ -599,48 +591,28 @@ class AmunetEquipment(models.Model):
 
     @api.constrains('state', 'next_calibration_date', 'calibration_required')
     def _check_calibration_validity(self):
-        """Validación en tiempo real (si alguien intenta activar un equipo vencido)."""
-        Expediente = self.env['amunet.equipment.expediente']
-        today = date.today()
-        grace_deadline = self._calibration_grace_deadline()
-        in_grace = bool(grace_deadline and today <= grace_deadline)
-        for equipment in self:
-            if equipment.state == 'active':
-                if not Expediente.search_count([('equipment_id', '=', equipment.id)]):
-                    raise ValidationError(
-                        f"El equipo '{equipment.name}' no puede activarse porque "
-                        f"no tiene un expediente de calificación registrado."
-                    )
-                if (not in_grace
-                        and equipment.calibration_required
-                        and equipment.next_calibration_date
-                        and equipment.next_calibration_date < today):
-                    raise ValidationError(
-                        f"El equipo '{equipment.name}' no puede estar 'Activo' "
-                        f"porque su calibración venció el {equipment.next_calibration_date}."
-                    )
+        """El estado del equipo lo gestiona el programa de calibración (FVA-001).
+        No se bloquea automáticamente por fechas de certificado."""
+        pass
 
     @api.model
     def _cron_check_calibration_status(self):
-        """CRON Job diario para buscar equipos Vencidos y forzarlos a Fuera de Servicio."""
+        """Revisa equipos con certificado por renovar e informa; el estado lo gestiona
+        el programa de calibración (FVA-001), no se modifica automáticamente."""
         today = date.today()
-        grace_deadline = self._calibration_grace_deadline()
-        if grace_deadline and today <= grace_deadline:
-            return
-
-        expired_equipments = self.search([
+        por_renovar = self.search([
             ('state', '=', 'active'),
             ('calibration_required', '=', True),
             ('next_calibration_date', '!=', False),
-            ('next_calibration_date', '<', today)
+            ('next_calibration_date', '<', today),
         ])
-
-        for eq in expired_equipments:
-            eq.write({'state': 'out_of_service'})
-            eq.message_post(body=(
-                f"El sistema ha cambiado automáticamente el estado a 'Fuera de Servicio'. "
-                f"Motivo: La calibración caducó el {eq.next_calibration_date}."
-            ))
+        if por_renovar:
+            _logger.info(
+                'amunet_equipment_calibration: %d equipo(s) con certificado por renovar '
+                '(conforme a programa FVA-001): %s',
+                len(por_renovar),
+                ', '.join(por_renovar.mapped('name')),
+            )
 
     @api.model
     def _cron_send_calibration_reminders(self):
@@ -744,7 +716,10 @@ class AmunetEquipment(models.Model):
             op_procedures = self.procedure_ids
 
         # Para cada PNO, buscar usuarios con registro vigente
-        Registro = self.env['amunet.registro.capacitacion']
+        # sudo(): saber QUIEN esta autorizado para un equipo es una consulta
+        # del sistema, no navegacion del usuario. Sin esto, cualquiera que abra
+        # un equipo sin grupo de Competencias recibe un AccessError.
+        Registro = self.env['amunet.registro.capacitacion'].sudo()
         authorized = None
         for proc in op_procedures:
             regs = Registro.search([

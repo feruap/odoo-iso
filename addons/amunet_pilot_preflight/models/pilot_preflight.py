@@ -789,7 +789,14 @@ class AmunetPilotPreflight(models.Model):
     def _check_training_for_user(self, rec, label, user):
         if not user:
             return
-        records = self.env['amunet.registro.capacitacion'].search([
+        # sudo(): el preflight es una verificacion INTERNA del sistema. Quien
+        # confirma una orden -- un fabricante de soluciones, un operador -- no
+        # tiene por que poder navegar los registros de capacitacion de nadie:
+        # solo se evalua si EL tiene capacitacion vigente. Sin sudo, el preflight
+        # revienta con AccessError y bloquea a quien no este en un grupo de
+        # Competencias. Reportado con Julissa el 09-sep-2026.
+        # Mismo criterio que amunet.matriz.competencias.verificar_competencia.
+        records = self.env['amunet.registro.capacitacion'].sudo().search([
             ('user_id', '=', user.id),
             ('state', 'in', ('vigente', 'proxima')),
         ], limit=5)
@@ -803,7 +810,7 @@ class AmunetPilotPreflight(models.Model):
                 sequence=600,
             )
         else:
-            expired = self.env['amunet.registro.capacitacion'].search([
+            expired = self.env['amunet.registro.capacitacion'].sudo().search([
                 ('user_id', '=', user.id),
             ], limit=1)
             rec._add_line(
