@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 class AmunetQualityCheck(models.Model):
     _inherit = 'amunet.quality.check'
@@ -50,11 +50,32 @@ class AmunetQualityCheck(models.Model):
 
                 # "y cuando sea "finalizado" este en produccion sera "Hecho""
                 elif new_state == 'done':
-                    if check.amunet_production_id.quality_analysis_status != 'approved':
-                        check.amunet_production_id.quality_analysis_status = 'approved'
-                        
-                    # Validar de forma bruta primero que el botón sea invocable
-                    if check.amunet_production_id.state not in ['done', 'cancel']:
-                        check.amunet_production_id.button_mark_done()
+                    if mo.quality_analysis_status != 'approved':
+                        mo.quality_analysis_status = 'approved'
+
+                    # LIBERAR el lote como aprobado NO es CERRAR la orden: son
+                    # dos actos distintos (Mery, 09-sep-2026). Si la orden trae
+                    # un candado que le impide cerrarse -- hoy, el lote dado de
+                    # alta a mano en inventario --, el analisis se finaliza
+                    # igual y la orden se queda abierta hasta que Almacen y
+                    # Calidad decidan que registro vale.
+                    #
+                    # Antes, ese candado reventaba la FIRMA del analisis: la
+                    # Responsable Sanitario no podia liberar producto que ya
+                    # estaba aprobado, por un tema de inventario que no le toca
+                    # resolver a ella.
+                    if mo.state not in ('done', 'cancel'):
+                        if mo.amunet_alta_manual_qty:
+                            mo.sudo().message_post(body=_(
+                                'Análisis <b>%(qc)s</b> finalizado: el lote queda '
+                                '<b>APROBADO</b>.<br/>La orden <b>no se cerró</b> '
+                                'porque tiene %(qty)s pieza(s) dadas de alta a mano '
+                                'en el inventario. Cerrarla ahora duplicaría el '
+                                'producto. Almacén y Calidad deben decidir cuál '
+                                'registro vale: retirar el alta manual y cerrar '
+                                'normal, o cerrar la orden en cero.'
+                            ) % {'qc': check.name, 'qty': mo.amunet_alta_manual_qty})
+                        else:
+                            mo.button_mark_done()
                         
         return res
