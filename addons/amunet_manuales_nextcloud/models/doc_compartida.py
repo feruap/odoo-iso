@@ -3,6 +3,8 @@ import base64
 import logging
 from urllib.parse import quote
 
+from markupsafe import Markup
+
 from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
@@ -145,14 +147,18 @@ class DocCompartidaNextcloud(models.Model):
                     'amunet_manuales_nextcloud: subido %s → HTTP %s; binario liberado',
                     filename, resp.status_code,
                 )
-                # Propuesta 1: refrescar al instante "Tiene manual" del tablero Woo.
+                # Refrescar al instante "Manual disponible" del tablero Woo.
                 if 'amunet.woo.product.mapping' in self.env:
                     try:
                         self.env['amunet.woo.product.mapping'].sudo().action_refresh_manuals()
                     except Exception:
                         _logger.warning(
                             'amunet_manuales_nextcloud: no se pudo refrescar '
-                            '"Tiene manual" del tablero Woo tras subir %s', filename)
+                            '"Manual disponible" del tablero Woo tras subir %s', filename)
+                    # Y publicarlo en la tienda. Solo al APROBAR: en un reemplazo el
+                    # PDF nuevo regresa a "listo para aprobar" y no debe salir aun.
+                    if not es_reemplazo:
+                        self._publicar_manual_en_tienda(filename)
             else:
                 self.message_post(
                     body='<p><b>Nextcloud [Error]:</b> No se pudo subir <b>%s</b>. '
@@ -165,6 +171,63 @@ class DocCompartidaNextcloud(models.Model):
             )
             self.message_post(
                 body='<p><b>Nextcloud [Error]:</b> %s. Contacta a desarrollo.</p>' % str(exc)
+            )
+
+    def _publicar_manual_en_tienda(self, filename):
+        """Publica en WooCommerce el manual recien aprobado.
+
+        Se llama sola al aprobar. Nunca tumba la aprobacion: si la tienda no
+        responde o el candado esta apagado, lo deja anotado en la conversacion
+        del manual y el barrido diario lo reintenta.
+        """
+        self.ensure_one()
+        base = (filename or '').rsplit('.', 1)[0]
+        clave = base.split('_')[0].strip().upper()
+        if not clave:
+            return
+        Mapeo = self.env['amunet.woo.product.mapping'].sudo()
+        mapeos = Mapeo.search([('default_code', '=', clave)])
+        if not mapeos:
+            self.message_post(
+                body=Markup('<p><b>Tienda:</b> no hay ning\u00fan producto de la tienda '
+                     'mapeado a la clave <b>%s</b>, as\u00ed que el manual no se '
+                     'public\u00f3. Rev\u00edsalo en Mapeos y consulta de productos.</p>'
+                     % clave),
+                message_type='notification',
+                subtype_xmlid='mail.mt_note',
+            )
+            return
+        try:
+            mapeos.action_sincronizar_manual()
+        except Exception as exc:  # noqa: BLE001
+            _logger.warning(
+                'amunet_manuales_nextcloud: no se pudo publicar %s en la tienda: %s',
+                filename, exc)
+            self.message_post(
+                body=Markup('<p><b>Tienda [pendiente]:</b> el manual no se pudo publicar '
+                            'todav\u00eda (%s). El barrido diario lo reintenta; tambi\u00e9n se '
+                            'puede correr a mano desde Mapeos y consulta de productos.</p>')
+                     % str(exc)[:200],
+                message_type='notification',
+                subtype_xmlid='mail.mt_note',
+            )
+            return
+        publicados = mapeos.filtered(lambda m: m.manual_sincronizado)
+        if publicados:
+            self.message_post(
+                body=Markup('<p><b>Tienda [OK]:</b> el manual ya se descarga desde la p\u00e1gina: '
+                     '<a href="%s" target="_blank">%s</a> (%d ficha(s) de producto).</p>'
+                     % (publicados[0].manual_sync_url, publicados[0].manual_sync_url,
+                        len(publicados))),
+                message_type='notification',
+                subtype_xmlid='mail.mt_note',
+            )
+        else:
+            self.message_post(
+                body=Markup('<p><b>Tienda [pendiente]:</b> la publicaci\u00f3n no qued\u00f3: %s</p>')
+                     % (mapeos[0].manual_sync_msg or 'sin detalle'),
+                message_type='notification',
+                subtype_xmlid='mail.mt_note',
             )
 
     def _resetear_a_por_aprobar(self):
