@@ -36,7 +36,7 @@
                             </tr>
                             <tr>
                                 <td style="padding:4px 6px;font-size:10px;">
-                                    <strong>Versión:</strong> <t t-esc="ver.version"/> &nbsp;|&nbsp;
+                                    <strong>Versión:</strong> <t t-esc="ver.version"/> &#160;|&#160;
                                     <strong>Fecha de emisión:</strong>
                                     <span t-if="ver.fecha_emision" t-esc="ver.fecha_emision.strftime('%d/%m/%Y')"/>
                                     <span t-else="">—</span>
@@ -52,11 +52,11 @@
                                     <strong>Elaboró:</strong>
                                     <span t-if="ver.elaboro_id" t-esc="ver.elaboro_id.name"/>
                                     <span t-else="">—</span>
-                                    &nbsp;|&nbsp;
+                                    &#160;|&#160;
                                     <strong>Revisó:</strong>
                                     <span t-if="ver.reviso_id" t-esc="ver.reviso_id.name"/>
                                     <span t-else="">—</span>
-                                    &nbsp;|&nbsp;
+                                    &#160;|&#160;
                                     <strong>Aprobó:</strong>
                                     <span t-if="ver.aprobado_por_id" t-esc="ver.aprobado_por_id.name"/>
                                     <span t-else="">—</span>
