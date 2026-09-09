@@ -95,6 +95,39 @@ class AmunetQualitySignaturePin(models.Model):
         """Hashea y guarda el PIN."""
         self.pin = self._hash_pin_if_needed(plain_pin)
 
+    @api.model
+    def amunet_validar_credencial(self, valor):
+        """Acepta el PIN de firma O la contrasena del usuario en sesion.
+
+        Asi es como firma el resto del sistema (ver el asistente de firma
+        generica). Habia flujos que aceptaban UNICAMENTE el PIN, y la gente que
+        venia escribiendo su contrasena -- que le funciona en todas las demas
+        actividades -- recibia "El PIN no es correcto" sin entender por que.
+        Reportado por Almacen en la Entrega de PT el 09-sep-2026.
+        """
+        if not valor:
+            return False
+        user = self.env.user
+        registro = self.sudo().search([('user_id', '=', user.id)], limit=1)
+        if registro and registro.check_pin(valor):
+            return True
+        try:
+            uid = self.env['res.users'].authenticate(
+                {
+                    'type': 'password',
+                    'db': self.env.cr.dbname,
+                    'login': user.login,
+                    'password': valor,
+                },
+                {'interactive': True},
+            )
+            return bool(uid)
+        except Exception:
+            _logger.info(
+                'Credencial de firma no valida para user=%s', user.login,
+                exc_info=True)
+            return False
+
     def check_pin(self, plain_pin):
         """Verifica el PIN contra el hash con fallback a texto plano para migracion."""
         if not self.pin or not plain_pin:

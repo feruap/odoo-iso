@@ -153,14 +153,17 @@ class AmunetEntregaPtWizard(models.TransientModel):
         self.ensure_one()
         if not self.pin:
             raise UserError(_('Escribe tu PIN para firmar la entrega.'))
-        pin_record = self.env['amunet.quality.signature.pin'].sudo().search(
-            [('user_id', '=', self.env.user.id)], limit=1)
-        if not pin_record:
+        # Se acepta PIN o contrasena, igual que el resto de las firmas del
+        # sistema. Antes aqui solo valia el PIN y quien escribia su contrasena
+        # -- que le funciona en todas las demas actividades -- recibia "El PIN
+        # no es correcto" sin pista de que hacer (Almacen, 09-sep-2026).
+        if not self.env['amunet.quality.signature.pin'].amunet_validar_credencial(
+                self.pin):
             raise UserError(_(
-                'No tienes PIN de firma configurado.\n\n'
-                'Puedes crearlo en tu perfil, en "Mi firma electronica".'))
-        if not pin_record.check_pin(self.pin):
-            raise UserError(_('El PIN no es correcto.'))
+                'La firma no coincide.\n\n'
+                'Puedes usar tu PIN de firma o la contraseña con la que entras '
+                'al sistema. Si no recuerdas tu PIN, lo puedes cambiar en tu '
+                'perfil, en "Mi firma electrónica".'))
 
     def _validar_gracia_liberacion(self):
         """Vencida la gracia, no se entrega material que Calidad no aprobo.

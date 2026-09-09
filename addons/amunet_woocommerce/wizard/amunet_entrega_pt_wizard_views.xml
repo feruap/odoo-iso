@@ -64,8 +64,8 @@
                 </group>
 
                 <group string="Firma">
-                    <field name="pin" password="True"
-                           placeholder="Escribe tu PIN"/>
+                    <field name="pin" password="True" string="PIN o contraseña"
+                           placeholder="Tu PIN de firma o tu contraseña"/>
                 </group>
                 <div class="text-muted">
                     El PIN confirma que eres tú: la entrega queda a nombre del
