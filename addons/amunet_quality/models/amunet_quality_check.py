@@ -2162,14 +2162,70 @@ class AmunetQualityCheck(models.Model):
 
         return from_uom._compute_quantity(qty, product_uom)
 
+    def _amunet_almacen_del_analisis(self):
+        """El almacen al que pertenece el producto de este analisis.
+
+        Se busca en tres pasos, del dato mas confiable al mas general:
+        la orden de fabricacion que lo genero, donde esta fisicamente el lote,
+        y la recepcion de la que vino.
+        """
+        self.ensure_one()
+
+        # 1. Orden de fabricacion. El campo lo agrega amunet_production, que NO
+        #    es dependencia de este modulo: se consulta con guarda.
+        if 'amunet_production_id' in self._fields:
+            mo = self.amunet_production_id
+            if mo and mo.location_dest_id and mo.location_dest_id.warehouse_id:
+                return mo.location_dest_id.warehouse_id
+
+        # 2. Donde esta el lote hoy
+        if self.lot_id and self.product_id:
+            quant = self.env['stock.quant'].sudo().search([
+                ('lot_id', '=', self.lot_id.id),
+                ('product_id', '=', self.product_id.id),
+                ('quantity', '>', 0),
+                ('location_id.usage', '=', 'internal'),
+            ], limit=1)
+            if quant and quant.location_id.warehouse_id:
+                return quant.location_id.warehouse_id
+
+        # 3. La recepcion de la que vino
+        if self.picking_id and self.picking_id.location_dest_id.warehouse_id:
+            return self.picking_id.location_dest_id.warehouse_id
+
+        return False
+
     def _get_quality_control_location(self):
         """
-        Obtiene la ubicación de Control de Calidad.
+        Obtiene la ubicación de Control de Calidad DEL ALMACEN del producto.
 
-        Busca una ubicación con 'control' y 'calidad' en el nombre,
-        o la primera ubicación interna de la compañía.
+        Antes se tomaba la PRIMERA ubicacion con "calidad" en el nombre, sin
+        mirar ni el producto ni el almacen. Amunet tiene CINCO almacenes con su
+        propia ubicacion de Control de calidad, asi que el muestreo de un
+        producto TERMINADO acababa en la ubicacion de MATERIA PRIMA. Y como la
+        liberacion deriva su destino del almacen de origen, el producto
+        terminado terminaba aterrizando en AMP/Existencias en vez de APT.
+        Detectado con ToRCH QC/2026/00153 el 09-sep-2026.
+
+        Si no se puede determinar el almacen, se conserva el comportamiento
+        anterior: es preferible la ubicacion de siempre que ninguna.
         """
         Location = self.env['stock.location']
+
+        # Preferencia: la ubicacion de calidad del almacen que corresponde
+        almacen = self._amunet_almacen_del_analisis()
+        if almacen and almacen.view_location_id:
+            qc_almacen = Location.search([
+                ('usage', '=', 'internal'),
+                ('company_id', '=', self.company_id.id),
+                ('id', 'child_of', almacen.view_location_id.id),
+                '|', '|',
+                ('name', 'ilike', 'control calidad'),
+                ('name', 'ilike', 'quality control'),
+                ('name', 'ilike', 'calidad'),
+            ], limit=1)
+            if qc_almacen:
+                return qc_almacen
 
         # Buscar ubicación de QC existente (tipo 'internal')
         qc_location = Location.search([
