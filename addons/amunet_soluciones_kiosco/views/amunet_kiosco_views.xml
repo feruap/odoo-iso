@@ -155,6 +155,27 @@
          rechazar: confunde y parece un hueco.
          Se hereda de la vista de amunet_process_inspection, que es la que
          declara el campo; la vista base de mrp NO lo tiene. -->
+    <!-- QUIEN FABRICA no se cambia a mano en el kiosco.
+         El Responsable de una orden de solucion es la persona que la elabora,
+         y en la tableta esa persona se identifica con su PIN: el flujo del
+         kiosco lo escribe solo (_amunet_set_responsable_solucion, que va en
+         sudo, asi que un readonly en la vista no lo estorba).
+         Sin esto, con la orden en borrador el campo quedaba editable desde la
+         tableta y cualquiera podia poner el nombre de otra persona como quien
+         fabrico la solucion. En un registro regulado eso no puede depender de
+         la buena fe: si el PIN es la firma, el campo no se toca a mano.
+         Pedido por Mery, 09-sep-2026. -->
+    <record id="view_mrp_production_kiosco_responsable" model="ir.ui.view">
+        <field name="name">mrp.production.form.kiosco.responsable</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="amunet_production.view_mrp_production_form_amunet_inherit"/>
+        <field name="arch" type="xml">
+            <field name="user_id" position="attributes">
+                <attribute name="readonly">kiosco_es_dispositivo or amunet_user_is_warehouse or (state != 'draft' and not amunet_user_is_mery)</attribute>
+            </field>
+        </field>
+    </record>
+
     <record id="view_mrp_production_kiosco_ruta" model="ir.ui.view">
         <field name="name">mrp.production.form.kiosco.ruta</field>
         <field name="model">mrp.production</field>
