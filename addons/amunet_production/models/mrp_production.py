@@ -246,6 +246,43 @@ class MrpProduction(models.Model):
         })
         return True
 
+    def action_cancel(self):
+        """No se cancela una orden cuyo producto YA existe en el almacen.
+
+        El motor de Odoo solo deja la orden en 'cancelada' si TODOS sus
+        movimientos de terminado quedan cancelados. Si el producto ya se aplico
+        al almacen -- lo que desde el ingreso al resguardar ocurre de forma
+        rutinaria -- ese movimiento esta en 'done', el calculo del estado cae en
+        la rama siguiente y la orden termina marcada como HECHA.
+
+        Una orden cancelada que dice "hecha" es un registro falso, y deja
+        producto en el almacen sin documento que lo respalde. Se bloquea antes
+        de que pase, con el camino correcto en el mensaje: el producto existe,
+        asi que lo que procede es darlo de baja, no borrar la orden que lo
+        documenta.
+
+        Detectado el 09-sep-2026 al probar el rediseno del flujo.
+        """
+        for mo in self:
+            if mo.state in ('done', 'cancel'):
+                continue
+            ya_producido = mo.move_finished_ids.filtered(
+                lambda m: m.product_id == mo.product_id and m.state == 'done')
+            if ya_producido:
+                cant = sum(ya_producido.mapped('quantity'))
+                raise UserError(_(
+                    'Esta orden no se puede cancelar: ya tiene %(qty)s pieza(s) '
+                    'de producto terminado ingresadas al almacén.\n\n'
+                    'El producto existe físicamente, así que cancelar la orden '
+                    'dejaría el registro en falso (el sistema la marcaría como '
+                    '"Hecha", no como "Cancelada") y las piezas se quedarían '
+                    'sin el documento que las respalda.\n\n'
+                    'Si el producto no sirve, el camino es darlo de baja: que '
+                    'Calidad lo rechace y se registre la baja del lote, que sí '
+                    'deja constancia de qué pasó y por qué.'
+                ) % {'qty': cant})
+        return super().action_cancel()
+
     def action_amunet_ingresar_resguardo(self):
         """Boton manual, para ordenes cuyo resguardo se hizo antes de que
         existiera el ingreso automatico."""
