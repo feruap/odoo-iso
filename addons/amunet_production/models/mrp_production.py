@@ -179,6 +179,190 @@ class MrpProduction(models.Model):
                         and m.state not in ('done', 'cancel')))
             mo.amunet_resguardo_pendiente = pendiente
 
+    # ------------------------------------------------------------------
+    # Etapa 2: el material se descuenta al conciliar, no al cerrar
+    # ------------------------------------------------------------------
+    amunet_consumo_al_conciliar = fields.Boolean(
+        string='Consumo al conciliar', default=True, copy=False, readonly=True,
+        help='Ordenes con esta marca mueven el material cuando Produccion lo '
+             'recibe (a Preproduccion) y lo descuentan cuando Almacen firma la '
+             'conciliacion. Las ordenes anteriores al cambio quedan sin la '
+             'marca y terminan con el comportamiento viejo: todo el inventario '
+             'se mueve al cerrar.')
+
+    def _amunet_loc_preproduccion(self):
+        """Ubicacion de piso: material surtido que todavia no se consume.
+
+        Se lee de la configuracion del almacen (amunet_loc_piso_id), NO por
+        nombre. Primero se intento buscar una ubicacion llamada
+        "Preproduccion": existen, pero estan ARCHIVADAS -- las crea Odoo al
+        configurar el almacen y quedaron sin uso, asi que la busqueda no
+        devolvia nada y el material nunca se movia. Una ubicacion declarada en
+        el almacen es explicita, se ve en la configuracion y no depende de como
+        alguien haya escrito un nombre.
+        """
+        self.ensure_one()
+        wh = self.location_src_id.warehouse_id
+        if not wh:
+            return False
+        return wh.sudo().amunet_loc_piso_id or False
+
+    def _amunet_lote_del_move(self, move):
+        """El lote realmente reservado/surtido de un componente.
+
+        amunet_lot_id es el que captura el flujo de surtido, pero no siempre
+        esta lleno: en ordenes donde el lote lo puso la reserva, vive en las
+        lineas del movimiento. Sin lote, el traslado revienta con "You need to
+        supply a Lot/Serial Number".
+        """
+        if move.amunet_lot_id:
+            return move.amunet_lot_id
+        lotes = move.move_line_ids.mapped('lot_id')
+        return lotes[0] if lotes else False
+
+    def _amunet_picking_type_interno(self):
+        self.ensure_one()
+        return self.env['stock.picking.type'].sudo().search([
+            ('code', '=', 'internal'),
+            ('company_id', '=', self.company_id.id),
+        ], limit=1)
+
+    def _amunet_mover_material(self, moves_qty, origen, destino, motivo):
+        """Crea y valida UN traslado interno con varias lineas.
+
+        moves_qty: lista de (stock.move de la orden, cantidad, lote o False).
+        Devuelve el picking creado, o False si no habia nada que mover.
+        """
+        self.ensure_one()
+        lineas = [(m, q, l) for (m, q, l) in moves_qty if q and q > 0]
+        if not lineas or not origen or not destino:
+            return False
+        tipo = self._amunet_picking_type_interno()
+        if not tipo:
+            raise UserError(_(
+                'No hay un tipo de operacion interna configurado; no se puede '
+                'mover el material.'))
+        picking = self.env['stock.picking'].sudo().create({
+            'picking_type_id': tipo.id,
+            'location_id': origen.id,
+            'location_dest_id': destino.id,
+            'origin': motivo,
+            'company_id': self.company_id.id,
+            'move_ids': [(0, 0, {
+                'product_id': m.product_id.id,
+                'product_uom_qty': q,
+                'product_uom': m.product_uom.id,
+                'location_id': origen.id,
+                'location_dest_id': destino.id,
+                'company_id': self.company_id.id,
+            }) for (m, q, l) in lineas],
+        })
+        picking.action_confirm()
+        picking.action_assign()
+        # Fijar cantidad y lote linea por linea: la reserva automatica puede
+        # tomar otro lote, y en un sistema con trazabilidad eso no es un detalle.
+        for mv, (m, q, lote) in zip(picking.move_ids, lineas):
+            if lote:
+                # Lote explicito: se fuerza. La reserva automatica puede tomar
+                # otro lote y en un sistema con trazabilidad eso no es detalle.
+                mv.move_line_ids.sudo().unlink()
+                self.env['stock.move.line'].sudo().create({
+                    'move_id': mv.id,
+                    'product_id': mv.product_id.id,
+                    'product_uom_id': mv.product_uom.id,
+                    'lot_id': lote.id,
+                    'quantity': q,
+                    'location_id': origen.id,
+                    'location_dest_id': destino.id,
+                })
+            else:
+                mv.quantity = q
+            mv.picked = True
+        picking.button_validate()
+        return picking
+
+    def _amunet_surtido_a_piso(self):
+        """El material surtido pasa al piso cuando Produccion lo recibe.
+
+        NO es un consumo: sigue siendo inventario, solo que en la ubicacion
+        donde de verdad esta. Antes el sistema no lo reflejaba hasta el cierre,
+        asi que Almacen contaba en su anaquel material que ya no tenia.
+        """
+        self.ensure_one()
+        if not self.amunet_consumo_al_conciliar:
+            return False
+        piso = self._amunet_loc_preproduccion()
+        if not piso:
+            self.sudo().message_post(body=_(
+                'El material surtido NO se movio al piso: no se encontró la '
+                'ubicación de Preproducción del almacén. Avisar a Desarrollo.'))
+            return False
+        pendientes = []
+        sin_lote = []
+        for m in self.move_raw_ids:
+            if m.state in ('done', 'cancel'):
+                continue
+            if m.location_id.id == piso.id:
+                continue      # ya esta en el piso
+            qty = m.amunet_qty_supplied or 0.0
+            if qty <= 0:
+                continue
+            lote = self._amunet_lote_del_move(m)
+            if m.product_id.tracking != 'none' and not lote:
+                # Componente rastreable sin lote: el traslado reventaria y
+                # dejaria a Produccion sin poder firmar la recepcion por un
+                # dato que no le toca capturar. Se salta y se avisa.
+                sin_lote.append(m.product_id.display_name)
+                continue
+            pendientes.append((m, qty, lote))
+        if sin_lote:
+            self.sudo().message_post(body=_(
+                'Estos materiales NO se movieron al piso porque no tienen lote '
+                'asignado: %s.<br/>Se quedan contados en el almacén hasta que '
+                'se capture el lote.'
+            ) % ', '.join(sin_lote))
+        if not pendientes:
+            return False
+        origen = pendientes[0][0].location_id
+        picking = self._amunet_mover_material(
+            pendientes, origen, piso,
+            _('Surtido a piso: %s') % self.name)
+        if not picking:
+            return False
+        # El consumo debe salir del piso, no del anaquel
+        for (m, q, l) in pendientes:
+            m.sudo()._do_unreserve()
+            m.sudo().location_id = piso.id
+            m.sudo()._action_assign()
+        self.sudo().message_post(body=_(
+            'Material surtido trasladado a <b>%(piso)s</b> (%(doc)s). Sigue '
+            'siendo inventario: se descontará cuando Almacén firme la '
+            'conciliación.'
+        ) % {'piso': piso.complete_name, 'doc': picking.name})
+        return picking
+
+    def _amunet_devolver_piso_a_almacen(self, motivo=None):
+        """Regresa al anaquel lo que quedo en el piso sin consumirse."""
+        self.ensure_one()
+        piso = self._amunet_loc_preproduccion()
+        if not piso:
+            return False
+        destino = self.location_src_id
+        if not destino or destino.id == piso.id:
+            return False
+        pendientes = []
+        for m in self.move_raw_ids:
+            if m.state in ('done', 'cancel'):
+                continue
+            sobrante = (m.amunet_qty_supplied or 0.0) - (m.amunet_qty_used or 0.0)
+            if sobrante > 0.000001:
+                pendientes.append((m, sobrante, self._amunet_lote_del_move(m)))
+        if not pendientes:
+            return False
+        return self._amunet_mover_material(
+            pendientes, piso, destino,
+            motivo or (_('Devolución de sobrante: %s') % self.name))
+
     def _amunet_ingresar_resguardo_pt(self, qty=None, origen=None,
                                       silencioso=False):
         """Aplica la ENTRADA del producto terminado al almacen de resguardo.
@@ -245,43 +429,6 @@ class MrpProduction(models.Model):
             'orig': ' (%s)' % origen if origen else '',
         })
         return True
-
-    def action_cancel(self):
-        """No se cancela una orden cuyo producto YA existe en el almacen.
-
-        El motor de Odoo solo deja la orden en 'cancelada' si TODOS sus
-        movimientos de terminado quedan cancelados. Si el producto ya se aplico
-        al almacen -- lo que desde el ingreso al resguardar ocurre de forma
-        rutinaria -- ese movimiento esta en 'done', el calculo del estado cae en
-        la rama siguiente y la orden termina marcada como HECHA.
-
-        Una orden cancelada que dice "hecha" es un registro falso, y deja
-        producto en el almacen sin documento que lo respalde. Se bloquea antes
-        de que pase, con el camino correcto en el mensaje: el producto existe,
-        asi que lo que procede es darlo de baja, no borrar la orden que lo
-        documenta.
-
-        Detectado el 09-sep-2026 al probar el rediseno del flujo.
-        """
-        for mo in self:
-            if mo.state in ('done', 'cancel'):
-                continue
-            ya_producido = mo.move_finished_ids.filtered(
-                lambda m: m.product_id == mo.product_id and m.state == 'done')
-            if ya_producido:
-                cant = sum(ya_producido.mapped('quantity'))
-                raise UserError(_(
-                    'Esta orden no se puede cancelar: ya tiene %(qty)s pieza(s) '
-                    'de producto terminado ingresadas al almacén.\n\n'
-                    'El producto existe físicamente, así que cancelar la orden '
-                    'dejaría el registro en falso (el sistema la marcaría como '
-                    '"Hecha", no como "Cancelada") y las piezas se quedarían '
-                    'sin el documento que las respalda.\n\n'
-                    'Si el producto no sirve, el camino es darlo de baja: que '
-                    'Calidad lo rechace y se registre la baja del lote, que sí '
-                    'deja constancia de qué pasó y por qué.'
-                ) % {'qty': cant})
-        return super().action_cancel()
 
     def action_amunet_ingresar_resguardo(self):
         """Boton manual, para ordenes cuyo resguardo se hizo antes de que
@@ -824,10 +971,158 @@ class MrpProduction(models.Model):
             msg += _('<br/>Sin sobrante. Falta confirmar la conciliación.')
         self.message_post(body=msg)
 
+    def _amunet_consumir_conciliado(self):
+        """Descuenta lo USADO y regresa el SOBRANTE al anaquel.
+
+        Este es el unico momento en que el material sale del inventario, y lo
+        dispara Almacen al firmar la conciliacion. Antes el descuento ocurria
+        como efecto colateral del cierre de la orden, que es un acto
+        administrativo: nadie firmaba el consumo.
+        """
+        self.ensure_one()
+        if not self.amunet_consumo_al_conciliar:
+            return False
+        piso = self._amunet_loc_preproduccion()
+        destino = self.location_src_id
+        moves = self.move_raw_ids.filtered(
+            lambda m: m.state not in ('done', 'cancel')
+            and (m.amunet_qty_supplied or 0) > 0)
+        if not moves:
+            return False
+        # El sobrante se calcula ANTES de consumir. Al aplicar el consumo los
+        # movimientos quedan en 'done' y el filtro de devolucion ya no los ve:
+        # probado sobre clon, el sobrante se quedaba varado en el piso.
+        sobrantes = []
+        for m in moves:
+            sob = (m.amunet_qty_supplied or 0.0) - (m.amunet_qty_used or 0.0)
+            if sob > 0.000001:
+                sobrantes.append((m, sob, self._amunet_lote_del_move(m)))
+        # 1. Consumir lo usado. cancel_backorder evita que quede un residual
+        #    vivo que el cierre pudiera volver a postear (lección de la etapa 1).
+        a_consumir = self.env['stock.move']
+        for m in moves:
+            usado = m.amunet_qty_used or 0.0
+            if usado <= 0:
+                continue
+            m.sudo().write({'quantity': usado, 'picked': True})
+            a_consumir |= m
+        if a_consumir:
+            a_consumir.sudo()._action_done(cancel_backorder=True)
+        # 2. Regresar el sobrante al anaquel, en el mismo acto: si se deja para
+        #    despues, nadie se acuerda y el material se queda en el piso.
+        devolucion = False
+        if sobrantes and piso and destino and piso.id != destino.id:
+            devolucion = self._amunet_mover_material(
+                sobrantes, piso, destino,
+                _('Devolución de sobrante: %s') % self.name)
+            if devolucion:
+                self.sudo().message_post(body=_(
+                    'Sobrante devuelto a <b>%(dest)s</b> (%(doc)s).'
+                ) % {'dest': destino.complete_name, 'doc': devolucion.name})
+        return {'consumidos': len(a_consumir), 'devolucion': devolucion}
+
+    def action_cancel(self):
+        """Cancelar una orden cuyo producto YA existe no es cancelar: es mentir.
+
+        El motor de Odoo solo deja la orden en 'cancelada' si TODOS sus
+        movimientos de terminado quedan cancelados. Si el producto ya se
+        aplico al almacen -- lo que desde la etapa 1 ocurre al resguardar --
+        ese movimiento esta en 'done', el calculo del estado cae en la rama
+        siguiente y la orden termina marcada como HECHA. Una orden cancelada
+        que dice "hecha" es un registro falso, y en un sistema regulado eso no
+        se negocia.
+
+        Se bloquea antes de que pase, con el camino correcto en el mensaje: el
+        producto existe fisicamente, asi que lo que procede es darlo de baja,
+        no borrar la orden que lo documenta.
+
+        Ademas, con el consumo al conciliar hay material en el piso que debe
+        regresar al almacen antes de cancelar.
+        """
+        for mo in self:
+            if mo.state in ('done', 'cancel'):
+                continue
+            ya_producido = mo.move_finished_ids.filtered(
+                lambda m: m.product_id == mo.product_id and m.state == 'done')
+            if ya_producido:
+                cant = sum(ya_producido.mapped('quantity'))
+                raise UserError(_(
+                    'Esta orden no se puede cancelar: ya tiene %(qty)s pieza(s) '
+                    'de producto terminado ingresadas al almacén.\n\n'
+                    'El producto existe físicamente, así que cancelar la orden '
+                    'dejaría el registro en falso (el sistema la marcaría como '
+                    '"Hecha", no como "Cancelada") y las piezas se quedarían '
+                    'sin el documento que las respalda.\n\n'
+                    'Si el producto no sirve, el camino es darlo de baja: que '
+                    'Calidad lo rechace y se registre la baja del lote, que sí '
+                    'deja constancia de qué pasó y por qué.'
+                ) % {'qty': cant})
+        con_piso = self.filtered(
+            lambda mo: mo.amunet_consumo_al_conciliar
+            and mo.state not in ('done', 'cancel'))
+        devoluciones = {}
+        for mo in con_piso:
+            # Se devuelve TODO lo surtido, no solo el sobrante: la orden se
+            # cancela, asi que no se consumio nada.
+            piso = mo._amunet_loc_preproduccion()
+            destino = mo.location_src_id
+            if not piso or not destino or piso.id == destino.id:
+                continue
+            pendientes = []
+            for m in mo.move_raw_ids:
+                if m.state in ('done', 'cancel'):
+                    continue
+                if m.location_id.id != piso.id:
+                    continue
+                qty = m.amunet_qty_supplied or 0.0
+                if qty > 0:
+                    pendientes.append((m, qty, mo._amunet_lote_del_move(m)))
+            if pendientes:
+                devoluciones[mo.id] = pendientes
+        # Devolver ANTES de cancelar: al cancelar, los movimientos quedan en
+        # 'cancel' y ya no se puede leer de donde salia el material.
+        for mo in con_piso:
+            pendientes = devoluciones.get(mo.id)
+            if not pendientes:
+                continue
+            piso = mo._amunet_loc_preproduccion()
+            picking = mo._amunet_mover_material(
+                pendientes, piso, mo.location_src_id,
+                _('Devolución por cancelación: %s') % mo.name)
+            if picking:
+                mo.sudo().message_post(body=_(
+                    'Orden cancelada: el material que estaba en el piso se '
+                    'devolvió al almacén (%s).') % picking.name)
+        return super().action_cancel()
+
+    def _amunet_resumen_conciliacion(self):
+        """Lo que se va a descontar y lo que regresa, por componente."""
+        self.ensure_one()
+        filas = []
+        for m in self.move_raw_ids:
+            if m.state == 'cancel' or not (m.amunet_qty_supplied or 0) > 0:
+                continue
+            surtido = m.amunet_qty_supplied or 0.0
+            usado = m.amunet_qty_used or 0.0
+            filas.append({
+                'producto': m.product_id.display_name,
+                'uom': m.product_uom.name or '',
+                'surtido': surtido,
+                'usado': usado,
+                'regresa': max(surtido - usado, 0.0),
+            })
+        return filas
+
     def action_complete_reconciliation(self):
         self.ensure_one()
         if self.reconciliation_state != 'validated':
             raise UserError(_('Solo se puede confirmar la conciliación cuando está validada.'))
+        # Confirmar la conciliacion DESCUENTA inventario y no se puede deshacer:
+        # se pide firma con el desglose a la vista. Sin firma no se descuenta.
+        if (self.amunet_consumo_al_conciliar
+                and not self.env.context.get('amunet_conciliacion_firmada')):
+            return self.env['amunet.conciliacion.firma.wizard'].abrir_para(self)
+        self._amunet_consumir_conciliado()
         self.write({
             'reconciliation_state': 'completed',
             'reconciliation_completed_by': self.env.user.id,

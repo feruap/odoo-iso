@@ -544,6 +544,10 @@ class MrpWorkorder(models.Model):
                 'Surtido recibido y aceptado por produccion (<b>%s</b>). '
                 'Liberando siguiente operacion.'
             )) % self.env.user.name)
+            # El material cambia de manos AQUI: sale del anaquel de Almacen y
+            # pasa al piso. No se consume todavia -- eso ocurre cuando Almacen
+            # firma la conciliacion.
+            self.production_id.sudo()._amunet_surtido_a_piso()
         return True
 
     def _has_supply_signature_values(self, vals):

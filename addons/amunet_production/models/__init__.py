@@ -9,3 +9,4 @@ from . import mrp_workcenter
 from . import mrp_workorder
 from . import amunet_lot_dossier
 from . import amunet_iso_dashboard
+from . import stock_warehouse
