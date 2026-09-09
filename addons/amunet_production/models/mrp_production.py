@@ -1550,6 +1550,35 @@ class MrpProduction(models.Model):
         categ = product.product_tmpl_id.categ_id.complete_name or ''
         return 'solucion' in categ.lower()
 
+    @api.model
+    def default_get(self, fields_list):
+        """Quien SOLO hace soluciones abre el formulario en Soluciones.
+
+        route_type nace con default='short' para todos. En la tableta del
+        kiosco ese campo esta en readonly (a proposito), asi que el operador
+        veia "Linea Corta" al abrir una orden nueva y no podia cambiarlo: la
+        pantalla parecia negarle hacer soluciones antes incluso de elegir el
+        producto. Reportado por Mery con foto, 09-sep-2026.
+
+        Solo aplica a quien esta en Fabricante de Soluciones y NO es operador
+        ni supervisor de produccion: esos son los usuarios que por regla de
+        registro unicamente pueden ver soluciones. A quien hace de todo
+        (Mery, Fernando, Alondra) no se le cambia nada.
+        """
+        res = super().default_get(fields_list)
+        if 'route_type' not in self._fields:
+            return res
+        if res.get('route_type') not in (None, False, '', 'short'):
+            return res
+        u = self.env.user
+        solo_soluciones = (
+            u.has_group('amunet_production.group_solution_maker')
+            and not u.has_group('amunet_production.group_production_operator')
+            and not u.has_group('amunet_production.group_production_supervisor'))
+        if solo_soluciones:
+            res['route_type'] = 'solution'
+        return res
+
     @api.onchange('product_id')
     def _amunet_onchange_product_route_type(self):
         """La LINEA DE PRODUCCION debe seguir al producto, no depender de que
@@ -1620,7 +1649,17 @@ class MrpProduction(models.Model):
             # queda como linea corta, se le aplica el flujo SGC equivocado y el
             # fabricante NO la ve (la regla de registro filtra por route_type).
             # Paso con AMP/MO/00028 en produccion.
-            if (vals.get('product_id') and not vals.get('route_type')
+            # Se corrige tambien cuando llega 'short' EXPLICITO, no solo
+            # cuando falta. La pantalla manda el valor del default aunque el
+            # onchange lo haya cambiado: en la tableta del kiosco el campo esta
+            # en readonly y el cliente enviaba 'short'. Con la regla de registro
+            # activa eso no quedaba en linea corta -- fallaba con AccessError al
+            # crear -- y la tableta no podia dar de alta ninguna orden.
+            # Reportado por Mery, 09-sep-2026.
+            # 'short' es el default del campo, asi que corregirlo no pisa una
+            # eleccion deliberada: nadie elige linea corta para una solucion.
+            if (vals.get('product_id')
+                    and vals.get('route_type') in (None, False, '', 'short')
                     and 'route_type' in self._fields):
                 prod_ruta = self.env['product.product'].browse(vals['product_id']).exists()
                 if prod_ruta and self._amunet_producto_es_solucion(prod_ruta):
