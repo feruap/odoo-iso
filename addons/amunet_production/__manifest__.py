@@ -8,7 +8,7 @@
 - 19.0.1.3.0: Reporte MO con trazabilidad ISO 13485 / Cofepris.""",
     'author': "Amunet",
     'category': 'Manufacturing',
-    'version': '19.0.1.41.1',
+    'version': '19.0.1.42.0',
     'depends': [
         'mrp',
         'stock',
@@ -25,6 +25,7 @@
         'security/ir.model.access.csv',
         'wizard/amunet_analysis_wizard_views.xml',
         'wizard/amunet_mo_baja_wizard_views.xml',
+        'wizard/amunet_conciliacion_firma_wizard_views.xml',
         'reports/production_label_report.xml',
         'reports/mrp_production_report.xml',
         'views/operator_workorder_views.xml',

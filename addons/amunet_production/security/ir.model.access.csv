@@ -18,3 +18,4 @@ access_mrp_production_supervisor_create,mrp.production supervisor create,mrp.mod
 access_mrp_production_solution_maker,mrp.production solution maker,mrp.model_mrp_production,amunet_production.group_solution_maker,1,1,1,0
 access_stock_move_solution_maker,stock.move solution maker,stock.model_stock_move,amunet_production.group_solution_maker,1,1,1,0
 access_stock_move_line_solution_maker,stock.move.line solution maker,stock.model_stock_move_line,amunet_production.group_solution_maker,1,1,1,1
+access_amunet_conciliacion_firma_wizard,amunet.conciliacion.firma.wizard,model_amunet_conciliacion_firma_wizard,base.group_user,1,1,1,1
