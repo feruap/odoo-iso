@@ -100,6 +100,26 @@ class AmunetWooProductMappingManual(models.Model):
         code = (self.product_id.default_code or '').strip().upper()
         return codes.get(code)
 
+    def _manual_aprobado_en_odoo(self):
+        """False si el manual de esta clave tiene una version esperando aprobacion.
+
+        Al reemplazar el PDF, el archivo de Nextcloud YA es el nuevo pero el
+        documento regresa a "listo para aprobar". Sin este candado el barrido
+        diario publicaria en la pagina un manual sin la firma de Calidad.
+        """
+        self.ensure_one()
+        if 'amunet.doc.compartida' not in self.env:
+            return True
+        fname = self._manual_archivo_nextcloud()
+        if not fname:
+            return True
+        docs = self.env['amunet.doc.compartida'].sudo().search(
+            [('manual_filename', '=', fname)])
+        if not docs:
+            # No lo lleva el modulo de manuales: no tenemos con que opinar.
+            return True
+        return any(d.state == 'aprobado' for d in docs)
+
     def _manual_descargar(self, fname):
         """Baja el PDF de la carpeta compartida de Nextcloud."""
         url, token, _share = self._manual_config()
@@ -161,6 +181,16 @@ class AmunetWooProductMappingManual(models.Model):
                     'manual_sync_msg': _('Sin manual aprobado en Nextcloud'),
                 })
                 detalle.append('%s: sin manual en Nextcloud' % (rec.woo_sku or rec.id))
+                continue
+            if not rec._manual_aprobado_en_odoo():
+                fallo += 1
+                rec.write({
+                    'manual_sincronizado': False,
+                    'manual_sync_msg': _(
+                        'Version nueva esperando aprobacion de Calidad'),
+                })
+                detalle.append('%s: manual sin aprobar, no se publica'
+                               % (rec.woo_sku or rec.id))
                 continue
             destino_id = rec.woo_parent_id or rec.woo_product_id
             if not destino_id:
