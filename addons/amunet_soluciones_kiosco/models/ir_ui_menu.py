@@ -9,6 +9,12 @@ la tableta compartida no.
 Por eso no se tocan los grupos: se ocultan los MENUS solo para el kiosco. La
 tableta conserva el acceso tecnico que la fabricacion requiere (stock y mrp
 por debajo) y pierde las aplicaciones que no le tocan.
+
+Hay un segundo perfil, 'Vista simplificada', para personas con cuenta propia
+que trabajan en piso (Julissa, Alondra): les quita solo las aplicaciones de
+escritorio que no usan, sin tocarles un permiso. Es un grupo aparte y no
+'Fabricante de Soluciones', porque ese grupo lo tienen tambien Mery y
+Fernando, que si necesitan esas aplicaciones.
 """
 
 from odoo import api, models
@@ -34,19 +40,38 @@ class IrUiMenu(models.Model):
         'spreadsheet_dashboard.spreadsheet_dashboard_menu_root',
     )
 
+    # Aplicaciones de escritorio que no usa quien trabaja en piso. Se ocultan
+    # a los kioscos y a quien tenga 'Vista simplificada'.
+    MENUS_ESCRITORIO = (
+        'base.menu_management',
+        'calendar.mail_menu_calendar',
+        'spreadsheet_dashboard.spreadsheet_dashboard_menu_root',
+        'amunet_marketplace.menu_amunet_marketplace_root',
+    )
+
+    def _amunet_menus_a_ocultar(self):
+        """Menus raiz que este usuario NO debe ver, por su perfil."""
+        if self.env.user.has_group(
+                'amunet_soluciones_kiosco.group_kiosco_soluciones'):
+            return self.KIOSCO_MENUS_OCULTOS
+        if self.env.user.has_group(
+                'amunet_soluciones_kiosco.group_vista_simplificada'):
+            return self.MENUS_ESCRITORIO
+        return ()
+
     @api.model
     def _visible_menu_ids(self, debug=False):
         # El super esta cacheado por conjunto de grupos del usuario, asi que
         # lo pesado sigue resolviendose una sola vez. Lo de aqui es una resta
         # de conjuntos.
         visibles = super()._visible_menu_ids(debug=debug)
-        if not self.env.user.has_group(
-                'amunet_soluciones_kiosco.group_kiosco_soluciones'):
+        a_ocultar = self._amunet_menus_a_ocultar()
+        if not a_ocultar:
             return visibles
 
         ocultos = set()
         IMD = self.env['ir.model.data'].sudo()
-        for xmlid in self.KIOSCO_MENUS_OCULTOS:
+        for xmlid in a_ocultar:
             raiz = IMD._xmlid_to_res_id(xmlid, raise_if_not_found=False)
             if not raiz:
                 continue
