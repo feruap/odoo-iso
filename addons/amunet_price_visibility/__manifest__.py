@@ -30,7 +30,7 @@ puede mostrar, exportar ni filtrar.
     """,
     'author': 'Amunet',
     'category': 'Hidden',
-    'version': '19.0.5.3.0',
+    'version': '19.0.6.0.0',
     'depends': [
         'product',
         'purchase',
@@ -38,6 +38,7 @@ puede mostrar, exportar ni filtrar.
         'stock_account',
         'mrp',
         'account',
+        'web',
     ],
     'data': [
         'security/security.xml',
