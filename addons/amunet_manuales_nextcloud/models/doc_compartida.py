@@ -138,6 +138,8 @@ class DocCompartidaNextcloud(models.Model):
                 self._limpiar_manual_binario(file_url)
                 if es_reemplazo:
                     self._resetear_a_por_aprobar()
+                    # La tienda sigue con la version anterior: que la 1109 lo diga.
+                    self._marcar_tienda_desactualizada(filename)
                 self.message_post(
                     body='<p><b>Nextcloud [OK]:</b> Manual subido y PDF liberado de Odoo. '
                          '<a href="%s" target="_blank">Ver manual en Nextcloud</a>.</p>'
@@ -229,6 +231,40 @@ class DocCompartidaNextcloud(models.Model):
                 message_type='notification',
                 subtype_xmlid='mail.mt_note',
             )
+
+    def _marcar_tienda_desactualizada(self, filename):
+        """Al subir una version nueva del PDF, la tienda deja de estar al dia.
+
+        El manual regresa a "listo para aprobar" y NO se publica hasta que
+        Calidad lo apruebe, asi que "Manual sincronizado" tiene que apagarse.
+        Sin esto la columna se quedaba en verde con el PDF viejo en la pagina,
+        porque solo comparaba el NOMBRE del archivo y en un reemplazo el nombre
+        casi siempre es el mismo.
+        """
+        self.ensure_one()
+        if 'amunet.woo.product.mapping' not in self.env:
+            return
+        base = (filename or '').rsplit('.', 1)[0]
+        clave = base.split('_')[0].strip().upper()
+        if not clave:
+            return
+        mapeos = self.env['amunet.woo.product.mapping'].sudo().search([
+            ('default_code', '=', clave),
+            ('manual_sincronizado', '=', True),
+        ])
+        if not mapeos:
+            return
+        mapeos.write({
+            'manual_sincronizado': False,
+            'manual_sync_msg': 'Version nueva esperando aprobacion de Calidad',
+        })
+        self.message_post(
+            body=Markup('<p><b>Tienda:</b> la p\u00e1gina sigue mostrando la versi\u00f3n '
+                        'anterior. Se publicar\u00e1 sola en cuanto Calidad apruebe esta '
+                        'versi\u00f3n (%d producto(s) en espera).</p>') % len(mapeos),
+            message_type='notification',
+            subtype_xmlid='mail.mt_note',
+        )
 
     def _resetear_a_por_aprobar(self):
         """Regresa el manual a 'por_aprobar' cuando se sube una nueva versión del PDF."""
