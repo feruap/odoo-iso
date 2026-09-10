@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Tablero de Actividades de Calidad',
-    'version': '19.0.1.0.11',
+    'version': '19.0.1.0.12',
     'summary': 'Reparto y priorizacion del trabajo de los analistas de Control de Calidad',
     'description': """
 Tablero de actividades de Control de Calidad

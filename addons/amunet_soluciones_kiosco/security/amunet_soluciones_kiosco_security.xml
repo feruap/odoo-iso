@@ -17,5 +17,18 @@
                 (4, ref('amunet_production.group_solution_maker')),
             ]"/>
         </record>
+
+        <!--
+          Vista simplificada: para quien trabaja en piso con su PROPIA cuenta
+          (Julissa, Alondra). Solo esconde las aplicaciones de escritorio que
+          no usa; no quita ni un permiso.
+
+          Va aparte de 'Fabricante de Soluciones' a proposito: ese grupo lo
+          tienen tambien Mery y Fernando, que si necesitan esas aplicaciones.
+          Aqui se agrega o se quita gente desde Ajustes, sin tocar codigo.
+        -->
+        <record id="group_vista_simplificada" model="res.groups">
+            <field name="name">Soluciones / Vista simplificada</field>
+        </record>
     </data>
 </odoo>
