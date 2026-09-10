@@ -19,6 +19,7 @@ el manual cambió en Nextcloud después.
 """
 
 import base64
+import json
 import logging
 from urllib.parse import quote
 
@@ -30,6 +31,13 @@ from odoo.exceptions import UserError
 _logger = logging.getLogger(__name__)
 
 NEXTCLOUD_TIMEOUT = 60
+
+# Por que un manual no sale a la pagina
+MOTIVO_NO_PUBLICA = [
+    ('por_firmar', 'Version nueva esperando la firma de Calidad'),
+    ('sin_firma', 'Manual nuevo o cambiado sin expediente firmado en Odoo'),
+    ('sin_manual', 'Sin manual aprobado en Nextcloud'),
+]
 
 
 class AmunetWooBackendManual(models.Model):
@@ -87,6 +95,22 @@ class AmunetWooProductMappingManual(models.Model):
         string='Fichas actualizadas', readonly=True, copy=False,
         help='Claves de la tienda que quedaron apuntando a este manual '
              '(el producto y sus gemelos de caducidad corta / cortesía).')
+    manual_origen = fields.Selection([
+        ('firmado', 'Firmado en Odoo'),
+        ('base', 'Base heredada'),
+        ('por_firmar', 'Esperando firma'),
+        ('sin_firma', 'Nuevo sin firma'),
+        ('sin_manual', 'Sin manual'),
+    ], string='Origen del manual', compute='_compute_manual_origen',
+        help='Firmado = tiene expediente aprobado en Odoo. '
+             'Base heredada = ya estaba antes de exigir firma. '
+             'Esperando firma / Nuevo sin firma = NO se publica.')
+
+    @api.depends('product_id')
+    def _compute_manual_origen(self):
+        for rec in self:
+            rec.manual_origen = rec._manual_origen()[0]
+
     manual_sync_msg = fields.Char(
         string='Resultado', readonly=True, copy=False)
 
@@ -100,25 +124,80 @@ class AmunetWooProductMappingManual(models.Model):
         code = (self.product_id.default_code or '').strip().upper()
         return codes.get(code)
 
-    def _manual_aprobado_en_odoo(self):
-        """False si el manual de esta clave tiene una version esperando aprobacion.
+    # ------------------------------------------------------------------
+    # Linea base de manuales (decision de Fernando, 10-sep-2026)
+    # ------------------------------------------------------------------
+    # Los manuales que ya estaban en la carpeta de Nextcloud cuando se congelo
+    # la base son los "base": se publican tal cual, sin expediente de Calidad.
+    # De ahi en adelante, TODO manual nuevo o modificado necesita expediente
+    # aprobado y firmado en Odoo para poder publicarse.
+    PARAM_BASE = 'amunet_woocommerce.manual_base_json'
+    PARAM_BASE_FECHA = 'amunet_woocommerce.manual_base_fecha'
 
-        Al reemplazar el PDF, el archivo de Nextcloud YA es el nuevo pero el
-        documento regresa a "listo para aprobar". Sin este candado el barrido
-        diario publicaria en la pagina un manual sin la firma de Calidad.
+    def _manual_base_map(self):
+        """Dict {CLAVE: archivo.pdf} congelado como linea base."""
+        raw = self.env['ir.config_parameter'].sudo().get_param(self.PARAM_BASE, '')
+        if not raw:
+            return None          # sin linea base fijada todavia
+        try:
+            return json.loads(raw) or {}
+        except (ValueError, TypeError):
+            return {}
+
+    def action_congelar_linea_base(self):
+        """Congela la carpeta actual como linea base. Se corre UNA vez."""
+        ICP = self.env['ir.config_parameter'].sudo()
+        if ICP.get_param(self.PARAM_BASE):
+            raise UserError(_(
+                'La linea base ya se congelo el %s. Volver a congelarla '
+                'convertiria en "base" manuales que hoy exigen firma.')
+                % ICP.get_param(self.PARAM_BASE_FECHA))
+        codes = self._manual_codes_map()
+        ICP.set_param(self.PARAM_BASE, json.dumps(codes))
+        ICP.set_param(self.PARAM_BASE_FECHA,
+                      fields.Datetime.to_string(fields.Datetime.now()))
+        _logger.info('amunet_woocommerce: linea base de manuales congelada '
+                     'con %d archivos', len(codes))
+        return len(codes)
+
+    def _manual_origen(self):
+        """De donde sale el manual de esta clave y si se puede publicar.
+
+        Devuelve (origen, publicable):
+          'firmado'  -> hay expediente APROBADO y firmado en Odoo. Se publica.
+          'base'     -> venia en la linea base congelada, tal cual. Se publica.
+          'por_firmar' -> hay expediente pero NO aprobado. NO se publica.
+          'sin_firma'  -> nuevo o cambiado respecto a la base y sin expediente
+                          aprobado. NO se publica.
+          'sin_manual' -> no hay archivo para esa clave.
         """
         self.ensure_one()
-        if 'amunet.doc.compartida' not in self.env:
-            return True
         fname = self._manual_archivo_nextcloud()
         if not fname:
-            return True
+            return ('sin_manual', False)
+
         docs = self.env['amunet.doc.compartida'].sudo().search(
-            [('manual_filename', '=', fname)])
-        if not docs:
-            # No lo lleva el modulo de manuales: no tenemos con que opinar.
-            return True
-        return any(d.state == 'aprobado' for d in docs)
+            [('manual_filename', '=', fname)]) \
+            if 'amunet.doc.compartida' in self.env \
+            else self.env['amunet.woo.product.mapping']
+        if docs:
+            if any(d.state == 'aprobado' for d in docs):
+                return ('firmado', True)
+            return ('por_firmar', False)
+
+        base = self._manual_base_map()
+        if base is None:
+            # Sin linea base congelada no hay con que comparar: no bloqueamos.
+            return ('base', True)
+        clave = (self.product_id.default_code or '').strip().upper()
+        if base.get(clave) == fname:
+            return ('base', True)
+        return ('sin_firma', False)
+
+    def _manual_aprobado_en_odoo(self):
+        """True si este manual se puede publicar en la tienda."""
+        self.ensure_one()
+        return self._manual_origen()[1]
 
     def _manual_descargar(self, fname):
         """Baja el PDF de la carpeta compartida de Nextcloud."""
@@ -186,11 +265,12 @@ class AmunetWooProductMappingManual(models.Model):
                 fallo += 1
                 rec.write({
                     'manual_sincronizado': False,
-                    'manual_sync_msg': _(
-                        'Version nueva esperando aprobacion de Calidad'),
+                    'manual_sync_msg': dict(
+                        MOTIVO_NO_PUBLICA).get(rec._manual_origen()[0],
+                        _('Sin permiso para publicar')),
                 })
-                detalle.append('%s: manual sin aprobar, no se publica'
-                               % (rec.woo_sku or rec.id))
+                detalle.append('%s: %s' % (rec.woo_sku or rec.id,
+                                           rec._manual_origen()[0]))
                 continue
             destino_id = rec.woo_parent_id or rec.woo_product_id
             if not destino_id:

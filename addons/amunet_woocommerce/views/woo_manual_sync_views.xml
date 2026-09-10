@@ -37,6 +37,11 @@
             <field name="has_quality_manual" position="after">
                 <field name="manual_sincronizado" string="Manual sincronizado"
                        widget="boolean_toggle" readonly="1" optional="show"/>
+                <field name="manual_origen" string="Origen del manual"
+                       optional="show"
+                       decoration-success="manual_origen == 'firmado'"
+                       decoration-info="manual_origen == 'base'"
+                       decoration-warning="manual_origen in ('por_firmar', 'sin_firma')"/>
                 <field name="manual_sync_date" string="Sincronizado el" optional="hide"/>
                 <field name="manual_sync_url" widget="url" string="Manual en la tienda"
                        optional="hide"/>
@@ -61,6 +66,8 @@
                         domain="['&amp;', ('has_quality_manual', '=', True), ('manual_sincronizado', '=', False)]"/>
                 <filter name="filter_manual_sincronizado" string="Manual sincronizado"
                         domain="[('manual_sincronizado', '=', True)]"/>
+                <filter name="group_manual_origen" string="Origen del manual"
+                        context="{'group_by': 'manual_origen'}"/>
             </search>
         </field>
     </record>
@@ -86,6 +93,7 @@
                         <field name="manual_sync_url" widget="url" readonly="1"/>
                         <field name="manual_sync_date" readonly="1"/>
                         <field name="manual_sync_productos" readonly="1"/>
+                        <field name="manual_origen" readonly="1"/>
                         <field name="manual_sync_msg" readonly="1"/>
                     </group>
                     <button name="action_sincronizar_manual" type="object"
