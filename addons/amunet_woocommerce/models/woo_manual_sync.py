@@ -37,6 +37,7 @@ MOTIVO_NO_PUBLICA = [
     ('por_firmar', 'Version nueva esperando la firma de Calidad'),
     ('sin_firma', 'Manual nuevo o cambiado sin expediente firmado en Odoo'),
     ('sin_manual', 'Sin manual aprobado en Nextcloud'),
+    ('ambiguo', 'Hay mas de un archivo para esta clave en la carpeta'),
 ]
 
 
@@ -101,6 +102,7 @@ class AmunetWooProductMappingManual(models.Model):
         ('por_firmar', 'Esperando firma'),
         ('sin_firma', 'Nuevo sin firma'),
         ('sin_manual', 'Sin manual'),
+        ('ambiguo', 'Archivo duplicado'),
     ], string='Origen del manual', compute='_compute_manual_origen',
         help='Firmado = tiene expediente aprobado en Odoo. '
              'Base heredada = ya estaba antes de exigir firma. '
@@ -133,6 +135,15 @@ class AmunetWooProductMappingManual(models.Model):
     # aprobado y firmado en Odoo para poder publicarse.
     PARAM_BASE = 'amunet_woocommerce.manual_base_json'
     PARAM_BASE_FECHA = 'amunet_woocommerce.manual_base_fecha'
+
+    def _manual_ambiguas_map(self):
+        """Claves con mas de un archivo en la carpeta y sin forma de decidir."""
+        raw = self.env['ir.config_parameter'].sudo().get_param(
+            'amunet_woocommerce.manual_codes_ambiguas_json', '{}')
+        try:
+            return json.loads(raw) or {}
+        except (ValueError, TypeError):
+            return {}
 
     def _manual_base_map(self):
         """Dict {CLAVE: archivo.pdf} congelado como linea base."""
@@ -175,6 +186,11 @@ class AmunetWooProductMappingManual(models.Model):
         fname = self._manual_archivo_nextcloud()
         if not fname:
             return ('sin_manual', False)
+
+        # Dos archivos peleando por la misma clave: no adivinamos.
+        clave_ = (self.product_id.default_code or '').strip().upper()
+        if clave_ in self._manual_ambiguas_map():
+            return ('ambiguo', False)
 
         docs = self.env['amunet.doc.compartida'].sudo().search(
             [('manual_filename', '=', fname)]) \
