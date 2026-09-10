@@ -6,6 +6,7 @@ from urllib.parse import quote
 from markupsafe import Markup
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -18,6 +19,32 @@ class DocCompartidaNextcloud(models.Model):
         readonly=True,
         help='URL del PDF en Nextcloud. Se llena automaticamente al aprobar el manual.',
     )
+    producto_id = fields.Many2one(
+        'product.product',
+        string='Producto del manual',
+        domain="[('default_code', '!=', False)]",
+        help='De aqui sale la clave con la que tiene que empezar el archivo. '
+             'Al elegirlo, el nombre del PDF se corrige solo.',
+    )
+    manual_sin_producto = fields.Boolean(
+        string='No es manual de producto',
+        help='Marcalo para manuales que no van a la tienda: equipos, balanzas, '
+             'procedimientos internos. Con esto el sistema deja de exigir la '
+             'clave del producto en el nombre del archivo.',
+    )
+    manual_clave = fields.Char(
+        string='Clave del archivo',
+        compute='_compute_manual_clave',
+        help='Lo que el sistema lee antes del primer "_" del nombre del archivo.',
+    )
+    manual_nombre_ok = fields.Boolean(
+        string='Nombre correcto',
+        compute='_compute_manual_clave',
+        help='El archivo empieza con una clave de producto que existe en Odoo. '
+             'Si esta apagado, el manual NO puede subir a Nextcloud ni llegar '
+             'a la pagina, aunque se apruebe.',
+    )
+
     enlace_pdf = fields.Html(
         string='PDF',
         compute='_compute_enlace_pdf',
@@ -46,7 +73,69 @@ class DocCompartidaNextcloud(models.Model):
                 '<i class="fa fa-download" style="margin-right:5px"></i>%s</a>'
             ) % (url, rec.manual_filename)
 
+    @api.depends('manual_filename')
+    def _compute_manual_clave(self):
+        Prod = self.env['product.product'].with_context(active_test=False).sudo()
+        for rec in self:
+            base = (rec.manual_filename or '').rsplit('.', 1)[0]
+            clave = base.split('_')[0].strip().upper() if '_' in base else ''
+            rec.manual_clave = clave
+            rec.manual_nombre_ok = bool(clave) and bool(
+                Prod.search_count([('default_code', '=ilike', clave)]))
+
+    @staticmethod
+    def _nombre_con_clave(filename, clave):
+        """Devuelve el nombre con CLAVE_ al principio, sin duplicarla."""
+        filename = (filename or '').strip()
+        clave = (clave or '').strip()
+        if not filename or not clave:
+            return filename
+        if filename.upper().startswith(clave.upper() + '_'):
+            return filename
+        return '%s_%s' % (clave, filename)
+
+    @api.onchange('producto_id')
+    def _onchange_producto_id(self):
+        """Al elegir el producto, el archivo se renombra a CLAVE_Nombre.pdf."""
+        for rec in self:
+            if rec.producto_id and rec.manual_filename:
+                rec.manual_filename = rec._nombre_con_clave(
+                    rec.manual_filename, rec.producto_id.default_code)
+
+    def _check_nombre_manual(self):
+        """El nombre tiene que empezar con la clave del producto.
+
+        Sin eso el manual se aprueba y firma pero NO sube a Nextcloud ni llega
+        a la pagina: el sistema no sabe a que producto pertenece. Paso en
+        13 manuales aprobados (Tuberculosis.pdf, CHAGAS.pdf, TFB_..., etc.)
+        que quedaron firmados y nunca se publicaron.
+        """
+        self.ensure_one()
+        if self.manual_sin_producto:
+            return
+        if not self.manual_file or self.manual_nombre_ok:
+            return
+        raise UserError(
+            'El archivo se llama "%s" y no empieza con la clave del producto.\n\n'
+            'Asi el sistema no sabe a que producto pertenece: el manual se '
+            'aprobaria y firmaria, pero NO subiria a Nextcloud ni llegaria a la '
+            'pagina.\n\n'
+            'Como se arregla, lo mas facil: elige el producto en el campo '
+            '"Producto del manual" y el nombre se corrige solo.\n'
+            'A mano: ponle el formato CLAVE_Nombre.pdf, por ejemplo '
+            '"DMATB01_Tuberculosis.pdf".\n\n'
+            'Las claves se ven en Mapeos y consulta de productos (accion 1109).\n\n'
+            'Si este manual NO es de un producto (un equipo, una balanza, un '
+            'procedimiento interno), marca la casilla "No es manual de '
+            'producto" y podras aprobarlo tal cual.'
+            % (self.manual_filename or '(sin archivo)'))
+
     def write(self, vals):
+        if vals.get('state') == 'aprobado':
+            for rec in self:
+                if rec.state != 'aprobado':
+                    rec._check_nombre_manual()
+
         candidatos_aprobar = []
         candidatos_reemplazar = []
 

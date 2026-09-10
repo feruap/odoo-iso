@@ -37,6 +37,25 @@
                     <field name="url_nextcloud" invisible="1"/>
                     <field name="enlace_pdf" widget="html" string="PDF"
                            invisible="not url_nextcloud"/>
+                    <!-- Regla del nombre: sin CLAVE_ el manual no llega a la pagina -->
+                    <field name="manual_sin_producto"
+                           readonly="not es_responsable"/>
+                    <field name="producto_id" string="Producto del manual"
+                           invisible="manual_sin_producto"
+                           options="{'no_create': True}"
+                           readonly="not es_responsable"/>
+                    <field name="manual_clave" readonly="1"
+                           invisible="not manual_filename or manual_sin_producto"/>
+                    <field name="manual_nombre_ok" widget="boolean_toggle" readonly="1"
+                           invisible="not manual_filename or manual_sin_producto"/>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not manual_file or manual_nombre_ok or manual_sin_producto">
+                        El archivo tiene que empezar con la clave del producto
+                        (<b>CLAVE_Nombre.pdf</b>, por ejemplo
+                        <b>DMATB01_Tuberculosis.pdf</b>). Con el nombre actual el
+                        manual se puede firmar, pero <b>no llegaria a la pagina</b>.
+                        Elige el producto arriba y el nombre se corrige solo.
+                    </div>
                 </xpath>
             </field>
         </record>
