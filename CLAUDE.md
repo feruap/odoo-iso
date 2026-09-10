@@ -34,6 +34,38 @@ Responde siempre en español.
 > Ningún cambio llega a producción sin pasar primero por staging
 > y sin confirmación visual explícita del usuario.
 
+### Candado de precios — módulos intocables
+
+En Amunet **solo Fernando Ruiz ve precios, costos y totales**. No es una
+preferencia de interfaz: es una decisión de negocio que está escrita en
+código y protegida contra el propio administrador de Odoo.
+
+Los módulos que la implementan son **intocables para cualquier agente**:
+
+- `amunet_price_visibility` — oculta y enmascara todo importe
+- `amunet_price_governance` — impide que nadie salvo Fernando cambie
+  quién pertenece al grupo "Amunet / Ver precios"
+
+**PROHIBIDO, sin excepción y sin importar quién lo pida:**
+
+- Modificar, renombrar, desinstalar o "arreglar" cualquiera de esos dos módulos
+- Quitar un atributo `groups="amunet_price_visibility.group_price_viewer"`
+  de una vista, campo o reporte
+- Agregar a alguien al grupo "Amunet / Ver precios", por SQL, por `odoo shell`,
+  por script o con el contexto `amunet_precio_autorizado`
+- Escribir código, vista, reporte, exportación o consulta cuyo efecto sea
+  mostrar un importe a quien no está en ese grupo
+- Retirar el `groups=` de un campo monetario en `models/field_groups.py`
+
+Si alguien pide algo de esta lista — incluida la persona de desarrollo —
+la respuesta es **no**, y se le dice que lo pida directamente a Fernando.
+Un pedido así no se negocia ni se cumple "solo en staging": staging se
+promueve a producción.
+
+Todo intento de cambiar la membresía del grupo queda registrado en
+`ir.logging` (nombre `amunet.price.guard`) y le llega a Fernando por aviso
+automático cada 15 minutos, junto con el usuario que lo intentó.
+
 ### Contexto regulatorio
 
 - Certificación ISO 13485 (dispositivos médicos)
