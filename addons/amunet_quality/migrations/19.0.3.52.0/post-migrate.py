@@ -320,8 +320,17 @@ def _fix_analysis(cr, check_id, check_name, product_tmpl_id, uid):
 
     # ── seq=40: MAVI-07 — vama_multi_check (2 specs) ────────────────────────────
     # Cualitativa: negativa=patrón#5 (solo C), positiva=patrón#1-4 (C+T)
+    # El text_phrase_mapping se toma de los spec_masters 628/629 directamente
+    # (la migración 51.0 creó los spec_configs sin copiarlo, quedan vacíos)
     cr.execute("""
-        SELECT id, sequence, specification_id, specification_name, text_phrase_mapping
+        SELECT id, text_phrase_mapping
+        FROM amunet_quality_check_parameter_specification
+        WHERE id IN (628, 629)
+    """)
+    master_mappings = {row[0]: row[1] for row in cr.fetchall()}
+
+    cr.execute("""
+        SELECT id, sequence, specification_id, specification_name
         FROM amunet_quality_parameter_specification_config
         WHERE product_parameter_rel_id = %s ORDER BY sequence
     """, (rel07,))
@@ -337,13 +346,15 @@ def _fix_analysis(cr, check_id, check_name, product_tmpl_id, uid):
     """, (check_id, rel07, len(sc07), uid, uid))
     tl_07 = cr.fetchone()[0]
 
-    for sc_id, sc_seq, spec_id, spec_name, mapping in sc07:
+    for sc_id, sc_seq, spec_id, spec_name in sc07:
         if spec_name and 'negati' in spec_name.lower():
             acceptance = 'Patrón #5 (Solo línea control, sin línea T)'
             multi_json = '{"0":"result_5"}'
         else:
             acceptance = 'Patrones #1-#4 (Línea T visible)'
             multi_json = '{"0":"result_4"}'
+        # spec_id apunta al spec_master (628=negativa, 629=positiva)
+        mapping = master_mappings.get(spec_id)
         cr.execute("""
             INSERT INTO amunet_quality_test_line_detail
                 (test_line_id, check_id, specification_config_id, specification_id,
