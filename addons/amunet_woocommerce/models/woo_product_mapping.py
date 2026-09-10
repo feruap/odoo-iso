@@ -852,17 +852,48 @@ class AmunetWooProductMapping(models.Model):
             raise UserError(
                 _('No se pudo conectar con la carpeta de manuales en '
                   'Nextcloud:\n%s') % exc)
-        codes = {}
+        # Una clave puede tener MAS DE UN archivo en la carpeta (al subir una
+        # version nueva conviven la vieja y la nueva). Antes ganaba el ultimo
+        # del listado, sin ninguna logica de version: la pagina podia quedarse
+        # con la version vieja segun el orden en que Nextcloud los devolviera.
+        # Ahora manda la FIRMA: si exactamente uno tiene expediente aprobado en
+        # Odoo, ese gana. Si no se puede decidir, la clave queda marcada como
+        # ambigua y no se publica hasta que alguien la resuelva.
+        por_clave = {}
         for m in re.finditer(r'<d:href>(.*?)</d:href>', resp.text):
             href = m.group(1)
             if href.lower().endswith('.pdf'):
                 fname = unquote(href.split('/webdav/')[-1])
                 code = fname.split('_')[0].strip().upper()
                 if code:
-                    codes[code] = fname
+                    por_clave.setdefault(code, []).append(fname)
+
+        Doc = (self.env['amunet.doc.compartida'].sudo()
+               if 'amunet.doc.compartida' in self.env else None)
+        codes, ambiguas = {}, {}
+        for code, archivos in por_clave.items():
+            if len(archivos) == 1:
+                codes[code] = archivos[0]
+                continue
+            firmados = []
+            if Doc is not None:
+                firmados = [f for f in archivos if Doc.search_count(
+                    [('manual_filename', '=', f), ('state', '=', 'aprobado')])]
+            if len(firmados) == 1:
+                codes[code] = firmados[0]
+            else:
+                codes[code] = sorted(archivos)[0]
+                ambiguas[code] = sorted(archivos)
+                _logger.warning(
+                    'amunet_woocommerce: la clave %s tiene %d archivos en la '
+                    'carpeta de manuales y no se puede decidir cual vale: %s',
+                    code, len(archivos), ', '.join(archivos))
+
         ICP = self.env['ir.config_parameter'].sudo()
         ICP.set_param('amunet_woocommerce.manual_codes_json',
                       json.dumps(codes))
+        ICP.set_param('amunet_woocommerce.manual_codes_ambiguas_json',
+                      json.dumps(ambiguas))
         ICP.set_param('amunet_woocommerce.manual_codes_updated',
                       fields.Datetime.to_string(fields.Datetime.now()))
         self.env['amunet.woo.product.mapping'].search([]).invalidate_recordset(
