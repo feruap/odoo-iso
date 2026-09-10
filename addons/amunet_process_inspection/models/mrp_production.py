@@ -52,6 +52,52 @@ class MrpProduction(models.Model):
     )
 
     # ============================
+    # Etapas de LINEA LARGA (L1 - L4)
+    # ============================
+    # Antes se le decia "linea larga" a todo el proceso de fabricar la hoja.
+    # Desde sep-2026 se divide en cuatro lineas encadenadas. Las cuatro
+    # siguen siendo linea larga, y por lo tanto produccion:
+    #
+    #   Soluciones   ya opera (hoy con su propio flujo, route_type='solution')
+    #   Conjugados
+    #   Inyeccion
+    #   Laminado
+    #
+    # El orden de la lista es el orden real del proceso. NO se numeran: la
+    # numeracion L1-L4 fue solo la forma de nombrarlas al describirlas, no
+    # como deben aparecerle al usuario (Mery, 08-sep-2026).
+    #
+    # Va APARTE de route_type a proposito. route_type define el FLUJO de la
+    # orden -- que gates aplican, que inspecciones nacen, que botones se ven --
+    # y hoy gobierna las 96 ordenes que ya corrieron. Este campo dice en que
+    # ETAPA de la linea larga esta la orden. Meter L1-L4 dentro de route_type
+    # habria cambiado el flujo de ordenes vivas, que es justo lo que no se
+    # debe mover.
+    amunet_sublinea = fields.Selection(
+        selection=[
+            ('soluciones', 'Soluciones'),
+            ('conjugados', 'Conjugados'),
+            ('inyeccion', 'Inyección'),
+            ('laminado', 'Laminado'),
+        ],
+        string='Etapa de linea larga',
+        tracking=True,
+        help='Etapa de la linea larga a la que pertenece esta orden. Las '
+             'cuatro son linea larga y son produccion. Se deja vacio en las '
+             'ordenes de linea corta y de compra-reventa.',
+    )
+
+    @api.onchange('route_type')
+    def _amunet_onchange_route_type_sublinea(self):
+        """Soluciones ES la L1: se rellena sola, y se limpia si no aplica."""
+        for rec in self:
+            if rec.route_type == 'solution':
+                if not rec.amunet_sublinea:
+                    rec.amunet_sublinea = 'soluciones'
+            elif rec.route_type in ('short', 'resale'):
+                rec.amunet_sublinea = False
+
+    # ============================
     # Gating Linea Corta (solo ordenes nuevas)
     # ============================
     amunet_lc_gating = fields.Boolean(
@@ -117,6 +163,37 @@ class MrpProduction(models.Model):
         # pisaba a este: el gating de Linea Corta nunca se activaba.
         records._amunet_check_solution_maker()
         return records
+
+    # ============================
+    # Responsable de una SOLUCION = quien la elabora
+    # ============================
+    # En linea corta el responsable es quien planea la orden. En Soluciones no:
+    # el responsable es la persona que fisicamente prepara la solucion, porque
+    # es quien responde por ella (Mery, 08-sep-2026).
+    #
+    # Hay dos formas de llegar aqui y las dos quedan cubiertas:
+    #   - Desde la tableta del area: la persona se identifica con su PIN y el
+    #     kiosco llama a este metodo con ese operador. El usuario conectado es
+    #     la tableta, que NO sirve como responsable.
+    #   - Desde la sesion de cada quien: al confirmar la orden, el responsable
+    #     pasa a ser quien confirma, si es del grupo de Soluciones.
+    def _amunet_set_responsable_solucion(self, persona):
+        """Deja a `persona` como responsable de las ordenes de solucion."""
+        if not persona:
+            return
+        for mo in self:
+            if mo.route_type != 'solution' and not mo.amunet_is_solution_product:
+                continue
+            if mo.user_id == persona:
+                continue
+            anterior = mo.user_id
+            mo.sudo().write({'user_id': persona.id})
+            mo.sudo().message_post(body=_(
+                'Responsable de la elaboracion: <b>%(nuevo)s</b>%(antes)s'
+            ) % {
+                'nuevo': persona.name,
+                'antes': (' (antes %s)' % anterior.name) if anterior else '',
+            })
 
     # ============================
     # Gate de CIERRE (C): no cerrar sin actividades terminadas y
@@ -232,7 +309,12 @@ class MrpProduction(models.Model):
                 lambda mv: mv.state not in ('done', 'cancel')
                 and mv.product_id.categ_id
                 and hasattr(mv.product_id.categ_id, '_amunet_routes_to_aru')
-                and mv.product_id.categ_id._amunet_routes_to_aru())
+                and mv.product_id.categ_id._amunet_routes_to_aru()
+                # Excepcion por producto: hay reactivos que el area NO resguarda
+                # y se piden a Materia Prima en cada orden. Sin esto el sistema
+                # los buscaria en ARU y la orden se quedaria sin material aunque
+                # haya existencia en MP.
+                and not mv.product_id.product_tmpl_id.amunet_surtir_desde_mp)
             if not moves:
                 continue
             moves._do_unreserve()
@@ -252,6 +334,12 @@ class MrpProduction(models.Model):
                     ) % rec.name)
         res = super().action_confirm()
         self._amunet_solution_moves_from_aru()
+        # El responsable de una solucion es quien la elabora. Solo se toma a
+        # quien confirma si pertenece a Soluciones: una tableta de kiosco NO
+        # esta en ese grupo, asi que no pisa al operador que entro con PIN.
+        if not self.env.su and self.env.user.has_group(
+                'amunet_production.group_solution_maker'):
+            self._amunet_set_responsable_solucion(self.env.user)
         return res
 
     # ============================

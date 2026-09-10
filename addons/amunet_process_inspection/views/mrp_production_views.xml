@@ -30,6 +30,11 @@
                 <field name="route_type"
                        required="1"
                        readonly="state != 'draft'"/>
+                <!-- La etapa solo tiene sentido en linea larga (y en
+                     Soluciones, que es su L1). En corta y reventa estorba. -->
+                <field name="amunet_sublinea"
+                       readonly="state != 'draft'"
+                       invisible="route_type not in ('long', 'solution')"/>
                 <field name="preflight_approved" readonly="1"
                        widget="boolean_toggle"
                        invisible="state != 'draft'"
@@ -129,6 +134,34 @@
                     </field>
                 </page>
             </xpath>
+        </field>
+    </record>
+
+    <!--
+        Buscador: poder filtrar y agrupar las ordenes por etapa de linea
+        larga. Sin esto las cuatro lineas existen pero no hay como verlas
+        juntas, que es justo lo que se necesita para planear conjugados.
+    -->
+    <record id="view_mrp_production_search_sublinea" model="ir.ui.view">
+        <field name="name">mrp.production.search.amunet.sublinea</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.view_mrp_production_filter"/>
+        <field name="arch" type="xml">
+            <filter name="my_mos" position="after">
+                <separator/>
+                <filter string="Soluciones" name="amunet_sublinea_soluciones"
+                        domain="[('amunet_sublinea', '=', 'soluciones')]"/>
+                <filter string="Conjugados" name="amunet_sublinea_conjugados"
+                        domain="[('amunet_sublinea', '=', 'conjugados')]"/>
+                <filter string="Inyección" name="amunet_sublinea_inyeccion"
+                        domain="[('amunet_sublinea', '=', 'inyeccion')]"/>
+                <filter string="Laminado" name="amunet_sublinea_laminado"
+                        domain="[('amunet_sublinea', '=', 'laminado')]"/>
+            </filter>
+            <group position="inside">
+                <filter string="Etapa de linea larga" name="group_amunet_sublinea"
+                        context="{'group_by': 'amunet_sublinea'}"/>
+            </group>
         </field>
     </record>
 

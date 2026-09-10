@@ -22,6 +22,11 @@
                                 <field name="amunet_weighing_range_text"/>
                                 <field name="amunet_expiration_text"/>
                                 <field name="amunet_solution_dependency_id" domain="[('categ_id.name', 'ilike', 'Solucion')]"/>
+                                <!-- Destino al terminar: si es de uso interno
+                                     se queda en ARU/Stock y no se entrega a
+                                     Materia Prima (Mery, 08-sep-2026). -->
+                                <field name="amunet_solucion_interna"/>
+                                <field name="amunet_surtir_desde_mp"/>
                             </group>
                         </group>
                     </page>
@@ -50,6 +55,11 @@
                                 <field name="amunet_weighing_range_text"/>
                                 <field name="amunet_expiration_text"/>
                                 <field name="amunet_solution_dependency_id" domain="[('categ_id.name', 'ilike', 'Solucion')]"/>
+                                <!-- Destino al terminar: si es de uso interno
+                                     se queda en ARU/Stock y no se entrega a
+                                     Materia Prima (Mery, 08-sep-2026). -->
+                                <field name="amunet_solucion_interna"/>
+                                <field name="amunet_surtir_desde_mp"/>
                             </group>
                         </group>
                     </page>

@@ -15,6 +15,13 @@ class MrpProduction(models.Model):
     packaging_plan_count = fields.Integer(
         string='Planes de empaque',
         compute='_compute_packaging_plan_count',
+        # compute_sudo: es un CONTADOR. El formulario de la orden lo lee al
+        # abrir, y quien no puede leer amunet.packaging.plan -- el fabricante
+        # de soluciones, por ejemplo -- recibia "Error de acceso" y no podia
+        # abrir NINGUNA orden. Saber CUANTOS planes hay no expone su contenido,
+        # y el boton que los abre sigue restringido por sus propios permisos.
+        # Reportado por Mery con foto, 09-sep-2026.
+        compute_sudo=True,
     )
 
     amunet_packaging_plan_approved = fields.Boolean(

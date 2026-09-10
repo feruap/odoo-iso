@@ -32,6 +32,45 @@
         Se usa route_type (campo almacenado); amunet_is_solution_product
         no esta almacenado y no puede ir en una ir.rule.
     -->
+    <!--
+        La misma restriccion, pero sobre las ACTIVIDADES.
+        La regla de arriba limita las ORDENES a soluciones; sin esta hermana,
+        el fabricante de soluciones seguia viendo las actividades de linea
+        corta en "Mi dia" y al abrirlas recibia un error de acceso, porque la
+        orden si estaba bloqueada. La tableta del kiosco quedaba "parada en
+        linea corta" sin poder trabajar (reportado por Mery, 09-sep-2026:
+        500 actividades visibles, 66 de linea corta y solo 1 de solucion).
+    -->
+    <!--
+        Y la misma restriccion sobre las INSPECCIONES.
+        El formulario de la orden lee inspection_qc_ids (One2many), asi que sin
+        permiso de lectura la pantalla revienta con "Error de acceso" al ABRIR
+        una orden ya guardada: es lo que impedia a la tableta entrar al kiosco
+        (foto de Mery, 09-sep-2026). El permiso se da acotado a soluciones,
+        para no abrirle las inspecciones de linea corta.
+    -->
+    <record id="rule_process_inspection_solution_maker_only" model="ir.rule">
+        <field name="name">Inspecciones: fabricante de soluciones solo ve soluciones</field>
+        <field name="model_id" ref="model_amunet_process_inspection"/>
+        <field name="domain_force">[('production_id.route_type', '=', 'solution')]</field>
+        <field name="groups" eval="[(4, ref('amunet_production.group_solution_maker'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_mrp_workorder_solution_maker_only" model="ir.rule">
+        <field name="name">Workorders: fabricante de soluciones solo ve soluciones</field>
+        <field name="model_id" ref="mrp.model_mrp_workorder"/>
+        <field name="domain_force">[('production_id.route_type', '=', 'solution')]</field>
+        <field name="groups" eval="[(4, ref('amunet_production.group_solution_maker'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
     <record id="rule_mrp_production_solution_maker_only" model="ir.rule">
         <field name="name">MOs: fabricante de soluciones solo ve soluciones</field>
         <field name="model_id" ref="mrp.model_mrp_production"/>

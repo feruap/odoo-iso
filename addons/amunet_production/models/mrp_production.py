@@ -1149,6 +1149,8 @@ class MrpProduction(models.Model):
     @api.depends(
         'state', 'workorder_ids.state', 'amunet_sys_req_qc', 'quality_analysis_status',
         'reconciliation_state', 'move_raw_ids.amunet_qty_supplied', 'move_raw_ids.state',
+        'move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid',
+        'amunet_is_solution_product',
     )
     def _compute_amunet_can_produce(self):
         for rec in self:
@@ -1168,7 +1170,19 @@ class MrpProduction(models.Model):
                 for m in rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
             )
             reconciliation_ok = not has_supply or rec.reconciliation_state == 'completed'
-            rec.amunet_can_produce = wos_done and qc_ok and reconciliation_ok
+            # Una SOLUCION no se produce a medias: hay que haber capturado lo
+            # que se uso de cada componente, que cuadre con el rango de pesaje
+            # y que la disolucion este marcada. Sin esto se podia producir sin
+            # haber registrado el consumo, y el expediente quedaba sin decir
+            # con que se hizo. Pedido por Mery, 09-sep-2026.
+            #
+            # Solo aplica a soluciones: en linea corta y kits no existe ese
+            # concepto y exigirlo las bloquearia.
+            terminada_ok = True
+            if rec.amunet_is_solution_product:
+                terminada_ok = rec.amunet_solucion_terminada
+            rec.amunet_can_produce = (
+                wos_done and qc_ok and reconciliation_ok and terminada_ok)
 
     @api.depends('product_id')
     def _compute_product_categ(self):
@@ -1199,11 +1213,20 @@ class MrpProduction(models.Model):
         temporal = self._amunet_apt_temporal_location()
         if not temporal:
             return
+        aru = self.env['stock.warehouse'].sudo().search([('code', '=', 'ARU')], limit=1)
         for production in self:
             categ = ((production.product_id.categ_id.complete_name or '')
                      if production.product_id else '')
             if categ.startswith('Producto terminado'):
                 production.location_dest_id = temporal.id
+                continue
+            # Soluciones de uso interno (ajuste de pH y pie para otra solucion):
+            # no salen del area, se quedan en el inventario interno de reactivos
+            # en uso. Las demas soluciones siguen a AMP, que es de donde se
+            # entregan a Materia Prima. Clasificacion de Mery, 08-sep-2026.
+            if (aru and production.product_id
+                    and production.product_id.product_tmpl_id.amunet_solucion_interna):
+                production.location_dest_id = aru.lot_stock_id.id
 
     @api.depends('product_id', 'date_start')
     def _amunet_compute_expiration(self, product, base_date):
@@ -1541,6 +1564,59 @@ class MrpProduction(models.Model):
         categ = product.product_tmpl_id.categ_id.complete_name or ''
         return 'solucion' in categ.lower()
 
+    amunet_solucion_terminada = fields.Boolean(
+        string='Solución terminada',
+        compute='_compute_amunet_solucion_terminada',
+        help='Todos los componentes tienen cantidad utilizada, dentro del rango '
+             'de pesaje, y con la disolución confirmada donde aplica.')
+
+    @api.depends('move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid',
+                 'move_raw_ids.state')
+    def _compute_amunet_solucion_terminada(self):
+        """La solucion esta lista para mandarse a supervision.
+
+        No basta con que la orden este confirmada: hay que haber capturado las
+        cantidades, que cuadren con el rango de pesaje y que la disolucion este
+        marcada. Eso es justo lo que evalua amunet_is_valid en cada linea, asi
+        que aqui solo se pregunta si TODAS lo cumplen.
+
+        Mandar a supervision una solucion a medias hace que el jefe firme algo
+        que todavia no existe. Pedido por Mery, 09-sep-2026.
+        """
+        for mo in self:
+            lineas = mo.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            mo.amunet_solucion_terminada = bool(lineas) and all(
+                (m.quantity or 0) > 0 and m.amunet_is_valid for m in lineas)
+
+    @api.model
+    def default_get(self, fields_list):
+        """Quien SOLO hace soluciones abre el formulario en Soluciones.
+
+        route_type nace con default='short' para todos. En la tableta del
+        kiosco ese campo esta en readonly (a proposito), asi que el operador
+        veia "Linea Corta" al abrir una orden nueva y no podia cambiarlo: la
+        pantalla parecia negarle hacer soluciones antes incluso de elegir el
+        producto. Reportado por Mery con foto, 09-sep-2026.
+
+        Solo aplica a quien esta en Fabricante de Soluciones y NO es operador
+        ni supervisor de produccion: esos son los usuarios que por regla de
+        registro unicamente pueden ver soluciones. A quien hace de todo
+        (Mery, Fernando, Alondra) no se le cambia nada.
+        """
+        res = super().default_get(fields_list)
+        if 'route_type' not in self._fields:
+            return res
+        if res.get('route_type') not in (None, False, '', 'short'):
+            return res
+        u = self.env.user
+        solo_soluciones = (
+            u.has_group('amunet_production.group_solution_maker')
+            and not u.has_group('amunet_production.group_production_operator')
+            and not u.has_group('amunet_production.group_production_supervisor'))
+        if solo_soluciones:
+            res['route_type'] = 'solution'
+        return res
+
     @api.onchange('product_id')
     def _amunet_onchange_product_route_type(self):
         """La LINEA DE PRODUCCION debe seguir al producto, no depender de que
@@ -1611,7 +1687,17 @@ class MrpProduction(models.Model):
             # queda como linea corta, se le aplica el flujo SGC equivocado y el
             # fabricante NO la ve (la regla de registro filtra por route_type).
             # Paso con AMP/MO/00028 en produccion.
-            if (vals.get('product_id') and not vals.get('route_type')
+            # Se corrige tambien cuando llega 'short' EXPLICITO, no solo
+            # cuando falta. La pantalla manda el valor del default aunque el
+            # onchange lo haya cambiado: en la tableta del kiosco el campo esta
+            # en readonly y el cliente enviaba 'short'. Con la regla de registro
+            # activa eso no quedaba en linea corta -- fallaba con AccessError al
+            # crear -- y la tableta no podia dar de alta ninguna orden.
+            # Reportado por Mery, 09-sep-2026.
+            # 'short' es el default del campo, asi que corregirlo no pisa una
+            # eleccion deliberada: nadie elige linea corta para una solucion.
+            if (vals.get('product_id')
+                    and vals.get('route_type') in (None, False, '', 'short')
                     and 'route_type' in self._fields):
                 prod_ruta = self.env['product.product'].browse(vals['product_id']).exists()
                 if prod_ruta and self._amunet_producto_es_solucion(prod_ruta):

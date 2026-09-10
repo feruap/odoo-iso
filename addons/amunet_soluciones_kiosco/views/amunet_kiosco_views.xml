@@ -155,6 +155,53 @@
          rechazar: confunde y parece un hueco.
          Se hereda de la vista de amunet_process_inspection, que es la que
          declara el campo; la vista base de mrp NO lo tiene. -->
+    <!-- QUIEN FABRICA no se cambia a mano en el kiosco.
+         El Responsable de una orden de solucion es la persona que la elabora,
+         y en la tableta esa persona se identifica con su PIN: el flujo del
+         kiosco lo escribe solo (_amunet_set_responsable_solucion, que va en
+         sudo, asi que un readonly en la vista no lo estorba).
+         Sin esto, con la orden en borrador el campo quedaba editable desde la
+         tableta y cualquiera podia poner el nombre de otra persona como quien
+         fabrico la solucion. En un registro regulado eso no puede depender de
+         la buena fe: si el PIN es la firma, el campo no se toca a mano.
+         Pedido por Mery, 09-sep-2026. -->
+    <!-- En el KIOSCO solo existen las versiones con PIN.
+         Los botones normales del flujo de soluciones no piden firma: quien
+         entra con su propia cuenta ya esta identificado por la sesion. Pero en
+         una tableta compartida eso deja un hueco: se puede enviar a
+         supervision, pedir analisis o producir SIN firmar, saltandose justo lo
+         que el PIN protege.
+         Se ocultan en el dispositivo de kiosco. Ahi quedan solo los cuatro
+         botones (PIN), que hacen lo mismo pero dejando constancia de quien fue.
+         Pedido por Mery, 09-sep-2026. -->
+    <record id="view_mrp_production_kiosco_sin_botones_normales" model="ir.ui.view">
+        <field name="name">mrp.production.form.kiosco.sin.botones.normales</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="amunet_production.view_mrp_production_form_amunet_inherit"/>
+        <field name="arch" type="xml">
+            <button name="action_amunet_request_supervision" position="attributes">
+                <attribute name="invisible">kiosco_es_dispositivo or not amunet_is_solution_product or amunet_supervision_state != 'none' or state not in ('confirmed','progress','to_close') or not amunet_solucion_terminada</attribute>
+            </button>
+            <button name="button_mark_done" position="attributes">
+                <attribute name="invisible">kiosco_es_dispositivo or not amunet_can_produce</attribute>
+            </button>
+            <button name="action_request_analysis" position="attributes">
+                <attribute name="invisible">kiosco_es_dispositivo or state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or (quality_analysis_status in ('requested', 'approved') and amunet_pt_qty_sin_analizar &lt;= 0)</attribute>
+            </button>
+        </field>
+    </record>
+
+    <record id="view_mrp_production_kiosco_responsable" model="ir.ui.view">
+        <field name="name">mrp.production.form.kiosco.responsable</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="amunet_production.view_mrp_production_form_amunet_inherit"/>
+        <field name="arch" type="xml">
+            <field name="user_id" position="attributes">
+                <attribute name="readonly">kiosco_es_dispositivo or amunet_user_is_warehouse or (state != 'draft' and not amunet_user_is_mery)</attribute>
+            </field>
+        </field>
+    </record>
+
     <record id="view_mrp_production_kiosco_ruta" model="ir.ui.view">
         <field name="name">mrp.production.form.kiosco.ruta</field>
         <field name="model">mrp.production</field>
@@ -162,6 +209,21 @@
         <field name="arch" type="xml">
             <field name="route_type" position="attributes">
                 <attribute name="readonly">kiosco_es_dispositivo</attribute>
+                <!-- force_save: en Odoo, el valor de un campo READONLY no se
+                     envia al guardar. El onchange del producto SI ponia
+                     'solution' al elegir una solucion, pero como aqui el campo
+                     esta bloqueado para el dispositivo, ese valor se descartaba
+                     y la orden quedaba con el default 'short'. Resultado: la
+                     tableta creaba la orden en LINEA CORTA y despues no la veia
+                     (la regla de registro filtra por route_type).
+                     Con force_save el operador sigue SIN poder cambiar la
+                     linea (que era la intencion) pero el valor que calcula
+                     el sistema si se conserva.
+                     Reportado por Mery, 09-sep-2026: "al hacer una nueva la
+                     manda a linea corta". Solo pasaba al crear desde el menu de
+                     Fabricacion; desde el kiosco no, porque ahi el contexto ya
+                     trae default_route_type=solution. -->
+                <attribute name="force_save">1</attribute>
             </field>
         </field>
     </record>
