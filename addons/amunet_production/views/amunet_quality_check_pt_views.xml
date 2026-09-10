@@ -34,6 +34,31 @@
             <field name="lot_qty_available" position="attributes">
                 <attribute name="invisible">amunet_production_id != False</attribute>
             </field>
+
+            <!--
+                'Proveedor' y 'Lote de fabrica' existen para material COMPRADO:
+                los llena la recepcion con el dato del proveedor. En un producto
+                que fabricamos aqui salen VACIOS, y Calidad los lee como datos
+                faltantes. Lo reporto Diana el 2026-09-10 sobre QC/2026/00155
+                ("falta lote de produccion y fabricante").
+
+                Se ocultan cuando el analisis viene de una orden, y en su lugar
+                se muestra el fabricante, que en ese caso somos nosotros. El
+                lote de produccion ya se muestra arriba como "Orden de
+                produccion".
+            -->
+            <field name="partner_id" position="attributes">
+                <attribute name="invisible">amunet_production_id != False</attribute>
+            </field>
+            <field name="lot_name_factory" position="attributes">
+                <attribute name="invisible">amunet_production_id != False</attribute>
+            </field>
+            <field name="lot_name_factory" position="after">
+                <field name="company_id"
+                       string="Fabricante"
+                       invisible="not amunet_production_id"
+                       readonly="1"/>
+            </field>
         </field>
     </record>
 

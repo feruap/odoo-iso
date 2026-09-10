@@ -88,12 +88,32 @@
                                 </t>
                                 <t t-else="">
                                     <strong>Código:</strong> <span t-esc="o.product_id.default_code"/><br/>
-                                    <strong>Proveedor:</strong> <span t-esc="o.partner_id.name"/>
+                                    <!--
+                                      Producto FABRICADO aqui vs producto COMPRADO.
+                                      'Proveedor' y 'Lote Fabrica' existen para material
+                                      que entra por recepcion. En un producto propio salen
+                                      vacios, y el certificado quedaba incompleto: lo
+                                      reporto Diana el 2026-09-10 sobre QC/2026/00155.
+                                      Cuando el analisis viene de una orden de produccion,
+                                      el fabricante somos nosotros y el lote de produccion
+                                      es el folio de la orden.
+                                    -->
+                                    <t t-if="o.amunet_production_id">
+                                        <strong>Fabricante:</strong> <span t-esc="o.company_id.partner_id.name"/>
+                                    </t>
+                                    <t t-else="">
+                                        <strong>Proveedor:</strong> <span t-esc="o.partner_id.name"/>
+                                    </t>
                                 </t>
                             </div>
                             <div class="col-6">
                                 <strong>Lote Amunet:</strong> <span t-field="o.lot_name_amunet"/><br/>
-                                <strong>Lote Fábrica:</strong> <span t-field="o.lot_name_factory"/><br/>
+                                <t t-if="o.amunet_production_id">
+                                    <strong>Lote de producción:</strong> <span t-esc="o.amunet_production_id.name"/><br/>
+                                </t>
+                                <t t-else="">
+                                    <strong>Lote Fábrica:</strong> <span t-field="o.lot_name_factory"/><br/>
+                                </t>
                                 <strong>Caducidad:</strong> <span t-field="o.expiration_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
                                 <t t-if="o.reanalysis_date">
                                     <strong>Reanálisis:</strong> <span t-field="o.reanalysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
