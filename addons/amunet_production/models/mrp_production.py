@@ -1149,6 +1149,8 @@ class MrpProduction(models.Model):
     @api.depends(
         'state', 'workorder_ids.state', 'amunet_sys_req_qc', 'quality_analysis_status',
         'reconciliation_state', 'move_raw_ids.amunet_qty_supplied', 'move_raw_ids.state',
+        'move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid',
+        'amunet_is_solution_product',
     )
     def _compute_amunet_can_produce(self):
         for rec in self:
@@ -1168,7 +1170,19 @@ class MrpProduction(models.Model):
                 for m in rec.move_raw_ids.filtered(lambda m: m.state != 'cancel')
             )
             reconciliation_ok = not has_supply or rec.reconciliation_state == 'completed'
-            rec.amunet_can_produce = wos_done and qc_ok and reconciliation_ok
+            # Una SOLUCION no se produce a medias: hay que haber capturado lo
+            # que se uso de cada componente, que cuadre con el rango de pesaje
+            # y que la disolucion este marcada. Sin esto se podia producir sin
+            # haber registrado el consumo, y el expediente quedaba sin decir
+            # con que se hizo. Pedido por Mery, 09-sep-2026.
+            #
+            # Solo aplica a soluciones: en linea corta y kits no existe ese
+            # concepto y exigirlo las bloquearia.
+            terminada_ok = True
+            if rec.amunet_is_solution_product:
+                terminada_ok = rec.amunet_solucion_terminada
+            rec.amunet_can_produce = (
+                wos_done and qc_ok and reconciliation_ok and terminada_ok)
 
     @api.depends('product_id')
     def _compute_product_categ(self):
@@ -1549,6 +1563,30 @@ class MrpProduction(models.Model):
             return False
         categ = product.product_tmpl_id.categ_id.complete_name or ''
         return 'solucion' in categ.lower()
+
+    amunet_solucion_terminada = fields.Boolean(
+        string='Solución terminada',
+        compute='_compute_amunet_solucion_terminada',
+        help='Todos los componentes tienen cantidad utilizada, dentro del rango '
+             'de pesaje, y con la disolución confirmada donde aplica.')
+
+    @api.depends('move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid',
+                 'move_raw_ids.state')
+    def _compute_amunet_solucion_terminada(self):
+        """La solucion esta lista para mandarse a supervision.
+
+        No basta con que la orden este confirmada: hay que haber capturado las
+        cantidades, que cuadren con el rango de pesaje y que la disolucion este
+        marcada. Eso es justo lo que evalua amunet_is_valid en cada linea, asi
+        que aqui solo se pregunta si TODAS lo cumplen.
+
+        Mandar a supervision una solucion a medias hace que el jefe firme algo
+        que todavia no existe. Pedido por Mery, 09-sep-2026.
+        """
+        for mo in self:
+            lineas = mo.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            mo.amunet_solucion_terminada = bool(lineas) and all(
+                (m.quantity or 0) > 0 and m.amunet_is_valid for m in lineas)
 
     @api.model
     def default_get(self, fields_list):
