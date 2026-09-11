@@ -433,9 +433,19 @@ def migrate(cr, version):
         pt_id = row[0]
 
         # Análisis activos (draft o in_progress)
+        # OJO: amunet_quality_check.product_id guarda un product.product.id,
+        # NO un product_template.id. Comparar directo contra pt_id alcanza
+        # analisis que no son de este producto por pura coincidencia numerica
+        # entre los dos espacios de identificadores. Eso paso el 2026-09-10:
+        # la migracion toco ~50 analisis de HOJA MAESTRA (SPHMC/SPHMT) y les
+        # puso estructura de Producto Terminado. Siempre hay que pasar por
+        # product_product.
         cr.execute("""
-            SELECT id, name FROM amunet_quality_check
-            WHERE product_id = %s AND state IN ('draft', 'in_progress')
+            SELECT qc.id, qc.name
+            FROM amunet_quality_check qc
+            JOIN product_product pp ON pp.id = qc.product_id
+            WHERE pp.product_tmpl_id = %s
+              AND qc.state IN ('draft', 'in_progress')
         """, (pt_id,))
         analyses = cr.fetchall()
         if not analyses:
