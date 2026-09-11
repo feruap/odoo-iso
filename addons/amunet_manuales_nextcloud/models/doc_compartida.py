@@ -279,6 +279,14 @@ class DocCompartidaNextcloud(models.Model):
         Mapeo = self.env['amunet.woo.product.mapping'].sudo()
         mapeos = Mapeo.search([('default_code', '=', clave)])
         if not mapeos:
+            if 'amunet.manual.aviso' in self.env:
+                self.env['amunet.manual.aviso']._manual_aviso(
+                    'Manual aprobado sin producto mapeado: %s' % clave,
+                    'Se aprobo este manual pero no hay ningun producto de la '
+                    'tienda mapeado a su clave, asi que NO se publico:',
+                    [Markup('<b>%s</b><br/>Archivo: %s') % (clave, filename or '')],
+                    pie='Hay que darlo de alta en el mapeo para que llegue a la '
+                        'pagina.')
             self.message_post(
                 body=Markup('<p><b>Tienda:</b> no hay ning\u00fan producto de la tienda '
                      'mapeado a la clave <b>%s</b>, as\u00ed que el manual no se '
@@ -347,6 +355,19 @@ class DocCompartidaNextcloud(models.Model):
             'manual_sincronizado': False,
             'manual_sync_msg': 'Version nueva esperando aprobacion de Calidad',
         })
+        if 'amunet.manual.aviso' in self.env:
+            lineas = [
+                Markup('<b>%s</b> &mdash; %s<br/>Archivo nuevo: %s')
+                % (m.product_id.default_code or m.woo_sku or clave,
+                   m.woo_name or m.product_name or '', filename or '')
+                for m in mapeos
+            ]
+            self.env['amunet.manual.aviso']._manual_aviso(
+                'Manual reemplazado, esperando firma de Calidad: %s' % clave,
+                'Se subio una version nueva de este manual. Mientras Calidad no '
+                'la apruebe, la pagina sigue mostrando la version anterior:',
+                lineas,
+                pie='En cuanto se apruebe, se publica sola en la tienda.')
         self.message_post(
             body=Markup('<p><b>Tienda:</b> la p\u00e1gina sigue mostrando la versi\u00f3n '
                         'anterior. Se publicar\u00e1 sola en cuanto Calidad apruebe esta '

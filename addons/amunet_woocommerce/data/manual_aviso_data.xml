@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        A quien avisar cuando cambia el manual de un producto.
+        Varias direcciones se separan con coma. Para apagar los avisos,
+        poner el valor "off" (dejarlo vacio NO sirve: Odoo borra el registro
+        y vuelve el valor por defecto).
+        noupdate="1" para que una actualizacion del modulo no pise el valor
+        que la empresa haya puesto despues.
+    -->
+    <data noupdate="1">
+        <record id="param_manual_aviso_email" model="ir.config_parameter">
+            <field name="key">amunet_woocommerce.manual_aviso_email</field>
+            <field name="value">gestion@amunet.com.mx</field>
+        </record>
+    </data>
+</odoo>

@@ -24,6 +24,7 @@ import logging
 from urllib.parse import quote
 
 import requests
+from markupsafe import Markup
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -265,6 +266,7 @@ class AmunetWooProductMappingManual(models.Model):
 
         excluir = registros._manual_excluir_ids()
         ok, fallo, detalle = 0, 0, []
+        avisos = []
         inicio = fields.Datetime.now()
 
         for rec in registros:
@@ -330,6 +332,19 @@ class AmunetWooProductMappingManual(models.Model):
             ok += 1
             detalle.append('%s -> %s (%d fichas)' % (
                 rec.woo_sku or rec.id, respuesta.get('url'), len(productos)))
+            avisos.append(Markup(
+                '<b>%s</b> &mdash; %s<br/>'
+                'Archivo: %s<br/>'
+                'Se descarga desde: <a href="%s">%s</a><br/>'
+                'Fichas de producto actualizadas: %s'
+            ) % (
+                rec.product_id.default_code or rec.woo_sku or '',
+                rec.woo_name or rec.product_name or '',
+                fname,
+                respuesta.get('url') or '',
+                respuesta.get('url') or '',
+                claves or str(len(productos)),
+            ))
             _logger.info(
                 'amunet_woocommerce: manual %s publicado en %s (%d fichas)',
                 fname, respuesta.get('url'), len(productos))
@@ -346,6 +361,24 @@ class AmunetWooProductMappingManual(models.Model):
             'failed_count': fallo,
             'message': '\n'.join(detalle)[:8000],
         })
+
+        # Aviso por correo: el manual de la pagina acaba de cambiar.
+        if avisos:
+            if len(avisos) == 1:
+                asunto = _('Manual actualizado en la pagina: %s') % (
+                    registros[0].product_id.default_code
+                    or registros[0].woo_sku or '')
+            else:
+                asunto = _('%d manuales actualizados en la pagina') % len(avisos)
+            self.env['amunet.manual.aviso']._manual_aviso(
+                asunto,
+                _('El manual que se descarga desde la tienda ya es el de Odoo. '
+                  'Esto es lo que se publico:'),
+                avisos,
+                pie=_('La direccion del manual no cambia nunca: siempre es la '
+                      'misma URL por clave, asi que los enlaces que ya andan '
+                      'por ahi siguen sirviendo.'))
+
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -395,6 +428,7 @@ class AmunetWooProductMappingManual(models.Model):
     def action_refresh_manuals(self):
         resultado = super().action_refresh_manuals()
         publicados = self.search([('manual_sincronizado', '=', True)])
+        cambiados = []
         for rec in publicados:
             fname = rec._manual_archivo_nextcloud()
             if fname and fname != rec.manual_sync_archivo:
@@ -403,4 +437,23 @@ class AmunetWooProductMappingManual(models.Model):
                     'manual_sync_msg': _(
                         'El manual cambió en Nextcloud: falta volver a publicarlo'),
                 })
+                cambiados.append(Markup(
+                    '<b>%s</b> &mdash; %s<br/>'
+                    'Antes: %s<br/>'
+                    'Ahora: %s'
+                ) % (
+                    rec.product_id.default_code or rec.woo_sku or '',
+                    rec.woo_name or rec.product_name or '',
+                    rec.manual_sync_archivo or '(sin registro)',
+                    fname,
+                ))
+
+        if cambiados:
+            self.env['amunet.manual.aviso']._manual_aviso(
+                _('Manual cambiado en Nextcloud: la pagina se quedo atras'),
+                _('El archivo del manual cambio en Nextcloud, asi que la pagina '
+                  'sigue mostrando la version anterior. Se publicara solo en '
+                  'cuanto el manual tenga la firma de Calidad:'),
+                cambiados)
+
         return resultado
