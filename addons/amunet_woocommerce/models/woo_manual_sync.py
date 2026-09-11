@@ -19,6 +19,7 @@ el manual cambió en Nextcloud después.
 """
 
 import base64
+import hashlib
 import json
 import logging
 from urllib.parse import quote
@@ -429,9 +430,29 @@ class AmunetWooProductMappingManual(models.Model):
         resultado = super().action_refresh_manuals()
         publicados = self.search([('manual_sincronizado', '=', True)])
         cambiados = []
+        renombrados = 0
         for rec in publicados:
             fname = rec._manual_archivo_nextcloud()
             if fname and fname != rec.manual_sync_archivo:
+                # El nombre cambio, pero eso no quiere decir que el manual sea
+                # otro: Calidad renombra archivos (mayusculas, acentos, codigo
+                # de instructivo) sin tocar el contenido. Si el PDF es el mismo,
+                # la pagina sigue al dia: se anota el nombre nuevo y ya. Sin
+                # esto, cada renombre desincronizaba el manual y mandaba un
+                # aviso en falso.
+                sha_nuevo = None
+                try:
+                    sha_nuevo = hashlib.sha256(
+                        rec._manual_descargar(fname)).hexdigest()
+                except Exception as exc:  # noqa: BLE001
+                    _logger.warning(
+                        'amunet_woocommerce: no se pudo comparar el contenido '
+                        'de %s: %s', fname, exc)
+                if sha_nuevo and rec.manual_sync_sha \
+                        and sha_nuevo == rec.manual_sync_sha:
+                    rec.write({'manual_sync_archivo': fname})
+                    renombrados += 1
+                    continue
                 rec.write({
                     'manual_sincronizado': False,
                     'manual_sync_msg': _(
@@ -447,6 +468,12 @@ class AmunetWooProductMappingManual(models.Model):
                     rec.manual_sync_archivo or '(sin registro)',
                     fname,
                 ))
+
+        if renombrados:
+            _logger.info(
+                'amunet_woocommerce: %d manual(es) solo cambiaron de nombre en '
+                'Nextcloud; el contenido es el mismo y siguen publicados',
+                renombrados)
 
         if cambiados:
             self.env['amunet.manual.aviso']._manual_aviso(
