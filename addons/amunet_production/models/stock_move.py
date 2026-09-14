@@ -235,6 +235,49 @@ class StockMove(models.Model):
                     'preflight de la orden: usa "Validar piloto" y luego "Aceptar '
                     'para piloto".') % (prod.name or ''))
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """En una solucion con receta NO se agregan componentes a mano.
+
+        Solo las soluciones de DESARROLLO admiten sumar productos: ahi la
+        receta es justamente lo que se esta buscando. Una solucion validada
+        sigue su formula aprobada; agregarle un reactivo la convierte en otra
+        cosa sin que nadie lo autorice.
+
+        COMO SE DISTINGUE lo que pone el SISTEMA de lo que pone una PERSONA:
+        los movimientos que salen de explotar la receta traen bom_line_id; el
+        que alguien agrega a mano no lo trae. Verificado: los 20 movimientos de
+        las soluciones existentes traen bom_line_id.
+
+        Esa distincion es imprescindible. Un candado a ciegas romperia confirmar
+        y producir, porque Odoo crea y recrea estos movimientos por su cuenta
+        durante el flujo. Al autor del unlink de mas abajo ya le paso; ver su
+        nota. Por eso tambien se respetan sudo y el contexto interno de surtido.
+
+        El candado va en el modelo y no solo en la vista porque el atributo
+        create de la lista depende de 'parent.', que en Odoo 19 no se evalua de
+        forma confiable en listas embebidas: la vista lo bloqueaba en el papel
+        y en la practica se podian agregar productos a todas. Detectado el
+        2026-09-14.
+        """
+        moves = super().create(vals_list)
+        if self.env.su or self.env.context.get('amunet_supply_internal'):
+            return moves
+        colados = moves.filtered(
+            lambda m: m.raw_material_production_id
+            and not m.bom_line_id
+            and m.raw_material_production_id.amunet_is_solution_product
+            and not m.raw_material_production_id.amunet_es_desarrollo)
+        if colados:
+            raise UserError(_(
+                'No se pueden agregar componentes a una solucion con receta: '
+                '%(prod)s.\n\n'
+                'La solucion sigue su formula aprobada. Si necesitas otra '
+                'composicion, usa una solucion de DESARROLLO, que si admite '
+                'sumar productos.'
+            ) % {'prod': ', '.join(colados.mapped('product_id.display_name'))})
+        return moves
+
     def write(self, vals):
         if 'amunet_qty_used' in vals:
             self._amunet_check_preflight_gate()
