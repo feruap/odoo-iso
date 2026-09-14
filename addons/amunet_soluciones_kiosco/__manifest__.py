@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Kiosco de Soluciones (PIN en tablet)',
-    'version': '19.0.1.0.9',
+    'version': '19.0.1.2.0',
     'summary': 'Tablet compartida en el area de soluciones: el PIN identifica a quien elabora',
     'description': """
 Kiosco de soluciones
