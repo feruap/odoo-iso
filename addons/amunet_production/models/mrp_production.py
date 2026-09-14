@@ -1571,7 +1571,7 @@ class MrpProduction(models.Model):
              'de pesaje, y con la disolución confirmada donde aplica.')
 
     @api.depends('move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid',
-                 'move_raw_ids.state')
+                 'move_raw_ids.state', 'amunet_ph_final')
     def _compute_amunet_solucion_terminada(self):
         """La solucion esta lista para mandarse a supervision.
 
@@ -1585,8 +1585,23 @@ class MrpProduction(models.Model):
         """
         for mo in self:
             lineas = mo.move_raw_ids.filtered(lambda m: m.state != 'cancel')
-            mo.amunet_solucion_terminada = bool(lineas) and all(
+            listo = bool(lineas) and all(
                 (m.quantity or 0) > 0 and m.amunet_is_valid for m in lineas)
+            # El pH va aqui y no en un candado aparte: sin "terminada" no se
+            # manda a supervision, y sin supervision no se produce. Asi el pH
+            # queda en la misma cadena que todo lo demas, en vez de ser un
+            # freno suelto al final.
+            #
+            # Solo se exige donde la elaboracion realmente ajusta pH. Las
+            # soluciones madre y reactivos concentrados (HCl, NaOH, azida,
+            # acido cloroaurico) no lo llevan. Se lee del producto y NO se
+            # deduce del pH objetivo: entre obtenido y objetivo siempre hay
+            # diferencia, y un objetivo en cero no distingue "no aplica" de
+            # "nadie lo capturo". Lista validada por Mery el 2026-09-14.
+            if listo and mo.product_id.product_tmpl_id.amunet_ph_requerido \
+                    and not (mo.amunet_ph_final or 0):
+                listo = False
+            mo.amunet_solucion_terminada = listo
 
     @api.model
     def default_get(self, fields_list):
@@ -2457,6 +2472,49 @@ class MrpProduction(models.Model):
         # La supervision de elaboracion no exige capacitacion en SOPs al jefe.
         return self.env['amunet.quality.procedure']
 
+    def _amunet_motivo_sin_supervision(self):
+        """Explica QUE falta, no solo que falta la supervision.
+
+        El mensaje anterior decia siempre "Falta la SUPERVISION del jefe
+        directo", aunque la causa real fuera otra: sin pH capturado, o sin
+        cantidades, la solucion no llega a "terminada" y por eso no se puede
+        ni mandar a supervision. El operador leia un mensaje que hablaba del
+        jefe cuando lo que faltaba estaba en sus manos. Pedido por Mery,
+        14-sep-2026.
+        """
+        self.ensure_one()
+        if self.amunet_supervision_state == 'requested':
+            quien = self.amunet_supervisor_id.name or _('el jefe directo')
+            return _('Esta orden ya fue enviada a supervision y espera la firma '
+                     'de %(quien)s.') % {'quien': quien}
+
+        if not self.amunet_solucion_terminada:
+            faltantes = []
+            tmpl = self.product_id.product_tmpl_id
+            if tmpl.amunet_ph_requerido and not (self.amunet_ph_final or 0):
+                faltantes.append(_('capturar el pH final (esta solucion lleva '
+                                   'ajuste de pH)'))
+            lineas = self.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            if not lineas:
+                faltantes.append(_('cargar los componentes de la receta'))
+            else:
+                sin_cant = lineas.filtered(lambda m: not (m.quantity or 0))
+                if sin_cant:
+                    faltantes.append(_('capturar la cantidad utilizada de: %s')
+                                     % ', '.join(sin_cant.mapped('product_id.default_code')))
+                invalidas = lineas.filtered(
+                    lambda m: (m.quantity or 0) and not m.amunet_is_valid)
+                if invalidas:
+                    faltantes.append(_('corregir el pesaje o la disolucion de: %s')
+                                     % ', '.join(invalidas.mapped('product_id.default_code')))
+            if faltantes:
+                return _('La elaboracion todavia no esta completa. Falta:\n%s') % (
+                    '\n'.join('  - %s' % x for x in faltantes))
+            return _('La elaboracion todavia no esta completa.')
+
+        return _('Falta enviar la solucion a supervision. Usa el boton '
+                 '"Enviar a supervision" y espera la firma del jefe.')
+
     def action_request_analysis(self):
         """Valida estado/reactivos/checklist y abre el Wizard de análisis"""
         self.ensure_one()
@@ -2464,8 +2522,8 @@ class MrpProduction(models.Model):
         # Gate de supervisión: sin la firma del jefe directo no se solicita analisis.
         if self.amunet_is_solution_product and self.amunet_supervision_state != 'done':
             raise UserError(_(
-                'Falta la SUPERVISIÓN del jefe directo antes de solicitar el '
-                'análisis. Usa "Enviar a supervisión" y espera la firma del jefe.'))
+                'No se puede solicitar el análisis todavía.\n\n%s'
+            ) % self._amunet_motivo_sin_supervision())
 
         if self.quality_analysis_status not in ('none', 'to_request', 'rejected'):
             raise UserError('El análisis de calidad ya fue solicitado o se encuentra aprobado.')
@@ -2724,8 +2782,8 @@ class MrpProduction(models.Model):
             # supervision ya se exigio antes de solicitar analisis).
             if record.amunet_is_solution_product and record.amunet_supervision_state != 'done':
                 raise UserError(_(
-                    'Falta la SUPERVISIÓN del jefe directo antes de producir la '
-                    'solución. Usa "Enviar a supervisión" y espera la firma del jefe.'))
+                    'No se puede producir la solución todavía.\n\n%s'
+                ) % record._amunet_motivo_sin_supervision())
             # 0. Conciliación de materiales obligatoria si hay surtido registrado
             moves_with_supply = record.move_raw_ids.filtered(
                 lambda m: m.state != 'cancel' and (m.amunet_qty_supplied or 0) > 0

@@ -17,6 +17,12 @@
                                 <field name="amunet_req_quality_control"/>
                             </group>
                             <group string="Parámetros Físico-Químicos de la Solución">
+                                <!-- Va PRIMERO porque manda sobre los de abajo:
+                                     si no lleva ajuste de pH, el objetivo y el
+                                     rango son informativos. Sin este campo
+                                     marcado NO se puede terminar la orden sin
+                                     capturar el pH final. -->
+                                <field name="amunet_ph_requerido"/>
                                 <field name="amunet_initial_ph"/>
                                 <field name="amunet_ph_adj_range_text"/>
                                 <field name="amunet_weighing_range_text"/>
@@ -50,6 +56,12 @@
                                 <field name="amunet_req_quality_control"/>
                             </group>
                             <group string="Parámetros Físico-Químicos de la Solución">
+                                <!-- Va PRIMERO porque manda sobre los de abajo:
+                                     si no lleva ajuste de pH, el objetivo y el
+                                     rango son informativos. Sin este campo
+                                     marcado NO se puede terminar la orden sin
+                                     capturar el pH final. -->
+                                <field name="amunet_ph_requerido"/>
                                 <field name="amunet_initial_ph"/>
                                 <field name="amunet_ph_adj_range_text"/>
                                 <field name="amunet_weighing_range_text"/>
