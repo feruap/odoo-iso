@@ -77,6 +77,37 @@ class MrpProduction(models.Model):
         self.ensure_one()
         return self.env['amunet.kiosco.pin.wizard'].abrir_para(self, 'analisis')
 
+    # ------------------------------------------------------------------
+    def button_mark_done(self):
+        """Candado de firma: desde una TABLET no se produce sin PIN.
+
+        La vista oculta el boton nativo, pero ocultar no es impedir: el
+        formulario de Odoo 19 trae CINCO botones button_mark_done y el parche
+        por nombre solo alcanzaba al primero. Los otros cuatro producian sin
+        pedir PIN, y el expediente quedaba a nombre de la tablet en vez de la
+        persona -- justo lo que este modulo existe para evitar.
+
+        El control va aqui y no en la vista porque un registro ISO no puede
+        depender de que un 'invisible' haya salido bien. Esto tambien cierra
+        la puerta por API o importacion.
+
+        No estorba al flujo con PIN: ese corre con with_user(operador), y el
+        operador NO pertenece al grupo de kiosco (ese grupo es solo de las
+        tablets). Detectado el 2026-09-14.
+        """
+        es_tablet = self.env.user.has_group(
+            'amunet_soluciones_kiosco.group_kiosco_soluciones')
+        if es_tablet and not self.env.su:
+            for mo in self:
+                if mo.amunet_is_solution_product:
+                    raise UserError(_(
+                        'Desde la tablet la produccion se registra con el boton '
+                        '"Producir (PIN)".\n\n'
+                        'Asi queda asentado QUIEN produjo la solucion y no la '
+                        'tablet. Si el boton no aparece, revisa que la '
+                        'elaboracion este completa.'))
+        return super().button_mark_done()
+
     def action_kiosco_producir(self):
         self.ensure_one()
         return self.env['amunet.kiosco.pin.wizard'].abrir_para(self, 'producir')
