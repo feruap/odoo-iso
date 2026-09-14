@@ -4,6 +4,21 @@ from odoo import models, fields
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
+    amunet_ph_requerido = fields.Boolean(
+        string='Requiere ajuste de pH',
+        default=False,
+        help='La elaboracion de esta solucion incluye ajustar el pH a un '
+             'objetivo. Si esta marcado, NO se puede terminar la orden sin '
+             'capturar el pH final.\n\n'
+             'Se marca por producto y no se deduce del pH objetivo: entre el pH '
+             'obtenido y el objetivo SIEMPRE hay diferencia, asi que el valor no '
+             'sirve como criterio. Ademas un pH objetivo en cero es ambiguo: no '
+             'distingue "no aplica" de "nadie lo capturo".\n\n'
+             'Las soluciones madre y reactivos concentrados (HCl, NaOH, azida, '
+             'acido cloroaurico) NO llevan ajuste: son lo que son. Los buffers y '
+             'soluciones de corrimiento, bloqueo y pretratamiento SI.\n\n'
+             'Lista validada por Mery el 2026-09-14: 20 requieren, 9 no.')
+
     # Secuencia para el folio de la ORDEN DE PRODUCCION cuando se
     # fabrica este producto. Si esta vacio, la MO usa la secuencia
     # generica del picking_type (AMP/MO/NNNNN). Si esta lleno, el
