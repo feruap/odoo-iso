@@ -531,6 +531,10 @@ class MrpProduction(models.Model):
         'res.users', string='Supervisado por', readonly=True, copy=False)
     amunet_supervised_date = fields.Datetime(
         string='Fecha de supervisión', readonly=True, copy=False)
+    amunet_elaborated_by_id = fields.Many2one(
+        'res.users', string='Elaborada por', readonly=True, copy=False,
+        help='Quien mando la solucion a supervision, es decir quien la '
+             'elaboro. Se usa para impedir que se supervise a si misma.')
     amunet_is_supervisor = fields.Boolean(
         string='Es supervisor actual', compute='_compute_amunet_is_supervisor')
 
@@ -2431,12 +2435,33 @@ class MrpProduction(models.Model):
             raise UserError(_('La supervisión de elaboración solo aplica a soluciones.'))
         if self.amunet_supervision_state == 'done':
             raise UserError(_('Esta orden ya fue supervisada.'))
+        # CANDADO 2: no se manda a supervision una solucion a medias. El jefe
+        # firmaria algo que todavia no existe. Esto estaba SOLO en la vista
+        # (boton oculto por amunet_solucion_terminada) y se colaba por backend:
+        # se logro enviar a supervision una orden en borrador y sin una sola
+        # cantidad capturada. Pedido por Mery el 09-sep-2026, cerrado el 17-sep.
+        if self.state not in ('confirmed', 'progress', 'to_close'):
+            raise UserError(_(
+                'La orden %(mo)s todavia no esta confirmada. Confirmala antes '
+                'de mandarla a supervision.') % {'mo': self.name})
+        if not self.amunet_solucion_terminada:
+            raise UserError(_(
+                'La solucion %(mo)s aun no esta terminada: falta capturar '
+                'cantidades utilizadas dentro del rango de pesaje, marcar la '
+                'disolucion donde aplique, y el pH final si el producto lo '
+                'pide.\n\nNo se manda a supervision una solucion a medias: el '
+                'jefe estaria firmando algo que todavia no existe.'
+            ) % {'mo': self.name})
         mgr = self._amunet_get_direct_manager_user()
         if not mgr:
             raise UserError(_(
                 'No se encontró el jefe directo de quien elabora. '
                 'Configura su Responsable en Recursos Humanos.'))
-        self.sudo().write({'amunet_supervision_state': 'requested', 'amunet_supervisor_id': mgr.id})
+        self.sudo().write({
+            'amunet_supervision_state': 'requested',
+            'amunet_supervisor_id': mgr.id,
+            'amunet_elaborated_by_id': self.env.user.id,
+        })
         self.sudo().activity_schedule(
             'mail.mail_activity_data_todo', user_id=mgr.id,
             summary=_('Supervisar elaboración de solución %s') % self.name,
@@ -2445,11 +2470,49 @@ class MrpProduction(models.Model):
         self.sudo().message_post(body=_('Enviada a supervisión de <b>%s</b>.') % mgr.name)
         return True
 
+    def _amunet_check_supervision_signer(self):
+        """CANDADO 1 y 3: quien firma la supervision debe ser EL jefe asignado,
+        y nunca quien elaboro la solucion.
+
+        SIN EXCEPCIONES. No las hay por grupo, ni para administradores, ni para
+        Fernando. Decidido por Mery el 17-sep-2026.
+
+        Hasta hoy esto vivia SOLO en la vista (boton oculto por
+        amunet_is_supervisor) y por backend firmaba cualquiera: se comprobo que
+        la propia fabricante, un practicante, el usuario de la tableta y un
+        administrador podian firmar una supervision ajena y quedaba registrada
+        como valida. Eso rompe la segregacion de funciones de ISO 13485: quien
+        elabora no puede aprobar su propio trabajo.
+
+        El PIN no protegia: el wizard valida el PIN del usuario conectado, no
+        el del supervisor, asi que cada quien firmaba con su propio PIN.
+        """
+        self.ensure_one()
+        quien = self.env.user
+        # CANDADO 3: nadie se supervisa a si mismo. Va PRIMERO para que, si el
+        # jefe asignado resulta ser quien elaboro, el mensaje diga la causa real
+        # en vez de mandar a firmar a alguien que tampoco puede.
+        elaboro = self.amunet_elaborated_by_id or self.create_uid
+        if elaboro and quien == elaboro:
+            raise UserError(_(
+                'No puedes supervisar una solucion que tu misma elaboraste. '
+                'La supervision la firma tu jefe directo: asi queda separada '
+                'la elaboracion de su revision.'))
+        # CANDADO 1: solo el jefe asignado al mandarla a supervision.
+        if self.amunet_supervisor_id and quien != self.amunet_supervisor_id:
+            raise UserError(_(
+                'Solo %(jefe)s puede firmar la supervision de %(mo)s, porque es '
+                'el jefe directo a quien se le envio.\n\nSi ya no es quien debe '
+                'supervisarla, corrige el Responsable en Recursos Humanos y '
+                'vuelve a mandarla a supervision.'
+            ) % {'jefe': self.amunet_supervisor_id.name, 'mo': self.name})
+
     def action_amunet_do_supervision(self):
         """El jefe directo abre la firma (PIN) para supervisar la elaboración."""
         self.ensure_one()
         if self.amunet_supervision_state != 'requested':
             raise UserError(_('No hay supervisión pendiente en esta orden.'))
+        self._amunet_check_supervision_signer()
         return self.env['amunet.generic.signature.wizard'].open_for(
             self, '_signature_amunet_supervision',
             _('Supervisión de elaboración'),
@@ -2457,6 +2520,10 @@ class MrpProduction(models.Model):
 
     def _signature_amunet_supervision(self):
         self.ensure_one()
+        # Se revalida aqui y no solo al abrir el wizard: este metodo es el que
+        # de verdad asienta la firma, y es invocable por su nombre desde la
+        # lista blanca de firmas.
+        self._amunet_check_supervision_signer()
         self.sudo().write({
             'amunet_supervision_state': 'done',
             'amunet_supervised_by_id': self.env.user.id,
