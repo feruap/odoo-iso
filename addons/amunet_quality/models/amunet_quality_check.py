@@ -3023,6 +3023,32 @@ class AmunetQualityCheck(models.Model):
             or self._get_stock_location()
         )
 
+        # EXCEPCION para PRODUCTO TERMINADO: lo que Calidad regresa vuelve a
+        # DONDE LO TOMO, no a Existencias.
+        #
+        # En un analisis de PT el material sale del Almacen Temporal de PT, que
+        # es la unica ubicacion desde la que Produccion puede entregar. Si la
+        # devolucion aterriza en Existencias, esas piezas quedan FUERA del
+        # alcance de Produccion para siempre: la orden ya no las puede entregar
+        # y el lote se entrega partido en dos documentos.
+        #
+        # Paso de verdad el 17-sep-2026 con el CA125 (QC/2026/00468): la
+        # pantalla ofrecia 170 pz cuando el lote tenia 270 disponibles, porque
+        # 38 estaban retenidas y su devolucion apuntaba a Existencias. Habia
+        # otros dos casos iguales sin validar (PSA 223 pz, E. Giardia 60 pz).
+        # Regla dada por Mery: lo que Calidad regresa de PT vuelve al Temporal
+        # de PT, para que Produccion entregue el lote completo.
+        #
+        # Se deriva del MOVIMIENTO DE MUESTREO en vez de fijar la ubicacion a
+        # mano: asi la devolucion sigue al origen real aunque el almacen se
+        # reconfigure. Solo aplica cuando el analisis viene de una orden de
+        # produccion; las liberaciones de COMPRA siguen aterrizando en
+        # Existencias, que es su destino correcto.
+        if self.amunet_production_id and self.sampling_move_id:
+            origen_muestreo = self.sampling_move_id.move_ids[:1].location_id
+            if origen_muestreo and origen_muestreo != source_location:
+                dest_location = origen_muestreo
+
         if not dest_location:
             _logger.warning(f"_create_final_reception_picking: sin destino para QC {self.id}")
             return False
