@@ -54,28 +54,40 @@ class AmunetQualityCheck(models.Model):
                         mo.quality_analysis_status = 'approved'
 
                     # LIBERAR el lote como aprobado NO es CERRAR la orden: son
-                    # dos actos distintos (Mery, 09-sep-2026). Si la orden trae
-                    # un candado que le impide cerrarse -- hoy, el lote dado de
-                    # alta a mano en inventario --, el analisis se finaliza
-                    # igual y la orden se queda abierta hasta que Almacen y
-                    # Calidad decidan que registro vale.
+                    # dos actos distintos (Mery, 09-sep-2026), de dos areas
+                    # distintas y en momentos distintos. El analisis NO cierra
+                    # la orden: solo deja el lote APROBADO. Produccion cierra
+                    # cuando le toca.
                     #
-                    # Antes, ese candado reventaba la FIRMA del analisis: la
-                    # Responsable Sanitario no podia liberar producto que ya
-                    # estaba aprobado, por un tema de inventario que no le toca
-                    # resolver a ella.
+                    # Antes se llamaba button_mark_done() aqui. Eso encadenaba
+                    # el cierre de la MO a la firma del analisis y a la
+                    # aceptacion de material por Almacen: si la orden traia
+                    # cualquier candado (firmas de supervision/inspeccion
+                    # pendientes en linea corta, alta manual de inventario),
+                    # el UserError del cierre REVENTABA la operacion de quien
+                    # si estaba trabajando. Caso real 17-sep-2026: Almacen no
+                    # podia aceptar la devolucion de 3 pzs del lote
+                    # 0926/01/HIT porque la orden tenia 9 inspecciones sin
+                    # firmar -- un tema que no le toca resolver a Almacen.
+                    #
+                    # Las ordenes de SOLUCION conservan su cierre automatico
+                    # (bloque de awaiting_reception arriba): ahi producir al
+                    # aprobar es intencional (custodia de Calidad, Opcion B).
                     if mo.state not in ('done', 'cancel'):
+                        cuerpo = _(
+                            'Análisis <b>%(qc)s</b> finalizado: el lote queda '
+                            '<b>APROBADO</b>.<br/>La orden permanece abierta; '
+                            'Producción la cierra cuando corresponda.'
+                        ) % {'qc': check.name}
                         if mo.amunet_alta_manual_qty:
-                            mo.sudo().message_post(body=_(
-                                'Análisis <b>%(qc)s</b> finalizado: el lote queda '
-                                '<b>APROBADO</b>.<br/>La orden <b>no se cerró</b> '
-                                'porque tiene %(qty)s pieza(s) dadas de alta a mano '
-                                'en el inventario. Cerrarla ahora duplicaría el '
-                                'producto. Almacén y Calidad deben decidir cuál '
-                                'registro vale: retirar el alta manual y cerrar '
-                                'normal, o cerrar la orden en cero.'
-                            ) % {'qc': check.name, 'qty': mo.amunet_alta_manual_qty})
-                        else:
-                            mo.button_mark_done()
+                            cuerpo += _(
+                                '<br/><b>Atención:</b> esta orden tiene %(qty)s '
+                                'pieza(s) dadas de alta a mano en el inventario. '
+                                'Cerrarla sin resolver eso duplicaría el producto. '
+                                'Almacén y Calidad deben decidir cuál registro '
+                                'vale: retirar el alta manual y cerrar normal, o '
+                                'cerrar la orden en cero.'
+                            ) % {'qty': mo.amunet_alta_manual_qty}
+                        mo.sudo().message_post(body=cuerpo)
                         
         return res
