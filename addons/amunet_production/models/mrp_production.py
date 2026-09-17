@@ -802,8 +802,8 @@ class MrpProduction(models.Model):
     reconciliation_state = fields.Selection([
         ('pending',    'Pendiente'),
         ('initiated',  'En proceso'),
-        ('validated',  'Supervisada'),
-        ('completed',  'Completada'),
+        ('validated',  'Validada por producción'),
+        ('completed',  'Validada por almacén'),
     ], string='Conciliación', default='pending', copy=False, tracking=True)
 
     reconciliation_initiated_by = fields.Many2one(
@@ -2887,9 +2887,21 @@ class MrpProduction(models.Model):
             if moves_with_supply and record.reconciliation_state != 'completed':
                 estado = dict(record._fields['reconciliation_state'].selection).get(
                     record.reconciliation_state, record.reconciliation_state)
+                if record.reconciliation_state == 'validated':
+                    raise UserError(_(
+                        'No se puede producir todavía.\n\n'
+                        'La conciliación de materiales está en "%s" y falta la '
+                        'validación de Almacén.\n\n'
+                        'Ese paso lo hace Almacén con el botón "Confirmar '
+                        'conciliación": pídeles que confirmen la conciliación '
+                        'de esta orden.'
+                    ) % estado)
                 raise UserError(_(
-                    'Debe completar la conciliación de materiales antes de producir.\n'
-                    'Estado actual: %s'
+                    'No se puede producir todavía.\n\n'
+                    'La conciliación de materiales está en "%s" y hay que '
+                    'terminarla antes de producir.\n\n'
+                    'Produccion la inicia y la valida; Almacén la confirma al '
+                    'final.'
                 ) % estado)
 
             # 1. Validar cantidades utilizadas en reactivos. Se permite 0
