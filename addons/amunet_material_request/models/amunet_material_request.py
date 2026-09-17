@@ -91,6 +91,18 @@ class AmunetMaterialRequest(models.Model):
              'necesita una compra a proveedor.',
     )
 
+    amunet_proveedor_factura = fields.Boolean(
+        string='El proveedor factura',
+        default=False,
+        tracking=True,
+        help='Marcar cuando el proveedor emite factura/CFDi por esta compra.',
+    )
+    amunet_datos_bancarios = fields.Char(
+        string='Datos bancarios (CLABE / banco)',
+        tracking=True,
+        help='CLABE interbancaria y banco para transferencia al proveedor.',
+    )
+
     @api.depends('line_ids.amunet_falta_stock')
     def _compute_amunet_requiere_compra(self):
         for req in self:
