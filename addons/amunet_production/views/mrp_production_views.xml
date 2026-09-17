@@ -46,6 +46,17 @@
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>
                     <button name="action_amunet_do_supervision" string="Firmar supervisión" type="object" class="oe_highlight"
                             invisible="not amunet_is_solution_product or amunet_supervision_state != 'requested' or not amunet_is_supervisor"/>
+                    <!-- Produccion recibe de vuelta lo que Calidad tomo. El producto
+                         sigue siendo suyo mientras no se entregue al almacen, asi que
+                         la devolucion la valida Produccion desde SU orden, sin entrar
+                         al tablero de almacen (no tienen acceso a APT, ni deben). -->
+                    <field name="amunet_devolucion_qc_id" invisible="1"/>
+                    <field name="amunet_devolucion_qc_qty" invisible="1"/>
+                    <button name="action_amunet_recibir_devolucion_qc" type="object"
+                            class="oe_highlight"
+                            string="Recibir devolución de Calidad (PIN)"
+                            groups="amunet_production.group_production_operator"
+                            invisible="not amunet_devolucion_qc_id"/>
                     <button name="action_request_analysis" string="Solicitar análisis" type="object" class="oe_highlight"
                             invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or (quality_analysis_status in ('requested', 'approved') and amunet_pt_qty_sin_analizar &lt;= 0)"
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>
