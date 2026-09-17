@@ -132,6 +132,11 @@
                             <field name="picking_id" readonly="1"
                                    invisible="not picking_id"
                                    groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
+                            <field name="amunet_proveedor_factura"
+                                   groups="amunet_nomina_control.group_nomina_captura,amunet_material_request.group_material_manager"/>
+                            <field name="amunet_datos_bancarios"
+                                   placeholder="Ej. CLABE 012650001234567890 — BBVA"
+                                   groups="amunet_nomina_control.group_nomina_captura,amunet_material_request.group_material_manager"/>
                         </group>
                     </group>
 
