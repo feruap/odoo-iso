@@ -2943,7 +2943,23 @@ class AmunetQualityCheck(models.Model):
         qty_sampling = self.qty_sampling or 0.0
         qty_to_return = self.qty_to_return or 0.0
 
-        qty_to_stock = max(0.0, qty_total - qty_sampling + qty_to_return)
+        # PRODUCTO TERMINADO vs COMPRA: son dos esquemas distintos.
+        #
+        # En una RECEPCION DE COMPRA todo el lote entra a Control de calidad,
+        # asi que al cerrar el analisis se regresa a Existencias el lote menos
+        # lo consumido: qty_total - qty_sampling + qty_to_return.
+        #
+        # En PRODUCTO TERMINADO el lote se queda en el Almacen Temporal de PT
+        # y a Calidad SOLO viaja la muestra. Aplicar la formula de compra
+        # devolvia el lote completo desde una ubicacion que nunca lo tuvo, y
+        # duplicaba el stock: en 0926/01/KEG mando 60 piezas cuando Calidad
+        # tenia 3 (13 muestreadas - 10 desechadas) y dejo -57 en Control de
+        # calidad con 57 piezas fantasma en Temporal PT. Aqui solo se regresa
+        # lo que Calidad tiene y no consumio.
+        if self.amunet_production_id:
+            qty_to_stock = max(0.0, qty_to_return)
+        else:
+            qty_to_stock = max(0.0, qty_total - qty_sampling + qty_to_return)
         qty_to_scrap = max(0.0, qty_sampling - qty_to_return)
 
         # 1. Merma automática (irrevocable — el producto fue analizado/destruido)
