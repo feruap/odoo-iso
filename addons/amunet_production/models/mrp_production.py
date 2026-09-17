@@ -2466,6 +2466,7 @@ class MrpProduction(models.Model):
             '_amunet_qc_firma_aprobar': _('Aprobación de análisis de PT'),
             '_amunet_qc_firma_rechazar': _('Rechazo de análisis de PT'),
             '_amunet_baja_rechazada_firma': _('Baja de lote no conforme'),
+            '_signature_amunet_devolucion_qc': _('Recepcion de devolucion de Calidad'),
         }
 
     def _amunet_signature_required_procedures(self):
