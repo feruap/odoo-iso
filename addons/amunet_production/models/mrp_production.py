@@ -802,8 +802,8 @@ class MrpProduction(models.Model):
     reconciliation_state = fields.Selection([
         ('pending',    'Pendiente'),
         ('initiated',  'En proceso'),
-        ('validated',  'Supervisada'),
-        ('completed',  'Completada'),
+        ('validated',  'Validada por producción'),
+        ('completed',  'Validada por almacén'),
     ], string='Conciliación', default='pending', copy=False, tracking=True)
 
     reconciliation_initiated_by = fields.Many2one(
@@ -1814,6 +1814,50 @@ class MrpProduction(models.Model):
                         'modificar la informacion general (campo: %(f)s).'
                     ) % {'mo': mo.name, 'f': mo._fields[f].string})
 
+    def _amunet_check_solution_raw_lines_lock(self, vals):
+        """Soluciones con receta: NADIE quita lineas de material a mano.
+
+        Aplica a TODOS (Fernando, Mery, Produccion, Calidad, Almacen). La
+        unica excepcion es la solucion de DESARROLLO, donde la receta es
+        justamente lo que se esta buscando y si se ajusta.
+
+        POR QUE VA AQUI Y NO EN stock_move.unlink():
+        ya se intento antes y rompio validar/producir, porque Odoo borra y
+        recrea move_raw_ids por su cuenta durante el flujo. Interceptando los
+        comandos (2=borrar) y (3=desligar) que llegan por write() de la ORDEN
+        se ataja SOLO el canal de la interfaz -- que es por donde lo hace una
+        persona. Los borrados internos de Odoo llaman unlink() directo sobre
+        stock.move y no pasan por aqui, asi que el flujo queda intacto.
+
+        Espejo del candado de alta en stock_move.create(). La vista tambien lo
+        bloquea, pero la vista NO es candado: en Odoo 19 'parent.' no se evalua
+        de forma confiable en listas embebidas (detectado el 2026-09-14).
+        """
+        if self.env.su or self.env.context.get('amunet_supply_internal'):
+            return
+        comandos = vals.get('move_raw_ids')
+        if not comandos:
+            return
+        quitar = [c[1] for c in comandos
+                  if isinstance(c, (list, tuple)) and len(c) >= 2
+                  and c[0] in (2, 3)]
+        if not quitar:
+            return
+        candadas = self.filtered(
+            lambda p: p.amunet_is_solution_product and not p.amunet_es_desarrollo)
+        if not candadas:
+            return
+        moves = self.env['stock.move'].browse(quitar).exists().filtered(
+            lambda m: m.raw_material_production_id in candadas)
+        if moves:
+            raise UserError(_(
+                'No se pueden quitar componentes de una solucion con receta: '
+                '%(prod)s.\n\n'
+                'La solucion sigue su formula aprobada. Si necesitas otra '
+                'composicion, usa una solucion de DESARROLLO, que si admite '
+                'quitar y sumar productos.'
+            ) % {'prod': ', '.join(moves.mapped('product_id.display_name'))})
+
     def write(self, vals):
         # El formulario (sobre todo movil) reenvia date_start con la hora
         # truncada a medianoche al guardar. Si la FECHA no cambia, no es un
@@ -1838,6 +1882,7 @@ class MrpProduction(models.Model):
             if self and all(_same_date(rec) for rec in self):
                 vals = dict(vals)
                 vals.pop('date_start')
+        self._amunet_check_solution_raw_lines_lock(vals)
         self._amunet_check_general_info_lock(vals)
         res = super().write(vals)
         if 'product_id' in vals:
@@ -2887,9 +2932,21 @@ class MrpProduction(models.Model):
             if moves_with_supply and record.reconciliation_state != 'completed':
                 estado = dict(record._fields['reconciliation_state'].selection).get(
                     record.reconciliation_state, record.reconciliation_state)
+                if record.reconciliation_state == 'validated':
+                    raise UserError(_(
+                        'No se puede producir todavía.\n\n'
+                        'La conciliación de materiales está en "%s" y falta la '
+                        'validación de Almacén.\n\n'
+                        'Ese paso lo hace Almacén con el botón "Confirmar '
+                        'conciliación": pídeles que confirmen la conciliación '
+                        'de esta orden.'
+                    ) % estado)
                 raise UserError(_(
-                    'Debe completar la conciliación de materiales antes de producir.\n'
-                    'Estado actual: %s'
+                    'No se puede producir todavía.\n\n'
+                    'La conciliación de materiales está en "%s" y hay que '
+                    'terminarla antes de producir.\n\n'
+                    'Produccion la inicia y la valida; Almacén la confirma al '
+                    'final.'
                 ) % estado)
 
             # 1. Validar cantidades utilizadas en reactivos. Se permite 0
