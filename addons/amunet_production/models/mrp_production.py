@@ -2539,6 +2539,45 @@ class MrpProduction(models.Model):
         if not pk:
             raise UserError(_('No hay devolucion de Calidad pendiente.'))
         qty = sum(pk.move_ids.mapped('product_uom_qty'))
+        # CANDADO DE RESPALDO FISICO: nunca se valida una devolucion por mas
+        # piezas de las que Calidad tiene en su ubicacion.
+        #
+        # El 17-sep-2026 la devolucion del lote 0926/01/KEG venia calculada por
+        # 60 pzs cuando Calidad tenia 3 (13 muestreadas menos 10 desechadas).
+        # Validarla dejo -57 en Control de calidad y 57 piezas fantasma en el
+        # Almacen Temporal de PT. La causa (la formula de disposicion usaba el
+        # esquema de COMPRA para producto terminado) ya esta corregida en
+        # amunet_quality, pero este candado se queda: mover stock que no existe
+        # no debe ser posible por ninguna via, venga el numero de donde venga.
+        Quant = self.env['stock.quant'].sudo()
+        faltantes = []
+        for m in pk.sudo().move_ids:
+            if m.state == 'cancel':
+                continue
+            dominio = [
+                ('product_id', '=', m.product_id.id),
+                ('location_id', 'child_of', m.location_id.id),
+            ]
+            lotes = m.move_line_ids.mapped('lot_id')
+            if lotes:
+                dominio.append(('lot_id', 'in', lotes.ids))
+            disponible = sum(Quant.search(dominio).mapped('quantity'))
+            if m.product_uom_qty > disponible + 0.0001:
+                faltantes.append((m.product_id, m.product_uom_qty, disponible,
+                                  m.location_id))
+        if faltantes:
+            detalle = '\n'.join(
+                _('  - %(prod)s: la devolucion pide %(pide).2f y en %(loc)s '
+                  'hay %(hay).2f') % {
+                      'prod': pr.display_name, 'pide': pide, 'hay': hay,
+                      'loc': loc.complete_name}
+                for pr, pide, hay, loc in faltantes)
+            raise UserError(_(
+                'Esta devolucion NO se puede recibir: pide mas piezas de las '
+                'que Calidad tiene.\n\n%(detalle)s\n\n'
+                'Recibirla crearia piezas que no existen. Avisa a Calidad y a '
+                'Desarrollo para que revisen el analisis antes de continuar.'
+            ) % {'detalle': detalle})
         # sudo: Produccion no tiene acceso al almacen de PT a proposito.
         #
         # Hay que marcar 'picked' ANTES de validar. Sin eso button_validate
