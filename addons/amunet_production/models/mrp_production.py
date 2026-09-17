@@ -2472,6 +2472,101 @@ class MrpProduction(models.Model):
         # La supervision de elaboracion no exige capacitacion en SOPs al jefe.
         return self.env['amunet.quality.procedure']
 
+    # ------------------------------------------------------------------
+    # DEVOLUCION DE CALIDAD (PT)
+    # ------------------------------------------------------------------
+    amunet_devolucion_qc_id = fields.Many2one(
+        'stock.picking', string='Devolucion de Calidad',
+        compute='_compute_amunet_devolucion_qc', store=False,
+        help='Albaran pendiente con el material que Calidad regresa a esta orden.')
+    amunet_devolucion_qc_qty = fields.Float(
+        string='Piezas que Calidad devuelve',
+        compute='_compute_amunet_devolucion_qc', store=False)
+
+    def _compute_amunet_devolucion_qc(self):
+        """Busca la devolucion pendiente de Calidad de ESTA orden.
+
+        Se liga por el analisis: la liberacion genera un albaran cuyo origen
+        dice 'Liberacion QC: <folio>'. Solo cuenta si el material vuelve al
+        Almacen Temporal de PT, que es la cancha de Produccion antes de
+        entregar; una liberacion de compra aterriza en Existencias y no es de
+        esta pantalla.
+        """
+        Check = self.env['amunet.quality.check'].sudo()
+        Picking = self.env['stock.picking'].sudo()
+        for mo in self:
+            mo.amunet_devolucion_qc_id = False
+            mo.amunet_devolucion_qc_qty = 0.0
+            if not mo.amunet_is_solution_product and mo.route_type not in ('short', 'long'):
+                continue
+            checks = Check.search([('amunet_production_id', '=', mo.id)])
+            pks = checks.mapped('final_reception_picking_id').filtered(
+                lambda p: p.state not in ('done', 'cancel')
+                and 'Temporal' in (p.location_dest_id.complete_name or ''))
+            if pks:
+                mo.amunet_devolucion_qc_id = pks[0]
+                mo.amunet_devolucion_qc_qty = sum(pks[0].move_ids.mapped('product_uom_qty'))
+
+    def action_amunet_recibir_devolucion_qc(self):
+        """Produccion recibe de vuelta el material que Calidad habia tomado.
+
+        POR QUE UN BOTON EN LA ORDEN Y NO EL TABLERO DE ALMACEN:
+        el producto sigue siendo de Produccion mientras no se entregue a PT, asi
+        que la devolucion la valida Produccion, no el almacenista. Pero
+        Produccion NO tiene acceso al almacen de PT -y no debe tenerlo-, por eso
+        el movimiento se ejecuta en sudo desde su propia orden, igual que ya
+        hace la Entrega de PT. Asi validan sin entrar nunca al tablero de
+        almacen. Pedido por Mery el 17-sep-2026.
+        """
+        self.ensure_one()
+        if not self.env.user.has_group('amunet_production.group_production_operator'):
+            raise UserError(_(
+                'Solo Produccion puede recibir la devolucion de Calidad: el '
+                'producto es suyo mientras no se entregue al almacen.'))
+        if not self.amunet_devolucion_qc_id:
+            raise UserError(_('No hay devolucion de Calidad pendiente en esta orden.'))
+        return self.env['amunet.generic.signature.wizard'].open_for(
+            self, '_signature_amunet_devolucion_qc',
+            _('Recepcion de devolucion de Calidad'),
+            _('Firma de quien recibe de vuelta las %(qty)s pza(s) que Calidad '
+              'tomo de la orden %(orden)s.') % {
+                  'qty': int(self.amunet_devolucion_qc_qty), 'orden': self.name})
+
+    def _signature_amunet_devolucion_qc(self):
+        self.ensure_one()
+        pk = self.amunet_devolucion_qc_id
+        if not pk:
+            raise UserError(_('No hay devolucion de Calidad pendiente.'))
+        qty = sum(pk.move_ids.mapped('product_uom_qty'))
+        # sudo: Produccion no tiene acceso al almacen de PT a proposito.
+        #
+        # Hay que marcar 'picked' ANTES de validar. Sin eso button_validate
+        # devuelve el asistente de transferencia inmediata en vez de validar, y
+        # el metodo termina sin error pero SIN mover nada: la firma quedaba
+        # registrada y el material seguia en Control de calidad.
+        pk = pk.sudo()
+        for m in pk.move_ids:
+            if not m.move_line_ids:
+                m._action_assign()
+            for ml in m.move_line_ids:
+                if not ml.quantity:
+                    ml.quantity = m.product_uom_qty
+            m.picked = True
+        # _skip_pin_wizard: las recepciones piden su propio PIN al validar, pero
+        # aqui el PIN YA se pidio en el asistente de firma que abrio el boton.
+        # Sin esto button_validate devuelve ese asistente y no mueve nada.
+        pk.with_context(_skip_pin_wizard=True).button_validate()
+        pk.invalidate_recordset()
+        if pk.state != 'done':
+            raise UserError(_(
+                'La devolucion no se pudo validar (quedo en %s). Avisa a '
+                'Desarrollo antes de continuar.') % pk.state)
+        self.sudo().message_post(body=_(
+            '<b>%(quien)s</b> recibio de vuelta <b>%(qty)s</b> pza(s) que Calidad '
+            'habia tomado (%(doc)s). Ya se pueden entregar al almacen.'
+        ) % {'quien': self.env.user.name, 'qty': int(qty), 'doc': pk.name})
+        return True
+
     def _amunet_motivo_sin_supervision(self):
         """Explica QUE falta, no solo que falta la supervision.
 
