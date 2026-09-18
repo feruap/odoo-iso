@@ -15,6 +15,7 @@
                                 <field name="amunet_req_dilution"/>
                                 <field name="amunet_req_aforar"/>
                                 <field name="amunet_req_quality_control"/>
+                                <field name="amunet_resguardo_aru"/>
                             </group>
                             <group string="Parámetros Físico-Químicos de la Solución">
                                 <!-- Va PRIMERO porque manda sobre los de abajo:
@@ -54,6 +55,7 @@
                                 <field name="amunet_req_dilution"/>
                                 <field name="amunet_req_aforar"/>
                                 <field name="amunet_req_quality_control"/>
+                                <field name="amunet_resguardo_aru"/>
                             </group>
                             <group string="Parámetros Físico-Químicos de la Solución">
                                 <!-- Va PRIMERO porque manda sobre los de abajo:

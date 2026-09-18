@@ -34,6 +34,26 @@ class ProductTemplate(models.Model):
              'secuencia generica del tipo de operacion.',
     )
 
+    # Resguardo en el Almacen de reactivos en uso (ARU)
+    #
+    # ARU no es un almacen rival del de materia prima: es donde se resguarda el
+    # STOCK PARA USO. Un reactivo puede estar en los dos -- lo cerrado en el
+    # almacen, lo disponible para trabajar en ARU -- y por eso su categoria
+    # dirige a ARU y el area lo toma directo, sin pedirlo.
+    #
+    # La excepcion se marca aqui, por producto. Caso real: el acido cloroaurico
+    # (MPREC35) NO se resguarda en ARU, solo en el almacen, asi que hay que
+    # pedirlo aunque sea un reactivo. Regla de Mery, 18-sep-2026.
+    amunet_resguardo_aru = fields.Selection(
+        [('categoria', 'Según su categoría'),
+         ('si', 'Sí se resguarda en ARU'),
+         ('no', 'No se resguarda en ARU')],
+        string='Resguardo en ARU', default='categoria', required=True,
+        help='Si el producto se resguarda en el Almacen de reactivos en uso. '
+             'Cuando se resguarda, el area lo toma directo y no se le pide a '
+             'Almacen. "Segun su categoria" deja que mande la categoria, que es '
+             'lo normal.')
+
     # Configuracion Actividades Produccion (Checklist de Fabricacion)
     amunet_req_history_log = fields.Boolean(string='Requiere Registro en Bitácora', default=True)
     amunet_req_calculations = fields.Boolean(string='Requiere Cálculos', default=True)

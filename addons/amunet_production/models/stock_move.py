@@ -160,8 +160,8 @@ class StockMove(models.Model):
     @api.depends('product_id',
                  'raw_material_production_id.amunet_is_solution_product',
                  'raw_material_production_id.product_id',
-                 'raw_material_production_id.product_id.product_tmpl_id.amunet_es_conjugado',
-                 'product_id.product_tmpl_id.amunet_solucion_interna')
+                 'product_id.product_tmpl_id.amunet_solucion_interna',
+                 'product_id.product_tmpl_id.amunet_resguardo_aru')
     def _compute_amunet_needs_surtido(self):
         for move in self:
             mo = move.raw_material_production_id
@@ -170,21 +170,31 @@ class StockMove(models.Model):
             if not is_sol:
                 move.amunet_needs_surtido = False
                 continue
-            # CONJUGADOS: todos sus insumos se piden a Almacen, incluidas
-            # las soluciones. Solo algunas soluciones viven en el area (ARU);
-            # las que alimentan un conjugado no. Sin esto, el nitrato de oro,
-            # el borato, el bloqueo y el diluyente se daban por presentes en la
-            # mesa y nadie los entregaba formalmente. Regla de Mery,
-            # 18-sep-2026.
-            if mo.product_id.product_tmpl_id.amunet_es_conjugado:
+            # Lo que se RESGUARDA EN ARU se toma directo; lo demas se pide a
+            # Almacen. ARU no es un almacen rival del de materia prima: es el
+            # stock para uso, y por eso un reactivo puede estar en los dos.
+            #
+            # Reglas de Mery, 18-sep-2026:
+            #   reactivos y agua        -> ARU, directo
+            #   soluciones INTERNAS     -> viven en el area, directo
+            #   las demas soluciones    -> NO estan en ARU, se piden
+            #   anticuerpos/antigenos   -> se piden
+            # Las excepciones por producto van en amunet_resguardo_aru: el
+            # acido cloroaurico (MPREC35) es reactivo pero solo vive en el
+            # almacen, asi que se pide.
+            #
+            # Los CONJUGADOS no necesitan regla propia: sus recetas solo llevan
+            # anticuerpos, antigenos y soluciones no internas, y las tres cosas
+            # ya se piden por lo de arriba.
+            tmpl = move.product_id.product_tmpl_id
+            resguardo = tmpl.amunet_resguardo_aru
+            if resguardo == 'si':
+                move.amunet_needs_surtido = False
+                continue
+            if resguardo == 'no':
                 move.amunet_needs_surtido = True
                 continue
-            # Las soluciones INTERNAS (ajuste de pH y pie para otra solucion)
-            # se toman directo de la mesa del area: no salieron nunca de ahi,
-            # asi que pedirselas a Almacen seria un tramite sobre material que
-            # ya esta enfrente. Las demas soluciones si se piden, aunque
-            # compartan categoria. Regla de Mery, 18-sep-2026.
-            if move.product_id.product_tmpl_id.amunet_solucion_interna:
+            if tmpl.amunet_solucion_interna:
                 move.amunet_needs_surtido = False
                 continue
             categ = move.product_id.categ_id
