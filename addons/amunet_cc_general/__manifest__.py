@@ -5,7 +5,7 @@
     'description': 'Registro de control de cambios general: formatos, manuales, instalaciones y equipos. ISO 13485 / NOM-241.',
     'author': 'Amunet',
     'category': 'Quality',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'depends': ['mail', 'amunet_documentos'],
     'data': [
         'security/amunet_cc_general_security.xml',
@@ -13,8 +13,9 @@
         'data/ir_sequence_data.xml',
         'data/lang_week_start.xml',
         'wizard/amunet_cc_rechazo_wizard_views.xml',
+        'wizard/amunet_nueva_version_wizard_views.xml',
         'views/amunet_cc_general_views.xml',
-        # 'views/amunet_documento_ext_views.xml',  # botón action_nueva_version ya no existe
+        'views/amunet_documento_ext_views.xml',
         'views/mis_pendientes_dashboard_action.xml',
         'views/auditorias_hub_action.xml',
         'views/programas_hub_action.xml',

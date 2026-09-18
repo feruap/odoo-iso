@@ -262,6 +262,7 @@ class AmunetDocumento(models.Model):
     # Campos transitorios
     descripcion_cambio_pendiente = fields.Text(string='Descripcion del cambio')
     justificacion_pendiente = fields.Text(string='Justificacion del cambio')
+    cc_referencia_pendiente = fields.Char(string='No. de control de cambios')
     motivo_devolucion = fields.Text(string='Motivo para devolver')
 
     _codigo_uniq = models.Constraint(
@@ -451,7 +452,6 @@ class AmunetDocumento(models.Model):
                 ('seccion_responsabilidades', 'Responsabilidades'),
                 ('seccion_terminos_definiciones', 'Terminos y definiciones'),
                 ('seccion_condiciones_generales', 'Condiciones generales'),
-                ('seccion_formatos_derivados', 'Formatos derivados'),
                 ('seccion_referencias', 'Referencias bibliograficas'),
             ]
         elif self.tipo == 'manual':
@@ -468,7 +468,6 @@ class AmunetDocumento(models.Model):
                 ('seccion_alcance', 'Alcance'),
                 ('seccion_responsabilidades', 'Responsabilidades'),
                 ('seccion_terminos_definiciones', 'Terminos y definiciones'),
-                ('seccion_formatos_derivados', 'Formatos derivados'),
                 ('seccion_referencias', 'Referencias bibliograficas'),
             ]
         else:
@@ -726,11 +725,10 @@ class AmunetDocumento(models.Model):
         for r in self:
             if r.state != 'vigente':
                 raise UserError(_('Solo puedes generar nueva version desde un documento Vigente.'))
-            if not (r.descripcion_cambio_pendiente or '').strip() or \
-               not (r.justificacion_pendiente or '').strip():
+            if not (r.cc_referencia_pendiente or '').strip():
                 raise UserError(_(
-                    'Para publicar una nueva version necesitas capturar la descripcion del cambio '
-                    'y la justificacion en la pestana "Nueva version".'))
+                    'Para generar una nueva versión debes capturar el número de control de cambios '
+                    'autorizado en la pestaña "Nueva versión" (campo "No. de control de cambios").'))
             today = fields.Date.today()
             def _h(label, html):
                 if not (html or '').strip():
@@ -779,6 +777,7 @@ class AmunetDocumento(models.Model):
                 'aprobado_por_id': r.firma_aprueba_id.id if r.firma_aprueba_id else False,
                 'descripcion_cambio': r.descripcion_cambio_pendiente,
                 'justificacion': r.justificacion_pendiente,
+                'cc_referencia': r.cc_referencia_pendiente,
                 'state_historico': 'obsoleto',
             })
             try:
@@ -796,6 +795,7 @@ class AmunetDocumento(models.Model):
                 'fecha_emision': False,
                 'descripcion_cambio_pendiente': False,
                 'justificacion_pendiente': False,
+                'cc_referencia_pendiente': False,
             })
 
     @api.model
@@ -841,6 +841,7 @@ class AmunetDocumentoVersion(models.Model):
     contenido_html = fields.Html(string='Contenido', sanitize=True, sanitize_tags=False)
     descripcion_cambio = fields.Text(string='Descripcion del cambio')
     justificacion = fields.Text(string='Justificacion')
+    cc_referencia = fields.Char(string='No. de control de cambios')
     elaboro_id = fields.Many2one('res.users', string='Elaboro')
     reviso_id = fields.Many2one('res.users', string='Reviso')
     aprobado_por_id = fields.Many2one('res.users', string='Aprobado por')
@@ -855,14 +856,21 @@ class AmunetDocumentoVersion(models.Model):
         import re
         from difflib import SequenceMatcher
 
-        def strip_html(html_text):
+        def html_to_lines(html_text):
             if not html_text:
-                return ''
-            text = re.sub(r'<[^>]+>', ' ', html_text)
-            text = re.sub(r'&nbsp;', ' ', text)
+                return []
+            text = re.sub(r'</td>\s*<td[^>]*>', ' | ', html_text, flags=re.IGNORECASE)
+            text = re.sub(r'</th>\s*<th[^>]*>', ' | ', text, flags=re.IGNORECASE)
+            text = re.sub(r'</?(h[1-6]|p|br|li|tr|div|blockquote|thead|tbody)[^>]*>', '\n', text, flags=re.IGNORECASE)
+            text = re.sub(r'<[^>]+>', '', text)
+            text = text.replace('&nbsp;', ' ').replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
             text = re.sub(r'&[a-z]+;', '', text)
-            text = re.sub(r'\s+', ' ', text)
-            return text.strip()
+            text = re.sub(r'[ \t]+', ' ', text)
+            lines = [l.strip() for l in text.splitlines()]
+            return [l for l in lines if l]
+
+        def esc(t):
+            return t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
         for record in self:
             prev = self.env['amunet.documento.version'].search([
@@ -877,34 +885,65 @@ class AmunetDocumentoVersion(models.Model):
                 )
                 continue
 
-            old_words = strip_html(prev.contenido_html).split()
-            new_words = strip_html(record.contenido_html).split()
-            matcher = SequenceMatcher(None, old_words, new_words, autojunk=False)
-            parts = []
+            old_lines = html_to_lines(prev.contenido_html)
+            new_lines = html_to_lines(record.contenido_html)
 
-            for op, i1, i2, j1, j2 in matcher.get_opcodes():
+            if not old_lines:
+                record.diff_html = (
+                    '<p style="color:#6b7280;font-style:italic">'
+                    'La versión anterior (v%s) no tiene contenido guardado en el sistema — '
+                    'el comparativo solo estará disponible en versiones generadas desde Odoo.</p>'
+                ) % prev.version
+                continue
+            matcher = SequenceMatcher(None, old_lines, new_lines, autojunk=False)
+            opcodes = matcher.get_opcodes()
+            inserts = sum(j2 - j1 for op, i1, i2, j1, j2 in opcodes if op in ('insert', 'replace'))
+            deletes = sum(i2 - i1 for op, i1, i2, j1, j2 in opcodes if op in ('delete', 'replace'))
+            header = (
+                '<div style="margin-bottom:12px;padding:8px 12px;background:#f1f5f9;'
+                'border-radius:6px;font-size:0.9em;border:1px solid #e2e8f0">'
+                'Comparando <strong>v%s</strong> con <strong>v%s</strong> &nbsp;·&nbsp; '
+                '<span style="color:#166534;font-weight:600">+%d línea(s) agregada(s)</span>'
+                ' &nbsp;·&nbsp; '
+                '<span style="color:#991b1b;font-weight:600">−%d línea(s) eliminada(s)</span>'
+                '</div>'
+            ) % (record.version, prev.version, inserts, deletes)
+            parts = ['<div style="font-size:0.95em;line-height:1.6">', header]
+
+            for op, i1, i2, j1, j2 in opcodes:
                 if op == 'equal':
-                    parts.append(' '.join(new_words[j1:j2]))
+                    for line in new_lines[j1:j2]:
+                        parts.append('<p style="margin:2px 0">%s</p>' % esc(line))
                 elif op == 'insert':
-                    chunk = ' '.join(new_words[j1:j2])
-                    parts.append(
-                        '<strong style="background:#dcfce7;color:#166534;padding:0 2px">%s</strong>' % chunk
-                    )
+                    for line in new_lines[j1:j2]:
+                        parts.append(
+                            '<p style="margin:2px 0;background:#dcfce7;color:#166534;'
+                            'padding:2px 6px;border-left:3px solid #16a34a">'
+                            '<strong>+ %s</strong></p>' % esc(line)
+                        )
                 elif op == 'delete':
-                    chunk = ' '.join(old_words[i1:i2])
-                    parts.append(
-                        '<del style="background:#fee2e2;color:#991b1b;padding:0 2px">%s</del>' % chunk
-                    )
+                    for line in old_lines[i1:i2]:
+                        parts.append(
+                            '<p style="margin:2px 0;background:#fee2e2;color:#991b1b;'
+                            'padding:2px 6px;border-left:3px solid #dc2626">'
+                            '<del>− %s</del></p>' % esc(line)
+                        )
                 elif op == 'replace':
-                    old_chunk = ' '.join(old_words[i1:i2])
-                    new_chunk = ' '.join(new_words[j1:j2])
-                    parts.append(
-                        '<del style="background:#fee2e2;color:#991b1b;padding:0 2px">%s</del> '
-                        '<strong style="background:#dcfce7;color:#166534;padding:0 2px">%s</strong>'
-                        % (old_chunk, new_chunk)
-                    )
+                    for line in old_lines[i1:i2]:
+                        parts.append(
+                            '<p style="margin:2px 0;background:#fee2e2;color:#991b1b;'
+                            'padding:2px 6px;border-left:3px solid #dc2626">'
+                            '<del>− %s</del></p>' % esc(line)
+                        )
+                    for line in new_lines[j1:j2]:
+                        parts.append(
+                            '<p style="margin:2px 0;background:#dcfce7;color:#166534;'
+                            'padding:2px 6px;border-left:3px solid #16a34a">'
+                            '<strong>+ %s</strong></p>' % esc(line)
+                        )
 
-            record.diff_html = '<div style="line-height:2;font-size:0.95em">%s</div>' % ' '.join(parts)
+            parts.append('</div>')
+            record.diff_html = ''.join(parts)
 
     def _check_version_workflow_write(self):
         if (
@@ -928,6 +967,10 @@ class AmunetDocumentoVersion(models.Model):
     def unlink(self):
         self._check_version_workflow_write()
         return super().unlink()
+
+    def action_print_version_historica(self):
+        self.ensure_one()
+        return self.env.ref('amunet_documentos.action_report_version_historica').report_action(self)
 
 
 class AmunetDocumentoDistribucion(models.Model):

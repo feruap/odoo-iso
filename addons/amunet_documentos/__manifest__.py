@@ -8,7 +8,7 @@ historial de versiones, firmas, secciones segun PNOGE-001, sugerencias de cambio
 de firmas configurables.""",
     'author': 'Amunet',
     'category': 'Quality',
-    'version': '19.0.5.0.3',
+    'version': '19.0.5.1.0',
     'depends': ['mail', 'amunet_quality'],
     'data': [
         # seeds_20260619_180814.xml, seeds_pnoal005/009_relacionados.xml y
@@ -30,6 +30,7 @@ de firmas configurables.""",
         'views/amunet_catalogo_firma_views.xml',
         'views/amunet_prueba_rapida_views.xml',
         'views/report_lista_maestra.xml',
+        'views/report_version_historica.xml',
         'views/menus.xml',
     ],
     'assets': {

@@ -104,6 +104,8 @@ class AmunetCCGeneralActividad(models.Model):
         es_manager = self.env.user.has_group('amunet_cc_general.group_cc_general_manager')
         if not es_manager and self.responsable_id and self.responsable_id == self.env.user:
             raise UserError(_('El responsable de realizar la actividad no puede firmar su propia verificación.'))
+        if self.responsable_id and not self.firma_enterado_id:
+            raise UserError(_('El responsable (%s) aún no ha firmado de enterado. Debe firmar primero.') % self.responsable_id.name)
         if self.verifico_id and self.verifico_id != self.env.user:
             raise UserError(_('Solo %s puede verificar esta actividad.') % self.verifico_id.name)
         return self.env['amunet.generic.signature.wizard'].open_for(
@@ -292,7 +294,9 @@ class AmunetCCGeneral(models.Model):
 
     @api.depends(
         'state',
+        'solicitante_id', 'firma_solicitante_id',
         'reviso_id', 'firma_reviso_id',
+        'aprobo_id', 'firma_aprobo_id',
         'cierre_realizo_id', 'firma_cierre_realizo_id',
         'cierre_reviso_id',  'firma_cierre_reviso_id',
         'cierre_aprobo_id',  'firma_cierre_aprobo_id',
@@ -305,14 +309,10 @@ class AmunetCCGeneral(models.Model):
                 rec.pendientes_para_ids = [(5,)]
                 continue
             user_ids = set()
-            if rec.reviso_id and not rec.firma_reviso_id:
-                user_ids.add(rec.reviso_id.id)
-            for act in rec.actividades_ids:
-                if act.responsable_id and not act.firma_enterado_id:
-                    user_ids.add(act.responsable_id.id)
-                if act.verifico_id and not act.firma_verifico_id:
-                    user_ids.add(act.verifico_id.id)
             for campo, firma in [
+                ('solicitante_id', 'firma_solicitante_id'),
+                ('reviso_id',      'firma_reviso_id'),
+                ('aprobo_id',      'firma_aprobo_id'),
                 ('cierre_realizo_id', 'firma_cierre_realizo_id'),
                 ('cierre_reviso_id',  'firma_cierre_reviso_id'),
                 ('cierre_aprobo_id',  'firma_cierre_aprobo_id'),
@@ -320,6 +320,11 @@ class AmunetCCGeneral(models.Model):
                 user = rec[campo]
                 if user and not rec[firma]:
                     user_ids.add(user.id)
+            for act in rec.actividades_ids:
+                if act.responsable_id and not act.firma_enterado_id:
+                    user_ids.add(act.responsable_id.id)
+                if act.verifico_id and not act.firma_verifico_id:
+                    user_ids.add(act.verifico_id.id)
             rec.pendientes_para_ids = [(6, 0, list(user_ids))]
 
     @api.depends('reviso_id', 'firma_reviso_id',
@@ -452,8 +457,8 @@ class AmunetCCGeneral(models.Model):
     # ── Acciones de flujo ────────────────────────────────────────
     def action_enviar(self):
         TIPOS = [
-            'tipo_procedimiento', 'tipo_formula', 'tipo_proveedor', 'tipo_instalacion',
-            'tipo_equipo', 'tipo_manual', 'tipo_formato', 'tipo_otro',
+            'tipo_pno', 'tipo_procedimiento', 'tipo_formula', 'tipo_proveedor',
+            'tipo_instalacion', 'tipo_equipo', 'tipo_manual', 'tipo_formato', 'tipo_otro',
         ]
         for r in self:
             if r.state != 'borrador':

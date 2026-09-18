@@ -268,9 +268,6 @@
                             <button name="action_firmar_enterado" type="object"
                                     string="Firmar enterado" icon="fa-check-circle-o"
                                     invisible="firma_enterado_id or not responsable_id"/>
-                            <field name="recursos" string="Recursos necesarios"
-                                   placeholder="Ej. Materiales, equipo, personal de apoyo..."
-                                   optional="show"/>
                             <field name="fecha_inicio"   string="Fecha de inicio"/>
                             <field name="fecha_termino"  string="Fecha de término"/>
                             <field name="verifico_id" string="Verifica"

@@ -33,6 +33,17 @@
             </field>
         </record>
 
+        <!-- Grupo: puede ver columna "Falta comprar" sin acceso de almacen -->
+        <record id="group_material_purchase_viewer" model="res.groups">
+            <field name="name">Solicitudes de Material / Puede ver falta comprar</field>
+            <field name="implied_ids" eval="[(6, 0, [ref('group_material_requester')])]"/>
+            <field name="comment">
+                Solo amplia la visibilidad del campo "Falta comprar" en las
+                lineas de solicitud. No da acceso al modulo de Inventario ni
+                permisos adicionales de gestion.
+            </field>
+        </record>
+
         <!-- Grupo: Administrador del modulo -->
         <record id="group_material_manager" model="res.groups">
             <field name="name">Solicitudes de Material / Administrador</field>
