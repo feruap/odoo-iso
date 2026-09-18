@@ -258,6 +258,7 @@ class AmunetPilotPreflight(models.Model):
             rec._check_master_data()
             rec._check_bom_and_inventory()
             rec._check_solution_equipment()
+            rec._check_conjugate_equipment()
             rec._check_quality()
             rec._check_packaging()
             rec._check_people_and_training()
@@ -553,13 +554,22 @@ class AmunetPilotPreflight(models.Model):
                     sequence=210,
                 )
 
+    def _amunet_es_conjugado(self):
+        """Un conjugado es una solucion de trabajo, pero no se fabrica igual."""
+        self.ensure_one()
+        return bool(self.product_tmpl_id.amunet_es_conjugado)
+
     def _check_solution_equipment(self):
         """Solo soluciones: valida los equipos fijos del area de Soluciones
         (balanza=pesado, agitador=disolucion, analizador=pH). Las soluciones no
         tienen operaciones de ruta, por eso el equipo se valida a nivel orden.
-        Mismo criterio/parametro que el candado al Producir."""
+        Mismo criterio/parametro que el candado al Producir.
+
+        Los CONJUGADOS quedan fuera: comparten la categoria de soluciones pero
+        no se pesan ni se aforan; su equipo se valida en
+        _check_conjugate_equipment."""
         for rec in self:
-            if rec.route_type != 'solution':
+            if rec.route_type != 'solution' or rec._amunet_es_conjugado():
                 continue
             serials = self.env['ir.config_parameter'].sudo().get_param(
                 'amunet.solution.equipment.serials',
@@ -580,6 +590,44 @@ class AmunetPilotPreflight(models.Model):
                 rec._add_line('equipment', 'Equipos de Soluciones', 'pass',
                     'Balanza, agitador y analizador operativos y con calibracion vigente.',
                     sequence=140)
+
+    def _check_conjugate_equipment(self):
+        """Solo CONJUGADOS: centrifuga refrigerada, horno y espectrofotometro.
+
+        El INSPR-003 no pesa ni afora: centrifuga el oro a 12,300 rpm y 4 C,
+        incuba en horno a 37 C y lee densidad optica a 530 nm. Validar aqui la
+        balanza y el medidor de pH del area de Soluciones dejaba pasar una
+        orden sin revisar los tres equipos que de verdad la condicionan.
+
+        La lista es un parametro para poder ajustarla sin tocar codigo, igual
+        que la de soluciones.
+        """
+        for rec in self:
+            if not rec._amunet_es_conjugado():
+                continue
+            serials = self.env['ir.config_parameter'].sudo().get_param(
+                'amunet.conjugate.equipment.serials',
+                'PRO/CEN/01,PRO/HOR/01,PRO/ESP/01')
+            serials = [x.strip() for x in (serials or '').split(',') if x.strip()]
+            equipos = self.env['amunet.equipment'].sudo().search(
+                [('serial_number', 'in', serials)])
+            problemas = self.env['mrp.workcenter']._amunet_calibration_problems_for(
+                equipos, 'Conjugados')
+            for f in sorted(set(serials) - set(equipos.mapped('serial_number'))):
+                problemas.append(' - Equipo %s no existe en el catalogo' % f)
+            if problemas:
+                rec._add_line(
+                    'equipment', 'Equipos de Conjugados', 'block',
+                    '\n'.join(problemas),
+                    'Calibrar o reactivar la centrifuga, el horno y el '
+                    'espectrofotometro antes de fabricar.',
+                    sequence=141)
+            else:
+                rec._add_line(
+                    'equipment', 'Equipos de Conjugados', 'pass',
+                    'Centrifuga refrigerada, horno y espectrofotometro '
+                    'operativos y con calibracion vigente.',
+                    sequence=141)
 
     def _check_quality(self):
         SamplingPlan = self.env['amunet.quality.sampling.plan']
