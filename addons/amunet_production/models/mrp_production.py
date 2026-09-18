@@ -2055,18 +2055,26 @@ class MrpProduction(models.Model):
         de Lote': formato DDMMYY-NN, donde DD/MM/YY = dia/mes/anio de
         elaboracion y NN = consecutivo de la solucion elaborada ese MISMO dia.
         El consecutivo se calcula contra los lotes existentes con ese prefijo
-        para que sea unico e irrepetible."""
+        para que sea unico e irrepetible.
+
+        Los CONJUGADOS llevan una C antes del consecutivo -- 180926-C01 -- y
+        cuentan aparte de las soluciones: el mismo dia puede haber 180926-01
+        (una solucion) y 180926-C01 (un conjugado) sin pisarse. Asi se
+        distinguen de un vistazo en el anaquel y en la bitacora FPR-030, donde
+        conviven con las soluciones que los alimentan. Regla de Mery,
+        18-sep-2026."""
         self.ensure_one()
         fecha = fields.Date.context_today(self)
         prefix = fecha.strftime('%d%m%y')
+        marca = 'C' if self.product_id.product_tmpl_id.amunet_es_conjugado else ''
         Lot = self.env['stock.lot'].sudo()
-        patron = re.compile(r'^%s-(\d+)$' % prefix)
+        patron = re.compile(r'^%s-%s(\d+)$' % (prefix, marca))
         consec = 0
-        for lot in Lot.search([('name', '=like', prefix + '-%')]):
+        for lot in Lot.search([('name', '=like', '%s-%s%%' % (prefix, marca))]):
             m = patron.match(lot.name or '')
             if m:
                 consec = max(consec, int(m.group(1)))
-        return '%s-%02d' % (prefix, consec + 1)
+        return '%s-%s%02d' % (prefix, marca, consec + 1)
 
     def _amunet_caducidad_de_la_orden(self):
         """La caducidad que vale es la que dice la ORDEN, no la del producto.
