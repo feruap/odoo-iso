@@ -120,9 +120,18 @@ class MrpProduction(models.Model):
     amunet_sys_req_aforar = fields.Boolean(related='product_id.amunet_req_aforar')
     
     # Campo lógico bidireccional hacia la plantilla del producto nativa (qc_required)
+    # CARRIL DE PRODUCCION. Hay dos campos de "requiere analisis" y cada uno
+    # nacio para un flujo distinto:
+    #   qc_required                 -> amunet_quality, para lo que se RECIBE
+    #   amunet_req_quality_control  -> amunet_production, para lo que se FABRICA
+    # Este gate es de la orden de fabricacion, asi que sigue al de produccion.
+    # Antes apuntaba a qc_required (default False), y por eso productos que si
+    # debian analizarse al fabricarse pasaban sin analisis: las soluciones de
+    # trabajo, entre otros (18-sep-2026).
     amunet_sys_req_qc = fields.Boolean(
         string='Requiere Análisis C.C',
-        related='product_id.qc_required', readonly=False, tracking=True,
+        related='product_id.amunet_req_quality_control', readonly=False,
+        tracking=True,
         help="Permite anular o activar el pase por laboratorio bilateralmente."
     )
     
@@ -1695,7 +1704,9 @@ class MrpProduction(models.Model):
             vals.pop('amunet_sys_req_qc', None)
             if vals.get('product_id') and not vals.get('quality_analysis_status'):
                 product = self.env['product.product'].browse(vals['product_id']).exists()
-                if product and (product.amunet_req_quality_control or product.qc_required):
+                # Solo el campo de PRODUCCION: preguntar por los dos era la
+                # senal de que ya no se sabia cual mandaba.
+                if product and product.amunet_req_quality_control:
                     vals['quality_analysis_status'] = 'to_request'
             # LINEA DE PRODUCCION: debe seguir al producto. route_type nace
             # con default='short'; si se crea una solucion y nadie lo corrige,
