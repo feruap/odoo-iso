@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Etapa de linea larga en la ficha del producto -->
+    <record id="view_product_template_etapa_ll" model="ir.ui.view">
+        <field name="name">product.template.form.amunet.etapa.ll</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="amunet_production.view_product_template_form_amunet_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amunet_req_quality_control']" position="after">
+                <field name="amunet_etapa_ll"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
