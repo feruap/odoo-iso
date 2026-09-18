@@ -519,7 +519,12 @@ class StockMove(models.Model):
                 if not ml.lot_id or ml.quantity <= 0:
                     continue
                 product = ml.product_id or move.product_id
-                if not product.product_tmpl_id.qc_required:
+                # CARRIL DE PRODUCCION: este candado protege lotes FABRICADOS,
+                # asi que sigue a amunet_req_quality_control y no a qc_required
+                # (que es el de recepcion). Verificado 18-sep-2026: ningun lote
+                # en existencia viene de una orden sin analisis aprobado, asi
+                # que el cambio no bloquea nada de lo que hay hoy.
+                if not product.product_tmpl_id.amunet_req_quality_control:
                     continue
                 # Buscar la MO que produjo este lote (a traves de
                 # lot_producing_ids; usa 'in' porque es Many2many).
