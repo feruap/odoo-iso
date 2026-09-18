@@ -120,9 +120,18 @@ class MrpProduction(models.Model):
     amunet_sys_req_aforar = fields.Boolean(related='product_id.amunet_req_aforar')
     
     # Campo lógico bidireccional hacia la plantilla del producto nativa (qc_required)
+    # CARRIL DE PRODUCCION. Hay dos campos de "requiere analisis" y cada uno
+    # nacio para un flujo distinto:
+    #   qc_required                 -> amunet_quality, para lo que se RECIBE
+    #   amunet_req_quality_control  -> amunet_production, para lo que se FABRICA
+    # Este gate es de la orden de fabricacion, asi que sigue al de produccion.
+    # Antes apuntaba a qc_required (default False), y por eso productos que si
+    # debian analizarse al fabricarse pasaban sin analisis: las soluciones de
+    # trabajo, entre otros (18-sep-2026).
     amunet_sys_req_qc = fields.Boolean(
         string='Requiere Análisis C.C',
-        related='product_id.qc_required', readonly=False, tracking=True,
+        related='product_id.amunet_req_quality_control', readonly=False,
+        tracking=True,
         help="Permite anular o activar el pase por laboratorio bilateralmente."
     )
     
@@ -1231,6 +1240,14 @@ class MrpProduction(models.Model):
             if (aru and production.product_id
                     and production.product_id.product_tmpl_id.amunet_solucion_interna):
                 production.location_dest_id = aru.lot_stock_id.id
+                continue
+            # Los CONJUGADOS se almacenan en el Almacen de reactivos en uso:
+            # de ahi los toma la etapa de Inyeccion. Si aterrizan en AMP, la
+            # siguiente etapa tendria que pedirlos de vuelta al almacen.
+            # Regla de Mery, 18-sep-2026.
+            if (aru and production.product_id
+                    and production.product_id.product_tmpl_id.amunet_es_conjugado):
+                production.location_dest_id = aru.lot_stock_id.id
 
     @api.depends('product_id', 'date_start')
     def _amunet_compute_expiration(self, product, base_date):
@@ -1574,8 +1591,45 @@ class MrpProduction(models.Model):
         help='Todos los componentes tienen cantidad utilizada, dentro del rango '
              'de pesaje, y con la disolución confirmada donde aplica.')
 
+    # Tolerancia de la D.O. final del conjugado contra su objetivo.
+    # 10% -- definido por Mery, 18-sep-2026.
+    AMUNET_CONJ_DO_TOLERANCIA = 0.10
+
+    def _amunet_conjugado_terminado(self, lineas):
+        """Un conjugado no se pesa ni se disuelve: se alicuota, se centrifuga,
+        se incuba y se lee densidad optica.
+
+        El criterio de las soluciones (pesaje dentro de rango + disolucion
+        confirmada) dejaba a los conjugados sin poder cerrarse nunca: ninguno
+        de sus componentes pasa por esos pasos. Aqui se exige lo que SI define
+        un conjugado bien hecho:
+          - consumo capturado en todos los componentes
+          - horas de conjugacion y de bloqueo registradas
+          - D.O. final dentro del 10% de la objetivo
+
+        La D.O. final es la prueba real de que el conjugado quedo bien: es su
+        equivalente al pesaje de una solucion.
+        """
+        self.ensure_one()
+        if not lineas or any(not (m.quantity or 0) for m in lineas):
+            return False
+        if not (self.amunet_conj_horno1_inicio and self.amunet_conj_horno1_fin):
+            return False
+        if not (self.amunet_conj_horno2_inicio and self.amunet_conj_horno2_fin):
+            return False
+        objetivo = self.product_id.product_tmpl_id.amunet_conj_do_objetivo or 0.0
+        if objetivo <= 0:
+            # Sin objetivo capturado no se puede juzgar: basta con que se haya
+            # leido la D.O. final.
+            return bool(self.amunet_conj_do_final)
+        if not self.amunet_conj_do_final:
+            return False
+        return abs(self.amunet_conj_do_final - objetivo) <= objetivo * self.AMUNET_CONJ_DO_TOLERANCIA
+
     @api.depends('move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid',
-                 'move_raw_ids.state', 'amunet_ph_final')
+                 'move_raw_ids.state', 'amunet_ph_final',
+                 'amunet_conj_do_final', 'amunet_conj_horno1_fin',
+                 'amunet_conj_horno2_fin')
     def _compute_amunet_solucion_terminada(self):
         """La solucion esta lista para mandarse a supervision.
 
@@ -1589,6 +1643,9 @@ class MrpProduction(models.Model):
         """
         for mo in self:
             lineas = mo.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            if mo.product_id.product_tmpl_id.amunet_es_conjugado:
+                mo.amunet_solucion_terminada = mo._amunet_conjugado_terminado(lineas)
+                continue
             listo = bool(lineas) and all(
                 (m.quantity or 0) > 0 and m.amunet_is_valid for m in lineas)
             # El pH va aqui y no en un candado aparte: sin "terminada" no se
@@ -1699,7 +1756,9 @@ class MrpProduction(models.Model):
             vals.pop('amunet_sys_req_qc', None)
             if vals.get('product_id') and not vals.get('quality_analysis_status'):
                 product = self.env['product.product'].browse(vals['product_id']).exists()
-                if product and (product.amunet_req_quality_control or product.qc_required):
+                # Solo el campo de PRODUCCION: preguntar por los dos era la
+                # senal de que ya no se sabia cual mandaba.
+                if product and product.amunet_req_quality_control:
                     vals['quality_analysis_status'] = 'to_request'
             # LINEA DE PRODUCCION: debe seguir al producto. route_type nace
             # con default='short'; si se crea una solucion y nadie lo corrige,
@@ -2056,18 +2115,26 @@ class MrpProduction(models.Model):
         de Lote': formato DDMMYY-NN, donde DD/MM/YY = dia/mes/anio de
         elaboracion y NN = consecutivo de la solucion elaborada ese MISMO dia.
         El consecutivo se calcula contra los lotes existentes con ese prefijo
-        para que sea unico e irrepetible."""
+        para que sea unico e irrepetible.
+
+        Los CONJUGADOS llevan una C antes del consecutivo -- 180926-C01 -- y
+        cuentan aparte de las soluciones: el mismo dia puede haber 180926-01
+        (una solucion) y 180926-C01 (un conjugado) sin pisarse. Asi se
+        distinguen de un vistazo en el anaquel y en la bitacora FPR-030, donde
+        conviven con las soluciones que los alimentan. Regla de Mery,
+        18-sep-2026."""
         self.ensure_one()
         fecha = fields.Date.context_today(self)
         prefix = fecha.strftime('%d%m%y')
+        marca = 'C' if self.product_id.product_tmpl_id.amunet_es_conjugado else ''
         Lot = self.env['stock.lot'].sudo()
-        patron = re.compile(r'^%s-(\d+)$' % prefix)
+        patron = re.compile(r'^%s-%s(\d+)$' % (prefix, marca))
         consec = 0
-        for lot in Lot.search([('name', '=like', prefix + '-%')]):
+        for lot in Lot.search([('name', '=like', '%s-%s%%' % (prefix, marca))]):
             m = patron.match(lot.name or '')
             if m:
                 consec = max(consec, int(m.group(1)))
-        return '%s-%02d' % (prefix, consec + 1)
+        return '%s-%s%02d' % (prefix, marca, consec + 1)
 
     def _amunet_caducidad_de_la_orden(self):
         """La caducidad que vale es la que dice la ORDEN, no la del producto.
@@ -2651,6 +2718,45 @@ class MrpProduction(models.Model):
         if not pk:
             raise UserError(_('No hay devolucion de Calidad pendiente.'))
         qty = sum(pk.move_ids.mapped('product_uom_qty'))
+        # CANDADO DE RESPALDO FISICO: nunca se valida una devolucion por mas
+        # piezas de las que Calidad tiene en su ubicacion.
+        #
+        # El 17-sep-2026 la devolucion del lote 0926/01/KEG venia calculada por
+        # 60 pzs cuando Calidad tenia 3 (13 muestreadas menos 10 desechadas).
+        # Validarla dejo -57 en Control de calidad y 57 piezas fantasma en el
+        # Almacen Temporal de PT. La causa (la formula de disposicion usaba el
+        # esquema de COMPRA para producto terminado) ya esta corregida en
+        # amunet_quality, pero este candado se queda: mover stock que no existe
+        # no debe ser posible por ninguna via, venga el numero de donde venga.
+        Quant = self.env['stock.quant'].sudo()
+        faltantes = []
+        for m in pk.sudo().move_ids:
+            if m.state == 'cancel':
+                continue
+            dominio = [
+                ('product_id', '=', m.product_id.id),
+                ('location_id', 'child_of', m.location_id.id),
+            ]
+            lotes = m.move_line_ids.mapped('lot_id')
+            if lotes:
+                dominio.append(('lot_id', 'in', lotes.ids))
+            disponible = sum(Quant.search(dominio).mapped('quantity'))
+            if m.product_uom_qty > disponible + 0.0001:
+                faltantes.append((m.product_id, m.product_uom_qty, disponible,
+                                  m.location_id))
+        if faltantes:
+            detalle = '\n'.join(
+                _('  - %(prod)s: la devolucion pide %(pide).2f y en %(loc)s '
+                  'hay %(hay).2f') % {
+                      'prod': pr.display_name, 'pide': pide, 'hay': hay,
+                      'loc': loc.complete_name}
+                for pr, pide, hay, loc in faltantes)
+            raise UserError(_(
+                'Esta devolucion NO se puede recibir: pide mas piezas de las '
+                'que Calidad tiene.\n\n%(detalle)s\n\n'
+                'Recibirla crearia piezas que no existen. Avisa a Calidad y a '
+                'Desarrollo para que revisen el analisis antes de continuar.'
+            ) % {'detalle': detalle})
         # sudo: Produccion no tiene acceso al almacen de PT a proposito.
         #
         # Hay que marcar 'picked' ANTES de validar. Sin eso button_validate
@@ -2703,6 +2809,31 @@ class MrpProduction(models.Model):
                 faltantes.append(_('capturar el pH final (esta solucion lleva '
                                    'ajuste de pH)'))
             lineas = self.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            if tmpl.amunet_es_conjugado:
+                sin_cant = lineas.filtered(lambda m: not (m.quantity or 0))
+                if not lineas:
+                    faltantes.append(_('cargar los componentes de la receta'))
+                elif sin_cant:
+                    faltantes.append(_('capturar la cantidad utilizada de: %s')
+                                     % ', '.join(sin_cant.mapped('product_id.default_code')))
+                if not (self.amunet_conj_horno1_inicio and self.amunet_conj_horno1_fin):
+                    faltantes.append(_('registrar el inicio y fin de la conjugacion en horno'))
+                if not (self.amunet_conj_horno2_inicio and self.amunet_conj_horno2_fin):
+                    faltantes.append(_('registrar el inicio y fin del bloqueo'))
+                objetivo = tmpl.amunet_conj_do_objetivo or 0.0
+                if not self.amunet_conj_do_final:
+                    faltantes.append(_('leer la D.O. final del conjugado'))
+                elif objetivo > 0 and abs(self.amunet_conj_do_final - objetivo) > objetivo * self.AMUNET_CONJ_DO_TOLERANCIA:
+                    faltantes.append(_(
+                        'ajustar el conjugado: la D.O. final es %(obt).2f y el '
+                        'objetivo %(obj).2f (tolerancia %(tol)s%%). Concentrar o '
+                        'diluir y volver a leer.'
+                    ) % {'obt': self.amunet_conj_do_final, 'obj': objetivo,
+                         'tol': int(self.AMUNET_CONJ_DO_TOLERANCIA * 100)})
+                if faltantes:
+                    return _('La elaboracion todavia no esta completa. Falta:\n%s') % (
+                        '\n'.join('  - %s' % x for x in faltantes))
+                return _('La elaboracion todavia no esta completa.')
             if not lineas:
                 faltantes.append(_('cargar los componentes de la receta'))
             else:

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Producto: parametros de receta del conjugado (INSPR-003) -->
+    <record id="view_product_template_conjugado" model="ir.ui.view">
+        <field name="name">product.template.form.amunet.conjugado</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Conjugado" name="amunet_conjugado"
+                      invisible="not amunet_es_conjugado">
+                    <group>
+                        <group string="Receta">
+                            <field name="amunet_conj_ph_sab"/>
+                            <field name="amunet_conj_agente_bloqueo"/>
+                            <field name="amunet_conj_proceso"/>
+                            <field name="amunet_conj_horas_conjugacion"/>
+                            <field name="amunet_conj_min_bloqueo"/>
+                        </group>
+                        <group string="Acabado">
+                            <field name="amunet_conj_do_objetivo"/>
+                            <field name="amunet_conj_vol_resuspension"/>
+                        </group>
+                        <group string="Centrifugado">
+                            <field name="amunet_conj_centrif_rpm"/>
+                            <field name="amunet_conj_centrif_temp"/>
+                            <field name="amunet_conj_centrif_min"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Orden: captura de las actividades del conjugado -->
+    <record id="view_product_template_conjugado_flag" model="ir.ui.view">
+        <field name="name">product.template.form.amunet.conjugado.flag</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="amunet_production.view_product_template_form_amunet_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amunet_req_quality_control']" position="after">
+                <field name="amunet_es_conjugado"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_mrp_production_conjugado" model="ir.ui.view">
+        <field name="name">mrp.production.form.amunet.conjugado</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Conjugado" name="amunet_conjugado"
+                      invisible="not amunet_es_conjugado">
+                    <field name="amunet_es_conjugado" invisible="1"/>
+                    <field name="amunet_conj_proceso" invisible="1"/>
+                    <group string="1-2. Despeje y bitacora">
+                        <field name="amunet_conj_despeje"/>
+                        <field name="amunet_conj_folio_bitacora"/>
+                    </group>
+                    <group>
+                        <group string="3-4. Alicuotado y centrifugado 1">
+                            <field name="amunet_conj_vol_nps"/>
+                            <field name="amunet_conj_c1_hora"/>
+                            <field name="amunet_conj_c1_rpm"/>
+                            <field name="amunet_conj_c1_temp"/>
+                            <field name="amunet_conj_c1_min"/>
+                        </group>
+                        <group string="5-6. Resuspension y anticuerpo">
+                            <field name="amunet_conj_ph_sab" readonly="1"/>
+                            <field name="amunet_conj_vol_sab"/>
+                            <field name="amunet_conj_conc_ac_inicial"/>
+                            <field name="amunet_conj_conc_ac_objetivo"/>
+                            <field name="amunet_conj_vol_ac"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="7. Conjugacion en horno 37 C">
+                            <field name="amunet_conj_horas_conjugacion" readonly="1"/>
+                            <field name="amunet_conj_horno1_inicio"/>
+                            <field name="amunet_conj_horno1_fin"/>
+                        </group>
+                        <group string="Proceso largo (botones)"
+                               invisible="amunet_conj_proceso != 'largo'">
+                            <field name="amunet_conj_botones_hora"/>
+                            <field name="amunet_conj_ta_inicio"/>
+                            <field name="amunet_conj_ta_fin"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="8. Bloqueo">
+                            <field name="amunet_conj_min_bloqueo" readonly="1"/>
+                            <field name="amunet_conj_vol_bloqueo"/>
+                            <field name="amunet_conj_horno2_inicio"/>
+                            <field name="amunet_conj_horno2_fin"/>
+                        </group>
+                        <group string="9. Centrifugado 2">
+                            <field name="amunet_conj_c2_hora"/>
+                            <field name="amunet_conj_c2_rpm"/>
+                            <field name="amunet_conj_c2_temp"/>
+                            <field name="amunet_conj_c2_min"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="10. D.O. inicial (530 nm)">
+                            <field name="amunet_conj_do_i_l1"/>
+                            <field name="amunet_conj_do_i_l2"/>
+                            <field name="amunet_conj_do_i_l3"/>
+                            <field name="amunet_conj_do_i_factor"/>
+                            <field name="amunet_conj_do_inicial" readonly="1"/>
+                        </group>
+                        <group string="11. Dilucion y D.O. final">
+                            <field name="amunet_conj_do_objetivo" readonly="1"/>
+                            <field name="amunet_conj_vol_concentrado"/>
+                            <field name="amunet_conj_vol_diluyente"/>
+                            <field name="amunet_conj_do_f_l1"/>
+                            <field name="amunet_conj_do_f_l2"/>
+                            <field name="amunet_conj_do_f_l3"/>
+                            <field name="amunet_conj_do_f_factor"/>
+                            <field name="amunet_conj_do_final" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

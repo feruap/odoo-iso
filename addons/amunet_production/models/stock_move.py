@@ -159,7 +159,8 @@ class StockMove(models.Model):
 
     @api.depends('product_id',
                  'raw_material_production_id.amunet_is_solution_product',
-                 'raw_material_production_id.product_id')
+                 'raw_material_production_id.product_id',
+                 'raw_material_production_id.product_id.product_tmpl_id.amunet_es_conjugado')
     def _compute_amunet_needs_surtido(self):
         for move in self:
             mo = move.raw_material_production_id
@@ -167,6 +168,15 @@ class StockMove(models.Model):
                              or mo.amunet_is_solution_product)
             if not is_sol:
                 move.amunet_needs_surtido = False
+                continue
+            # CONJUGADOS: todos sus insumos se piden a Almacen, incluidas
+            # las soluciones. Solo algunas soluciones viven en el area (ARU);
+            # las que alimentan un conjugado no. Sin esto, el nitrato de oro,
+            # el borato, el bloqueo y el diluyente se daban por presentes en la
+            # mesa y nadie los entregaba formalmente. Regla de Mery,
+            # 18-sep-2026.
+            if mo.product_id.product_tmpl_id.amunet_es_conjugado:
+                move.amunet_needs_surtido = True
                 continue
             categ = move.product_id.categ_id
             routes = (categ._amunet_routes_to_aru()
@@ -509,7 +519,12 @@ class StockMove(models.Model):
                 if not ml.lot_id or ml.quantity <= 0:
                     continue
                 product = ml.product_id or move.product_id
-                if not product.product_tmpl_id.qc_required:
+                # CARRIL DE PRODUCCION: este candado protege lotes FABRICADOS,
+                # asi que sigue a amunet_req_quality_control y no a qc_required
+                # (que es el de recepcion). Verificado 18-sep-2026: ningun lote
+                # en existencia viene de una orden sin analisis aprobado, asi
+                # que el cambio no bloquea nada de lo que hay hoy.
+                if not product.product_tmpl_id.amunet_req_quality_control:
                     continue
                 # Buscar la MO que produjo este lote (a traves de
                 # lot_producing_ids; usa 'in' porque es Many2many).
