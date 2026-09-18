@@ -43,6 +43,20 @@ class AmunetMaterialRequest(models.Model):
     amunet_autorizacion_fecha = fields.Datetime(string='Fecha de autorizacion', copy=False, readonly=True)
     amunet_telegram_msg_id = fields.Char(copy=False, groups='base.group_system')
 
+    # -- corte de pagos y comprobante -------------------------------------
+    # Las ordenes de pago autorizadas NO salen al grupo de una en una: se
+    # acumulan y salen juntas en el corte de las 15:00 de lunes a viernes.
+    # Quien paga responde a esa orden con la foto del comprobante, y ahi se
+    # cierra el circulo.
+    amunet_pago_publicado = fields.Datetime(
+        string='Publicado al grupo de pagos', copy=False, readonly=True)
+    amunet_telegram_grupo_msg_id = fields.Char(copy=False, groups='base.group_system')
+    amunet_comprobante_fecha = fields.Datetime(
+        string='Comprobante recibido', copy=False, readonly=True)
+    amunet_comprobante_archivo = fields.Char(
+        string='Archivo del comprobante', copy=False, readonly=True,
+        groups='amunet_compras_general.group_compras_monto')
+
     @api.model
     def _amunet_hmac_secret(self):
         ICP = self.env['ir.config_parameter'].sudo()
