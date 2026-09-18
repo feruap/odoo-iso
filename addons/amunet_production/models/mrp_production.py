@@ -2854,6 +2854,60 @@ class MrpProduction(models.Model):
         return _('Falta enviar la solucion a supervision. Usa el boton '
                  '"Enviar a supervision" y espera la firma del jefe.')
 
+    amunet_puede_pedir_analisis = fields.Boolean(
+        string='Puede solicitar análisis',
+        compute='_compute_amunet_puede_pedir_analisis',
+        help='Tecnico: si action_request_analysis pasaria sus validaciones. '
+             'Lo usan las dos vistas -- escritorio y kiosco -- para no ofrecer '
+             'un boton que va a rechazar.')
+
+    @api.depends('amunet_is_solution_product', 'amunet_supervision_state',
+                 'move_raw_ids.quantity', 'amunet_all_ingredients_valid',
+                 'amunet_solucion_terminada',
+                 'amunet_check_history_log', 'amunet_check_calculations',
+                 'amunet_check_dilution', 'amunet_check_aforar',
+                 'amunet_sys_req_history', 'amunet_sys_req_calc',
+                 'amunet_sys_req_dilution', 'amunet_sys_req_aforar')
+    def _compute_amunet_puede_pedir_analisis(self):
+        """Espejo de lo que exige action_request_analysis.
+
+        El boton se ofrecia en cuanto la orden llegaba a 'Por cerrar', pero el
+        metodo rechaza por cuatro motivos mas que la vista no miraba: la firma
+        del jefe, cantidades negativas, reactivos sin marcar como validos y el
+        checklist operativo. El operador lo presionaba y recibia un no. En la
+        TABLETA es peor: ahi el PIN se pide ANTES de validar, asi que tecleaba
+        su PIN para nada.
+
+        Esto NO sustituye las validaciones del metodo -- ahi sigue el candado
+        real, con sus mensajes que explican que falta. Aqui solo se anticipa el
+        resultado para no ensenar un camino cerrado. Pedido por Mery,
+        18-sep-2026.
+        """
+        for mo in self:
+            ok = True
+            es_conj = mo.product_id.product_tmpl_id.amunet_es_conjugado
+            if mo.move_raw_ids.filtered(lambda m: (m.quantity or 0.0) < 0):
+                ok = False
+            elif es_conj:
+                # El conjugado no se pesa ni se disuelve, asi que sus lineas
+                # nunca salen 'validas': lo que lo da por terminado es su D.O.
+                ok = bool(mo.amunet_solucion_terminada
+                          and mo.amunet_supervision_state == 'done')
+            elif not mo.amunet_all_ingredients_valid:
+                ok = False
+            elif mo.amunet_is_solution_product:
+                # Solo soluciones: firma del jefe y checklist de preparacion
+                # quimica. Cada casilla se exige unicamente si el producto la
+                # pide, igual que en el metodo.
+                if mo.amunet_supervision_state != 'done':
+                    ok = False
+                elif ((mo.amunet_sys_req_history and not mo.amunet_check_history_log)
+                        or (mo.amunet_sys_req_calc and not mo.amunet_check_calculations)
+                        or (mo.amunet_sys_req_dilution and not mo.amunet_check_dilution)
+                        or (mo.amunet_sys_req_aforar and not mo.amunet_check_aforar)):
+                    ok = False
+            mo.amunet_puede_pedir_analisis = ok
+
     def action_request_analysis(self):
         """Valida estado/reactivos/checklist y abre el Wizard de análisis"""
         self.ensure_one()
@@ -2875,14 +2929,24 @@ class MrpProduction(models.Model):
             nombres = ', '.join(sin_cantidad.mapped('product_id.name'))
             raise UserError(f'Los siguientes reactivos tienen Cantidad Utilizada inválida (negativa):\n{nombres}')
 
-        if not self.amunet_all_ingredients_valid:
+        # Los CONJUGADOS no se pesan ni se disuelven: sus lineas nunca salen
+        # 'validas' porque esa marca mide pesaje y disolucion. Lo que dice que
+        # un conjugado quedo bien es su D.O. final, que ya evalua
+        # amunet_solucion_terminada. Sin esta excepcion, el dia que se encienda
+        # el analisis en conjugados este candado los rechazaria siempre.
+        if self.product_id.product_tmpl_id.amunet_es_conjugado:
+            if not self.amunet_solucion_terminada:
+                raise UserError(_(
+                    'No se puede solicitar el análisis todavía.\n\n%s'
+                ) % self._amunet_motivo_sin_supervision())
+        elif not self.amunet_all_ingredients_valid:
             raise UserError('Todos los reactivos deben estar marcados como Válidos para proceder.')
 
         # Validar checklist operativa: bitacoras, calculos, dilucion y
         # aforar son requisitos del flujo de SOLUCIONES (preparacion
         # quimica). Para kits y otros productos no aplican porque no
         # hay preparacion de mezclas.
-        if self.amunet_is_solution_product:
+        if self.amunet_is_solution_product and not self.product_id.product_tmpl_id.amunet_es_conjugado:
             missing = []
             if self.amunet_sys_req_history and not self.amunet_check_history_log:
                 missing.append("Registro en Bitácoras")
