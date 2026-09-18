@@ -1829,7 +1829,52 @@ class MrpProduction(models.Model):
                         'modificar la informacion general (campo: %(f)s).'
                     ) % {'mo': mo.name, 'f': mo._fields[f].string})
 
+    def _amunet_check_solution_raw_lines_lock(self, vals):
+        """Soluciones con receta: NADIE quita lineas de material a mano.
+
+        Aplica a TODOS (Fernando, Mery, Produccion, Calidad, Almacen). La
+        unica excepcion es la solucion de DESARROLLO, donde la receta es
+        justamente lo que se esta buscando y si se ajusta.
+
+        POR QUE VA AQUI Y NO EN stock_move.unlink():
+        ya se intento antes y rompio validar/producir, porque Odoo borra y
+        recrea move_raw_ids por su cuenta durante el flujo. Interceptando los
+        comandos (2=borrar) y (3=desligar) que llegan por write() de la ORDEN
+        se ataja SOLO el canal de la interfaz -- que es por donde lo hace una
+        persona. Los borrados internos de Odoo llaman unlink() directo sobre
+        stock.move y no pasan por aqui, asi que el flujo queda intacto.
+
+        Espejo del candado de alta en stock_move.create(). La vista tambien lo
+        bloquea, pero la vista NO es candado: en Odoo 19 'parent.' no se evalua
+        de forma confiable en listas embebidas (detectado el 2026-09-14).
+        """
+        if self.env.su or self.env.context.get('amunet_supply_internal'):
+            return
+        comandos = vals.get('move_raw_ids')
+        if not comandos:
+            return
+        quitar = [c[1] for c in comandos
+                  if isinstance(c, (list, tuple)) and len(c) >= 2
+                  and c[0] in (2, 3)]
+        if not quitar:
+            return
+        candadas = self.filtered(
+            lambda p: p.amunet_is_solution_product and not p.amunet_es_desarrollo)
+        if not candadas:
+            return
+        moves = self.env['stock.move'].browse(quitar).exists().filtered(
+            lambda m: m.raw_material_production_id in candadas)
+        if moves:
+            raise UserError(_(
+                'No se pueden quitar componentes de una solucion con receta: '
+                '%(prod)s.\n\n'
+                'La solucion sigue su formula aprobada. Si necesitas otra '
+                'composicion, usa una solucion de DESARROLLO, que si admite '
+                'quitar y sumar productos.'
+            ) % {'prod': ', '.join(moves.mapped('product_id.display_name'))})
+
     def write(self, vals):
+        self._amunet_check_solution_raw_lines_lock(vals)
         # El formulario (sobre todo movil) reenvia date_start con la hora
         # truncada a medianoche al guardar. Si la FECHA no cambia, no es un
         # cambio real: lo descartamos ANTES de escribir para no disparar el
