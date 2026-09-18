@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- OJO: deliberadamente NO se usa purchase.group_purchase_manager.
+             Ese grupo hoy incluye a almacen.mp, supalmacen y
+             verif-odoo-almacen, y almacen no debe ver montos nunca. -->
+        <record id="group_compras_monto" model="res.groups">
+            <field name="name">Compras / Ve montos de compra general</field>
+            <field name="comment">Puede ver el importe de las solicitudes de compra general. Membresia nombrada.</field>
+        </record>
+    </data>
+    <data noupdate="1">
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', 'in', ['fernando.ruiz@amunet.com.mx', 'desarrollo@amunet.com.mx'])]"/>
+            </function>
+            <value eval="{'group_ids': [(4, ref('amunet_compras_general.group_compras_monto'))]}"/>
+        </function>
+    </data>
+</odoo>
