@@ -16,6 +16,8 @@
                 <field name="amunet_concepto_pago" invisible="amunet_forma_pago != 'transferencia'"/>
                 <field name="amunet_autorizacion_estado" readonly="1" invisible="amunet_autorizacion_estado == 'na'"/>
                 <field name="amunet_autorizacion_fecha" readonly="1" invisible="not amunet_autorizacion_fecha"/>
+                <field name="amunet_pago_publicado" readonly="1" invisible="not amunet_pago_publicado"/>
+                <field name="amunet_comprobante_fecha" readonly="1" invisible="not amunet_comprobante_fecha"/>
                 <field name="amunet_currency_id" invisible="1"/>
                 <field name="amunet_monto" groups="amunet_compras_general.group_compras_monto"/>
                 <field name="amunet_monto_visible" readonly="1" invisible="not amunet_monto_visible" groups="!amunet_compras_general.group_compras_monto"/>
