@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Inspecciones de proceso',
-    'version': '19.0.4.1.5',
+    'version': '19.0.4.2.0',
     'category': 'Manufacturing',
     'summary': 'Inspecciones operativas durante el proceso productivo '
                '(ISO 13485 §8.2.5). NO sustituye la liberacion de lote.',
@@ -43,6 +43,7 @@ Folio: INP/MMAA/NNN con reinicio mensual.
         'views/amunet_process_inspection_views.xml',
         'views/mrp_routing_workcenter_views.xml',
         'views/mrp_production_views.xml',
+        'views/amunet_etapa_ll_views.xml',
         'views/menu_views.xml',
         'views/aru_menu_views.xml',
     ],
