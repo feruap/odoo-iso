@@ -1570,8 +1570,45 @@ class MrpProduction(models.Model):
         help='Todos los componentes tienen cantidad utilizada, dentro del rango '
              'de pesaje, y con la disolución confirmada donde aplica.')
 
+    # Tolerancia de la D.O. final del conjugado contra su objetivo.
+    # 10% -- definido por Mery, 18-sep-2026.
+    AMUNET_CONJ_DO_TOLERANCIA = 0.10
+
+    def _amunet_conjugado_terminado(self, lineas):
+        """Un conjugado no se pesa ni se disuelve: se alicuota, se centrifuga,
+        se incuba y se lee densidad optica.
+
+        El criterio de las soluciones (pesaje dentro de rango + disolucion
+        confirmada) dejaba a los conjugados sin poder cerrarse nunca: ninguno
+        de sus componentes pasa por esos pasos. Aqui se exige lo que SI define
+        un conjugado bien hecho:
+          - consumo capturado en todos los componentes
+          - horas de conjugacion y de bloqueo registradas
+          - D.O. final dentro del 10% de la objetivo
+
+        La D.O. final es la prueba real de que el conjugado quedo bien: es su
+        equivalente al pesaje de una solucion.
+        """
+        self.ensure_one()
+        if not lineas or any(not (m.quantity or 0) for m in lineas):
+            return False
+        if not (self.amunet_conj_horno1_inicio and self.amunet_conj_horno1_fin):
+            return False
+        if not (self.amunet_conj_horno2_inicio and self.amunet_conj_horno2_fin):
+            return False
+        objetivo = self.product_id.product_tmpl_id.amunet_conj_do_objetivo or 0.0
+        if objetivo <= 0:
+            # Sin objetivo capturado no se puede juzgar: basta con que se haya
+            # leido la D.O. final.
+            return bool(self.amunet_conj_do_final)
+        if not self.amunet_conj_do_final:
+            return False
+        return abs(self.amunet_conj_do_final - objetivo) <= objetivo * self.AMUNET_CONJ_DO_TOLERANCIA
+
     @api.depends('move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid',
-                 'move_raw_ids.state', 'amunet_ph_final')
+                 'move_raw_ids.state', 'amunet_ph_final',
+                 'amunet_conj_do_final', 'amunet_conj_horno1_fin',
+                 'amunet_conj_horno2_fin')
     def _compute_amunet_solucion_terminada(self):
         """La solucion esta lista para mandarse a supervision.
 
@@ -1585,6 +1622,9 @@ class MrpProduction(models.Model):
         """
         for mo in self:
             lineas = mo.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            if mo.product_id.product_tmpl_id.amunet_es_conjugado:
+                mo.amunet_solucion_terminada = mo._amunet_conjugado_terminado(lineas)
+                continue
             listo = bool(lineas) and all(
                 (m.quantity or 0) > 0 and m.amunet_is_valid for m in lineas)
             # El pH va aqui y no en un candado aparte: sin "terminada" no se
@@ -2630,6 +2670,31 @@ class MrpProduction(models.Model):
                 faltantes.append(_('capturar el pH final (esta solucion lleva '
                                    'ajuste de pH)'))
             lineas = self.move_raw_ids.filtered(lambda m: m.state != 'cancel')
+            if tmpl.amunet_es_conjugado:
+                sin_cant = lineas.filtered(lambda m: not (m.quantity or 0))
+                if not lineas:
+                    faltantes.append(_('cargar los componentes de la receta'))
+                elif sin_cant:
+                    faltantes.append(_('capturar la cantidad utilizada de: %s')
+                                     % ', '.join(sin_cant.mapped('product_id.default_code')))
+                if not (self.amunet_conj_horno1_inicio and self.amunet_conj_horno1_fin):
+                    faltantes.append(_('registrar el inicio y fin de la conjugacion en horno'))
+                if not (self.amunet_conj_horno2_inicio and self.amunet_conj_horno2_fin):
+                    faltantes.append(_('registrar el inicio y fin del bloqueo'))
+                objetivo = tmpl.amunet_conj_do_objetivo or 0.0
+                if not self.amunet_conj_do_final:
+                    faltantes.append(_('leer la D.O. final del conjugado'))
+                elif objetivo > 0 and abs(self.amunet_conj_do_final - objetivo) > objetivo * self.AMUNET_CONJ_DO_TOLERANCIA:
+                    faltantes.append(_(
+                        'ajustar el conjugado: la D.O. final es %(obt).2f y el '
+                        'objetivo %(obj).2f (tolerancia %(tol)s%%). Concentrar o '
+                        'diluir y volver a leer.'
+                    ) % {'obt': self.amunet_conj_do_final, 'obj': objetivo,
+                         'tol': int(self.AMUNET_CONJ_DO_TOLERANCIA * 100)})
+                if faltantes:
+                    return _('La elaboracion todavia no esta completa. Falta:\n%s') % (
+                        '\n'.join('  - %s' % x for x in faltantes))
+                return _('La elaboracion todavia no esta completa.')
             if not lineas:
                 faltantes.append(_('cargar los componentes de la receta'))
             else:
