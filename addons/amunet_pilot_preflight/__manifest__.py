@@ -11,7 +11,7 @@
     """,
     'author': 'Amunet',
     'category': 'Manufacturing',
-    'version': '19.0.1.1.11',
+    'version': '19.0.1.2.0',
     'depends': [
         'mail',
         'mrp',
@@ -27,6 +27,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
+        'data/conjugate_equipment_data.xml',
         'views/pilot_preflight_views.xml',
         'views/mrp_production_views.xml',
         'views/menu_views.xml',
