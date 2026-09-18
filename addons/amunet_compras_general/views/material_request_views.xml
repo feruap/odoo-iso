@@ -5,6 +5,13 @@
         <field name="model">amunet.material.request</field>
         <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_pedir_autorizacion_pago" type="object"
+                        string="Pedir autorizacion de pago"
+                        class="btn-primary"
+                        groups="amunet_compras_general.group_compras_monto,amunet_material_request.group_material_manager"
+                        invisible="amunet_autorizacion_estado != 'na' or not amunet_forma_pago"/>
+            </xpath>
             <field name="amunet_proveedor_factura" position="before">
                 <field name="amunet_forma_pago"/>
             </field>
