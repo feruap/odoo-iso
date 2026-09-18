@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from odoo import models, fields, api
+
+
+_logger = logging.getLogger(__name__)
 
 
 class AmunetQualityPoint(models.Model):
@@ -92,6 +96,37 @@ class AmunetQualityPoint(models.Model):
             unique_ids = list(set(target_rel_ids))
             record.parameter_product_rel_ids = [(6, 0, unique_ids)]
 
+    # ------------------------------------------------------------------
+    # SINCRONIA PUNTO <-> FLAG DE RECEPCION
+    # ------------------------------------------------------------------
+    # Desde el 18-sep-2026 apply_quality_points exige qc_required. Sin esto,
+    # crear un punto y olvidar el flag dejaria al producto sin analisis y sin
+    # aviso: el albaran se valida y nadie se entera. El punto es quien sabe que
+    # el producto se analiza, asi que el punto enciende el flag.
+    def _amunet_sync_qc_required(self):
+        for point in self:
+            if not point.active:
+                continue
+            tmpls = point.product_ids.mapped('product_tmpl_id').filtered(
+                lambda t: not t.qc_required)
+            if tmpls:
+                tmpls.sudo().write({'qc_required': True})
+                _logger.info(
+                    "Punto de calidad %s activo qc_required en: %s",
+                    point.name, tmpls.mapped('name'))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        points = super().create(vals_list)
+        points._amunet_sync_qc_required()
+        return points
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'product_ids' in vals or 'active' in vals:
+            self._amunet_sync_qc_required()
+        return res
+
     def apply_quality_points(self, picking):
         """
         Aplica puntos de control a un picking, creando QCs con parámetros.
@@ -167,7 +202,22 @@ class AmunetQualityPoint(models.Model):
                 # Asignar el lote al move_line para que Odoo lo use en la validación
                 move_line.lot_id = lot.id
             
-            # Filtrar puntos aplicables a este producto
+            # Filtrar puntos aplicables a este producto.
+            #
+            # qc_required es el interruptor de RECEPCION: el punto dice QUE se
+            # analiza y el flag dice SI el producto esta sujeto a analisis. Antes
+            # el flag no se consultaba aqui y por eso su ayuda prometia algo que
+            # no hacia. Se exige desde el 18-sep-2026, despues de alinear los 45
+            # productos que tenian punto con el flag apagado (habrian dejado de
+            # analizarse: 31 anticuerpos, 7 soluciones y 6 buffers).
+            #
+            # Para lo que se FABRICA el interruptor es amunet_req_quality_control;
+            # este camino es solo el de recepcion.
+            if not product.product_tmpl_id.qc_required:
+                _logger.info(
+                    "    Producto %s tiene punto de calidad pero qc_required "
+                    "esta apagado: no se genera analisis.", product.default_code)
+                continue
             applicable_points = points.filtered(lambda p: product in p.product_ids)
             
             _logger.info(f"    Applicable points for this product: {len(applicable_points)}")
