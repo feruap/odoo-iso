@@ -42,15 +42,20 @@
             </xpath>
 
             <!--
-                Filtrar el Producto segun la LINEA de produccion elegida
-                (route_type), para que solo se puedan elegir los productos que
-                aplican a esa linea:
-                  - Linea Corta ('short')   -> productos terminados
-                  - Soluciones ('solution') -> soluciones de trabajo
-                Las demas lineas (larga/reventa) aun no filtran.
+                Filtrar el Producto segun la ETAPA de linea larga y, si no
+                hay etapa, segun la LINEA de produccion:
+                  - Etapa elegida            -> productos de esa etapa
+                    (Soluciones, Conjugados, Inyeccion, Laminado)
+                  - Linea Corta ('short')    -> productos terminados
+                  - Soluciones sin etapa     -> soluciones de trabajo
+                  - Las demas                -> sin filtro
+
+                La etapa manda sobre la linea: los conjugados estan en la
+                categoria "Soluciones de trabajo", asi que filtrar solo por
+                linea ofrecia TODAS las soluciones en una orden de conjugado.
             -->
             <xpath expr="//field[@name='product_id']" position="attributes">
-                <attribute name="domain">[('categ_id.complete_name', '=ilike', 'Producto terminado%')] if route_type == 'short' else ([('categ_id.complete_name', 'ilike', 'solucion')] if route_type == 'solution' else [])</attribute>
+                <attribute name="domain">[('product_tmpl_id.amunet_etapa_ll', '=', amunet_sublinea)] if amunet_sublinea else ([('categ_id.complete_name', '=ilike', 'Producto terminado%')] if route_type == 'short' else ([('categ_id.complete_name', 'ilike', 'solucion')] if route_type == 'solution' else []))</attribute>
             </xpath>
 
             <!--
