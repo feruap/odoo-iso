@@ -58,7 +58,7 @@
                             groups="amunet_production.group_production_operator"
                             invisible="not amunet_devolucion_qc_id"/>
                     <button name="action_request_analysis" string="Solicitar análisis" type="object" class="oe_highlight"
-                            invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or (quality_analysis_status in ('requested', 'approved') and amunet_pt_qty_sin_analizar &lt;= 0)"
+                            invisible="state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or not amunet_puede_pedir_analisis or (quality_analysis_status in ('requested', 'approved') and amunet_pt_qty_sin_analizar &lt;= 0)"
                             groups="amunet_production.group_production_operator,amunet_production.group_production_supervisor,amunet_production.group_solution_maker"/>
                     <!-- Abre el analisis real, donde Calidad captura y firma. -->
                     <button name="action_amunet_ver_analisis" string="Ver análisis de Calidad" type="object"
@@ -215,6 +215,7 @@
                     <field name="amunet_baja_fecha" readonly="1" invisible="amunet_baja_fecha == False"/>
                     <field name="amunet_all_ingredients_valid" invisible="1"/>
                     <field name="amunet_sys_req_qc" invisible="1"/>
+                    <field name="amunet_puede_pedir_analisis" invisible="1"/>
                 </xpath>
 
                 <!-- Ocultar pestana Miscelaneo nativa -->

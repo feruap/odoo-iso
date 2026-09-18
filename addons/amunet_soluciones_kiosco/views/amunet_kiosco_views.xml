@@ -271,7 +271,7 @@
                 <attribute name="invisible" add="kiosco_es_dispositivo" separator=" or "/>
             </xpath>
             <button name="action_request_analysis" position="attributes">
-                <attribute name="invisible">kiosco_es_dispositivo or state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or (quality_analysis_status in ('requested', 'approved') and amunet_pt_qty_sin_analizar &lt;= 0)</attribute>
+                <attribute name="invisible">kiosco_es_dispositivo or state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or not amunet_puede_pedir_analisis or (quality_analysis_status in ('requested', 'approved') and amunet_pt_qty_sin_analizar &lt;= 0)</attribute>
             </button>
         </field>
     </record>
