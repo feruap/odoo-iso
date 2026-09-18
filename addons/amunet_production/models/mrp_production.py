@@ -1227,6 +1227,14 @@ class MrpProduction(models.Model):
             if (aru and production.product_id
                     and production.product_id.product_tmpl_id.amunet_solucion_interna):
                 production.location_dest_id = aru.lot_stock_id.id
+                continue
+            # Los CONJUGADOS se almacenan en el Almacen de reactivos en uso:
+            # de ahi los toma la etapa de Inyeccion. Si aterrizan en AMP, la
+            # siguiente etapa tendria que pedirlos de vuelta al almacen.
+            # Regla de Mery, 18-sep-2026.
+            if (aru and production.product_id
+                    and production.product_id.product_tmpl_id.amunet_es_conjugado):
+                production.location_dest_id = aru.lot_stock_id.id
 
     @api.depends('product_id', 'date_start')
     def _amunet_compute_expiration(self, product, base_date):
