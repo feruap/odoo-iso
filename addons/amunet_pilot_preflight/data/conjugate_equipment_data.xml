@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Equipos que el preflight exige para fabricar un CONJUGADO (INSPR-003):
+          PRO/CEN/01  Centrifuga refrigerada  - los dos centrifugados 12,300 rpm / 4 C
+          PRO/HOR/01  Horno                   - conjugacion y bloqueo a 37 C
+          PRO/ESP/01  Espectrofotometro       - lecturas de densidad optica a 530 nm
+        Se deja como parametro para poder ajustarlo sin tocar codigo.
+    -->
+    <record id="param_conjugate_equipment_serials" model="ir.config_parameter">
+        <field name="key">amunet.conjugate.equipment.serials</field>
+        <field name="value">PRO/CEN/01,PRO/HOR/01,PRO/ESP/01</field>
+    </record>
+</odoo>
