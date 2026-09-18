@@ -160,7 +160,8 @@ class StockMove(models.Model):
     @api.depends('product_id',
                  'raw_material_production_id.amunet_is_solution_product',
                  'raw_material_production_id.product_id',
-                 'raw_material_production_id.product_id.product_tmpl_id.amunet_es_conjugado')
+                 'raw_material_production_id.product_id.product_tmpl_id.amunet_es_conjugado',
+                 'product_id.product_tmpl_id.amunet_solucion_interna')
     def _compute_amunet_needs_surtido(self):
         for move in self:
             mo = move.raw_material_production_id
@@ -177,6 +178,14 @@ class StockMove(models.Model):
             # 18-sep-2026.
             if mo.product_id.product_tmpl_id.amunet_es_conjugado:
                 move.amunet_needs_surtido = True
+                continue
+            # Las soluciones INTERNAS (ajuste de pH y pie para otra solucion)
+            # se toman directo de la mesa del area: no salieron nunca de ahi,
+            # asi que pedirselas a Almacen seria un tramite sobre material que
+            # ya esta enfrente. Las demas soluciones si se piden, aunque
+            # compartan categoria. Regla de Mery, 18-sep-2026.
+            if move.product_id.product_tmpl_id.amunet_solucion_interna:
+                move.amunet_needs_surtido = False
                 continue
             categ = move.product_id.categ_id
             routes = (categ._amunet_routes_to_aru()
