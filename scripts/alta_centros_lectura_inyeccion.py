@@ -5,6 +5,9 @@ Datos confirmados por Jorge (Ensayo) el 18-sep-2026:
 
   Lectura y Pretratamiento
      Se lee D.O. de conjugado, se pretratan las almohadillas y se secan.
+     Tambien se CORTAN las almohadillas: Jorge lo creia y Mery lo confirmo
+     el 19-sep-2026. El corte de HOJAS MAESTRAS sigue en Laminado/Secado/Corte;
+     lo que se corta aqui son las almohadillas.
      Equipos: Agitador orbital (id 88) y Horno SLW-53 (id 90).
      NO tiene puerta: es el mismo espacio fisico que Soluciones.
 
@@ -16,16 +19,16 @@ Van como centros INDEPENDIENTES (lo pidio Jorge explicitamente). El secado
 de Laminado/Secado/Corte es de materiales, no de membranas: son operaciones
 distintas en areas distintas, por eso no se reutiliza aquel centro.
 
-PENDIENTE (no bloquea): el corte de almohadillas. Jorge cree que se hace en
-Lectura y Pretratamiento, pero pidio confirmarlo con Alondra antes de
-registrarlo. Mientras no se confirme, no se le asigna esa operacion.
+El corte de almohadillas quedo confirmado por Mery el 19-sep-2026: SI se hace
+en Lectura y Pretratamiento. Era el unico punto que Jorge habia dejado abierto.
 
 Idempotente.
 """
 WC = env['mrp.workcenter']
 CENTROS = [
     ('Lectura y Pretratamiento', 'LYP',
-     'Lectura de D.O. de conjugado, pretratado de almohadillas y secado. '
+     'Lectura de D.O. de conjugado, pretratado y CORTE de almohadillas, y '
+     'secado. El corte de hojas maestras NO es aqui, es en Laminado/Secado/Corte. '
      'Mismo espacio fisico que Soluciones, sin separacion (no tiene puerta). '
      'Equipos: Agitador orbital (88) y Horno SLW-53 (90).'),
     ('Inyección', 'INY',
