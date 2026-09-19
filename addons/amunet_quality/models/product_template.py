@@ -49,10 +49,19 @@ class ProductTemplate(models.Model):
 
     # ========== Configuración de Control de Calidad ==========
 
+    # CARRIL DE RECEPCION. Ojo: este campo NO dispara el analisis. Quien lo
+    # crea al recibir es el punto de calidad (amunet.quality.point), que liga
+    # producto + tipo de operacion y no consulta este campo. El texto anterior
+    # prometia lo contrario y confundia a quien lo activaba esperando que el
+    # producto se analizara solo (corregido 18-sep-2026).
+    # Para lo que se FABRICA el campo es amunet_req_quality_control.
     qc_required = fields.Boolean(
         string='Requiere control de calidad',
         default=False,
-        help='Si está activo, se creará un QC automáticamente al recibir este producto'
+        help='Habilita la configuración de parámetros de calidad de este '
+             'producto. NO genera el análisis por sí solo: para que se cree '
+             'al recibirlo hace falta además un punto de calidad que ligue '
+             'el producto con el tipo de operación.'
     )
 
     qc_test_destructiveness = fields.Selection([
