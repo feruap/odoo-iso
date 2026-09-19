@@ -36,6 +36,23 @@ class ProductTemplate(models.Model):
             self.lot_sequence_id.code.startswith('amunet.lot.')
         )
     
+    def _amunet_lot_prefix_value(self):
+        """Devuelve el prefijo base (sin placeholders) SIN tocar el campo.
+
+        Existe para que otros computes puedan leer el prefijo sin escribirlo.
+        'amunet_lot_prefix' tiene inverse, asi que asignarlo fuera de su propio
+        compute Odoo lo toma como un write REAL sobre el producto: abrir la
+        ficha reventaba con "No puede modificar registros Producto" para todo
+        el que no tuviera permiso de escritura en productos (le paso a Diana,
+        Calidad, el 17-sep-2026, al pasar de Inventario/Administrador a
+        Inventario/Usuario). Leer nunca debe escribir.
+        """
+        self.ensure_one()
+        seq = self.lot_sequence_id
+        if seq and seq.prefix:
+            return seq.prefix.split('%(')[0] if '%(' in seq.prefix else seq.prefix
+        return ''
+
     @api.depends('lot_sequence_id', 'lot_sequence_id.prefix')
     def _compute_amunet_lot_prefix(self):
         """
@@ -44,15 +61,7 @@ class ProductTemplate(models.Model):
         Ejemplo: Si lot_sequence_id.prefix = "CR8%(month)s%(y)s", muestra "CR8"
         """
         for template in self:
-            if template.lot_sequence_id and template.lot_sequence_id.prefix:
-                prefix = template.lot_sequence_id.prefix
-                # Extraer solo el prefijo base (antes de cualquier placeholder %(...)s)
-                if '%(' in prefix:
-                    template.amunet_lot_prefix = prefix.split('%(')[0]
-                else:
-                    template.amunet_lot_prefix = prefix
-            else:
-                template.amunet_lot_prefix = ''
+            template.amunet_lot_prefix = template._amunet_lot_prefix_value()
 
     @api.depends('lot_sequence_id', 'lot_sequence_id.prefix')
     def _compute_serial_prefix_format(self):
@@ -71,8 +80,7 @@ class ProductTemplate(models.Model):
                 pass
             
         for template in amunet_templates:
-            template._compute_amunet_lot_prefix()
-            template.serial_prefix_format = template.amunet_lot_prefix
+            template.serial_prefix_format = template._amunet_lot_prefix_value()
     
     def _inverse_amunet_lot_prefix(self):
         """
@@ -144,9 +152,8 @@ class ProductTemplate(models.Model):
         year_str = now.strftime('%y')   # Año sin siglo (25 para 2025)
         
         for template in amunet_templates:
-            # Forzamos la limpieza del prefijo para el cálculo
-            template._compute_amunet_lot_prefix()
-            prefix = template.amunet_lot_prefix or ""
+            # Se lee el prefijo SIN escribirlo (ver _amunet_lot_prefix_value)
+            prefix = template._amunet_lot_prefix_value() or ""
             
             if template.lot_sequence_id:
                 # Obtener número con padding
