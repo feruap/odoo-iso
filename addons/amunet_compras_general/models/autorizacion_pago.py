@@ -17,6 +17,7 @@ import hmac
 import secrets
 
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 PARAM_SECRETO = 'amunet_compras_general.hmac_secret'
 
@@ -43,6 +44,20 @@ class AmunetMaterialRequest(models.Model):
     amunet_autorizacion_fecha = fields.Datetime(string='Fecha de autorizacion', copy=False, readonly=True)
     amunet_telegram_msg_id = fields.Char(copy=False, groups='base.group_system')
 
+    # -- corte de pagos y comprobante -------------------------------------
+    # Las ordenes de pago autorizadas NO salen al grupo de una en una: se
+    # acumulan y salen juntas en el corte de las 15:00 de lunes a viernes.
+    # Quien paga responde a esa orden con la foto del comprobante, y ahi se
+    # cierra el circulo.
+    amunet_pago_publicado = fields.Datetime(
+        string='Publicado al grupo de pagos', copy=False, readonly=True)
+    amunet_telegram_grupo_msg_id = fields.Char(copy=False, groups='base.group_system')
+    amunet_comprobante_fecha = fields.Datetime(
+        string='Comprobante recibido', copy=False, readonly=True)
+    amunet_comprobante_archivo = fields.Char(
+        string='Archivo del comprobante', copy=False, readonly=True,
+        groups='amunet_compras_general.group_compras_monto')
+
     @api.model
     def _amunet_hmac_secret(self):
         ICP = self.env['ir.config_parameter'].sudo()
@@ -62,11 +77,10 @@ class AmunetMaterialRequest(models.Model):
             hashlib.sha256,
         ).hexdigest()[:16]
 
-    def action_head_approve(self):
-        resultado = super().action_head_approve()
+    def _amunet_encolar_autorizacion(self):
+        """Deja la solicitud lista para que el bot le pida el visto bueno a
+        Fernando. Se separa del boton para que sirva a los dos caminos."""
         for req in self:
-            if req.request_type != 'general' or not req.amunet_forma_pago:
-                continue
             if req.amunet_autorizacion_estado not in ('na', False):
                 continue
             req.sudo().write({
@@ -74,7 +88,46 @@ class AmunetMaterialRequest(models.Model):
                 'amunet_autorizacion_token': secrets.token_urlsafe(9),
             })
             req.message_post(body=_(
-                'Autorizada por el jefe. Se le pedira el visto bueno a Fernando por Telegram '
-                'antes de comprar o de pedir la transferencia.'
-            ))
+                'Se le pedira el visto bueno a Fernando por Telegram antes de '
+                'comprar o de pedir la transferencia.'))
+
+    def action_pedir_autorizacion_pago(self):
+        """Camino para las solicitudes cuyo solicitante NO tiene jefe asignado.
+
+        El disparo normal vive en action_head_approve, pero hoy buena parte de
+        la gente no tiene jefe: esas solicitudes pasan directo a 'Enviada' sin
+        que nadie firme, y por ese camino la compra jamas llegaria a Telegram.
+        Con este boton, quien captura el importe pide el visto bueno de forma
+        explicita."""
+        if not (self.env.user.has_group(
+                'amunet_compras_general.group_compras_monto')
+                or self.env.user.has_group(
+                    'amunet_material_request.group_material_manager')):
+            raise UserError(_(
+                'Solo el area de compras puede pedir la autorizacion de pago.'))
+        for req in self:
+            if not req.amunet_forma_pago:
+                raise UserError(_(
+                    'Falta la forma de pago en %s.\n\nSin ese dato no se sabe '
+                    'si la compra se hace en la tienda o si va al grupo de '
+                    'pagos por transferencia.') % req.name)
+            if not req.sudo().amunet_monto:
+                raise UserError(_(
+                    'Falta el importe en %s.\n\nNo se puede pedir una '
+                    'autorizacion de pago sin decir cuanto.') % req.name)
+            if req.amunet_autorizacion_estado not in ('na', False):
+                raise UserError(_(
+                    '%s ya esta en el circuito de autorizacion (%s).')
+                    % (req.name, req.amunet_autorizacion_estado))
+        self._amunet_encolar_autorizacion()
+        return True
+
+    def action_head_approve(self):
+        resultado = super().action_head_approve()
+        for req in self:
+            if req.request_type != 'general' or not req.amunet_forma_pago:
+                continue
+            if req.amunet_autorizacion_estado not in ('na', False):
+                continue
+            req._amunet_encolar_autorizacion()
         return resultado
