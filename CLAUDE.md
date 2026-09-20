@@ -441,6 +441,46 @@ ssh agentia-odoo@149.102.142.110 \
 | 4 | Autenticación por `secrets.SSH_PASSWORD` | Habilita Ruta B completa |
 | 5 | Triggers: `push: branches: [staging, main]` | Deploy automático al hacer merge |
 
+### Como llega un cambio a `main` (cambio del 20-sep-2026)
+
+**`main` ya no acepta push directo.** Antes la regla existía pero los
+administradores la saltaban: el push decía *"los cambios deben hacerse por pull
+request"* y aceptaba igual. Los últimos 15 commits de `main` entraron así, 15 de
+15, sin una sola revisión. Todo el equipo creía que había un candado que no
+existía.
+
+Ahora sí bloquea. Un `git push origin main` responde:
+
+```
+remote: error: GH006: Protected branch update failed for refs/heads/main.
+remote: - Changes must be made through a pull request.
+```
+
+**No requiere aprobación de nadie**: el PR se abre y se cierra solo, en segundos.
+No es un cuello de botella, es un registro de qué entró a producción y cuándo.
+
+El procedimiento:
+
+```bash
+cd /opt/odoo/production
+git fetch -q staging-local
+git checkout -b deploy/<lo-que-sea>-$(date +%Y%m%d-%H%M)
+git cherry-pick <sha>            # lo de siempre
+git push -u origin HEAD
+# luego, con el GITHUB_TOKEN:
+#   POST /repos/feruap/odoo-iso/pulls        {title, head, base: "main"}
+#   PUT  /repos/feruap/odoo-iso/pulls/<n>/merge   {merge_method: "squash"}
+git checkout main && git pull --ff-only origin main
+git branch -D deploy/<...>
+```
+
+El despliegue en el servidor no cambia: `build` + `up -d` + `odoo -u`, igual que
+siempre. Lo único que cambia es cómo el commit llega a `main`.
+
+Si necesitas saltarte esto por una urgencia real, hay que apagar `enforce_admins`
+a propósito y volverlo a encender. Que sea un acto consciente, no el silencio de
+antes.
+
 ### Intocabilidad del deploy.yml
 
 PROHIBIDO modificar:
