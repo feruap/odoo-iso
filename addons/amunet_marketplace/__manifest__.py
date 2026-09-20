@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Marketplace Interno',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Inventory/Inventory',
     'summary': 'Catalogo interno conectado con solicitudes de material, compras y almacen',
     'description': """
@@ -25,13 +25,16 @@ Objetivos:
         'mrp',
         'hr',
         'amunet_material_request',
+        'amunet_recepcion_materiales',
     ],
     'data': [
+        'data/ir_sequence_data.xml',
         'security/ir.model.access.csv',
         'security/ir_rule.xml',
         'views/product_template_views.xml',
         'views/amunet_material_request_views.xml',
         'views/marketplace_product_proposal_views.xml',
+        'views/solicitud_compra_views.xml',
         'views/menu_views.xml',
     ],
     'installable': True,

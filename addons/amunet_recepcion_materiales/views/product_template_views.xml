@@ -13,9 +13,8 @@
                     <field name="amunet_requires_quarantine"
                            widget="boolean_toggle"
                            string="Requiere inspección de Calidad antes de usar"/>
-                    <field name="amunet_va_a_distribucion"
-                           widget="boolean_toggle"
-                           string="Va a distribución ADT (traslado automático al liberar)"/>
+                    <field name="amunet_destino_almacen"
+                           string="Almacén donde vive"/>
                 </group>
             </xpath>
         </field>
