@@ -12,10 +12,16 @@
               action="action_marketplace_catalog"
               sequence="10"/>
 
+    <!--
+        Antes apuntaba a la accion de Solicitudes de Material: era la MISMA
+        lista que la aplicacion de Almacen, por dos puertas distintas, y por
+        eso se mezclaban pedir material con comprar. Ahora cada aplicacion
+        muestra lo suyo. Mery, 19-sep-2026.
+    -->
     <menuitem id="menu_amunet_marketplace_requests"
-              name="Solicitudes"
+              name="Solicitudes de compra"
               parent="menu_amunet_marketplace_root"
-              action="amunet_material_request.action_amunet_material_request"
+              action="action_solicitud_compra"
               sequence="20"/>
 
     <menuitem id="menu_amunet_marketplace_proposals"

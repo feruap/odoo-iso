@@ -13,8 +13,6 @@
                            readonly="state != 'draft'"
                            domain="[('state', 'not in', ('done', 'cancel'))]"
                            invisible="request_type != 'production'"/>
-                    <field name="marketplace_source_product_tmpl_id" readonly="1" invisible="not marketplace_source_product_tmpl_id"/>
-                    <field name="product_proposal_id" readonly="1" invisible="not product_proposal_id"/>
                 </group>
             </xpath>
         </field>
