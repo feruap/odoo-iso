@@ -75,7 +75,6 @@ class ProductTemplate(models.Model):
             'target': 'current',
             'context': {
                 'default_request_type': request_type,
-                'default_marketplace_source_product_tmpl_id': self.id,
                 'default_note': self.marketplace_request_note or False,
                 'default_line_ids': [
                     (0, 0, {

@@ -21,18 +21,6 @@ class AmunetMaterialRequest(models.Model):
         tracking=True,
         help='Usar cuando la solicitud este ligada a una orden de fabricacion.',
     )
-    marketplace_source_product_tmpl_id = fields.Many2one(
-        'product.template',
-        string='Producto origen marketplace',
-        readonly=True,
-        copy=False,
-    )
-    product_proposal_id = fields.Many2one(
-        'amunet.marketplace.product.proposal',
-        string='Propuesta de producto',
-        readonly=True,
-        copy=False,
-    )
 
     @api.constrains('request_type', 'mrp_production_id')
     def _check_request_type_links(self):
