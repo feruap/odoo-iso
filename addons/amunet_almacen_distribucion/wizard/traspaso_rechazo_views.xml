@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_traspaso_rechazo_form" model="ir.ui.view">
+        <field name="name">amunet.traspaso.distribucion.rechazo.form</field>
+        <field name="model">amunet.traspaso.distribucion.rechazo</field>
+        <field name="arch" type="xml">
+            <form string="Rechazar traspaso">
+                <field name="traspaso_id" invisible="1"/>
+                <group>
+                    <field name="motivo" placeholder="Por que no pasa a Distribucion: caducidad corta, empaque danado, lote retenido..."/>
+                </group>
+                <footer>
+                    <button name="action_confirmar" type="object"
+                            string="Rechazar" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

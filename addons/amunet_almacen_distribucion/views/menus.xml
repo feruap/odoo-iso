@@ -56,6 +56,12 @@
               action="action_distribucion_transferencias"
               sequence="10"/>
 
+    <menuitem id="menu_distribucion_traspasos_pt"
+              name="Traspasos de Producto Terminado"
+              parent="menu_distribucion_operaciones"
+              action="action_traspaso_distribucion"
+              sequence="5"/>
+
     <menuitem id="menu_distribucion_inventario"
               name="Inventario"
               parent="menu_distribucion_root"
