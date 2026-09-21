@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        El Marketplace interno lo usa un grupo pequeno: quien pide compras,
+        quien las autoriza y desarrollo. Antes el menu colgaba de los grupos de
+        Solicitudes de Material, con lo que lo veian 41 solicitantes: operadores,
+        practicantes, calidad, ensayo. Ahi se capturan ligas de proveedor y
+        montos, asi que el acceso se acota. Mery, 20-sep-2026.
+    -->
+    <record id="group_marketplace_user" model="res.groups">
+        <field name="name">Marketplace Interno</field>
+        <field name="comment">Puede entrar al Marketplace interno: catalogo de
+            compra, solicitudes de compra y propuestas de producto.</field>
+    </record>
+
+</odoo>
