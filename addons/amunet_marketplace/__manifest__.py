@@ -28,6 +28,7 @@ Objetivos:
         'amunet_recepcion_materiales',
     ],
     'data': [
+        'security/marketplace_groups.xml',
         'data/ir_sequence_data.xml',
         'security/ir.model.access.csv',
         'security/ir_rule.xml',
