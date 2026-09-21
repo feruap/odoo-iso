@@ -928,6 +928,26 @@ class MrpProduction(models.Model):
         for rec in self:
             rec.amunet_user_is_warehouse = is_wh
 
+    amunet_user_puede_elaborar = fields.Boolean(
+        string='El usuario elabora',
+        compute='_compute_amunet_user_puede_elaborar', store=False,
+        help='Quien fabrica: soluciones o produccion. Las columnas de la '
+             'elaboracion (cantidad utilizada, disolucion, lote de linea) solo '
+             'se le muestran a el.\n'
+             'Se pregunta en POSITIVO a proposito: amunet_user_is_warehouse no '
+             'sirve aqui porque excluye a quien tenga permisos de Manufactura, '
+             'y Almacen los tiene, asi que daba False para Karla y no ocultaba '
+             'nada. Mery, 21-sep-2026.')
+
+    @api.depends_context('uid')
+    def _compute_amunet_user_puede_elaborar(self):
+        u = self.env.user
+        puede = (u.has_group('amunet_production.group_solution_maker')
+                 or u.has_group('amunet_production.group_production_operator')
+                 or u.has_group('amunet_production.group_production_supervisor'))
+        for rec in self:
+            rec.amunet_user_puede_elaborar = puede
+
     @api.depends_context('uid')
     def _compute_amunet_user_can_see_supply_details(self):
         # La columna "Detalles" de componentes es informacion de almacen.
