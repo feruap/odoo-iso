@@ -291,7 +291,15 @@ class AmunetWooProductMappingManual(models.Model):
                 detalle.append('%s: %s' % (rec.woo_sku or rec.id,
                                            rec._manual_origen()[0]))
                 continue
-            destino_id = rec.woo_parent_id or rec.woo_product_id
+            # Un mapeo de variacion publica en SU propia variacion; si no, el
+            # manual de cada tipo de muestra pisa al de la pagina padre.
+            if rec.woo_parent_id and rec.woo_product_id:
+                destino_id = rec.woo_parent_id
+                endpoint = 'product/%d/variation/%d/manual' % (
+                    rec.woo_parent_id, rec.woo_product_id)
+            else:
+                destino_id = rec.woo_product_id
+                endpoint = 'product/%d/manual' % destino_id
             if not destino_id:
                 fallo += 1
                 rec.write({
@@ -303,7 +311,7 @@ class AmunetWooProductMappingManual(models.Model):
             try:
                 pdf = rec._manual_descargar(fname)
                 respuesta = rec.backend_id._bridge_request(
-                    'POST', 'product/%d/manual' % destino_id, payload={
+                    'POST', endpoint, payload={
                         'clave': (rec.product_id.default_code or rec.woo_sku or ''),
                         'filename': fname,
                         'pdf_base64': base64.b64encode(pdf).decode('ascii'),
