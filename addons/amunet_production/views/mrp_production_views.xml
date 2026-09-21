@@ -10,6 +10,18 @@
             <field name="arch" type="xml">
 
                 <!-- Botones de accion en header -->
+                <xpath expr="//sheet" position="before">
+                    <!--
+                        Decir en pantalla que falta. El motivo ya existia pero
+                        solo salia al apretar un boton que se oculta cuando
+                        falta algo: quien fabricaba se quedaba sin saber por
+                        que no podia continuar. Mery, 21-sep-2026.
+                    -->
+                    <div class="alert alert-warning mb-0" role="status"
+                         invisible="not amunet_motivo_pendiente">
+                        <field name="amunet_motivo_pendiente" readonly="1" nolabel="1"/>
+                    </div>
+                </xpath>
                 <xpath expr="//header" position="inside">
                     <!--
                         Botones del FLUJO DE SURTIDO. Aparecen aqui en
@@ -26,7 +38,7 @@
                             groups="amunet_material_request.group_material_warehouse,amunet_material_request.group_material_manager"/>
                     <button name="action_amunet_mo_receive_supply" string="Recibir / Aceptar entrega" type="object" class="oe_highlight"
                             invisible="not amunet_supply_workorder_id or amunet_supply_state != 'awaiting_reception'"
-                            groups="amunet_production.group_production_supervisor,amunet_production.group_production_operator"/>
+                            groups="amunet_production.group_production_supervisor,amunet_production.group_production_operator,amunet_production.group_solution_maker"/>
 
                     <!--
                         'Confirmar analisis' aparece solo cuando la

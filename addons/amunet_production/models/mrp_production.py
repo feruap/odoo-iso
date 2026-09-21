@@ -106,6 +106,9 @@ class MrpProduction(models.Model):
     amunet_expiration_text = fields.Char(string='Caducidad (Texto)', compute='_compute_quality_params', store=True, readonly=False)
     
     # Checklist Operativa (Actividades de Fabricación)
+    # Estas cuatro casillas ya NO condicionan nada: la checklist operativa
+    # salio del flujo de soluciones el 21-sep-2026. Se conservan porque las
+    # ordenes viejas guardan su valor y es registro regulado.
     amunet_check_history_log = fields.Boolean(string='Registro en Bitácoras', tracking=True)
     amunet_check_calculations = fields.Boolean(string='Cálculos Realizados', tracking=True)
     amunet_check_dilution = fields.Boolean(string='Dilución Realizada', tracking=True)
@@ -141,7 +144,31 @@ class MrpProduction(models.Model):
         ('requested', 'Análisis Solicitado'),
         ('approved', 'Aprobado'),
         ('rejected', 'Rechazado')
-    ], string='Integración de Calidad', default='none', tracking=True, compute='_compute_quality_params', store=True, readonly=False)
+    ], string='Integración de Calidad', default='none', tracking=True,
+        compute='_compute_quality_analysis_status', store=True, readonly=False)
+
+    @api.depends('product_id', 'product_id.amunet_req_quality_control')
+    def _compute_quality_analysis_status(self):
+        """Sigue al producto mientras no haya un analisis de verdad.
+
+        Antes se fijaba al nacer la orden y ahi se quedaba: si despues se le
+        apagaba la bandera al producto, la orden seguia diciendo "Pendiente de
+        Solicitar" y el boton para pedirlo ya no estaba. El letrero pedia algo
+        que no se podia hacer (paso con 210926-02 el 21-sep-2026).
+
+        En cuanto existe un analisis real -- solicitado, aprobado o rechazado --
+        el estado se CONGELA: eso es registro regulado y no lo reescribe un
+        cambio de configuracion del producto.
+        """
+        for rec in self:
+            if rec.quality_analysis_status in ('requested', 'approved', 'rejected'):
+                continue
+            if not rec.product_id:
+                rec.quality_analysis_status = 'none'
+            elif rec.product_id.amunet_req_quality_control:
+                rec.quality_analysis_status = 'to_request'
+            else:
+                rec.quality_analysis_status = 'none'
 
     # Alta manual de inventario hecha ANTES de cerrar la orden. Sirve de
     # candado: si alguien cierra la orden despues, el terminado entraria una
@@ -465,9 +492,18 @@ class MrpProduction(models.Model):
              'sea mayor a cero se puede pedir otro analisis parcial.')
 
     @api.depends('amunet_qc_check_ids.amunet_qty_analizada', 'qty_producing',
-                 'amunet_pt_qty_solicitada')
+                 'amunet_pt_qty_solicitada', 'amunet_is_solution_product')
     def _compute_amunet_pt_qty_sin_analizar(self):
         for rec in self:
+            # Esto es del flujo de PRODUCTO TERMINADO: Calidad toma una muestra
+            # del lote y, si sobran piezas sin cubrir, se puede pedir otro
+            # analisis parcial. En SOLUCIONES no aplica: se analiza el lote
+            # completo, no por piezas. Dejarlo en cero evita que despues de
+            # cerrar una solucion el sistema siga ofreciendo pedir analisis.
+            # Mery, 21-sep-2026.
+            if rec.amunet_is_solution_product:
+                rec.amunet_pt_qty_sin_analizar = 0.0
+                continue
             fabricadas = rec.amunet_pt_qty_solicitada or rec.qty_producing or 0.0
             cubiertas = sum(rec.amunet_qc_check_ids.mapped('amunet_qty_analizada'))
             rec.amunet_pt_qty_sin_analizar = max(0.0, fabricadas - cubiertas)
@@ -581,11 +617,17 @@ class MrpProduction(models.Model):
         help='Solucion existente cuya receta (lista de materiales) se copia como '
              'BASE a esta orden de desarrollo, para partir de ahi y ajustar. No '
              'cambia el producto ni su BoM; solo llena los componentes de esta orden.')
+    # OBSOLETO desde el 21-sep-2026. El pH final de una solucion se captura en
+    # quality_ph_final, que es el campo que sale en pantalla junto a los
+    # reactivos. Este vivia escondido (solo visible en ordenes de desarrollo) y
+    # sin embargo era el que miraba el candado de supervision: la orden pedia
+    # un pH que en pantalla ya estaba puesto, y como el boton se oculta cuando
+    # falta algo, nadie podia ver por que. Se conserva por las ordenes viejas.
     amunet_ph_final = fields.Float(
-        string='pH final',
+        string='pH final (obsoleto)',
         copy=False,
         digits=(4, 2),
-        help='pH final obtenido de la solucion, capturado por quien la fabrica.')
+        help='No usar. El pH final se captura en "pH Final Obtenido".')
 
     # Surtido a nivel MO: vinculos al workorder de Surtido (AMP) para
     # exponer los botones del flujo (Iniciar/Confirmar/Recibir) en la
@@ -1282,18 +1324,12 @@ class MrpProduction(models.Model):
                 rec.quality_ph_initial = False
                 rec.amunet_expiration_text = False
                 rec.amunet_sys_weighing_range = False
-                rec.quality_analysis_status = 'none'
                 rec.solution_expiration_date = False
                 continue
 
             product = rec.product_id
             rec.quality_ph_initial = product.amunet_initial_ph
             rec.amunet_sys_weighing_range = product.amunet_weighing_range_text
-
-            if product.amunet_req_quality_control:
-                rec.quality_analysis_status = 'to_request'
-            else:
-                rec.quality_analysis_status = 'none'
 
             # Caducidad = fecha de FABRICACION (date_start) + duracion del
             # producto, RESPETANDO la unidad real (dias/meses/años), con fecha
@@ -1627,7 +1663,7 @@ class MrpProduction(models.Model):
         return abs(self.amunet_conj_do_final - objetivo) <= objetivo * self.AMUNET_CONJ_DO_TOLERANCIA
 
     @api.depends('move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid',
-                 'move_raw_ids.state', 'amunet_ph_final',
+                 'move_raw_ids.state', 'quality_ph_final',
                  'amunet_conj_do_final', 'amunet_conj_horno1_fin',
                  'amunet_conj_horno2_fin')
     def _compute_amunet_solucion_terminada(self):
@@ -1660,7 +1696,7 @@ class MrpProduction(models.Model):
             # diferencia, y un objetivo en cero no distingue "no aplica" de
             # "nadie lo capturo". Lista validada por Mery el 2026-09-14.
             if listo and mo.product_id.product_tmpl_id.amunet_ph_requerido \
-                    and not (mo.amunet_ph_final or 0):
+                    and not (mo.quality_ph_final or 0):
                 listo = False
             mo.amunet_solucion_terminada = listo
 
@@ -2805,7 +2841,7 @@ class MrpProduction(models.Model):
         if not self.amunet_solucion_terminada:
             faltantes = []
             tmpl = self.product_id.product_tmpl_id
-            if tmpl.amunet_ph_requerido and not (self.amunet_ph_final or 0):
+            if tmpl.amunet_ph_requerido and not (self.quality_ph_final or 0):
                 faltantes.append(_('capturar el pH final (esta solucion lleva '
                                    'ajuste de pH)'))
             lineas = self.move_raw_ids.filtered(lambda m: m.state != 'cancel')
@@ -2861,13 +2897,32 @@ class MrpProduction(models.Model):
              'Lo usan las dos vistas -- escritorio y kiosco -- para no ofrecer '
              'un boton que va a rechazar.')
 
+    amunet_motivo_pendiente = fields.Char(
+        string='Que falta',
+        compute='_compute_amunet_motivo_pendiente',
+        help='El motivo por el que la orden todavia no avanza, en texto. Se '
+             'muestra en pantalla: antes solo aparecia al apretar un boton que '
+             'justo se oculta cuando falta algo, asi que quien fabricaba veia '
+             'que no podia continuar pero no por que. Mery, 21-sep-2026.')
+
+    @api.depends('amunet_is_solution_product', 'amunet_solucion_terminada',
+                 'amunet_supervision_state', 'quality_ph_final', 'state',
+                 'move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid')
+    def _compute_amunet_motivo_pendiente(self):
+        for mo in self:
+            motivo = False
+            if (mo.amunet_is_solution_product
+                    and mo.state in ('confirmed', 'progress', 'to_close')
+                    and not mo.amunet_solucion_terminada):
+                try:
+                    motivo = mo._amunet_motivo_sin_supervision()
+                except Exception:
+                    motivo = False
+            mo.amunet_motivo_pendiente = motivo
+
     @api.depends('amunet_is_solution_product', 'amunet_supervision_state',
                  'move_raw_ids.quantity', 'amunet_all_ingredients_valid',
-                 'amunet_solucion_terminada',
-                 'amunet_check_history_log', 'amunet_check_calculations',
-                 'amunet_check_dilution', 'amunet_check_aforar',
-                 'amunet_sys_req_history', 'amunet_sys_req_calc',
-                 'amunet_sys_req_dilution', 'amunet_sys_req_aforar')
+                 'amunet_solucion_terminada')
     def _compute_amunet_puede_pedir_analisis(self):
         """Espejo de lo que exige action_request_analysis.
 
@@ -2896,15 +2951,10 @@ class MrpProduction(models.Model):
             elif not mo.amunet_all_ingredients_valid:
                 ok = False
             elif mo.amunet_is_solution_product:
-                # Solo soluciones: firma del jefe y checklist de preparacion
-                # quimica. Cada casilla se exige unicamente si el producto la
-                # pide, igual que en el metodo.
+                # Solo soluciones: firma del jefe directo. La checklist de
+                # bitacoras/calculos/dilucion/aforar ya NO forma parte del
+                # flujo de soluciones (Mery, 21-sep-2026).
                 if mo.amunet_supervision_state != 'done':
-                    ok = False
-                elif ((mo.amunet_sys_req_history and not mo.amunet_check_history_log)
-                        or (mo.amunet_sys_req_calc and not mo.amunet_check_calculations)
-                        or (mo.amunet_sys_req_dilution and not mo.amunet_check_dilution)
-                        or (mo.amunet_sys_req_aforar and not mo.amunet_check_aforar)):
                     ok = False
             mo.amunet_puede_pedir_analisis = ok
 
@@ -2941,23 +2991,6 @@ class MrpProduction(models.Model):
                 ) % self._amunet_motivo_sin_supervision())
         elif not self.amunet_all_ingredients_valid:
             raise UserError('Todos los reactivos deben estar marcados como Válidos para proceder.')
-
-        # Validar checklist operativa: bitacoras, calculos, dilucion y
-        # aforar son requisitos del flujo de SOLUCIONES (preparacion
-        # quimica). Para kits y otros productos no aplican porque no
-        # hay preparacion de mezclas.
-        if self.amunet_is_solution_product and not self.product_id.product_tmpl_id.amunet_es_conjugado:
-            missing = []
-            if self.amunet_sys_req_history and not self.amunet_check_history_log:
-                missing.append("Registro en Bitácoras")
-            if self.amunet_sys_req_calc and not self.amunet_check_calculations:
-                missing.append("Cálculos Realizados")
-            if self.amunet_sys_req_dilution and not self.amunet_check_dilution:
-                missing.append("Dilución de Reactivos")
-            if self.amunet_sys_req_aforar and not self.amunet_check_aforar:
-                missing.append("Aforar")
-            if missing:
-                raise UserError('Completa las siguientes actividades operativas antes de solicitar el análisis:\n- ' + '\n- '.join(missing))
 
         return {
             'name': 'Confirmar Solicitud de Análisis',
@@ -3219,18 +3252,12 @@ class MrpProduction(models.Model):
                 nombres = ', '.join(sin_cantidad.mapped('product_id.name'))
                 raise UserError(f'ATENCIÓN: Los siguientes reactivos tienen Cantidad Utilizada inválida (negativa):\n{nombres}')
 
-            # 2. Validar Checklist Operativa — SOLO para SOLUCIONES (preparacion
-            # quimica: bitacora/calculos/dilucion/aforar). Los kits, reactivos y
-            # medios de cultivo no llevan este checklist aunque tengan los flags
-            # amunet_sys_req_* puestos (heredados al dar de alta el producto).
-            if record.amunet_is_solution_product:
-                missing = []
-                if record.amunet_sys_req_history and not record.amunet_check_history_log: missing.append("Registro en Bitácoras")
-                if record.amunet_sys_req_calc and not record.amunet_check_calculations: missing.append("Cálculos Realizados")
-                if record.amunet_sys_req_dilution and not record.amunet_check_dilution: missing.append("Dilución de Reactivos")
-                if record.amunet_sys_req_aforar and not record.amunet_check_aforar: missing.append("Aforar")
-                if missing:
-                    raise UserError('ATENCIÓN: Faltan las siguientes actividades operativas por marcar en la Pestaña de Actividades:\n- ' + '\n- '.join(missing))
+            # La checklist operativa (bitacoras / calculos / dilucion / aforar)
+            # ya NO forma parte del flujo de soluciones. Bloqueaba producir y
+            # solicitar analisis pidiendo marcar casillas que no existian en
+            # ninguna pantalla: ninguna solucion podia cerrarse. Los campos se
+            # conservan en el modelo por las ordenes historicas, pero no
+            # condicionan nada. Mery, 21-sep-2026.
             
             # 2. Validar Calidad (solo si el producto lo requiere y NO es desarrollo).
             # Excepcion: la BAJA de un lote no conforme (rechazado) cierra la MO
