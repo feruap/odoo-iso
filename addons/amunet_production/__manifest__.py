@@ -19,6 +19,7 @@
     ],
     'data': [
         'data/production_data.xml',
+        'data/entrada_interna_data.xml',
         'data/iso_dashboard_data.xml',
         'data/system_parameters.xml',
         'security/amunet_production_security.xml',
@@ -37,6 +38,7 @@
         'views/amunet_conjugado_views.xml',
         'views/amunet_quality_check_pt_views.xml',
 ],
+    'post_init_hook': 'post_init_entrada_interna',
     'installable': True,
     'application': False,
     'auto_install': False,
