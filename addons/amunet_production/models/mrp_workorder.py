@@ -355,9 +355,19 @@ class MrpWorkorder(models.Model):
     def _amunet_check_production_supervisor(self):
         # Operadores Y supervisores de produccion pueden recibir/aceptar el
         # material surtido (el supervisor hereda el grupo operador).
-        if not self.env.user.has_group('amunet_production.group_production_operator'):
+        #
+        # El fabricante de soluciones tambien: el elabora la solucion, asi que
+        # es quien recibe su propio material. Antes quedaba fuera y la orden se
+        # detenia ahi hasta que entrara alguien mas. Mery, 21-sep-2026.
+        permitido = (
+            self.env.user.has_group('amunet_production.group_production_operator')
+            or (self.production_id.amunet_is_solution_product
+                and self.env.user.has_group('amunet_production.group_solution_maker'))
+        )
+        if not permitido:
             raise AccessError(_(
-                'Solo produccion (operador o supervisor) puede recibir/aceptar el material entregado.'))
+                'Solo produccion (operador o supervisor) puede recibir/aceptar '
+                'el material entregado. En soluciones, tambien el fabricante.'))
 
     def _amunet_signature_allowed_methods(self):
         return {
