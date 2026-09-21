@@ -125,17 +125,17 @@ select row_to_json(t) from (
          coalesce(ps.name, '?') as solicitante,
          coalesce(pj.name, '') as jefe,
          (select string_agg(coalesce(pt.default_code,'') || ' ' ||
-                 coalesce(pt.name->>'es_MX', pt.name->>'en_US','') ||
-                 ' x' || trim(to_char(l.qty_requested,'FM999999.99')), ', ')
-            from amunet_material_request_line l
-            join product_product pp on pp.id = l.product_id
-            join product_template pt on pt.id = pp.product_tmpl_id
+                 coalesce(pt.name->>'es_MX', pt.name->>'en_US', l.name, '') ||
+                 ' x' || trim(to_char(l.qty,'FM999999.99')), ', ')
+            from amunet_solicitud_compra_line l
+            left join product_product pp on pp.id = l.product_id
+            left join product_template pt on pt.id = pp.product_tmpl_id
            where l.request_id = r.id) as productos
-    from amunet_material_request r
+    from amunet_solicitud_compra r
     left join res_currency c on c.id = r.amunet_currency_id
     left join res_users us on us.id = r.requester_id
     left join res_partner ps on ps.id = us.partner_id
-    left join res_users uj on uj.id = r.amunet_head_approved_by
+    left join res_users uj on uj.id = r.amunet_autorizada_por_id
     left join res_partner pj on pj.id = uj.partner_id
    where %s
 ) t
@@ -157,7 +157,7 @@ def marcar(solicitud_id, estado, msg_id=None, con_fecha=False):
         partes.append("amunet_telegram_msg_id = '%s'" % escapar(msg_id))
     if con_fecha:
         partes.append("amunet_autorizacion_fecha = (now() at time zone 'utc')")
-    sql("with u as (update amunet_material_request set %s where id = %d returning id) "
+    sql("with u as (update amunet_solicitud_compra set %s where id = %d returning id) "
         "select row_to_json(u) from u" % (', '.join(partes), int(solicitud_id)))
 
 
@@ -299,7 +299,7 @@ def publicar_corte():
         if not publicado.get('ok'):
             log.error('no se publico %s', sol['name'])
             continue
-        sql("with u as (update amunet_material_request set "
+        sql("with u as (update amunet_solicitud_compra set "
             "amunet_pago_publicado = (now() at time zone 'utc'), "
             "amunet_telegram_grupo_msg_id = '%s' where id = %d returning id) "
             "select row_to_json(u) from u"
@@ -370,7 +370,7 @@ def guardar_comprobante(mensaje):
     except Exception:
         log.exception('no se pudo descargar el comprobante de %s', sol['name'])
 
-    sql("with u as (update amunet_material_request set "
+    sql("with u as (update amunet_solicitud_compra set "
         "amunet_comprobante_fecha = (now() at time zone 'utc'), "
         "amunet_comprobante_archivo = '%s' where id = %d returning id) "
         "select row_to_json(u) from u" % (escapar(ruta), int(sol['id'])))

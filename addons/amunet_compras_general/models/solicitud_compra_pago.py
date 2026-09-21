@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Datos de pago de una compra general.
+"""Datos de pago de una solicitud de compra (Marketplace interno).
+
+Desde 19.0.5.0.0 estos campos viven en `amunet.solicitud.compra` y no en la
+solicitud de material: pedirle material a Almacen y comprar en una tienda son
+dos tramites distintos (decision de Mery, 19-sep-2026).
 
 El monto es el unico dato sensible aqui. Se protege en dos capas:
 
@@ -18,8 +22,8 @@ from odoo.exceptions import ValidationError
 GRUPO_MONTO = 'amunet_compras_general.group_compras_monto'
 
 
-class AmunetMaterialRequest(models.Model):
-    _inherit = 'amunet.material.request'
+class AmunetSolicitudCompra(models.Model):
+    _inherit = 'amunet.solicitud.compra'
 
     amunet_forma_pago = fields.Selection(
         selection=[
@@ -31,6 +35,13 @@ class AmunetMaterialRequest(models.Model):
         tracking=True,
         help='Decide el camino: con tarjeta la compra se hace en la tienda; '
              'con transferencia se avisa al grupo de pagos.',
+    )
+    # Decide desde que cuenta se paga: con factura, la cuenta de Amunet; sin
+    # factura, la otra. El bot de pagos lo lee para redactar la orden.
+    amunet_proveedor_factura = fields.Boolean(
+        string='El proveedor factura', tracking=True,
+        help='Si el proveedor emite factura (CFDI). Cambia desde que cuenta '
+             'se paga.',
     )
 
     amunet_currency_id = fields.Many2one(

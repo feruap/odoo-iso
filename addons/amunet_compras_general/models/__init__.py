@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
-from . import material_request_compra
+from . import solicitud_compra_pago
 from . import autorizacion_pago

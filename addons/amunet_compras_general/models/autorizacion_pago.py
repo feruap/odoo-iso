@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Autorizacion de pago de una compra general.
+"""Autorizacion de pago de una solicitud de compra.
 
 Odoo NO habla con Telegram. Cuando el jefe autoriza una solicitud de
-compra general, aqui solo se deja la marca `por_enviar` y se genera un
-token firmado. Un servicio aparte (amunet-pagos-bot) recoge las marcadas,
+compra, aqui solo se deja la marca `por_enviar` y se genera un token
+firmado. Un servicio aparte (amunet-pagos-bot) recoge las marcadas,
 manda el mensaje a Fernando y vuelve a escribir el resultado.
 
 Se separa a proposito: una llamada HTTP dentro de la transaccion de Odoo
@@ -22,8 +22,8 @@ from odoo.exceptions import UserError
 PARAM_SECRETO = 'amunet_compras_general.hmac_secret'
 
 
-class AmunetMaterialRequest(models.Model):
-    _inherit = 'amunet.material.request'
+class AmunetSolicitudCompra(models.Model):
+    _inherit = 'amunet.solicitud.compra'
 
     amunet_concepto_pago = fields.Char(string='Concepto de pago', tracking=True)
 
@@ -41,7 +41,7 @@ class AmunetMaterialRequest(models.Model):
         tracking=True,
     )
     amunet_autorizacion_token = fields.Char(copy=False, groups='base.group_system')
-    amunet_autorizacion_fecha = fields.Datetime(string='Fecha de autorizacion', copy=False, readonly=True)
+    amunet_autorizacion_fecha = fields.Datetime(string='Fecha de autorizacion de pago', copy=False, readonly=True)
     amunet_telegram_msg_id = fields.Char(copy=False, groups='base.group_system')
 
     # -- corte de pagos y comprobante -------------------------------------
@@ -94,11 +94,10 @@ class AmunetMaterialRequest(models.Model):
     def action_pedir_autorizacion_pago(self):
         """Camino para las solicitudes cuyo solicitante NO tiene jefe asignado.
 
-        El disparo normal vive en action_head_approve, pero hoy buena parte de
-        la gente no tiene jefe: esas solicitudes pasan directo a 'Enviada' sin
-        que nadie firme, y por ese camino la compra jamas llegaria a Telegram.
-        Con este boton, quien captura el importe pide el visto bueno de forma
-        explicita."""
+        El disparo normal vive en action_autorizar, pero parte de la gente no
+        tiene jefe en Recursos Humanos: esas solicitudes nadie las firma y por
+        ese camino la compra jamas llegaria a Telegram. Con este boton, quien
+        captura el importe pide el visto bueno de forma explicita."""
         if not (self.env.user.has_group(
                 'amunet_compras_general.group_compras_monto')
                 or self.env.user.has_group(
@@ -122,10 +121,12 @@ class AmunetMaterialRequest(models.Model):
         self._amunet_encolar_autorizacion()
         return True
 
-    def action_head_approve(self):
-        resultado = super().action_head_approve()
+    def action_autorizar(self):
+        """Primera firma (jefe directo). Si la compra ya trae forma de pago,
+        se encola la segunda: el visto bueno de Fernando por Telegram."""
+        resultado = super().action_autorizar()
         for req in self:
-            if req.request_type != 'general' or not req.amunet_forma_pago:
+            if not req.amunet_forma_pago:
                 continue
             if req.amunet_autorizacion_estado not in ('na', False):
                 continue
