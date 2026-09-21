@@ -311,7 +311,7 @@
                         options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
                         string="Lote surtido"
                         optional="hide"
-                        readonly="not amunet_user_is_warehouse or (parent.amunet_supply_workorder_id and parent.amunet_supply_state != 'in_progress') or parent.state in ('done','cancel')"/>
+                        readonly="not amunet_user_is_warehouse or (parent.amunet_supply_workorder_id and parent.amunet_supply_state != 'in_progress') or parent.state in ('done','cancel') or (parent.amunet_is_solution_product and not amunet_needs_surtido)"/>
                     <!--
                         Lotes surtidos (reales): muestra TODOS los lotes
                         realmente tomados (de las operaciones detalladas).
@@ -350,14 +350,23 @@
                         string="Lote"
                         domain="[('product_id', '=', product_id)]"
                         options="{'no_create': True, 'no_open': True}"
-                        column_invisible="not parent.amunet_is_solution_product"
+                        column_invisible="not parent.amunet_is_solution_product or amunet_user_is_warehouse"
                         readonly="parent.state in ('done','cancel') or not amunet_user_can_edit_consume"
                         optional="show"/>
                     <!-- Cantidad Utilizada: editable EN LA MISMA LINEA en soluciones
                          (para el fabricante); en linea corta sigue readonly (se captura
                          en la conciliacion). -->
+                    <!--
+                        Cantidad utilizada y Disolucion son de QUIEN FABRICA.
+                        Almacen no las ve ni las escribe: son las dos que
+                        deciden si la solucion queda valida para supervision.
+                        El candado de verdad esta en stock_move.write();
+                        esto solo evita que la pantalla las ofrezca.
+                        Mery, 21-sep-2026.
+                    -->
                     <field name="amunet_qty_used"
                         string="Cantidad Utilizada"
+                        column_invisible="parent.amunet_is_solution_product and amunet_user_is_warehouse"
                         readonly="parent.state in ('done','cancel') or not (parent.amunet_is_solution_product and amunet_user_can_edit_consume)"
                         optional="show"/>
                 </xpath>
@@ -417,7 +426,7 @@
                     <field name="amunet_dissolution"
                         widget="boolean_toggle"
                         string="Disolucion"
-                        column_invisible="not parent.amunet_is_solution_product"
+                        column_invisible="not parent.amunet_is_solution_product or amunet_user_is_warehouse"
                         invisible="amunet_is_water_solvent"/>
                     <field name="amunet_is_valid"
                         widget="boolean"

@@ -334,6 +334,46 @@ class StockMove(models.Model):
                 raise UserError(_(
                     'Solo personal de Almacen (Veronica, Patricia, Karla) puede '
                     'capturar la Cantidad surtida y el Lote del material.'))
+        # Candado: en una SOLUCION, Almacen solo captura las lineas que de
+        # verdad surte. Los reactivos vienen de ARU y son material directo:
+        # su lote y su cantidad surtida no le tocan.
+        if (supply_fields & set(vals)
+                and not self.env.su
+                and not self.env.context.get('amunet_supply_internal')):
+            ajenas = self.filtered(
+                lambda m: m.raw_material_production_id.amunet_is_solution_product
+                and not m.amunet_needs_surtido)
+            if ajenas:
+                raise UserError(_(
+                    'Estos materiales no se surten desde Almacen, vienen del '
+                    'Almacen de reactivos en uso (ARU) y los toma directo '
+                    'quien fabrica:\n%s'
+                ) % '\n'.join('  - %s' % m.product_id.display_name for m in ajenas))
+
+        # Candado: la cantidad utilizada y la disolucion las captura QUIEN
+        # FABRICA, nunca Almacen. Son las dos que deciden si la solucion queda
+        # valida para irse a supervision: si las escribe alguien ajeno a la
+        # elaboracion, el registro lo firma quien no la hizo.
+        # Hasta el 21-sep-2026 solo las cuidaba la vista, y la vista no es
+        # candado (ver el hallazgo del 14-sep-2026).
+        elaboracion_fields = {'amunet_qty_used', 'amunet_dissolution'}
+        if (elaboracion_fields & set(vals)
+                and not self.env.su
+                and not self.env.context.get('amunet_supply_internal')):
+            usuario = self.env.user
+            es_almacen = (
+                usuario.has_group('amunet_material_request.group_material_warehouse')
+                or usuario.has_group('amunet_material_request.group_material_manager'))
+            fabrica = (
+                usuario.has_group('amunet_production.group_solution_maker')
+                or usuario.has_group('amunet_production.group_production_operator')
+                or usuario.has_group('amunet_production.group_production_supervisor'))
+            if es_almacen and not fabrica and any(
+                    m.raw_material_production_id for m in self):
+                raise UserError(_(
+                    'La cantidad utilizada y la disolucion las captura quien '
+                    'fabrica la solucion, no Almacen.'))
+
         # Validacion: el 'Lote surtido' debe existir (con stock) en el
         # almacen de Fabrica (ubicacion origen del consumo). Evita que se
         # capture un lote que esta en otro almacen (ej. Burgos) y que no
