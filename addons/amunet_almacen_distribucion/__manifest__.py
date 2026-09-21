@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Almacen de Distribucion',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.1.0',
     'summary': 'Almacen ADT y aplicacion propia para Distribucion, separada de '
                'la Fabrica',
     'description': """
@@ -32,7 +32,11 @@ Los dos caminos de entrada:
     'depends': ['stock', 'purchase', 'amunet_warehouse_access'],
     'data': [
         'security/groups.xml',
+        'data/sequences.xml',
+        'data/cron.xml',
         'security/ir.model.access.csv',
+        'views/traspaso_views.xml',
+        'wizard/traspaso_rechazo_views.xml',
         'views/menus.xml',
         'views/stock_views.xml',
     ],

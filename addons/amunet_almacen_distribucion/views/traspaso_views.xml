@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_traspaso_distribucion_list" model="ir.ui.view">
+        <field name="name">amunet.traspaso.distribucion.list</field>
+        <field name="model">amunet.traspaso.distribucion</field>
+        <field name="arch" type="xml">
+            <list string="Traspasos a Distribucion"
+                  decoration-warning="state == 'draft'"
+                  decoration-muted="state == 'rejected'">
+                <field name="name"/>
+                <field name="create_date" string="Ingreso"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="expiration_date" optional="show"/>
+                <field name="quantity" sum="Total"/>
+                <field name="uom_id" optional="hide"/>
+                <field name="origin" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-warning="state == 'draft'"
+                       decoration-success="state == 'authorized'"
+                       decoration-danger="state == 'rejected'"/>
+                <field name="decision_user_id" optional="hide"/>
+                <button name="action_autorizar" type="object" string="Autorizar"
+                        icon="fa-check" invisible="state != 'draft'"/>
+                <button name="action_rechazar" type="object" string="Rechazar"
+                        icon="fa-times" invisible="state != 'draft'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_traspaso_distribucion_form" model="ir.ui.view">
+        <field name="name">amunet.traspaso.distribucion.form</field>
+        <field name="model">amunet.traspaso.distribucion</field>
+        <field name="arch" type="xml">
+            <form string="Traspaso a Distribucion">
+                <header>
+                    <button name="action_autorizar" type="object" string="Autorizar"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_rechazar" type="object" string="Rechazar"
+                            class="btn-secondary" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,authorized"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Material">
+                            <field name="product_id"/>
+                            <field name="lot_id"/>
+                            <field name="expiration_date"/>
+                            <field name="quantity"/>
+                            <field name="uom_id"/>
+                        </group>
+                        <group string="Origen">
+                            <field name="location_id"/>
+                            <field name="origin"/>
+                            <field name="origin_move_id"/>
+                            <field name="create_date" string="Fecha de ingreso"/>
+                        </group>
+                    </group>
+                    <group string="Decision" invisible="state == 'draft'">
+                        <field name="decision_user_id"/>
+                        <field name="decision_date"/>
+                        <field name="reject_reason" invisible="state != 'rejected'"/>
+                        <field name="picking_id"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_traspaso_distribucion_search" model="ir.ui.view">
+        <field name="name">amunet.traspaso.distribucion.search</field>
+        <field name="model">amunet.traspaso.distribucion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="name"/>
+                <filter name="f_draft" string="Por autorizar"
+                        domain="[('state','=','draft')]"/>
+                <filter name="f_auth" string="Autorizadas"
+                        domain="[('state','=','authorized')]"/>
+                <filter name="f_rej" string="Rechazadas"
+                        domain="[('state','=','rejected')]"/>
+                <separator/>
+                <filter name="g_state" string="Estado" context="{'group_by': 'state'}"/>
+                <filter name="g_prod" string="Producto" context="{'group_by': 'product_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_traspaso_distribucion" model="ir.actions.act_window">
+        <field name="name">Traspasos a Distribucion</field>
+        <field name="res_model">amunet.traspaso.distribucion</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_f_draft': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiley_face">Sin traspasos pendientes</p>
+            <p>Cada ingreso de material al anaquel de Producto Terminado
+               genera aqui una solicitud por lote.</p>
+        </field>
+    </record>
+
+</odoo>
