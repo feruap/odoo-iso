@@ -481,6 +481,44 @@ Si necesitas saltarte esto por una urgencia real, hay que apagar `enforce_admins
 a propósito y volverlo a encender. Que sea un acto consciente, no el silencio de
 antes.
 
+### Datos de negocio: NUNCA por SQL directo
+
+`psql` es para **leer**. Para **escribir** un dato de negocio (una solicitud, un
+producto, un lote, una orden) se usa la ORM de Odoo — `odoo shell` con
+`record.write({...})` — o la interfaz. Nunca `UPDATE`/`INSERT` a mano sobre
+las tablas de Odoo.
+
+Por que no se negocia: un `UPDATE` directo se salta **todo** lo que Odoo hace
+al guardar. No valida los valores de un `Selection`, no corre los
+`@api.constrains`, no dispara los `compute`, no deja rastro en el chatter ni en
+el `tracking`, y no despierta a los modulos que escuchan el `write`. El dato
+queda en la base con cara de correcto y el sistema entero lo trata como basura.
+
+Caso real, 20-sep-2026: alguien capturo por SQL `amunet_forma_pago = 'transfer'`
+en SMP/26/00303. El valor valido es `transferencia`. Consecuencias: la pantalla
+mostraba el campo **vacio**, el aviso a Fernando por Telegram decia "Pago: por
+definir", y si Fernando hubiera autorizado, la orden de pago **no habria salido
+al grupo** — el bot solo publica lo que dice exactamente `transferencia`. Nadie
+se habria enterado hasta que el proveedor reclamara.
+
+La forma correcta, dos lineas:
+
+```python
+# dentro de odoo shell
+req = env['amunet.material.request'].search([('name', '=', 'SMP/26/00303')])
+req.write({'amunet_forma_pago': 'transferencia', 'amunet_monto': 1524.58})
+env.cr.commit()
+```
+
+Si el `write` truena, **esa es la informacion**: el valor era invalido, la
+constraint lo rechazo, o falta un permiso. Un `UPDATE` directo se habria
+tragado el error y dejado el dato mal.
+
+Excepciones legitimas, y son pocas: reparar una migracion rota, corregir un
+`ir_module_module`, borrar registros huerfanos que la ORM no alcanza. En esos
+casos se documenta en el commit o en el aviso **que** se toco y **por que** no
+se pudo por la ORM.
+
 ### Intocabilidad del deploy.yml
 
 PROHIBIDO modificar:
