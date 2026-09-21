@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+            Produccion es el proveedor de Almacen: lo que fabrica entra como
+            cualquier ingreso, no aparece de golpe en existencias.
+
+            Hasta el 21-sep-2026 una solucion aterrizaba directo en
+            AMP/Existencias al apretar Producir. Karla se encontraba material
+            en su inventario sin haberlo recibido: nadie confirmaba
+            que lo tenia fisicamente, con ese lote y esa cantidad.
+
+            Ubicacion aparte de AMP/Entrada a proposito: lo que entrega
+            Produccion no se mezcla con lo que Calidad esta liberando de
+            proveedores, y no pasa por cuarentena — la solucion ya viene
+            analizada y aprobada en su propia orden.
+        -->
+        <record id="stock_location_amp_entrada_interna" model="stock.location">
+            <field name="name">Entrada Interna</field>
+            <field name="usage">internal</field>
+            <field name="location_id" ref="stock.stock_location_company"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <record id="picking_type_ingreso_produccion" model="stock.picking.type">
+            <field name="name">Ingreso de producción</field>
+            <field name="sequence_code">PROD-IN</field>
+            <field name="code">internal</field>
+            <field name="default_location_src_id"
+                   ref="stock_location_amp_entrada_interna"/>
+            <field name="default_location_dest_id" ref="stock.stock_location_stock"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+    </data>
+</odoo>

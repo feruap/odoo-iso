@@ -1310,6 +1310,19 @@ class MrpProduction(models.Model):
             if (aru and production.product_id
                     and production.product_id.product_tmpl_id.amunet_es_conjugado):
                 production.location_dest_id = aru.lot_stock_id.id
+                continue
+            # Las demas soluciones entran a Almacen como cualquier ingreso:
+            # Produccion es el proveedor. Aterrizan en AMP/Entrada Interna y
+            # Karla valida el ingreso; hasta entonces no son existencias.
+            # Antes caian directo en AMP/Existencias al apretar Producir, y
+            # Almacen se encontraba material que nunca recibio.
+            # Regla de Mery, 21-sep-2026.
+            if production.product_id and production.amunet_is_solution_product:
+                entrada = self.env.ref(
+                    'amunet_production.stock_location_amp_entrada_interna',
+                    raise_if_not_found=False)
+                if entrada:
+                    production.location_dest_id = entrada.id
 
     @api.depends('product_id', 'date_start')
     def _amunet_compute_expiration(self, product, base_date):
@@ -1649,7 +1662,18 @@ class MrpProduction(models.Model):
 
     # Tolerancia de la D.O. final del conjugado contra su objetivo.
     # 10% -- definido por Mery, 18-sep-2026.
+    amunet_ingreso_almacen_id = fields.Many2one(
+        'stock.picking', string='Ingreso a Almacen', readonly=True, copy=False,
+        help='El ingreso que Almacen valida para que la solucion pase a '
+             'existencias. Se genera solo al producir.')
+
     AMUNET_CONJ_DO_TOLERANCIA = 0.10
+
+    # Nanoparticulas: la unica solucion con numeracion de lote propia.
+    # El prefijo NO se deriva de la clave (seria 'SPN'): es 'NPS', como se
+    # venia nombrando a mano. Mery, 21-sep-2026.
+    AMUNET_CLAVE_NANOPARTICULAS = 'SPNPS01'
+    AMUNET_PREFIJO_LOTE_NANOPARTICULAS = 'NPS'
 
     def _amunet_conjugado_terminado(self, lineas):
         """Un conjugado no se pesa ni se disuelve: se alicuota, se centrifuga,
@@ -2183,6 +2207,13 @@ class MrpProduction(models.Model):
         fecha = fields.Date.context_today(self)
         prefix = fecha.strftime('%d%m%y')
         marca = 'C' if self.product_id.product_tmpl_id.amunet_es_conjugado else ''
+        # NANOPARTICULAS: unico producto con formato propio, NPSDDMMAA-NN
+        # (NPS210926-01). Pedido por Mery el 21-sep-2026, solo para esta clave.
+        # Las de DESARROLLO no se distinguen: llevan el mismo lote que las de
+        # produccion.
+        if self.product_id.default_code == self.AMUNET_CLAVE_NANOPARTICULAS:
+            prefix = '%s%s' % (self.AMUNET_PREFIJO_LOTE_NANOPARTICULAS, prefix)
+            marca = ''
         Lot = self.env['stock.lot'].sudo()
         patron = re.compile(r'^%s-%s(\d+)$' % (prefix, marca))
         consec = 0
@@ -3287,4 +3318,65 @@ class MrpProduction(models.Model):
                     and not self.env.context.get('amunet_baja_rechazada')):
                 raise UserError('ATENCIÓN: Este producto requiere Análisis C.C. No puedes "Marcar como Hecho" hasta que el área de Calidad apruebe el análisis.')
                 
-        return super(MrpProduction, self).button_mark_done()
+        res = super(MrpProduction, self).button_mark_done()
+        self._amunet_crear_ingreso_a_almacen()
+        return res
+
+    def _amunet_crear_ingreso_a_almacen(self):
+        """Produccion entrega a Almacen: crea el ingreso que Karla valida.
+
+        La solucion queda en AMP/Entrada Interna y NO es existencia todavia.
+        Almacen confirma con su PIN que la tiene fisicamente, con ese lote y
+        esa cantidad, y hasta entonces pasa a AMP/Existencias.
+
+        No se re-lotifica: es un movimiento interno, asi que el lote Amunet
+        de la orden (210926-07, NPS210926-01) viaja intacto. Y no pasa por
+        cuarentena: la solucion ya viene analizada y aprobada en su propia
+        orden. Mery, 21-sep-2026.
+        """
+        entrada = self.env.ref(
+            'amunet_production.stock_location_amp_entrada_interna',
+            raise_if_not_found=False)
+        tipo = self.env.ref(
+            'amunet_production.picking_type_ingreso_produccion',
+            raise_if_not_found=False)
+        if not (entrada and tipo):
+            return
+        for mo in self:
+            if not mo.amunet_is_solution_product:
+                continue
+            if mo.product_id.product_tmpl_id.amunet_solucion_interna:
+                continue      # se queda en el area, no entra a Almacen
+            if mo.product_id.product_tmpl_id.amunet_es_conjugado:
+                continue      # va a ARU, lo toma Inyeccion
+            if mo.amunet_ingreso_almacen_id:
+                continue
+            lineas = mo.move_finished_ids.filtered(
+                lambda m: m.state == 'done'
+                and m.product_id == mo.product_id
+                and (m.quantity or 0) > 0)
+            if not lineas:
+                continue
+            destino = tipo.default_location_dest_id
+            picking = self.env['stock.picking'].sudo().create({
+                'picking_type_id': tipo.id,
+                'location_id': entrada.id,
+                'location_dest_id': destino.id,
+                'origin': mo.name,
+                'move_ids': [(0, 0, {
+                    'product_id': l.product_id.id,
+                    'product_uom_qty': l.quantity,
+                    'product_uom': l.product_uom.id,
+                    'location_id': entrada.id,
+                    'location_dest_id': destino.id,
+                }) for l in lineas],
+            })
+            picking.action_confirm()
+            picking.action_assign()
+            mo.sudo().amunet_ingreso_almacen_id = picking.id
+            mo.message_post(body=_(
+                'Entregada a Almacen. Esta en <b>%(ubic)s</b> esperando que '
+                'Almacen valide el ingreso <b>%(pick)s</b>; hasta entonces no '
+                'es existencia.'
+            ) % {'ubic': entrada.complete_name, 'pick': picking.name})
+        return True
