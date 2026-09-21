@@ -29,7 +29,33 @@ CATEGORIA_PT = 'Producto terminado'
 # categorias separadas por coma, se comparan por nombre completo (una categoria
 # incluye a sus hijas).
 PARAM_CATEGORIAS = 'amunet_caducidad.categorias_promocion'
-CATEGORIAS_PROMOCION = 'Producto terminado / Pruebas rápidas inmunológicas'
+CATEGORIAS_PROMOCION = ('Producto terminado / Pruebas rápidas inmunológicas,'
+                        'Producto terminado / Pruebas PCR rápida')
+
+# Umbrales PROPIOS por categoria. Una prueba rapida inmunologica vive ~24 meses;
+# una PCR rapida nace con 6. Con la misma regla, cada lote de PCR entraba al
+# anaquel de promociones el dia que se fabricaba (lo documento Luis lote por
+# lote el 08-sep: entre 5.9 y 7.1 meses de vida real).
+#
+# Se penso en dejar las PCR FUERA del sistema, pero eso las deja ciegas: una PCR
+# que de verdad esta por vencerse tampoco se marcaria. Mejor darles su propia
+# escala (decision de Mery, 08-sep-2026): 2 meses caducidad corta, 1 mes cortesia
+# y 10 dias de retiro.
+#
+# El retiro NO se escalo por proporcion. En los productos normales es 1 mes
+# porque ese es el tiempo minimo para que el cliente reciba y use el material,
+# y eso no depende de si la prueba vive 6 o 24 meses. Para PCR se fijo en 10
+# dias para que alcance a existir el tramo de cortesia: con 1 mes de retiro,
+# cortesia y retiro coincidirian y una PCR pasaria de corta a retenida sin
+# ofrecerse nunca como cortesia.
+#
+# Es un parametro, no codigo: JSON con la categoria como llave. Lo que no
+# aparezca aqui usa los umbrales generales.
+PARAM_UMBRALES_CATEG = 'amunet_caducidad.umbrales_por_categoria'
+UMBRALES_CATEG = (
+    '{"Producto terminado / Pruebas PCR rápida": '
+    '{"corta": 2, "cortesia": 1, "retiro_dias": 10}}'
+)
 
 # Las HOJAS MAESTRAS (semiprocesado) tienen su propio anaquel "Caducidad corta"
 # bajo AMP/Existencias. Como no se producen pruebas con hojas de <6 meses de vida,
@@ -90,20 +116,60 @@ class StockLot(models.Model):
 
     # ------------------------------------------------------------------
     @api.model
-    def _amunet_umbrales(self):
-        """Umbrales en meses, leidos de parametros del sistema."""
+    def _amunet_umbrales(self, categoria=None):
+        """Umbrales en meses. Si la categoria tiene los suyos, esos mandan.
+
+        Sin categoria, o si no esta configurada, devuelve los generales. Asi el
+        resto del sistema sigue funcionando igual que antes.
+        """
         param = self.env['ir.config_parameter'].sudo()
         valores = {}
         for clave, defecto in DEFAULTS.items():
             try:
-                valores[clave] = int(param.get_param(clave, defecto))
+                valores[clave] = float(param.get_param(clave, defecto))
             except (TypeError, ValueError):
                 valores[clave] = defecto
+
+        if not categoria:
+            return valores
+
+        import json as _json
+        try:
+            propios = _json.loads(
+                param.get_param(PARAM_UMBRALES_CATEG, UMBRALES_CATEG) or '{}')
+        except (ValueError, TypeError):
+            return valores
+
+        # La categoria hija hereda los umbrales de la padre configurada.
+        for cat, u in propios.items():
+            if categoria == cat or categoria.startswith(cat + ' /'):
+                for llave, clave in (('corta', UMBRAL_CORTA),
+                                     ('cortesia', UMBRAL_CORTESIA),
+                                     ('retiro', UMBRAL_RETIRO)):
+                    # Se acepta en meses ("retiro": 0.5) o en dias
+                    # ("retiro_dias": 10). Los tramos cortos se piensan en dias,
+                    # y escribir 0.33 meses es una forma rara de decir 10 dias.
+                    if llave + '_dias' in u:
+                        try:
+                            valores[clave] = float(u[llave + '_dias']) / 30.0
+                            continue
+                        except (TypeError, ValueError):
+                            pass
+                    if llave in u:
+                        try:
+                            valores[clave] = float(u[llave])
+                        except (TypeError, ValueError):
+                            pass
+                break
         return valores
 
     @api.model
-    def _amunet_condicion(self, fecha_caducidad, hoy=None):
-        """Condicion comercial de una fecha de caducidad. Funcion pura."""
+    def _amunet_condicion(self, fecha_caducidad, hoy=None, categoria=None):
+        """Condicion comercial de una fecha de caducidad. Funcion pura.
+
+        `categoria` permite que un producto con vida util distinta use sus
+        propios umbrales (por ejemplo las PCR rapida).
+        """
         if not fecha_caducidad:
             return 'sin_fecha', 0
         hoy = hoy or fields.Date.context_today(self)
@@ -112,7 +178,7 @@ class StockLot(models.Model):
         dias = (fecha_caducidad - hoy).days
         if dias < 0:
             return 'vencido', dias
-        u = self._amunet_umbrales()
+        u = self._amunet_umbrales(categoria)
         meses = dias / 30.0
         if meses < u[UMBRAL_RETIRO]:
             return 'retirar', dias
@@ -245,7 +311,12 @@ class StockLot(models.Model):
         """Escribe la condicion en cada lote. Solo toca lo que cambio."""
         hoy = fields.Date.context_today(self)
         for lote in self:
-            condicion, dias = self._amunet_condicion(lote.expiration_date, hoy)
+            # Cada categoria puede tener su propia escala: una PCR rapida
+            # vive 6 meses y no puede medirse con la regla de una prueba
+            # inmunologica de 24.
+            condicion, dias = self._amunet_condicion(
+                lote.expiration_date, hoy,
+                categoria=lote.product_id.categ_id.complete_name or '')
             valores = {}
             if lote.amunet_condicion_caducidad != condicion:
                 valores['amunet_condicion_caducidad'] = condicion
