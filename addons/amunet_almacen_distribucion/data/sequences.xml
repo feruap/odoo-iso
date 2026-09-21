@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_traspaso_distribucion" model="ir.sequence">
+            <field name="name">Traspaso PT a Distribucion</field>
+            <field name="code">amunet.traspaso.distribucion</field>
+            <field name="prefix">TPD/%(range_year)s/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>
