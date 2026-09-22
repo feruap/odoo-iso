@@ -8,7 +8,7 @@
     # amunet_material_request sigue siendo dependencia por res.users.amunet_material_head_id
     # (el jefe directo) y por el grupo group_material_manager (area de compras).
     'depends': ['amunet_material_request', 'amunet_marketplace'],
-    'data': ['security/security.xml', 'views/solicitud_compra_views.xml'],
+    'data': ['security/ir.model.access.csv', 'security/security.xml', 'views/solicitud_compra_views.xml'],
     'post_init_hook': 'post_init_generar_secreto',
     'installable': True,
     'application': False,

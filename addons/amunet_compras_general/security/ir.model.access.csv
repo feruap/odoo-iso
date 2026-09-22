@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_res_partner_compras_monto,res.partner compras monto,base.model_res_partner,amunet_compras_general.group_compras_monto,1,1,1,0
