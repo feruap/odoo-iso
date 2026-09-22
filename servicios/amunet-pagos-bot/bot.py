@@ -143,7 +143,9 @@ select row_to_json(t) from (
 
 
 def solicitudes_por_enviar():
-    return sql(CONSULTA_SOLICITUD % "r.amunet_autorizacion_estado = 'por_enviar'")
+    return sql(CONSULTA_SOLICITUD % (
+        "r.amunet_autorizacion_estado = 'por_enviar' "
+        "and r.state not in ('cancelled', 'closed')"))
 
 
 def solicitud(solicitud_id):
@@ -276,7 +278,8 @@ def publicar_corte():
     pendientes = sql(CONSULTA_SOLICITUD % (
         "r.amunet_autorizacion_estado = 'autorizado' "
         "and r.amunet_forma_pago = 'transferencia' "
-        "and r.amunet_pago_publicado is null"))
+        "and r.amunet_pago_publicado is null "
+        "and r.state not in ('cancelled', 'closed')"))
     if not pendientes:
         _marca_corte(hoy.strftime('%Y-%m-%d'))
         log.info('corte %s: nada que pagar', hoy.strftime('%Y-%m-%d'))
