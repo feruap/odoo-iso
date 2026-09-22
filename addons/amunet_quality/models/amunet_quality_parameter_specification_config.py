@@ -476,7 +476,11 @@ class AmunetQualityParameterSpecificationConfig(models.Model):
             'test_line_id': test_line_id,
             'specification_config_id': self.id,
             'sequence': self.sequence,
-            'name': self.specification_id.name or self.specification_name,
+            # El nombre que configuro Calidad PARA ESTE PRODUCTO manda sobre el
+            # del catalogo general: ahi varios renglones comparten nombre
+            # (los dos de MAVI-16 se llaman 'Visualizacion Operativa') y el
+            # analisis salia con renglones identicos, imposibles de distinguir.
+            'name': self.specification_name or self.specification_id.name,
             'acceptance_criteria': self.acceptance_criteria,
             'evaluation_type': self.evaluation_type,
             
