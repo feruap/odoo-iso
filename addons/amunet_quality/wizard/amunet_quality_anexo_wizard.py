@@ -17,6 +17,7 @@ class AmunetQualityAnexoWizardLine(models.TransientModel):
     col5      = fields.Char(string='Col 5')
     col6      = fields.Char(string='Col 6')
     col7      = fields.Char(string='Col 7')
+    col8      = fields.Char(string='Col 8')
 
 
 class AmunetQualityAnexoWizard(models.TransientModel):
@@ -34,6 +35,7 @@ class AmunetQualityAnexoWizard(models.TransientModel):
     col5_header  = fields.Char(related='check_id.anexo_col5_header', readonly=True)
     col6_header  = fields.Char(related='check_id.anexo_col6_header', readonly=True)
     col7_header  = fields.Char(related='check_id.anexo_col7_header', readonly=True)
+    col8_header  = fields.Char(related='check_id.anexo_col8_header', readonly=True)
 
     # Líneas propias del wizard — no se pierden con onchanges del formulario principal
     line_ids = fields.One2many('amunet.quality.anexo.wizard.line', 'wizard_id', string='Muestras')
@@ -46,7 +48,7 @@ class AmunetQualityAnexoWizard(models.TransientModel):
             'muestra':  line.muestra,
             'col1': line.col1, 'col2': line.col2, 'col3': line.col3,
             'col4': line.col4, 'col5': line.col5, 'col6': line.col6,
-            'col7': line.col7,
+            'col7': line.col7, 'col8': line.col8,
         }) for line in check.anexo_line_ids]
 
     def action_guardar_cerrar(self):
@@ -65,7 +67,7 @@ class AmunetQualityAnexoWizard(models.TransientModel):
                 'muestra':  wl.muestra,
                 'col1': wl.col1, 'col2': wl.col2, 'col3': wl.col3,
                 'col4': wl.col4, 'col5': wl.col5, 'col6': wl.col6,
-                'col7': wl.col7,
+                'col7': wl.col7, 'col8': wl.col8,
             }
             if i < len(existing):
                 existing[i].write(vals)
