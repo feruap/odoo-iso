@@ -1710,6 +1710,35 @@ class AmunetWooProductMapping(models.Model):
         # diria 0 para el material ya traspasado mientras la tienda lo vende.
         return backend._ubicaciones_a_publicar()
 
+    def _ubicacion_carga_inicial(self):
+        """Donde ATERRIZA el inventario inicial: UNA sola ubicacion.
+
+        _ubicacion_piezas() devuelve TODAS las ubicaciones que publica la
+        tienda -- hoy el anaquel de PT y ADT/Stock -- y eso esta bien para
+        LEER: el panel suma las dos y el traspaso a Distribucion es invisible
+        para el cliente.
+
+        Pero para ESCRIBIR hay que elegir una, y el material siempre entra por
+        el anaquel de PT: de ahi se traspasa a Distribucion con el flujo
+        normal. Dar de alta inventario inicial directo en Distribucion se
+        saltaria ese paso.
+
+        Sin esto, el boton "Cargar inventario inicial" reventaba con
+        "Expected singleton: stock.location(14, 66)" desde que se configuro
+        ADT/Stock como ubicacion extra (9-sep-2026). Lo levanto Luis el
+        22-sep-2026.
+        """
+        self.ensure_one()
+        backend = self.backend_id.sudo()
+        if not backend:
+            return self.env['stock.location'].browse()
+        anaquel = backend._apt_pieces_location()
+        if anaquel:
+            return anaquel[:1]
+        # Sin anaquel configurado: la primera de las que publica, para no
+        # dejar el boton muerto.
+        return self._ubicacion_piezas()[:1]
+
     @api.onchange('inicial_lot_id')
     def _onchange_inicial_lot_id(self):
         """Al elegir un lote del desplegable se traen sus datos.
@@ -1750,7 +1779,7 @@ class AmunetWooProductMapping(models.Model):
             raise UserError(_(
                 'El inventario inicial de %s tiene que ser mayor que cero.'
             ) % (rec.woo_sku or rec.product_id.display_name))
-        ubicacion = rec._ubicacion_piezas()
+        ubicacion = rec._ubicacion_carga_inicial()
         if not ubicacion:
             raise UserError(_(
                 'No se encontro el anaquel de piezas de APT para la tienda '
