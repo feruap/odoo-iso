@@ -33,6 +33,7 @@
         'views/amunet_lot_dossier_views.xml',
         'views/amunet_iso_dashboard_views.xml',
         'views/mrp_production_views.xml',
+        'views/stock_picking_ingreso_views.xml',
         'views/mrp_workcenter_views.xml',
         'views/product_template_views.xml',
         'views/amunet_conjugado_views.xml',
