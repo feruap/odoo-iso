@@ -720,6 +720,15 @@ class AmunetPilotPreflight(models.Model):
         for rec in self:
             if rec.route_type == 'solution':
                 continue  # las soluciones no se empacan en presentaciones
+            # Un semiprocesado tampoco: sale a granel y se guarda en Materia
+            # Prima para usarse como insumo. La caja, la etiqueta y el manual
+            # los lleva el producto terminado, mucho despues. Exigirle aqui una
+            # presentacion autorizada bloqueaba el piloto de las 13 almohadillas
+            # SPALMA (22-sep-2026), que fueron los primeros preflights de ruta
+            # larga del sistema; por eso nadie lo habia topado antes.
+            categ = rec.product_tmpl_id.categ_id.complete_name or ''
+            if categ.startswith('Semiprocesado'):
+                continue
             presentations = Presentation.search([
                 ('product_tmpl_id', '=', rec.product_tmpl_id.id),
                 ('is_authorized', '=', True),
