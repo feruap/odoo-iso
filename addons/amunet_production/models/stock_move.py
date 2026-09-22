@@ -2,6 +2,9 @@
 import re
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class StockMove(models.Model):
@@ -515,6 +518,88 @@ class StockMove(models.Model):
                 continue
 
             move.amunet_is_valid = in_range
+
+    def _action_assign(self, *args, **kwargs):
+        """Tras reservar, dejar un solo lote en los componentes de solucion."""
+        res = super()._action_assign(*args, **kwargs)
+        try:
+            self._amunet_prellenar_lote_unico()
+        except Exception:
+            # Reservar nunca debe fallar por esto: si no se puede dejar un solo
+            # lote, se queda como lo hizo Odoo y el candado avisara al firmar.
+            _logger.warning(
+                'amunet: no se pudo dejar un solo lote en %s', self.ids)
+        return res
+
+    def _amunet_prellenar_lote_unico(self):
+        """En SOLUCIONES, reservar de UN SOLO lote que alcance para todo.
+
+        Odoo reserva por FEFO y parte la cantidad entre lotes cuando el primero
+        no alcanza: pedir 333 ml dejaba 330 de un lote y 3 de otro. Eso choca
+        de frente con el candado ISO de un lote por componente, y a Almacen le
+        tocaba deshacer el reparto a mano antes de poder firmar.
+
+        Aqui se busca un lote que cubra la cantidad COMPLETA y se reserva solo
+        de ese. Se elige por caducidad mas proxima (FEFO) entre los que
+        alcanzan, para no dejar material a punto de vencer. Si ninguno alcanza
+        por si solo, se deja lo que Odoo hizo: ahi si hace falta que una persona
+        decida. Mery, 22-sep-2026.
+        """
+        Quant = self.env['stock.quant'].sudo()
+        for move in self:
+            mo = move.raw_material_production_id
+            if not mo or not mo.amunet_is_solution_product:
+                continue
+            if move.state in ('draft', 'done', 'cancel'):
+                continue
+            if move.product_id.tracking == 'none':
+                continue
+            lotes = move.move_line_ids.filtered(
+                lambda ml: ml.lot_id and ml.quantity > 0).mapped('lot_id')
+            if len(lotes) <= 1:
+                continue
+            falta = move.product_uom_qty
+            quants = Quant.search([
+                ('product_id', '=', move.product_id.id),
+                ('location_id', 'child_of', move.location_id.id),
+                ('quantity', '>', 0),
+                ('lot_id', '!=', False),
+            ])
+            # solo los que alcanzan solos, el que caduque primero
+            alcanzan = quants.filtered(
+                lambda q: (q.quantity - q.reserved_quantity
+                           + sum(ml.quantity for ml in move.move_line_ids
+                                 if ml.lot_id == q.lot_id)) >= falta)
+            if not alcanzan:
+                continue
+            elegido = alcanzan.sorted(
+                key=lambda q: (q.lot_id.expiration_date or fields.Datetime.max,
+                               q.lot_id.id))[0].lot_id
+            move.sudo()._do_unreserve()
+            move.sudo()._action_assign()
+            sobran = move.move_line_ids.filtered(lambda ml: ml.lot_id != elegido)
+            if sobran:
+                sobran.sudo().unlink()
+            move.invalidate_recordset(['move_line_ids'])
+            lineas = move.move_line_ids.filtered(lambda ml: ml.lot_id == elegido)
+            if len(lineas) > 1:
+                lineas[1:].sudo().unlink()
+                move.invalidate_recordset(['move_line_ids'])
+                lineas = move.move_line_ids.filtered(
+                    lambda ml: ml.lot_id == elegido)
+            if lineas:
+                # la reserva la vuelve a partir: se fija la cantidad completa
+                lineas[0].sudo().write({'quantity': falta})
+            else:
+                self.env['stock.move.line'].sudo().create({
+                    'move_id': move.id,
+                    'product_id': move.product_id.id,
+                    'product_uom_id': move.product_uom.id,
+                    'location_id': move.location_id.id,
+                    'location_dest_id': move.location_dest_id.id,
+                    'lot_id': elegido.id,
+                    'quantity': falta,
+                })
 
     def _amunet_check_single_lot_per_component(self):
         """Candado ISO 13485: cada componente de una orden de produccion debe
