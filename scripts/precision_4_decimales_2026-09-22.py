@@ -1,37 +1,44 @@
 # -*- coding: utf-8 -*-
-"""Redondeo de unidades a 4 decimales.
+"""Cuatro decimales en las cantidades.
 
-Todas las unidades estaban en 0.01. Con eso Odoo no podia expresar una
-cantidad como 333 ml de un producto que se lleva en LITROS: 0.333 L se
-redondeaba a 0.33 (330 ml), y los 3 ml sobrantes se iban a un segundo lote.
-De ahi salia el lote partido que chocaba con el candado ISO de un lote por
-componente. Decision de Mery, 22-sep-2026: cuatro decimales.
+Con 2 decimales Odoo no podia expresar 333 ml de un producto que se lleva en
+LITROS: 0.333 L se redondeaba a 0.33 (330 ml), y los 3 ml sobrantes se iban a
+un segundo lote. De ahi salia el lote partido que chocaba con el candado ISO de
+un lote por componente. Decision de Mery, 22-sep-2026.
 
-Cambia:
-  - uom.uom.rounding  -> 0.0001 en todas las unidades que estuvieran por arriba
-  - decimal.precision 'Product Unit' y 'Stock Weight' -> 4 digitos
+OJO: en Odoo 19 el redondeo NO es por unidad. `uom.uom.rounding` es un campo
+CALCULADO (store=False) que sale de una sola configuracion global: la precision
+decimal 'Product Unit'. Por eso esto no se puede limitar a L, ml y g: o son 4
+decimales para todas las unidades, o para ninguna.
 
-NO toca 'Product Price': los precios no entran en este cambio.
+Cambia solo:
+    decimal.precision 'Product Unit'   2 -> 4
+
+NO toca 'Product Price' (los precios no entran) ni 'Stock Weight' (es el peso
+para envios, nada que ver con fabricar soluciones).
 
 Correr con:
   /opt/odoo/scripts/run_correction.sh production precision_4_decimales_2026-09-22.py
 """
 
-cambiadas = 0
-for u in env['uom.uom'].search([]):
-    if u.rounding and u.rounding > 0.0001:
-        print('  %-28s %s -> 0.0001' % (u.name, u.rounding))
-        u.sudo().rounding = 0.0001
-        cambiadas += 1
-print('\nunidades ajustadas: %d' % cambiadas)
-
-for nombre in ('Product Unit', 'Stock Weight'):
-    d = env['decimal.precision'].search([('name', '=', nombre)], limit=1)
-    if d and d.digits < 4:
-        print('  precision %-16s %s -> 4' % (nombre, d.digits))
+d = env['decimal.precision'].search([('name', '=', 'Product Unit')], limit=1)
+if not d:
+    print('No existe la precision "Product Unit". Revisar a mano.')
+else:
+    print('Product Unit: %s -> 4' % d.digits)
+    if d.digits < 4:
         d.sudo().digits = 4
 
-precio = env['decimal.precision'].search([('name', '=', 'Product Price')], limit=1)
-print('\nProduct Price se deja en %s (no entra en este cambio)' % (precio.digits if precio else '-'))
+print('\nsin tocar:')
+for nombre in ('Product Price', 'Stock Weight'):
+    x = env['decimal.precision'].search([('name', '=', nombre)], limit=1)
+    if x:
+        print('   %-16s %s' % (nombre, x.digits))
+
+print('\nredondeo que resulta (global, derivado de Product Unit):')
+for nombre in ('L', 'ml', 'g', 'mg'):
+    u = env['uom.uom'].search([('name', '=', nombre)], limit=1)
+    if u:
+        print('   %-6s %s' % (u.name, u.rounding))
 
 env.cr.commit()
