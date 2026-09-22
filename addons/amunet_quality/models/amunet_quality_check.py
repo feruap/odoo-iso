@@ -3021,11 +3021,21 @@ class AmunetQualityCheck(models.Model):
             _logger.warning(f"_create_final_reception_picking: ubicaciones no encontradas para QC {self.id}")
             return False
 
-        # Buscar tipo de operacion incoming
+        # Tipo de operacion INTERNO. La liberacion mueve material que YA esta
+        # en la casa (de Control de calidad a Existencias); no es una llegada
+        # del proveedor. Cuando se creaba como 'Recepciones' pasaban dos cosas:
+        # el material entraba por la ruta de recepcion y aterrizaba en Entrada
+        # en vez de Existencias, y desde ahi la ruta le disparaba OTRO picking
+        # de Calidad sobre lo que Calidad acababa de liberar. Ademas, un
+        # documento que dice "Recepcion" invita a poner Proveedor como origen,
+        # que es sacar material de la nada. Se prefiere el tipo del almacen de
+        # origen para no cruzar almacenes.
+        warehouse_src = source_location.warehouse_id
         picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'incoming'),
+            ('code', '=', 'internal'),
             ('company_id', '=', self.company_id.id),
-        ], limit=1)
+            ('warehouse_id', '=', warehouse_src.id),
+        ], limit=1) if warehouse_src else self.env['stock.picking.type']
 
         if not picking_type:
             picking_type = self.env['stock.picking.type'].search([
