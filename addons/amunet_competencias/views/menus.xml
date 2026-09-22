@@ -84,6 +84,14 @@
         sequence="20"
         groups="amunet_competencias.group_competencias_manager"/>
 
+    <menuitem
+        id="menu_amunet_semaforo_cap"
+        name="Semáforo de Capacitación"
+        parent="menu_amunet_competencias_root"
+        action="action_semaforo_cap"
+        sequence="21"
+        groups="amunet_competencias.group_competencias_manager"/>
+
     <!-- ══════════════════════════════════════════════════════
          Menú: Mi Capacitación  (autoservicio, todos los empleados)
     ══════════════════════════════════════════════════════ -->

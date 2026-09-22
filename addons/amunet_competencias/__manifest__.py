@@ -48,6 +48,7 @@ Funcionalidades:
         'views/amunet_equipment_inherit_views.xml',
         'views/amunet_registro_capacitacion_views.xml',
         'views/amunet_matriz_competencias_views.xml',
+        'views/amunet_semaforo_cap_views.xml',
         'views/menus.xml',
         'views/amunet_hr_workqueue_views.xml',
 
@@ -57,6 +58,7 @@ Funcionalidades:
         # Seeds: cursos de renovacion anual de equipos + preguntas/respuestas
         'data/seeds_20260709_162924.xml',
         'data/seeds_cursos_virtuales_preguntas.xml',
+        'data/seeds_requisitos_semaforo.xml',
     ],
     'installable': True,
     'application': True,
