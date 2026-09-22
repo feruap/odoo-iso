@@ -2003,6 +2003,50 @@ class MrpProduction(models.Model):
 
     def write(self, vals):
         self._amunet_check_solution_raw_lines_lock(vals)
+        # Candado: la CADUCIDAD de una solucion no se cambia a mano.
+        #
+        # Sale de la receta del producto y es lo que acaba impreso en la
+        # etiqueta: si alguien la mueve en la orden, el lote queda con una
+        # vigencia que no corresponde a como se preparo, y eso es registro
+        # regulado. La unica excepcion son las soluciones de DESARROLLO, donde
+        # cada preparacion es distinta y su vida util la decide quien la
+        # elabora. Mery, 22-sep-2026.
+        campos_caducidad = {'amunet_expiration_text', 'solution_expiration_date'}
+        if (campos_caducidad & set(vals)
+                and not self.env.su
+                and not self.env.context.get('amunet_caducidad_interna')):
+            # Solo estorba el cambio MANUAL: si el valor es el que sale de la
+            # receta, es el propio sistema calculandolo (pasa al crear la orden
+            # y al cambiar el producto) y debe pasar.
+            def _cambio_manual(mo):
+                if not mo.amunet_is_solution_product:
+                    return False
+                if mo.product_id.product_tmpl_id.amunet_es_desarrollo:
+                    return False
+                if 'amunet_expiration_text' not in vals:
+                    return False
+                nuevo = (vals.get('amunet_expiration_text') or '').strip()
+                # Lo que dice la receta. Si coincide, es el propio sistema
+                # calculandola (al crear la orden o al cambiar el producto).
+                esperado = ''
+                try:
+                    base = mo.date_start or fields.Datetime.now()
+                    cad = mo._amunet_compute_expiration(mo.product_id, base)
+                    if cad:
+                        esperado = cad.strftime('%d.%m.%y')
+                except Exception:
+                    esperado = ''
+                return bool(nuevo) and nuevo != esperado
+
+            bloqueadas = self.filtered(_cambio_manual)
+            if bloqueadas:
+                raise UserError(_(
+                    'La caducidad de una solucion no se cambia a mano: sale de '
+                    'la receta del producto y es la que se imprime en la '
+                    'etiqueta.\n\n%s\n\nSolo las soluciones de DESARROLLO '
+                    'admiten capturarla, porque cada preparacion es distinta.'
+                ) % '\n'.join('  - %s (%s)' % (mo.name, mo.product_id.default_code)
+                               for mo in bloqueadas))
         # El formulario (sobre todo movil) reenvia date_start con la hora
         # truncada a medianoche al guardar. Si la FECHA no cambia, no es un
         # cambio real: lo descartamos ANTES de escribir para no disparar el
@@ -2960,9 +3004,21 @@ class MrpProduction(models.Model):
                  'amunet_supervision_state', 'quality_ph_final', 'state',
                  'move_raw_ids.quantity', 'move_raw_ids.amunet_is_valid')
     def _compute_amunet_motivo_pendiente(self):
+        """Solo cuando YA EMPEZO a elaborar.
+
+        El aviso es para el momento en que quien fabrica cree que termino, va a
+        mandarla a supervision y el boton no aparece: ahi se quedaba sin saber
+        por que. En una orden recien confirmada no informa nada -- recita lo que
+        cualquiera sabe que falta porque todavia no empieza -- y estorba.
+        Por eso se exige que haya consumo capturado en algun componente.
+        Mery, 22-sep-2026.
+        """
         for mo in self:
             motivo = False
+            empezo = any((m.quantity or 0) > 0
+                         for m in mo.move_raw_ids if m.state != 'cancel')
             if (mo.amunet_is_solution_product
+                    and empezo
                     and mo.state in ('confirmed', 'progress', 'to_close')
                     and not mo.amunet_solucion_terminada):
                 try:
