@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from .amunet_etapa_ll import ETAPAS
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
@@ -74,12 +75,9 @@ class MrpProduction(models.Model):
     # habria cambiado el flujo de ordenes vivas, que es justo lo que no se
     # debe mover.
     amunet_sublinea = fields.Selection(
-        selection=[
-            ('soluciones', 'Soluciones'),
-            ('conjugados', 'Conjugados'),
-            ('inyeccion', 'Inyección'),
-            ('laminado', 'Laminado'),
-        ],
+        # Misma lista que el producto (ETAPAS): estaba copiada a mano en los dos
+        # sitios y se desincronizaron al agregar una etapa nueva.
+        selection=ETAPAS,
         string='Etapa de linea larga',
         tracking=True,
         help='Etapa de la linea larga a la que pertenece esta orden. Las '
