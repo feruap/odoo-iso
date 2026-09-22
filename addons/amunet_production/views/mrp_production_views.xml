@@ -216,7 +216,7 @@
                     <div class="o_row">
                         <field name="amunet_expiration_text"
                                placeholder="2026-05"
-                               readonly="state != 'draft' and not amunet_user_is_mery"
+                               readonly="amunet_is_solution_product and not amunet_es_desarrollo"
                                force_save="1"/>
                         <field name="solution_expiration_date" invisible="1"/>
                     </div>
@@ -505,7 +505,7 @@
                 <!-- Responsable: solo Alma o Alondra -->
                 <xpath expr="//field[@name='user_id']" position="attributes">
                     <attribute name="domain">[('login', 'in', ['s.produccion@amunet.com.mx', 'produccionsub@amunet.com.mx'])]</attribute>
-                    <attribute name="readonly">amunet_user_is_warehouse or (state != 'draft' and not amunet_user_is_mery)</attribute>
+                    <attribute name="readonly">amunet_user_is_warehouse or (amunet_is_solution_product and not amunet_es_desarrollo) or (not amunet_is_solution_product and state != 'draft' and not amunet_user_is_mery)</attribute>
                 </xpath>
 
                 <!-- Bloqueo completo para almacén: solo puede editar Lote y Cantidad surtida -->
