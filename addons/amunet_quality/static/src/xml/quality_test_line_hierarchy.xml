@@ -89,10 +89,10 @@
                                 <tr class="quality-detail-row">
                                     <td class="text-muted">↳</td>
                                     <td>
-                                        <t t-esc="detail.name"/>
+                                        <t t-esc="detail.name || ''"/>
                                     </td>
                                     <td class="text-muted small">
-                                        <t t-esc="detail.acceptance_criteria"/>
+                                        <t t-esc="detail.acceptance_criteria || ''"/>
                                     </td>
                                     <td>
                                         <!-- Campo de resultado según tipo de evaluación -->
@@ -105,11 +105,11 @@
                                                 <option value="">Seleccionar...</option>
                                                 <option t-att-value="detail.binary_option_pass"
                                                         t-att-selected="detail.result_selection === detail.binary_option_pass">
-                                                    <t t-esc="detail.binary_option_pass"/>
+                                                    <t t-esc="detail.binary_option_pass || ''"/>
                                                 </option>
                                                 <option t-att-value="detail.binary_option_fail"
                                                         t-att-selected="detail.result_selection === detail.binary_option_fail">
-                                                    <t t-esc="detail.binary_option_fail"/>
+                                                    <t t-esc="detail.binary_option_fail || ''"/>
                                                 </option>
                                             </select>
                                             <span t-else="" class="form-control-plaintext">
@@ -131,7 +131,7 @@
                                                     <t t-esc="detail.result_numeric || '-'"/>
                                                 </span>
                                                 <span class="input-group-text" t-if="detail.uom_id">
-                                                    <t t-esc="detail.uom_id[1]"/>
+                                                    <t t-esc="detail.uom_id ? detail.uom_id[1] : ''"/>
                                                 </span>
                                             </div>
                                             <small class="text-muted d-block">
@@ -150,7 +150,7 @@
                                                        data-field="result_checkbox_1"
                                                        t-on-change="onCheckboxChange"/>
                                                 <label class="form-check-label small">
-                                                    <t t-esc="detail.checkbox_label_1"/>
+                                                    <t t-esc="detail.checkbox_label_1 || ''"/>
                                                 </label>
                                             </div>
                                             <div class="form-check form-check-inline">
@@ -162,7 +162,7 @@
                                                        data-field="result_checkbox_2"
                                                        t-on-change="onCheckboxChange"/>
                                                 <label class="form-check-label small">
-                                                    <t t-esc="detail.checkbox_label_2"/>
+                                                    <t t-esc="detail.checkbox_label_2 || ''"/>
                                                 </label>
                                             </div>
                                         </t>
@@ -180,7 +180,7 @@
                                                 <t t-esc="detail.result_text_pattern || '-'"/>
                                             </span>
                                             <div t-if="detail.constructed_phrase" class="small text-muted mt-1">
-                                                <t t-esc="detail.constructed_phrase"/>
+                                                <t t-esc="detail.constructed_phrase || ''"/>
                                             </div>
                                         </t>
 
@@ -407,7 +407,7 @@
                                                 <div t-if="detail.verdict_message" t-att-class="'alert mt-2 mb-0 py-2 px-3 small ' + (detail.verdict === 'pass' ? 'alert-success border-success' : (detail.verdict === 'fail' ? 'alert-danger border-danger' : 'alert-warning'))">
                                                     <i t-attf-class="fa {{ detail.verdict === 'pass' ? 'fa-check-circle' : 'fa-times-circle' }} me-2"/>
                                                     <strong t-esc="detail.verdict === 'pass' ? 'CUMPLE: ' : 'NO CUMPLE: '"/>
-                                                    <span t-esc="detail.verdict_message"/>
+                                                    <span t-esc="detail.verdict_message || ''"/>
                                                 </div>
                                             </div>
                                         </t>
@@ -461,7 +461,7 @@
                                                 <div t-if="detail.verdict_message" t-att-class="'alert mt-3 mb-0 py-2 px-3 small ' + (detail.verdict === 'pass' ? 'alert-success border-success' : (detail.verdict === 'fail' ? 'alert-danger border-danger' : 'alert-warning'))">
                                                     <i t-attf-class="fa {{ detail.verdict === 'pass' ? 'fa-check-circle' : 'fa-times-circle' }} me-2"/>
                                                     <strong t-esc="detail.verdict === 'pass' ? 'CUMPLE: ' : 'NO CUMPLE: '"/>
-                                                    <span t-esc="detail.verdict_message"/>
+                                                    <span t-esc="detail.verdict_message || ''"/>
                                                 </div>
                                             </div>
                                         </t>
@@ -507,7 +507,7 @@
                                                 <div t-if="detail.verdict_message" t-att-class="'alert mt-1 mb-0 py-2 px-3 small ' + (detail.verdict === 'pass' ? 'alert-success border-success' : (detail.verdict === 'fail' ? 'alert-danger border-danger' : 'alert-warning'))">
                                                     <i t-attf-class="fa {{ detail.verdict === 'pass' ? 'fa-check-circle' : 'fa-times-circle' }} me-2"/>
                                                     <strong t-esc="detail.verdict === 'pass' ? 'CUMPLE: ' : 'NO CUMPLE: '"/>
-                                                    <span t-esc="detail.verdict_message"/>
+                                                    <span t-esc="detail.verdict_message || ''"/>
                                                 </div>
                                             </div>
                                         </t>
