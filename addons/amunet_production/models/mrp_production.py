@@ -138,6 +138,14 @@ class MrpProduction(models.Model):
         help="Permite anular o activar el pase por laboratorio bilateralmente."
     )
     
+    amunet_qc_previo_al_sistema = fields.Boolean(
+        string='Analisis en papel, anterior al sistema',
+        default=False, copy=False, tracking=True,
+        help='Se marca UNA orden a la vez, a mano, cuando su analisis de calidad '
+             'se hizo en papel antes de que el flujo existiera en Odoo. El candado '
+             'que impide sacar lote sin analisis aprobado la deja pasar. No es una '
+             'regla por fecha a proposito: asi ninguna orden queda exenta sola.')
+
     quality_analysis_status = fields.Selection([
         ('none', 'No Requerido'),
         ('to_request', 'Pendiente de Solicitar'),
