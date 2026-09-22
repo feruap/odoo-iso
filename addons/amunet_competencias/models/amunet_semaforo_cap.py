@@ -52,7 +52,7 @@ req_por_empleado AS (
     SELECT req.id AS requisito_id, req.course_id, e.id AS employee_id
     FROM amunet_curso_requisito req
     JOIN hr_employee e ON e.active = true AND e.name NOT ILIKE '%practicante%'
-    JOIN emp_dept ed ON ed.employee_id = e.id
+    LEFT JOIN emp_dept ed ON ed.employee_id = e.id
     WHERE (
         -- Para todos: aplica_todos y el dept del empleado NO está excluido
         (req.aplica_todos = true
@@ -87,6 +87,7 @@ SELECT
     (mr.expiry_date - CURRENT_DATE)::integer AS days_to_expiry,
     CASE
         WHEN mr.id IS NULL THEN 'faltante'
+        WHEN mr.expiry_date IS NULL THEN 'faltante'
         WHEN mr.expiry_date < CURRENT_DATE THEN 'vencida'
         WHEN mr.expiry_date <= CURRENT_DATE + INTERVAL '90 days' THEN 'proxima'
         ELSE 'vigente'
@@ -94,6 +95,6 @@ SELECT
 FROM req_por_empleado req
 JOIN hr_employee e ON e.id = req.employee_id
 JOIN hr_training_course c ON c.id = req.course_id
-JOIN emp_dept ed ON ed.employee_id = e.id
+LEFT JOIN emp_dept ed ON ed.employee_id = e.id
 LEFT JOIN mejor_registro mr ON mr.employee_id = e.id AND mr.hr_course_id = req.course_id
 """)
