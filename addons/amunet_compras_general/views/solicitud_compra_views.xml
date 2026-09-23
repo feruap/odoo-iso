@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_solicitud_compra_form_pago" model="ir.ui.view">
+        <field name="name">amunet.solicitud.compra.form.pago</field>
+        <field name="model">amunet.solicitud.compra</field>
+        <field name="inherit_id" ref="amunet_marketplace.view_solicitud_compra_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_pedir_autorizacion_pago" type="object"
+                        string="Pedir autorizacion de pago"
+                        class="btn-primary"
+                        groups="amunet_compras_general.group_compras_monto,amunet_material_request.group_material_manager"
+                        invisible="amunet_autorizacion_estado != 'na' or not amunet_forma_pago"/>
+            </xpath>
+            <xpath expr="//sheet/group[1]" position="after">
+                <group string="Pago" name="pago">
+                    <group>
+                        <field name="amunet_forma_pago"/>
+                        <field name="amunet_proveedor_factura"/>
+                        <field name="amunet_currency_id" invisible="1"/>
+                        <field name="amunet_monto" groups="amunet_compras_general.group_compras_monto"/>
+                        <field name="amunet_monto_visible" readonly="1" invisible="not amunet_monto_visible" groups="!amunet_compras_general.group_compras_monto"/>
+                        <field name="amunet_autorizacion_estado" readonly="1" invisible="amunet_autorizacion_estado == 'na'"/>
+                        <field name="amunet_autorizacion_fecha" readonly="1" invisible="not amunet_autorizacion_fecha"/>
+                        <field name="amunet_pago_publicado" readonly="1" invisible="not amunet_pago_publicado"/>
+                        <field name="amunet_comprobante_fecha" readonly="1" invisible="not amunet_comprobante_fecha"/>
+                    </group>
+                    <group invisible="amunet_forma_pago != 'transferencia'">
+                        <field name="amunet_banco"/>
+                        <field name="amunet_clabe" placeholder="18 digitos"/>
+                        <field name="amunet_titular"/>
+                        <field name="amunet_referencia_pago"/>
+                        <field name="amunet_concepto_pago"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
