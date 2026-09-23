@@ -25,6 +25,45 @@ def es_pt(cfg):
     c = cfg.product_parameter_rel_id.product_tmpl_id.default_code or ''
     return any(c.upper().startswith(p) for p in PT_PREFIJOS)
 
+
+# ── PASO 0: quitar los renglones viejos que quedaron duplicados ──────────────
+# El script original cambiaba el renglon viejo a "— Empaque" y ademas agregaba
+# uno nuevo "— Prueba". En los productos que YA tenian un segundo juego de
+# renglones, los viejos se quedaron: el analisis muestra Rasgaduras dos veces,
+# una con sufijo y otra sin. El original solo limpiaba 4 bloques por id fijo;
+# los afectados son 44. Aqui se buscan por contenido.
+VIEJAS_SIN_SUFIJO = [691, 692]   # 'Rasgaduras' y 'Deformidad o deterioro'
+print("PASO 0: quitar renglones viejos duplicados")
+sobrantes = Config.search([('specification_id', 'in', VIEJAS_SIN_SUFIJO),
+                           ('active', '=', True)]).filtered(es_pt)
+# solo sobra si su bloque YA tiene el equivalente con sufijo
+def tiene_sufijo(cfg):
+    hermanos = Config.search([
+        ('product_parameter_rel_id', '=', cfg.product_parameter_rel_id.id),
+        ('active', '=', True)])
+    base = 'Rasgaduras' if cfg.specification_id.id == 691 else 'Deformidad o deterioro'
+    return any((h.specification_name or '').startswith(base + ' —') for h in hermanos)
+
+sobrantes = sobrantes.filtered(tiene_sufijo)
+print("         renglones a desactivar: %s en %s productos" % (
+    len(sobrantes),
+    len(set(sobrantes.mapped('product_parameter_rel_id.product_tmpl_id.default_code')))))
+
+# Desactivar el renglon NO afecta a los analisis ya creados: sus lineas son
+# copias con su propio nombre, criterio y captura. Se comprobo sobre un clon:
+# tras desactivar, el analisis conserva sus renglones y lo capturado. Lo unico
+# que cambia es que deja de copiarse a los analisis NUEVOS, que es el objetivo.
+env.cr.execute("""SELECT DISTINCT specification_config_id
+                  FROM amunet_quality_test_line_detail
+                  WHERE specification_config_id = ANY(%s)""", (sobrantes.ids or [0],))
+con_capturas = {r[0] for r in env.cr.fetchall()}
+if con_capturas:
+    print("         de esos, %s ya aparecen en algun analisis; se desactivan "
+          "igual y esos analisis no pierden nada" % len(con_capturas))
+sobrantes.write({'active': False})
+env.cr.flush()
+print("         desactivados: %s" % len(sobrantes))
+
 # ── PASO 1: la spec de catalogo con el nombre correcto ───────────────────────
 destino = Spec.search([('name', '=', 'Letra adecuada — Empaque'),
                        ('parameter_id', '=', MAVI04)], limit=1)
