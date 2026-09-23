@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Solo documentación (uid=69) y Fernando (uid=67) pueden crear/editar/eliminar -->
+    <record id="rule_vencimiento_solo_documentacion" model="ir.rule">
+        <field name="name">Vigencias — solo documentación puede editar</field>
+        <field name="model_id" ref="model_amunet_vencimiento"/>
+        <field name="perm_read"   eval="False"/>
+        <field name="perm_write"  eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="domain_force">[(1, '=', 1 if user.id in (69, 67) else 0)]</field>
+    </record>
+
+    <record id="rule_alerta_solo_documentacion" model="ir.rule">
+        <field name="name">Alertas de vigencia — solo documentación puede editar</field>
+        <field name="model_id" ref="model_amunet_vencimiento_alerta"/>
+        <field name="perm_read"   eval="False"/>
+        <field name="perm_write"  eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="domain_force">[(1, '=', 1 if user.id in (69, 67) else 0)]</field>
+    </record>
+
+</odoo>

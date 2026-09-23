@@ -8,6 +8,7 @@
     'depends': ['mail', 'amunet_documentos'],
     'data': [
         'security/ir.model.access.csv',
+        'security/rules.xml',
         'data/cron.xml',
         'data/seeds_registros_sanitarios.xml',
         'views/vencimiento_views.xml',
