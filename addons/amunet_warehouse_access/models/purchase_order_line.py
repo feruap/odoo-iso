@@ -1,32 +1,49 @@
 # -*- coding: utf-8 -*-
-# Descripcion de la linea de Orden de Compra: mostrar SIEMPRE primero el
-# nombre y clave INTERNOS de Amunet, y debajo la referencia del proveedor.
+# Descripcion de la linea de Orden de Compra.
 #
-# Odoo estandar, cuando la linea se arma con el proveedor en contexto, usa el
-# nombre/codigo del proveedor (product.supplierinfo) y esconde el nuestro, lo
-# que confunde a quien hace la compra. Aqui se antepone lo nuestro.
+# La OC es un documento PARA EL PROVEEDOR: debe llevar SU codigo y SU nombre
+# (product.supplierinfo), en su idioma. Hasta 19.0.1.1.0 este modulo anteponia
+# la clave interna de Amunet ("[SPHMC64] Hoja Maestra ...") y dejaba la del
+# proveedor como "Ref. proveedor" en una segunda linea; Tongzhou y Fapon
+# recibian ordenes con claves que no reconocen y texto en espanol. Fernando lo
+# marco como error del sistema el 23-sep-2026.
 #
-# NOTA: esto solo afecta el TEXTO de la descripcion. No toca precios ni su
-# visibilidad (la restriccion de precios sigue intacta en amunet_price_visibility).
+# Regla actual:
+#   - Si hay supplierinfo del proveedor con codigo o nombre -> "[codigo] nombre"
+#     del proveedor. Nada interno.
+#   - Si no hay supplierinfo -> "[clave] nombre" interno (no hay otra cosa).
+#   - La clave interna sigue visible en Odoo en la columna Producto de la linea;
+#     solo se quita del TEXTO que se imprime.
+#
+# NOTA: solo afecta el texto de la descripcion. No toca precios ni su
+# visibilidad (amunet_price_visibility).
 from odoo import models
 
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
+    def _amunet_supplierinfo(self, product):
+        self.ensure_one()
+        partner = self.order_id.partner_id or self.partner_id
+        if not partner:
+            return self.env['product.supplierinfo']
+        sellers = product.seller_ids.filtered(
+            lambda s: s.partner_id.commercial_partner_id == partner.commercial_partner_id
+            and (not s.product_id or s.product_id == product))
+        con_dato = sellers.filtered(lambda s: s.product_code or s.product_name)
+        return (con_dato or sellers)[:1]
+
     def _get_product_purchase_description(self, product_lang):
         self.ensure_one()
-        # Nombre INTERNO (clave + nombre), sin la sustitucion por proveedor.
-        # product_lang.name / .default_code son los nuestros; solo display_name
-        # aplica la sustitucion del proveedor.
-        interno = product_lang.name or ''
-        if product_lang.default_code:
-            interno = '[%s] %s' % (product_lang.default_code, interno)
-        name = interno
-        # Referencia del proveedor (para que el proveedor reconozca el producto).
-        ref_prov = product_lang.display_name
-        if ref_prov and ref_prov != interno:
-            name += '\nRef. proveedor: %s' % ref_prov
+        si = self._amunet_supplierinfo(product_lang)
+        if si and (si.product_code or si.product_name):
+            nombre = si.product_name or product_lang.name or ''
+            name = '[%s] %s' % (si.product_code, nombre) if si.product_code else nombre
+        else:
+            name = product_lang.name or ''
+            if product_lang.default_code:
+                name = '[%s] %s' % (product_lang.default_code, name)
         if product_lang.description_purchase:
             name += '\n' + product_lang.description_purchase
         return name
