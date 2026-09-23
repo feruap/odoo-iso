@@ -1853,6 +1853,19 @@ class AmunetQualityCheck(models.Model):
                 'anexo_col7_header': '',
                 'anexo_col8_header': '',
             })
+        elif code.startswith(('DM', 'DL', 'DIAM', 'DRAM', 'DEMAM')):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO PRODUCTO TERMINADO',
+                'anexo_col1_header': 'Apariencia de Empaque',
+                'anexo_col2_header': 'Apariencia de Prueba',
+                'anexo_col3_header': 'Hermeticidad',
+                'anexo_col4_header': 'Contenido',
+                'anexo_col5_header': 'T. Liberación (seg)',
+                'anexo_col6_header': 'T. Migración (seg)',
+                'anexo_col7_header': 'Desempeño',
+                'anexo_col8_header': '',
+            })
 
     def _load_product_parameters(self):
         """

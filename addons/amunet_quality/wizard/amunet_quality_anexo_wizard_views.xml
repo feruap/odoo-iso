@@ -26,6 +26,7 @@
                         <field name="col5_header" string="Col 5" readonly="1"/>
                         <field name="col6_header" string="Col 6" readonly="1"/>
                         <field name="col7_header" string="Col 7" readonly="1"/>
+                        <field name="col8_header" string="Col 8" readonly="1"/>
                     </group>
 
                     <!-- Tabla de datos -->
@@ -40,6 +41,7 @@
                             <field name="col5"     string="Col 5"/>
                             <field name="col6"     string="Col 6"/>
                             <field name="col7"     string="Col 7"/>
+                            <field name="col8"     string="Col 8"/>
                         </list>
                     </field>
                 </sheet>
