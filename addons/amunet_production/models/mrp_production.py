@@ -2010,7 +2010,7 @@ class MrpProduction(models.Model):
             ) % {'prod': ', '.join(moves.mapped('product_id.display_name'))})
 
     def write(self, vals):
-        self._amunet_check_solution_raw_lines_lock(vals)
+
         # Candado: la CADUCIDAD de una solucion no se cambia a mano.
         #
         # Sale de la receta del producto y es lo que acaba impreso en la
@@ -2078,6 +2078,7 @@ class MrpProduction(models.Model):
             if self and all(_same_date(rec) for rec in self):
                 vals = dict(vals)
                 vals.pop('date_start')
+        self._amunet_check_solution_raw_lines_lock(vals)
         self._amunet_check_general_info_lock(vals)
         res = super().write(vals)
         if 'product_id' in vals:

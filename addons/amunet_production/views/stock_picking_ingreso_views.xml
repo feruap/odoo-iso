@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        En el ingreso de produccion, con Validar basta. Se quitan los botones
+        que pertenecen a otros flujos y que aqui solo confunden:
+          - Operaciones detalladas: el lote y la cantidad ya vienen puestos
+            desde la orden de fabricacion
+          - Registrar numeros de serie: es del alta de equipos
+        Mery, 22-sep-2026.
+    -->
+    <record id="view_picking_form_ingreso_produccion" model="ir.ui.view">
+        <field name="name">stock.picking.form.ingreso.produccion</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <field name="picking_type_id" position="after">
+                <field name="amunet_es_ingreso_prod" invisible="1"/>
+            </field>
+            <xpath expr="//button[@name='action_detailed_operations']" position="attributes">
+                <attribute name="invisible" add="amunet_es_ingreso_prod" separator=" or "/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
