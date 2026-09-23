@@ -100,7 +100,8 @@
     <!-- ── Submenú: Auditorías a proveedores ── -->
     <menuitem id="menu_auditorias_proveedores" name="Auditorías a proveedores"
               parent="menu_amunet_documentos_root"
-              sequence="45"
+              action="amunet_cc_general.action_audit_prov_hub"
+              sequence="60"
               groups="amunet_documentos.group_documentos_manager"/>
 
     <!-- ── Configuración (managers) ── -->

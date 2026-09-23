@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="amunet_vencimientos.VigenciasHub">
+    <div class="o_action o_amunet_mis_pendientes">
+
+        <div class="o_amunet_dash_section_title">Control de Vigencias</div>
+
+        <div class="o_amunet_dash_cards o_amunet_dash_cards_hub">
+
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.openAction('amunet_vencimientos.action_vencimientos')">
+                <i class="fa fa-calendar-check-o fa-2x mb-2" style="color:#c53030"/>
+                <span class="o_amunet_hub_label">Registros y certificados</span>
+                <t t-if="!state.loading">
+                    <span t-attf-class="o_amunet_hub_badge {{ state.por_vencer > 0 ? 'badge-active' : 'badge-empty' }}">
+                        <t t-esc="state.por_vencer"/> por vencer
+                    </span>
+                </t>
+                <t t-else="">
+                    <span class="o_amunet_hub_badge badge-empty">&#8212;</span>
+                </t>
+            </div>
+
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.openAction('amunet_vencimientos.action_vencimientos_vencidos')">
+                <i class="fa fa-exclamation-triangle fa-2x mb-2" style="color:#dc3545"/>
+                <span class="o_amunet_hub_label">Vencidos</span>
+                <t t-if="!state.loading">
+                    <span t-attf-class="o_amunet_hub_badge {{ state.vencidos > 0 ? 'badge-active' : 'badge-empty' }}">
+                        <t t-esc="state.vencidos"/> vencido<t t-if="state.vencidos != 1">s</t>
+                    </span>
+                </t>
+                <t t-else="">
+                    <span class="o_amunet_hub_badge badge-empty">&#8212;</span>
+                </t>
+            </div>
+
+            <div class="o_amunet_hub_card o_amunet_hub_card_lg"
+                 t-on-click="() => this.openAction('amunet_vencimientos.action_vencimientos_todos')">
+                <i class="fa fa-list fa-2x mb-2" style="color:#0d6efd"/>
+                <span class="o_amunet_hub_label">Todos los registros</span>
+            </div>
+
+        </div>
+    </div>
+</t>
+</templates>
