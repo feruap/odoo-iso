@@ -755,7 +755,12 @@ class AmunetWooBackend(models.Model):
                 {'product_id': producto.id, 'lot_id': lote.id})
 
         # ---- de donde sale y a donde va ----
-        origen = self._apt_pieces_location()
+        # Las MISMAS ubicaciones que se publican. Si aqui solo mirara el anaquel
+        # de APT, cada venta de material ya traspasado a Distribucion se quedaria
+        # sin descontar: la tienda lo anuncia porque se publica desde ADT, pero
+        # el descuento no lo encontraria y quedaria pendiente para siempre.
+        # (83,441 pz vivian en ADT/Stock cuando se detecto, 22-sep-2026.)
+        origen = self._ubicaciones_a_publicar()
         destino = self.apt_venta_cliente_location_id
         if destino and destino.usage != 'customer':
             destino = False
@@ -777,7 +782,7 @@ class AmunetWooBackend(models.Model):
         quants = self.env['stock.quant'].search([
             ('product_id', '=', producto.id),
             ('lot_id', '=', lote.id),
-            ('location_id', 'child_of', origen.id),
+            ('location_id', 'child_of', origen.ids),
             ('company_id', '=', empresa.id),
         ], order='id')
         if quants:
@@ -800,8 +805,8 @@ class AmunetWooBackend(models.Model):
             hay = comun['cantidad'] - falta
             return self._guardar_resultado(
                 mov, fila, 'sin_existencia',
-                _('En el anaquel hay %(hay)s libres del lote %(l)s y la tienda vendio '
-                  '%(pide)s.') % {'hay': hay, 'l': lote.name, 'pide': comun['cantidad']},
+                _('En las ubicaciones publicadas hay %(hay)s libres del lote %(l)s '
+                  'y la tienda vendio %(pide)s.') % {'hay': hay, 'l': lote.name, 'pide': comun['cantidad']},
                 {'product_id': producto.id, 'lot_id': lote.id})
 
         # ---- el movimiento de existencias ----
@@ -814,7 +819,9 @@ class AmunetWooBackend(models.Model):
             'product_id': producto.id,
             'product_uom': producto.uom_id.id,
             'product_uom_qty': comun['cantidad'],
-            'location_id': origen.id,
+            # El encabezado lleva la ubicacion de donde realmente salen las
+            # piezas; los renglones de abajo ya traen la suya exacta.
+            'location_id': reparto[0][0].id,
             'location_dest_id': destino.id,
             'company_id': empresa.id,
             'origin': origen_txt[:250],
