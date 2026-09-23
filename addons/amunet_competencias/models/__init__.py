@@ -11,3 +11,5 @@ from . import amunet_equipment_ext
 from . import hr_employee_ext
 from . import amunet_quality_procedure_ext
 from . import amunet_registro_alertas
+from . import amunet_curso_requisito
+from . import amunet_semaforo_cap

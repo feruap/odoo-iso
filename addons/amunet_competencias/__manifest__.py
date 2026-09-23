@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Competencias y Capacitación (ISO 13485 §6.2)',
-    'version': '19.0.5.1.1',
+    'version': '19.0.5.2.0',
     'category': 'Quality',
     'summary': 'Cursos, exámenes, planes de estudio, matriz de competencias y bloqueo de firma por competencia vencida',
     'description': """Gestion de Capacitacion bajo ISO 13485 Clausula 6.2.
@@ -48,6 +48,7 @@ Funcionalidades:
         'views/amunet_equipment_inherit_views.xml',
         'views/amunet_registro_capacitacion_views.xml',
         'views/amunet_matriz_competencias_views.xml',
+        'views/amunet_semaforo_cap_views.xml',
         'views/menus.xml',
         'views/amunet_hr_workqueue_views.xml',
 
@@ -57,6 +58,7 @@ Funcionalidades:
         # Seeds: cursos de renovacion anual de equipos + preguntas/respuestas
         'data/seeds_20260709_162924.xml',
         'data/seeds_cursos_virtuales_preguntas.xml',
+        'data/seeds_requisitos_semaforo.xml',
     ],
     'installable': True,
     'application': True,
