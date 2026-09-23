@@ -666,14 +666,29 @@ class StockPicking(models.Model):
         # Pre-step: para liberaciones QC con productos de distribución,
         # redirigir destino → ADT/Input ANTES de validar,
         # para que el material vaya directo a ADT sin pasar por AMP/Existencias.
+        #
+        # SOLO las que SALEN de Calidad. El picking de MUESTREO tambien lleva
+        # amunet_disposition_qc_id, asi que entraba aqui y la muestra --que va
+        # HACIA Calidad-- terminaba en Distribucion. Quedo latente el 22-sep-2026
+        # a las 16:24, cuando se marcaron 88 productos como 'va a distribucion';
+        # se detecto el 23-sep antes de que ningun muestreo lo sufriera.
         wh_adt = self.env['stock.warehouse'].search([('code', '=', 'ADT')], limit=1)
         loc_adt_input = wh_adt.wh_input_stock_loc_id if wh_adt else False
 
         if loc_adt_input:
             for picking in self.filtered(lambda p: p.amunet_disposition_qc_id):
+                # Y NUNCA lo que viene de una orden de FABRICACION: ese
+                # material sigue el flujo de APT (Temporal -> Calidad ->
+                # Temporal -> Entrega -> Existencias) y llega a Distribucion
+                # despues, por el traspaso que autoriza Almacen PT. La marca
+                # 'va a distribucion' es del flujo de COMPRAS; si alguien la
+                # pone en un producto que se fabrica, este candado evita que
+                # el material se salte APT. Regla de Mery, 23-sep-2026.
+                de_fabricacion = bool(picking.amunet_disposition_qc_id.amunet_production_id)
                 dist_moves = picking.move_ids.filtered(
                     lambda m: m.product_id.product_tmpl_id.amunet_va_a_distribucion
-                )
+                    and 'calidad' in (m.location_id.complete_name or '').lower()
+                ) if not de_fabricacion else picking.move_ids.browse()
                 if dist_moves:
                     dist_moves.write({'location_dest_id': loc_adt_input.id})
                     dist_moves.move_line_ids.write({'location_dest_id': loc_adt_input.id})

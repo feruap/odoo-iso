@@ -1,10 +1,22 @@
 # -*- coding: utf-8 -*-
-from odoo import _, models
+from odoo import _, fields, models
 from odoo.exceptions import UserError
 
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
+
+    amunet_es_ingreso_prod = fields.Boolean(
+        string='Es ingreso de produccion',
+        compute='_compute_amunet_es_ingreso_prod',
+        help='Tecnico: lo usa la vista para no ofrecer botones de otros flujos.')
+
+    def _compute_amunet_es_ingreso_prod(self):
+        tipo = self.env.ref(
+            'amunet_production.picking_type_ingreso_produccion',
+            raise_if_not_found=False)
+        for rec in self:
+            rec.amunet_es_ingreso_prod = bool(tipo) and rec.picking_type_id == tipo
 
     def _amunet_es_ingreso_produccion(self):
         """El ingreso que Produccion entrega a Almacen."""
@@ -22,6 +34,19 @@ class StockPicking(models.Model):
             base = list(heredado())
         return base + ['_amunet_firmar_ingreso_produccion']
 
+    def _amunet_asegurar_reserva(self):
+        """El material ya esta en Entrada Interna: lo dejo Produccion.
+
+        Si por lo que sea no quedo reservado, Almacen veria "Comprobar
+        disponibilidad" antes de poder validar. Es un paso que no tiene
+        sentido en una recepcion, asi que se reintenta solo.
+        """
+        pendientes = self.filtered(
+            lambda p: p._amunet_es_ingreso_produccion() and p.state == 'confirmed')
+        if pendientes:
+            pendientes.sudo().action_assign()
+        return True
+
     def button_validate(self):
         """El ingreso de produccion se valida FIRMANDO.
 
@@ -29,6 +54,7 @@ class StockPicking(models.Model):
         lote y esa cantidad. Es el espejo de lo que ya firma cuando surte, y
         de lo que firma Produccion cuando recibe. Mery, 21-sep-2026.
         """
+        self._amunet_asegurar_reserva()
         ingresos = self.filtered(
             lambda p: p._amunet_es_ingreso_produccion()
             and not self.env.context.get('amunet_ingreso_firmado'))
