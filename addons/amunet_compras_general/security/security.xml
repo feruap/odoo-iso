@@ -10,11 +10,13 @@
         </record>
     </data>
     <!-- noupdate="0": se re-aplica en cada update para que los usuarios
-         autorizados siempre tengan el acceso, incluso en produccion. -->
+         autorizados siempre tengan el acceso, incluso en produccion.
+         RRHH NO va en esta lista: decision de Mery del 22-sep-2026.
+         Si alguien la vuelve a agregar, preguntarle a ella primero. -->
     <data noupdate="0">
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', 'in', ['fernando.ruiz@amunet.com.mx', 'desarrollo@amunet.com.mx', 'rrhh@amunet.com.mx'])]"/>
+                <value eval="[('login', 'in', ['fernando.ruiz@amunet.com.mx', 'desarrollo@amunet.com.mx'])]"/>
             </function>
             <value eval="{'group_ids': [(4, ref('amunet_compras_general.group_compras_monto'))]}"/>
         </function>
