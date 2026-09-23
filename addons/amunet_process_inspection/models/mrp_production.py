@@ -285,7 +285,41 @@ class MrpProduction(models.Model):
         self._amunet_check_solution_maker()
         self._amunet_check_solution_equipment()
         self._amunet_lc_check_close_gate()
-        return super().button_mark_done()
+        res = super().button_mark_done()
+        self._amunet_heredar_caducidad_del_insumo()
+        return res
+
+    def _amunet_heredar_caducidad_del_insumo(self):
+        """Las almohadillas que SOLO se cortan heredan la caducidad de su lamina.
+
+        Cortar no cambia el material: si la lamina caduca en marzo, las piezas
+        que salen de ella caducan en marzo, no dos anos y medio despues. Solo
+        las PRETRATADAS estrenan vida propia (2.5 anos), porque el pretratado
+        es un proceso quimico que las convierte en otro producto.
+
+        Se distingue por el codigo de la receta: CORTE-* hereda, PRETRATA-* no.
+        Se toma la caducidad MAS CERCANA de los insumos consumidos: manda el
+        que vence primero. Mery, 23-sep-2026.
+        """
+        for rec in self:
+            code = rec.bom_id.code or ''
+            if not code.upper().startswith('CORTE'):
+                continue
+            lotes_pt = rec.move_finished_ids.filtered(
+                lambda m: m.product_id == rec.product_id
+            ).move_line_ids.lot_id
+            if not lotes_pt:
+                continue
+            fechas = rec.move_raw_ids.move_line_ids.lot_id.mapped('expiration_date')
+            fechas = [f for f in fechas if f]
+            if not fechas:
+                continue
+            lotes_pt.sudo().write({'expiration_date': min(fechas)})
+            rec.message_post(body=_(
+                'Caducidad heredada del insumo: %s. Esta almohadilla solo se '
+                'corta, no se pretrata, asi que conserva la vida util de su '
+                'lamina.'
+            ) % min(fechas).strftime('%d.%m.%y'))
 
     # ============================
     # Override action_confirm: gate preflight
@@ -338,24 +372,108 @@ class MrpProduction(models.Model):
             etapa = rec.product_id.product_tmpl_id.amunet_etapa_ll
             if etapa != 'pretratado':
                 continue
-            por_lamina = bom.product_qty
-            pedido = rec.product_qty
-            if pedido and abs(pedido % por_lamina) > 0.0001:
-                laminas = int(pedido // por_lamina)
+            info = rec._amunet_laminas_info()
+            if info:
                 raise UserError(_(
                     'La orden %(orden)s pide %(pedido)s piezas de %(prod)s, y esa '
                     'cantidad no sale de un numero entero de laminas.\n\n'
                     'De cada lamina salen %(por)s piezas: la lamina se sumerge, se '
                     'seca y se corta completa, no se trabaja media lamina.\n\n'
                     'Pide %(menos)s (%(nl)s laminas) o %(mas)s (%(nl2)s laminas).'
-                ) % {
-                    'orden': rec.name, 'pedido': int(pedido),
-                    'prod': rec.product_id.default_code or rec.product_id.name,
-                    'por': int(por_lamina),
-                    'menos': int(laminas * por_lamina) or int(por_lamina),
-                    'nl': laminas or 1,
-                    'mas': int((laminas + 1) * por_lamina), 'nl2': laminas + 1,
-                })
+                ) % info)
+
+    def _get_moves_raw_values(self):
+        """La solucion de pretratamiento NO escala por lamina: es una charola.
+
+        Se llena una charola con 200 ml y ahi se sumergen las laminas. Meter
+        una segunda lamina no pide otros 200: pide lo que esa lamina se lleva
+        impregnado, los 50 o 60 ml que dice la receta. Odoo multiplicaba, y
+        una orden de 2 laminas pedia 120 ml cuando lo real son 260.
+
+        Formula: 200 + (laminas - 1) x lo que dice la receta por lamina.
+        El sobrante de la charola se desecha, no se regresa al frasco: por eso
+        se consume el total calculado, no solo lo impregnado.
+        Regla de Mery, 23-sep-2026.
+        """
+        base = float(self.env['ir.config_parameter'].sudo().get_param(
+            'amunet.pretratado.charola_ml', 200))
+        unidad_piezas = self.env.ref('uom.product_uom_unit')
+        vals = []
+        # Se procesa orden por orden en vez de filtrar el resultado por
+        # raw_material_production_id: en una orden en borrador ese id es un
+        # NewId y la comparacion nunca casa, asi que el ajuste se perdia justo
+        # donde mas se necesita, al capturar la cantidad.
+        for rec in self:
+            sub = super(MrpProduction, rec)._get_moves_raw_values()
+            vals += sub
+            code = (rec.bom_id.code or '').upper()
+            if not code.startswith('PRETRATA') or not rec.bom_id.product_qty:
+                continue
+            laminas = rec.product_qty / rec.bom_id.product_qty
+            if laminas < 1:
+                continue
+            for v in sub:
+                prod = self.env['product.product'].browse(v['product_id'])
+                linea = rec.bom_id.bom_line_ids.filtered(
+                    lambda l: l.product_id == prod)[:1]
+                if not linea:
+                    continue
+                # La charola solo aplica al liquido. En una receta de
+                # pretratado la lamina y el desecante van en piezas; lo unico
+                # que se mide en volumen es la solucion.
+                if linea.product_uom_id == unidad_piezas:
+                    continue
+                por_lamina = linea.product_qty
+                v['product_uom_qty'] = base + (laminas - 1) * por_lamina
+        return vals
+
+    def _amunet_laminas_info(self):
+        """Devuelve el diccionario del aviso si la cantidad pedida NO sale de
+        un numero entero de laminas; False si esta bien o no aplica.
+
+        Lo usan los dos avisos: el onchange (al capturar la cantidad) y el
+        candado (al confirmar). Un solo calculo para que nunca se contradigan.
+        """
+        self.ensure_one()
+        bom = self.bom_id
+        if not bom or not bom.product_qty or bom.product_qty <= 1:
+            return False
+        if self.product_id.product_tmpl_id.amunet_etapa_ll != 'pretratado':
+            return False
+        por_lamina = bom.product_qty
+        pedido = self.product_qty
+        if not pedido or abs(pedido % por_lamina) <= 0.0001:
+            return False
+        laminas = int(pedido // por_lamina)
+        return {
+            'orden': self.name, 'pedido': int(pedido),
+            'prod': self.product_id.default_code or self.product_id.name,
+            'por': int(por_lamina),
+            'menos': int(laminas * por_lamina) or int(por_lamina),
+            'nl': laminas or 1,
+            'mas': int((laminas + 1) * por_lamina), 'nl2': laminas + 1,
+        }
+
+    @api.onchange('product_qty', 'bom_id', 'product_id')
+    def _amunet_onchange_cantidad_por_lamina(self):
+        """Avisa al CAPTURAR la cantidad, no hasta confirmar.
+
+        Enterarse al confirmar es tarde: para entonces ya se eligieron
+        componentes y se planeo. Esto solo advierte; el candado de
+        action_confirm sigue siendo el que impide seguir. Mery, 23-sep-2026.
+        """
+        info = self._amunet_laminas_info()
+        if not info:
+            return
+        return {'warning': {
+            'title': _('La cantidad no sale de laminas enteras'),
+            'message': _(
+                'Pediste %(pedido)s piezas de %(prod)s y de cada lamina salen '
+                '%(por)s.\n\nLa lamina se sumerge, se seca y se corta completa: '
+                'no se trabaja media lamina.\n\nPide %(menos)s (%(nl)s laminas) '
+                'o %(mas)s (%(nl2)s laminas).'
+            ) % info,
+        }}
 
     def action_confirm(self):
         self._amunet_check_cantidad_por_lamina()
