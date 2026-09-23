@@ -2393,10 +2393,19 @@ class AmunetQualityCheck(models.Model):
         """
         self.ensure_one()
 
-        # Cancelar movimiento de muestreo si existe
+        # Regresar la muestra ANTES de desbloquear. Si no se puede, se
+        # detiene aqui: desbloquear sin regresar las piezas es lo que dejo 64
+        # piezas en Calidad donde debia haber 32 (QC/2026/00480, 22-sep-2026).
         if self.sampling_move_id and self.sampling_move_id.state != 'cancel':
-            # Revertir el movimiento
             self._reverse_sampling_move()
+        elif self.sampling_confirmed:
+            raise UserError(_(
+                'El muestreo de %s figura como confirmado pero su transferencia '
+                'no existe o esta cancelada, asi que no se puede saber que '
+                'piezas regresar. Revisalo con Desarrollo antes de desbloquear: '
+                'si se desbloquea asi, la muestra se queda en Calidad y el '
+                'siguiente muestreo la suma encima.'
+            ) % self.name)
 
         self.write({
             'sampling_confirmed': False,
@@ -2425,68 +2434,116 @@ class AmunetQualityCheck(models.Model):
         )
 
     def _reverse_sampling_move(self):
-        """Revierte el movimiento de muestreo creando un movimiento inverso"""
+        """Regresa la muestra a la ubicacion EXACTA de donde salio.
+
+        Tres cosas que se ganaron a golpes (23-sep-2026, caso QC/2026/00480):
+
+        1. Antes se salia en silencio si no encontraba el tipo de operacion o
+           si el enlace al muestreo ya venia vacio: ni error, ni nota en el
+           historial. Quien apretaba "Editar muestreo" leia "Muestreo
+           desbloqueado" y daba por hecho que las piezas habian regresado,
+           cuando seguian en Calidad. Ahora truena con un mensaje claro.
+
+        2. Antes armaba el regreso con el tipo de operacion interno que se
+           encontrara primero, y tomaba SU ubicacion de destino. En Amunet ese
+           tipo se llama "Recepciones" y apunta a APT/Existencias, asi que la
+           muestra terminaba en existencias vendibles en vez de volver al
+           Almacen Temporal. Ahora el destino sale de la linea original: se
+           regresa a donde estaba, sin depender de configuracion.
+
+        3. Antes creaba una linea de movimiento ADEMAS de la que Odoo genera
+           sola al confirmar, y el regreso salia por el doble de piezas. Ahora
+           se borran las automaticas y se crea exactamente una por linea
+           original.
+        """
         self.ensure_one()
 
         if not self.sampling_move_id:
-            return
+            raise UserError(_(
+                'No se puede desbloquear el muestreo de %s: el analisis no '
+                'tiene registrada la transferencia con la que se tomo la '
+                'muestra, asi que no hay de donde regresar las piezas. '
+                'Revisalo con Desarrollo antes de continuar.'
+            ) % self.name)
 
-        # Crear movimiento inverso
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('company_id', '=', self.company_id.id),
-        ], limit=1)
+        lineas = self.sampling_move_id.move_line_ids.filtered(
+            lambda ml: ml.quantity > 0)
+        if not lineas:
+            raise UserError(_(
+                'La transferencia de muestreo %s no tiene lineas con cantidad, '
+                'asi que no hay nada que regresar. Revisalo con Desarrollo.'
+            ) % self.sampling_move_id.name)
 
-        if not picking_type:
-            return
+        # No se regresa lo que ya no esta: si parte de la muestra se consumio
+        # o se desecho, devolverla dejaria existencia NEGATIVA en Calidad y el
+        # descuadre se arrastra sin que nadie lo note.
+        # Se SUMA lo que pide cada linea antes de comparar: dos lineas de 24
+        # contra 24 disponibles pasaban las dos por separado y el regreso
+        # dejaba -24.
+        Quant = self.env['stock.quant']
+        pedido = {}
+        for ml in lineas:
+            pedido.setdefault((ml.product_id, ml.lot_id, ml.location_dest_id), 0.0)
+            pedido[(ml.product_id, ml.lot_id, ml.location_dest_id)] += ml.quantity
+        for (prod, lote, ubic), pide in pedido.items():
+            hay = sum(Quant.search([
+                ('product_id', '=', prod.id),
+                ('lot_id', '=', lote.id),
+                ('location_id', 'child_of', ubic.id),
+            ]).mapped('quantity'))
+            if hay < pide:
+                raise UserError(_(
+                    'En %(ubic)s quedan %(hay)s de %(prod)s lote %(lote)s y la '
+                    'muestra fue de %(pide)s. No se desbloquea el muestreo '
+                    'porque regresar lo que ya no esta dejaria existencia '
+                    'negativa. Si la muestra ya se consumio, registralo con '
+                    'Calidad antes de editar el muestreo.'
+                ) % {'ubic': ubic.display_name, 'hay': hay,
+                     'prod': prod.default_code or prod.name,
+                     'lote': lote.name or '-', 'pide': pide})
 
-        for move in self.sampling_move_id.move_ids:
-            reverse_vals = {
-                'picking_type_id': picking_type.id,
-                'location_id': move.location_dest_id.id,
-                'location_dest_id': move.location_id.id,
-                'origin': f'Reversión Muestreo: {self.name}',
-                'move_ids': [(0, 0, {
-                    'product_id': move.product_id.id,
-                    'product_uom_qty': move.quantity,
-                    'product_uom': move.product_uom.id,
-                    'location_id': move.location_dest_id.id,
-                    'location_dest_id': move.location_id.id,
-                    'date': fields.Datetime.now(),
-                    'company_id': self.company_id.id,
-                    'procure_method': 'make_to_stock',
-                })],
-            }
+        Move = self.env['stock.move']
+        MoveLine = self.env['stock.move.line']
+        devuelto = []
+        for ml in lineas:
+            origen = ml.location_dest_id      # donde quedo la muestra
+            destino = ml.location_id          # de donde se habia tomado
+            mv = Move.create({
+                'product_id': ml.product_id.id,
+                'product_uom': ml.product_uom_id.id,
+                'product_uom_qty': ml.quantity,
+                'location_id': origen.id,
+                'location_dest_id': destino.id,
+                'company_id': self.company_id.id,
+                'origin': _('Reversion Muestreo: %s') % self.name,
+            })
+            mv._action_confirm()
+            mv.move_line_ids.unlink()         # las que genera Odoo al reservar
+            MoveLine.create({
+                'move_id': mv.id,
+                'product_id': ml.product_id.id,
+                'product_uom_id': ml.product_uom_id.id,
+                'lot_id': ml.lot_id.id or False,
+                'quantity': ml.quantity,
+                'location_id': origen.id,
+                'location_dest_id': destino.id,
+                'company_id': self.company_id.id,
+            })
+            mv.picked = True
+            mv._action_done()
+            if mv.state != 'done':
+                raise UserError(_(
+                    'El regreso de la muestra quedo en "%(estado)s" y no en '
+                    '"hecho". No se desbloqueo el muestreo para no dejar las '
+                    'piezas a medio camino.'
+                ) % {'estado': mv.state})
+            devuelto.append('%s %s de %s a %s' % (
+                ml.quantity, ml.product_uom_id.name or '',
+                origen.display_name, destino.display_name))
 
-            reverse_picking = self.env['stock.picking'].create(reverse_vals)
-            reverse_picking.action_confirm()
-
-            # Crear o actualizar move_line_ids con cantidad y lote
-            for rev_move in reverse_picking.move_ids:
-                move_line = reverse_picking.move_line_ids.filtered(
-                    lambda ml: ml.move_id == rev_move and ml.product_id == move.product_id
-                )
-                
-                if not move_line:
-                    move_line = self.env['stock.move.line'].create({
-                        'picking_id': reverse_picking.id,
-                        'move_id': rev_move.id,
-                        'product_id': move.product_id.id,
-                        'product_uom_id': move.product_uom.id,
-                        'location_id': move.location_dest_id.id,
-                        'location_dest_id': move.location_id.id,
-                        'lot_id': self.lot_id.id if self.lot_id else False,
-                        'quantity': move.quantity,
-                        'date': fields.Datetime.now(),
-                        'company_id': self.company_id.id,
-                    })
-                else:
-                    move_line.write({
-                        'lot_id': self.lot_id.id if self.lot_id else False,
-                        'quantity': move.quantity,
-                    })
-
-            reverse_picking.button_validate()
+        self.message_post(body=_(
+            'Muestra regresada a su ubicacion de origen: %s.'
+        ) % '; '.join(devuelto))
 
     # ========================================================================
     # MÉTODOS DE FIRMA ELECTRÓNICA
