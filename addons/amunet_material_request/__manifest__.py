@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Solicitudes de Material',
-    'version': '19.0.1.5.3',
+    'version': '19.0.1.6.0',
     'category': 'Inventory/Inventory',
     'summary': 'Solicitudes internas de material con trazabilidad de lotes',
     'description': """
