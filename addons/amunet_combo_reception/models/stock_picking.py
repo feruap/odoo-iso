@@ -112,6 +112,14 @@ class StockPicking(models.Model):
             # no re-disparar sobre la propia conversion
             if conv_pt and picking.picking_type_id == conv_pt:
                 continue
+            # SOLO se convierte al RECIBIR. Un traslado interno del combo
+            # (la ruta Entrada->Control de calidad, un movimiento a mano) NO
+            # es una llegada nueva: antes cada uno volvia a disparar la
+            # conversion y a inventar lotes para las mismas hojas. El combo
+            # que aterriza directo en cuarentena sigue cubierto, porque esa
+            # recepcion tambien es 'incoming'.
+            if picking.picking_type_id.code != 'incoming':
+                continue
             # combos que aterrizaron en la ENTRADA del almacen (ideal) o en
             # CONTROL DE CALIDAD (por si el ruteo de 3 pasos los mando a
             # cuarentena): en ambos casos se dispara la conversion, consumiendo
@@ -120,6 +128,15 @@ class StockPicking(models.Model):
                 lambda m: m.state == 'done'
                 and m.product_id.product_tmpl_id.es_combo_compra
                 and m.location_dest_id in landing)
+            # Solo lo que AUN no se ha convertido. El combo se mueve varias
+            # veces (Entrada -> Control de calidad por la ruta, traslados
+            # manuales) y cada movimiento volvia a disparar la conversion,
+            # inventando lotes nuevos para las mismas hojas. La marca vive en
+            # la linea, que es lo que de verdad se convierte.
+            combo_moves = combo_moves.filtered(
+                lambda m: any(
+                    not l.amunet_combo_conv_id
+                    for l in m.move_line_ids if l.quantity > 0))
             if combo_moves:
                 combo_loc = combo_moves[0].location_dest_id
                 picking._amunet_create_combo_conversion(combo_moves, combo_loc)
@@ -159,7 +176,8 @@ class StockPicking(models.Model):
                     'convertir. Configúralos en la ficha del producto, '
                     'pestaña "Combo de compra".') % cm.product_id.display_name)
             # por cada linea recibida del combo (hereda datos de proveedor)
-            for ml in cm.move_line_ids.filtered(lambda l: l.quantity > 0):
+            for ml in cm.move_line_ids.filtered(
+                    lambda l: l.quantity > 0 and not l.amunet_combo_conv_id):
                 combo_lot = ml.lot_id  # puede NO existir: el combo no lleva lote
                 qty = ml.quantity
                 # Los datos del proveedor (lote de proveedor + fechas) viven en la
@@ -203,14 +221,29 @@ class StockPicking(models.Model):
                     # 'pending' (Calidad lo libera). Si no requiere -> Existencias.
                     requires_qc = tmpl._amunet_effective_requires_quarantine()
                     dest_loc = qc_loc if requires_qc else lot_stock
-                    lot = Lot.create({
-                        'product_id': hoja.id,
-                        'company_id': self.company_id.id,
-                        'name': lot_name or (self.name + '/' + (hoja.default_code or '')),
-                        'factory_lot_id': factory,
-                        'manufacturing_date': fab,
-                        'expiration_date': exp,
-                    })
+                    # Reusar el lote si esta misma remesa ya lo creo. Dos
+                    # corridas de la conversion sobre el mismo material son el
+                    # mismo lote fisico: crear uno nuevo partia el inventario y
+                    # dejaba huerfano al analisis de Calidad, que se quedaba
+                    # apuntando al primero. Solo se reusa cuando hay lote de
+                    # fabrica con que identificar la remesa; sin el no hay forma
+                    # de saber si es el mismo material y se crea uno nuevo.
+                    lot = Lot.browse()
+                    if factory:
+                        lot = Lot.search([
+                            ('product_id', '=', hoja.id),
+                            ('factory_lot_id', '=', factory),
+                            ('company_id', '=', self.company_id.id),
+                        ], limit=1)
+                    if not lot:
+                        lot = Lot.create({
+                            'product_id': hoja.id,
+                            'company_id': self.company_id.id,
+                            'name': lot_name or (self.name + '/' + (hoja.default_code or '')),
+                            'factory_lot_id': factory,
+                            'manufacturing_date': fab,
+                            'expiration_date': exp,
+                        })
                     inm = Move.create({
                         'product_id': hoja.id, 'product_uom_qty': hqty,
                         'product_uom': hoja.uom_id.id,
@@ -239,6 +272,14 @@ class StockPicking(models.Model):
         # las respeta. Tras reservar, forzamos picking_id en TODAS las lineas
         # (en Odoo 19 move_line.picking_id es un campo normal, no related: al
         # crear/reservar puede quedar nulo y ocultar las lineas del encabezado).
+        # Marcar la linea de combo como YA convertida ANTES de reservar: es lo
+        # que impide que el proximo movimiento del combo (la ruta a Control de
+        # calidad, un traslado manual) vuelva a disparar la conversion y a
+        # inventar lotes.
+        for cm in combo_moves:
+            cm.move_line_ids.filtered(
+                lambda l: l.quantity > 0 and not l.amunet_combo_conv_id
+            ).write({'amunet_combo_conv_id': conv.id})
         conv.action_assign()
         conv.move_ids.move_line_ids.write({'picking_id': conv.id})
         # marcar como surtido: la conversion es automatica y determinista, no
