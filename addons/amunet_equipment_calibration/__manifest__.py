@@ -1,10 +1,6 @@
 {
     'name': 'Gestión de Calibración de Equipos (Amunet)',
-<<<<<<< HEAD
     'version': '19.0.3.7.1',
-=======
-    'version': '19.0.3.8.0',
->>>>>>> origin/main
     'category': 'Quality',
     'summary': 'Control de equipos, calibraciones y trazabilidad ISO 13485',
     'description': """
