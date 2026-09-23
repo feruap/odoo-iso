@@ -59,3 +59,4 @@ from . import amunet_equipment_inspection
 
 # Registro Unitario de Equipos en QC
 from . import amunet_quality_check_equipment_unit
+from . import mrp_production
