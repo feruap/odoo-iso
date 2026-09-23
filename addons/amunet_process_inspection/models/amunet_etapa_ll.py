@@ -17,6 +17,11 @@ from odoo import api, fields, models
 ETAPAS = [
     ('soluciones', 'Soluciones'),
     ('conjugados', 'Conjugados'),
+    # Pretratado y corte: las almohadillas SPALMA. Se sumergen en solucion de
+    # pretratamiento, se secan 4 h a 37 C y se cortan al ancho de cada una.
+    # Faltaba en la lista, asi que sus ordenes no se podian clasificar y las 13
+    # almohadillas no aparecian al elegir producto (Mery, 22-sep-2026).
+    ('pretratado', 'Pretratado y corte'),
     ('inyeccion', 'Inyección'),
     ('laminado', 'Laminado'),
 ]
