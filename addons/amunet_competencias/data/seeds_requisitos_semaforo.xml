@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!--
+        Cursos requeridos por área/empleado (ISO 13485 §6.2 — semáforo de capacitación).
+        Los IDs de curso y departamento corresponden a los registros en staging/productiva.
+        Regenerar con exportar_seeds.sh antes del deploy a productiva si cambian.
+    -->
+
+    <!-- BPF (curso 2): para todos -->
+    <record id="req_bpf" model="amunet.curso.requisito">
+        <field name="course_id" eval="2"/>
+        <field name="aplica_todos">True</field>
+    </record>
+
+    <!-- RPBI (curso 7): para todos -->
+    <record id="req_rpbi" model="amunet.curso.requisito">
+        <field name="course_id" eval="7"/>
+        <field name="aplica_todos">True</field>
+    </record>
+
+    <!-- AMEF (curso 6): para todos -->
+    <record id="req_amef" model="amunet.curso.requisito">
+        <field name="course_id" eval="6"/>
+        <field name="aplica_todos">True</field>
+    </record>
+
+    <!-- Registro de temperatura (curso 14): todos EXCEPTO Documentación(4), RRHH(10), Validación(5) -->
+    <record id="req_temperatura" model="amunet.curso.requisito">
+        <field name="course_id" eval="14"/>
+        <field name="aplica_todos">True</field>
+        <field name="excluir_department_ids" eval="[(6, 0, [4, 10, 5])]"/>
+    </record>
+
+    <!-- Renovación PNOEC (curso 16): Control de Calidad (dept 11) -->
+    <record id="req_pnoec" model="amunet.curso.requisito">
+        <field name="course_id" eval="16"/>
+        <field name="department_ids" eval="[(6, 0, [11])]"/>
+    </record>
+
+    <!-- Renovación PNOEM (curso 17): Desarrollo (dept 3) -->
+    <record id="req_pnoem" model="amunet.curso.requisito">
+        <field name="course_id" eval="17"/>
+        <field name="department_ids" eval="[(6, 0, [3])]"/>
+    </record>
+
+    <!-- Renovación PNOEB (curso 18): Desarrollo(3) + Resp. Sanitario(22) -->
+    <record id="req_pnoeb" model="amunet.curso.requisito">
+        <field name="course_id" eval="18"/>
+        <field name="department_ids" eval="[(6, 0, [3, 22])]"/>
+    </record>
+
+    <!-- Renovación PNOs Producción (curso 20): Encartuchado(17) Acond1(18) Acond2(19) Laminado(12) Soluciones(14) -->
+    <record id="req_pnos_prod" model="amunet.curso.requisito">
+        <field name="course_id" eval="20"/>
+        <field name="department_ids" eval="[(6, 0, [17, 18, 19, 12, 14])]"/>
+    </record>
+
+    <!-- Renovación PNOs CC (curso 21): Control de Calidad (dept 11) -->
+    <record id="req_pnos_cc" model="amunet.curso.requisito">
+        <field name="course_id" eval="21"/>
+        <field name="department_ids" eval="[(6, 0, [11])]"/>
+    </record>
+
+    <!-- Renovación PNOs Biotecnología (curso 22): Desarrollo (dept 3) -->
+    <record id="req_pnos_bio" model="amunet.curso.requisito">
+        <field name="course_id" eval="22"/>
+        <field name="department_ids" eval="[(6, 0, [3])]"/>
+    </record>
+
+    <!-- Renovación PNOs Manufactura (curso 23): Resp. Sanitario (dept 22) -->
+    <record id="req_pnos_mfg" model="amunet.curso.requisito">
+        <field name="course_id" eval="23"/>
+        <field name="department_ids" eval="[(6, 0, [22])]"/>
+    </record>
+
+    <!-- Renovación PNOEP (curso 15): 8 empleados específicos -->
+    <record id="req_pnoep" model="amunet.curso.requisito">
+        <field name="course_id" eval="15"/>
+        <field name="employee_ids" eval="[(6, 0, [196, 197, 220, 211, 199, 216, 207, 219])]"/>
+    </record>
+
+</odoo>

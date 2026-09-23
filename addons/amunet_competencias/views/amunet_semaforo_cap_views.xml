@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══ Lista por empleado (semáforo) ══ -->
+    <record id="view_semaforo_cap_list" model="ir.ui.view">
+        <field name="name">amunet.semaforo.cap.list</field>
+        <field name="model">amunet.semaforo.cap</field>
+        <field name="arch" type="xml">
+            <list string="Semáforo de Capacitación"
+                  decoration-success="estado == 'vigente'"
+                  decoration-warning="estado == 'proxima'"
+                  decoration-danger="estado == 'vencida' or estado == 'faltante'"
+                  default_group_by="employee_id">
+                <field name="employee_id" optional="show"/>
+                <field name="department_id" optional="show"/>
+                <field name="course_id" optional="show"/>
+                <field name="expiry_date" optional="show"/>
+                <field name="days_to_expiry" string="Días restantes" optional="show"/>
+                <field name="estado" widget="badge"
+                       decoration-success="estado == 'vigente'"
+                       decoration-warning="estado == 'proxima'"
+                       decoration-danger="estado == 'vencida'"
+                       decoration-muted="estado == 'faltante'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══ Búsqueda ══ -->
+    <record id="view_semaforo_cap_search" model="ir.ui.view">
+        <field name="name">amunet.semaforo.cap.search</field>
+        <field name="model">amunet.semaforo.cap</field>
+        <field name="arch" type="xml">
+            <search string="Filtrar semáforo">
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="course_id"/>
+                <separator/>
+                <filter name="faltante_vencida" string="Requieren atención"
+                        domain="[('estado', 'in', ['faltante', 'vencida', 'proxima'])]"/>
+                <filter name="solo_faltante" string="Sin registro"
+                        domain="[('estado', '=', 'faltante')]"/>
+                <filter name="solo_vencida" string="Vencidos"
+                        domain="[('estado', '=', 'vencida')]"/>
+                <filter name="solo_proxima" string="Por vencer (90 días)"
+                        domain="[('estado', '=', 'proxima')]"/>
+                <filter name="solo_vigente" string="Vigentes"
+                        domain="[('estado', '=', 'vigente')]"/>
+                <separator/>
+                <filter name="group_emp" string="Por empleado"
+                        context="{'group_by': 'employee_id'}"/>
+                <filter name="group_dept" string="Por área"
+                        context="{'group_by': 'department_id'}"/>
+                <filter name="group_course" string="Por curso"
+                        context="{'group_by': 'course_id'}"/>
+                <filter name="group_estado" string="Por estado"
+                        context="{'group_by': 'estado'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══ Pivot por área ══ -->
+    <record id="view_semaforo_cap_pivot" model="ir.ui.view">
+        <field name="name">amunet.semaforo.cap.pivot</field>
+        <field name="model">amunet.semaforo.cap</field>
+        <field name="arch" type="xml">
+            <pivot string="Cumplimiento por área">
+                <field name="department_id" type="row"/>
+                <field name="estado" type="col"/>
+                <field name="employee_id" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ══ Gráfica por área ══ -->
+    <record id="view_semaforo_cap_graph" model="ir.ui.view">
+        <field name="name">amunet.semaforo.cap.graph</field>
+        <field name="model">amunet.semaforo.cap</field>
+        <field name="arch" type="xml">
+            <graph string="Cumplimiento de capacitación" type="bar" stacked="1">
+                <field name="department_id"/>
+                <field name="estado"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ══ Acción ══ -->
+    <record id="action_semaforo_cap" model="ir.actions.act_window">
+        <field name="name">Semáforo de Capacitación</field>
+        <field name="res_model">amunet.semaforo.cap</field>
+        <field name="view_mode">list,pivot,graph</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_semaforo_cap_list')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_semaforo_cap_pivot')}),
+            (0, 0, {'view_mode': 'graph', 'view_id': ref('view_semaforo_cap_graph')}),
+        ]"/>
+        <field name="search_view_id" ref="view_semaforo_cap_search"/>
+        <field name="context">{'search_default_faltante_vencida': 1, 'group_by': ['employee_id']}</field>
+    </record>
+
+</odoo>

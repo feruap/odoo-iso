@@ -23,3 +23,7 @@ access_amunet_plan_estudios_linea_manager,amunet.plan.estudios.linea.manager,mod
 access_hr_employee_competencias_manager,hr.employee competencias manager,hr.model_hr_employee,amunet_competencias.group_competencias_manager,1,0,0,0
 access_hr_department_competencias_manager,hr.department competencias manager,hr.model_hr_department,amunet_competencias.group_competencias_manager,1,0,0,0
 access_hr_job_competencias_manager,hr.job competencias manager,hr.model_hr_job,amunet_competencias.group_competencias_manager,1,0,0,0
+access_amunet_curso_requisito_user,amunet.curso.requisito.user,model_amunet_curso_requisito,base.group_user,1,0,0,0
+access_amunet_curso_requisito_manager,amunet.curso.requisito.manager,model_amunet_curso_requisito,amunet_competencias.group_competencias_manager,1,1,1,1
+access_amunet_semaforo_cap_user,amunet.semaforo.cap.user,model_amunet_semaforo_cap,base.group_user,1,0,0,0
+access_amunet_semaforo_cap_manager,amunet.semaforo.cap.manager,model_amunet_semaforo_cap,amunet_competencias.group_competencias_manager,1,0,0,0
