@@ -2010,7 +2010,11 @@ class MrpProduction(models.Model):
             ) % {'prod': ', '.join(moves.mapped('product_id.display_name'))})
 
     def write(self, vals):
+<<<<<<< HEAD
 
+=======
+        self._amunet_check_solution_raw_lines_lock(vals)
+>>>>>>> origin/main
         # Candado: la CADUCIDAD de una solucion no se cambia a mano.
         #
         # Sale de la receta del producto y es lo que acaba impreso en la

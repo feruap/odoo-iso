@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
+<<<<<<< HEAD
 from odoo import _, fields, models
+=======
+from odoo import _, models
+>>>>>>> origin/main
 from odoo.exceptions import UserError
 
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
+<<<<<<< HEAD
     amunet_es_ingreso_prod = fields.Boolean(
         string='Es ingreso de produccion',
         compute='_compute_amunet_es_ingreso_prod',
@@ -18,6 +23,8 @@ class StockPicking(models.Model):
         for rec in self:
             rec.amunet_es_ingreso_prod = bool(tipo) and rec.picking_type_id == tipo
 
+=======
+>>>>>>> origin/main
     def _amunet_es_ingreso_produccion(self):
         """El ingreso que Produccion entrega a Almacen."""
         self.ensure_one()
@@ -34,6 +41,7 @@ class StockPicking(models.Model):
             base = list(heredado())
         return base + ['_amunet_firmar_ingreso_produccion']
 
+<<<<<<< HEAD
     def _amunet_asegurar_reserva(self):
         """El material ya esta en Entrada Interna: lo dejo Produccion.
 
@@ -47,6 +55,8 @@ class StockPicking(models.Model):
             pendientes.sudo().action_assign()
         return True
 
+=======
+>>>>>>> origin/main
     def button_validate(self):
         """El ingreso de produccion se valida FIRMANDO.
 
@@ -54,7 +64,10 @@ class StockPicking(models.Model):
         lote y esa cantidad. Es el espejo de lo que ya firma cuando surte, y
         de lo que firma Produccion cuando recibe. Mery, 21-sep-2026.
         """
+<<<<<<< HEAD
         self._amunet_asegurar_reserva()
+=======
+>>>>>>> origin/main
         ingresos = self.filtered(
             lambda p: p._amunet_es_ingreso_produccion()
             and not self.env.context.get('amunet_ingreso_firmado'))
