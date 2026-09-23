@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="venc_antidoping_net" model="amunet.vencimiento">
+        <field name="name">ANTIDOPING-NET</field>
+        <field name="numero">1401R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-05-14</field>
+        <field name="fecha_vencimiento">2029-05-14</field>
+    </record>
+
+    <record id="venc_bionet_multi" model="amunet.vencimiento">
+        <field name="name">BIONET MULTI</field>
+        <field name="numero">0037R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-01-08</field>
+        <field name="fecha_vencimiento">2029-01-08</field>
+    </record>
+
+    <record id="venc_cardiac_combo" model="amunet.vencimiento">
+        <field name="name">CARDIAC COMBO</field>
+        <field name="numero">1151R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-04-22</field>
+        <field name="fecha_vencimiento">2029-04-22</field>
+    </record>
+
+    <record id="venc_clamidianet" model="amunet.vencimiento">
+        <field name="name">CLAMIDIANET</field>
+        <field name="numero">1685R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-06-11</field>
+        <field name="fecha_vencimiento">2029-06-11</field>
+    </record>
+
+    <record id="venc_combo_mosquito" model="amunet.vencimiento">
+        <field name="name">COMBO MOSQUITO DENV/CHIKV/ZIKV</field>
+        <field name="numero">0948R2026 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2026-05-29</field>
+        <field name="fecha_vencimiento">2031-05-29</field>
+    </record>
+
+    <record id="venc_combo_respiratorio" model="amunet.vencimiento">
+        <field name="name">COMBO RESPIRATORIO INFLUENZA A y B + SARS-COV-2 + RSV</field>
+        <field name="numero">1820R2025 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2025-09-26</field>
+        <field name="fecha_vencimiento">2030-09-26</field>
+    </record>
+
+    <record id="venc_covinet" model="amunet.vencimiento">
+        <field name="name">COVINET</field>
+        <field name="numero">2625R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-09-18</field>
+        <field name="fecha_vencimiento">2029-09-18</field>
+    </record>
+
+    <record id="venc_dengue_net" model="amunet.vencimiento">
+        <field name="name">DENGUE NET</field>
+        <field name="numero">1003R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-04-10</field>
+        <field name="fecha_vencimiento">2029-04-10</field>
+    </record>
+
+    <record id="venc_drogs_net" model="amunet.vencimiento">
+        <field name="name">DROGS-NET</field>
+        <field name="numero">1400R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-05-15</field>
+        <field name="fecha_vencimiento">2029-05-15</field>
+    </record>
+
+    <record id="venc_ferrinet" model="amunet.vencimiento">
+        <field name="name">FERRINET</field>
+        <field name="numero">0183R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-01-19</field>
+        <field name="fecha_vencimiento">2029-01-19</field>
+    </record>
+
+    <record id="venc_flunet" model="amunet.vencimiento">
+        <field name="name">FLUNET</field>
+        <field name="numero">1094R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-04-17</field>
+        <field name="fecha_vencimiento">2029-04-17</field>
+    </record>
+
+    <record id="venc_hemoglinet" model="amunet.vencimiento">
+        <field name="name">HEMOGLINET</field>
+        <field name="numero">0171R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-01-18</field>
+        <field name="fecha_vencimiento">2029-01-18</field>
+    </record>
+
+    <record id="venc_hcg_net" model="amunet.vencimiento">
+        <field name="name">HCG-NET</field>
+        <field name="numero">0131R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-01-17</field>
+        <field name="fecha_vencimiento">2029-01-17</field>
+    </record>
+
+    <record id="venc_prostatinet" model="amunet.vencimiento">
+        <field name="name">PROSTATINET</field>
+        <field name="numero">2364R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-08-14</field>
+        <field name="fecha_vencimiento">2029-08-14</field>
+    </record>
+
+    <record id="venc_pylorinet" model="amunet.vencimiento">
+        <field name="name">PYLORINET-ADN</field>
+        <field name="numero">1429R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-05-16</field>
+        <field name="fecha_vencimiento">2029-05-16</field>
+    </record>
+
+    <record id="venc_rotadenet" model="amunet.vencimiento">
+        <field name="name">ROTADENET</field>
+        <field name="numero">2789R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-10-10</field>
+        <field name="fecha_vencimiento">2029-10-10</field>
+    </record>
+
+    <record id="venc_rsv_net" model="amunet.vencimiento">
+        <field name="name">RSV NET</field>
+        <field name="numero">2110R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-07-24</field>
+        <field name="fecha_vencimiento">2029-07-24</field>
+    </record>
+
+    <record id="venc_sifilinet" model="amunet.vencimiento">
+        <field name="name">SIFILINET</field>
+        <field name="numero">1596R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-05-30</field>
+        <field name="fecha_vencimiento">2029-05-30</field>
+    </record>
+
+    <record id="venc_tb_dxnet" model="amunet.vencimiento">
+        <field name="name">TB-DxNet</field>
+        <field name="numero">1255R2026 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2026-07-15</field>
+        <field name="fecha_vencimiento">2031-07-15</field>
+    </record>
+
+    <record id="venc_vitaminet_d" model="amunet.vencimiento">
+        <field name="name">VITAMINET D</field>
+        <field name="numero">0252R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-01-25</field>
+        <field name="fecha_vencimiento">2029-01-25</field>
+    </record>
+
+    <record id="venc_vph_net" model="amunet.vencimiento">
+        <field name="name">VPH-NET</field>
+        <field name="numero">2328R2024 SSA</field>
+        <field name="tipo">registro_sanitario</field>
+        <field name="titular">Amunet</field>
+        <field name="fecha_emision">2024-08-12</field>
+        <field name="fecha_vencimiento">2029-08-12</field>
+    </record>
+
+</odoo>
