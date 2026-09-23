@@ -439,6 +439,24 @@
                         decoration-success="amunet_is_valid == True"
                         decoration-danger="amunet_is_valid == False"
                         column_invisible="not parent.amunet_is_solution_product"/>
+                    <!--
+                        Material que se guarda por envase y se ocupa por volumen
+                        (el agua: galon de 20 L, recetas en ml). El operador
+                        anota los ml que uso y el sistema descuenta la fraccion
+                        de envase. La columna solo sale si el material esta
+                        configurado asi.
+                    -->
+                    <field name="amunet_consumo_por_volumen" column_invisible="1"/>
+                    <field name="amunet_ml_usados"
+                        string="Usado (ml)"
+                        readonly="parent.state in ('done', 'cancel')"
+                        invisible="not amunet_consumo_por_volumen"
+                        optional="show"/>
+                    <field name="amunet_envase_equivalente"
+                        string="= envases"
+                        readonly="1"
+                        invisible="not amunet_consumo_por_volumen"
+                        optional="show"/>
                 </xpath>
 
                 <!-- Ocultar badge de disponibilidad nativo -->
