@@ -12,3 +12,4 @@ from . import amunet_iso_dashboard
 from . import stock_warehouse
 from . import amunet_conjugado
 from . import stock_picking_ingreso
+from . import amunet_nps_reaccion

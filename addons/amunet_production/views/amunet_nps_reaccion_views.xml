@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Pestana de reacciones en la orden de fabricacion.
+
+        Solo aparece cuando el producto es la Solucion de Nanoparticulas: el
+        resto de las ordenes no la ve. Se llena durante la sintesis y se cierra
+        con la orden, igual que las firmas (Mery, 23-sep-2026).
+    -->
+    <record id="view_mrp_production_form_nps" model="ir.ui.view">
+        <field name="name">mrp.production.form.nps.reacciones</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Reacciones de síntesis"
+                      name="amunet_nps"
+                      invisible="not amunet_es_nps">
+                    <field name="amunet_es_nps" invisible="1"/>
+                    <div class="alert alert-info" role="alert">
+                        Las nanopartículas se hacen en reacciones, no en una sola
+                        preparación. Anota aquí los datos de cada reacción
+                        conforme la vas midiendo, como indica la instrucción
+                        INPSL-001. No hace falta llenar las diez: se dejan
+                        listas por si se ocupan.
+                        <br/>
+                        La lectura de λmax va entre 510 y 540 nm; si anotas un
+                        valor fuera de ese rango te aparece un aviso en el
+                        renglón.
+                    </div>
+                    <field name="amunet_nps_reaccion_ids"
+                           readonly="state in ('done', 'cancel')">
+                        <list editable="bottom" limit="20">
+                            <field name="secuencia" string="Reacción"
+                                   readonly="1" optional="show"/>
+                            <field name="tamano"/>
+                            <field name="pico_do"/>
+                            <field name="lambda_max"/>
+                            <field name="indice_agregacion"/>
+                            <field name="indice_sintesis"/>
+                            <field name="ama"/>
+                            <field name="tolera_75" widget="boolean_toggle"/>
+                            <field name="tolera_85" widget="boolean_toggle"/>
+                            <field name="observaciones"/>
+                            <field name="aviso_lambda" string=" "
+                                   decoration-danger="aviso_lambda"
+                                   readonly="1"/>
+                        </list>
+                    </field>
+                    <group>
+                        <field name="amunet_nps_reacciones_llenas"
+                               string="Reacciones con datos" readonly="1"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
