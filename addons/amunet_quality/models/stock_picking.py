@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -120,6 +120,46 @@ class StockPicking(models.Model):
         # Los QCs se generan en button_validate() para tener acceso a los lotes.
         return res
 
+    def _amunet_check_origen_liberacion(self):
+        """Impide validar una liberacion de Calidad cuyo origen NO sea interno.
+
+        La liberacion mueve material que ya esta en la casa: de Control de
+        calidad a Existencias. Si el origen apunta a Proveedor, Inventario o
+        Produccion, lo que se valida no es un traslado sino material creado de
+        la nada. Paso tres veces (QC/2026/00012, /00071, /00107): 2,053
+        unidades de hojas maestras y cartuchos que el sistema cree tener y que
+        nunca se compraron.
+
+        No fue descuido de nadie. El documento decia "Recepcion", el lote del
+        analisis no aparecia en Control de calidad porque la conversion de
+        combos lo habia regenerado, y cambiar el origen era la unica forma de
+        cerrarlo. Por eso el mensaje dice que hacer, no solo que no se puede.
+        """
+        for p in self.filtered(lambda x: x.amunet_disposition_qc_id
+                               and x.state not in ('done', 'cancel')):
+            malas = p.move_ids.filtered(
+                lambda m: m.state not in ('done', 'cancel')
+                and m.location_id.usage != 'internal')
+            if not malas:
+                continue
+            detalle = '\n'.join(
+                '  - %s: sale de %s' % (m.product_id.display_name,
+                                        m.location_id.complete_name)
+                for m in malas)
+            raise UserError(_(
+                'Esta liberación no se puede validar porque el material NO '
+                'sale de un almacén interno:\n\n%(detalle)s\n\n'
+                'Una liberación mueve lo que Calidad ya tenía retenido, de '
+                'Control de calidad a Existencias. Si el origen es Proveedor, '
+                'se estaría dando entrada a material que nunca se compró.\n\n'
+                'Qué hacer: revisa que el lote del análisis (%(lote)s) sea el '
+                'mismo que tienes físicamente en Control de calidad. Si el '
+                'material está bajo otro número de lote, avisa a Calidad para '
+                'que corrija el análisis; no cambies el origen del traslado.',
+                detalle=detalle,
+                lote=(p.amunet_disposition_qc_id.lot_id.name or 'sin lote'),
+            ))
+
     def button_validate(self):
         """
         Override original para integración completa de Calidad Amunet.
@@ -127,6 +167,9 @@ class StockPicking(models.Model):
         1. CREACIÓN DE QCS: Generar QCs ANTES de validación (con lotes disponibles).
         2. VALIDACIÓN: Impide validar si hay QCs Amunet pendientes/fallidos.
         """
+        # Una liberacion NUNCA saca material de fuera de la casa.
+        self._amunet_check_origen_liberacion()
+
         # 0. SUPRESIÓN TEMPRANA: Auto-aprobar checks nativos ANTES del wizard
         for picking in self:
             if hasattr(picking, 'check_ids'):
