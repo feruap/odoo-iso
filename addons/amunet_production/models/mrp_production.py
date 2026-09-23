@@ -377,6 +377,18 @@ class MrpProduction(models.Model):
         for (m, q, l) in pendientes:
             m.sudo()._do_unreserve()
             m.sudo().location_id = piso.id
+            # 'picked' se queda pegado en True y hay que bajarlo A MANO.
+            # En Odoo es un campo CALCULADO: se pone en True si el movimiento
+            # esta hecho o si alguna de sus lineas esta marcada, y en False
+            # solo si TIENE lineas sin marcar. Cuando _do_unreserve() borra las
+            # lineas, el movimiento se queda sin ninguna y el calculo no entra
+            # por ninguna rama: conserva el True anterior. Y _action_assign()
+            # ignora los movimientos marcados como surtidos, porque entiende
+            # que el operador ya decidio la cantidad. Resultado: el material
+            # llegaba al piso pero la orden no lo volvia a reservar y se
+            # quedaba sin lotes. Caso 0926/01/VPL, 22-sep-2026: 8 de 9
+            # componentes sin lote con el material disponible en el piso.
+            m.sudo().picked = False
             m.sudo()._action_assign()
         self.sudo().message_post(body=_(
             'Material surtido trasladado a <b>%(piso)s</b> (%(doc)s). Sigue '
