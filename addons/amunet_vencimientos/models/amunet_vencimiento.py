@@ -9,6 +9,7 @@ DESTINATARIOS = [
     's.controldecalidad@amunet.com.mx',
     'documentacion@amunet.com.mx',
     'fernando.ruiz@amunet.com.mx',
+    'pm@amunet.com.mx',
 ]
 
 # (días_antes, etiqueta, color_hex)
