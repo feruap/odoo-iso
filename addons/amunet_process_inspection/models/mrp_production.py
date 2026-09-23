@@ -319,7 +319,46 @@ class MrpProduction(models.Model):
             moves.write({'location_id': aru_loc.id})
             moves._action_assign()
 
+    def _amunet_check_cantidad_por_lamina(self):
+        """En las almohadillas la receta va POR LAMINA, no por pieza.
+
+        La lamina se sumerge, se seca y se corta completa: no se trabaja media
+        lamina. Si se pide una cantidad que no es multiplo de lo que sale de
+        una lamina, Odoo escala los componentes proporcionalmente y el consumo
+        queda mal: pedir 13 de las 26 que salen de una lamina descontaba la
+        LAMINA COMPLETA pero solo la MITAD de la solucion de pretratamiento.
+        Pedir 1 pieza llegaba a descontar 1.93 ml, que no pretrata nada.
+
+        Por eso se exige el multiplo. Decision de Mery, 23-sep-2026.
+        """
+        for rec in self:
+            bom = rec.bom_id
+            if not bom or not bom.product_qty or bom.product_qty <= 1:
+                continue
+            etapa = rec.product_id.product_tmpl_id.amunet_etapa_ll
+            if etapa != 'pretratado':
+                continue
+            por_lamina = bom.product_qty
+            pedido = rec.product_qty
+            if pedido and abs(pedido % por_lamina) > 0.0001:
+                laminas = int(pedido // por_lamina)
+                raise UserError(_(
+                    'La orden %(orden)s pide %(pedido)s piezas de %(prod)s, y esa '
+                    'cantidad no sale de un numero entero de laminas.\n\n'
+                    'De cada lamina salen %(por)s piezas: la lamina se sumerge, se '
+                    'seca y se corta completa, no se trabaja media lamina.\n\n'
+                    'Pide %(menos)s (%(nl)s laminas) o %(mas)s (%(nl2)s laminas).'
+                ) % {
+                    'orden': rec.name, 'pedido': int(pedido),
+                    'prod': rec.product_id.default_code or rec.product_id.name,
+                    'por': int(por_lamina),
+                    'menos': int(laminas * por_lamina) or int(por_lamina),
+                    'nl': laminas or 1,
+                    'mas': int((laminas + 1) * por_lamina), 'nl2': laminas + 1,
+                })
+
     def action_confirm(self):
+        self._amunet_check_cantidad_por_lamina()
         self._amunet_check_solution_maker()
         for rec in self:
             if rec.route_type in ('short', 'long', 'solution'):
