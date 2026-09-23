@@ -675,6 +675,12 @@ class StockMove(models.Model):
                 mo = self.env['mrp.production'].sudo().search([
                     ('lot_producing_ids', 'in', ml.lot_id.id),
                 ], limit=1)
+                # Exencion explicita, orden por orden: el analisis existe en
+                # papel y es anterior al flujo en Odoo. Se marca a mano y queda
+                # en el historial de la orden. No hay corte por fecha a
+                # proposito, para que ninguna orden nueva quede exenta sola.
+                if mo and getattr(mo, 'amunet_qc_previo_al_sistema', False):
+                    continue
                 if mo and mo.quality_analysis_status != 'approved':
                     raise UserError(_(
                         'No se puede liberar el lote %(lot)s del producto '
