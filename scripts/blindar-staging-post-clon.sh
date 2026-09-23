@@ -11,10 +11,20 @@ set -e
 DB="${1:-Amunet_testing}"
 C="odoo-staging-db"
 
+# OJO: el contenedor tiene politica restart=always, asi que un "docker stop"
+# solo no basta: Docker lo revive en segundos. Paso el 23-sep-2026 durante un
+# clon y dos crons alcanzaron a correr antes del blindaje. Hay que quitarle la
+# politica ANTES de detenerlo, y devolversela al final.
 if docker ps --format '{{.Names}}' | grep -q '^odoo-staging$'; then
-  echo "ERROR: odoo-staging esta corriendo. Apagalo primero:"
-  echo "  docker stop odoo-staging"
-  exit 1
+  echo "odoo-staging esta corriendo. Deteniendolo de forma que no se reinicie solo..."
+  docker update --restart=no odoo-staging > /dev/null
+  docker stop odoo-staging > /dev/null
+  sleep 2
+  if docker ps --format '{{.Names}}' | grep -q '^odoo-staging$'; then
+    echo "ERROR: no se pudo detener odoo-staging. Revisar a mano."
+    exit 1
+  fi
+  echo "  detenido."
 fi
 
 echo "=== Blindando $DB ==="
@@ -56,4 +66,6 @@ SELECT
   (SELECT count(*) FROM ir_config_parameter WHERE key LIKE 'nextcloud.%')  AS credenciales_nextcloud;"
 echo "Todo debe estar en CERO. Si no, revisar antes de levantar staging."
 echo
-echo "Ahora si: docker start odoo-staging"
+echo "Ahora si:"
+echo "  docker update --restart=always odoo-staging"
+echo "  docker start odoo-staging"
