@@ -305,23 +305,12 @@
                     consumir'.
                 -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_uom_qty'][@widget='mrp_should_consume']" position="after">
-                    <!--
-                        Par de columnas contiguas para la cantidad planeada: la
-                        nativa va en la unidad de almacen y esta en la unidad de
-                        consumo, y cada fila llena una o la otra. Van juntas a
-                        proposito: si la celda de "Por consumir" queda sola y
-                        vacia, se lee como "este material no lleva nada" o como
-                        un dato que falta capturar. Con el numero al lado, se lee
-                        lo que es: la misma cantidad en la unidad que el operador
-                        usa. No se pueden fusionar en una sola columna porque
-                        garrafones y mililitros son categorias de unidad
-                        distintas, que es el motivo de todo este mecanismo.
-                    -->
-                    <field name="amunet_ml_receta"
-                        string="Por consumir (ml)"
-                        readonly="1"
-                        invisible="not amunet_consumo_por_volumen"
-                        optional="show"/>
+                    <field name="amunet_consumo_por_volumen" column_invisible="1"/>
+                    <field name="amunet_por_consumir"
+                        string="Por consumir"
+                        readonly="not amunet_user_can_edit_consume or parent.state != 'draft'"/>
+                    <field name="amunet_uom_display_id" string="U.M." readonly="1"/>
+                    
                     <field name="amunet_user_can_edit_consume" column_invisible="True"/>
                     <field name="amunet_user_is_warehouse" column_invisible="True"/>
                     <field name="amunet_available_lot_ids" column_invisible="True"/>
@@ -409,6 +398,12 @@
                 </xpath>
                 <!-- En soluciones el reactivo es de solo lectura, EXCEPTO en
                      desarrollo (receta ajustable). -->
+                <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_uom']" position="attributes">
+                    <!-- Se reemplaza por amunet_uom_display_id, que dice ml en la
+                         fila de un material que se consume por volumen. -->
+                    <attribute name="column_invisible">True</attribute>
+                </xpath>
+
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_id']" position="attributes">
                     <attribute name="readonly">parent.amunet_is_solution_product and not parent.amunet_es_desarrollo</attribute>
                 </xpath>
@@ -424,11 +419,14 @@
                          editar consumo. Una vez planificada (confirmada+) queda
                          bloqueada para todos (candado backend en stock_move). -->
                     <attribute name="readonly">not amunet_user_can_edit_consume or parent.state != 'draft'</attribute>
-                    <!-- Un material que se consume por volumen muestra aqui la
-                         fraccion de envase (0.0490 garrafones). Al operador eso
-                         no le sirve: su receta dice 980 ml. La celda se oculta
-                         en esa fila y en su lugar sale "Receta (ml)". -->
-                    <attribute name="invisible">amunet_consumo_por_volumen</attribute>
+                    <!-- La columna nativa va en la unidad de ALMACEN, y para un
+                         material que se guarda por envase eso es una fraccion
+                         (0.0490 garrafones) que al operador no le dice nada. Se
+                         oculta la columna entera y en su lugar va
+                         amunet_por_consumir, que muestra la cantidad en la
+                         unidad de consumo cuando hace falta y la de siempre en
+                         todos los demas casos. Una sola columna, sin huecos. -->
+                    <attribute name="column_invisible">True</attribute>
                 </xpath>
 
                 <!-- 2. Renombrar Cantidad Utilizada, asegurar visibilidad

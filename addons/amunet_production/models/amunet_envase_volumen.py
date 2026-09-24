@@ -68,6 +68,17 @@ class StockMove(models.Model):
         string='Equivale a', digits='Product Unit of Measure',
         compute='_compute_amunet_envase_equivalente',
         help='La fracción de envase que sale del volumen anotado.')
+    amunet_por_consumir = fields.Float(
+        string='Por consumir', digits='Product Unit of Measure',
+        compute='_compute_amunet_por_consumir',
+        inverse='_inverse_amunet_por_consumir',
+        help='La cantidad planeada, siempre en la unidad en que el operador la '
+             'ocupa. Para un material que se guarda por envase y se consume por '
+             'volumen muestra los mililitros; para el resto, la cantidad de '
+             'siempre. Sustituye a la columna nativa para que no haya dos '
+             'columnas con el mismo dato en unidades distintas.')
+    amunet_uom_display_id = fields.Many2one(
+        'uom.uom', string='U.M.', compute='_compute_amunet_uom_display')
     amunet_ml_receta = fields.Float(
         string='Receta (ml)', digits='Product Unit of Measure',
         compute='_compute_amunet_ml_receta',
@@ -83,6 +94,34 @@ class StockMove(models.Model):
             tmpl = move.product_id.product_tmpl_id
             move.amunet_consumo_por_volumen = bool(
                 tmpl and tmpl.amunet_contenido_envase > 0)
+
+    @api.depends('product_uom_qty', 'product_uom',
+                 'product_id.amunet_contenido_envase')
+    def _compute_amunet_por_consumir(self):
+        for move in self:
+            contenido = move.product_id.product_tmpl_id.amunet_contenido_envase
+            if contenido:
+                move.amunet_por_consumir = (move.product_uom_qty or 0.0) * contenido
+            else:
+                move.amunet_por_consumir = move.product_uom_qty
+
+    def _inverse_amunet_por_consumir(self):
+        """Lo que se teclea en la unidad de consumo vuelve a fraccion de envase."""
+        for move in self:
+            contenido = move.product_id.product_tmpl_id.amunet_contenido_envase
+            if contenido:
+                move.product_uom_qty = (move.amunet_por_consumir or 0.0) / contenido
+            else:
+                move.product_uom_qty = move.amunet_por_consumir
+
+    @api.depends('product_uom', 'product_id.amunet_uom_consumo_id',
+                 'product_id.amunet_contenido_envase')
+    def _compute_amunet_uom_display(self):
+        for move in self:
+            tmpl = move.product_id.product_tmpl_id
+            move.amunet_uom_display_id = (
+                tmpl.amunet_uom_consumo_id if tmpl.amunet_contenido_envase
+                else move.product_uom)
 
     @api.depends('product_uom_qty', 'product_id.amunet_contenido_envase')
     def _compute_amunet_ml_receta(self):
