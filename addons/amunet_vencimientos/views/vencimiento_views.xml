@@ -42,6 +42,12 @@
                            decoration-warning="aviso_prorroga == 'enviar'"
                            decoration-info="aviso_prorroga == 'iniciar'"
                            invisible="aviso_prorroga == 'vigente'"/>
+                    <button name="action_abrir_firma"
+                            string="Modificar con firma"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-pencil"
+                            invisible="not id"/>
                     <button name="action_enviar_alerta_manual"
                             string="Enviar alerta ahora"
                             type="object"
@@ -55,12 +61,17 @@
                     <group>
                         <group>
                             <field name="tipo"/>
-                            <field name="numero"/>
+                            <!-- Numero y fechas: se capturan al crear y despues
+                                 solo se cambian por el boton "Modificar con
+                                 firma", que pide razon y PIN. El candado de
+                                 verdad esta en el write del modelo; esto es
+                                 para que nadie teclee en balde. -->
+                            <field name="numero" readonly="id"/>
                             <field name="titular"/>
                         </group>
                         <group>
-                            <field name="fecha_emision"/>
-                            <field name="fecha_vencimiento"/>
+                            <field name="fecha_emision" readonly="id"/>
+                            <field name="fecha_vencimiento" readonly="id"/>
                             <field name="dias_restantes"/>
                         </group>
                     </group>
