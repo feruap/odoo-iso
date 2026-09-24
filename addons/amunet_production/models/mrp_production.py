@@ -2638,13 +2638,21 @@ class MrpProduction(models.Model):
         Se aplica solo cuando la UoM del COMPONENTE es 'Unidades'
         (uom.product_uom_unit). Para componentes en cm, ml, kg, etc.
         se respeta el decimal.
+
+        EXCEPCION: los materiales que se guardan por envase pero se consumen
+        por volumen (los que tienen 'Contenido del envase' configurado, como el
+        agua tridestilada en garrafon de 20 L). Ahi la fraccion es el punto:
+        una receta que ocupa 980 ml pide 0.049 del garrafon, y redondear a 1
+        descargaria los 20 L completos. Con 30 recetas usando agua, el
+        inventario se vaciaria solo.
         """
         import math
         if product and product_uom_qty and not isinstance(product, dict):
             unit_uom = self.env.ref(
                 'uom.product_uom_unit', raise_if_not_found=False)
             uom = product_uom or product.uom_id
-            if unit_uom and uom and uom.id == unit_uom.id:
+            por_volumen = bool(product.product_tmpl_id.amunet_contenido_envase)
+            if unit_uom and uom and uom.id == unit_uom.id and not por_volumen:
                 product_uom_qty = math.ceil(product_uom_qty)
         return super()._get_move_raw_values(
             product, product_uom_qty, product_uom,

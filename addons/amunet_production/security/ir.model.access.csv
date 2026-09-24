@@ -19,3 +19,5 @@ access_mrp_production_solution_maker,mrp.production solution maker,mrp.model_mrp
 access_stock_move_solution_maker,stock.move solution maker,stock.model_stock_move,amunet_production.group_solution_maker,1,1,1,0
 access_stock_move_line_solution_maker,stock.move.line solution maker,stock.model_stock_move_line,amunet_production.group_solution_maker,1,1,1,1
 access_amunet_conciliacion_firma_wizard,amunet.conciliacion.firma.wizard,model_amunet_conciliacion_firma_wizard,base.group_user,1,1,1,1
+access_amunet_nps_reaccion_user,amunet.nps.reaccion user,model_amunet_nps_reaccion,base.group_user,1,1,1,0
+access_amunet_nps_reaccion_manager,amunet.nps.reaccion manager,model_amunet_nps_reaccion,mrp.group_mrp_manager,1,1,1,1
