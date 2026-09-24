@@ -1,14 +1,23 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Amunet - Compras generales (pago y autorizacion)',
-    'summary': 'Forma de pago, monto, datos de transferencia y autorizacion por Telegram en la solicitud de compra del Marketplace interno.',
+    'summary': 'Urgencia de la solicitud, forma de pago, autorizacion por Telegram y seguimiento de pago, embarque y llegada en la orden de compra.',
     'author': 'Amunet',
     'category': 'Inventory/Purchase',
-    'version': '19.0.5.0.0',
+    'version': '19.0.6.0.0',
     # amunet_material_request sigue siendo dependencia por res.users.amunet_material_head_id
     # (el jefe directo) y por el grupo group_material_manager (area de compras).
-    'depends': ['amunet_material_request', 'amunet_marketplace'],
-    'data': ['security/ir.model.access.csv', 'security/security.xml', 'views/solicitud_compra_views.xml'],
+    # purchase_stock: la orden de compra ahora lleva seguimiento de pago y llegada.
+    'depends': ['amunet_material_request', 'amunet_marketplace', 'purchase_stock'],
+    'data': [
+        'security/security.xml',
+        'security/usuarios_pagos.xml',
+        'security/ir.model.access.csv',
+        'views/solicitud_compra_views.xml',
+        'views/material_request_views.xml',
+        'views/purchase_order_views.xml',
+        'views/seguimiento_views.xml',
+    ],
     'post_init_hook': 'post_init_generar_secreto',
     'installable': True,
     'application': False,

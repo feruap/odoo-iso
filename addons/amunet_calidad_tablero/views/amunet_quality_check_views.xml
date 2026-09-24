@@ -119,6 +119,13 @@
                 <field name="request_date" string="Solicitado" optional="show" readonly="1"/>
                 <field name="state" widget="badge" readonly="1"/>
                 <field name="tablero_orden" column_invisible="True"/>
+                <!-- Tomar: el analista levanta la mano por un analisis que
+                     nadie tiene. Solo aparece si esta libre. -->
+                <button name="action_tablero_tomar" type="object"
+                        string="Tomar" icon="fa-hand-paper-o"
+                        title="Hacerme cargo de este analisis"
+                        invisible="tablero_analista_id"
+                        groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor"/>
             </list>
         </field>
     </record>
@@ -134,6 +141,12 @@
         <field name="model">amunet.quality.check</field>
         <field name="inherit_id" ref="amunet_quality.view_amunet_quality_check_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_tablero_tomar" type="object"
+                        string="Tomar" class="btn-secondary"
+                        invisible="tablero_analista_id"
+                        groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor"/>
+            </xpath>
             <field name="request_date" position="after">
                 <field name="tablero_es_supervisor" invisible="1"/>
                 <field name="tablero_analista_id" widget="many2one_avatar_user"
@@ -147,6 +160,21 @@
                 <field name="tablero_aviso_capacitacion" readonly="1"
                        invisible="not tablero_aviso_capacitacion"/>
             </field>
+        </field>
+    </record>
+
+    <!-- "Mi trabajo" de amunet_quality solo sabe de firmas y solicitante.
+         Con el tablero instalado, lo mio es tambien lo que el supervisor me
+         asigno. Se ensancha el mismo filtro en vez de agregar otro, para que
+         el menu siga teniendo una sola nocion de "mio". -->
+    <record id="view_amunet_quality_check_search_tablero" model="ir.ui.view">
+        <field name="name">amunet.quality.check.search.tablero</field>
+        <field name="model">amunet.quality.check</field>
+        <field name="inherit_id" ref="amunet_quality.view_amunet_quality_check_search"/>
+        <field name="arch" type="xml">
+            <filter name="filter_mi_trabajo" position="attributes">
+                <attribute name="domain">['|', '|', ('tablero_analista_id','=',uid), ('user_realized_id','=',uid), ('requester_id','=',uid)]</attribute>
+            </filter>
         </field>
     </record>
 

@@ -126,10 +126,18 @@ class AmunetQualityCheck(models.Model):
         """
         grupo = self.env.ref('amunet_quality.group_quality_user',
                              raise_if_not_found=False)
-        if not grupo:
+        supervisor = self.env.ref('amunet_quality.group_quality_supervisor',
+                                  raise_if_not_found=False)
+        grupos = (grupo or self.env['res.groups']) | (
+            supervisor or self.env['res.groups'])
+        if not grupos:
             return []
+        # Los grupos de Calidad NO se implican entre si: estar en Supervisor
+        # QC no mete a nadie en Analista QC. Por eso hay que nombrar los dos,
+        # o Diana (supervisora que tambien analiza) no aparecia en la lista
+        # aunque el comentario decia que si.
         dominio = [
-            ('group_ids', 'in', grupo.ids),
+            ('group_ids', 'in', grupos.ids),
             ('share', '=', False),
             ('login', 'not in', ['__system__', 'default']),
             ('login', 'not like', 'verif-odoo%'),
@@ -362,6 +370,13 @@ class AmunetQualityCheck(models.Model):
         candado inservible. Si hace falta mas logica, va aqui dentro.
         """
         tocados = set(vals) & set(self.TABLERO_CAMPOS_SUPERVISOR)
+        # Excepcion: tomar un analisis libre. Que el analista se ponga a si
+        # mismo un trabajo que nadie tiene no es repartir: es levantar la
+        # mano. Reasignar el de otro o cambiar prioridad sigue siendo del
+        # supervisor. Es la unica via; antes action_tablero_tomar existia
+        # pero este mismo candado la rechazaba.
+        if tocados == {'tablero_analista_id'} and self._tablero_es_autoasignacion(vals):
+            tocados = set()
         if (tocados and not self.env.su
                 and not self.env.context.get('amunet_tablero_interno')
                 and not self.env.user.has_group(
@@ -414,9 +429,32 @@ class AmunetQualityCheck(models.Model):
     # ---------------------------------------------------------------
     # Acciones del tablero
     # ---------------------------------------------------------------
+    def _tablero_es_autoasignacion(self, vals):
+        """True si el usuario se esta poniendo a si mismo un analisis libre."""
+        if vals.get('tablero_analista_id') != self.env.user.id:
+            return False
+        if not self.env.user.has_group('amunet_quality.group_quality_user') \
+                and not self.env.user.has_group(
+                    'amunet_quality.group_quality_supervisor'):
+            return False
+        return all(
+            not check.tablero_analista_id
+            or check.tablero_analista_id == self.env.user
+            for check in self)
+
     def action_tablero_tomar(self):
-        """El analista se asigna a si mismo."""
+        """El analista se hace cargo de un analisis que nadie tiene."""
+        ajenos = self.filtered(
+            lambda c: c.tablero_analista_id
+            and c.tablero_analista_id != self.env.user)
+        if ajenos and not self.env.user.has_group(
+                'amunet_quality.group_quality_supervisor'):
+            raise UserError(_(
+                'Ese analisis ya esta asignado a %s. Pide al supervisor de '
+                'Calidad que lo reasigne.'
+            ) % ajenos[0].tablero_analista_id.display_name)
         self.write({'tablero_analista_id': self.env.user.id})
+        return True
 
     def action_tablero_ver_ordenes(self):
         """Abre las ordenes de manufactura detenidas por este analisis."""

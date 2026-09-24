@@ -19,12 +19,16 @@ produccion en concreto, y asi quedan amarrados al lote que salio de ahi.
 
 Se llena durante la sintesis y se cierra con la orden, igual que las firmas
 (Mery, 23-sep-2026).
+
+ESTA TABLA NO EVALUA (Mery, 24-sep-2026). Es informacion e historial de como
+salio el lote, nada mas: registra lo que se midio y no dice si un numero esta
+bien o mal. Quien juzga la conformidad es el analisis de Calidad, con sus
+especificaciones. Por eso aqui no hay rangos, ni avisos, ni semaforos: un
+numero marcado en rojo en la orden se lee como un rechazo que produccion no
+esta facultada para emitir, y ademas puede contradecir al analisis.
 """
 
 from odoo import _, api, fields, models
-
-# Rango en el que la instruccion manda leer la absorbancia.
-LAMBDA_MIN, LAMBDA_MAX = 510.0, 540.0
 
 
 class AmunetNpsReaccion(models.Model):
@@ -37,13 +41,19 @@ class AmunetNpsReaccion(models.Model):
         required=True, ondelete='cascade', index=True)
     secuencia = fields.Integer(string='Reacción', required=True, default=1)
 
+    # Los dos reactivos van primero, en el orden en que se agregan a la
+    # reaccion: el citrato y el oro. Es lo que el operador anota antes de
+    # medir nada, asi que leer la tabla de izquierda a derecha sigue el
+    # orden real del trabajo.
+    citrato = fields.Float(string='Citrato (ml)', digits='Product Unit of Measure',
+                           help='Citrato de sodio al 1% que se usó en esta reacción.')
+    oro = fields.Float(string='Oro (ml)', digits='Product Unit of Measure',
+                       help='Ácido cloroáurico al 1% que se usó en esta reacción.')
+
     tamano = fields.Float(string='Tamaño (nm)', digits=(10, 2))
-    pico_do = fields.Float(string='Pico D.O.', digits=(10, 4),
-                           help='Densidad óptica en el máximo de absorbancia.')
     lambda_max = fields.Float(
         string='λmax (nm)', digits=(10, 2),
-        help='Longitud de onda del máximo. La instrucción manda leerla entre '
-             '510 y 540 nm.')
+        help='Longitud de onda del máximo, como salió de la lectura.')
     indice_agregacion = fields.Float(string='IA', digits=(10, 4),
                                      help='Índice de agregación.')
     indice_sintesis = fields.Float(string='IS', digits=(10, 4),
@@ -60,16 +70,6 @@ class AmunetNpsReaccion(models.Model):
 
     observaciones = fields.Char(string='Observaciones')
 
-    aviso_lambda = fields.Char(string='Aviso', compute='_compute_aviso_lambda')
-
-    @api.depends('lambda_max')
-    def _compute_aviso_lambda(self):
-        for rec in self:
-            if rec.lambda_max and not (LAMBDA_MIN <= rec.lambda_max <= LAMBDA_MAX):
-                rec.aviso_lambda = _('λmax fuera de %s-%s nm') % (
-                    int(LAMBDA_MIN), int(LAMBDA_MAX))
-            else:
-                rec.aviso_lambda = False
 
 
 class MrpProduction(models.Model):
@@ -85,7 +85,8 @@ class MrpProduction(models.Model):
     amunet_nps_reacciones_llenas = fields.Integer(
         string='Reacciones con datos', compute='_compute_amunet_es_nps')
 
-    @api.depends('product_id', 'amunet_nps_reaccion_ids.pico_do',
+    @api.depends('product_id', 'amunet_nps_reaccion_ids.citrato',
+                 'amunet_nps_reaccion_ids.oro',
                  'amunet_nps_reaccion_ids.lambda_max')
     def _compute_amunet_es_nps(self):
         for rec in self:
@@ -94,7 +95,7 @@ class MrpProduction(models.Model):
             # exige llenar las 10: la instruccion habla de "aproximadamente 9".
             rec.amunet_nps_reacciones_llenas = len(
                 rec.amunet_nps_reaccion_ids.filtered(
-                    lambda r: r.pico_do or r.lambda_max or r.tamano
+                    lambda r: r.citrato or r.oro or r.lambda_max or r.tamano
                     or r.indice_agregacion or r.indice_sintesis or r.ama
                     or r.observaciones))
 

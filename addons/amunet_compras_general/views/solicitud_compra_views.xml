@@ -12,6 +12,27 @@
                         groups="amunet_compras_general.group_compras_monto,amunet_material_request.group_material_manager"
                         invisible="amunet_autorizacion_estado != 'na' or not amunet_forma_pago"/>
             </xpath>
+
+            <!-- Los tres campos de urgencia van juntos y pegados a la fecha
+                 requerida, porque es la fecha la que se vuelve obligatoria. -->
+            <xpath expr="//field[@name='required_date']" position="before">
+                <field name="amunet_urgencia"/>
+                <field name="amunet_urgencia_motivo"
+                       placeholder="Por que no puede esperar"
+                       invisible="amunet_urgencia == 'normal'"
+                       required="amunet_urgencia != 'normal'"/>
+            </xpath>
+            <xpath expr="//field[@name='required_date']" position="attributes">
+                <attribute name="required">amunet_urgencia != 'normal'</attribute>
+            </xpath>
+
+            <!-- La orden ligada se captura a mano cuando se creo suelta. -->
+            <xpath expr="//field[@name='purchase_order_id']" position="attributes">
+                <attribute name="readonly">0</attribute>
+                <attribute name="invisible">0</attribute>
+                <attribute name="options">{'no_create': True}</attribute>
+            </xpath>
+
             <xpath expr="//sheet/group[1]" position="after">
                 <group string="Pago" name="pago">
                     <group>
@@ -33,6 +54,40 @@
                         <field name="amunet_concepto_pago"/>
                     </group>
                 </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_solicitud_compra_list_urgencia" model="ir.ui.view">
+        <field name="name">amunet.solicitud.compra.list.urgencia</field>
+        <field name="model">amunet.solicitud.compra</field>
+        <field name="inherit_id" ref="amunet_marketplace.view_solicitud_compra_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='request_date']" position="after">
+                <field name="amunet_urgencia" widget="badge"
+                       decoration-danger="amunet_urgencia == 'linea_detenida'"
+                       decoration-warning="amunet_urgencia == 'urge'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_solicitud_compra_search_urgencia" model="ir.ui.view">
+        <field name="name">amunet.solicitud.compra.search.urgencia</field>
+        <field name="model">amunet.solicitud.compra</field>
+        <field name="inherit_id" ref="amunet_marketplace.view_solicitud_compra_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='f_prod']" position="after">
+                <separator/>
+                <filter string="Urge" name="f_urge"
+                        domain="[('amunet_urgencia','=','urge')]"/>
+                <filter string="Para linea detenida" name="f_linea_detenida"
+                        domain="[('amunet_urgencia','=','linea_detenida')]"/>
+                <filter string="Urgentes (cualquiera)" name="f_urgentes"
+                        domain="[('amunet_urgencia','!=','normal')]"/>
+            </xpath>
+            <xpath expr="//filter[@name='g_estado']" position="before">
+                <filter string="Por urgencia" name="g_urgencia"
+                        context="{'group_by':'amunet_urgencia'}"/>
             </xpath>
         </field>
     </record>
