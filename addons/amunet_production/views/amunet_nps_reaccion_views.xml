@@ -25,9 +25,9 @@
                         INPSL-001. No hace falta llenar las diez: se dejan
                         listas por si se ocupan.
                         <br/>
-                        La lectura de λmax va entre 510 y 540 nm; si anotas un
-                        valor fuera de ese rango te aparece un aviso en el
-                        renglón.
+                        Esta tabla es el historial de cómo salió el lote: registra
+                        lo que se midió y no dice si un número está bien o mal.
+                        La conformidad la resuelve el análisis de Calidad.
                     </div>
                     <field name="amunet_nps_reaccion_ids"
                            readonly="state in ('done', 'cancel')">
@@ -44,9 +44,6 @@
                             <field name="tolera_75" widget="boolean_toggle"/>
                             <field name="tolera_85" widget="boolean_toggle"/>
                             <field name="observaciones"/>
-                            <field name="aviso_lambda" string=" "
-                                   decoration-danger="aviso_lambda"
-                                   readonly="1"/>
                         </list>
                     </field>
                     <group>
