@@ -98,7 +98,7 @@ class AmunetQualityCheck(models.Model):
             rec.is_esterilizador = code.upper().startswith('EQEPV')
             rec.is_balanza = code.upper().startswith('EQBAD')
 
-    _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO',
+    _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO', 'STHIS',
                        'DM', 'DIAM', 'DRAM', 'DL', 'STB', 'STRE')
 
     @api.depends('product_id.default_code')
@@ -1850,6 +1850,19 @@ class AmunetQualityCheck(models.Model):
                 'anexo_col4_header': 'Liberación',
                 'anexo_col5_header': 'Desempeño',
                 'anexo_col6_header': '',
+                'anexo_col7_header': '',
+                'anexo_col8_header': '',
+            })
+        elif code.startswith('STHIS'):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO HISOPO',
+                'anexo_col1_header': 'Muestra',
+                'anexo_col2_header': 'Apariencia — Empaque',
+                'anexo_col3_header': 'Apariencia — Hisopo',
+                'anexo_col4_header': 'Dimensiones',
+                'anexo_col5_header': 'Funcionalidad prevista',
+                'anexo_col6_header': 'Observaciones',
                 'anexo_col7_header': '',
                 'anexo_col8_header': '',
             })
