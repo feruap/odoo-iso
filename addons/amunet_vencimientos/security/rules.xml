@@ -9,7 +9,7 @@
         <field name="perm_write"  eval="True"/>
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
-        <field name="domain_force">[(1, '=', 1 if user.id in (69, 67) else 0)]</field>
+        <field name="domain_force">[(1, '=', 1)] if user.id in (69, 67) else [(0, '=', 1)]</field>
     </record>
 
     <record id="rule_alerta_solo_documentacion" model="ir.rule">
@@ -19,7 +19,7 @@
         <field name="perm_write"  eval="True"/>
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
-        <field name="domain_force">[(1, '=', 1 if user.id in (69, 67) else 0)]</field>
+        <field name="domain_force">[(1, '=', 1)] if user.id in (69, 67) else [(0, '=', 1)]</field>
     </record>
 
 </odoo>
