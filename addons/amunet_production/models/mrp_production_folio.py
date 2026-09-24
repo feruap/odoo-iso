@@ -96,6 +96,13 @@ class MrpProduction(models.Model):
                 # el folio se recicla, asi que esta orden no puede conservarlo:
                 # si no, la siguiente naceria con el mismo nombre
                 rec.write({'name': '%s-CANCELADA' % folio})
+                # El UPDATE del nombre tiene que llegar a Postgres ANTES de que
+                # alguien cree la siguiente orden. La ORM lo guarda en memoria
+                # hasta el final del request, asi que si el mismo proceso
+                # cancela y crea enseguida -- un script de carga, una accion que
+                # haga las dos cosas -- el INSERT de la nueva sale primero y
+                # choca contra mrp_production_name_uniq con el folio reciclado.
+                rec.flush_recordset(['name'])
                 rec.message_post(body=_(
                     'Folio %(folio)s devuelto al consecutivo: la orden se '
                     'canceló sin haberse trabajado. Esta orden queda como '
