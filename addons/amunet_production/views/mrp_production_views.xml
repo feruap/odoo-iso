@@ -305,6 +305,23 @@
                     consumir'.
                 -->
                 <xpath expr="//field[@name='move_raw_ids']/list/field[@name='product_uom_qty'][@widget='mrp_should_consume']" position="after">
+                    <!--
+                        Par de columnas contiguas para la cantidad planeada: la
+                        nativa va en la unidad de almacen y esta en la unidad de
+                        consumo, y cada fila llena una o la otra. Van juntas a
+                        proposito: si la celda de "Por consumir" queda sola y
+                        vacia, se lee como "este material no lleva nada" o como
+                        un dato que falta capturar. Con el numero al lado, se lee
+                        lo que es: la misma cantidad en la unidad que el operador
+                        usa. No se pueden fusionar en una sola columna porque
+                        garrafones y mililitros son categorias de unidad
+                        distintas, que es el motivo de todo este mecanismo.
+                    -->
+                    <field name="amunet_ml_receta"
+                        string="Por consumir (ml)"
+                        readonly="1"
+                        invisible="not amunet_consumo_por_volumen"
+                        optional="show"/>
                     <field name="amunet_user_can_edit_consume" column_invisible="True"/>
                     <field name="amunet_user_is_warehouse" column_invisible="True"/>
                     <field name="amunet_available_lot_ids" column_invisible="True"/>
@@ -453,13 +470,6 @@
                         configurado asi.
                     -->
                     <field name="amunet_consumo_por_volumen" column_invisible="1"/>
-                    <!-- Lo que el operador lee y captura, los dos en la misma
-                         unidad para que pueda compararlos de un vistazo. -->
-                    <field name="amunet_ml_receta"
-                        string="Receta (ml)"
-                        readonly="1"
-                        invisible="not amunet_consumo_por_volumen"
-                        optional="show"/>
                     <field name="amunet_ml_usados"
                         string="Usado (ml)"
                         readonly="parent.state in ('done', 'cancel')"
