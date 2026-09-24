@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Lista de seguimiento: lo que le importa a quien pidio, de un golpe.
+         Una sola vista sirve a los dos menus; lo que cambia es el dominio. -->
+    <record id="view_solicitud_compra_list_seguimiento" model="ir.ui.view">
+        <field name="name">amunet.solicitud.compra.list.seguimiento</field>
+        <field name="model">amunet.solicitud.compra</field>
+        <field name="priority">32</field>
+        <field name="arch" type="xml">
+            <list string="Seguimiento de solicitudes" create="false">
+                <field name="name"/>
+                <field name="request_date"/>
+                <field name="requester_id" optional="show"/>
+                <field name="required_date" optional="show"/>
+                <field name="amunet_urgencia" widget="badge"
+                       decoration-danger="amunet_urgencia == 'linea_detenida'"
+                       decoration-warning="amunet_urgencia == 'urge'"/>
+                <field name="state" widget="badge"
+                       decoration-success="state in ('approved','purchased','closed')"
+                       decoration-warning="state == 'pending_approval'"
+                       decoration-muted="state == 'cancelled'"/>
+                <field name="purchase_order_id"/>
+                <field name="amunet_oc_estado_pago"/>
+                <field name="amunet_oc_via_embarque"/>
+                <field name="amunet_oc_eta"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_solicitud_compra_search_seguimiento" model="ir.ui.view">
+        <field name="name">amunet.solicitud.compra.search.seguimiento</field>
+        <field name="model">amunet.solicitud.compra</field>
+        <field name="arch" type="xml">
+            <search string="Seguimiento de solicitudes">
+                <field name="name"/>
+                <field name="requester_id"/>
+                <field name="purchase_order_id"/>
+                <filter string="Abiertas" name="f_abiertas"
+                        domain="[('state','not in',('closed','cancelled'))]"/>
+                <filter string="Urgentes (cualquiera)" name="f_urgentes"
+                        domain="[('amunet_urgencia','!=','normal')]"/>
+                <filter string="Sin orden de compra" name="f_sin_oc"
+                        domain="[('purchase_order_id','=',False)]"/>
+                <separator/>
+                <filter string="Por urgencia" name="g_urgencia"
+                        context="{'group_by':'amunet_urgencia'}"/>
+                <filter string="Por estado de pago" name="g_estado_pago"
+                        context="{'group_by':'amunet_oc_estado_pago'}"/>
+                <filter string="Por estado" name="g_estado"
+                        context="{'group_by':'state'}"/>
+                <filter string="Por solicitante" name="g_solicitante"
+                        context="{'group_by':'requester_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_seguimiento_mis_solicitudes" model="ir.actions.act_window">
+        <field name="name">Seguimiento de mis solicitudes</field>
+        <field name="res_model">amunet.solicitud.compra</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('requester_id','=',uid)]</field>
+        <field name="search_view_id" ref="view_solicitud_compra_search_seguimiento"/>
+        <field name="context">{'search_default_f_abiertas': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aqui aparecen tus solicitudes de compra</p>
+            <p>En que va cada una: si ya se autorizo, con que orden de compra
+               se esta comprando, si ya se pago y para cuando llega.</p>
+        </field>
+    </record>
+
+    <record id="action_seguimiento_compras" model="ir.actions.act_window">
+        <field name="name">Seguimiento de compras</field>
+        <field name="res_model">amunet.solicitud.compra</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_solicitud_compra_search_seguimiento"/>
+        <field name="context">{'search_default_f_abiertas': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Todas las solicitudes de compra</p>
+            <p>Vista de Compras y Direccion: se puede agrupar por urgencia y
+               por estado de pago para ver que falta pagar y que urge.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_seguimiento_mis_solicitudes"
+              name="Seguimiento de mis solicitudes"
+              parent="amunet_marketplace.menu_amunet_marketplace_root"
+              action="action_seguimiento_mis_solicitudes"
+              sequence="25"/>
+
+    <menuitem id="menu_seguimiento_compras"
+              name="Seguimiento de compras"
+              parent="amunet_marketplace.menu_amunet_marketplace_root"
+              action="action_seguimiento_compras"
+              sequence="26"
+              groups="amunet_compras_general.group_compras_monto,amunet_material_request.group_material_manager"/>
+</odoo>

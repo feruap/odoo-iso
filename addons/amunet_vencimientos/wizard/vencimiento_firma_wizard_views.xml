@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vencimiento_firma_wizard_form" model="ir.ui.view">
+        <field name="name">amunet.vencimiento.firma.wizard.form</field>
+        <field name="model">amunet.vencimiento.firma.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Modificar vigencia con firma">
+                <field name="vencimiento_id" invisible="1"/>
+                <div class="alert alert-warning" role="alert">
+                    Esta ficha dice hasta cuándo se puede usar el producto.
+                    Anota la razón del cambio y fírmalo con tu PIN: las dos cosas
+                    quedan en el expediente del registro.
+                </div>
+                <group>
+                    <group string="Como está hoy">
+                        <field name="actual_numero"/>
+                        <field name="actual_fecha_emision"/>
+                        <field name="actual_fecha_vencimiento"/>
+                    </group>
+                    <group string="Como queda">
+                        <field name="numero"/>
+                        <field name="fecha_emision"/>
+                        <field name="fecha_vencimiento"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="motivo" placeholder="Por ejemplo: prórroga autorizada por COFEPRIS, oficio 1234/2026 del 20.09.26"/>
+                    <field name="password" password="True"/>
+                </group>
+                <footer>
+                    <button name="action_confirmar" type="object"
+                            string="Firmar y guardar" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
