@@ -372,6 +372,7 @@
                         string="Cantidad Utilizada"
                         column_invisible="parent.amunet_is_solution_product and not parent.amunet_user_puede_elaborar"
                         readonly="parent.state in ('done','cancel') or not (parent.amunet_is_solution_product and amunet_user_can_edit_consume)"
+                        invisible="amunet_consumo_por_volumen"
                         optional="show"/>
                 </xpath>
 
@@ -406,6 +407,11 @@
                          editar consumo. Una vez planificada (confirmada+) queda
                          bloqueada para todos (candado backend en stock_move). -->
                     <attribute name="readonly">not amunet_user_can_edit_consume or parent.state != 'draft'</attribute>
+                    <!-- Un material que se consume por volumen muestra aqui la
+                         fraccion de envase (0.0490 garrafones). Al operador eso
+                         no le sirve: su receta dice 980 ml. La celda se oculta
+                         en esa fila y en su lugar sale "Receta (ml)". -->
+                    <attribute name="invisible">amunet_consumo_por_volumen</attribute>
                 </xpath>
 
                 <!-- 2. Renombrar Cantidad Utilizada, asegurar visibilidad
@@ -447,16 +453,26 @@
                         configurado asi.
                     -->
                     <field name="amunet_consumo_por_volumen" column_invisible="1"/>
+                    <!-- Lo que el operador lee y captura, los dos en la misma
+                         unidad para que pueda compararlos de un vistazo. -->
+                    <field name="amunet_ml_receta"
+                        string="Receta (ml)"
+                        readonly="1"
+                        invisible="not amunet_consumo_por_volumen"
+                        optional="show"/>
                     <field name="amunet_ml_usados"
                         string="Usado (ml)"
                         readonly="parent.state in ('done', 'cancel')"
                         invisible="not amunet_consumo_por_volumen"
                         optional="show"/>
+                    <!-- La fraccion de envase es el dato con el que se descuenta
+                         del inventario. La ve Almacen, no el operador. -->
                     <field name="amunet_envase_equivalente"
                         string="= envases"
                         readonly="1"
+                        groups="stock.group_stock_manager"
                         invisible="not amunet_consumo_por_volumen"
-                        optional="show"/>
+                        optional="hide"/>
                 </xpath>
 
                 <!-- Ocultar badge de disponibilidad nativo -->
@@ -511,6 +527,11 @@
                                 <field name="amunet_lotes_reales" readonly="1" string="Lotes surtidos (reales)" optional="show"/>
                                 <field name="product_uom" readonly="1" string="U.M." optional="show"/>
                                 <field name="amunet_qty_supplied" readonly="1" string="Surtido"/>
+                                <field name="amunet_consumo_por_volumen" column_invisible="1"/>
+                                <field name="amunet_ml_usados" string="Usado (ml)"
+                                       readonly="1"
+                                       invisible="not amunet_consumo_por_volumen"
+                                       optional="show"/>
                                 <field name="amunet_qty_used" string="Utilizado"
                                        force_save="1"
                                        readonly="parent.reconciliation_state in ('validated','completed')"/>
