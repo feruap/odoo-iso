@@ -25,9 +25,12 @@ FALTA UN PASO al correrlo: las ordenes ya abiertas siguen pidiendo mililitros,
 porque el preflight y la reserva validan move_raw_ids de la orden y no la
 receta. Hay que alinearlas aparte (en staging fue AMP/MO/00035).
 
-REDONDEO: con la precision "Product Unit" en 4 decimales, ocho de las 29
-recetas se mueven hasta 1 ml en 1 L (0.14% como maximo). Si eso no se acepta,
-la precision tiene que subir a 6 decimales ANTES de correr esto.
+REDONDEO, DECIDIDO: la precision "Product Unit" se queda en 4 decimales
+(Mery, 24-sep-2026). Con eso, ocho de las 29 recetas se mueven hasta 1 ml en
+1 L -- 0.14% en el peor caso, SPAPB01 666.96 -> 666.00 y SPSDC01 999.00 ->
+1000.00 -- y se acepta. Subir a 6 decimales las dejaria exactas, pero cambia
+como se ven las cantidades en todo el sistema y no compensa por 1 ml.
+No volver a plantearlo sin que Mery lo pida.
 
 Corrido en staging el 24-sep-2026: 29 convertidas, 4 saltadas.
 """
