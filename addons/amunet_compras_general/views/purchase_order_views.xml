@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_purchase_order_form_seguimiento" model="ir.ui.view">
+        <field name="name">purchase.order.form.seguimiento.amunet</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Pago y seguimiento" name="amunet_pago_seguimiento">
+                    <group>
+                        <group string="Embarque">
+                            <field name="amunet_urgencia_maxima" readonly="1"
+                                   invisible="amunet_urgencia_maxima == 'normal'"/>
+                            <field name="amunet_via_sugerida" readonly="1"
+                                   invisible="not amunet_via_sugerida"/>
+                            <field name="amunet_via_embarque"/>
+                        </group>
+                        <group string="Llegada">
+                            <!-- Las dos fechas juntas a proposito: la de
+                                 arriba se pone al crear la orden, la de
+                                 abajo es la que confirma el proveedor. -->
+                            <field name="date_planned" readonly="1"
+                                   string="Fecha planeada (al crear la orden)"/>
+                            <field name="amunet_eta"/>
+                        </group>
+                    </group>
+                    <group string="Pago (nota de seguimiento, no contabilidad)"
+                           name="amunet_pago">
+                        <group>
+                            <field name="amunet_estado_pago"
+                                   readonly="not amunet_puede_capturar_pagos"/>
+                            <field name="amunet_puede_capturar_pagos" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="amunet_pago_fecha"
+                                   readonly="not amunet_puede_capturar_pagos"/>
+                            <field name="amunet_pago_referencia"
+                                   readonly="not amunet_puede_capturar_pagos"/>
+                        </group>
+                    </group>
+                    <separator string="Solicitudes del Marketplace ligadas"/>
+                    <field name="amunet_solicitud_compra_ids" readonly="1"
+                           nolabel="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="requester_id"/>
+                            <field name="amunet_urgencia"/>
+                            <field name="amunet_forma_pago"/>
+                            <field name="amunet_monto"
+                                   groups="amunet_compras_general.group_compras_monto"/>
+                            <field name="amunet_banco"/>
+                            <field name="amunet_clabe"/>
+                            <field name="amunet_titular"/>
+                            <field name="amunet_referencia_pago"/>
+                            <field name="amunet_autorizacion_estado"/>
+                            <field name="state"/>
+                            <button name="action_amunet_abrir_solicitud" type="object"
+                                    string="Abrir solicitud" icon="fa-external-link"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

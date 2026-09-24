@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_material_request_form_urgencia" model="ir.ui.view">
+        <field name="name">amunet.material.request.form.urgencia</field>
+        <field name="model">amunet.material.request</field>
+        <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='required_date']" position="before">
+                <field name="amunet_urgencia"
+                       readonly="state not in ('draft','submitted')"/>
+                <field name="amunet_urgencia_motivo"
+                       placeholder="Por que no puede esperar"
+                       invisible="amunet_urgencia == 'normal'"
+                       required="amunet_urgencia != 'normal'"
+                       readonly="state not in ('draft','submitted')"/>
+            </xpath>
+            <xpath expr="//field[@name='required_date']" position="attributes">
+                <attribute name="required">amunet_urgencia != 'normal'</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_material_request_list_urgencia" model="ir.ui.view">
+        <field name="name">amunet.material.request.list.urgencia</field>
+        <field name="model">amunet.material.request</field>
+        <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='required_date']" position="before">
+                <field name="amunet_urgencia" widget="badge"
+                       decoration-danger="amunet_urgencia == 'linea_detenida'"
+                       decoration-warning="amunet_urgencia == 'urge'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_material_request_search_urgencia" model="ir.ui.view">
+        <field name="name">amunet.material.request.search.urgencia</field>
+        <field name="model">amunet.material.request</field>
+        <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_to_validate']" position="after">
+                <separator/>
+                <filter name="f_urge" string="Urge"
+                        domain="[('amunet_urgencia','=','urge')]"/>
+                <filter name="f_linea_detenida" string="Para linea detenida"
+                        domain="[('amunet_urgencia','=','linea_detenida')]"/>
+                <filter name="f_urgentes" string="Urgentes (cualquiera)"
+                        domain="[('amunet_urgencia','!=','normal')]"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_state']" position="before">
+                <filter name="g_urgencia" string="Urgencia"
+                        context="{'group_by': 'amunet_urgencia'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

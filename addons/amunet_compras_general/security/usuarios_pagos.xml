@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- noupdate="1" a proposito: la membresia se asigna una sola vez, al
+         instalar. Si manana se agrega o se quita a alguien desde la
+         pantalla de usuarios, una actualizacion del modulo NO lo pisa.
+
+         Hoy el unico miembro es Fernando Ruiz (uid 67). Nadie mas: quien
+         captura el pago es quien lo hace. -->
+    <data noupdate="1">
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'fernando.ruiz@amunet.com.mx')]"/>
+            </function>
+            <value eval="{'group_ids': [(4, ref('amunet_compras_general.group_compras_pagos'))]}"/>
+        </function>
+    </data>
+</odoo>
