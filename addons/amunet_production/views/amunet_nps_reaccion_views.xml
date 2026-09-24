@@ -34,8 +34,9 @@
                         <list editable="bottom" limit="20">
                             <field name="secuencia" string="Reacción"
                                    readonly="1" optional="show"/>
+                            <field name="citrato"/>
+                            <field name="oro"/>
                             <field name="tamano"/>
-                            <field name="pico_do"/>
                             <field name="lambda_max"/>
                             <field name="indice_agregacion"/>
                             <field name="indice_sintesis"/>

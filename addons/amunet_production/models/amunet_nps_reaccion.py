@@ -37,9 +37,16 @@ class AmunetNpsReaccion(models.Model):
         required=True, ondelete='cascade', index=True)
     secuencia = fields.Integer(string='Reacción', required=True, default=1)
 
+    # Los dos reactivos van primero, en el orden en que se agregan a la
+    # reaccion: el citrato y el oro. Es lo que el operador anota antes de
+    # medir nada, asi que leer la tabla de izquierda a derecha sigue el
+    # orden real del trabajo.
+    citrato = fields.Float(string='Citrato (ml)', digits='Product Unit of Measure',
+                           help='Citrato de sodio al 1% que se usó en esta reacción.')
+    oro = fields.Float(string='Oro (ml)', digits='Product Unit of Measure',
+                       help='Ácido cloroáurico al 1% que se usó en esta reacción.')
+
     tamano = fields.Float(string='Tamaño (nm)', digits=(10, 2))
-    pico_do = fields.Float(string='Pico D.O.', digits=(10, 4),
-                           help='Densidad óptica en el máximo de absorbancia.')
     lambda_max = fields.Float(
         string='λmax (nm)', digits=(10, 2),
         help='Longitud de onda del máximo. La instrucción manda leerla entre '
@@ -85,7 +92,8 @@ class MrpProduction(models.Model):
     amunet_nps_reacciones_llenas = fields.Integer(
         string='Reacciones con datos', compute='_compute_amunet_es_nps')
 
-    @api.depends('product_id', 'amunet_nps_reaccion_ids.pico_do',
+    @api.depends('product_id', 'amunet_nps_reaccion_ids.citrato',
+                 'amunet_nps_reaccion_ids.oro',
                  'amunet_nps_reaccion_ids.lambda_max')
     def _compute_amunet_es_nps(self):
         for rec in self:
@@ -94,7 +102,7 @@ class MrpProduction(models.Model):
             # exige llenar las 10: la instruccion habla de "aproximadamente 9".
             rec.amunet_nps_reacciones_llenas = len(
                 rec.amunet_nps_reaccion_ids.filtered(
-                    lambda r: r.pico_do or r.lambda_max or r.tamano
+                    lambda r: r.citrato or r.oro or r.lambda_max or r.tamano
                     or r.indice_agregacion or r.indice_sintesis or r.ama
                     or r.observaciones))
 
