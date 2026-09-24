@@ -8,7 +8,7 @@
 - 19.0.1.3.0: Reporte MO con trazabilidad ISO 13485 / Cofepris.""",
     'author': "Amunet",
     'category': 'Manufacturing',
-    'version': '19.0.1.53.6',
+    'version': '19.0.1.54.0',
     'depends': [
         'mrp',
         'stock',
@@ -32,8 +32,13 @@
         'views/operator_workorder_views.xml',
         'views/amunet_lot_dossier_views.xml',
         'views/amunet_iso_dashboard_views.xml',
-        'views/mrp_production_views.xml',
+        # La vista de reacciones NPS va ANTES que la del formulario de la orden:
+        # las dos heredan de mrp.mrp_production_form_view, y al validar la
+        # segunda Odoo combina todas las heredadas. Si la de NPS aun tiene en la
+        # base un campo que ya se renombro, la validacion truena. Paso el
+        # 24-sep-2026 al renombrar 'tamano' a 'densidad_optica'.
         'views/amunet_nps_reaccion_views.xml',
+        'views/mrp_production_views.xml',
         'views/stock_picking_ingreso_views.xml',
         'views/mrp_workcenter_views.xml',
         'views/product_template_views.xml',
