@@ -25,16 +25,7 @@ for l in po.order_line:
     si = S.search([('product_tmpl_id', '=', t.id), ('partner_id', '=', prov.id)], limit=1)
     interno = '%s %s' % (t.default_code, t.name)
     if si and si.product_code:
-        # La clave SIEMPRE al frente. Antes se usaba el nombre del proveedor
-        # cuando existia, y los renglones cargados con nombre pero sin la clave
-        # dentro salian como "EXTRACTION TUBE" a secas -- y ShengFeng tiene DOS
-        # tubos de extraccion (CT001 y CT004). Sin la clave, Ron no sabe cual es.
-        nom = (si.product_name or '').strip()
-        if nom and si.product_code not in nom:
-            desc = '%s / %s' % (si.product_code, nom)
-        else:
-            desc = nom or si.product_code
-        nuevo = '%s\n(Amunet: %s)' % (desc, interno)
+        nuevo = '%s\n(Amunet: %s)' % (si.product_name or si.product_code, interno)
     else:
         sin_codigo.append(t.default_code)
         nuevo = '%s\n(pendiente de clave ShengFeng)' % interno
