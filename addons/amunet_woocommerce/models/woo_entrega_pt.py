@@ -205,6 +205,28 @@ class AmunetEntregaPtStock(models.Model):
             # Ya se produjo por la via normal; no hay nada que materializar.
             return False
         move = pendiente[0]
+
+        # ¿YA EXISTEN las piezas? (Mery, 25-sep-2026)
+        # Desde el rediseno del flujo, el terminado entra al almacen cuando
+        # Produccion DECLARA lo fabricado al pedir el analisis, no al cerrar la
+        # orden. Asi que la premisa de esta funcion -- "no hay una sola pieza en
+        # el almacen" -- dejo de ser cierta.
+        #
+        # Sin esta comprobacion, entregar tomaba el movimiento vivo (lo que
+        # FALTA POR DECLARAR) y lo cerraba para "materializar" producto que ya
+        # existia. Paso en 0926/01/CAL: se declararon 40, se entregaron 35, y la
+        # entrega ingreso ademas las 30 sin declarar. El almacen quedo con las 70
+        # del plan -- 30 piezas fantasma.
+        #
+        # Si en el origen ya hay existencia suficiente del lote, no hay nada que
+        # materializar: se entrega de lo que hay.
+        disponible = sum(self.env['stock.quant'].sudo().search([
+            ('product_id', '=', self.product_id.id),
+            ('lot_id', '=', self.lot_id.id),
+            ('location_id', 'child_of', move.location_dest_id.id),
+        ]).mapped('quantity'))
+        if disponible >= (self.quantity_delivered or 0.0):
+            return False
         por_hacer = min(self.quantity_delivered, move.product_uom_qty)
         if por_hacer <= 0:
             return False
@@ -471,3 +493,57 @@ class AmunetEntregaPtStock(models.Model):
                 note=cuerpo,
                 user_id=responsable.id,
             )
+
+
+class StockMove(models.Model):
+    """La reserva automatica de Odoo volvia a llenar el conteo del almacen.
+
+    `_entrega_pt_generar_ingreso` deja la linea del ingreso en CERO a proposito:
+    quien recibe cuenta el material y escribe lo que tiene enfrente. Pero el
+    tipo de operacion de PT tiene `reservation_method = 'at_confirm'`, asi que
+    cada vez que entra material de ese producto a APT/Entrada, Odoo dispara
+    `_action_assign` sobre los movimientos que estaban esperando y reescribe la
+    cantidad con lo reservado. El cero solo sobrevive hasta el siguiente ingreso.
+
+    Comprobado el 25-sep-2026 con 0926/01/CAL: APT/IN/00085 nacio en 0 y a las
+    22:55 -cuando otra transferencia metio piezas del mismo lote a APT/Entrada-
+    quedo en 35, exactamente lo que Produccion habia entregado. Como el
+    asistente de recepcion se prellena con lo que trae el documento y la
+    validacion solo exige que el conteo cuadre con lo entregado, Almacen abria
+    la pantalla con el numero correcto ya escrito: validar era darle a un boton
+    sin contar, justo lo que este flujo vino a evitar. Con dos entregas del
+    mismo lote la segunda entrada delata a la primera.
+
+    Aqui se vuelve a poner en cero despues de cada reserva, mientras nadie haya
+    capturado el conteo. `picked` es la senal de que ya se capturo: el asistente
+    escribe la cantidad y despues `action_entrega_pt_validar` marca `picked`.
+    """
+    _inherit = 'stock.move'
+
+    def _action_assign(self, force_qty=False):
+        res = super()._action_assign(force_qty=force_qty)
+
+        candidatos = self.filtered(
+            lambda m: m.picking_id and not m.picked
+            and m.state not in ('done', 'cancel'))
+        if not candidatos:
+            return res
+
+        # Solo los ingresos de una entrega que el almacen aun no ha recibido.
+        # Se pregunta por la entrega y no por el tipo de operacion: en ese mismo
+        # tipo viven las recepciones de combos y las de Karla, donde la reserva
+        # automatica si es lo que se quiere.
+        ingresos = self.env['amunet.entrega.pt'].sudo().search([
+            ('picking_ingreso_id', 'in', candidatos.picking_id.ids),
+            ('state', '=', 'por_recibir'),
+        ]).picking_ingreso_id
+        if not ingresos:
+            return res
+
+        lineas = candidatos.filtered(
+            lambda m: m.picking_id in ingresos).move_line_ids
+        por_limpiar = lineas.filtered(lambda ml: ml.quantity)
+        if por_limpiar:
+            por_limpiar.sudo().write({'quantity': 0.0})
+
+        return res

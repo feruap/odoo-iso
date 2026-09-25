@@ -234,13 +234,28 @@ class MrpProduction(models.Model):
         string='Resguardo sin ingresar',
         compute='_compute_amunet_resguardo_pendiente')
 
-    @api.depends('state', 'move_finished_ids.state', 'workorder_ids.state')
+    @api.depends('state', 'move_finished_ids.state', 'workorder_ids.state',
+                 'amunet_sys_req_qc', 'amunet_es_desarrollo')
     def _compute_amunet_resguardo_pendiente(self):
         """La actividad de resguardo ya se hizo pero el terminado sigue sin
-        entrar al almacen. Pasa con las ordenes que venian del flujo anterior."""
+        entrar al almacen.
+
+        SOLO para ordenes que NO llevan analisis. Desde el 25-sep-2026 el
+        inventario de una orden con analisis entra cuando Produccion DECLARA lo
+        fabricado, asi que estar resguardado y sin ingresar dejo de ser una
+        anomalia: es el estado normal entre la actividad y la declaracion. Sin
+        esta condicion el boton "Ingresar resguardo al almacen" aparecia en
+        TODAS las ordenes y ofrecia ingresar qty_producing de un golpe, saltandose
+        la declaracion -- justo lo que el rediseno vino a quitar.
+
+        Para un producto que no requiere analisis no hay declaracion que espere,
+        asi que el boton sigue siendo su via de entrada anticipada; si nadie lo
+        aprieta, el cierre de la orden lo ingresa como siempre.
+        """
         for mo in self:
             pendiente = False
-            if mo.state not in ('done', 'cancel'):
+            va_por_declaracion = mo.amunet_sys_req_qc and not mo.amunet_es_desarrollo
+            if mo.state not in ('done', 'cancel') and not va_por_declaracion:
                 resguardo = mo.workorder_ids.filtered(
                     lambda w: w.workcenter_id.amunet_es_resguardo_pt)
                 if resguardo and all(w.state == 'done' for w in resguardo):
@@ -446,12 +461,27 @@ class MrpProduction(models.Model):
             motivo or (_('Devolución de sobrante: %s') % self.name))
 
     def _amunet_ingresar_resguardo_pt(self, qty=None, origen=None,
-                                      silencioso=False):
+                                      silencioso=False, cantidad=None,
+                                      cerrar=True):
         """Aplica la ENTRADA del producto terminado al almacen de resguardo.
 
         Odoo lo soporta de fabrica: _post_inventory salta los movimientos que
         ya estan en 'done' ("the finish move can already be completed by the
         workorder"). Por eso adelantar el ingreso NO duplica nada al cerrar.
+
+        QUIEN MANDA LA CANTIDAD (Mery, 25-sep-2026). Lo que Produccion declara
+        al pedir el analisis ES lo producido, y de ahi bajan los descuentos.
+        Antes esta entrada corria al terminar la actividad de resguardo, con la
+        cantidad que la orden trajera en ese momento -- casi siempre la
+        PLANEADA, porque todavia no se contaba. Un minuto despues se declaraba
+        la real, menor, y el almacen se quedaba con la diferencia: 194 piezas
+        fantasma en 5 ordenes hasta el 25-sep-2026.
+
+        Ahora la entrada la dispara la declaracion, no la actividad:
+          `cantidad`  las piezas que se acaban de declarar (no el acumulado).
+          `cerrar`    True en el analisis COMPLETO, que es el ultimo: cancela
+                      el sobrante, o sea lo planeado que no se fabrico.
+                      False en un PARCIAL: deja vivo el resto para el siguiente.
 
         Devuelve True si ingreso algo, False si no habia nada que ingresar.
         """
@@ -468,9 +498,15 @@ class MrpProduction(models.Model):
         # declara como fabricado, y es exactamente lo que el cierre habria
         # ingresado. Esta etapa cambia CUANDO entra el inventario, no CUANTO.
         # Solo si la orden no lo trae se cae a lo declarado en la actividad.
-        cantidad = self.qty_producing or qty or self.product_qty
+        if cantidad is None:
+            cantidad = self.qty_producing or qty or self.product_qty
         if not cantidad or cantidad <= 0:
             return False
+        # Nunca ingresar mas de lo que el movimiento tiene pendiente: si se
+        # declara de mas, se ingresa lo que queda y el resto se avisa.
+        pendiente = move.product_uom_qty - (move.quantity or 0.0)
+        if pendiente > 0 and cantidad > pendiente:
+            cantidad = pendiente
         # Sin lote no hay trazabilidad: el producto no se podria analizar ni
         # liberar despues. Mejor detenerse aqui que ingresar a ciegas.
         if move.has_tracking != 'none':
@@ -490,7 +526,11 @@ class MrpProduction(models.Model):
                     'No se puede ingresar el resguardo: la orden todavía no '
                     'tiene lote asignado. Asigna el lote y vuelve a intentar.'))
             move.lot_ids = self.lot_producing_ids.ids
-        self.qty_producing = cantidad
+        # qty_producing lo fija QUIEN DECLARA (el asistente de analisis), no
+        # esta funcion. Solo se rellena si viene vacio, que es el caso del
+        # boton manual en ordenes viejas.
+        if not self.qty_producing:
+            self.qty_producing = cantidad
         move.quantity = cantidad
         move.picked = True
         # cancel_backorder=True es OBLIGATORIO. Sin el, aplicar 246 de un
@@ -499,7 +539,14 @@ class MrpProduction(models.Model):
         # a ingresar el terminado completo. Probado en clon: 496 pz en vez de
         # 246. Con cancel_backorder el sobrante se cancela y no queda nada que
         # el cierre pueda re-ingresar.
-        move._action_done(cancel_backorder=True)
+        # cancel_backorder cancela el SOBRANTE del movimiento. En el COMPLETO
+        # eso es lo correcto: lo planeado que no se fabrico. En un PARCIAL no,
+        # porque el resto se va a declarar despues. Sin esta distincion el
+        # parcial mataba las piezas que faltaban por declarar.
+        # OJO: dejar un sobrante vivo y CERRAR la orden hace que el motor nativo
+        # lo infle y re-ingrese el terminado completo (probado en clon: 496 pz
+        # en vez de 246). Por eso el ultimo ingreso SIEMPRE cierra.
+        move._action_done(cancel_backorder=cerrar)
         self.message_post(body=Markup(_(
             'Ingresadas <b>%(qty)s</b> pieza(s) a <b>%(loc)s</b> por el '
             'resguardo de producto terminado%(orig)s.<br/>'
@@ -3166,8 +3213,21 @@ class MrpProduction(models.Model):
                 'No se puede solicitar el análisis todavía.\n\n%s'
             ) % self._amunet_motivo_sin_supervision())
 
+        # Se puede volver a solicitar mientras quede algo por analizar o por
+        # declarar. Antes bastaba con que el estado fuera 'requested' o
+        # 'approved' para cerrar la puerta, y eso rompe el flujo por partes:
+        # tras aprobar un parcial la orden queda 'approved' aunque falte la
+        # mitad del lote por declarar. Es el espejo de la condicion del boton
+        # (ver la vista): si el boton se ofrece, el metodo tiene que aceptar.
+        # Mery, 25-sep-2026.
         if self.quality_analysis_status not in ('none', 'to_request', 'rejected'):
-            raise UserError('El análisis de calidad ya fue solicitado o se encuentra aprobado.')
+            falta = ((self.amunet_pt_qty_sin_analizar or 0.0) > 0
+                     or (self.amunet_pt_qty_por_declarar or 0.0) > 0)
+            if not falta:
+                raise UserError(_(
+                    'El análisis de calidad ya fue solicitado o se encuentra '
+                    'aprobado, y no queda producto por analizar ni por '
+                    'declarar en esta orden.'))
 
         # Validar que ningun reactivo tenga cantidad utilizada negativa. Se
         # permite 0: el material se entrego pero NO se uso (se devuelve todo

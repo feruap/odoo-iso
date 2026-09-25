@@ -5,7 +5,11 @@
         <field name="model">amunet.production.analysis.wizard</field>
         <field name="arch" type="xml">
             <form string="Solicitar análisis de producto terminado">
-                <alert message="Elige el alcance. Si mandas a analizar solo una parte del lote, indica únicamente esas piezas: el total del lote se va acumulando y el último parcial queda como el total. El análisis completo sí pide el total fabricado." type="info"/>
+                <alert message="Elige el alcance. Si mandas a analizar solo una parte del lote, indica únicamente esas piezas: el total del lote se va acumulando y el último parcial queda como el total." type="info"/>
+                <alert invisible="tipo_analisis != 'completo'" type="warning">
+                    En el análisis completo declaras el lote TERMINADO: escribe el total de TODO el lote, incluyendo lo que ya mandaste en análisis anteriores.
+                    Lo que quede del plan sin fabricar se cancela y ya no vas a poder declarar más piezas de esta orden.
+                </alert>
 
                 <sheet>
                     <group>
@@ -23,6 +27,8 @@
                             <field name="qty_fabricada"
                                    invisible="tipo_analisis != 'completo'"
                                    required="tipo_analisis == 'completo'"/>
+                            <field name="qty_cubre"
+                                   invisible="tipo_analisis != 'completo'"/>
                             <field name="qty_analizada"
                                    invisible="tipo_analisis != 'parcial'"
                                    required="tipo_analisis == 'parcial'"/>
