@@ -45,7 +45,7 @@
 
             <div t-if="state.isManager" class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_copias_controladas.action_copia_controlada')">
                 <i class="fa fa-copy fa-2x mb-2" style="color:#c53030"/>
-                <span class="o_amunet_hub_label">Copias Controladas</span>
+                <span class="o_amunet_hub_label">Expediente de certificados de análisis</span>
             </div>
 
             <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_registros.action_registros_hub')">
