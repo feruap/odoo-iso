@@ -1,26 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_vencimientos_root"
-        name="Vigencia de trámites"
-        parent="amunet_documentos.menu_amunet_documentos_root"
-        action="action_vencimientos_hub"
-        sequence="70"/>
-
-    <menuitem id="menu_vencimientos_lista"
-        name="Por vencer"
-        parent="menu_vencimientos_root"
-        action="action_vencimientos"
-        sequence="10"/>
-
-    <menuitem id="menu_vencimientos_vencidos"
-        name="Vencidos"
-        parent="menu_vencimientos_root"
-        action="action_vencimientos_vencidos"
-        sequence="20"/>
-
-    <menuitem id="menu_vencimientos_todos"
-        name="Todos los registros"
-        parent="menu_vencimientos_root"
-        action="action_vencimientos_todos"
-        sequence="30"/>
 </odoo>
