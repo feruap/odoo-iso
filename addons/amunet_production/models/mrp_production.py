@@ -543,6 +543,42 @@ class MrpProduction(models.Model):
         help='Piezas fabricadas que todavia no cubre ningun analisis. Mientras '
              'sea mayor a cero se puede pedir otro analisis parcial.')
 
+    amunet_pt_qty_por_declarar = fields.Float(
+        string='Piezas por declarar', compute='_compute_amunet_pt_qty_por_declarar',
+        help='Lo que el movimiento de terminado todavia tiene pendiente, o sea '
+             'producto que Produccion aun no declara. Mientras sea mayor a cero '
+             'se puede pedir otro analisis, aunque lo ya declarado este '
+             'analizado completo.')
+
+    @api.depends('move_finished_ids.state', 'move_finished_ids.product_uom_qty',
+                 'move_finished_ids.quantity', 'product_id')
+    def _compute_amunet_pt_qty_por_declarar(self):
+        """Producto que todavia no se declara.
+
+        Desde el 25-sep-2026 el inventario entra cuando Produccion declara al
+        pedir el analisis, no al terminar el resguardo. Con eso aparecio un
+        hueco: despues de aprobar un PARCIAL, 'piezas sin analizar' quedaba en
+        cero -- lo declarado estaba todo analizado -- y el boton de solicitar
+        analisis se ocultaba, aunque faltara producto por declarar. Esas piezas
+        ya no entrarian nunca al almacen.
+
+        El hueco existia antes, pero no se notaba: el resguardo posteaba el lote
+        completo de golpe, asi que el inventario quedaba bien aunque nadie
+        declarara el resto.
+        """
+        for rec in self:
+            if rec.amunet_is_solution_product:
+                rec.amunet_pt_qty_por_declarar = 0.0
+                continue
+            vivos = rec.move_finished_ids.filtered(
+                lambda m: m.product_id == rec.product_id
+                and m.state not in ('done', 'cancel'))
+            # OJO: NO restar 'quantity'. En Odoo 17+ un movimiento reservado ya
+            # trae 'quantity' prellenado con lo reservado, no con lo posteado, y
+            # restarlo daba SIEMPRE cero. Un movimiento que no esta en 'done' no
+            # ha ingresado nada al almacen: lo pendiente es su cantidad entera.
+            rec.amunet_pt_qty_por_declarar = sum(vivos.mapped('product_uom_qty'))
+
     @api.depends('amunet_qc_check_ids.amunet_qty_analizada', 'qty_producing',
                  'amunet_pt_qty_solicitada', 'amunet_is_solution_product')
     def _compute_amunet_pt_qty_sin_analizar(self):
