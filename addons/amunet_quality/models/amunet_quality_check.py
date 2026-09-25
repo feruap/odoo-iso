@@ -130,18 +130,22 @@ class AmunetQualityCheck(models.Model):
         ).report_action(self)
 
     def action_open_anexo_wizard(self):
+        from odoo.exceptions import UserError
         self.ensure_one()
+        if self.state == 'done' or self.user_authorized_id:
+            raise UserError(
+                'Este análisis ya fue autorizado y no se puede modificar. '
+                'Si necesitas una corrección, contacta al Responsable Sanitario.'
+            )
         WizardModel = self.env['amunet.quality.anexo.wizard']
-        # Limpiar wizards anteriores colgados del mismo análisis para evitar bloqueo por FK
-        viejos = WizardModel.search([('check_id', '=', self.id)])
-        if viejos:
-            viejos.mapped('line_ids').unlink()
-            viejos.unlink()
-        lineas = WizardModel._load_lines_from_check(self)
-        if not lineas:
-            qty = int(self.qty_sampling or 0) or 10
-            lineas = [(0, 0, {'sequence': (i + 1) * 10, 'muestra': str(i + 1)}) for i in range(qty)]
-        wizard = WizardModel.create({'check_id': self.id, 'line_ids': lineas})
+        # Si ya existe un wizard para este análisis, retomarlo para preservar datos no guardados
+        wizard = WizardModel.search([('check_id', '=', self.id)], limit=1)
+        if not wizard:
+            lineas = WizardModel._load_lines_from_check(self)
+            if not lineas:
+                qty = int(self.qty_sampling or 0) or 10
+                lineas = [(0, 0, {'sequence': (i + 1) * 10, 'muestra': str(i + 1)}) for i in range(qty)]
+            wizard = WizardModel.create({'check_id': self.id, 'line_ids': lineas})
         return {
             'type': 'ir.actions.act_window',
             'name': self.anexo_titulo or 'Datos del Anexo',
@@ -2285,27 +2289,56 @@ class AmunetQualityCheck(models.Model):
         return False
 
     def _get_source_location(self):
-        """
-        Obtiene la ubicación origen del lote (donde está el stock).
+        """De donde saca Calidad las piezas del muestreo.
+
+        Aqui habia un `search(..., limit=1)` SIN ORDEN: cuando el lote esta
+        repartido en varias ubicaciones internas, el origen lo decidia el orden
+        que devolviera Postgres. Con un lote analizado por partes eso toma las
+        piezas que YA se entregaron a Almacen en vez de las que este analisis
+        cubre, que siguen en el anaquel temporal de PT.
+
+        Caso real, 0926/01/CAL el 25-sep-2026: el analisis completo amparaba las
+        30 piezas recien declaradas (en APT/Almacen Temporal PT) y el muestreo
+        de 10 salio de APT/Entrada, donde vivian las 35 ya entregadas del
+        parcial anterior. Almacen perdio 10 piezas que ya tenia recibidas y la
+        devolucion de la muestra se las regreso a un lugar del que nunca
+        salieron.
+
+        Orden de preferencia:
+        1. La ubicacion destino de la orden de fabricacion que genero el
+           analisis -- el anaquel donde Produccion deja lo que declara.
+        2. La ubicacion interna con MAS existencia del lote. Sigue siendo una
+           heuristica, pero es determinista y no depende del motor.
         """
         self.ensure_one()
 
+        fallback = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
         if not self.lot_id or not self.product_id:
-            return self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+            return fallback
 
-        # Buscar donde está el stock del lote en ubicaciones internas
-        quant = self.env['stock.quant'].search([
+        Quant = self.env['stock.quant'].sudo()
+        base = [
             ('lot_id', '=', self.lot_id.id),
             ('product_id', '=', self.product_id.id),
             ('quantity', '>', 0),
             ('location_id.usage', '=', 'internal'),
-        ], limit=1)
+        ]
 
+        # 1. El anaquel de la orden, si ahi hay existencia del lote.
+        if 'amunet_production_id' in self._fields and self.amunet_production_id:
+            destino = self.amunet_production_id.location_dest_id
+            if destino:
+                quant = Quant.search(base + [('location_id', 'child_of', destino.id)],
+                                     order='quantity desc', limit=1)
+                if quant:
+                    return quant.location_id
+
+        # 2. Donde haya mas piezas del lote.
+        quant = Quant.search(base, order='quantity desc', limit=1)
         if quant:
             return quant.location_id
 
-        # Fallback
-        return self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+        return fallback
 
     def _create_sampling_move(self):
         """
