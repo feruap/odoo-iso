@@ -46,8 +46,10 @@ class AmunetAnalysisWizard(models.TransientModel):
              'Es lo único que se sabe con certeza al pedir un análisis parcial.')
 
     qty_fabricada = fields.Float(
-        string='Total de piezas fabricadas',
-        help='Total real que salió del lote. Solo se pide en el análisis '
+        string='Total de piezas fabricadas (todo el lote)',
+        help='Total real que salió del lote COMPLETO, incluyendo las piezas '
+             'que ya mandaste a analizar en solicitudes anteriores. No es lo '
+             'que falta: es el gran total. Solo se pide en el análisis '
              'completo, que es cuando ya se conoce.')
 
     qty_ya_analizada = fields.Float(
@@ -56,10 +58,20 @@ class AmunetAnalysisWizard(models.TransientModel):
     qty_acumulada = fields.Float(
         string='Quedarían enviadas en total', compute='_compute_qty_acumulada', readonly=True)
 
+    qty_cubre = fields.Float(
+        string='Este análisis cubriría', compute='_compute_qty_cubre', readonly=True,
+        help='Piezas que se declaran y se mandan a Calidad con esta solicitud: '
+             'el total del lote menos lo que ya amparaban los análisis previos.')
+
     @api.depends('qty_analizada', 'qty_ya_analizada')
     def _compute_qty_acumulada(self):
         for w in self:
             w.qty_acumulada = (w.qty_ya_analizada or 0.0) + (w.qty_analizada or 0.0)
+
+    @api.depends('qty_fabricada', 'qty_ya_analizada')
+    def _compute_qty_cubre(self):
+        for w in self:
+            w.qty_cubre = (w.qty_fabricada or 0.0) - (w.qty_ya_analizada or 0.0)
 
     @api.model
     def default_get(self, fields_list):
@@ -69,9 +81,15 @@ class AmunetAnalysisWizard(models.TransientModel):
             prod = self.env['mrp.production'].browse(prod_id)
             ya = sum(prod.amunet_qc_check_ids.mapped('amunet_qty_analizada'))
             res['qty_ya_analizada'] = ya
-            # Sugerencia para el completo: lo que la orden traiga registrado o
-            # lo planeado. El usuario lo corrige con el dato real.
-            base = prod.qty_producing or prod.product_qty or 0.0
+            # OJO: NO sugerir `qty_producing`. Despues de un parcial ese campo
+            # vale EXACTAMENTE lo ya declarado, asi que proponerlo como "total
+            # fabricado" hacia que aceptar el default diera cubre = 0: cerraba
+            # el lote en lo ya declarado y cancelaba el resto, sin crear
+            # analisis. Es la misma trampa que cerro 0926/01/VPL en 216.
+            # La sugerencia honesta es el PLAN COMPLETO: lo ya amparado mas lo
+            # que sigue vivo por declarar. Produccion lo corrige con el real.
+            por_declarar = prod.amunet_pt_qty_por_declarar or 0.0
+            base = (ya + por_declarar) or prod.product_qty or 0.0
             res.setdefault('qty_fabricada', base)
             res.setdefault('qty_analizada', max(0.0, base - ya))
         return res
@@ -92,6 +110,16 @@ class AmunetAnalysisWizard(models.TransientModel):
                     'pieza(s) que ya se enviaron a analizar en solicitudes '
                     'previas.') % {'fab': self.qty_fabricada, 'ya': ya})
             cubre = self.qty_fabricada - ya
+            if cubre <= 0:
+                raise UserError(_(
+                    'El total que declaras (%(fab)s) es exactamente lo que ya '
+                    'amparan los análisis previos, así que este análisis no '
+                    'cubriría ninguna pieza.\n\n'
+                    'Si el lote sí terminó en %(fab)s pieza(s) y ya está todo '
+                    'analizado, no pidas otro análisis. Si falta producto por '
+                    'declarar, escribe aquí el total REAL del lote completo '
+                    '(lo previo más lo que falta).'
+                ) % {'fab': self.qty_fabricada})
             total_declarado = self.qty_fabricada
         else:
             if (self.qty_analizada or 0.0) <= 0:
@@ -112,6 +140,28 @@ class AmunetAnalysisWizard(models.TransientModel):
             'quality_analysis_status': 'requested',
             'amunet_pt_qty_solicitada': total_declarado,
         })
+
+        # EL INGRESO AL ALMACEN LO DISPARA ESTA DECLARACION (Mery, 25-sep-2026).
+        # Lo que Produccion declara aqui ES lo producido, y de ahi bajan los
+        # descuentos. Antes el ingreso corria al terminar la actividad de
+        # resguardo, con la cantidad que la orden trajera entonces -- casi
+        # siempre la PLANEADA-- y un minuto despues se declaraba la real, menor.
+        # La diferencia se quedaba en el anaquel: 194 piezas fantasma en 5
+        # ordenes al 25-sep-2026.
+        #
+        # Se ingresa `cubre`, que son las piezas que se acaban de declarar (no
+        # el acumulado): en un parcial es lo que se manda, y en el completo es
+        # lo que faltaba por declarar.
+        #
+        # cerrar=True solo en el COMPLETO, que es el ultimo por definicion: ahi
+        # se cancela el sobrante, o sea lo planeado que no se fabrico. En un
+        # PARCIAL se deja vivo para el siguiente.
+        prod.sudo()._amunet_ingresar_resguardo_pt(
+            cantidad=cubre,
+            cerrar=(self.tipo_analisis == 'completo'),
+            origen=_('declaración del análisis %s') % (
+                'completo' if self.tipo_analisis == 'completo' else 'parcial'),
+            silencioso=True)
 
         qc = self._amunet_crear_analisis_calidad(cubre)
 
