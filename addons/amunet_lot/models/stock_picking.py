@@ -36,6 +36,33 @@ class StockPicking(models.Model):
     transfer_done_date = fields.Datetime(string='Fecha realización', readonly=True, copy=False)
 
     transfer_verified = fields.Boolean(string='Verificado', default=False, copy=False, tracking=True)
+
+    # Las liberaciones y muestreos de Calidad tambien son traslados "internos"
+    # para Odoo, asi que el flujo de tres pasos (aprobar traslado -> marcar
+    # realizado -> verificar) les caia encima sin corresponderles: ese flujo es
+    # para mover material ENTRE ALMACENES. En una liberacion Calidad ya aprobo
+    # el lote y lo unico que falta es que Almacen confirme que el material
+    # REGRESO fisicamente de cuarentena. Eso es un solo acto: Validar.
+    # Decision de Mery, 25-sep-2026.
+    amunet_es_movimiento_qc = fields.Boolean(
+        string='Movimiento de Calidad', compute='_compute_amunet_es_movimiento_qc',
+        help='Liberacion o muestreo generado por Control de Calidad. Se valida '
+             'en un solo paso: Almacen confirma que recibio el material.')
+
+    @api.depends('origin', 'picking_type_id')
+    def _compute_amunet_es_movimiento_qc(self):
+        # Dos senales, porque ninguna sola alcanza:
+        #  - el tipo de operacion de Control de calidad (secuencia QC), que es
+        #    lo que de verdad define el documento;
+        #  - el origen 'Liberacion QC' / 'Muestreo QC', para los que se crean
+        #    con otro tipo de operacion.
+        # Con solo el origen se quedaban fuera documentos como AMP/QC/00336 o
+        # AMP/QC/00353, cuyo origen es la recepcion que los disparo.
+        prefijos = ('Muestreo QC', 'Liberación QC', 'Liberacion QC')
+        for rec in self:
+            por_tipo = rec.picking_type_id.sequence_code == 'QC'
+            por_origen = bool(rec.origin and rec.origin.startswith(prefijos))
+            rec.amunet_es_movimiento_qc = por_tipo or por_origen
     transfer_verified_by = fields.Many2one('res.users', string='Verificado por', readonly=True, copy=False)
     transfer_verified_date = fields.Datetime(string='Fecha verificación', readonly=True, copy=False)
 
