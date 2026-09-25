@@ -3213,8 +3213,21 @@ class MrpProduction(models.Model):
                 'No se puede solicitar el análisis todavía.\n\n%s'
             ) % self._amunet_motivo_sin_supervision())
 
+        # Se puede volver a solicitar mientras quede algo por analizar o por
+        # declarar. Antes bastaba con que el estado fuera 'requested' o
+        # 'approved' para cerrar la puerta, y eso rompe el flujo por partes:
+        # tras aprobar un parcial la orden queda 'approved' aunque falte la
+        # mitad del lote por declarar. Es el espejo de la condicion del boton
+        # (ver la vista): si el boton se ofrece, el metodo tiene que aceptar.
+        # Mery, 25-sep-2026.
         if self.quality_analysis_status not in ('none', 'to_request', 'rejected'):
-            raise UserError('El análisis de calidad ya fue solicitado o se encuentra aprobado.')
+            falta = ((self.amunet_pt_qty_sin_analizar or 0.0) > 0
+                     or (self.amunet_pt_qty_por_declarar or 0.0) > 0)
+            if not falta:
+                raise UserError(_(
+                    'El análisis de calidad ya fue solicitado o se encuentra '
+                    'aprobado, y no queda producto por analizar ni por '
+                    'declarar en esta orden.'))
 
         # Validar que ningun reactivo tenga cantidad utilizada negativa. Se
         # permite 0: el material se entrego pero NO se uso (se devuelve todo
