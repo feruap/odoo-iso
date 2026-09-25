@@ -296,8 +296,14 @@
             <xpath expr="(//button[@name='button_mark_done'])[5]" position="attributes">
                 <attribute name="invisible" add="kiosco_es_dispositivo" separator=" or "/>
             </xpath>
+            <!-- Se SUMA la condicion del kiosco, no se reescribe la de la orden.
+                 Antes esta vista copiaba la condicion entera, asi que cada cambio
+                 en mrp_production_views.xml dejaba esta copia vieja y el kiosco
+                 mandaba: el 25-sep-2026 el boton no aparecia aunque faltaran 30
+                 piezas por declarar, porque aqui seguia la condicion anterior.
+                 Con add= se hereda siempre lo que diga la vista base. -->
             <button name="action_request_analysis" position="attributes">
-                <attribute name="invisible">kiosco_es_dispositivo or state not in ('to_close','done') or amunet_sys_req_qc == False or amunet_es_desarrollo or not amunet_puede_pedir_analisis or (quality_analysis_status in ('requested', 'approved') and amunet_pt_qty_sin_analizar &lt;= 0)</attribute>
+                <attribute name="invisible" add="kiosco_es_dispositivo" separator=" or "/>
             </button>
         </field>
     </record>

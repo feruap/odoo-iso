@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!--
+        El padre era amunet_documentos.menu_auditorias_proveedores, que ya no
+        existe: Documentacion quito los submenus de Auditorias y Auditorias a
+        proveedores del menu superior el 25-sep-2026 ("ahora el acceso es solo
+        por las tarjetas del hub"). Con el padre inexistente el modulo NO SE
+        PODIA INSTALAR: "External ID not found" al cargar este archivo, y por
+        eso las dos tarjetas del hub fallaban.
+
+        Pasa a colgar del mismo padre que su modulo hermano amunet_proveedores,
+        que si existe y esta instalado.
+    -->
     <menuitem id="menu_apertura_cierre_prov"
               name="Registros de Apertura y Cierre"
-              parent="amunet_documentos.menu_auditorias_proveedores"
+              parent="amunet_programa_auditoria_proveedores.menu_prog_proveedor"
               action="action_apertura_cierre_prov"
               sequence="51"
               groups="amunet_documentos.group_documentos_manager"/>

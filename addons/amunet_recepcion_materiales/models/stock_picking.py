@@ -695,9 +695,22 @@ class StockPicking(models.Model):
 
         res = super()._action_done()
 
-        # Post-step: crear traslado ADT/INT (ADT/Input → ADT/Stock) para Luis
+        # Post-step: crear traslado ADT/INT (ADT/Input → ADT/Stock) para Luis.
+        #
+        # La MISMA guarda que el pre-step: si el analisis viene de una orden de
+        # FABRICACION, el material no se redirigio a ADT/Input, asi que no hay
+        # nada que trasladar de ahi. Sin esta condicion se creaba un traslado
+        # imposible de validar -- pedia sacar piezas de ADT/Input, que estaba en
+        # cero -- y quedaba colgado para siempre en la lista de Almacen.
+        #
+        # Paso el 25-sep-2026 en staging con el MUESTREO de 0926/01/CAL: el
+        # picking de muestreo llega marcado con amunet_disposition_qc_id, el
+        # pre-step lo dejo correctamente en Control de calidad, y este post-step
+        # igual creo ADT/INT/00012 por 10 pz. Es la otra mitad del arreglo del
+        # PR #96, que solo cubrio el pre-step.
         for picking in self.filtered(
             lambda p: p.state == 'done' and p.amunet_disposition_qc_id
+            and not p.amunet_disposition_qc_id.amunet_production_id
         ):
             picking._amunet_crear_traslado_distribucion()
         for picking in self.filtered(

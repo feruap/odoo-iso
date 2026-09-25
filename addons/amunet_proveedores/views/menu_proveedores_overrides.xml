@@ -10,9 +10,14 @@
         <field name="parent_id" ref="amunet_programa_auditoria_proveedores.menu_prog_proveedor"/>
     </record>
 
-    <record id="amunet_checklist_auditoria_prov.menu_checklist_audit_prov" model="ir.ui.menu">
-        <field name="parent_id" ref="amunet_programa_auditoria_proveedores.menu_prog_proveedor"/>
-    </record>
+    <!--
+        Aqui habia un re-anidado de amunet_checklist_auditoria_prov.
+        menu_checklist_audit_prov, pero ese menu NO EXISTE: el modulo
+        amunet_checklist_auditoria_prov esta instalado y no define ningun
+        menuitem. Con esa referencia el modulo no se podia instalar,
+        "External ID not found", y por eso fallaba la tarjeta del hub.
+        Si algun dia ese modulo crea su menu, se vuelve a anidar aqui.
+    -->
 
     <!-- Oculta el menú de Auditoría Técnicas de Proveedores de Gestión;
          el acceso queda en el hub del tablero. -->

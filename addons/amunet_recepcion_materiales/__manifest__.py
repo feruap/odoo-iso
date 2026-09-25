@@ -1,6 +1,6 @@
 {
     'name': 'Recepción de Materiales MP',
-    'version': '19.0.2.1.4',
+    'version': '19.0.2.1.5',
     'summary': 'Inspección de entrada, criterios de aceptación, destino automático y firma con PIN',
     'category': 'Inventory',
     'author': 'Amunet',

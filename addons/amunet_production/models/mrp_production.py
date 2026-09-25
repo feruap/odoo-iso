@@ -234,13 +234,28 @@ class MrpProduction(models.Model):
         string='Resguardo sin ingresar',
         compute='_compute_amunet_resguardo_pendiente')
 
-    @api.depends('state', 'move_finished_ids.state', 'workorder_ids.state')
+    @api.depends('state', 'move_finished_ids.state', 'workorder_ids.state',
+                 'amunet_sys_req_qc', 'amunet_es_desarrollo')
     def _compute_amunet_resguardo_pendiente(self):
         """La actividad de resguardo ya se hizo pero el terminado sigue sin
-        entrar al almacen. Pasa con las ordenes que venian del flujo anterior."""
+        entrar al almacen.
+
+        SOLO para ordenes que NO llevan analisis. Desde el 25-sep-2026 el
+        inventario de una orden con analisis entra cuando Produccion DECLARA lo
+        fabricado, asi que estar resguardado y sin ingresar dejo de ser una
+        anomalia: es el estado normal entre la actividad y la declaracion. Sin
+        esta condicion el boton "Ingresar resguardo al almacen" aparecia en
+        TODAS las ordenes y ofrecia ingresar qty_producing de un golpe, saltandose
+        la declaracion -- justo lo que el rediseno vino a quitar.
+
+        Para un producto que no requiere analisis no hay declaracion que espere,
+        asi que el boton sigue siendo su via de entrada anticipada; si nadie lo
+        aprieta, el cierre de la orden lo ingresa como siempre.
+        """
         for mo in self:
             pendiente = False
-            if mo.state not in ('done', 'cancel'):
+            va_por_declaracion = mo.amunet_sys_req_qc and not mo.amunet_es_desarrollo
+            if mo.state not in ('done', 'cancel') and not va_por_declaracion:
                 resguardo = mo.workorder_ids.filtered(
                     lambda w: w.workcenter_id.amunet_es_resguardo_pt)
                 if resguardo and all(w.state == 'done' for w in resguardo):
@@ -3198,8 +3213,21 @@ class MrpProduction(models.Model):
                 'No se puede solicitar el análisis todavía.\n\n%s'
             ) % self._amunet_motivo_sin_supervision())
 
+        # Se puede volver a solicitar mientras quede algo por analizar o por
+        # declarar. Antes bastaba con que el estado fuera 'requested' o
+        # 'approved' para cerrar la puerta, y eso rompe el flujo por partes:
+        # tras aprobar un parcial la orden queda 'approved' aunque falte la
+        # mitad del lote por declarar. Es el espejo de la condicion del boton
+        # (ver la vista): si el boton se ofrece, el metodo tiene que aceptar.
+        # Mery, 25-sep-2026.
         if self.quality_analysis_status not in ('none', 'to_request', 'rejected'):
-            raise UserError('El análisis de calidad ya fue solicitado o se encuentra aprobado.')
+            falta = ((self.amunet_pt_qty_sin_analizar or 0.0) > 0
+                     or (self.amunet_pt_qty_por_declarar or 0.0) > 0)
+            if not falta:
+                raise UserError(_(
+                    'El análisis de calidad ya fue solicitado o se encuentra '
+                    'aprobado, y no queda producto por analizar ni por '
+                    'declarar en esta orden.'))
 
         # Validar que ningun reactivo tenga cantidad utilizada negativa. Se
         # permite 0: el material se entrego pero NO se uso (se devuelve todo

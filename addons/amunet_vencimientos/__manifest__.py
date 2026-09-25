@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Control de Vigencias',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Quality',
     'summary': 'Alertas de vencimiento para registros sanitarios, certificados y permisos (ISO 13485)',
     'author': 'Amunet',
