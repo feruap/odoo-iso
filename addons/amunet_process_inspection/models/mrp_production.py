@@ -382,6 +382,15 @@ class MrpProduction(models.Model):
                     'Pide %(menos)s (%(nl)s laminas) o %(mas)s (%(nl2)s laminas).'
                 ) % info)
 
+    def _amunet_pretratados_sin_charola(self):
+        """Pretratados que NO se sumergen en charola.
+
+        La A14 es el unico caso hoy: se corta primero y el Hier 1 se aplica
+        sobre la almohadilla ya cortada, 2 ul por cm. Su consumo escala con la
+        cantidad como cualquier componente normal.
+        """
+        return ('SPALMA14',)
+
     def _get_moves_raw_values(self):
         """La solucion de pretratamiento NO escala por lamina: es una charola.
 
@@ -408,6 +417,13 @@ class MrpProduction(models.Model):
             vals += sub
             code = (rec.bom_id.code or '').upper()
             if not code.startswith('PRETRATA') or not rec.bom_id.product_qty:
+                continue
+            # La charola solo aplica a las que se SUMERGEN. La A14 se corta
+            # primero y el Hier se aplica gota a gota sobre la almohadilla ya
+            # cortada (2 ul por cm), asi que su consumo SI escala con la
+            # cantidad y no lleva volumen de base. Sin esta salida, una orden
+            # de una lamina pedia 200 ml de Hier en vez de 3.96.
+            if rec.bom_id.product_tmpl_id.default_code in self._amunet_pretratados_sin_charola():
                 continue
             laminas = rec.product_qty / rec.bom_id.product_qty
             if laminas < 1:
