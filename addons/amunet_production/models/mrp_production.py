@@ -146,6 +146,32 @@ class MrpProduction(models.Model):
              'que impide sacar lote sin analisis aprobado la deja pasar. No es una '
              'regla por fecha a proposito: asi ninguna orden queda exenta sola.')
 
+    # Misma idea que el campo de arriba, pero para el candado de un solo lote
+    # por componente: se marca UNA orden a la vez y con motivo escrito. Hay
+    # casos en que dos lotes son inevitables porque ninguno alcanza para la
+    # cantidad pedida (0926/01/CRD del 25-sep-2026: pedia 3,640 viales y el lote
+    # mas grande tenia 3,535). Autorizado por Mery.
+    amunet_permitir_multi_lote = fields.Boolean(
+        string='Permitir mas de un lote por componente',
+        default=False, copy=False, tracking=True,
+        help='Deja pasar el candado de trazabilidad que exige un solo lote por '
+             'componente. Se marca orden por orden y exige escribir el motivo, '
+             'que queda en el historial. Solo para cuando ningun lote alcanza '
+             'la cantidad pedida.')
+    amunet_multi_lote_motivo = fields.Char(
+        string='Motivo del multi-lote', copy=False, tracking=True,
+        help='Por que esta orden necesita mas de un lote en un componente.')
+
+    @api.constrains('amunet_permitir_multi_lote', 'amunet_multi_lote_motivo')
+    def _check_multi_lote_motivo(self):
+        for rec in self:
+            if rec.amunet_permitir_multi_lote and not (
+                    rec.amunet_multi_lote_motivo or '').strip():
+                raise ValidationError(_(
+                    'Para permitir mas de un lote por componente hay que '
+                    'escribir el motivo. Queda en el historial de la orden '
+                    'como parte de la trazabilidad.'))
+
     quality_analysis_status = fields.Selection([
         ('none', 'No Requerido'),
         ('to_request', 'Pendiente de Solicitar'),
@@ -510,6 +536,42 @@ class MrpProduction(models.Model):
         string='Piezas sin analizar', compute='_compute_amunet_pt_qty_sin_analizar',
         help='Piezas fabricadas que todavia no cubre ningun analisis. Mientras '
              'sea mayor a cero se puede pedir otro analisis parcial.')
+
+    amunet_pt_qty_por_declarar = fields.Float(
+        string='Piezas por declarar', compute='_compute_amunet_pt_qty_por_declarar',
+        help='Lo que el movimiento de terminado todavia tiene pendiente, o sea '
+             'producto que Produccion aun no declara. Mientras sea mayor a cero '
+             'se puede pedir otro analisis, aunque lo ya declarado este '
+             'analizado completo.')
+
+    @api.depends('move_finished_ids.state', 'move_finished_ids.product_uom_qty',
+                 'move_finished_ids.quantity', 'product_id')
+    def _compute_amunet_pt_qty_por_declarar(self):
+        """Producto que todavia no se declara.
+
+        Desde el 25-sep-2026 el inventario entra cuando Produccion declara al
+        pedir el analisis, no al terminar el resguardo. Con eso aparecio un
+        hueco: despues de aprobar un PARCIAL, 'piezas sin analizar' quedaba en
+        cero -- lo declarado estaba todo analizado -- y el boton de solicitar
+        analisis se ocultaba, aunque faltara producto por declarar. Esas piezas
+        ya no entrarian nunca al almacen.
+
+        El hueco existia antes, pero no se notaba: el resguardo posteaba el lote
+        completo de golpe, asi que el inventario quedaba bien aunque nadie
+        declarara el resto.
+        """
+        for rec in self:
+            if rec.amunet_is_solution_product:
+                rec.amunet_pt_qty_por_declarar = 0.0
+                continue
+            vivos = rec.move_finished_ids.filtered(
+                lambda m: m.product_id == rec.product_id
+                and m.state not in ('done', 'cancel'))
+            # OJO: NO restar 'quantity'. En Odoo 17+ un movimiento reservado ya
+            # trae 'quantity' prellenado con lo reservado, no con lo posteado, y
+            # restarlo daba SIEMPRE cero. Un movimiento que no esta en 'done' no
+            # ha ingresado nada al almacen: lo pendiente es su cantidad entera.
+            rec.amunet_pt_qty_por_declarar = sum(vivos.mapped('product_uom_qty'))
 
     @api.depends('amunet_qc_check_ids.amunet_qty_analizada', 'qty_producing',
                  'amunet_pt_qty_solicitada', 'amunet_is_solution_product')
