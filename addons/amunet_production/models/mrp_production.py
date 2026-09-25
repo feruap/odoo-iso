@@ -146,6 +146,32 @@ class MrpProduction(models.Model):
              'que impide sacar lote sin analisis aprobado la deja pasar. No es una '
              'regla por fecha a proposito: asi ninguna orden queda exenta sola.')
 
+    # Misma idea que el campo de arriba, pero para el candado de un solo lote
+    # por componente: se marca UNA orden a la vez y con motivo escrito. Hay
+    # casos en que dos lotes son inevitables porque ninguno alcanza para la
+    # cantidad pedida (0926/01/CRD del 25-sep-2026: pedia 3,640 viales y el lote
+    # mas grande tenia 3,535). Autorizado por Mery.
+    amunet_permitir_multi_lote = fields.Boolean(
+        string='Permitir mas de un lote por componente',
+        default=False, copy=False, tracking=True,
+        help='Deja pasar el candado de trazabilidad que exige un solo lote por '
+             'componente. Se marca orden por orden y exige escribir el motivo, '
+             'que queda en el historial. Solo para cuando ningun lote alcanza '
+             'la cantidad pedida.')
+    amunet_multi_lote_motivo = fields.Char(
+        string='Motivo del multi-lote', copy=False, tracking=True,
+        help='Por que esta orden necesita mas de un lote en un componente.')
+
+    @api.constrains('amunet_permitir_multi_lote', 'amunet_multi_lote_motivo')
+    def _check_multi_lote_motivo(self):
+        for rec in self:
+            if rec.amunet_permitir_multi_lote and not (
+                    rec.amunet_multi_lote_motivo or '').strip():
+                raise ValidationError(_(
+                    'Para permitir mas de un lote por componente hay que '
+                    'escribir el motivo. Queda en el historial de la orden '
+                    'como parte de la trazabilidad.'))
+
     quality_analysis_status = fields.Selection([
         ('none', 'No Requerido'),
         ('to_request', 'Pendiente de Solicitar'),
@@ -208,13 +234,28 @@ class MrpProduction(models.Model):
         string='Resguardo sin ingresar',
         compute='_compute_amunet_resguardo_pendiente')
 
-    @api.depends('state', 'move_finished_ids.state', 'workorder_ids.state')
+    @api.depends('state', 'move_finished_ids.state', 'workorder_ids.state',
+                 'amunet_sys_req_qc', 'amunet_es_desarrollo')
     def _compute_amunet_resguardo_pendiente(self):
         """La actividad de resguardo ya se hizo pero el terminado sigue sin
-        entrar al almacen. Pasa con las ordenes que venian del flujo anterior."""
+        entrar al almacen.
+
+        SOLO para ordenes que NO llevan analisis. Desde el 25-sep-2026 el
+        inventario de una orden con analisis entra cuando Produccion DECLARA lo
+        fabricado, asi que estar resguardado y sin ingresar dejo de ser una
+        anomalia: es el estado normal entre la actividad y la declaracion. Sin
+        esta condicion el boton "Ingresar resguardo al almacen" aparecia en
+        TODAS las ordenes y ofrecia ingresar qty_producing de un golpe, saltandose
+        la declaracion -- justo lo que el rediseno vino a quitar.
+
+        Para un producto que no requiere analisis no hay declaracion que espere,
+        asi que el boton sigue siendo su via de entrada anticipada; si nadie lo
+        aprieta, el cierre de la orden lo ingresa como siempre.
+        """
         for mo in self:
             pendiente = False
-            if mo.state not in ('done', 'cancel'):
+            va_por_declaracion = mo.amunet_sys_req_qc and not mo.amunet_es_desarrollo
+            if mo.state not in ('done', 'cancel') and not va_por_declaracion:
                 resguardo = mo.workorder_ids.filtered(
                     lambda w: w.workcenter_id.amunet_es_resguardo_pt)
                 if resguardo and all(w.state == 'done' for w in resguardo):
