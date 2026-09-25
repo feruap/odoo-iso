@@ -39,10 +39,10 @@
 
             <!-- Ocultar ambos botones "Validate" para internos -->
             <xpath expr="//button[@name='button_validate'][hasclass('oe_highlight')]" position="attributes">
-                <attribute name="invisible">picking_type_code == 'internal' or state in ('draft', 'confirmed', 'done', 'cancel')</attribute>
+                <attribute name="invisible">(picking_type_code == 'internal' and not amunet_es_movimiento_qc) or state in ('draft', 'confirmed', 'done', 'cancel')</attribute>
             </xpath>
             <xpath expr="//button[@name='button_validate'][hasclass('o_btn_validate')]" position="attributes">
-                <attribute name="invisible">picking_type_code == 'internal' or state in ('waiting', 'assigned', 'done', 'cancel')</attribute>
+                <attribute name="invisible">(picking_type_code == 'internal' and not amunet_es_movimiento_qc) or state in ('waiting', 'assigned', 'done', 'cancel')</attribute>
             </xpath>
 
             <!-- Botones del flujo propio (antes del primer Validate) -->
@@ -52,22 +52,23 @@
                         type="object"
                         class="oe_highlight"
                         groups="amunet_material_request.group_material_warehouse"
-                        invisible="picking_type_code != 'internal' or state not in ('confirmed', 'assigned') or transfer_approved"/>
+                        invisible="picking_type_code != 'internal' or amunet_es_movimiento_qc or state not in ('confirmed', 'assigned') or transfer_approved"/>
                 <button name="action_transfer_mark_done"
                         string="Marcar movimiento realizado"
                         type="object"
                         class="oe_highlight"
-                        invisible="picking_type_code != 'internal' or not transfer_approved or transfer_done_by_operator or state not in ('confirmed', 'assigned')"/>
+                        invisible="picking_type_code != 'internal' or amunet_es_movimiento_qc or not transfer_approved or transfer_done_by_operator or state not in ('confirmed', 'assigned')"/>
                 <button name="action_transfer_verify"
                         string="Verificar e ingresar al inventario"
                         type="object"
                         class="btn-success"
                         groups="amunet_material_request.group_material_warehouse"
-                        invisible="picking_type_code != 'internal' or not transfer_done_by_operator or transfer_verified or state not in ('confirmed', 'assigned')"/>
+                        invisible="picking_type_code != 'internal' or amunet_es_movimiento_qc or not transfer_done_by_operator or transfer_verified or state not in ('confirmed', 'assigned')"/>
             </xpath>
 
             <!-- Campos auxiliares de control (invisibles) -->
             <xpath expr="//field[@name='origin']" position="after">
+                <field name="amunet_es_movimiento_qc" invisible="1"/>
                 <field name="is_quality_control" invisible="1"/>
                 <field name="is_storage" invisible="1"/>
                 <field name="is_reception" invisible="1"/>

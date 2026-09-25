@@ -42,8 +42,14 @@
             <!-- El Validar nativo se esconde aqui: si se usara, el material
                  entraria a existencias pero la entrega se quedaria en "por
                  recibir", sin firma de recepcion y sin liberar el lote. -->
+            <!-- OJO: 'position=attributes' REEMPLAZA la condicion, no la suma. Aqui
+                 se arrastra la que puso amunet_lot (ocultar el Validar en los
+                 traslados internos, que llevan su propio flujo de tres pasos).
+                 Sin eso, el Validar reaparecia en TODOS los internos, incluidas
+                 las liberaciones de Calidad, y el usuario veia tres botones sin
+                 saber cual apretar. Detectado el 25-sep-2026 en AMP/QC/00415. -->
             <xpath expr="//button[@name='button_validate']" position="attributes">
-                <attribute name="invisible">amunet_entrega_pt_id and amunet_entrega_pt_state == 'por_recibir'</attribute>
+                <attribute name="invisible">(amunet_entrega_pt_id and amunet_entrega_pt_state == 'por_recibir') or (picking_type_code == 'internal' and not amunet_es_movimiento_qc)</attribute>
             </xpath>
 
         </field>
