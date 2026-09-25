@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <menuitem id="menu_vencimientos_root"
-        name="Vigencias"
+        name="Vigencia de trámites"
         parent="amunet_documentos.menu_amunet_documentos_root"
         action="action_vencimientos_hub"
         sequence="70"/>

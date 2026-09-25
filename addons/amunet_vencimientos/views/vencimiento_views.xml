@@ -172,7 +172,7 @@
 
     <!-- ── Hub ── -->
     <record id="action_vencimientos_hub" model="ir.actions.client">
-        <field name="name">Vigencias</field>
+        <field name="name">Vigencia de trámites</field>
         <field name="tag">amunet_vencimientos_hub</field>
     </record>
 

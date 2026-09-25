@@ -3,7 +3,7 @@
 <t t-name="amunet_vencimientos.VigenciasHub">
     <div class="o_action o_amunet_mis_pendientes">
 
-        <div class="o_amunet_dash_section_title">Control de Vigencias</div>
+        <div class="o_amunet_dash_section_title">Vigencia de trámites</div>
 
         <div class="o_amunet_dash_cards o_amunet_dash_cards_hub">
 
