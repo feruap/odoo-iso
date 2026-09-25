@@ -50,7 +50,11 @@ class AmunetNpsReaccion(models.Model):
     oro = fields.Float(string='Oro (ml)', digits='Product Unit of Measure',
                        help='Ácido cloroáurico al 1% que se usó en esta reacción.')
 
-    tamano = fields.Float(string='Tamaño (nm)', digits=(10, 2))
+    # Antes se llamaba 'tamano' y decia 'Tamaño (nm)'. Lo que se mide en
+    # cada reaccion es la DENSIDAD OPTICA, que no tiene unidad de longitud.
+    # Se renombro el 24-sep-2026 por indicacion de Mery; no habia ningun
+    # dato capturado ni calculo que lo usara.
+    densidad_optica = fields.Float(string='D.O.', digits=(10, 2))
     lambda_max = fields.Float(
         string='λmax (nm)', digits=(10, 2),
         help='Longitud de onda del máximo, como salió de la lectura.')
