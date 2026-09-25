@@ -113,6 +113,28 @@ class AmunetAnalysisWizard(models.TransientModel):
             'amunet_pt_qty_solicitada': total_declarado,
         })
 
+        # EL INGRESO AL ALMACEN LO DISPARA ESTA DECLARACION (Mery, 25-sep-2026).
+        # Lo que Produccion declara aqui ES lo producido, y de ahi bajan los
+        # descuentos. Antes el ingreso corria al terminar la actividad de
+        # resguardo, con la cantidad que la orden trajera entonces -- casi
+        # siempre la PLANEADA-- y un minuto despues se declaraba la real, menor.
+        # La diferencia se quedaba en el anaquel: 194 piezas fantasma en 5
+        # ordenes al 25-sep-2026.
+        #
+        # Se ingresa `cubre`, que son las piezas que se acaban de declarar (no
+        # el acumulado): en un parcial es lo que se manda, y en el completo es
+        # lo que faltaba por declarar.
+        #
+        # cerrar=True solo en el COMPLETO, que es el ultimo por definicion: ahi
+        # se cancela el sobrante, o sea lo planeado que no se fabrico. En un
+        # PARCIAL se deja vivo para el siguiente.
+        prod.sudo()._amunet_ingresar_resguardo_pt(
+            cantidad=cubre,
+            cerrar=(self.tipo_analisis == 'completo'),
+            origen=_('declaración del análisis %s') % (
+                'completo' if self.tipo_analisis == 'completo' else 'parcial'),
+            silencioso=True)
+
         qc = self._amunet_crear_analisis_calidad(cubre)
 
         if self.tipo_analisis == 'parcial':

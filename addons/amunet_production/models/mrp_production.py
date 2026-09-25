@@ -420,12 +420,27 @@ class MrpProduction(models.Model):
             motivo or (_('Devolución de sobrante: %s') % self.name))
 
     def _amunet_ingresar_resguardo_pt(self, qty=None, origen=None,
-                                      silencioso=False):
+                                      silencioso=False, cantidad=None,
+                                      cerrar=True):
         """Aplica la ENTRADA del producto terminado al almacen de resguardo.
 
         Odoo lo soporta de fabrica: _post_inventory salta los movimientos que
         ya estan en 'done' ("the finish move can already be completed by the
         workorder"). Por eso adelantar el ingreso NO duplica nada al cerrar.
+
+        QUIEN MANDA LA CANTIDAD (Mery, 25-sep-2026). Lo que Produccion declara
+        al pedir el analisis ES lo producido, y de ahi bajan los descuentos.
+        Antes esta entrada corria al terminar la actividad de resguardo, con la
+        cantidad que la orden trajera en ese momento -- casi siempre la
+        PLANEADA, porque todavia no se contaba. Un minuto despues se declaraba
+        la real, menor, y el almacen se quedaba con la diferencia: 194 piezas
+        fantasma en 5 ordenes hasta el 25-sep-2026.
+
+        Ahora la entrada la dispara la declaracion, no la actividad:
+          `cantidad`  las piezas que se acaban de declarar (no el acumulado).
+          `cerrar`    True en el analisis COMPLETO, que es el ultimo: cancela
+                      el sobrante, o sea lo planeado que no se fabrico.
+                      False en un PARCIAL: deja vivo el resto para el siguiente.
 
         Devuelve True si ingreso algo, False si no habia nada que ingresar.
         """
@@ -442,9 +457,15 @@ class MrpProduction(models.Model):
         # declara como fabricado, y es exactamente lo que el cierre habria
         # ingresado. Esta etapa cambia CUANDO entra el inventario, no CUANTO.
         # Solo si la orden no lo trae se cae a lo declarado en la actividad.
-        cantidad = self.qty_producing or qty or self.product_qty
+        if cantidad is None:
+            cantidad = self.qty_producing or qty or self.product_qty
         if not cantidad or cantidad <= 0:
             return False
+        # Nunca ingresar mas de lo que el movimiento tiene pendiente: si se
+        # declara de mas, se ingresa lo que queda y el resto se avisa.
+        pendiente = move.product_uom_qty - (move.quantity or 0.0)
+        if pendiente > 0 and cantidad > pendiente:
+            cantidad = pendiente
         # Sin lote no hay trazabilidad: el producto no se podria analizar ni
         # liberar despues. Mejor detenerse aqui que ingresar a ciegas.
         if move.has_tracking != 'none':
@@ -464,7 +485,11 @@ class MrpProduction(models.Model):
                     'No se puede ingresar el resguardo: la orden todavía no '
                     'tiene lote asignado. Asigna el lote y vuelve a intentar.'))
             move.lot_ids = self.lot_producing_ids.ids
-        self.qty_producing = cantidad
+        # qty_producing lo fija QUIEN DECLARA (el asistente de analisis), no
+        # esta funcion. Solo se rellena si viene vacio, que es el caso del
+        # boton manual en ordenes viejas.
+        if not self.qty_producing:
+            self.qty_producing = cantidad
         move.quantity = cantidad
         move.picked = True
         # cancel_backorder=True es OBLIGATORIO. Sin el, aplicar 246 de un
@@ -473,7 +498,14 @@ class MrpProduction(models.Model):
         # a ingresar el terminado completo. Probado en clon: 496 pz en vez de
         # 246. Con cancel_backorder el sobrante se cancela y no queda nada que
         # el cierre pueda re-ingresar.
-        move._action_done(cancel_backorder=True)
+        # cancel_backorder cancela el SOBRANTE del movimiento. En el COMPLETO
+        # eso es lo correcto: lo planeado que no se fabrico. En un PARCIAL no,
+        # porque el resto se va a declarar despues. Sin esta distincion el
+        # parcial mataba las piezas que faltaban por declarar.
+        # OJO: dejar un sobrante vivo y CERRAR la orden hace que el motor nativo
+        # lo infle y re-ingrese el terminado completo (probado en clon: 496 pz
+        # en vez de 246). Por eso el ultimo ingreso SIEMPRE cierra.
+        move._action_done(cancel_backorder=cerrar)
         self.message_post(body=Markup(_(
             'Ingresadas <b>%(qty)s</b> pieza(s) a <b>%(loc)s</b> por el '
             'resguardo de producto terminado%(orig)s.<br/>'
