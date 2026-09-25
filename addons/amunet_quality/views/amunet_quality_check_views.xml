@@ -649,6 +649,13 @@
                 <filter name="filter_done" string="Finalizados"
                         domain="[('state', '=', 'done')]"/>
                 <separator/>
+                <!-- Lo mio: lo que firme, lo que pedi. El menu "Mi trabajo"
+                     lo aplica por defecto desde el contexto, no como dominio
+                     duro, para que el supervisor pueda quitar la faceta y ver
+                     el trabajo de todos. -->
+                <filter name="filter_mi_trabajo" string="Mi trabajo"
+                        domain="['|', ('user_realized_id','=',uid), ('requester_id','=',uid)]"/>
+                <separator/>
                 <filter name="filter_pass" string="Aprobados"
                         domain="[('global_result', '=', 'pass')]"/>
                 <filter name="filter_fail" string="Rechazados"

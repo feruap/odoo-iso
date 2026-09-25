@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Expediente de Auditoría',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Quality',
     'summary': 'Vista resumen con plan, acta, lista de verificación e informe de cada auditoría',
     'author': 'Amunet',

@@ -48,12 +48,16 @@ mejor_registro AS (
     ORDER BY rc.employee_id, rc.hr_course_id, rc.expiry_date DESC
 ),
 req_por_empleado AS (
-    -- Expandir requisitos a empleados activos
+    -- Expandir requisitos a empleados activos no practicantes
     SELECT req.id AS requisito_id, req.course_id, e.id AS employee_id
     FROM amunet_curso_requisito req
-    JOIN hr_employee e ON e.active = true AND e.name NOT ILIKE '%practicante%'
+    JOIN hr_employee e ON e.active = true
+    LEFT JOIN hr_employee_public ep ON ep.id = e.id
+    LEFT JOIN hr_job j ON j.id = ep.job_id
     LEFT JOIN emp_dept ed ON ed.employee_id = e.id
-    WHERE (
+    WHERE (j.id IS NULL OR j.name::text NOT ILIKE '%practicante%')
+      AND e.name NOT ILIKE '%practicante%'
+    AND (
         -- Para todos: aplica_todos y el dept del empleado NO está excluido
         (req.aplica_todos = true
          AND NOT EXISTS (

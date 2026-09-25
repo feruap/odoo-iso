@@ -132,6 +132,11 @@ class AmunetQualityCheck(models.Model):
     def action_open_anexo_wizard(self):
         self.ensure_one()
         WizardModel = self.env['amunet.quality.anexo.wizard']
+        # Limpiar wizards anteriores colgados del mismo análisis para evitar bloqueo por FK
+        viejos = WizardModel.search([('check_id', '=', self.id)])
+        if viejos:
+            viejos.mapped('line_ids').unlink()
+            viejos.unlink()
         lineas = WizardModel._load_lines_from_check(self)
         if not lineas:
             qty = int(self.qty_sampling or 0) or 10
