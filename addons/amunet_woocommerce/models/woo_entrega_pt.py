@@ -205,6 +205,28 @@ class AmunetEntregaPtStock(models.Model):
             # Ya se produjo por la via normal; no hay nada que materializar.
             return False
         move = pendiente[0]
+
+        # ¿YA EXISTEN las piezas? (Mery, 25-sep-2026)
+        # Desde el rediseno del flujo, el terminado entra al almacen cuando
+        # Produccion DECLARA lo fabricado al pedir el analisis, no al cerrar la
+        # orden. Asi que la premisa de esta funcion -- "no hay una sola pieza en
+        # el almacen" -- dejo de ser cierta.
+        #
+        # Sin esta comprobacion, entregar tomaba el movimiento vivo (lo que
+        # FALTA POR DECLARAR) y lo cerraba para "materializar" producto que ya
+        # existia. Paso en 0926/01/CAL: se declararon 40, se entregaron 35, y la
+        # entrega ingreso ademas las 30 sin declarar. El almacen quedo con las 70
+        # del plan -- 30 piezas fantasma.
+        #
+        # Si en el origen ya hay existencia suficiente del lote, no hay nada que
+        # materializar: se entrega de lo que hay.
+        disponible = sum(self.env['stock.quant'].sudo().search([
+            ('product_id', '=', self.product_id.id),
+            ('lot_id', '=', self.lot_id.id),
+            ('location_id', 'child_of', move.location_dest_id.id),
+        ]).mapped('quantity'))
+        if disponible >= (self.quantity_delivered or 0.0):
+            return False
         por_hacer = min(self.quantity_delivered, move.product_uom_qty)
         if por_hacer <= 0:
             return False
