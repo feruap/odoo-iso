@@ -624,6 +624,11 @@ class StockMove(models.Model):
             # Solo ordenes creadas despues de activar el candado.
             if mo.create_date and mo.create_date <= cutoff_dt:
                 continue
+            # Exencion explicita, orden por orden, con motivo escrito: hay casos
+            # en que dos lotes son inevitables porque ninguno alcanza para la
+            # cantidad pedida. Se marca a mano y queda en el historial.
+            if getattr(mo, 'amunet_permitir_multi_lote', False):
+                continue
             lotes = move.move_line_ids.filtered(
                 lambda ml: ml.lot_id and ml.quantity > 0
             ).mapped('lot_id')
