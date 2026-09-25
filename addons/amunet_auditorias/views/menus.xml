@@ -5,31 +5,6 @@
          Menú: Auditorías (bajo el catálogo de Calidad)
     ══════════════════════════════════════════════════════ -->
 
-    <!-- Menú padre: Auditorías -->
-    <menuitem
-        id="menu_amunet_auditorias_root"
-        name="Auditorías"
-        parent="amunet_documentos.menu_amunet_documentos_root"
-        action="amunet_cc_general.action_auditorias_hub"
-        sequence="50"
-        groups="amunet_auditorias.group_auditorias_auditor"/>
 
-    <!-- Submenú: Programa de Auditorías -->
-    <menuitem
-        id="menu_amunet_auditoria"
-        name="Programa de Auditorías"
-        parent="menu_amunet_auditorias_root"
-        action="action_amunet_auditoria"
-        sequence="10"
-        groups="amunet_auditorias.group_auditorias_auditor"/>
-
-    <!-- Submenú: Todos los Hallazgos (vista global rápida) -->
-    <menuitem
-        id="menu_amunet_auditoria_hallazgos"
-        name="Hallazgos Abiertos"
-        parent="menu_amunet_auditorias_root"
-        action="action_amunet_auditoria_hallazgo"
-        sequence="20"
-        groups="amunet_auditorias.group_auditorias_auditor"/>
 
 </odoo>
