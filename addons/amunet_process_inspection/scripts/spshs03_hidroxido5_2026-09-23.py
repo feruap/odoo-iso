@@ -13,9 +13,13 @@ Se agrega la tercera siguiendo el consecutivo de la serie:
 Y SPSPA05 deja de consumir el reactivo solido: ahora lleva PVP 50 g (5%) mas
 1000 ml de SPSHS03, que aporta el hidroxido al 5%.
 
-CLAVE PENDIENTE DE LIBERACION: SPSHS03 se propone siguiendo la normativa
-(SP = semiprocesado, SHS = solucion hidroxido de sodio, 03 = consecutivo).
-Falta la confirmacion de Almacen, como manda el procedimiento de alta.
+CLAVE LIBERADA: SPSHS03 sigue la normativa (SP = semiprocesado, SHS = solucion
+hidroxido de sodio, 03 = consecutivo) y la valido DOCUMENTACION -- Stacy, el
+24-sep-2026: "confirmadas las dos, SPSPA05 y SPSHS03, tanto los nombres como
+las claves; puedes promover cuando quieras".
+
+Ojo con lo que decia antes este bloque: las claves nuevas NO las libera Almacen,
+las libera Documentacion. Almacen no las valida y mandarselo solo hace ruido.
 
 Idempotente: busca por clave y no duplica.
 """

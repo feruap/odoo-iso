@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Programa de Auditorías (ISO 13485 §8.2.4 / §7.4)',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Quality',
     'summary': 'Auditorías internas y a proveedores con checklists y generación automática de CAPAs',
     'description': """
@@ -21,6 +21,12 @@ Funcionalidades:
     'license': 'LGPL-3',
     'depends': [
         'amunet_quality',
+        # views/menus.xml cuelga el menu de amunet_documentos y usa una accion
+        # de amunet_cc_general. Sin declararlo, en una base que ya los tiene
+        # instalados funciona (Odoo resuelve el ID externo contra ir_model_data),
+        # pero en una instalacion limpia truena: alfabeticamente amunet_auditorias
+        # carga ANTES que los dos. amunet_cc_general arrastra amunet_documentos.
+        'amunet_cc_general',
         'hr',
         'purchase',
         'mail',

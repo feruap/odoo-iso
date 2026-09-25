@@ -8,6 +8,16 @@
             <field name="name">Compras / Ve montos de compra general</field>
             <field name="comment">Puede ver el importe de las solicitudes de compra general. Membresia nombrada.</field>
         </record>
+
+        <!-- Quien captura en que va el pago de una orden de compra. No es
+             contabilidad: la contabilidad de Amunet vive fuera de Odoo.
+             Implica group_compras_monto porque no tiene sentido anotar un
+             pago sin poder ver el importe. -->
+        <record id="group_compras_pagos" model="res.groups">
+            <field name="name">Compras / Captura de pagos</field>
+            <field name="comment">Puede capturar estado de pago, fecha y referencia en la orden de compra. Membresia nombrada.</field>
+            <field name="implied_ids" eval="[(4, ref('amunet_compras_general.group_compras_monto'))]"/>
+        </record>
     </data>
     <!-- noupdate="0": se re-aplica en cada update para que los usuarios
          autorizados siempre tengan el acceso, incluso en produccion.

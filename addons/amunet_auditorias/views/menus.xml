@@ -9,8 +9,9 @@
     <menuitem
         id="menu_amunet_auditorias_root"
         name="Auditorías"
-        parent="amunet_quality.menu_sgc_root"
-        sequence="10"
+        parent="amunet_documentos.menu_amunet_documentos_root"
+        action="amunet_cc_general.action_auditorias_hub"
+        sequence="50"
         groups="amunet_auditorias.group_auditorias_auditor"/>
 
     <!-- Submenú: Programa de Auditorías -->

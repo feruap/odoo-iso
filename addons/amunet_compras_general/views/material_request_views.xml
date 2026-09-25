@@ -1,34 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_material_request_form_pago" model="ir.ui.view">
-        <field name="name">amunet.material.request.form.pago</field>
+    <record id="view_material_request_form_urgencia" model="ir.ui.view">
+        <field name="name">amunet.material.request.form.urgencia</field>
         <field name="model">amunet.material.request</field>
         <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//header" position="inside">
-                <button name="action_pedir_autorizacion_pago" type="object"
-                        string="Pedir autorizacion de pago"
-                        class="btn-primary"
-                        groups="amunet_compras_general.group_compras_monto,amunet_material_request.group_material_manager"
-                        invisible="amunet_autorizacion_estado != 'na' or not amunet_forma_pago"/>
+            <xpath expr="//field[@name='required_date']" position="before">
+                <field name="amunet_urgencia"
+                       readonly="state not in ('draft','submitted')"/>
+                <field name="amunet_urgencia_motivo"
+                       placeholder="Por que no puede esperar"
+                       invisible="amunet_urgencia == 'normal'"
+                       required="amunet_urgencia != 'normal'"
+                       readonly="state not in ('draft','submitted')"/>
             </xpath>
-            <field name="amunet_proveedor_factura" position="before">
-                <field name="amunet_forma_pago"/>
-            </field>
-            <field name="amunet_datos_bancarios" position="after">
-                <field name="amunet_banco" invisible="amunet_forma_pago != 'transferencia'"/>
-                <field name="amunet_clabe" placeholder="18 digitos" invisible="amunet_forma_pago != 'transferencia'"/>
-                <field name="amunet_titular" invisible="amunet_forma_pago != 'transferencia'"/>
-                <field name="amunet_referencia_pago" invisible="amunet_forma_pago != 'transferencia'"/>
-                <field name="amunet_concepto_pago" invisible="amunet_forma_pago != 'transferencia'"/>
-                <field name="amunet_autorizacion_estado" readonly="1" invisible="amunet_autorizacion_estado == 'na'"/>
-                <field name="amunet_autorizacion_fecha" readonly="1" invisible="not amunet_autorizacion_fecha"/>
-                <field name="amunet_pago_publicado" readonly="1" invisible="not amunet_pago_publicado"/>
-                <field name="amunet_comprobante_fecha" readonly="1" invisible="not amunet_comprobante_fecha"/>
-                <field name="amunet_currency_id" invisible="1"/>
-                <field name="amunet_monto" groups="amunet_compras_general.group_compras_monto"/>
-                <field name="amunet_monto_visible" readonly="1" invisible="not amunet_monto_visible" groups="!amunet_compras_general.group_compras_monto"/>
-            </field>
+            <xpath expr="//field[@name='required_date']" position="attributes">
+                <attribute name="required">amunet_urgencia != 'normal'</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_material_request_list_urgencia" model="ir.ui.view">
+        <field name="name">amunet.material.request.list.urgencia</field>
+        <field name="model">amunet.material.request</field>
+        <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='required_date']" position="before">
+                <field name="amunet_urgencia" widget="badge"
+                       decoration-danger="amunet_urgencia == 'linea_detenida'"
+                       decoration-warning="amunet_urgencia == 'urge'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_material_request_search_urgencia" model="ir.ui.view">
+        <field name="name">amunet.material.request.search.urgencia</field>
+        <field name="model">amunet.material.request</field>
+        <field name="inherit_id" ref="amunet_material_request.view_amunet_material_request_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_to_validate']" position="after">
+                <separator/>
+                <filter name="f_urge" string="Urge"
+                        domain="[('amunet_urgencia','=','urge')]"/>
+                <filter name="f_linea_detenida" string="Para linea detenida"
+                        domain="[('amunet_urgencia','=','linea_detenida')]"/>
+                <filter name="f_urgentes" string="Urgentes (cualquiera)"
+                        domain="[('amunet_urgencia','!=','normal')]"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_state']" position="before">
+                <filter name="g_urgencia" string="Urgencia"
+                        context="{'group_by': 'amunet_urgencia'}"/>
+            </xpath>
         </field>
     </record>
 </odoo>

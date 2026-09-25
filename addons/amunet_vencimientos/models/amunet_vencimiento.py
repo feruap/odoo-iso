@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
-from odoo import api, fields, models
+from odoo.exceptions import UserError
+from odoo import _, api, fields, models
 
 DESTINATARIOS = [
     'desarrollo@amunet.com.mx',
@@ -81,6 +82,51 @@ class AmunetVencimiento(models.Model):
 
     alerta_ids = fields.One2many('amunet.vencimiento.alerta', 'vencimiento_id',
                                  string='Alertas enviadas')
+
+    # ── Candado: los datos que mueven la frontera de uso no se cambian a pelo ──
+    # Hay que pasar por el wizard de firma, que exige razon y PIN. El candado
+    # vive aqui y no en la vista porque la vista no es candado: un write por
+    # shell, por importacion o por otro modulo se la salta entera.
+    CAMPOS_FIRMADOS = ('fecha_vencimiento', 'numero', 'fecha_emision')
+
+    def write(self, vals):
+        tocados = [c for c in self.CAMPOS_FIRMADOS if c in vals]
+        if tocados and not self.env.context.get('amunet_venc_firmado'):
+            # el alta y las semillas del modulo no pasan por aqui: solo se
+            # revisa cuando el registro ya existe y alguien lo modifica
+            etiquetas = {
+                'fecha_vencimiento': _('la fecha de vencimiento'),
+                'numero': _('el número de registro'),
+                'fecha_emision': _('la fecha de emisión'),
+            }
+            raise UserError(_(
+                'Para cambiar %(campos)s hay que usar el botón '
+                '«Modificar con firma»: se necesita la razón del cambio y tu '
+                'PIN.\n\nEsta ficha dice hasta cuándo se puede usar el '
+                'producto; un cambio sin razón asentada no se sostiene en una '
+                'auditoría.'
+            ) % {'campos': ', '.join(etiquetas[c] for c in tocados)})
+        return super().write(vals)
+
+    def action_abrir_firma(self):
+        """Abre el wizard de modificacion con razon y firma."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Modificar vigencia con firma'),
+            'res_model': 'amunet.vencimiento.firma.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_vencimiento_id': self.id,
+                'default_actual_numero': self.numero,
+                'default_actual_fecha_vencimiento': self.fecha_vencimiento,
+                'default_actual_fecha_emision': self.fecha_emision,
+                'default_numero': self.numero,
+                'default_fecha_vencimiento': self.fecha_vencimiento,
+                'default_fecha_emision': self.fecha_emision,
+            },
+        }
 
     @api.depends('fecha_vencimiento')
     def _compute_dias_restantes(self):
