@@ -1249,6 +1249,81 @@
         </record>
             
         <!-- ======================================================== -->
+        <!-- MAVI-23: Funcionalidad prevista (hisopos)               -->
+        <!-- Reemplaza: VAMA-092 (STHIS04), VAMA-093 (STHIS02/03/06) -->
+        <!--            VAMA-104 (STHIS05)                           -->
+        <!-- ======================================================== -->
+        <record id="param_mavi_23" model="amunet.quality.check.parameter">
+            <field name="code">MAVI-23</field>
+            <field name="name">Funcionalidad prevista</field>
+        </record>
+
+        <!-- Absorción — STHIS02 (130-150 µL), STHIS03 y STHIS06 (140-170 µL) -->
+        <record id="spec_mavi_23_absorcion" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_23"/>
+            <field name="name">Absorción</field>
+            <field name="sequence">1</field>
+            <field name="evaluation_type">numeric_range</field>
+            <field name="acceptance_criteria">Según especificación de producto (µL)</field>
+        </record>
+
+        <!-- Expulsión de cabeza del cepillo — STHIS04 -->
+        <record id="spec_mavi_23_expulsion" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_23"/>
+            <field name="name">Expulsión de cabeza del cepillo por el tubo transparente.</field>
+            <field name="sequence">2</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">La cabeza del cepillo es expulsada completamente por el tubo transparente.</field>
+            <field name="binary_option_pass">La cabeza del cepillo es expulsada completamente por el tubo transparente.</field>
+            <field name="binary_option_fail">La cabeza del cepillo no es expulsada completamente por el tubo transparente.</field>
+            <field name="binary_prefix">Expulsión completa/Expulsión incompleta</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+        <!-- Prueba de extensión y retracción — STHIS05 -->
+        <record id="spec_mavi_23_extension" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_23"/>
+            <field name="name">1. Prueba de extensión y retracción</field>
+            <field name="sequence">3</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Se extiende y retrae sin fallas.</field>
+            <field name="binary_option_pass">Se extiende y retrae sin fallas.</field>
+            <field name="binary_option_fail">Presenta fallas al extender o retraer.</field>
+            <field name="binary_prefix">Sin fallas/Con fallas</field>
+            <field name="binary_suffix">al extender/retraer</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+        <!-- Prueba de firmeza en posición — STHIS05 -->
+        <record id="spec_mavi_23_firmeza" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_23"/>
+            <field name="name">2. Prueba de firmeza en posición</field>
+            <field name="sequence">4</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">Se mantiene firme en su posición extendida.</field>
+            <field name="binary_option_pass">Se mantiene firme en su posición extendida.</field>
+            <field name="binary_option_fail">No se mantiene firme (presenta juego o inestabilidad).</field>
+            <field name="binary_prefix">Firme/Inestable</field>
+            <field name="binary_suffix">en posición extendida</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+        <!-- Prueba de resistencia bajo presión — STHIS05 -->
+        <record id="spec_mavi_23_presion" model="amunet.quality.check.parameter.specification">
+            <field name="parameter_id" ref="param_mavi_23"/>
+            <field name="name">3. Prueba de resistencia bajo presión</field>
+            <field name="sequence">5</field>
+            <field name="evaluation_type">binary_selection</field>
+            <field name="acceptance_criteria">No colapsa bajo presión simulada.</field>
+            <field name="binary_option_pass">No colapsa bajo presión simulada.</field>
+            <field name="binary_option_fail">Colapsa bajo presión simulada.</field>
+            <field name="binary_prefix">No colapsa/Colapsa</field>
+            <field name="binary_suffix">bajo presión simulada</field>
+            <field name="binary_expected_option">with_prefix</field>
+        </record>
+
+
+        <!-- ======================================================== -->
         <!-- VAMA-111: D e sem peño de liberación de la almohadilla de conjugado -->
         <!-- ======================================================== -->
         <record id="param_vama_111" model="amunet.quality.check.parameter">

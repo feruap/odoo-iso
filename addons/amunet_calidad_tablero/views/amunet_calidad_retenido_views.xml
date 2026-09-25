@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ LISTA ============ -->
+    <record id="view_calidad_retenido_list" model="ir.ui.view">
+        <field name="name">amunet.calidad.retenido.list</field>
+        <field name="model">amunet.calidad.retenido</field>
+        <field name="arch" type="xml">
+            <list string="Material inmovilizado"
+                  create="false"
+                  delete="false"
+                  default_order="dias desc"
+                  decoration-danger="dias &gt; 30"
+                  decoration-warning="dias &gt; 7">
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="location_id"/>
+                <field name="cantidad"/>
+                <field name="fecha_ingreso" optional="show"/>
+                <field name="dias"/>
+                <field name="analista_id" widget="many2one_avatar_user"/>
+                <field name="quality_check_id" optional="show"/>
+                <field name="estado" widget="badge"/>
+                <button name="action_tomar" type="object" string="Tomar"
+                        icon="fa-hand-paper-o" title="Hacerme cargo"
+                        invisible="estado == 'resuelto'"/>
+                <button name="action_resolver" type="object" string="Resuelto"
+                        icon="fa-check" title="Marcar como resuelto"
+                        invisible="estado == 'resuelto'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============ KANBAN ============ -->
+    <record id="view_calidad_retenido_kanban" model="ir.ui.view">
+        <field name="name">amunet.calidad.retenido.kanban</field>
+        <field name="model">amunet.calidad.retenido</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="estado"
+                    quick_create="false"
+                    group_create="false"
+                    create="false"
+                    class="o_kanban_small_column">
+                <field name="dias"/>
+                <field name="estado"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_record_top mb-1">
+                            <strong class="o_kanban_record_title">
+                                <field name="product_id"/>
+                            </strong>
+                        </div>
+                        <div class="text-muted">
+                            Lote: <field name="lot_id"/>
+                        </div>
+                        <div class="text-muted">
+                            <field name="location_id"/>
+                        </div>
+                        <div class="mt-1">
+                            <span t-if="record.dias.raw_value &gt; 30"
+                                  class="badge text-bg-danger">
+                                <field name="dias"/> dias detenido
+                            </span>
+                            <span t-elif="record.dias.raw_value &gt; 7"
+                                  class="badge text-bg-warning">
+                                <field name="dias"/> dias detenido
+                            </span>
+                            <span t-else="" class="badge text-bg-secondary">
+                                <field name="dias"/> dias detenido
+                            </span>
+                        </div>
+                        <div class="o_kanban_record_bottom mt-2">
+                            <div class="oe_kanban_bottom_left">
+                                <field name="cantidad"/>
+                            </div>
+                            <div class="oe_kanban_bottom_right">
+                                <field name="analista_id" widget="many2one_avatar_user"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============ FORMULARIO ============ -->
+    <record id="view_calidad_retenido_form" model="ir.ui.view">
+        <field name="name">amunet.calidad.retenido.form</field>
+        <field name="model">amunet.calidad.retenido</field>
+        <field name="arch" type="xml">
+            <form string="Material inmovilizado" create="false">
+                <header>
+                    <button name="action_tomar" type="object" string="Tomar"
+                            class="btn-primary" invisible="estado == 'resuelto'"/>
+                    <button name="action_resolver" type="object"
+                            string="Marcar resuelto"
+                            invisible="estado == 'resuelto'"/>
+                    <button name="action_ver_analisis" type="object"
+                            string="Ver analisis"
+                            invisible="not quality_check_id"/>
+                    <field name="estado" widget="statusbar"
+                           statusbar_visible="pendiente,asignado,con_analisis,resuelto"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="product_id" readonly="1"/>
+                            <field name="lot_id" readonly="1"/>
+                            <field name="location_id" readonly="1"/>
+                            <field name="cantidad" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="fecha_ingreso" readonly="1"/>
+                            <field name="dias" readonly="1"/>
+                            <field name="analista_id" widget="many2one_avatar_user"/>
+                            <field name="quality_check_id" readonly="1"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Notas">
+                        <field name="notas" nolabel="1" placeholder="Que se hizo con este material"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ BUSQUEDA ============ -->
+    <record id="view_calidad_retenido_search" model="ir.ui.view">
+        <field name="name">amunet.calidad.retenido.search</field>
+        <field name="model">amunet.calidad.retenido</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="location_id"/>
+                <field name="analista_id"/>
+                <filter name="f_abiertos" string="Sin resolver"
+                        domain="[('estado','!=','resuelto')]"/>
+                <filter name="f_mios" string="Asignados a mi"
+                        domain="[('analista_id','=',uid)]"/>
+                <filter name="f_sin_asignar" string="Sin asignar"
+                        domain="[('analista_id','=',False)]"/>
+                <filter name="f_atrasados" string="Mas de 7 dias"
+                        domain="[('dias','&gt;',7)]"/>
+                <separator/>
+                <filter name="g_analista" string="Analista"
+                        context="{'group_by':'analista_id'}"/>
+                <filter name="g_estado" string="Estado"
+                        context="{'group_by':'estado'}"/>
+                <filter name="g_ubicacion" string="Ubicacion"
+                        context="{'group_by':'location_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============ ACCIONES ============ -->
+    <!-- Mi dia: lo del analista logueado, lo mas detenido primero -->
+    <record id="action_calidad_mi_dia" model="ir.actions.act_window">
+        <field name="name">Mi dia (Calidad)</field>
+        <field name="res_model">amunet.calidad.retenido</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('analista_id','=',uid)]</field>
+        <field name="context">{'search_default_f_abiertos': 1}</field>
+        <field name="search_view_id" ref="view_calidad_retenido_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No tienes material detenido</p>
+            <p>Aqui aparece el material inmovilizado en Calidad que te toca revisar.</p>
+        </field>
+    </record>
+
+    <!-- Vista del supervisor: sin filtro de usuario, agrupada por analista -->
+    <record id="action_calidad_retenido_todos" model="ir.actions.act_window">
+        <field name="name">Material inmovilizado</field>
+        <field name="res_model">amunet.calidad.retenido</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="context">{'search_default_f_abiertos': 1, 'search_default_g_analista': 1}</field>
+        <field name="search_view_id" ref="view_calidad_retenido_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No hay material detenido</p>
+            <p>Lo detecta solo el cron diario a partir de las existencias en las
+               ubicaciones de Calidad y Entrada.</p>
+        </field>
+    </record>
+
+    <!-- ============ MENUS ============ -->
+    <menuitem id="menu_calidad_mi_dia"
+              name="Mi dia (Calidad)"
+              parent="menu_tablero_calidad_root"
+              action="action_calidad_mi_dia"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor"
+              sequence="30"/>
+
+    <menuitem id="menu_calidad_retenido_todos"
+              name="Material inmovilizado"
+              parent="menu_tablero_calidad_root"
+              action="action_calidad_retenido_todos"
+              groups="amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager"
+              sequence="40"/>
+
+</odoo>

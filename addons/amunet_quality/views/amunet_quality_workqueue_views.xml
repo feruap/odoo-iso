@@ -53,6 +53,11 @@
         <field name="res_model">amunet.quality.check</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('state', 'not in', ['done'])]</field>
+        <!-- El filtro de usuario va en el contexto, no en el dominio: asi el
+             analista entra y ve lo suyo, y el supervisor puede quitar la
+             faceta "Mi trabajo" y ver la cola completa. Con dominio duro no
+             habria forma de quitarlo. -->
+        <field name="context">{'search_default_filter_mi_trabajo': 1}</field>
         <field name="view_id" ref="view_amunet_quality_my_work_list"/>
         <field name="search_view_id" ref="view_amunet_quality_check_search"/>
         <field name="help" type="html">

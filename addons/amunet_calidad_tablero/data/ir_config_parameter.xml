@@ -24,5 +24,19 @@
             <field name="value">365</field>
         </record>
 
+        <!-- Reparto automatico entre analistas. '1' reparte; cualquier otro
+             valor lo apaga sin tocar codigo, por si Calidad prefiere repartir
+             a mano una temporada. -->
+        <record id="param_reparto_automatico" model="ir.config_parameter">
+            <field name="key">amunet_calidad_tablero.reparto_automatico</field>
+            <field name="value">1</field>
+        </record>
+
+        <!-- Dias detenido a partir de los cuales se avisa al supervisor. -->
+        <record id="param_dias_alerta_retenido" model="ir.config_parameter">
+            <field name="key">amunet_calidad_tablero.dias_alerta_retenido</field>
+            <field name="value">7</field>
+        </record>
+
     </data>
 </odoo>

@@ -3,3 +3,4 @@ access_vencimiento_user,Vencimiento Usuario,model_amunet_vencimiento,base.group_
 access_vencimiento_manager,Vencimiento Gestor,model_amunet_vencimiento,amunet_documentos.group_documentos_manager,1,1,1,1
 access_alerta_user,Alerta Usuario,model_amunet_vencimiento_alerta,base.group_user,1,0,0,0
 access_alerta_manager,Alerta Gestor,model_amunet_vencimiento_alerta,amunet_documentos.group_documentos_manager,1,1,1,1
+access_venc_firma_wizard,Vigencia firma wizard,model_amunet_vencimiento_firma_wizard,base.group_user,1,1,1,1

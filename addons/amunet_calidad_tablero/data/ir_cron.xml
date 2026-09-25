@@ -22,4 +22,22 @@
         <field name="active" eval="True"/>
     </record>
 
+    <!-- Material inmovilizado: una pasada al dia.
+
+         A las 6 de la manana, antes de que empiece el turno: el analista
+         llega y ya tiene su dia repartido. Diario y no cada hora porque lo
+         que se mide son DIAS detenido; correrlo mas seguido solo repetiria
+         el mismo resultado. El cron es idempotente (un registro por lote y
+         ubicacion), asi que repetirlo no duplica nada. -->
+    <record id="cron_detectar_retenidos" model="ir.cron">
+        <field name="name">Calidad: detectar material inmovilizado y repartir</field>
+        <field name="model_id" ref="model_amunet_calidad_retenido"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_detectar_retenidos()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(DateTime.now().replace(hour=12, minute=0, second=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="active" eval="True"/>
+    </record>
+
 </odoo>
