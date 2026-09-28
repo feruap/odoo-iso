@@ -15,6 +15,7 @@
         'data/seeds_semiterminado.xml',
         'data/seeds_materiaprima.xml',
         'data/seeds_materialimpresion.xml',
+        'data/seeds_productoterminado.xml',
     ],
     'assets': {
         'web.assets_backend': [
