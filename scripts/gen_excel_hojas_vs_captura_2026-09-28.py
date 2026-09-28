@@ -1,29 +1,35 @@
 # -*- coding: utf-8 -*-
-"""Que solucion de captura le toca a cada hoja maestra, y cuales faltan."""
+"""Que solucion de captura le toca a cada hoja maestra. Version al cierre
+del 28-sep-2026, con los ajustes que devolvio Mery.
+
+La membrana lleva hasta TRES lineas impresas: prueba, referencia y control.
+La de control es la misma en las 15 hojas.
+"""
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 
-# hoja, nombre, producto terminado, linea de prueba, solucion, estado
+CONTROL = 'SPSCA25'
+
+# hoja, nombre, producto terminado, linea(s) de prueba, linea de referencia, estado
 LAMINADAS = [
-    ('SPHMC01', 'Covinet Ag', 'Covinet, Covflu-Net, Combo respiratorio', 'Proteína N SARS-CoV-2', 'SPSCA15', 'OK'),
-    ('SPHMC07', 'Hemoglobina', 'DMHBA01 Hemoglobina cualitativa', 'Hemoglobina humana (sangre oculta)', '', 'FALTA SOLUCIÓN Y MP'),
-    ('SPHMC09', 'Vitamina D', 'DMVID01 Vitaminet D', '25 (OH) D', 'SPSAN01', 'OK'),
-    ('SPHMC15', 'Influenza A+B', 'Flunet, Covflu-Net, Combo respiratorio', 'Influenza A / Influenza B (2 líneas)', 'SPSCA01 + SPSCA02', 'OK'),
-    ('SPHMC18', 'Dengue IgG/IgM', 'Dengue Net, DMDEN02', 'IgG humana / IgM humana (2 líneas)', 'SPSCA13 + SPSCA14', 'OK'),
-    ('SPHMC19', 'Dengue NS1', 'Dengue Net', 'NS1 de Dengue', 'SPSCA16', 'OK'),
-    ('SPHMC20', 'RSV', 'RSV Net, Combo respiratorio', 'RSV', 'SPSCA24', 'OK'),
-    ('SPHMC22', 'Sífilis', 'Sifilinet, Combo Sífilis+VIH', 'Antígeno Treponema pallidum', 'SPSPC01', 'OK (clave con Documentación)'),
-    ('SPHMC23', 'VIH p24', 'DMVIH02 VIH 4ta generación', 'p24', '', 'FALTA SOLUCIÓN (MP sí hay: MPANT41)'),
-    ('SPHMC24', 'PSA cualitativa', 'DMPSA02 Prostatinet', 'PSA', 'SPSCA21', 'OK'),
-    ('SPHMC37', 'TSH cualitativa', 'DMTSH01, DMTSH02', 'TSH', '', 'FALTA SOLUCIÓN (MP sí hay: MPANT55)'),
-    ('SPHMC38', 'PSA semicuantitativa', 'DMPSA01', 'PSA', 'SPSCA21', 'OK (la misma que SPHMC24)'),
-    ('SPHMC45', 'Salmonella typhi', 'DMSAT01, Combo Entamoeba+Salmonella', 'Salmonella typhi', '', 'FALTA SOLUCIÓN (MP sí hay: MPANT49)'),
-    ('SPHMC52', 'TSH semicuantitativa', '(ninguno la usa)', 'TSH', '', 'FALTA SOLUCIÓN + hoja sin producto'),
-    ('SPHMT01', 'Biotina', 'Ecohem, Isolister, Salmonet, VPH Net (PCR)', 'Biotina', 'SPSCA08', 'OK'),
+    ('SPHMC01', 'Covinet Ag', 'Covinet, Covflu-Net, Combo respiratorio', 'SPSCA15', '', 'Completa'),
+    ('SPHMC07', 'Hemoglobina', 'DMHBA01 Hemoglobina cualitativa', 'SPSCA20', '', 'Completa'),
+    ('SPHMC09', 'Vitamina D', 'DMVID01 Vitaminet D', 'SPSAN01', '', 'Completa'),
+    ('SPHMC15', 'Influenza A+B', 'Flunet, Covflu-Net, Combo respiratorio', 'SPSCA01 + SPSCA02', '', 'Completa'),
+    ('SPHMC18', 'Dengue IgG/IgM', 'Dengue Net, DMDEN02', 'SPSCA13 + SPSCA14', '', 'Completa'),
+    ('SPHMC19', 'Dengue NS1', 'Dengue Net', 'SPSCA16', '', 'Completa'),
+    ('SPHMC20', 'RSV', 'RSV Net, Combo respiratorio', 'SPSCA24', '', 'Completa'),
+    ('SPHMC22', 'Sífilis', 'Sifilinet, Combo Sífilis+VIH', 'SPSPC01', '', 'Completa (clave con Documentación)'),
+    ('SPHMC23', 'VIH p24', 'DMVIH02 VIH 4ta generación', 'SPSCA26', '', 'Completa'),
+    ('SPHMC24', 'PSA cualitativa', 'DMPSA02 Prostatinet', 'SPSCA21', '', 'Completa'),
+    ('SPHMC37', 'TSH cualitativa', 'DMTSH01', 'SPSCA27', '', 'Completa'),
+    ('SPHMC38', 'PSA semicuantitativa', 'DMPSA01', 'SPSCA21', 'FALTA DEFINIR', 'Falta la línea de referencia'),
+    ('SPHMC45', 'Salmonella typhi', 'DMSAT01, Combo Entamoeba+Salmonella', 'SPSCA28', '', 'Completa'),
+    ('SPHMC52', 'TSH semicuantitativa', 'DMTSH02', 'SPSCA27', 'FALTA DEFINIR', 'Falta la línea de referencia'),
+    ('SPHMT01', 'Biotina', 'Ecohem, Isolister, Salmonet, VPH Net (PCR)', 'SPSCA08', '', 'Completa'),
 ]
 
-# solucion, analito, hojas que la ocuparian, estado
 COBERTURA = [
     ('SPSCA03', 'THC', 'SPHMC10, SPHMC53, SPHMC76, SPHMT07', 'Sin anticuerpo: no se lamina aquí todavía'),
     ('SPSCA04', 'COC', 'SPHMC12, SPHMC54, SPHMC75, SPHMT09', 'Sin anticuerpo: no se lamina aquí todavía'),
@@ -37,22 +43,17 @@ COBERTURA = [
     ('SPSCA17', 'Alcohol', 'SPHMC67 Alcohol en saliva', 'Sin MP: la prueba es enzimática, no inmunológica'),
     ('SPSCA18', 'Ferritina', 'SPHMC25', 'Hoja aún sin ruta de laminado'),
     ('SPSCA19', 'hCG', 'SPHMC21, SPHMC65, SPHMT06', 'Hoja aún sin ruta de laminado'),
-    ('SPSCA20', 'Hemoglobina glicada', '(ninguna)', 'NO HAY hoja maestra de HbA1c'),
     ('SPSCA22', 'Rotavirus', 'SPHMC27', 'Hoja aún sin ruta de laminado'),
     ('SPSCA23', 'Adenovirus', 'SPHMC27', 'Hoja aún sin ruta de laminado'),
     ('SPSCA13', 'IgG humana', 'SPHMC18 y además SPHMC49, 62, 69, 70, 80, 85-88', 'Sirve a varias hojas'),
     ('SPSCA14', 'IgM humana', 'SPHMC18 y además SPHMC49, 62, 69, 70, 80, 85-88', 'Sirve a varias hojas'),
 ]
 
-# que falta dar de alta
-FALTANTES = [
-    ('Línea de control', 'MPANT03 Anticuerpo policlonal anti-ratón (línea control)',
-     'TODAS las 15 hojas', 'La tira lleva línea de prueba Y línea de control. Hoy no hay solución para la de control.'),
-    ('anti-p24', 'MPANT41 Anticuerpo de captura anti-p24', 'SPHMC23', 'El MP ya existe.'),
-    ('anti-TSH', 'MPANT55 Anticuerpo de captura anti-TSH', 'SPHMC37, SPHMC52', 'El MP ya existe.'),
-    ('anti-Salmonella', 'MPANT49 Anticuerpo de captura anti-Salmonella', 'SPHMC45', 'El MP ya existe.'),
-    ('anti-hemoglobina humana', '(no existe el MP)', 'SPHMC07',
-     'Es hemoglobina cualitativa (sangre oculta), NO glicada. Falta el anticuerpo en el catálogo.'),
+PENDIENTES = [
+    ('Línea de referencia', 'SPHMC38 PSA semicuantitativa, SPHMC52 TSH semicuantitativa',
+     'Solo las semicuantitativas la llevan. Falta decir qué anticuerpo y a qué '
+     'concentración: si es el mismo de la línea de prueba a otra concentración, '
+     'es clave aparte.'),
 ]
 
 azul = PatternFill('solid', fgColor='1F4E78')
@@ -74,7 +75,7 @@ def encabeza(ws, titulo, subtitulo, cols):
         c.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         c.border = borde
         ws.column_dimensions[get_column_letter(i)].width = w
-    ws.row_dimensions[4].height = 30
+    ws.row_dimensions[4].height = 34
     ws.freeze_panes = 'A5'
 
 
@@ -93,26 +94,26 @@ wb = openpyxl.Workbook()
 ws = wb.active
 ws.title = 'Hojas que se laminan aqui'
 encabeza(ws, 'Las 15 hojas maestras que se laminan en Amunet',
-         'Qué solución de captura se imprime en la membrana de cada una.',
-         [('Hoja', 11), ('Nombre', 26), ('Producto terminado', 40),
-          ('Línea de prueba', 34), ('Solución de captura', 20), ('Estado', 34)])
+         'La membrana lleva hasta tres líneas impresas. La de control es la misma en las 15.',
+         [('Hoja', 11), ('Nombre', 24), ('Producto terminado', 38),
+          ('Línea(s) de prueba', 20), ('Línea de referencia', 18),
+          ('Línea de control', 16), ('Estado', 30)])
 for n, f in enumerate(LAMINADAS):
-    pinta(ws, 5 + n, list(f), rojo if f[5].startswith('FALTA') else verde)
+    fila = [f[0], f[1], f[2], f[3], f[4], CONTROL, f[5]]
+    pinta(ws, 5 + n, fila, rojo if f[4] else verde)
 
-ws2 = wb.create_sheet('Faltan por dar de alta')
-encabeza(ws2, 'Soluciones de captura que faltan',
-         'Cinco huecos. Cuatro tienen el anticuerpo ya en el catálogo; uno no.',
-         [('Solución que falta', 26), ('Anticuerpo / antígeno', 46),
-          ('Hojas afectadas', 24), ('Nota', 62)])
-for n, f in enumerate(FALTANTES):
+ws2 = wb.create_sheet('Lo que falta')
+encabeza(ws2, 'Lo único que falta', 'Las 30 soluciones cubren todo lo demás.',
+         [('Qué falta', 24), ('Hojas afectadas', 46), ('Nota', 70)])
+for n, f in enumerate(PENDIENTES):
     pinta(ws2, 5 + n, list(f), ambar)
 
-ws3 = wb.create_sheet('Las otras 17 soluciones')
-encabeza(ws3, 'Soluciones ya dadas de alta que ninguna hoja laminada ocupa todavía',
-         'Son para hojas que hoy no se laminan aquí. No sobran: esperan su hoja.',
+ws3 = wb.create_sheet('Soluciones en espera')
+encabeza(ws3, 'Soluciones dadas de alta que ninguna hoja laminada ocupa todavía',
+         'No sobran: esperan su hoja.',
          [('Solución', 12), ('Analito', 26), ('Hojas que la ocuparían', 44), ('Nota', 52)])
 for n, f in enumerate(COBERTURA):
     pinta(ws3, 5 + n, list(f))
 
 wb.save('/tmp/claude-1001/-home-agentia-odoo-odoo-workspace/40e1928e-dd87-4d8e-b8a3-401e8c22dfcd/scratchpad/Hojas_maestras_vs_soluciones_captura.xlsx')
-print('OK: %d laminadas, %d faltantes, %d cobertura' % (len(LAMINADAS), len(FALTANTES), len(COBERTURA)))
+print('OK: %d hojas, %d pendientes, %d en espera' % (len(LAMINADAS), len(PENDIENTES), len(COBERTURA)))

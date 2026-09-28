@@ -32,6 +32,10 @@ FILAS = [
     ('SPSCA24', 'Solución de captura anti-RSV', 'MPANT39', 'Anticuerpo de captura anti-RSV', 'FPZ0181'),
     ('SPSPC01', 'Solución de captura Antígeno de Treponema pallidum', 'MPAG09', 'Antígeno de captura Treponema pallidum', 'GRCTPS206'),
     ('SPSAN01', 'Solución de captura 25 (OH) D', 'MPAG18', 'Antígeno Vitamina D-BSA', 'FPZ0188-3'),
+    ('SPSCA25', 'Solución de captura anti-ratón', 'MPANT03', 'Anticuerpo policlonal anti-ratón (línea control)', 'GRCGAMS002'),
+    ('SPSCA26', 'Solución de captura anti-p24 del VIH 1', 'MPANT41', 'Anticuerpo de captura anti-p24', ''),
+    ('SPSCA27', 'Solución de captura anti-TSH', 'MPANT55', 'Anticuerpo de captura anti-TSH', 'BECTSHS102'),
+    ('SPSCA28', 'Solución de captura anti-Salmonella typhi', 'MPANT49', 'Anticuerpo de captura anti-Salmonella', ''),
 ]
 
 # Las de drogas y la de alcohol van sin MP a proposito: Mery indico el 28-sep
@@ -56,7 +60,7 @@ borde = Border(*[Side(style='thin', color='BFBFBF')] * 4)
 
 ws['A1'] = 'Soluciones de captura — línea de laminado'
 ws['A1'].font = Font(size=14, bold=True, color='1F4E78')
-ws['A2'] = ('Se imprimen en la membrana (línea de prueba). Caducidad 3 días, no piden análisis. '
+ws['A2'] = ('Se imprimen en la membrana. Caducidad 3 días, no piden análisis. '
             'Las columnas ámbar son las que faltan por definir.')
 ws['A2'].font = Font(size=9, italic=True, color='808080')
 
@@ -91,7 +95,13 @@ ws.cell(row=r + 1, column=1,
 ws.cell(row=r + 2, column=1,
         value='SPSPC01 comparte abreviatura con las soluciones de borato (SPSPC03/04/05); '
               'Documentación tiene que confirmar si le toca clave propia.')
-for k in (1, 2):
+ws.cell(row=r + 3, column=1,
+        value='SPSCA25 anti-ratón es la LÍNEA DE CONTROL: la llevan las 15 hojas que se '
+              'laminan aquí, no una sola. Su cantidad y volumen aplican a todas.')
+ws.cell(row=r + 4, column=1,
+        value='Falta la línea de referencia de las dos semicuantitativas (SPHMC38 PSA y '
+              'SPHMC52 TSH): qué anticuerpo y a qué concentración.')
+for k in (1, 2, 3, 4):
     ws.cell(row=r + k, column=1).font = Font(size=9, italic=True)
 
 ws.freeze_panes = 'A%d' % (FILA0 + 1)
