@@ -87,7 +87,18 @@ class AmunetVencimiento(models.Model):
     # Hay que pasar por el wizard de firma, que exige razon y PIN. El candado
     # vive aqui y no en la vista porque la vista no es candado: un write por
     # shell, por importacion o por otro modulo se la salta entera.
-    CAMPOS_FIRMADOS = ('fecha_vencimiento', 'numero', 'fecha_emision')
+    # TODO lo que captura una persona va con razon y firma (Stacy,
+    # documentacion, 25-sep-2026): "si alguien va a cambiar algo en el registro,
+    # que quede razon y firma de todo".
+    #
+    # Quedan fuera solo tres campos calculados -- dias_restantes, estado y
+    # aviso_prorroga -- porque los escribe Odoo al recalcular, no una persona:
+    # protegerlos trabaria el propio recalculo. Y alerta_ids, que es el
+    # historial de correos enviados y lo llena el cron.
+    CAMPOS_FIRMADOS = (
+        'name', 'numero', 'tipo', 'titular', 'fecha_emision',
+        'fecha_vencimiento', 'archivo', 'archivo_filename', 'notas',
+    )
 
     def write(self, vals):
         tocados = [c for c in self.CAMPOS_FIRMADOS if c in vals]
@@ -95,9 +106,15 @@ class AmunetVencimiento(models.Model):
             # el alta y las semillas del modulo no pasan por aqui: solo se
             # revisa cuando el registro ya existe y alguien lo modifica
             etiquetas = {
-                'fecha_vencimiento': _('la fecha de vencimiento'),
+                'name': _('el nombre del documento'),
                 'numero': _('el número de registro'),
+                'tipo': _('el tipo de documento'),
+                'titular': _('el titular'),
                 'fecha_emision': _('la fecha de emisión'),
+                'fecha_vencimiento': _('la fecha de vencimiento'),
+                'archivo': _('el documento adjunto'),
+                'archivo_filename': _('el nombre del archivo'),
+                'notas': _('las notas'),
             }
             raise UserError(_(
                 'Para cambiar %(campos)s hay que usar el botón '
@@ -119,12 +136,13 @@ class AmunetVencimiento(models.Model):
             'target': 'new',
             'context': {
                 'default_vencimiento_id': self.id,
-                'default_actual_numero': self.numero,
-                'default_actual_fecha_vencimiento': self.fecha_vencimiento,
-                'default_actual_fecha_emision': self.fecha_emision,
+                'default_name': self.name,
                 'default_numero': self.numero,
-                'default_fecha_vencimiento': self.fecha_vencimiento,
+                'default_tipo': self.tipo,
+                'default_titular': self.titular,
                 'default_fecha_emision': self.fecha_emision,
+                'default_fecha_vencimiento': self.fecha_vencimiento,
+                'default_notas': self.notas,
             },
         }
 
