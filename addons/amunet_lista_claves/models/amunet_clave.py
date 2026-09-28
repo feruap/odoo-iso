@@ -6,6 +6,7 @@ CLASIFICACIONES = [
     ('st', 'Semiterminado'),
     ('mi', 'Material de Impresión'),
     ('pt', 'Producto Terminado'),
+    ('ptr', 'Producto Terminado Reactivos'),
     ('eq', 'Equipo'),
 ]
 

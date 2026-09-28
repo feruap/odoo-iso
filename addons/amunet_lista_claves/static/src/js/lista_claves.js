@@ -9,6 +9,7 @@ const CLASIFICACIONES = {
     st: { label: "Semiterminado",          icon: "fa-cogs",        color: "#6f42c1" },
     mi: { label: "Material de Impresión",  icon: "fa-print",       color: "#c53030" },
     pt: { label: "Producto Terminado",     icon: "fa-box",         color: "#e85d04" },
+    ptr: { label: "PT Reactivos",          icon: "fa-flask",       color: "#d62828" },
     eq: { label: "Equipos",               icon: "fa-wrench",      color: "#0d6efd" },
 };
 
