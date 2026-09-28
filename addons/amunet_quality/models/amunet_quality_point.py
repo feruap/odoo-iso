@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 
 _logger = logging.getLogger(__name__)
@@ -226,9 +226,27 @@ class AmunetQualityPoint(models.Model):
                 for point in applicable_points:
                     _logger.info(f"      - Point: {point.name} covering products: {point.product_ids.mapped('name')}")
             
+            # ANTES aqui habia un `continue`: si ningun punto de calidad
+            # mencionaba al producto, el analisis NO se creaba y el material se
+            # quedaba en cuarentena sin nada que lo sacara. Fallaba EN SILENCIO
+            # -solo esta linea de log, que ademas se borra en cada despliegue-.
+            # Almacen validaba, veia "en cuarentena" y no habia mas.
+            #
+            # Reportado por Mery el 28-sep-2026 con AMP/IN/00473 y AMP/IN/00480
+            # (STCPL04). Al medirlo: 140 productos con qc_required encendido no
+            # estaban en NINGUNO de los 338 puntos activos, y habia 7 lotes
+            # parados en cuarentena sin analisis.
+            #
+            # Regla que fijo Mery: **manda la bandera, no el punto de calidad**.
+            # Si el producto requiere analisis se GENERA SIEMPRE, aunque nazca
+            # sin parametros; los parametros se ajustan sobre la marcha. Lo que
+            # no puede pasar es que Calidad no se entere de que hay material
+            # esperandola.
             if not applicable_points:
-                _logger.info("    SKIPPED: No applicable points")
-                continue
+                _logger.info(
+                    "    %s no esta en ningun punto de calidad; el analisis se "
+                    "genera igual porque qc_required esta encendido.",
+                    product.default_code or product.name)
             
             # Evitar duplicados por producto/lote
             key = (product.id, lot.id if lot else 0)
@@ -287,8 +305,29 @@ class AmunetQualityPoint(models.Model):
                     qc_vals['removal_date'] = rem_date
             
             # 5. CREAR QC CON TODOS LOS DATOS
-            _logger.error(f">>>>> DEBUG: qc_vals={qc_vals} for product {product.name}")
             qc = QualityCheck.create(qc_vals)
+
+            # Sin punto de calidad, los parametros se toman del PRODUCTO, que es
+            # de donde los lee tambien el analisis de produccion
+            # (_load_product_parameters). Si el producto tampoco los tiene, el
+            # analisis nace vacio a proposito: Calidad lo ve, lo configura y lo
+            # captura. Un analisis vacio es un pendiente visible; ningun
+            # analisis es material perdido en cuarentena.
+            if not applicable_points:
+                try:
+                    qc._load_product_parameters()
+                except Exception:  # noqa: BLE001
+                    _logger.exception(
+                        "No se pudieron cargar los parametros del producto %s "
+                        "en el analisis %s", product.default_code, qc.name)
+                if not qc.test_line_ids:
+                    qc.message_post(body=_(
+                        'Analisis generado <b>sin parametros</b>: el producto '
+                        '%(prod)s no tiene parametros de calidad configurados ni '
+                        'aparece en ningun punto de control.<br/><br/>El material '
+                        'esta en cuarentena esperando a Calidad. Configura los '
+                        'parametros del producto y vuelve a abrir el analisis.'
+                    ) % {'prod': product.display_name})
             
             # Cargar parámetros desde todos los puntos aplicables
             for point in applicable_points:
