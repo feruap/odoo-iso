@@ -16,7 +16,7 @@
 # justo lo que rompio los permisos ese dia).
 set -uo pipefail
 
-DEST_EMAIL="${DEST_EMAIL:-fernando.ruiz@amunet.com.mx}"
+DEST_EMAIL="${DEST_EMAIL:-desarrollo@amunet.com.mx}"
 LOG=/home/agentia-odoo/scripts/audit_modulos_sin_codigo.log
 INBOX=/home/agentia-odoo/inboxes/desarrollo/inbox
 HALLAZGOS=""

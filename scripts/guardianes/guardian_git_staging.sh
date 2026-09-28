@@ -7,7 +7,7 @@
 # Creado: 2026-08-31
 
 REPO=/opt/odoo/staging
-DEST="${DEST:-fernando.ruiz@amunet.com.mx,desarrollo@amunet.com.mx}"
+DEST="${DEST:-desarrollo@amunet.com.mx}"
 DIAS_SIN_INTEGRAR=${DIAS_SIN_INTEGRAR:-14}
 LOG=/home/agentia-odoo/scripts/guardian_git_staging.log
 MAILER=/home/agentia-odoo/scripts/_send_mail.py
