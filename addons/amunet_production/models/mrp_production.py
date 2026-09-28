@@ -2785,6 +2785,35 @@ class MrpProduction(models.Model):
         return super()._prepare_stock_lot_values()
 
     # ── Supervisión de elaboración ──────────────────────────────────────────
+    def _amunet_get_supervisor_users(self):
+        """Quienes pueden firmar la supervision: el jefe directo y el de arriba.
+
+        DOS NIVELES, no mas. El jefe directo firma normalmente y el suyo puede
+        cubrirlo cuando no esta, sin que nadie mas arriba pueda meterse.
+
+        Antes solo valia el jefe directo, y si ese dia no estaba la solucion se
+        quedaba sin firmar. Caso que lo motivo: los Practicantes de Soluciones,
+        cuyas soluciones deben poder firmar Julissa (su jefa) o Alondra (jefa de
+        Julissa). Decision de Mery, 28-sep-2026.
+
+        La fuente es el organigrama de RRHH y nada mas: si alguien cambia de
+        puesto, esto se acomoda solo. No hay lista paralela que mantener.
+        """
+        self.ensure_one()
+        Emp = self.env['hr.employee'].sudo()
+        emp = Emp.search([('user_id', '=', self.env.user.id)], limit=1)
+        if not emp and self.create_uid:
+            emp = Emp.search([('user_id', '=', self.create_uid.id)], limit=1)
+        if not emp:
+            return self.env['res.users']
+        jefes = self.env['res.users']
+        directo = emp.parent_id
+        if directo and directo.user_id:
+            jefes |= directo.user_id
+        if directo and directo.parent_id and directo.parent_id.user_id:
+            jefes |= directo.parent_id.user_id
+        return jefes
+
     def _amunet_get_direct_manager_user(self):
         """Usuario del JEFE DIRECTO (manager de RRHH) de quien elabora la orden."""
         self.ensure_one()
@@ -2868,14 +2897,21 @@ class MrpProduction(models.Model):
                 'No puedes supervisar una solucion que tu misma elaboraste. '
                 'La supervision la firma tu jefe directo: asi queda separada '
                 'la elaboracion de su revision.'))
-        # CANDADO 1: solo el jefe asignado al mandarla a supervision.
-        if self.amunet_supervisor_id and quien != self.amunet_supervisor_id:
-            raise UserError(_(
-                'Solo %(jefe)s puede firmar la supervision de %(mo)s, porque es '
-                'el jefe directo a quien se le envio.\n\nSi ya no es quien debe '
-                'supervisarla, corrige el Responsable en Recursos Humanos y '
-                'vuelve a mandarla a supervision.'
-            ) % {'jefe': self.amunet_supervisor_id.name, 'mo': self.name})
+        # CANDADO 1: el jefe al que se le envio, o el de arriba cubriendolo.
+        # Dos niveles: asi la solucion no se queda sin firmar si el jefe directo
+        # no esta ese dia. Decision de Mery, 28-sep-2026.
+        if self.amunet_supervisor_id:
+            autorizados = self._amunet_get_supervisor_users() | self.amunet_supervisor_id
+            if quien not in autorizados:
+                nombres = ' o '.join(autorizados.mapped('name')) or \
+                    self.amunet_supervisor_id.name
+                raise UserError(_(
+                    'Solo %(jefes)s puede firmar la supervision de %(mo)s: es el '
+                    'jefe directo de quien la elaboro, o el jefe de ese jefe.'
+                    '\n\nSi ya no es quien debe supervisarla, corrige el '
+                    'Responsable en Recursos Humanos y vuelve a mandarla a '
+                    'supervision.'
+                ) % {'jefes': nombres, 'mo': self.name})
 
     def action_amunet_do_supervision(self):
         """El jefe directo abre la firma (PIN) para supervisar la elaboración."""
