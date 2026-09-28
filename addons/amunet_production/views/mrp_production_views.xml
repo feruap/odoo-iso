@@ -590,4 +590,30 @@
         </record>
 
     </data>
+
+    <!-- Filtro "Esperan mi firma" en la lista de Soluciones.
+
+         Solo lo ve quien puede firmar: el campo amunet_is_supervisor mira la
+         cadena de dos niveles (el jefe al que se le envio y el jefe de ese
+         jefe), asi que a quien no le toca ninguna el filtro no devuelve nada.
+         Sin este filtro habia que abrir las ordenes una por una para ver cual
+         esperaba la firma. Pedido por Mery el 28-sep-2026. -->
+    <record id="view_mrp_production_search_supervision" model="ir.ui.view">
+        <field name="name">mrp.production.search.amunet.supervision</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.view_mrp_production_filter"/>
+        <field name="arch" type="xml">
+            <filter name="todo" position="after">
+                <separator/>
+                <filter name="amunet_esperan_mi_firma"
+                        string="Esperan mi firma"
+                        domain="[('amunet_supervision_state', '=', 'requested'),
+                                 ('amunet_is_supervisor', '=', True)]"/>
+                <filter name="amunet_en_supervision"
+                        string="Enviadas a supervisión"
+                        domain="[('amunet_supervision_state', '=', 'requested')]"/>
+            </filter>
+        </field>
+    </record>
+
 </odoo>
