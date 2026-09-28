@@ -31,7 +31,7 @@ FILAS = [
     ('SPSCA23', 'Solución de captura anti-adenovirus', 'MPANT46', 'Anticuerpo de captura anti-Adenovirus', ''),
     ('SPSCA24', 'Solución de captura anti-RSV', 'MPANT39', 'Anticuerpo de captura anti-RSV', 'FPZ0181'),
     ('SPSPC01', 'Solución de captura Antígeno de Treponema pallidum', 'MPAG09', 'Antígeno de captura Treponema pallidum', 'GRCTPS206'),
-    ('SPSAN01', 'Solución de captura 25 (OH) D', 'MPAG02', 'Antígeno de captura 25-OH-D', ''),
+    ('SPSAN01', 'Solución de captura 25 (OH) D', 'MPAG18', 'Antígeno Vitamina D-BSA', 'FPZ0188-3'),
 ]
 
 # Las de drogas y la de alcohol van sin MP a proposito: Mery indico el 28-sep
