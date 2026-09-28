@@ -1,0 +1,186 @@
+.o_amunet_lc_root {
+    padding: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* ── Loading ── */
+.o_amunet_lc_loading {
+    text-align: center;
+    padding: 60px;
+    color: #6c757d;
+    font-size: 15px;
+}
+
+/* ── Hub ── */
+.o_amunet_lc_hub_header {
+    margin-bottom: 28px;
+}
+.o_amunet_lc_hub_title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1d3557;
+    margin-bottom: 4px;
+}
+.o_amunet_lc_hub_sub {
+    color: #6c757d;
+    margin: 0;
+    font-size: 14px;
+}
+.o_amunet_lc_hub_cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+}
+.o_amunet_lc_card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 16px;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #fff;
+    transition: box-shadow 0.15s, transform 0.1s;
+}
+.o_amunet_lc_card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+}
+.o_amunet_lc_card_label {
+    font-weight: 600;
+    font-size: 13px;
+    text-align: center;
+    color: #212529;
+}
+.o_amunet_lc_card_count {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* ── Detalle ── */
+.o_amunet_lc_detail_header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.o_amunet_lc_back {
+    font-size: 13px;
+    padding: 0;
+    color: #6c757d;
+}
+.o_amunet_lc_back:hover { color: #1d3557; }
+.o_amunet_lc_detail_title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1d3557;
+    flex: 1;
+}
+.o_amunet_lc_nueva {
+    margin-left: auto;
+}
+
+/* ── Pestañas ── */
+.o_amunet_lc_tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 16px;
+}
+.o_amunet_lc_tab {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px 6px 0 0;
+    background: none;
+    color: #6c757d;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: -2px;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s;
+}
+.o_amunet_lc_tab:hover { color: #1d3557; }
+.o_amunet_lc_tab.active {
+    color: #1d3557;
+    font-weight: 600;
+    border-bottom-color: #1d3557;
+}
+.o_amunet_lc_tab_badge {
+    background: #e9ecef;
+    color: #495057;
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 11px;
+}
+.o_amunet_lc_tab.active .o_amunet_lc_tab_badge {
+    background: #1d3557;
+    color: #fff;
+}
+
+/* ── Tabla ── */
+.o_amunet_lc_tab_content { margin-bottom: 24px; }
+.o_amunet_lc_tabla_wrap { overflow-x: auto; }
+.o_amunet_lc_tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.o_amunet_lc_tabla thead th {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
+}
+.o_amunet_lc_fila {
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.1s;
+}
+.o_amunet_lc_fila:hover { background: #f0f5ff; }
+.o_amunet_lc_fila td { padding: 9px 14px; }
+.o_amunet_lc_clave {
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d3557;
+    white-space: nowrap;
+}
+
+/* ── Sin pestaña ── */
+.o_amunet_lc_sin_pestana_header {
+    margin-top: 28px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1d3557;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+.o_amunet_lc_sin_pestana {
+    margin-top: 28px;
+    border-top: 1px dashed #dee2e6;
+    padding-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+.o_amunet_lc_mini_grupo { min-width: 280px; flex: 1; }
+.o_amunet_lc_mini_titulo {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6c757d;
+    margin-bottom: 8px;
+}

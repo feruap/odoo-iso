@@ -58,6 +58,11 @@
                 <span class="o_amunet_hub_label">Vigencia de trámites</span>
             </div>
 
+            <div class="o_amunet_hub_card" t-on-click="() => this.abrirAccionXml('amunet_lista_claves.action_lista_claves_hub')">
+                <i class="fa fa-list-alt fa-2x mb-2" style="color:#2d6a4f"/>
+                <span class="o_amunet_hub_label">Lista maestra de claves</span>
+            </div>
+
         </div>
 
         <!-- Pendientes — sección compacta -->
