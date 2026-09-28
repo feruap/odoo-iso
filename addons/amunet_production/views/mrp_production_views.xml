@@ -603,7 +603,7 @@
         <field name="model">mrp.production</field>
         <field name="inherit_id" ref="mrp.view_mrp_production_filter"/>
         <field name="arch" type="xml">
-            <filter name="to_do" position="after">
+            <filter name="todo" position="after">
                 <separator/>
                 <filter name="amunet_esperan_mi_firma"
                         string="Esperan mi firma"
