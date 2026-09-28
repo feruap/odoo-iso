@@ -11,10 +11,11 @@
                         <field name="anexo_titulo" readonly="1" nolabel="1"/>
                     </div>
 
-                    <div class="alert alert-info" role="alert" style="margin-bottom:12px;">
-                        Captura aquí los datos crudos. Al dar clic en
-                        <strong>Guardar y Cerrar</strong> quedan guardados en el análisis
-                        y puedes llenar los puntos de control sin perder nada.
+                    <div class="alert alert-warning" role="alert" style="margin-bottom:12px;">
+                        <strong>Tip:</strong> Si vas a tardar llenando, dale clic a
+                        <strong>Guardar progreso</strong> cada rato — así tus datos
+                        quedan a salvo aunque el formulario se cierre solo.
+                        Cuando termines, usa <strong>Guardar y Cerrar</strong>.
                     </div>
 
                     <!-- Encabezados de columnas como referencia -->
@@ -50,6 +51,10 @@
                             type="object"
                             name="action_guardar_cerrar"
                             class="btn-primary"/>
+                    <button string="Guardar progreso"
+                            type="object"
+                            name="action_guardar_progreso"
+                            class="btn-secondary"/>
                     <button string="Cancelar"
                             class="btn-secondary"
                             special="cancel"/>
