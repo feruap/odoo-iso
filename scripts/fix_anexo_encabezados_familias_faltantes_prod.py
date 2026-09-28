@@ -13,7 +13,12 @@ Familias cubiertas:
   MICAJ                 → ANEXO CAJA CAPLE
   STSAL                 → ANEXO SOLUCIÓN SALINA
 
-Solo se tocan análisis donde col2_header está vacío.
+Solo se tocan análisis donde col2_header está vacío Y QUE NO ESTEN FIRMADOS NI
+CERRADOS. Regla de Mery, 28-sep-2026: lo firmado y cerrado es historia, los
+arreglos son para adelante. Poner el encabezado hace visible en el PDF una
+columna que ese certificado no mostraba, y un certificado que ya firmo la
+Responsable Sanitaria no se modifica. Los analisis nuevos ya nacen con los
+encabezados correctos por el codigo del modulo.
 
 Solicitado por: Diana Flores — Control de Calidad, 2026-09-28
 """
@@ -73,10 +78,26 @@ for familia in FAMILIAS:
             ('tiene_anexos', '=', True),
             ('anexo_col2_header', 'in', [False, '']),
             ('product_id.default_code', 'like', prefijo + '%'),
+            # lo firmado o cerrado queda fuera
+            ('user_authorized_id', '=', False),
+            ('state', '!=', 'done'),
         ])
 
+    # Cuantos quedaron fuera por estar firmados: se reporta, no se tocan.
+    firmados = Check.browse([])
+    for prefijo in familia['prefijos']:
+        firmados |= Check.search([
+            ('tiene_anexos', '=', True),
+            ('anexo_col2_header', 'in', [False, '']),
+            ('product_id.default_code', 'like', prefijo + '%'),
+            '|', ('user_authorized_id', '!=', False), ('state', '=', 'done'),
+        ])
+    if firmados:
+        print(f"  {familia['prefijos']}: {len(firmados)} analisis FIRMADOS que NO se tocan: "
+              f"{', '.join(c.name or str(c.id) for c in firmados)}")
+
     if not checks:
-        print(f"  {familia['prefijos']}: sin análisis que actualizar")
+        print(f"  {familia['prefijos']}: sin análisis abiertos que actualizar")
         continue
 
     c1, c2, c3, c4, c5, c6, c7, c8 = familia['cols']

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import timedelta
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 
 class AmunetQualityAnexoWizardLine(models.TransientModel):
@@ -60,15 +61,25 @@ class AmunetQualityAnexoWizard(models.TransientModel):
             'col7': line.col7, 'col8': line.col8,
         }) for line in check.anexo_line_ids]
 
-    def action_guardar_cerrar(self):
-        """Escribe las líneas del wizard al QC sin borrar datos del reporte."""
+    def _sync_to_check(self):
+        """Sincroniza las líneas del wizard al modelo permanente. Devuelve True si era corrección."""
         self.ensure_one()
         check = self.check_id
+        # Un analisis firmado es historia y no se toca. El boton que abre la
+        # captura ya lo impide, pero AQUI es donde de verdad se escribe: un
+        # wizard abierto antes de la firma seguia guardando despues de ella, y
+        # ahora los wizard viven 48 horas, asi que es facil que pase.
+        if check.user_authorized_id or check.state == 'done':
+            raise UserError(_(
+                'El análisis %(folio)s ya fue autorizado: su anexo no se puede '
+                'modificar.\n\nLo capturado en esta ventana no se guardó. Si '
+                'hace falta una corrección, la pide el Responsable Sanitario.'
+            ) % {'folio': check.name or check.id})
         AnexoLine = self.env['amunet.quality.anexo.line']
 
         existing = check.anexo_line_ids.sorted(lambda l: (l.sequence, l.id))
         wizard_lines = self.line_ids.sorted(lambda l: (l.sequence, l.id))
-        es_correccion = bool(existing)  # Si ya había datos, es una corrección
+        es_correccion = bool(existing)
 
         for i, wl in enumerate(wizard_lines):
             vals = {
@@ -83,17 +94,35 @@ class AmunetQualityAnexoWizard(models.TransientModel):
             else:
                 AnexoLine.create({'check_id': check.id, **vals})
 
-        # Eliminar sólo las líneas que el usuario quitó del wizard
         for j in range(len(wizard_lines), len(existing)):
             existing[j].unlink()
 
-        # Registrar en el historial del análisis quién capturó/modificó el anexo
-        titulo = check.anexo_titulo or 'Anexo'
+        return es_correccion
+
+    def action_guardar_progreso(self):
+        """Guarda las líneas al análisis sin cerrar el diálogo."""
+        self.ensure_one()
+        self._sync_to_check()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'message': 'Progreso guardado. Puedes seguir capturando con tranquilidad.',
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
+    def action_guardar_cerrar(self):
+        """Guarda las líneas al análisis y cierra el diálogo."""
+        self.ensure_one()
+        es_correccion = self._sync_to_check()
+
+        titulo = self.check_id.anexo_titulo or 'Anexo'
         usuario = self.env.user.name
-        if es_correccion:
-            msg = f'<b>Corrección de {titulo}</b> realizada por {usuario}.'
-        else:
-            msg = f'<b>Captura de {titulo}</b> realizada por {usuario}.'
-        check.sudo().message_post(body=msg, message_type='comment', subtype_xmlid='mail.mt_note')
+        msg = (f'<b>Corrección de {titulo}</b> realizada por {usuario}.'
+               if es_correccion
+               else f'<b>Captura de {titulo}</b> realizada por {usuario}.')
+        self.check_id.sudo().message_post(body=msg, message_type='comment', subtype_xmlid='mail.mt_note')
 
         return {'type': 'ir.actions.act_window_close'}

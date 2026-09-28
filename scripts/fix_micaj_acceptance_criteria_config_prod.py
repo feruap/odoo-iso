@@ -1,97 +1,79 @@
 """
-CORRECCIÓN acceptance_criteria MICAJ — Configuración fuente (producción)
-========================================================================
-El fix de 2026-09-23 (fix_micaj_etiquetas_analisis_prod.py) corrigió los
-registros existentes de amunet_quality_test_line_detail en producción, pero
-NO actualizó la fuente (amunet_quality_parameter_specification_config).
+CORRECCION acceptance_criteria MICAJ (produccion)
+=================================================
+Ancho y Largo de la Caja Caple nacian con los criterios intercambiados:
 
-Por eso, cada análisis nuevo de MICAJ seguía naciendo con criterios
-intercambiados:
-  - Ancho (rango 105-115): "200 mm ±5 mm"  ← incorrecto
-  - Largo (rango 195-205): "110 mm ±5 mm"  ← incorrecto
+    Ancho (rango 105-115)  decia "200 mm +/-5 mm"   <- del Largo
+    Largo (rango 195-205)  decia "110 mm +/-5 mm"   <- del Ancho
 
-Este script corrige los registros de config (la fuente) para que todos los
-análisis futuros hereden los criterios correctos. Los análisis existentes que
-aún tengan los criterios invertidos también se corrigen.
+El fix del 23-sep corrigio los analisis de entonces pero NO la configuracion
+fuente, asi que cada analisis nuevo volvia a nacer mal. Esto arregla la fuente.
 
-Solicitado por: Diana Flores — Control de Calidad, 2026-09-28
+DOS AJUSTES sobre la version original, 28-sep-2026:
+
+1. Por ORM, no por SQL. El acceptance_criteria de un analisis es un dato de
+   negocio: un UPDATE directo se salta validaciones, computes, el historial y
+   cualquier modulo que escuche el write. Regla del CLAUDE.md, y ya nos costo
+   una vez (la forma de pago de SMP/26/00303).
+
+2. Los analisis FIRMADOS O CERRADOS no se tocan. Regla de Mery: lo firmado es
+   historia, los arreglos son para adelante. Se corrige la fuente -- que es lo
+   que gobierna los analisis por venir -- y los analisis abiertos.
+
+Solicitado por: Diana Flores -- Control de Calidad, 2026-09-28
+Idempotente: solo escribe donde el criterio no es ya el correcto.
 """
 
-import logging
-_logger = logging.getLogger(__name__)
+Cfg = env['amunet.quality.parameter.specification.config']
+Check = env['amunet.quality.check']
+Detail = env['amunet.quality.test.line.detail']
 
-cr = env.cr
+# (nombre de la especificacion, min_value que la identifica, criterio correcto)
+# El texto va con el signo mas-menos tal como lo escribe el sistema, para no
+# introducir una variante nueva del mismo criterio.
+CRITERIOS = [
+    ('Ancho', 105, u'110 mm ±5 mm'),
+    ('Largo', 195, u'200 mm ±5 mm'),
+]
 
-# 1. Corregir la configuración fuente (amunet_quality_parameter_specification_config)
-cr.execute("""
-UPDATE amunet_quality_parameter_specification_config cfg
-SET acceptance_criteria = '110 mm ±5 mm'
-FROM amunet_quality_parameter_product_rel rel
-JOIN product_template pt ON rel.product_tmpl_id = pt.id
-WHERE cfg.product_parameter_rel_id = rel.id
-  AND pt.default_code LIKE 'MICAJ%%'
-  AND cfg.specification_name = 'Ancho'
-  AND cfg.min_value = 105
-  AND (cfg.acceptance_criteria != '110 mm ±5 mm' OR cfg.acceptance_criteria IS NULL);
-""")
-n_ancho_cfg = cr.rowcount
-_logger.info(f"Config fuente — Ancho corregidos: {n_ancho_cfg}")
+print('-- 1. Configuracion fuente (gobierna los analisis nuevos) --')
+for nombre, minimo, correcto in CRITERIOS:
+    cfgs = Cfg.search([
+        ('specification_name', '=', nombre),
+        ('min_value', '=', minimo),
+        ('product_parameter_rel_id.product_tmpl_id.default_code', 'like', 'MICAJ%'),
+    ])
+    malas = cfgs.filtered(lambda c: (c.acceptance_criteria or '') != correcto)
+    for c in malas:
+        print('   %s %s: "%s" -> "%s"' % (
+            c.product_parameter_rel_id.product_tmpl_id.default_code, nombre,
+            c.acceptance_criteria or '(vacio)', correcto))
+    if malas:
+        malas.write({'acceptance_criteria': correcto})
+    print('   %s: %s de %s configs corregidas' % (nombre, len(malas), len(cfgs)))
 
-cr.execute("""
-UPDATE amunet_quality_parameter_specification_config cfg
-SET acceptance_criteria = '200 mm ±5 mm'
-FROM amunet_quality_parameter_product_rel rel
-JOIN product_template pt ON rel.product_tmpl_id = pt.id
-WHERE cfg.product_parameter_rel_id = rel.id
-  AND pt.default_code LIKE 'MICAJ%%'
-  AND cfg.specification_name = 'Largo'
-  AND cfg.min_value = 195
-  AND (cfg.acceptance_criteria != '200 mm ±5 mm' OR cfg.acceptance_criteria IS NULL);
-""")
-n_largo_cfg = cr.rowcount
-_logger.info(f"Config fuente — Largo corregidos: {n_largo_cfg}")
-
-# 2. Corregir análisis existentes que aún tengan criterios invertidos
-cr.execute("""
-UPDATE amunet_quality_test_line_detail tld
-SET acceptance_criteria = '110 mm ±5 mm'
-FROM amunet_quality_check qc
-JOIN product_product pp ON qc.product_id = pp.id
-JOIN product_template pt ON pp.product_tmpl_id = pt.id
-WHERE tld.check_id = qc.id
-  AND pt.default_code LIKE 'MICAJ%%'
-  AND tld.name = 'Ancho'
-  AND tld.min_value = 105
-  AND (tld.acceptance_criteria != '110 mm ±5 mm' OR tld.acceptance_criteria IS NULL);
-""")
-n_ancho_det = cr.rowcount
-
-cr.execute("""
-UPDATE amunet_quality_test_line_detail tld
-SET acceptance_criteria = '200 mm ±5 mm'
-FROM amunet_quality_check qc
-JOIN product_product pp ON qc.product_id = pp.id
-JOIN product_template pt ON pp.product_tmpl_id = pt.id
-WHERE tld.check_id = qc.id
-  AND pt.default_code LIKE 'MICAJ%%'
-  AND tld.name = 'Largo'
-  AND tld.min_value = 195
-  AND (tld.acceptance_criteria != '200 mm ±5 mm' OR tld.acceptance_criteria IS NULL);
-""")
-n_largo_det = cr.rowcount
+print('\n-- 2. Analisis ABIERTOS (los firmados quedan como estan) --')
+for nombre, minimo, correcto in CRITERIOS:
+    dets = Detail.search([
+        ('name', '=', nombre),
+        ('min_value', '=', minimo),
+        ('check_id.product_id.default_code', 'like', 'MICAJ%'),
+    ])
+    abiertos = dets.filtered(
+        lambda d: not d.check_id.user_authorized_id and d.check_id.state != 'done')
+    firmados = dets - abiertos
+    malas = abiertos.filtered(lambda d: (d.acceptance_criteria or '') != correcto)
+    for d in malas:
+        print('   %s (%s) %s: "%s" -> "%s"' % (
+            d.check_id.name or d.check_id.id, d.check_id.product_id.default_code,
+            nombre, d.acceptance_criteria or '(vacio)', correcto))
+    if malas:
+        malas.write({'acceptance_criteria': correcto})
+    pend = firmados.filtered(lambda d: (d.acceptance_criteria or '') != correcto)
+    print('   %s: %s corregidos en analisis abiertos; %s en analisis FIRMADOS que NO se tocan%s'
+          % (nombre, len(malas), len(pend),
+             (' (%s)' % ', '.join(sorted(set(
+                 d.check_id.name or str(d.check_id.id) for d in pend)))) if pend else ''))
 
 env.cr.commit()
-
-print(f"""
-✓ Fix acceptance_criteria MICAJ aplicado:
-
-  Configuración fuente:
-    Ancho corregidos: {n_ancho_cfg}
-    Largo corregidos: {n_largo_cfg}
-
-  Análisis existentes:
-    Ancho corregidos: {n_ancho_det}
-    Largo corregidos: {n_largo_det}
-
-  Desde ahora todo análisis nuevo de MICAJ hereda los criterios correctos.
-""")
+print('\nListo. Todo analisis nuevo de MICAJ hereda ya los criterios correctos.')

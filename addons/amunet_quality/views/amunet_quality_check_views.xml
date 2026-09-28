@@ -466,7 +466,7 @@
                         </div>
                         <div style="padding: 4px 0 12px 0; color:#888; font-size:10pt;"
                              invisible="not user_authorized_id and state != 'done'">
-                            🔒 Anexo cerrado — análisis autorizado
+                            Anexo cerrado: el análisis ya fue autorizado
                         </div>
 
                         <!-- Vista de solo lectura de las filas ya guardadas -->
