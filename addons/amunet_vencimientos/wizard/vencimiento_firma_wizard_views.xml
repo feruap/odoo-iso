@@ -8,10 +8,9 @@
             <form string="Modificar vigencia con firma">
                 <field name="vencimiento_id" invisible="1"/>
                 <div class="alert alert-warning" role="alert">
-                    Los campos vienen con lo que hay hoy. Cambia lo que haga
-                    falta, anota la razón y fírmalo con tu PIN: en el expediente
-                    del registro queda asentado qué cambió, de qué a qué, quién
-                    lo hizo y por qué.
+                    Modifica los datos que necesites corregir, escribe el motivo
+                    del cambio y confirma con tu PIN. El sistema guardará el
+                    historial: qué cambió, quién lo hizo y por qué.
                 </div>
                 <group>
                     <group string="Datos del documento">
