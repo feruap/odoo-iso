@@ -30,8 +30,8 @@ FILAS = [
     ('SPSCA22', 'Solución de captura anti-rotavirus', 'MPANT44', 'Anticuerpo de captura anti-Rotavirus', ''),
     ('SPSCA23', 'Solución de captura anti-adenovirus', 'MPANT46', 'Anticuerpo de captura anti-Adenovirus', ''),
     ('SPSCA24', 'Solución de captura anti-RSV', 'MPANT39', 'Anticuerpo de captura anti-RSV', 'FPZ0181'),
-    ('SPSPC01', 'Solución de captura Antígeno de Treponema pallidum', 'MPAG09', 'Antígeno de captura Treponema pallidum', 'GRCTPS206'),
-    ('SPSAN01', 'Solución de captura 25 (OH) D', 'MPAG18', 'Antígeno Vitamina D-BSA', 'FPZ0188-3'),
+    ('SPSCA29', 'Solución de captura Antígeno de Treponema pallidum', 'MPAG09', 'Antígeno de captura Treponema pallidum', 'GRCTPS206'),
+    ('SPSCA30', 'Solución de captura 25 (OH) D', 'MPAG18', 'Antígeno Vitamina D-BSA', 'FPZ0188-3'),
     ('SPSCA25', 'Solución de captura anti-ratón', 'MPANT03', 'Anticuerpo policlonal anti-ratón (línea control)', 'GRCGAMS002'),
     ('SPSCA26', 'Solución de captura anti-p24 del VIH 1', 'MPANT41', 'Anticuerpo de captura anti-p24', ''),
     ('SPSCA27', 'Solución de captura anti-TSH', 'MPANT55', 'Anticuerpo de captura anti-TSH', 'BECTSHS102'),
@@ -93,8 +93,8 @@ ws.cell(row=r + 1, column=1,
         value='Las 5 de drogas (THC, COC, AMP, MET, OPI) y la de alcohol van sin anticuerpo: '
               'por ahora no se fabrican desde este punto, solo por línea corta.')
 ws.cell(row=r + 2, column=1,
-        value='SPSPC01 comparte abreviatura con las soluciones de borato (SPSPC03/04/05); '
-              'Documentación tiene que confirmar si le toca clave propia.')
+        value='Las dos últimas cambiaron de clave: Treponema pasó a SPSCA29 y vitamina D a '
+              'SPSCA30, para que las 30 sigan una sola serie.')
 ws.cell(row=r + 3, column=1,
         value='SPSCA25 anti-ratón es la LÍNEA DE CONTROL: la llevan las 15 hojas que se '
               'laminan aquí, no una sola. Su cantidad y volumen aplican a todas.')
