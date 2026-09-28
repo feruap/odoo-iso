@@ -24,7 +24,7 @@ FILAS = [
     ('SPSCA16', 'Solución de captura anti-NS1', 'MPANT28', 'Anticuerpo de captura anti-NS1 del Dengue', ''),
     ('SPSCA17', 'Solución de captura anti-ALC', '', '', ''),
     ('SPSCA18', 'Solución de captura anti-ferritina', 'MPANT42', 'Anticuerpo de captura anti-ferritina', ''),
-    ('SPSCA19', 'Solución de captura anti-hCG', 'MPANT09', 'Anticuerpo de captura anti-hCG', ''),
+    ('SPSCA19', 'Solución de captura anti-hCG', 'MPANT09', 'Anticuerpo de captura anti-hCG', 'FPZ0612'),
     ('SPSCA20', 'Solución de captura anti-hemoglobina glicada', 'MPANT12', 'Anticuerpo de captura anti-HbA1c', 'BRJHBAS101'),
     ('SPSCA21', 'Solución de captura anti-PSA', 'MPANT37', 'Anticuerpo de captura anti-PSA', 'BENPSAN101'),
     ('SPSCA22', 'Solución de captura anti-rotavirus', 'MPANT44', 'Anticuerpo de captura anti-Rotavirus', ''),
