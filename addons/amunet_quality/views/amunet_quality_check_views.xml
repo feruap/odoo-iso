@@ -455,13 +455,19 @@
                     <!-- Contenido: siempre visible para material_con_anexo; o si tiene_anexos está activado -->
                     <group invisible="not (tiene_anexos or is_material_con_anexo) or not sampling_confirmed" colspan="4" col="1">
 
-                        <!-- Botón principal de captura — solo visible al área de calidad; permite correcciones en cualquier estado -->
+                        <!-- Botón de captura: visible solo si el análisis no ha sido autorizado -->
                         <div style="padding: 8px 0 12px 0;"
+                             invisible="user_authorized_id or state == 'done'"
                              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_sanitary,amunet_quality.group_quality_manager">
                             <button string="✎  Capturar / Editar Datos del Anexo"
                                     type="object"
                                     name="action_open_anexo_wizard"
                                     class="btn btn-primary btn-lg"/>
+                        </div>
+                        <!-- Indicador de solo lectura cuando ya está autorizado -->
+                        <div style="padding: 4px 0 12px 0; color:#888; font-size:10pt;"
+                             invisible="not user_authorized_id and state != 'done'">
+                            🔒 Anexo cerrado — análisis autorizado
                         </div>
 
                         <!-- Vista de solo lectura de las filas ya guardadas -->

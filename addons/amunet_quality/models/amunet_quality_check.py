@@ -99,7 +99,7 @@ class AmunetQualityCheck(models.Model):
             rec.is_balanza = code.upper().startswith('EQBAD')
 
     _PREFIJOS_ANEXO = ('MPCAR', 'MPCAC', 'MPCAG', 'SPHMC', 'SPHMT', 'STGO', 'STHIS',
-                       'DM', 'DIAM', 'DRAM', 'DL', 'STB', 'STRE')
+                       'DM', 'DIAM', 'DRAM', 'DL', 'STB', 'STRE', 'STDSC', 'MICAJ', 'STSAL')
 
     @api.depends('product_id.default_code')
     def _compute_is_material_con_anexo(self):
@@ -1872,6 +1872,45 @@ class AmunetQualityCheck(models.Model):
                 'anexo_col4_header': 'Dimensiones',
                 'anexo_col5_header': 'Funcionalidad prevista',
                 'anexo_col6_header': 'Observaciones',
+                'anexo_col7_header': '',
+                'anexo_col8_header': '',
+            })
+        elif code.startswith('MICAJ'):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO CAJA CAPLE',
+                'anexo_col1_header': 'Apariencia',
+                'anexo_col2_header': 'Ancho Interno (mm)',
+                'anexo_col3_header': 'Largo Interno (mm)',
+                'anexo_col4_header': 'Ancho Externo (mm)',
+                'anexo_col5_header': 'Largo Externo (mm)',
+                'anexo_col6_header': 'Alineación',
+                'anexo_col7_header': 'Desempeño',
+                'anexo_col8_header': '',
+            })
+        elif code.startswith('STSAL'):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO SOLUCIÓN SALINA',
+                'anexo_col1_header': 'Apariencia',
+                'anexo_col2_header': 'Observaciones',
+                'anexo_col3_header': '',
+                'anexo_col4_header': '',
+                'anexo_col5_header': '',
+                'anexo_col6_header': '',
+                'anexo_col7_header': '',
+                'anexo_col8_header': '',
+            })
+        elif code.startswith('STDSC'):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO DESECANTE',
+                'anexo_col1_header': 'Apariencia',
+                'anexo_col2_header': 'Dimensiones (ancho/largo)',
+                'anexo_col3_header': 'Peso inicial',
+                'anexo_col4_header': 'Peso húmedo',
+                'anexo_col5_header': 'Peso seco',
+                'anexo_col6_header': 'Absorción',
                 'anexo_col7_header': '',
                 'anexo_col8_header': '',
             })

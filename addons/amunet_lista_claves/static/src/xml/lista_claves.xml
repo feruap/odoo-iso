@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="amunet_lista_claves.ListaClaves">
+<div class="o_action o_amunet_lc_root">
+
+    <!-- ── Cargando ── -->
+    <t t-if="state.loading">
+        <div class="o_amunet_lc_loading">
+            <i class="fa fa-spinner fa-spin me-2"/>Cargando...
+        </div>
+    </t>
+
+    <!-- ── HUB: tarjetas de clasificación ── -->
+    <t t-elif="state.vista === 'hub'">
+        <div class="o_amunet_lc_hub_header">
+            <h2 class="o_amunet_lc_hub_title">Lista Maestra de Claves</h2>
+            <p class="o_amunet_lc_hub_sub">Catálogo de productos por clasificación</p>
+        </div>
+        <div class="o_amunet_lc_hub_cards">
+            <t t-foreach="clasificacionesList" t-as="cl" t-key="cl.key">
+                <div class="o_amunet_lc_card" t-on-click="() => this.abrirClasificacion(cl.key)">
+                    <i t-attf-class="fa #{cl.icon} fa-2x o_amunet_lc_card_icon"
+                       t-attf-style="color:#{cl.color}"/>
+                    <span class="o_amunet_lc_card_label" t-esc="cl.label"/>
+                    <span class="o_amunet_lc_card_count">
+                        <t t-esc="cl.count"/> clave<t t-if="cl.count !== 1">s</t>
+                    </span>
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <!-- ── DETALLE: pestañas por subcategoría ── -->
+    <t t-else="">
+        <!-- Encabezado con volver y nueva clave -->
+        <div class="o_amunet_lc_detail_header">
+            <button class="btn btn-link o_amunet_lc_back" t-on-click="volverHub">
+                <i class="fa fa-arrow-left me-1"/>Volver
+            </button>
+            <span class="o_amunet_lc_detail_title">
+                <i t-attf-class="fa #{clasificacionActual.icon} me-2"
+                   t-attf-style="color:#{clasificacionActual.color}"/>
+                <t t-esc="clasificacionActual.label"/>
+            </span>
+            <button class="btn btn-primary btn-sm o_amunet_lc_nueva" t-on-click="nuevaClave">
+                <i class="fa fa-plus me-1"/>Nueva clave
+            </button>
+        </div>
+
+        <!-- Pestañas para grupos con más de 3 items -->
+        <t t-if="gruposConPestana.length">
+            <div class="o_amunet_lc_tabs">
+                <t t-foreach="gruposConPestana" t-as="grupo" t-key="grupo.nombre">
+                    <button t-attf-class="o_amunet_lc_tab {{ state.tabActiva === grupo.nombre ? 'active' : '' }}"
+                            t-on-click="() => this.setTab(grupo.nombre)">
+                        <t t-esc="grupo.nombre"/>
+                        <span class="o_amunet_lc_tab_badge" t-esc="grupo.items.length"/>
+                    </button>
+                </t>
+            </div>
+            <div class="o_amunet_lc_tab_content">
+                <t t-foreach="gruposConPestana" t-as="grupo" t-key="grupo.nombre">
+                    <t t-if="state.tabActiva === grupo.nombre">
+                        <t t-call="amunet_lista_claves.TablaClaves">
+                            <t t-set="items" t-value="grupo.items"/>
+                        </t>
+                    </t>
+                </t>
+            </div>
+        </t>
+
+        <!-- Items sin pestaña (grupos con 3 o menos) -->
+        <t t-if="gruposSinPestana.length">
+            <div class="o_amunet_lc_sin_pestana">
+                <t t-foreach="gruposSinPestana" t-as="grupo" t-key="grupo.nombre">
+                    <div class="o_amunet_lc_mini_grupo">
+                        <div class="o_amunet_lc_mini_titulo" t-esc="grupo.nombre"/>
+                        <t t-call="amunet_lista_claves.TablaClaves">
+                            <t t-set="items" t-value="grupo.items"/>
+                        </t>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </t>
+
+</div>
+</t>
+
+<!-- ── Subtemplante: tabla de claves ── -->
+<t t-name="amunet_lista_claves.TablaClaves">
+    <div class="o_amunet_lc_tabla_wrap">
+        <table class="o_amunet_lc_tabla">
+            <thead>
+                <tr>
+                    <th>Clave</th>
+                    <th>Nombre</th>
+                    <th>Unidad</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <t t-foreach="items" t-as="item" t-key="item.id">
+                    <tr class="o_amunet_lc_fila" t-on-click="() => this.abrirClave(item.id)">
+                        <td class="o_amunet_lc_clave" t-esc="item.clave"/>
+                        <td t-esc="item.nombre"/>
+                        <td t-esc="item.unidad || '—'"/>
+                        <td>
+                            <span t-attf-class="badge {{ item.estado === 'activa' ? 'bg-success' : 'bg-secondary' }}"
+                                  t-esc="item.estado"/>
+                        </td>
+                    </tr>
+                </t>
+            </tbody>
+        </table>
+    </div>
+</t>
+
+</templates>
