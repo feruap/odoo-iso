@@ -20,9 +20,20 @@ from markupsafe import Markup
 from odoo import _, fields, models
 from odoo.exceptions import ValidationError
 
-# Los campos que no se pueden mover sin razon y firma. El resto de la ficha
-# -- notas, titular, el PDF -- no cambia la frontera de uso del producto.
-CAMPOS_CONTROLADOS = ('fecha_vencimiento', 'numero', 'fecha_emision', 'name', 'tipo')
+# Todo lo que captura una persona va con razon y firma: "si alguien va a cambiar
+# algo en el registro, que quede razon y firma de todo" (Stacy, documentacion,
+# 25-sep-2026). Los tres campos calculados quedan fuera porque los escribe Odoo
+# al recalcular, no una persona.
+CAMPOS = ('name', 'numero', 'tipo', 'titular', 'fecha_emision',
+          'fecha_vencimiento', 'notas', 'archivo')
+
+ETIQUETAS = {
+    'name': 'Nombre del documento', 'numero': 'Número / Folio',
+    'tipo': 'Tipo', 'titular': 'Titular / Empresa',
+    'fecha_emision': 'Fecha de emisión',
+    'fecha_vencimiento': 'Fecha de vencimiento',
+    'notas': 'Notas', 'archivo': 'Documento adjunto',
+}
 
 
 class AmunetVencimientoFirmaWizard(models.TransientModel):
@@ -32,15 +43,22 @@ class AmunetVencimientoFirmaWizard(models.TransientModel):
     vencimiento_id = fields.Many2one(
         'amunet.vencimiento', string='Vigencia', required=True, readonly=True)
 
-    # lo que hay hoy, para que se vea contra que se compara
-    actual_numero = fields.Char(string='Número actual', readonly=True)
-    actual_fecha_vencimiento = fields.Date(string='Vence actualmente', readonly=True)
-    actual_fecha_emision = fields.Date(string='Emitido actualmente', readonly=True)
-
-    # lo nuevo
+    # Todos los campos que captura una persona. Se precargan con lo que hay hoy
+    # y al confirmar solo se asienta lo que de verdad cambio.
+    name = fields.Char(string='Nombre del documento')
     numero = fields.Char(string='Número / Folio')
+    # Selection propio, NO related: un related editable escribe directo en el
+    # registro al asignarlo, sin pasar por action_confirmar ni por la llave de
+    # contexto, asi que el candado lo rechazaba al abrir el wizard.
+    tipo = fields.Selection(
+        selection=lambda self: self.env['amunet.vencimiento']._fields['tipo'].selection,
+        string='Tipo')
+    titular = fields.Char(string='Titular / Empresa')
     fecha_emision = fields.Date(string='Fecha de emisión')
     fecha_vencimiento = fields.Date(string='Fecha de vencimiento')
+    notas = fields.Text(string='Notas')
+    archivo = fields.Binary(string='Documento (PDF)')
+    archivo_filename = fields.Char()
 
     motivo = fields.Text(
         string='Razón del cambio', required=True,
@@ -71,10 +89,18 @@ class AmunetVencimientoFirmaWizard(models.TransientModel):
 
         venc = self.vencimiento_id
         cambios, vals = [], {}
-        for campo in ('numero', 'fecha_emision', 'fecha_vencimiento'):
+        for campo in CAMPOS:
             nuevo = self[campo]
             viejo = venc[campo]
-            if nuevo and nuevo != viejo:
+            # el binario no se compara ni se muestra: solo se sabe si se cargo uno
+            if campo == 'archivo':
+                if nuevo and nuevo != viejo:
+                    vals[campo] = nuevo
+                    if self.archivo_filename:
+                        vals['archivo_filename'] = self.archivo_filename
+                    cambios.append((campo, _('el anterior'), self.archivo_filename or _('uno nuevo')))
+                continue
+            if nuevo != viejo and not (not nuevo and not viejo):
                 vals[campo] = nuevo
                 cambios.append((campo, viejo, nuevo))
         if not cambios:
@@ -83,9 +109,7 @@ class AmunetVencimientoFirmaWizard(models.TransientModel):
         # el write del modelo solo pasa con esta llave en el contexto
         venc.with_context(amunet_venc_firmado=True).sudo().write(vals)
 
-        etiquetas = dict(
-            numero=_('Número'), fecha_emision=_('Fecha de emisión'),
-            fecha_vencimiento=_('Fecha de vencimiento'))
+        etiquetas = ETIQUETAS
         # El cuerpo va como Markup: message_post escapa un str normal y en el
         # chatter se leeria el HTML crudo, etiquetas incluidas.
         detalle = Markup('<br/>').join(
