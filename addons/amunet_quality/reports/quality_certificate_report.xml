@@ -123,7 +123,7 @@
                         <t t-if="o.prueba_rapida_id and o.prueba_rapida_id.descripcion">
                             <div class="row mb32">
                                 <div class="col-12">
-                                    <strong>Descripción (Denominación genérica):</strong>
+                                    <strong>Denominación genérica:</strong>
                                     <span t-out="o.prueba_rapida_id.descripcion"/>
                                 </div>
                             </div>
