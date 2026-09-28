@@ -268,6 +268,13 @@
         <field name="subcategoria">Accesorios</field>
         <field name="estado">activa</field>
     </record>
+    <record id="clave_STESP01" model="amunet.clave">
+        <field name="clave">STESP01</field>
+        <field name="nombre">Esponja para toma de muestra</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
     <record id="clave_STHIE04" model="amunet.clave">
         <field name="clave">STHIE04</field>
         <field name="nombre">Hielera chica con asa</field>
