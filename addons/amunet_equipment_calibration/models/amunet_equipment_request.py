@@ -159,7 +159,17 @@ class AmunetEquipmentRequest(models.Model):
             'product_uom': self.product_id.uom_id.id,
             'location_id': src.id,
             'location_dest_id': dest.id,
-            'company_id': (self.picking_id.company_id.id if self.picking_id
+            # sudo: se lee la recepcion solo para saber de que compania es.
+            # Quien valida un equipo es de Validacion, no de Almacen, y no
+            # tiene -ni debe tener- permiso de lectura sobre stock.picking.
+            # Sin el sudo, validar reventaba con "Jorge Simarron Cuaya no
+            # tiene acceso leer a: Transferir (stock.picking)" y la solicitud
+            # se quedaba atorada. Reportado por Ensayo el 28-sep-2026 con
+            # SOL-EQ-0001 (camara de vacio). Todo lo demas de este metodo ya
+            # iba con sudo: el movimiento lo hace el SISTEMA como consecuencia
+            # de la validacion, no el usuario a mano.
+            'company_id': (self.sudo().picking_id.company_id.id
+                           if self.sudo().picking_id
                            else False) or self.env.company.id,
         })
         move._action_confirm()
