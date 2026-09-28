@@ -726,7 +726,11 @@ class MrpProduction(models.Model):
         return bool(jefe_del_jefe and jefe_del_jefe == self.env.user)
 
     @api.depends('amunet_supervisor_id')
+    @api.depends_context('uid')
     def _compute_amunet_is_supervisor(self):
+        # depends_context('uid'): el valor cambia segun quien pregunta. Sin esto
+        # Odoo guarda en cache el resultado del primer usuario y se lo entrega a
+        # los demas en la misma transaccion (se detecto el 28-sep-2026 probando).
         for mo in self:
             mo.amunet_is_supervisor = mo._amunet_puede_firmar(mo)
 
@@ -737,15 +741,31 @@ class MrpProduction(models.Model):
         puede buscar. Devuelve las ordenes cuyo supervisor asignado soy yo, o
         cuyo supervisor asignado es alguien que me reporta.
         """
-        if operator not in ('=', '!=') or not isinstance(value, bool):
+        # Odoo 19 normaliza los dominios a 'in'/'not in', asi que hay que
+        # atender las cuatro formas. Atendiendo solo '=' el metodo devolvia una
+        # lista vacia, que para Odoo significa "sin condicion": el filtro le
+        # mostraba a cada quien TODAS las ordenes que alcanza a ver, no las que
+        # puede firmar. Detectado el 28-sep-2026 al probar con el practicante.
+        if operator not in ('=', '!=', 'in', 'not in'):
             return []
+        # El valor llega como bool con '=' y como coleccion con 'in', y esa
+        # coleccion es un OrderedSet, no una lista: comprobar el tipo exacto
+        # rechazaba el filtro. Se normaliza sin mirar de que clase viene.
+        try:
+            vals = [value] if isinstance(value, bool) else list(value)
+        except TypeError:
+            return []
+        if len(vals) != 1 or not isinstance(vals[0], bool):
+            return []
+        positivo = vals[0]
+        if operator in ('!=', 'not in'):
+            positivo = not positivo
         Emp = self.env['hr.employee'].sudo()
         yo = Emp.search([('user_id', '=', self.env.uid)], limit=1)
         # quienes me reportan: sus supervisiones tambien las puedo firmar
         subordinados = Emp.search([('parent_id', '=', yo.id)]) if yo else Emp
         users = [self.env.uid] + [
             e.user_id.id for e in subordinados if e.user_id]
-        positivo = (operator == '=') == bool(value)
         return [('amunet_supervisor_id', 'in' if positivo else 'not in', users)]
 
     amunet_all_ingredients_valid = fields.Boolean(
