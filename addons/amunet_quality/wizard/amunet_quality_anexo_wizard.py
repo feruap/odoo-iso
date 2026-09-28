@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
 from odoo import models, fields, api
 
 
@@ -23,6 +24,15 @@ class AmunetQualityAnexoWizardLine(models.TransientModel):
 class AmunetQualityAnexoWizard(models.TransientModel):
     _name = 'amunet.quality.anexo.wizard'
     _description = 'Captura de Datos del Anexo'
+    _transient_max_hours = 48  # conserva hasta 48h para no perder datos en curso
+
+    def _transient_clean_rows_older_than(self, seconds):
+        # Eliminar líneas primero para evitar el error de restricción FK
+        viejos = self.search([('create_date', '<',
+                               fields.Datetime.now() - timedelta(seconds=seconds))])
+        if viejos:
+            viejos.mapped('line_ids').unlink()
+        super()._transient_clean_rows_older_than(seconds)
 
     check_id = fields.Many2one('amunet.quality.check', required=True, ondelete='cascade')
 
