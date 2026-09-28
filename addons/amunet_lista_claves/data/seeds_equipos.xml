@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Micropipetas y soportes (3) -->
+    <record id="eq_eqmic01" model="amunet.clave">
+        <field name="clave">EQMIC01</field>
+        <field name="nombre">Micropipeta (5 - 50 µl)</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Micropipetas y soportes</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqmic02" model="amunet.clave">
+        <field name="clave">EQMIC02</field>
+        <field name="nombre">Micropipeta (100 - 1000 µl)</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Micropipetas y soportes</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqsmi01" model="amunet.clave">
+        <field name="clave">EQSMI01</field>
+        <field name="nombre">Soporte de micropipeta</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Micropipetas y soportes</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Gradillas (4) -->
+    <record id="eq_eqgra01" model="amunet.clave">
+        <field name="clave">EQGRA01</field>
+        <field name="nombre">Gradilla magnética (tubo de 2 ml)</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Gradillas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqgra02" model="amunet.clave">
+        <field name="clave">EQGRA02</field>
+        <field name="nombre">Gradilla magnética (tubo de 15 ml)</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Gradillas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqgra03" model="amunet.clave">
+        <field name="clave">EQGRA03</field>
+        <field name="nombre">Gradilla de plástico (tubo de 2 ml)</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Gradillas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqgra04" model="amunet.clave">
+        <field name="clave">EQGRA04</field>
+        <field name="nombre">Gradilla de plástico (tubo de 15 ml)</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Gradillas</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Equipos de temperatura (4) -->
+    <record id="eq_eqter01" model="amunet.clave">
+        <field name="clave">EQTER01</field>
+        <field name="nombre">Termobloque MDB100</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Equipos de temperatura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqter02" model="amunet.clave">
+        <field name="clave">EQTER02</field>
+        <field name="nombre">Termobloque DB100</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Equipos de temperatura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqinc01" model="amunet.clave">
+        <field name="clave">EQINC01</field>
+        <field name="nombre">Incubadora</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Equipos de temperatura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqtem01" model="amunet.clave">
+        <field name="clave">EQTEM01</field>
+        <field name="nombre">Termómetro de mercurio</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Equipos de temperatura</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Equipos de laboratorio (5) -->
+    <record id="eq_eqvor01" model="amunet.clave">
+        <field name="clave">EQVOR01</field>
+        <field name="nombre">Vortex</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Equipos de laboratorio</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqcbv01" model="amunet.clave">
+        <field name="clave">EQCBV01</field>
+        <field name="nombre">Centrífuga de baja velocidad</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Equipos de laboratorio</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqamc01" model="amunet.clave">
+        <field name="clave">EQAMC01</field>
+        <field name="nombre">Agitador magnético con placa calefactora</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Equipos de laboratorio</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqepv01" model="amunet.clave">
+        <field name="clave">EQEPV01</field>
+        <field name="nombre">Autoclave (esterilizador a presión y vapor)</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Equipos de laboratorio</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="eq_eqbad01" model="amunet.clave">
+        <field name="clave">EQBAD01</field>
+        <field name="nombre">Balanza digital</field>
+        <field name="clasificacion">eq</field>
+        <field name="subcategoria">Equipos de laboratorio</field>
+        <field name="estado">activa</field>
+    </record>
+
+</odoo>

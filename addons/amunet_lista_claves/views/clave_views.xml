@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Formulario ── -->
+    <record id="view_amunet_clave_form" model="ir.ui.view">
+        <field name="name">amunet.clave.form</field>
+        <field name="model">amunet.clave</field>
+        <field name="arch" type="xml">
+            <form string="Clave">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="clave" placeholder="Ej: SPALMA01"/></h1>
+                        <h3><field name="nombre" placeholder="Nombre del producto"/></h3>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="clasificacion"/>
+                            <field name="subcategoria"/>
+                        </group>
+                        <group>
+                            <field name="estado"/>
+                            <field name="fecha_alta"/>
+                            <field name="asignado_por"/>
+                        </group>
+                    </group>
+                    <group string="Notas">
+                        <field name="notas" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Lista ── -->
+    <record id="view_amunet_clave_list" model="ir.ui.view">
+        <field name="name">amunet.clave.list</field>
+        <field name="model">amunet.clave</field>
+        <field name="arch" type="xml">
+            <list string="Claves" decoration-muted="estado == 'archivada'">
+                <field name="clave"/>
+                <field name="nombre"/>
+                <field name="subcategoria"/>
+                <field name="estado" widget="badge"
+                       decoration-success="estado == 'activa'"
+                       decoration-muted="estado == 'archivada'"/>
+                <field name="fecha_alta" optional="show"/>
+                <field name="asignado_por" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Búsqueda ── -->
+    <record id="view_amunet_clave_search" model="ir.ui.view">
+        <field name="name">amunet.clave.search</field>
+        <field name="model">amunet.clave</field>
+        <field name="arch" type="xml">
+            <search string="Buscar claves">
+                <field name="clave" string="Clave"/>
+                <field name="nombre" string="Nombre"/>
+                <field name="subcategoria" string="Subcategoría"/>
+                <filter string="Activas" name="activas" domain="[('estado','=','activa')]"/>
+                <filter string="Archivadas" name="archivadas" domain="[('estado','=','archivada')]"/>
+                <separator/>
+                <filter string="Clasificación" name="by_clasificacion"
+                        context="{'group_by': 'clasificacion'}"/>
+                <filter string="Subcategoría" name="by_subcategoria"
+                        context="{'group_by': 'subcategoria'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Acción lista ── -->
+    <record id="action_amunet_clave_list" model="ir.actions.act_window">
+        <field name="name">Lista Maestra de Claves</field>
+        <field name="res_model">amunet.clave</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_activas': 1}</field>
+    </record>
+
+    <!-- ── Acción hub (OWL) ── -->
+    <record id="action_lista_claves_hub" model="ir.actions.client">
+        <field name="name">Lista Maestra de Claves</field>
+        <field name="tag">amunet_lista_claves_hub</field>
+    </record>
+
+</odoo>

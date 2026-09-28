@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Medios de cultivo (3) -->
+    <record id="ptr_ptrec01" model="amunet.clave">
+        <field name="clave">PTREC01</field>
+        <field name="nombre">Medio de cultivo para Salmonella</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Medios de cultivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec02" model="amunet.clave">
+        <field name="clave">PTREC02</field>
+        <field name="nombre">Medio de cultivo para Listeria</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Medios de cultivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec03" model="amunet.clave">
+        <field name="clave">PTREC03</field>
+        <field name="nombre">Medio de cultivo para E. coli</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Medios de cultivo</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Insumos (2) -->
+    <record id="ptr_ptesp01" model="amunet.clave">
+        <field name="clave">PTESP01</field>
+        <field name="nombre">Esponja para muestreo ambiental estéril</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Insumos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptbwp01" model="amunet.clave">
+        <field name="clave">PTBWP01</field>
+        <field name="nombre">Bolsa Whirl-Pak estéril</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Insumos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Reactivos (10) -->
+    <record id="ptr_ptrec04" model="amunet.clave">
+        <field name="clave">PTREC04</field>
+        <field name="nombre">Tris-HCl</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec05" model="amunet.clave">
+        <field name="clave">PTREC05</field>
+        <field name="nombre">Tris-base</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec06" model="amunet.clave">
+        <field name="clave">PTREC06</field>
+        <field name="nombre">HEPES</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec07" model="amunet.clave">
+        <field name="clave">PTREC07</field>
+        <field name="nombre">MOPS</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec08" model="amunet.clave">
+        <field name="clave">PTREC08</field>
+        <field name="nombre">MES</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec09" model="amunet.clave">
+        <field name="clave">PTREC09</field>
+        <field name="nombre">CHAPS</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec10" model="amunet.clave">
+        <field name="clave">PTREC10</field>
+        <field name="nombre">Guanidine Hydrochloride</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec11" model="amunet.clave">
+        <field name="clave">PTREC11</field>
+        <field name="nombre">TCEP-HCl</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec12" model="amunet.clave">
+        <field name="clave">PTREC12</field>
+        <field name="nombre">IPTG</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptrec13" model="amunet.clave">
+        <field name="clave">PTREC13</field>
+        <field name="nombre">DTT</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+</odoo>

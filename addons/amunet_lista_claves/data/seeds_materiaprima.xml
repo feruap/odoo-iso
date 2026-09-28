@@ -1,0 +1,892 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Aguas (3 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPATR01" model="amunet.clave">
+        <field name="clave">MPATR01</field>
+        <field name="nombre">Agua tridestilada</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Aguas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPABD01" model="amunet.clave">
+        <field name="clave">MPABD01</field>
+        <field name="nombre">Agua bidestilada</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Aguas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPADE01" model="amunet.clave">
+        <field name="clave">MPADE01</field>
+        <field name="nombre">Agua destilada</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Aguas</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Almohadillas y membranas (7 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPAAB01" model="amunet.clave">
+        <field name="clave">MPAAB01</field>
+        <field name="nombre">Almohadilla absorbente 20X30 cm</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Almohadillas y membranas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPAFV01" model="amunet.clave">
+        <field name="clave">MPAFV01</field>
+        <field name="nombre">Almohadilla fibra de vidrio MDI</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Almohadillas y membranas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPAFV02" model="amunet.clave">
+        <field name="clave">MPAFV02</field>
+        <field name="nombre">Almohadilla de fibra de vidrio biotech</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Almohadillas y membranas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPAGR01" model="amunet.clave">
+        <field name="clave">MPAGR01</field>
+        <field name="nombre">Almohadilla para filtrar sangre</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Almohadillas y membranas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPMNC01" model="amunet.clave">
+        <field name="clave">MPMNC01</field>
+        <field name="nombre">Membrana de nitrocelulosa 10 µm</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Almohadillas y membranas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPMNC02" model="amunet.clave">
+        <field name="clave">MPMNC02</field>
+        <field name="nombre">Membrana de nitrocelulosa 12 µm</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Almohadillas y membranas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPMNC03" model="amunet.clave">
+        <field name="clave">MPMNC03</field>
+        <field name="nombre">Membrana de nitrocelulosa 12 µm (115 sec)</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Almohadillas y membranas</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Bolsas termosellables (5 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPBOL01" model="amunet.clave">
+        <field name="clave">MPBOL01</field>
+        <field name="nombre">Bolsa termosellable 6x12</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Bolsas termosellables</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPBOL02" model="amunet.clave">
+        <field name="clave">MPBOL02</field>
+        <field name="nombre">Bolsa termosellable 6x13</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Bolsas termosellables</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPBOL03" model="amunet.clave">
+        <field name="clave">MPBOL03</field>
+        <field name="nombre">Bolsa termosellable 8x13</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Bolsas termosellables</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPBOL04" model="amunet.clave">
+        <field name="clave">MPBOL04</field>
+        <field name="nombre">Bolsa termosellable 6x19</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Bolsas termosellables</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPBOL05" model="amunet.clave">
+        <field name="clave">MPBOL05</field>
+        <field name="nombre">Bolsa termosellable (5.5+5)x12</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Bolsas termosellables</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Tarjetas, cartuchos y adhesivos (6 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPCAI01" model="amunet.clave">
+        <field name="clave">MPCAI01</field>
+        <field name="nombre">Cartuchos impares</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Tarjetas, cartuchos y adhesivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPCAP01" model="amunet.clave">
+        <field name="clave">MPCAP01</field>
+        <field name="nombre">Cartuchos pares</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Tarjetas, cartuchos y adhesivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPADH01" model="amunet.clave">
+        <field name="clave">MPADH01</field>
+        <field name="nombre">Adhesivo para almohadilla absorbente</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Tarjetas, cartuchos y adhesivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPAMI01" model="amunet.clave">
+        <field name="clave">MPAMI01</field>
+        <field name="nombre">Adhesivo de microfluidez 1.27</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Tarjetas, cartuchos y adhesivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPTS01" model="amunet.clave">
+        <field name="clave">MPTS01</field>
+        <field name="nombre">Tarjeta de soporte 6x30</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Tarjetas, cartuchos y adhesivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPTS02" model="amunet.clave">
+        <field name="clave">MPTS02</field>
+        <field name="nombre">Tarjeta de soporte 8x30</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Tarjetas, cartuchos y adhesivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Sales y fosfatos (26 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPREC01" model="amunet.clave">
+        <field name="clave">MPREC01</field>
+        <field name="nombre">Citrato de sodio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC05" model="amunet.clave">
+        <field name="clave">MPREC05</field>
+        <field name="nombre">Cloruro de sodio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC07" model="amunet.clave">
+        <field name="clave">MPREC07</field>
+        <field name="nombre">Azida de sodio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC30" model="amunet.clave">
+        <field name="clave">MPREC30</field>
+        <field name="nombre">Cloruro de potasio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC31" model="amunet.clave">
+        <field name="clave">MPREC31</field>
+        <field name="nombre">Fosfato de sodio dibásico</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC32" model="amunet.clave">
+        <field name="clave">MPREC32</field>
+        <field name="nombre">Fosfato de sodio monobásico</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC33" model="amunet.clave">
+        <field name="clave">MPREC33</field>
+        <field name="nombre">Fosfato de potasio monobásico</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC34" model="amunet.clave">
+        <field name="clave">MPREC34</field>
+        <field name="nombre">Borato de sodio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC41" model="amunet.clave">
+        <field name="clave">MPREC41</field>
+        <field name="nombre">Sulfato de amonio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC42" model="amunet.clave">
+        <field name="clave">MPREC42</field>
+        <field name="nombre">Persulfato de amonio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC44" model="amunet.clave">
+        <field name="clave">MPREC44</field>
+        <field name="nombre">Cloruro de magnesio hexahidrato</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC45" model="amunet.clave">
+        <field name="clave">MPREC45</field>
+        <field name="nombre">Cloruro de manganeso tetrahidrato</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC46" model="amunet.clave">
+        <field name="clave">MPREC46</field>
+        <field name="nombre">Cloruro férrico hexahidrato</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC48" model="amunet.clave">
+        <field name="clave">MPREC48</field>
+        <field name="nombre">Molibdato de sodio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC49" model="amunet.clave">
+        <field name="clave">MPREC49</field>
+        <field name="nombre">Cloruro de amonio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC54" model="amunet.clave">
+        <field name="clave">MPREC54</field>
+        <field name="nombre">Sulfato de sodio anhidro</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC56" model="amunet.clave">
+        <field name="clave">MPREC56</field>
+        <field name="nombre">Cloruro de calcio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC57" model="amunet.clave">
+        <field name="clave">MPREC57</field>
+        <field name="nombre">Cloruro de colbato anhidro</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC58" model="amunet.clave">
+        <field name="clave">MPREC58</field>
+        <field name="nombre">Cloruro de cobre (II) dihidrato</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC59" model="amunet.clave">
+        <field name="clave">MPREC59</field>
+        <field name="nombre">Sulfato de zinc heptahidrato</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC65" model="amunet.clave">
+        <field name="clave">MPREC65</field>
+        <field name="nombre">Sulfato de magnesio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC66" model="amunet.clave">
+        <field name="clave">MPREC66</field>
+        <field name="nombre">Acetato de plomo</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC69" model="amunet.clave">
+        <field name="clave">MPREC69</field>
+        <field name="nombre">Cloruro de litio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC71" model="amunet.clave">
+        <field name="clave">MPREC71</field>
+        <field name="nombre">Acetato de litio dihidratado</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC92" model="amunet.clave">
+        <field name="clave">MPREC92</field>
+        <field name="nombre">Cloruro de niquel</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC96" model="amunet.clave">
+        <field name="clave">MPREC96</field>
+        <field name="nombre">Yoduro de potasio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Ácidos y bases (12 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPREC08" model="amunet.clave">
+        <field name="clave">MPREC08</field>
+        <field name="nombre">Ácido bórico</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC09" model="amunet.clave">
+        <field name="clave">MPREC09</field>
+        <field name="nombre">Hidróxido de sodio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC19" model="amunet.clave">
+        <field name="clave">MPREC19</field>
+        <field name="nombre">Ácido fosfórico 85%</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC37" model="amunet.clave">
+        <field name="clave">MPREC37</field>
+        <field name="nombre">Ácido clorhídrico concentrado</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC38" model="amunet.clave">
+        <field name="clave">MPREC38</field>
+        <field name="nombre">Buffer pH 4</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC39" model="amunet.clave">
+        <field name="clave">MPREC39</field>
+        <field name="nombre">Buffer pH 7</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC40" model="amunet.clave">
+        <field name="clave">MPREC40</field>
+        <field name="nombre">Buffer pH 10</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC43" model="amunet.clave">
+        <field name="clave">MPREC43</field>
+        <field name="nombre">Hidróxido de potasio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC70" model="amunet.clave">
+        <field name="clave">MPREC70</field>
+        <field name="nombre">Ácido sulfúrico</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC74" model="amunet.clave">
+        <field name="clave">MPREC74</field>
+        <field name="nombre">Ácido nitriloacético</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC78" model="amunet.clave">
+        <field name="clave">MPREC78</field>
+        <field name="nombre">Ácido acético</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC79" model="amunet.clave">
+        <field name="clave">MPREC79</field>
+        <field name="nombre">Hidróxido de amonio</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Buffers y agentes estabilizantes (13 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPREC04" model="amunet.clave">
+        <field name="clave">MPREC04</field>
+        <field name="nombre">Tris-HCl</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC10" model="amunet.clave">
+        <field name="clave">MPREC10</field>
+        <field name="nombre">Tris-base</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC11" model="amunet.clave">
+        <field name="clave">MPREC11</field>
+        <field name="nombre">Polivinilpirrolidona (PVP)</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC20" model="amunet.clave">
+        <field name="clave">MPREC20</field>
+        <field name="nombre">HEPES</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC21" model="amunet.clave">
+        <field name="clave">MPREC21</field>
+        <field name="nombre">MOPS</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC22" model="amunet.clave">
+        <field name="clave">MPREC22</field>
+        <field name="nombre">MES</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC24" model="amunet.clave">
+        <field name="clave">MPREC24</field>
+        <field name="nombre">Guanidine hydrochloride</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC26" model="amunet.clave">
+        <field name="clave">MPREC26</field>
+        <field name="nombre">DTT</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC27" model="amunet.clave">
+        <field name="clave">MPREC27</field>
+        <field name="nombre">TCEP-HCl</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC53" model="amunet.clave">
+        <field name="clave">MPREC53</field>
+        <field name="nombre">Imidazol</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC61" model="amunet.clave">
+        <field name="clave">MPREC61</field>
+        <field name="nombre">Glicina</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC62" model="amunet.clave">
+        <field name="clave">MPREC62</field>
+        <field name="nombre">Betaína</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC98" model="amunet.clave">
+        <field name="clave">MPREC98</field>
+        <field name="nombre">EDTA</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Surfactantes y detergentes (4 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPREC06" model="amunet.clave">
+        <field name="clave">MPREC06</field>
+        <field name="nombre">Triton X-100</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC12" model="amunet.clave">
+        <field name="clave">MPREC12</field>
+        <field name="nombre">Tween 20</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC23" model="amunet.clave">
+        <field name="clave">MPREC23</field>
+        <field name="nombre">CHAPS</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC80" model="amunet.clave">
+        <field name="clave">MPREC80</field>
+        <field name="nombre">SDS</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Azúcares y crioprotectores (6 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPREC13" model="amunet.clave">
+        <field name="clave">MPREC13</field>
+        <field name="nombre">D-trehalosa</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC14" model="amunet.clave">
+        <field name="clave">MPREC14</field>
+        <field name="nombre">Sacarosa</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC47" model="amunet.clave">
+        <field name="clave">MPREC47</field>
+        <field name="nombre">Dextrosa anhidra</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC52" model="amunet.clave">
+        <field name="clave">MPREC52</field>
+        <field name="nombre">Etilenglicol</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC75" model="amunet.clave">
+        <field name="clave">MPREC75</field>
+        <field name="nombre">Lactosa monohidrato</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC95" model="amunet.clave">
+        <field name="clave">MPREC95</field>
+        <field name="nombre">Sorbitol 100%</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Proteínas y bloqueantes (5 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPREC03" model="amunet.clave">
+        <field name="clave">MPREC03</field>
+        <field name="nombre">Caseína láctica</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC16" model="amunet.clave">
+        <field name="clave">MPREC16</field>
+        <field name="nombre">Albúmina de suero bovino (BSA)</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC36" model="amunet.clave">
+        <field name="clave">MPREC36</field>
+        <field name="nombre">Caseína CHEMS</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC67" model="amunet.clave">
+        <field name="clave">MPREC67</field>
+        <field name="nombre">Peptona de caseína</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC94" model="amunet.clave">
+        <field name="clave">MPREC94</field>
+        <field name="nombre">Triptona</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Medios de cultivo (8 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPREC28" model="amunet.clave">
+        <field name="clave">MPREC28</field>
+        <field name="nombre">Agua peptonada</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC29" model="amunet.clave">
+        <field name="clave">MPREC29</field>
+        <field name="nombre">Medio de cultivo Fraser Broth base</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC50" model="amunet.clave">
+        <field name="clave">MPREC50</field>
+        <field name="nombre">Agar dextrosa y papa</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC51" model="amunet.clave">
+        <field name="clave">MPREC51</field>
+        <field name="nombre">Agarosa</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC64" model="amunet.clave">
+        <field name="clave">MPREC64</field>
+        <field name="nombre">Base de caldo tetrationato Muller K</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC88" model="amunet.clave">
+        <field name="clave">MPREC88</field>
+        <field name="nombre">Agar Mueller Hinton Mcolab</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC90" model="amunet.clave">
+        <field name="clave">MPREC90</field>
+        <field name="nombre">Agar bacteriológico</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC91" model="amunet.clave">
+        <field name="clave">MPREC91</field>
+        <field name="nombre">Base agar sangre</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         MATERIA PRIMA — Solventes, colorantes y otros (25 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_MPREC02" model="amunet.clave">
+        <field name="clave">MPREC02</field>
+        <field name="nombre">Ácido tetracloro áurico</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC15" model="amunet.clave">
+        <field name="clave">MPREC15</field>
+        <field name="nombre">S9</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC17" model="amunet.clave">
+        <field name="clave">MPREC17</field>
+        <field name="nombre">Azul brillante de Coomassie G-250</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC18" model="amunet.clave">
+        <field name="clave">MPREC18</field>
+        <field name="nombre">Etanol 96%</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC25" model="amunet.clave">
+        <field name="clave">MPREC25</field>
+        <field name="nombre">IPTG</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC35" model="amunet.clave">
+        <field name="clave">MPREC35</field>
+        <field name="nombre">Ácido cloroáurico</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC55" model="amunet.clave">
+        <field name="clave">MPREC55</field>
+        <field name="nombre">Colorante amarillo</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC60" model="amunet.clave">
+        <field name="clave">MPREC60</field>
+        <field name="nombre">Azul de bromofenol</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC63" model="amunet.clave">
+        <field name="clave">MPREC63</field>
+        <field name="nombre">N, N-Metilenbis (acrilamida)</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC68" model="amunet.clave">
+        <field name="clave">MPREC68</field>
+        <field name="nombre">Acrilamida</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC72" model="amunet.clave">
+        <field name="clave">MPREC72</field>
+        <field name="nombre">Colorante rojo púrpura</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC73" model="amunet.clave">
+        <field name="clave">MPREC73</field>
+        <field name="nombre">Ortosilicato de tetraetilo</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC76" model="amunet.clave">
+        <field name="clave">MPREC76</field>
+        <field name="nombre">Alcohol isopropílico</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC77" model="amunet.clave">
+        <field name="clave">MPREC77</field>
+        <field name="nombre">Agua desionizada</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC81" model="amunet.clave">
+        <field name="clave">MPREC81</field>
+        <field name="nombre">Estándar de conductividad de 5uS/cm con TDS</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC82" model="amunet.clave">
+        <field name="clave">MPREC82</field>
+        <field name="nombre">Azul brillante R</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC83" model="amunet.clave">
+        <field name="clave">MPREC83</field>
+        <field name="nombre">Solución de almacenamiento 3M KCl para electrodos</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC84" model="amunet.clave">
+        <field name="clave">MPREC84</field>
+        <field name="nombre">Agua HPLC</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC85" model="amunet.clave">
+        <field name="clave">MPREC85</field>
+        <field name="nombre">Alcohol etílico absoluto</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC86" model="amunet.clave">
+        <field name="clave">MPREC86</field>
+        <field name="nombre">Alcohol metílico anhidro</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC87" model="amunet.clave">
+        <field name="clave">MPREC87</field>
+        <field name="nombre">Arena de resina termoendurecible</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC89" model="amunet.clave">
+        <field name="clave">MPREC89</field>
+        <field name="nombre">Calceína (indicador fluorescente)</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC93" model="amunet.clave">
+        <field name="clave">MPREC93</field>
+        <field name="nombre">Yodo</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC97" model="amunet.clave">
+        <field name="clave">MPREC97</field>
+        <field name="nombre">Verde brillante</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_MPREC99" model="amunet.clave">
+        <field name="clave">MPREC99</field>
+        <field name="nombre">S17</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+</odoo>

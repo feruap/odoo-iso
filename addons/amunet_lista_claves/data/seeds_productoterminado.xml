@@ -1,0 +1,608 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Antidoping (8) -->
+    <record id="pt_dmalc01" model="amunet.clave">
+        <field name="clave">DMALC01</field>
+        <field name="nombre">Alcohol</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Antidoping</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmadg01" model="amunet.clave">
+        <field name="clave">DMADG01</field>
+        <field name="nombre">Antidoping 1 parámetro</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Antidoping</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmado04" model="amunet.clave">
+        <field name="clave">DMADO04</field>
+        <field name="nombre">Antidoping 3 parámetros orina</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Antidoping</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmado03" model="amunet.clave">
+        <field name="clave">DMADO03</field>
+        <field name="nombre">Antidoping 4 parámetros orina</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Antidoping</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmado02" model="amunet.clave">
+        <field name="clave">DMADO02</field>
+        <field name="nombre">Antidoping 5 parámetros orina</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Antidoping</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmact02" model="amunet.clave">
+        <field name="clave">DMACT02</field>
+        <field name="nombre">Antidoping 3 parámetros saliva</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Antidoping</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmadb01" model="amunet.clave">
+        <field name="clave">DMADB01</field>
+        <field name="nombre">Antidoping 5 parámetros saliva</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Antidoping</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmasn01" model="amunet.clave">
+        <field name="clave">DMASN01</field>
+        <field name="nombre">Antidoping 5 parámetros sangre</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Antidoping</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Molecular PCR/LAMP (7) -->
+    <record id="pt_dlbio01" model="amunet.clave">
+        <field name="clave">DLBIO01</field>
+        <field name="nombre">Bionet multi</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Molecular PCR/LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dlkrs01" model="amunet.clave">
+        <field name="clave">DLKRS01</field>
+        <field name="nombre">PCR rápida para KRAS (12 tiras reactivas)</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Molecular PCR/LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dlvph01" model="amunet.clave">
+        <field name="clave">DLVPH01</field>
+        <field name="nombre">PCR rápida para VPH (12 tiras reactivas)</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Molecular PCR/LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dlsfe01" model="amunet.clave">
+        <field name="clave">DLSFE01</field>
+        <field name="nombre">PCR rápida-LAMP para sexo fetal (12 reacciones)</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Molecular PCR/LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dlhpy01" model="amunet.clave">
+        <field name="clave">DLHPY01</field>
+        <field name="nombre">PCR rápida-LAMP para Helicobacter pylori</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Molecular PCR/LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dltb02" model="amunet.clave">
+        <field name="clave">DLTB02</field>
+        <field name="nombre">PCR rápida para tuberculosis (12 tiras reactivas)</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Molecular PCR/LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dlvih01" model="amunet.clave">
+        <field name="clave">DLVIH01</field>
+        <field name="nombre">PCR rápida para VIH LAMP-NET (12 tiras reactivas)</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Molecular PCR/LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Marcadores tumorales (7) -->
+    <record id="pt_dmafp01" model="amunet.clave">
+        <field name="clave">DMAFP01</field>
+        <field name="nombre">Alfa-fetoproteína</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Marcadores tumorales</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmcao01" model="amunet.clave">
+        <field name="clave">DMCAO01</field>
+        <field name="nombre">CA 125</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Marcadores tumorales</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmcam01" model="amunet.clave">
+        <field name="clave">DMCAM01</field>
+        <field name="nombre">CA 15-3</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Marcadores tumorales</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmcap01" model="amunet.clave">
+        <field name="clave">DMCAP01</field>
+        <field name="nombre">CA 19-9</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Marcadores tumorales</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmpsa01" model="amunet.clave">
+        <field name="clave">DMPSA01</field>
+        <field name="nombre">PSA semicuantitativa</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Marcadores tumorales</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmpsa02" model="amunet.clave">
+        <field name="clave">DMPSA02</field>
+        <field name="nombre">Prostatinet</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Marcadores tumorales</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmvpe01" model="amunet.clave">
+        <field name="clave">DMVPE01</field>
+        <field name="nombre">VPH E7</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Marcadores tumorales</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- COVID y respiratorios (8) -->
+    <record id="pt_dmicr01" model="amunet.clave">
+        <field name="clave">DMICR01</field>
+        <field name="nombre">Combo flu/sars-cov-2/rsv</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">COVID y respiratorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_diam_023" model="amunet.clave">
+        <field name="clave">DIAM-023</field>
+        <field name="nombre">Coronavirus 2019 plus</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">COVID y respiratorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_diam_025" model="amunet.clave">
+        <field name="clave">DIAM-025</field>
+        <field name="nombre">Covinet Ag saliva</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">COVID y respiratorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_diam_029" model="amunet.clave">
+        <field name="clave">DIAM-029</field>
+        <field name="nombre">Covinet nasal</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">COVID y respiratorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_diam_024" model="amunet.clave">
+        <field name="clave">DIAM-024</field>
+        <field name="nombre">Covflunet</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">COVID y respiratorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmiab01" model="amunet.clave">
+        <field name="clave">DMIAB01</field>
+        <field name="nombre">Influenza A+B</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">COVID y respiratorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmmyc01" model="amunet.clave">
+        <field name="clave">DMMYC01</field>
+        <field name="nombre">Mycoplasma pneumoniae</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">COVID y respiratorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmvsr01" model="amunet.clave">
+        <field name="clave">DMVSR01</field>
+        <field name="nombre">RSV</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">COVID y respiratorios</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Hematología y metabólico (12) -->
+    <record id="pt_dram_002" model="amunet.clave">
+        <field name="clave">DRAM-002</field>
+        <field name="nombre">Albumina cualitativa</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dram_001" model="amunet.clave">
+        <field name="clave">DRAM-001</field>
+        <field name="nombre">Albumina semicuantitativa</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmiam01" model="amunet.clave">
+        <field name="clave">DMIAM01</field>
+        <field name="nombre">Cardiac combo advanced</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmmct01" model="amunet.clave">
+        <field name="clave">DMMCT01</field>
+        <field name="nombre">Cardiac combo</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmdmd01" model="amunet.clave">
+        <field name="clave">DMDMD01</field>
+        <field name="nombre">Dímero D</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmfre01" model="amunet.clave">
+        <field name="clave">DMFRE01</field>
+        <field name="nombre">Factor reumatoide</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmfrt02" model="amunet.clave">
+        <field name="clave">DMFRT02</field>
+        <field name="nombre">Ferritina</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmhba01" model="amunet.clave">
+        <field name="clave">DMHBA01</field>
+        <field name="nombre">Hemoglobina cualitativa</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_demam_001" model="amunet.clave">
+        <field name="clave">DEMAM-001</field>
+        <field name="nombre">Hemoglobina semicuantitativa</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmige01" model="amunet.clave">
+        <field name="clave">DMIGE01</field>
+        <field name="nombre">IgE</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmpro01" model="amunet.clave">
+        <field name="clave">DMPRO01</field>
+        <field name="nombre">NT-proBNP</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmtrf01" model="amunet.clave">
+        <field name="clave">DMTRF01</field>
+        <field name="nombre">Transferrina/FOB</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hematología y metabólico</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Hormonal y reproductivo (9) -->
+    <record id="pt_dmamh01" model="amunet.clave">
+        <field name="clave">DMAMH01</field>
+        <field name="nombre">AMH</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hormonal y reproductivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmffn01" model="amunet.clave">
+        <field name="clave">DMFFN01</field>
+        <field name="nombre">Fibronectina fetal</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hormonal y reproductivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmhcg03" model="amunet.clave">
+        <field name="clave">DMHCG03</field>
+        <field name="nombre">HCG orina</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hormonal y reproductivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmhcg02" model="amunet.clave">
+        <field name="clave">DMHCG02</field>
+        <field name="nombre">HCG multimuestra</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hormonal y reproductivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmhcg01" model="amunet.clave">
+        <field name="clave">DMHCG01</field>
+        <field name="nombre">HCG sangre</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hormonal y reproductivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmphv01" model="amunet.clave">
+        <field name="clave">DMPHV01</field>
+        <field name="nombre">pH vaginal</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hormonal y reproductivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmtsh01" model="amunet.clave">
+        <field name="clave">DMTSH01</field>
+        <field name="nombre">TSH cualitativa</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hormonal y reproductivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmtsh02" model="amunet.clave">
+        <field name="clave">DMTSH02</field>
+        <field name="nombre">TSH semicuantitativa</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hormonal y reproductivo</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmvid01" model="amunet.clave">
+        <field name="clave">DMVID01</field>
+        <field name="nombre">Vitamina D semicuantitativa</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Hormonal y reproductivo</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Infecciosas (33) -->
+    <record id="pt_dmcal01" model="amunet.clave">
+        <field name="clave">DMCAL01</field>
+        <field name="nombre">Calprotectina</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmcbr01" model="amunet.clave">
+        <field name="clave">DMCBR01</field>
+        <field name="nombre">Campylobacter</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmcan01" model="amunet.clave">
+        <field name="clave">DMCAN01</field>
+        <field name="nombre">Candida</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmcrb01" model="amunet.clave">
+        <field name="clave">DMCRB01</field>
+        <field name="nombre">CARBA 5 en 1</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmcha01" model="amunet.clave">
+        <field name="clave">DMCHA01</field>
+        <field name="nombre">Chagas</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmchi01" model="amunet.clave">
+        <field name="clave">DMCHI01</field>
+        <field name="nombre">Chikungunya</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmclam01" model="amunet.clave">
+        <field name="clave">DMCLAM01</field>
+        <field name="nombre">Clamidia</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmdcz01" model="amunet.clave">
+        <field name="clave">DMDCZ01</field>
+        <field name="nombre">Combo mosquito DENV/CHIV/ZIKV</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmden02" model="amunet.clave">
+        <field name="clave">DMDEN02</field>
+        <field name="nombre">Dengue IgG/IgM</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmden01" model="amunet.clave">
+        <field name="clave">DMDEN01</field>
+        <field name="nombre">Dengue-net</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dment01" model="amunet.clave">
+        <field name="clave">DMENT01</field>
+        <field name="nombre">Entamoeba histolytica</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmeng01" model="amunet.clave">
+        <field name="clave">DMENG01</field>
+        <field name="nombre">Entamoeba histolytica + Giardia lamblia</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmesc01" model="amunet.clave">
+        <field name="clave">DMESC01</field>
+        <field name="nombre">Entamoeba histolytica + Salmonella typhi</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmspn02" model="amunet.clave">
+        <field name="clave">DMSPN02</field>
+        <field name="nombre">Estreptococcus A</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmspn01" model="amunet.clave">
+        <field name="clave">DMSPN01</field>
+        <field name="nombre">Estreptococcus B</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmgia01" model="amunet.clave">
+        <field name="clave">DMGIA01</field>
+        <field name="nombre">Giardia lamblia</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmhpy01" model="amunet.clave">
+        <field name="clave">DMHPY01</field>
+        <field name="nombre">H. pylori IgM/IgG</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmhpy02" model="amunet.clave">
+        <field name="clave">DMHPY02</field>
+        <field name="nombre">H. pylori antígeno</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmivu01" model="amunet.clave">
+        <field name="clave">DMIVU01</field>
+        <field name="nombre">Infecciones urinarias</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmmon01" model="amunet.clave">
+        <field name="clave">DMMON01</field>
+        <field name="nombre">Mononucleosis</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmrav01" model="amunet.clave">
+        <field name="clave">DMRAV01</field>
+        <field name="nombre">Rotavirus y adenovirus</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmsat01" model="amunet.clave">
+        <field name="clave">DMSAT01</field>
+        <field name="nombre">Salmonella typhi</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmsgf01" model="amunet.clave">
+        <field name="clave">DMSGF01</field>
+        <field name="nombre">Shigella flexneri</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_diam_002" model="amunet.clave">
+        <field name="clave">DIAM-002</field>
+        <field name="nombre">Sífilis</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmsvi01" model="amunet.clave">
+        <field name="clave">DMSVI01</field>
+        <field name="nombre">Sífilis + VIH 1.2</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmspo01" model="amunet.clave">
+        <field name="clave">DMSPO01</field>
+        <field name="nombre">Streptococcus pneumoniae</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmtet01" model="amunet.clave">
+        <field name="clave">DMTET01</field>
+        <field name="nombre">Tétanos</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmtif01" model="amunet.clave">
+        <field name="clave">DMTIF01</field>
+        <field name="nombre">Tifoidea</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmtor02" model="amunet.clave">
+        <field name="clave">DMTOR02</field>
+        <field name="nombre">ToRCH IgG/IgM combo</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmatb01" model="amunet.clave">
+        <field name="clave">DMATB01</field>
+        <field name="nombre">Tuberculosis</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmvih01" model="amunet.clave">
+        <field name="clave">DMVIH01</field>
+        <field name="nombre">VIH 1.2</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmvih02" model="amunet.clave">
+        <field name="clave">DMVIH02</field>
+        <field name="nombre">VIH combo</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="pt_dmzik01" model="amunet.clave">
+        <field name="clave">DMZIK01</field>
+        <field name="nombre">Zika IgG/IgM/NS1</field>
+        <field name="clasificacion">pt</field>
+        <field name="subcategoria">Infecciosas</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- SALMONET-ADN: pendiente de clave -->
+
+</odoo>

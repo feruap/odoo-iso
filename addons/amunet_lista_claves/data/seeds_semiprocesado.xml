@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ── Almohadillas ── -->
+    <record id="clave_spalma01" model="amunet.clave">
+        <field name="clave">SPALMA01</field>
+        <field name="nombre">Almohadilla para conjugado pretratada A1</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma02" model="amunet.clave">
+        <field name="clave">SPALMA02</field>
+        <field name="nombre">Almohadilla para conjugado sin pretratar A2</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma03" model="amunet.clave">
+        <field name="clave">SPALMA03</field>
+        <field name="nombre">Almohadilla para conjugado pretratada A3</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma04" model="amunet.clave">
+        <field name="clave">SPALMA04</field>
+        <field name="nombre">Almohadilla para muestra nasofaríngea/nasal/saliva A4</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma05" model="amunet.clave">
+        <field name="clave">SPALMA05</field>
+        <field name="nombre">Almohadilla para muestra sin pretratar A5</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma06" model="amunet.clave">
+        <field name="clave">SPALMA06</field>
+        <field name="nombre">Almohadilla para muestra sangre, suero o plasma A6</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma07" model="amunet.clave">
+        <field name="clave">SPALMA07</field>
+        <field name="nombre">Almohadilla de muestra sin pretratar A7</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma08" model="amunet.clave">
+        <field name="clave">SPALMA08</field>
+        <field name="nombre">Almohadilla para muestra orina A8</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma09" model="amunet.clave">
+        <field name="clave">SPALMA09</field>
+        <field name="nombre">Almohadilla intermedia PVP + NaOH A9</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma10" model="amunet.clave">
+        <field name="clave">SPALMA10</field>
+        <field name="nombre">Almohadilla para absorber residuos de muestras y buffer A10</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma11" model="amunet.clave">
+        <field name="clave">SPALMA11</field>
+        <field name="nombre">Almohadilla para absorber residuos de muestras de buffer A11</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma12" model="amunet.clave">
+        <field name="clave">SPALMA12</field>
+        <field name="nombre">Almohadilla para filtrar muestras de sangre A12</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+    <record id="clave_spalma14" model="amunet.clave">
+        <field name="clave">SPALMA14</field>
+        <field name="nombre">Almohadilla A14 (intermedia pretratada con Hier 1) 0.3 × 30 cm</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Almohadillas</field>
+        <field name="unidad">piezas</field>
+    </record>
+
+    <!-- ── Soluciones de corrimiento ── -->
+    <record id="clave_spapb01" model="amunet.clave">
+        <field name="clave">SPAPB01</field>
+        <field name="nombre">Solución de corrimiento AC+PBS</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de corrimiento</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spbab01" model="amunet.clave">
+        <field name="clave">SPBAB01</field>
+        <field name="nombre">Solución de corrimiento Ac</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de corrimiento</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spbab02" model="amunet.clave">
+        <field name="clave">SPBAB02</field>
+        <field name="nombre">Solución de corrimiento Ac CHEM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de corrimiento</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_sphbb01" model="amunet.clave">
+        <field name="clave">SPHBB01</field>
+        <field name="nombre">Solución de Corrimiento de Hemoglobina Cualitativa</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de corrimiento</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spsag01" model="amunet.clave">
+        <field name="clave">SPSAG01</field>
+        <field name="nombre">Solución de corrimiento Tracto Respiratorio</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de corrimiento</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spcpr01" model="amunet.clave">
+        <field name="clave">SPCPR01</field>
+        <field name="nombre">Solución de Corrimiento PCR rápida</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de corrimiento</field>
+        <field name="unidad">L</field>
+    </record>
+
+    <!-- ── Soluciones de pretratamiento ── -->
+    <record id="clave_spspa01" model="amunet.clave">
+        <field name="clave">SPSPA01</field>
+        <field name="nombre">Solución de pretratamiento de almohadilla de conjugado</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de pretratamiento</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspa02" model="amunet.clave">
+        <field name="clave">SPSPA02</field>
+        <field name="nombre">Solución de pretratamiento de almohadilla de muestra (sangre, suero, plasma)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de pretratamiento</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspa03" model="amunet.clave">
+        <field name="clave">SPSPA03</field>
+        <field name="nombre">Solución de pretratamiento de almohadilla de muestra (nasofaríngea, nasal y saliva)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de pretratamiento</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspa05" model="amunet.clave">
+        <field name="clave">SPSPA05</field>
+        <field name="nombre">Solución de pretratamiento para almohadilla intermedia (PVP + NaOH 5%)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de pretratamiento</field>
+        <field name="unidad">L</field>
+    </record>
+
+    <!-- ── Soluciones de bloqueo ── -->
+    <record id="clave_spspb01" model="amunet.clave">
+        <field name="clave">SPSPB01</field>
+        <field name="nombre">Solución de bloqueo de BSA 7.5</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de bloqueo</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspb02" model="amunet.clave">
+        <field name="clave">SPSPB02</field>
+        <field name="nombre">Solución de bloqueo de BSA 8.5</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de bloqueo</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspb03" model="amunet.clave">
+        <field name="clave">SPSPB03</field>
+        <field name="nombre">Solución de bloqueo de caseína</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de bloqueo</field>
+        <field name="unidad">L</field>
+    </record>
+
+    <!-- ── Soluciones diluyentes ── -->
+    <record id="clave_spsdc01" model="amunet.clave">
+        <field name="clave">SPSDC01</field>
+        <field name="nombre">Solución diluyente para conjugado (AD0)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones diluyentes</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spsdc02" model="amunet.clave">
+        <field name="clave">SPSDC02</field>
+        <field name="nombre">Solución diluyente para conjugado (AD1)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones diluyentes</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spsdm01" model="amunet.clave">
+        <field name="clave">SPSDM01</field>
+        <field name="nombre">Solución diluyente 1/2 trehalosa</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones diluyentes</field>
+        <field name="unidad">L</field>
+    </record>
+
+    <!-- ── Soluciones amortiguadoras y PBS ── -->
+    <record id="clave_spspc01" model="amunet.clave">
+        <field name="clave">SPSPC01</field>
+        <field name="nombre">Solución amortiguadora de borato 1M pH 7.5</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspc02" model="amunet.clave">
+        <field name="clave">SPSPC02</field>
+        <field name="nombre">Solución amortiguadora de borato 1M pH 8.5</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspc03" model="amunet.clave">
+        <field name="clave">SPSPC03</field>
+        <field name="nombre">Solución amortiguadora de borato 0.1M</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspc04" model="amunet.clave">
+        <field name="clave">SPSPC04</field>
+        <field name="nombre">Solución amortiguadora de borato 20 mM 7.5</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspc05" model="amunet.clave">
+        <field name="clave">SPSPC05</field>
+        <field name="nombre">Solución amortiguadora de borato 20 mM 8.5</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_sppbs01" model="amunet.clave">
+        <field name="clave">SPPBS01</field>
+        <field name="nombre">Solución PBS 1x</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_sppbs02" model="amunet.clave">
+        <field name="clave">SPPBS02</field>
+        <field name="nombre">Solución PBS 10x</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
+        <field name="unidad">L</field>
+    </record>
+
+    <!-- ── Reactivos auxiliares ── -->
+    <record id="clave_spshs01" model="amunet.clave">
+        <field name="clave">SPSHS01</field>
+        <field name="nombre">Solución Hidróxido de Sodio 1M</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos auxiliares</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spshs02" model="amunet.clave">
+        <field name="clave">SPSHS02</field>
+        <field name="nombre">Hidróxido de Sodio 20%</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos auxiliares</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spshs03" model="amunet.clave">
+        <field name="clave">SPSHS03</field>
+        <field name="nombre">Solución Hidróxido de Sodio al 5%</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos auxiliares</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spspv01" model="amunet.clave">
+        <field name="clave">SPSPV01</field>
+        <field name="nombre">Solución de PVP al 5%</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos auxiliares</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spsac01" model="amunet.clave">
+        <field name="clave">SPSAC01</field>
+        <field name="nombre">Solución HCl 6M</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos auxiliares</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spsas01" model="amunet.clave">
+        <field name="clave">SPSAS01</field>
+        <field name="nombre">Azida de Sodio 20%</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos auxiliares</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_splpt01" model="amunet.clave">
+        <field name="clave">SPLPT01</field>
+        <field name="nombre">Solución de lavado PBS/Tween</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos auxiliares</field>
+        <field name="unidad">L</field>
+    </record>
+
+    <!-- ── Sin pestaña ── -->
+    <record id="clave_spnps01" model="amunet.clave">
+        <field name="clave">SPNPS01</field>
+        <field name="nombre">Solución de nanopartículas</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones varios</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spsrb01" model="amunet.clave">
+        <field name="clave">SPSRB01</field>
+        <field name="nombre">Solución reactivo de Bradford</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones varios</field>
+        <field name="unidad">L</field>
+    </record>
+    <record id="clave_spdes01" model="amunet.clave">
+        <field name="clave">SPDES01</field>
+        <field name="nombre">Soluciones de desarrollo (clave general para soluciones solo de desarrollo)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones varios</field>
+        <field name="unidad">L</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMIPROCESADO — Mix de reacción LAMP (8 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_SPMRL01" model="amunet.clave">
+        <field name="clave">SPMRL01</field>
+        <field name="nombre">Mix de reacción RT-LAMP COV-FLU (pH)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRL02" model="amunet.clave">
+        <field name="clave">SPMRL02</field>
+        <field name="nombre">Mix de reacción RT-LAMP COV-FLU (prueba rápida)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRL03" model="amunet.clave">
+        <field name="clave">SPMRL03</field>
+        <field name="nombre">Mix de reacción reactivo seco</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRL04" model="amunet.clave">
+        <field name="clave">SPMRL04</field>
+        <field name="nombre">Mix de reacción LAMP liofilizado TB</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRL05" model="amunet.clave">
+        <field name="clave">SPMRL05</field>
+        <field name="nombre">Mix de reacción LAMP liofilizado RIF/INH</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRS01" model="amunet.clave">
+        <field name="clave">SPMRS01</field>
+        <field name="nombre">Mix de reacción SARS-CoV-2 (PCR-rápida)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRI02" model="amunet.clave">
+        <field name="clave">SPMRI02</field>
+        <field name="nombre">Mix de reacción Influenza A+B</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRA03" model="amunet.clave">
+        <field name="clave">SPMRA03</field>
+        <field name="nombre">Mix de reacción Adina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMIPROCESADO — Controles moleculares LAMP (10 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_SPCNL01" model="amunet.clave">
+        <field name="clave">SPCNL01</field>
+        <field name="nombre">Control negativo (CoV/FLU)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL02" model="amunet.clave">
+        <field name="clave">SPCNL02</field>
+        <field name="nombre">Control negativo investigar</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL03" model="amunet.clave">
+        <field name="clave">SPCNL03</field>
+        <field name="nombre">Control negativo tuberculosis RIF/IHN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL04" model="amunet.clave">
+        <field name="clave">SPCNL04</field>
+        <field name="nombre">IsoLister-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL05" model="amunet.clave">
+        <field name="clave">SPCNL05</field>
+        <field name="nombre">AUREUS-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL06" model="amunet.clave">
+        <field name="clave">SPCNL06</field>
+        <field name="nombre">CAMPY-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL07" model="amunet.clave">
+        <field name="clave">SPCNL07</field>
+        <field name="nombre">ENTERONET-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL08" model="amunet.clave">
+        <field name="clave">SPCNL08</field>
+        <field name="nombre">SALMONET-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL09" model="amunet.clave">
+        <field name="clave">SPCNL09</field>
+        <field name="nombre">EcoHem-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL10" model="amunet.clave">
+        <field name="clave">SPCNL10</field>
+        <field name="nombre">VIHLAMP-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMIPROCESADO — Soluciones LAMP (3 registros; SPSEO01 pendiente)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_SPSCS01" model="amunet.clave">
+        <field name="clave">SPSCS01</field>
+        <field name="nombre">Solución SARS-CoV-2</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPSCI01" model="amunet.clave">
+        <field name="clave">SPSCI01</field>
+        <field name="nombre">Solución Influenza A+B</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPSBC01" model="amunet.clave">
+        <field name="clave">SPSBC01</field>
+        <field name="nombre">Buffer de corrimiento</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMIPROCESADO — Reactivos y agentes LAMP (4 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_SPAIP01" model="amunet.clave">
+        <field name="clave">SPAIP01</field>
+        <field name="nombre">Agente intercalante p/PCR tiempo real</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos y agentes LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPAIG01" model="amunet.clave">
+        <field name="clave">SPAIG01</field>
+        <field name="nombre">Agente Intercalante ADN/ARN para gel</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos y agentes LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPRDI01" model="amunet.clave">
+        <field name="clave">SPRDI01</field>
+        <field name="nombre">Reactivo diluyente</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos y agentes LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPTRC01" model="amunet.clave">
+        <field name="clave">SPTRC01</field>
+        <field name="nombre">Tubo con reactivo de corrimiento</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos y agentes LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Instructivos y etiquetas (3) -->
+    <record id="mi_miman01" model="amunet.clave">
+        <field name="clave">MIMAN01</field>
+        <field name="nombre">Instructivo de uso</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Instructivos y etiquetas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_miebp01" model="amunet.clave">
+        <field name="clave">MIEBP01</field>
+        <field name="nombre">Etiqueta de empaque primario</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Instructivos y etiquetas</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_miecp01" model="amunet.clave">
+        <field name="clave">MIECP01</field>
+        <field name="nombre">Etiqueta de empaque secundario</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Instructivos y etiquetas</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Tarjetas de color (5) -->
+    <record id="mi_mitac01" model="amunet.clave">
+        <field name="clave">MITAC01</field>
+        <field name="nombre">Tarjeta de color hemoglobina</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Tarjetas de color</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mitac02" model="amunet.clave">
+        <field name="clave">MITAC02</field>
+        <field name="nombre">Tarjeta de color AMH</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Tarjetas de color</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mitac03" model="amunet.clave">
+        <field name="clave">MITAC03</field>
+        <field name="nombre">Tarjeta de color vitamina D</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Tarjetas de color</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mitac04" model="amunet.clave">
+        <field name="clave">MITAC04</field>
+        <field name="nombre">Tarjeta de color albúmina</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Tarjetas de color</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mitac05" model="amunet.clave">
+        <field name="clave">MITAC05</field>
+        <field name="nombre">Tarjeta de color infecciones urinarias</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Tarjetas de color</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Cajas caple (19) -->
+    <record id="mi_micaj01" model="amunet.clave">
+        <field name="clave">MICAJ01</field>
+        <field name="nombre">Caja caple general</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj02" model="amunet.clave">
+        <field name="clave">MICAJ02</field>
+        <field name="nombre">Caja caple combo respiratorio</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj03" model="amunet.clave">
+        <field name="clave">MICAJ03</field>
+        <field name="nombre">Caja caple vitamina D</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj04" model="amunet.clave">
+        <field name="clave">MICAJ04</field>
+        <field name="nombre">Caja caple Dengue-net</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj05" model="amunet.clave">
+        <field name="clave">MICAJ05</field>
+        <field name="nombre">Caja caple Covinet</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj06" model="amunet.clave">
+        <field name="clave">MICAJ06</field>
+        <field name="nombre">Caja caple Flunet</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj07" model="amunet.clave">
+        <field name="clave">MICAJ07</field>
+        <field name="nombre">Caja caple PCR Bionet Multi</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj08" model="amunet.clave">
+        <field name="clave">MICAJ08</field>
+        <field name="nombre">Caja caple ADN</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj09" model="amunet.clave">
+        <field name="clave">MICAJ09</field>
+        <field name="nombre">Caja caple ARN</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj10" model="amunet.clave">
+        <field name="clave">MICAJ10</field>
+        <field name="nombre">Caja caple HCG</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj11" model="amunet.clave">
+        <field name="clave">MICAJ11</field>
+        <field name="nombre">Caja caple CARDIAC COMBO</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj12" model="amunet.clave">
+        <field name="clave">MICAJ12</field>
+        <field name="nombre">Caja caple DROGS-NET</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj13" model="amunet.clave">
+        <field name="clave">MICAJ13</field>
+        <field name="nombre">Caja caple CLAMIDIANET</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj14" model="amunet.clave">
+        <field name="clave">MICAJ14</field>
+        <field name="nombre">Caja caple HEMOGLINET</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj15" model="amunet.clave">
+        <field name="clave">MICAJ15</field>
+        <field name="nombre">Caja caple general chica</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj16" model="amunet.clave">
+        <field name="clave">MICAJ16</field>
+        <field name="nombre">Caja antidoping saliva</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj17" model="amunet.clave">
+        <field name="clave">MICAJ17</field>
+        <field name="nombre">Caja antidoping NET ssp</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj18" model="amunet.clave">
+        <field name="clave">MICAJ18</field>
+        <field name="nombre">Caja de COVINET Ag-SALIVA</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_micaj19" model="amunet.clave">
+        <field name="clave">MICAJ19</field>
+        <field name="nombre">Caja hemoglinet 5 piezas</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Cajas caple</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- Fundas para caja PCR (10) -->
+    <record id="mi_mifun01" model="amunet.clave">
+        <field name="clave">MIFUN01</field>
+        <field name="nombre">Funda para caja PCR Fetalamp</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mifun02" model="amunet.clave">
+        <field name="clave">MIFUN02</field>
+        <field name="nombre">Funda para caja PCR Isolister ADN</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mifun03" model="amunet.clave">
+        <field name="clave">MIFUN03</field>
+        <field name="nombre">Funda para caja PCR rápida</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mifun04" model="amunet.clave">
+        <field name="clave">MIFUN04</field>
+        <field name="nombre">Funda para caja PCR Salmonet ADN</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mifun05" model="amunet.clave">
+        <field name="clave">MIFUN05</field>
+        <field name="nombre">Funda para caja PCR TB DxNet</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mifun06" model="amunet.clave">
+        <field name="clave">MIFUN06</field>
+        <field name="nombre">Funda para caja PCR TB Rifnet</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mifun07" model="amunet.clave">
+        <field name="clave">MIFUN07</field>
+        <field name="nombre">Funda para caja PCR VPH NET</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mifun08" model="amunet.clave">
+        <field name="clave">MIFUN08</field>
+        <field name="nombre">Funda para caja PCR ECHOHEM</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mifun09" model="amunet.clave">
+        <field name="clave">MIFUN09</field>
+        <field name="nombre">Funda para caja PCR PYLORINET-ADN</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="mi_mifun10" model="amunet.clave">
+        <field name="clave">MIFUN10</field>
+        <field name="nombre">Funda para caja PCR VIHLAMP-NET</field>
+        <field name="clasificacion">mi</field>
+        <field name="subcategoria">Fundas para caja PCR</field>
+        <field name="estado">activa</field>
+    </record>
+
+</odoo>

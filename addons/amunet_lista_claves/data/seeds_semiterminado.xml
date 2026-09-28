@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMITERMINADO — Viales con solución (15 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_STSSP01" model="amunet.clave">
+        <field name="clave">STSSP01</field>
+        <field name="nombre">Vial con solución de corrimiento Sangre, Suero, Plasma</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STTRE01" model="amunet.clave">
+        <field name="clave">STTRE01</field>
+        <field name="nombre">Vial con solución de corrimiento Tracto Respiratorio</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STAPB01" model="amunet.clave">
+        <field name="clave">STAPB01</field>
+        <field name="nombre">Vial con solución de corrimiento Ac+PBS</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STBMB01" model="amunet.clave">
+        <field name="clave">STBMB01</field>
+        <field name="nombre">Vial con solución de corrimiento PCR rápida (90 - 120 µl)</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STBMB02" model="amunet.clave">
+        <field name="clave">STBMB02</field>
+        <field name="nombre">Vial con solución de corrimiento PCR rápida (250 µl)</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHEB01" model="amunet.clave">
+        <field name="clave">STHEB01</field>
+        <field name="nombre">Vial con solución de corrimiento heces</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STSAL01" model="amunet.clave">
+        <field name="clave">STSAL01</field>
+        <field name="nombre">Vial con solución salina</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STACM01" model="amunet.clave">
+        <field name="clave">STACM01</field>
+        <field name="nombre">Vial con aceite mineral</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STRDI01" model="amunet.clave">
+        <field name="clave">STRDI01</field>
+        <field name="nombre">Vial con reactivo diluyente</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STREX01" model="amunet.clave">
+        <field name="clave">STREX01</field>
+        <field name="nombre">Vial con reactivo de extracción 1</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STREX02" model="amunet.clave">
+        <field name="clave">STREX02</field>
+        <field name="nombre">Vial con reactivo de extracción 2</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STTRE02" model="amunet.clave">
+        <field name="clave">STTRE02</field>
+        <field name="nombre">Vial individual con sol corrim muestra de tracto respiratorio</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STBHB01" model="amunet.clave">
+        <field name="clave">STBHB01</field>
+        <field name="nombre">Vial individual con sol corrim HbA1c</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STSSP02" model="amunet.clave">
+        <field name="clave">STSSP02</field>
+        <field name="nombre">Vial con solución de corrimiento Sangre, Suero, Plasma con Chem</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STBPC01" model="amunet.clave">
+        <field name="clave">STBPC01</field>
+        <field name="nombre">Vial con solución de corrimiento (proveedor)</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales con solución</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMITERMINADO — Goteros y capilares (8 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_STGOT01" model="amunet.clave">
+        <field name="clave">STGOT01</field>
+        <field name="nombre">Gotero capilar</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Goteros y capilares</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STGOT02" model="amunet.clave">
+        <field name="clave">STGOT02</field>
+        <field name="nombre">Gotero capilar chico punta larga</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Goteros y capilares</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STGOT03" model="amunet.clave">
+        <field name="clave">STGOT03</field>
+        <field name="nombre">Gotero capilar grande punta larga</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Goteros y capilares</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STGOT04" model="amunet.clave">
+        <field name="clave">STGOT04</field>
+        <field name="nombre">Gotero 25 µl</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Goteros y capilares</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STGOT05" model="amunet.clave">
+        <field name="clave">STGOT05</field>
+        <field name="nombre">Gotero general 40 µl</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Goteros y capilares</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STGOT06" model="amunet.clave">
+        <field name="clave">STGOT06</field>
+        <field name="nombre">Gotero antidoping Sangre, Suero, Plasma</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Goteros y capilares</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STGOT07" model="amunet.clave">
+        <field name="clave">STGOT07</field>
+        <field name="nombre">Gotero con capilar</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Goteros y capilares</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STGOT08" model="amunet.clave">
+        <field name="clave">STGOT08</field>
+        <field name="nombre">Tubo capilar de cristal</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Goteros y capilares</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMITERMINADO — Hisopos y cepillos (6 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_STHIS01" model="amunet.clave">
+        <field name="clave">STHIS01</field>
+        <field name="nombre">Hisopo nasofaringeo</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Hisopos y cepillos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIS02" model="amunet.clave">
+        <field name="clave">STHIS02</field>
+        <field name="nombre">Hisopo bucal</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Hisopos y cepillos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIS03" model="amunet.clave">
+        <field name="clave">STHIS03</field>
+        <field name="nombre">Hisopo vaginal</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Hisopos y cepillos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIS04" model="amunet.clave">
+        <field name="clave">STHIS04</field>
+        <field name="nombre">Cepillo cervical</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Hisopos y cepillos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIS05" model="amunet.clave">
+        <field name="clave">STHIS05</field>
+        <field name="nombre">Hisopo cervical (auto-toma)</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Hisopos y cepillos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIS06" model="amunet.clave">
+        <field name="clave">STHIS06</field>
+        <field name="nombre">Hisopo general</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Hisopos y cepillos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMITERMINADO — Accesorios (6 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_STALA01" model="amunet.clave">
+        <field name="clave">STALA01</field>
+        <field name="nombre">Almohadilla con alcohol</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STLAN01" model="amunet.clave">
+        <field name="clave">STLAN01</field>
+        <field name="nombre">Lanceta</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIE01" model="amunet.clave">
+        <field name="clave">STHIE01</field>
+        <field name="nombre">Hielera chica</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIE02" model="amunet.clave">
+        <field name="clave">STHIE02</field>
+        <field name="nombre">Hielera mediana</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIE03" model="amunet.clave">
+        <field name="clave">STHIE03</field>
+        <field name="nombre">Hielera grande</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STDSC01" model="amunet.clave">
+        <field name="clave">STDSC01</field>
+        <field name="nombre">Desecante</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STGRA01" model="amunet.clave">
+        <field name="clave">STGRA01</field>
+        <field name="nombre">Gradilla de cartón</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STESP01" model="amunet.clave">
+        <field name="clave">STESP01</field>
+        <field name="nombre">Esponja para toma de muestra</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIE04" model="amunet.clave">
+        <field name="clave">STHIE04</field>
+        <field name="nombre">Hielera chica con asa</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMITERMINADO — Tubos y colectores (5 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_STTCT01" model="amunet.clave">
+        <field name="clave">STTCT01</field>
+        <field name="nombre">Tubo colector con tapa cuentagotas</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Tubos y colectores</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STTCT02" model="amunet.clave">
+        <field name="clave">STTCT02</field>
+        <field name="nombre">Tubo colector con unión a la tapa cuentagotas (con tapa)</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Tubos y colectores</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STTCS01" model="amunet.clave">
+        <field name="clave">STTCS01</field>
+        <field name="nombre">Tubo colector de saliva (para alcohol en saliva)</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Tubos y colectores</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STTBT01" model="amunet.clave">
+        <field name="clave">STTBT01</field>
+        <field name="nombre">Tubo con tapa desecante</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Tubos y colectores</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STCSA01" model="amunet.clave">
+        <field name="clave">STCSA01</field>
+        <field name="nombre">Colector de saliva (para alcohol en saliva)</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Tubos y colectores</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMITERMINADO — Controles y reactivos (4 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_STCOP01" model="amunet.clave">
+        <field name="clave">STCOP01</field>
+        <field name="nombre">Control positivo</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Controles y reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STCON01" model="amunet.clave">
+        <field name="clave">STCON01</field>
+        <field name="nombre">Control negativo</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Controles y reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STRSE01" model="amunet.clave">
+        <field name="clave">STRSE01</field>
+        <field name="nombre">Reactivo seco</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Controles y reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STGEL01" model="amunet.clave">
+        <field name="clave">STGEL01</field>
+        <field name="nombre">GEL</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Controles y reactivos</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMITERMINADO — Viales para buffer (3 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_STVIA05" model="amunet.clave">
+        <field name="clave">STVIA05</field>
+        <field name="nombre">Vial 5 ml para buffer</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales para buffer</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STVIR01" model="amunet.clave">
+        <field name="clave">STVIR01</field>
+        <field name="nombre">Vial 5ml con recolector para buffer</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales para buffer</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STVIR02" model="amunet.clave">
+        <field name="clave">STVIR02</field>
+        <field name="nombre">Vial 5ml sin recolector para buffer</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Viales para buffer</field>
+        <field name="estado">activa</field>
+    </record>
+
+</odoo>
