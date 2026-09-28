@@ -233,9 +233,23 @@
         <field name="subcategoria">Accesorios</field>
         <field name="estado">activa</field>
     </record>
-    <record id="clave_STCHI01" model="amunet.clave">
-        <field name="clave">STCHI01</field>
-        <field name="nombre">Hielera</field>
+    <record id="clave_STHIE01" model="amunet.clave">
+        <field name="clave">STHIE01</field>
+        <field name="nombre">Hielera chica</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIE02" model="amunet.clave">
+        <field name="clave">STHIE02</field>
+        <field name="nombre">Hielera mediana</field>
+        <field name="clasificacion">st</field>
+        <field name="subcategoria">Accesorios</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STHIE03" model="amunet.clave">
+        <field name="clave">STHIE03</field>
+        <field name="nombre">Hielera grande</field>
         <field name="clasificacion">st</field>
         <field name="subcategoria">Accesorios</field>
         <field name="estado">activa</field>
@@ -256,7 +270,7 @@
     </record>
     <record id="clave_STHIE04" model="amunet.clave">
         <field name="clave">STHIE04</field>
-        <field name="nombre">Hielera con asa</field>
+        <field name="nombre">Hielera chica con asa</field>
         <field name="clasificacion">st</field>
         <field name="subcategoria">Accesorios</field>
         <field name="estado">activa</field>
