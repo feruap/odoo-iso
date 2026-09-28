@@ -50,7 +50,7 @@ export class AmunetListaClaves extends Component {
             "amunet.clave",
             [["clasificacion", "=", key]],
             ["id", "clave", "nombre", "subcategoria", "unidad", "estado"],
-            { order: "subcategoria, clave" },
+            { order: "subcategoria, clave", limit: 5000 },
         );
         this.state.claves        = claves;
         this.state.clasificacion = key;

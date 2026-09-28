@@ -126,7 +126,11 @@
 }
 
 /* ── Tabla ── */
-.o_amunet_lc_tab_content { margin-bottom: 24px; }
+.o_amunet_lc_tab_content {
+    margin-bottom: 24px;
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+}
 .o_amunet_lc_tabla_wrap { overflow-x: auto; }
 .o_amunet_lc_tabla {
     width: 100%;
