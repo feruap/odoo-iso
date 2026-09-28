@@ -13,6 +13,7 @@
         'views/menus.xml',
         'data/seeds_semiprocesado.xml',
         'data/seeds_semiterminado.xml',
+        'data/seeds_materiaprima.xml',
     ],
     'assets': {
         'web.assets_backend': [
