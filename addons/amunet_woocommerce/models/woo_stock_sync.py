@@ -649,6 +649,25 @@ class AmunetWooBackend(models.Model):
         try:
             with self.env.cr.savepoint():
                 return self._descontar_venta(mov, fila).estado
+        except UserError as exc:
+            # Un UserError NO es un fallo tecnico: es un candado del sistema que
+            # dice en castellano por que no se puede. El mas comun es el de lote
+            # sin analisis aprobado (amunet_production/models/stock_move.py).
+            #
+            # Antes caia en el `except Exception` de abajo y la cola quedaba en
+            # 'error_tecnico' con la nota "Revisar el log del servidor", que no
+            # dice nada y ademas manda a un log que se borra en cada deploy.
+            # Almacen 2 perdio tiempo el 25-sep-2026 persiguiendo una hipotesis
+            # de SKU por culpa de esa nota: el motivo real estaba escrito en la
+            # excepcion y el puente lo tiraba a la basura.
+            estado, nota, extra = self._clasificar_candado(mov, exc)
+            try:
+                with self.env.cr.savepoint():
+                    return self._guardar_resultado(mov, fila, estado, nota, extra).estado
+            except Exception:  # noqa: BLE001
+                _logger.exception('Puente: no se pudo registrar el candado del movimiento %s',
+                                  mov.get('id'))
+                return None
         except Exception as exc:  # noqa: BLE001
             _logger.exception('Puente: fallo el movimiento %s: %s', mov.get('id'), exc)
         # El intento reventó: al menos hay que dejar escrito que reventó.
@@ -660,6 +679,48 @@ class AmunetWooBackend(models.Model):
             _logger.exception('Puente: tampoco se pudo registrar el fallo del movimiento %s',
                               mov.get('id'))
             return None
+
+    def _clasificar_candado(self, mov, exc):
+        """Traduce un candado del sistema al estado que le corresponde en la cola.
+
+        Devuelve (estado, nota, extra). La nota SIEMPRE lleva el texto de la
+        excepcion: es la unica explicacion real que existe y no debe perderse.
+        El `extra` rellena producto y lote cuando se pueden resolver, para que el
+        renglon no se vea como '(sin mapeo)' teniendo mapeo -- que fue justo lo
+        que confundio a Almacen 2.
+        """
+        self.ensure_one()
+        motivo = (str(exc) or '').strip()
+        comun = self._datos_comunes(mov)
+        extra = {}
+        lote = None
+        # Se resuelven igual que en _descontar_venta: por el mapeo confirmado y
+        # por el nombre normalizado del lote.
+        mapeo = self.env['amunet.woo.product.mapping'].sudo().search([
+            ('backend_id', '=', self.id),
+            ('woo_product_id', '=', comun['woo_product_id']),
+            ('relation_state', '=', 'confirmed'),
+            ('product_id', '!=', False),
+        ], limit=1)
+        if mapeo:
+            extra['product_id'] = mapeo.product_id.id
+            buscado = norm_lote(comun['lote_texto'])
+            if buscado:
+                iguales = self.env['stock.lot'].sudo().search([
+                    ('product_id', '=', mapeo.product_id.id),
+                    ('company_id', 'in', (self.company_id.id, False)),
+                ]).filtered(lambda l: norm_lote(l.name) == buscado)
+                if len(iguales) == 1:
+                    lote = iguales
+                    extra['lot_id'] = lote.id
+        retenido = bool(lote) and getattr(
+            lote, 'amunet_lot_release_state', 'released') != 'released'
+        if retenido:
+            return 'lote_retenido', _(
+                'Calidad no ha liberado el lote %(lote)s. %(motivo)s'
+            ) % {'lote': lote.name, 'motivo': motivo}, extra
+        return 'error_tecnico', motivo or _(
+            'Fallo tecnico al descontar. Revisar el log del servidor.'), extra
 
     def _datos_comunes(self, mov):
         comun = {
