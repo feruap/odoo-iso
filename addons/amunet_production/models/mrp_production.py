@@ -714,16 +714,7 @@ class MrpProduction(models.Model):
         permiso existia pero el boton no aparecia: el jefe de arriba podia
         firmar y no tenia donde apretar. Corregido el 28-sep-2026.
         """
-        sup = orden.amunet_supervisor_id
-        if not sup:
-            return False
-        if sup == self.env.user:
-            return True
-        # el jefe de quien quedo asignado, mirando el organigrama de RRHH
-        Emp = self.env['hr.employee'].sudo()
-        emp_sup = Emp.search([('user_id', '=', sup.id)], limit=1)
-        jefe_del_jefe = emp_sup.parent_id.user_id if emp_sup and emp_sup.parent_id else False
-        return bool(jefe_del_jefe and jefe_del_jefe == self.env.user)
+        return self.env.user in orden._amunet_supervisores_autorizados()
 
     @api.depends('amunet_supervisor_id')
     @api.depends_context('uid')
@@ -1176,7 +1167,9 @@ class MrpProduction(models.Model):
             'reconciliation_initiated_by': self.env.user.id,
             'reconciliation_initiated_date': fields.Datetime.now(),
         })
-        self.message_post(body=_('Conciliación de materiales iniciada por <b>%s</b>.') % self.env.user.name)
+        self.message_post(
+            body=Markup(_('Conciliación de materiales iniciada por <b>%s</b>.'))
+            % self.env.user.name)
 
     def action_validate_reconciliation(self):
         self.ensure_one()
@@ -2844,34 +2837,36 @@ class MrpProduction(models.Model):
         return super()._prepare_stock_lot_values()
 
     # ── Supervisión de elaboración ──────────────────────────────────────────
-    def _amunet_get_supervisor_users(self):
-        """Quienes pueden firmar la supervision: el jefe directo y el de arriba.
+    def _amunet_supervisores_autorizados(self):
+        """Quienes pueden firmar la supervision de ESTA orden.
 
-        DOS NIVELES, no mas. El jefe directo firma normalmente y el suyo puede
-        cubrirlo cuando no esta, sin que nadie mas arriba pueda meterse.
+        DOS NIVELES, no mas: el jefe al que se le envio y el jefe de ese jefe.
+        El directo firma normalmente y el de arriba puede cubrirlo cuando no
+        esta, sin que nadie mas pueda meterse. Caso que lo motivo: los
+        Practicantes de Soluciones, cuyas soluciones deben poder firmar Julissa
+        (su jefa) o Alondra (jefa de Julissa). Decision de Mery, 28-sep-2026.
 
-        Antes solo valia el jefe directo, y si ese dia no estaba la solucion se
-        quedaba sin firmar. Caso que lo motivo: los Practicantes de Soluciones,
-        cuyas soluciones deben poder firmar Julissa (su jefa) o Alondra (jefa de
-        Julissa). Decision de Mery, 28-sep-2026.
+        Se parte del SUPERVISOR ASIGNADO en la orden, no de quien esta
+        preguntando. Antes el candado calculaba la cadena desde el usuario
+        conectado, asi que a Alondra le decia "solo Mery o Julissa pueden
+        firmar": le devolvia a SU jefa en vez de reconocerla a ella. El boton
+        ya usaba el criterio correcto, de modo que a Alondra le aparecia el
+        boton y al apretarlo la rechazaba. Detectado el 28-sep-2026 probando la
+        firma usuario por usuario; ahora los dos leen de aqui.
 
         La fuente es el organigrama de RRHH y nada mas: si alguien cambia de
         puesto, esto se acomoda solo. No hay lista paralela que mantener.
         """
         self.ensure_one()
-        Emp = self.env['hr.employee'].sudo()
-        emp = Emp.search([('user_id', '=', self.env.user.id)], limit=1)
-        if not emp and self.create_uid:
-            emp = Emp.search([('user_id', '=', self.create_uid.id)], limit=1)
-        if not emp:
+        sup = self.amunet_supervisor_id
+        if not sup:
             return self.env['res.users']
-        jefes = self.env['res.users']
-        directo = emp.parent_id
-        if directo and directo.user_id:
-            jefes |= directo.user_id
-        if directo and directo.parent_id and directo.parent_id.user_id:
-            jefes |= directo.parent_id.user_id
-        return jefes
+        autorizados = sup
+        Emp = self.env['hr.employee'].sudo()
+        emp_sup = Emp.search([('user_id', '=', sup.id)], limit=1)
+        if emp_sup and emp_sup.parent_id and emp_sup.parent_id.user_id:
+            autorizados |= emp_sup.parent_id.user_id
+        return autorizados
 
     def _amunet_get_direct_manager_user(self):
         """Usuario del JEFE DIRECTO (manager de RRHH) de quien elabora la orden."""
@@ -2925,7 +2920,8 @@ class MrpProduction(models.Model):
             summary=_('Supervisar elaboración de solución %s') % self.name,
             note=_('Revisa la elaboración de la solución %s y firma la '
                    'supervisión (con PIN) antes de que continue.') % self.name)
-        self.sudo().message_post(body=_('Enviada a supervisión de <b>%s</b>.') % mgr.name)
+        self.sudo().message_post(
+            body=Markup(_('Enviada a supervisión de <b>%s</b>.')) % mgr.name)
         return True
 
     def _amunet_check_supervision_signer(self):
@@ -2960,7 +2956,7 @@ class MrpProduction(models.Model):
         # Dos niveles: asi la solucion no se queda sin firmar si el jefe directo
         # no esta ese dia. Decision de Mery, 28-sep-2026.
         if self.amunet_supervisor_id:
-            autorizados = self._amunet_get_supervisor_users() | self.amunet_supervisor_id
+            autorizados = self._amunet_supervisores_autorizados()
             if quien not in autorizados:
                 nombres = ' o '.join(autorizados.mapped('name')) or \
                     self.amunet_supervisor_id.name
@@ -2999,8 +2995,10 @@ class MrpProduction(models.Model):
             lambda a: a.user_id == self.amunet_supervisor_id)
         if acts:
             acts.sudo().action_feedback(feedback=_('Elaboración supervisada.'))
+        # Markup: sin el, las etiquetas <b> se guardan escapadas y el usuario
+        # lee literalmente "<b>Julissa</b>" en el historial de la orden.
         self.sudo().message_post(
-            body=_('Elaboración supervisada por <b>%s</b>.') % self.env.user.name)
+            body=Markup(_('Elaboración supervisada por <b>%s</b>.')) % self.env.user.name)
         return True
 
     def _amunet_signature_allowed_methods(self):
