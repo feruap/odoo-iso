@@ -18,6 +18,7 @@
         'data/seeds_productoterminado.xml',
         'data/seeds_equipos.xml',
         'data/seeds_ptreactivos.xml',
+        'data/seeds_soluciones_captura.xml',
     ],
     'assets': {
         'web.assets_backend': [

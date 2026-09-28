@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Soluciones de captura SP (30) -->
+    <record id="sp_spsca01" model="amunet.clave">
+        <field name="clave">SPSCA01</field>
+        <field name="nombre">Solución de captura anti-influenza A</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca02" model="amunet.clave">
+        <field name="clave">SPSCA02</field>
+        <field name="nombre">Solución de captura anti-influenza B</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca03" model="amunet.clave">
+        <field name="clave">SPSCA03</field>
+        <field name="nombre">Solución de captura anti-THC</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca04" model="amunet.clave">
+        <field name="clave">SPSCA04</field>
+        <field name="nombre">Solución de captura anti-COC</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca05" model="amunet.clave">
+        <field name="clave">SPSCA05</field>
+        <field name="nombre">Solución de captura anti-AMP</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca06" model="amunet.clave">
+        <field name="clave">SPSCA06</field>
+        <field name="nombre">Solución de captura anti-MET</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca07" model="amunet.clave">
+        <field name="clave">SPSCA07</field>
+        <field name="nombre">Solución de captura anti-OPI</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca08" model="amunet.clave">
+        <field name="clave">SPSCA08</field>
+        <field name="nombre">Solución de captura anti-biotina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca09" model="amunet.clave">
+        <field name="clave">SPSCA09</field>
+        <field name="nombre">Solución de captura anti-mioglobina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca10" model="amunet.clave">
+        <field name="clave">SPSCA10</field>
+        <field name="nombre">Solución de captura anti-CK-MB</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca11" model="amunet.clave">
+        <field name="clave">SPSCA11</field>
+        <field name="nombre">Solución de captura anti-cTnI</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca12" model="amunet.clave">
+        <field name="clave">SPSCA12</field>
+        <field name="nombre">Solución de captura anti-Chlamydia trachomatis</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca13" model="amunet.clave">
+        <field name="clave">SPSCA13</field>
+        <field name="nombre">Solución de captura IgG anti-humano</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca14" model="amunet.clave">
+        <field name="clave">SPSCA14</field>
+        <field name="nombre">Solución de captura IgM anti-humano</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca15" model="amunet.clave">
+        <field name="clave">SPSCA15</field>
+        <field name="nombre">Solución de captura anti-proteína N</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca16" model="amunet.clave">
+        <field name="clave">SPSCA16</field>
+        <field name="nombre">Solución de captura anti-NS1</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca17" model="amunet.clave">
+        <field name="clave">SPSCA17</field>
+        <field name="nombre">Solución de captura anti-ALC</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca18" model="amunet.clave">
+        <field name="clave">SPSCA18</field>
+        <field name="nombre">Solución de captura anti-ferritina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca19" model="amunet.clave">
+        <field name="clave">SPSCA19</field>
+        <field name="nombre">Solución de captura anti-hCG</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca20" model="amunet.clave">
+        <field name="clave">SPSCA20</field>
+        <field name="nombre">Solución de captura anti-hemoglobina glicada</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca21" model="amunet.clave">
+        <field name="clave">SPSCA21</field>
+        <field name="nombre">Solución de captura anti-PSA</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca22" model="amunet.clave">
+        <field name="clave">SPSCA22</field>
+        <field name="nombre">Solución de captura anti-rotavirus</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca23" model="amunet.clave">
+        <field name="clave">SPSCA23</field>
+        <field name="nombre">Solución de captura anti-adenovirus</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca24" model="amunet.clave">
+        <field name="clave">SPSCA24</field>
+        <field name="nombre">Solución de captura anti-RSV</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca25" model="amunet.clave">
+        <field name="clave">SPSCA25</field>
+        <field name="nombre">Solución de captura anti-ratón</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca26" model="amunet.clave">
+        <field name="clave">SPSCA26</field>
+        <field name="nombre">Solución de captura anti-p24 del VIH 1</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca27" model="amunet.clave">
+        <field name="clave">SPSCA27</field>
+        <field name="nombre">Solución de captura anti-TSH</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca28" model="amunet.clave">
+        <field name="clave">SPSCA28</field>
+        <field name="nombre">Solución de captura anti-Salmonella typhi</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca29" model="amunet.clave">
+        <field name="clave">SPSCA29</field>
+        <field name="nombre">Solución de captura Antígeno de Treponema pallidum</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="sp_spsca30" model="amunet.clave">
+        <field name="clave">SPSCA30</field>
+        <field name="nombre">Solución de captura 25 (OH) D</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de captura</field>
+        <field name="estado">activa</field>
+    </record>
+
+</odoo>
