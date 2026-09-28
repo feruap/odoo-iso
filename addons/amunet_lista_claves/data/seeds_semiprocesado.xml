@@ -339,4 +339,195 @@
         <field name="unidad">L</field>
     </record>
 
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMIPROCESADO — Mix de reacción LAMP (8 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_SPMRL01" model="amunet.clave">
+        <field name="clave">SPMRL01</field>
+        <field name="nombre">Mix de reacción RT-LAMP COV-FLU (pH)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRL02" model="amunet.clave">
+        <field name="clave">SPMRL02</field>
+        <field name="nombre">Mix de reacción RT-LAMP COV-FLU (prueba rápida)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRL03" model="amunet.clave">
+        <field name="clave">SPMRL03</field>
+        <field name="nombre">Mix de reacción reactivo seco</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRL04" model="amunet.clave">
+        <field name="clave">SPMRL04</field>
+        <field name="nombre">Mix de reacción LAMP liofilizado TB</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRL05" model="amunet.clave">
+        <field name="clave">SPMRL05</field>
+        <field name="nombre">Mix de reacción LAMP liofilizado RIF/INH</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRS01" model="amunet.clave">
+        <field name="clave">SPMRS01</field>
+        <field name="nombre">Mix de reacción SARS-CoV-2 (PCR-rápida)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRI02" model="amunet.clave">
+        <field name="clave">SPMRI02</field>
+        <field name="nombre">Mix de reacción Influenza A+B</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPMRA03" model="amunet.clave">
+        <field name="clave">SPMRA03</field>
+        <field name="nombre">Mix de reacción Adina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Mix de reacción LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMIPROCESADO — Controles moleculares LAMP (10 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_SPCNL01" model="amunet.clave">
+        <field name="clave">SPCNL01</field>
+        <field name="nombre">Control negativo (CoV/FLU)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL02" model="amunet.clave">
+        <field name="clave">SPCNL02</field>
+        <field name="nombre">Control negativo investigar</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL03" model="amunet.clave">
+        <field name="clave">SPCNL03</field>
+        <field name="nombre">Control negativo tuberculosis RIF/IHN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL04" model="amunet.clave">
+        <field name="clave">SPCNL04</field>
+        <field name="nombre">IsoLister-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL05" model="amunet.clave">
+        <field name="clave">SPCNL05</field>
+        <field name="nombre">AUREUS-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL06" model="amunet.clave">
+        <field name="clave">SPCNL06</field>
+        <field name="nombre">CAMPY-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL07" model="amunet.clave">
+        <field name="clave">SPCNL07</field>
+        <field name="nombre">ENTERONET-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL08" model="amunet.clave">
+        <field name="clave">SPCNL08</field>
+        <field name="nombre">SALMONET-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL09" model="amunet.clave">
+        <field name="clave">SPCNL09</field>
+        <field name="nombre">EcoHem-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCNL10" model="amunet.clave">
+        <field name="clave">SPCNL10</field>
+        <field name="nombre">VIHLAMP-ADN</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Controles moleculares LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMIPROCESADO — Soluciones LAMP (3 registros; SPSEO01 pendiente)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_SPSCS01" model="amunet.clave">
+        <field name="clave">SPSCS01</field>
+        <field name="nombre">Solución SARS-CoV-2</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPSCI01" model="amunet.clave">
+        <field name="clave">SPSCI01</field>
+        <field name="nombre">Solución Influenza A+B</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPSBC01" model="amunet.clave">
+        <field name="clave">SPSBC01</field>
+        <field name="nombre">Buffer de corrimiento</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEMIPROCESADO — Reactivos y agentes LAMP (4 registros)
+    ───────────────────────────────────────────────────────────────── -->
+    <record id="clave_SPAIP01" model="amunet.clave">
+        <field name="clave">SPAIP01</field>
+        <field name="nombre">Agente intercalante p/PCR tiempo real</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos y agentes LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPAIG01" model="amunet.clave">
+        <field name="clave">SPAIG01</field>
+        <field name="nombre">Agente Intercalante ADN/ARN para gel</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos y agentes LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPRDI01" model="amunet.clave">
+        <field name="clave">SPRDI01</field>
+        <field name="nombre">Reactivo diluyente</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos y agentes LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPTRC01" model="amunet.clave">
+        <field name="clave">SPTRC01</field>
+        <field name="nombre">Tubo con reactivo de corrimiento</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Reactivos y agentes LAMP</field>
+        <field name="estado">activa</field>
+    </record>
+
 </odoo>
