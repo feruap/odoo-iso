@@ -239,14 +239,45 @@ class StockPicking(models.Model):
                                 f"{len(qc.destination_line_ids)} destinos guardados"
                             )
 
-                    # Ahora sobreescribir todo a Cuarentena
+                    # Ahora sobreescribir todo a Cuarentena.
+                    #
+                    # PERO NO TODO: la cuarentena solo tiene sentido hacia una
+                    # ubicacion REAL de almacen. Un movimiento cuyo destino es
+                    # virtual -la ubicacion de conversion de combos, un ajuste,
+                    # una merma- no es material que entre al anaquel: es una
+                    # pata contable, y mandarla a Control de calidad la rompe.
+                    #
+                    # Caso real, CONV/00010 (28-sep-2026): la conversion de 30
+                    # combos Zika/Chikungunya consume el combo mandandolo a
+                    # "Conversion de combos" (usage inventory) y produce las tres
+                    # hojas maestras hacia Control de calidad. Este bloque pisaba
+                    # TAMBIEN la pata del combo, que salia de Control de calidad,
+                    # y la dejaba con origen = destino. Entonces el candado de
+                    # amunet_warehouse_access -que prohibe validar un traslado
+                    # donde el material no se mueve- lo bloqueaba. Un modulo
+                    # forzaba el destino y el otro prohibia el resultado: el
+                    # traslado quedaba imposible de validar por cualquier via,
+                    # y Almacen no tenia forma de saber por que.
+                    #
+                    # Tampoco se toca un movimiento que YA sale de la cuarentena:
+                    # redirigirlo ahi lo dejaria yendo a ningun lado.
                     _logger.info(f"REDIRECCION: Forzando destino {qc_location.name} para {picking.name}")
-                    picking.location_dest_id = qc_location
-                    for move in picking.move_ids:
-                        if move.state not in ('done', 'cancel'):
+                    redirigibles = picking.move_ids.filtered(
+                        lambda m: m.state not in ('done', 'cancel')
+                        and m.location_dest_id.usage == 'internal'
+                        and m.location_id != qc_location)
+                    if redirigibles:
+                        if picking.location_dest_id.usage == 'internal':
+                            picking.location_dest_id = qc_location
+                        for move in redirigibles:
                             move.location_dest_id = qc_location
                             for ml in move.move_line_ids:
                                 ml.location_dest_id = qc_location
+                    else:
+                        _logger.info(
+                            "REDIRECCION: %s no tiene movimientos redirigibles "
+                            "(destinos virtuales o ya en cuarentena); se deja "
+                            "como esta.", picking.name)
 
         # 2. ENFORCEMENT: (DESHABILITADO por requerimiento del usuario)
 
