@@ -99,3 +99,17 @@ print('=== AMP/IN/00478 lista para validar ===')
 print('  estado: %s' % p.state)
 for ml in p.move_line_ids:
     print('  %-10s lote=%s' % (ml.product_id.default_code, ml.lot_id.name if ml.lot_id else '-'))
+
+
+# ---------------------------------------------------------------------------
+# EQGOG01 (Goggles de seguridad UVEX): el mismo hueco. El producto lo dio de
+# alta Mery el 28-sep a las 12:04 con la ficha correcta, pero sin prefijo de
+# lote, asi que su primer lote habria salido 0000001. Se configura GOG01.
+t = env['product.template'].sudo().search([('default_code', '=', 'EQGOG01')], limit=1)
+if t and not (t.amunet_lot_prefix or '').strip():
+    t.write({'amunet_lot_prefix': 'GOG01'})
+    env.cr.commit()
+    t.invalidate_recordset()
+    pv = t.product_variant_ids[0]
+    pv.invalidate_recordset()
+    print('\nEQGOG01 -> prefijo %s, propone %s' % (t.amunet_lot_prefix, pv._amunet_next_lot_names(1)[0]))
