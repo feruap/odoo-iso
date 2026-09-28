@@ -24,6 +24,22 @@
         <field name="estado">activa</field>
     </record>
 
+    <!-- Insumos (2) -->
+    <record id="ptr_ptesp01" model="amunet.clave">
+        <field name="clave">PTESP01</field>
+        <field name="nombre">Esponja para muestreo ambiental estéril</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Insumos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="ptr_ptbwp01" model="amunet.clave">
+        <field name="clave">PTBWP01</field>
+        <field name="nombre">Bolsa Whirl-Pak estéril</field>
+        <field name="clasificacion">ptr</field>
+        <field name="subcategoria">Insumos</field>
+        <field name="estado">activa</field>
+    </record>
+
     <!-- Reactivos (10) -->
     <record id="ptr_ptrec04" model="amunet.clave">
         <field name="clave">PTREC04</field>

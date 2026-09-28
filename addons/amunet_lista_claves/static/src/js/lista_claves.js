@@ -80,8 +80,8 @@ export class AmunetListaClaves extends Component {
         return Object.entries(map).map(([nombre, items]) => ({ nombre, items }));
     }
 
-    _gruposConPestana(claves)  { return this._agrupar(claves).filter(g => g.items.length >= 3); }
-    _gruposSinPestana(claves)  { return this._agrupar(claves).filter(g => g.items.length < 3); }
+    _gruposConPestana(claves)  { return this._agrupar(claves).filter(g => g.items.length >= 2); }
+    _gruposSinPestana(claves)  { return this._agrupar(claves).filter(g => g.items.length < 2); }
 
     get clasificacionActual()  { return CLASIFICACIONES[this.state.clasificacion] || {}; }
     get clasificacionesList()  {
