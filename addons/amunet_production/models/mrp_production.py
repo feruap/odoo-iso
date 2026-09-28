@@ -701,13 +701,52 @@ class MrpProduction(models.Model):
         help='Quien mando la solucion a supervision, es decir quien la '
              'elaboro. Se usa para impedir que se supervise a si misma.')
     amunet_is_supervisor = fields.Boolean(
-        string='Es supervisor actual', compute='_compute_amunet_is_supervisor')
+        string='Puedo firmar esta supervision',
+        compute='_compute_amunet_is_supervisor',
+        search='_search_amunet_is_supervisor')
+
+    def _amunet_puede_firmar(self, orden):
+        """El usuario actual puede firmar la supervision de esta orden?
+
+        Vale el jefe al que se le envio Y el jefe de ese jefe, igual que el
+        candado de _amunet_check_supervision_signer. Antes este campo comparaba
+        contra UNA sola persona, asi que con la cadena de dos niveles el
+        permiso existia pero el boton no aparecia: el jefe de arriba podia
+        firmar y no tenia donde apretar. Corregido el 28-sep-2026.
+        """
+        sup = orden.amunet_supervisor_id
+        if not sup:
+            return False
+        if sup == self.env.user:
+            return True
+        # el jefe de quien quedo asignado, mirando el organigrama de RRHH
+        Emp = self.env['hr.employee'].sudo()
+        emp_sup = Emp.search([('user_id', '=', sup.id)], limit=1)
+        jefe_del_jefe = emp_sup.parent_id.user_id if emp_sup and emp_sup.parent_id else False
+        return bool(jefe_del_jefe and jefe_del_jefe == self.env.user)
 
     @api.depends('amunet_supervisor_id')
     def _compute_amunet_is_supervisor(self):
         for mo in self:
-            mo.amunet_is_supervisor = bool(
-                mo.amunet_supervisor_id and mo.amunet_supervisor_id == self.env.user)
+            mo.amunet_is_supervisor = mo._amunet_puede_firmar(mo)
+
+    def _search_amunet_is_supervisor(self, operator, value):
+        """Permite filtrar 'las que puedo firmar yo'.
+
+        Sin esto el filtro de la vista no funciona: un campo calculado no se
+        puede buscar. Devuelve las ordenes cuyo supervisor asignado soy yo, o
+        cuyo supervisor asignado es alguien que me reporta.
+        """
+        if operator not in ('=', '!=') or not isinstance(value, bool):
+            return []
+        Emp = self.env['hr.employee'].sudo()
+        yo = Emp.search([('user_id', '=', self.env.uid)], limit=1)
+        # quienes me reportan: sus supervisiones tambien las puedo firmar
+        subordinados = Emp.search([('parent_id', '=', yo.id)]) if yo else Emp
+        users = [self.env.uid] + [
+            e.user_id.id for e in subordinados if e.user_id]
+        positivo = (operator == '=') == bool(value)
+        return [('amunet_supervisor_id', 'in' if positivo else 'not in', users)]
 
     amunet_all_ingredients_valid = fields.Boolean(
         compute='_compute_all_ingredients_valid',
