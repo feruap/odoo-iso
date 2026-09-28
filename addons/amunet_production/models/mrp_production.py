@@ -2915,11 +2915,22 @@ class MrpProduction(models.Model):
             'amunet_supervisor_id': mgr.id,
             'amunet_elaborated_by_id': self.env.user.id,
         })
-        self.sudo().activity_schedule(
-            'mail.mail_activity_data_todo', user_id=mgr.id,
-            summary=_('Supervisar elaboración de solución %s') % self.name,
-            note=_('Revisa la elaboración de la solución %s y firma la '
-                   'supervisión (con PIN) antes de que continue.') % self.name)
+        # El aviso va a los DOS que pueden firmar, siempre, este o no el jefe
+        # directo. Antes solo lo recibia el directo y el de arriba tenia que
+        # acordarse de mirar el filtro "Esperan mi firma": el permiso existia y
+        # el aviso no. Decision de Mery, 28-sep-2026.
+        for quien in self._amunet_supervisores_autorizados():
+            if quien == mgr:
+                nota = _('Revisa la elaboración de la solución %s y firma la '
+                         'supervisión (con PIN) antes de que continue.') % self.name
+            else:
+                nota = _('La solución %(mo)s se envió a supervisión de '
+                         '%(jefe)s. Tú también puedes firmarla (con PIN) si '
+                         'hace falta cubrirla.') % {'mo': self.name, 'jefe': mgr.name}
+            self.sudo().activity_schedule(
+                'mail.mail_activity_data_todo', user_id=quien.id,
+                summary=_('Supervisar elaboración de solución %s') % self.name,
+                note=nota)
         self.sudo().message_post(
             body=Markup(_('Enviada a supervisión de <b>%s</b>.')) % mgr.name)
         return True
@@ -2990,9 +3001,11 @@ class MrpProduction(models.Model):
             'amunet_supervised_by_id': self.env.user.id,
             'amunet_supervised_date': fields.Datetime.now(),
         })
-        # Cerrar la actividad de supervision pendiente.
-        acts = self.activity_ids.filtered(
-            lambda a: a.user_id == self.amunet_supervisor_id)
+        # Cerrar las actividades de supervision pendientes: son DOS, una por
+        # cada quien que podia firmar. Si solo se cierra la del supervisor
+        # asignado, al otro le queda el pendiente colgado para siempre.
+        autorizados = self._amunet_supervisores_autorizados()
+        acts = self.activity_ids.filtered(lambda a: a.user_id in autorizados)
         if acts:
             acts.sudo().action_feedback(feedback=_('Elaboración supervisada.'))
         # Markup: sin el, las etiquetas <b> se guardan escapadas y el usuario
