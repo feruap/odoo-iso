@@ -75,6 +75,27 @@ class AmunetComprasTablero(models.AbstractModel):
         return dict(record._fields[campo]._description_selection(self.env)).get(valor, valor)
 
     @api.model
+    def _tienda(self, urls):
+        """Que tienda es, a partir del enlace de compra del renglon.
+
+        Sirve para marcar en la tarjeta lo que NO se paga por transferencia
+        sino comprando en una pagina: eso se hace asistido, abriendo la
+        tienda y dejando el carrito listo. Si hay enlace pero no se
+        reconoce el dominio, igual se marca: lo que importa es que hay una
+        pagina donde comprar."""
+        for url in urls:
+            u = (url or '').lower()
+            if 'amazon.' in u:
+                return 'Amazon'
+            if 'mercadolibre.' in u or 'mercadolivre.' in u or 'articulo.ml' in u:
+                return 'Mercado Libre'
+            if 'aliexpress.' in u or 'alibaba.' in u:
+                return 'AliExpress'
+            if 'ebay.' in u:
+                return 'eBay'
+        return _('tienda en linea') if any(urls) else False
+
+    @api.model
     def _monto(self, importe, moneda):
         if not moneda:
             return '%s' % '{:,.2f}'.format(importe or 0.0)
@@ -189,6 +210,9 @@ class AmunetComprasTablero(models.AbstractModel):
                 etapa = 'recibida'
 
             solicitudes = o.amunet_solicitud_compra_ids
+            # Una OC nacida de una solicitud con enlace de tienda arrastra
+            # la marca: sigue siendo una compra que se hace en la pagina.
+            auto_tienda = self._tienda(solicitudes.mapped('line_ids.purchase_url'))
             origen = (o.origin or '').strip()
             es_general = bool(solicitudes) or origen.startswith(('SMP/', 'SC/'))
 
@@ -232,6 +256,8 @@ class AmunetComprasTablero(models.AbstractModel):
                 'via_code': o.amunet_via_embarque or False,
                 'via_pref': o.amunet_via_preferida or False,
                 'via_sug': 'aereo' if o.amunet_urgencia_maxima in ('urge', 'linea_detenida') else False,
+                'auto': bool(auto_tienda),
+                'auto_tienda': auto_tienda,
                 'monto': self._monto(o.amount_total, o.currency_id) if ver_montos else False,
                 'buscar': ' '.join(filter(None, [
                     o.name, o.partner_id.display_name, origen,
@@ -269,6 +295,8 @@ class AmunetComprasTablero(models.AbstractModel):
                 productos.append((p.default_code if p else False) or (l.name or p.name or '')[:40])
             if len(lineas) > 3:
                 productos.append('+%d' % (len(lineas) - 3))
+
+            auto_tienda = self._tienda(lineas.mapped('purchase_url'))
 
             titulo = (lineas[:1].name or lineas[:1].product_id.name) if lineas else _('(sin renglones)')
             if len(lineas) > 1:
@@ -312,6 +340,10 @@ class AmunetComprasTablero(models.AbstractModel):
                 'vb_estado': s.amunet_autorizacion_estado or False,
                 'vb_puede': puede_vb and s.amunet_autorizacion_estado in ('por_enviar', 'pendiente'),
                 'vb_via': s.amunet_autorizacion_via or False,
+                # Compra asistida en tienda: hay enlace, o la forma de pago
+                # es tarjeta. No se resuelve con una transferencia.
+                'auto': bool(auto_tienda) or s.amunet_forma_pago == 'tarjeta',
+                'auto_tienda': auto_tienda or (_('tienda') if s.amunet_forma_pago == 'tarjeta' else False),
                 'via': False,
                 'via_code': False,
                 'via_pref': s.amunet_via_preferida or False,
