@@ -2474,13 +2474,23 @@ class MrpProduction(models.Model):
         Los CONJUGADOS llevan una C antes del consecutivo -- 180926-C01 -- y
         cuentan aparte de las soluciones: el mismo dia puede haber 180926-01
         (una solucion) y 180926-C01 (un conjugado) sin pisarse. Asi se
-        distinguen de un vistazo en el anaquel y en la bitacora FPR-030, donde
-        conviven con las soluciones que los alimentan. Regla de Mery,
-        18-sep-2026."""
+        distinguen de un vistazo en el anaquel, donde conviven con las
+        soluciones que los alimentan. Regla de Mery, 18-sep-2026.
+
+        Las de CAPTURA llevan una P -- 290926-P01 -- con la misma logica: el
+        mismo dia pueden convivir 290926-01, 290926-C01 y 290926-P01 sin
+        pisarse. Regla de Mery, 29-sep-2026."""
         self.ensure_one()
         fecha = fields.Date.context_today(self)
         prefix = fecha.strftime('%d%m%y')
-        marca = 'C' if self.product_id.product_tmpl_id.amunet_es_conjugado else ''
+        tmpl = self.product_id.product_tmpl_id
+        marca = ''
+        if tmpl.amunet_es_conjugado:
+            marca = 'C'
+        elif tmpl.amunet_es_captura:
+            # Las de CAPTURA llevan P -- 290926-P01 -- y cuentan aparte, igual
+            # que los conjugados. Regla de Mery, 29-sep-2026.
+            marca = 'P'
         # NANOPARTICULAS: unico producto con formato propio, NPSDDMMAA-NN
         # (NPS210926-01). Pedido por Mery el 21-sep-2026, solo para esta clave.
         # Las de DESARROLLO no se distinguen: llevan el mismo lote que las de
