@@ -135,6 +135,25 @@ AND specification_config_id IN (
 );
 -- Esperado: DELETE 6 (2 líneas × 3 análisis)
 
+-- 2c) MAVI-11: borrar la entrada duplicada "Vial - Altura" (mavi_11_height, seq=40)
+--     La correcta "Altura 6 u 8 cm (según aplique)" (conditional_numeric_range) queda intacta
+DELETE FROM amunet_quality_test_line_detail
+WHERE check_id IN (
+  SELECT id FROM amunet_quality_check
+  WHERE name IN ('QC/2026/00503','QC/2026/00504','QC/2026/00505')
+)
+AND specification_config_id IN (
+  SELECT psc.id
+  FROM amunet_quality_parameter_specification_config psc
+  JOIN amunet_quality_parameter_product_rel ppr ON ppr.id = psc.product_parameter_rel_id
+  JOIN product_template pt ON pt.id = ppr.product_tmpl_id
+  JOIN amunet_quality_check_parameter cp ON cp.id = ppr.parameter_id
+  WHERE pt.default_code IN ('SPHMC86','SPHMC87','SPHMC88')
+    AND cp.code = 'MAVI-11'
+    AND psc.evaluation_type = 'mavi_11_height'
+);
+-- Esperado: DELETE 3 (1 línea × 3 análisis)
+
 -- ============================================================
 -- VERIFICACIÓN FINAL
 -- ============================================================
