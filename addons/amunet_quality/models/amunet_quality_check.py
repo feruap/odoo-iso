@@ -604,6 +604,13 @@ class AmunetQualityCheck(models.Model):
         help='True cuando numeral 3 ha sido validado'
     )
 
+    amunet_return_deviation_reason = fields.Text(
+        string='Motivo de la merma de muestra',
+        help='Por que no regresa todo lo que no se analizo: se destruyo, se '
+             'contamino, se perdio, se guarda como testigo.',
+        tracking=True,
+    )
+
     sampling_confirmed = fields.Boolean(
         string='Muestreo confirmado',
         default=False,
@@ -2694,6 +2701,42 @@ class AmunetQualityCheck(models.Model):
                 message_type='comment',
                 subtype_xmlid='mail.mt_note',
             )
+
+    def _amunet_resumen_muestreo(self):
+        """Los numeros del muestreo y que va a pasar con las piezas al cerrar.
+
+        LA CUENTA: de lo que Calidad se lleva, lo analizado se consume y el resto
+        regresa. Lo que no regresa se va a Desechos, porque la disposicion del
+        analisis calcula el desecho como muestra menos devolucion.
+
+        POR QUE EXISTE: el 29-sep-2026 QC/2026/00514 (DMATB01) se cerro con la
+        devolucion en 0 teniendo 80 de muestra y 20 analizadas, y la disposicion
+        mando las 80 a Desechos: 60 pruebas de tuberculosis buenas a la basura por
+        un cero. Nadie se salto ningun paso -el muestreo estaba confirmado-, el
+        sistema acepto el cero sin decir nada. Habia 5 casos mas iguales.
+
+        Devuelve False cuando no hay nada que advertir.
+        """
+        self.ensure_one()
+        muestra = self.qty_sampling or 0.0
+        if muestra <= 0:
+            return False
+        analizada = self.qty_analyzed or 0.0
+        devuelve = self.qty_to_return or 0.0
+        esperado = max(0.0, muestra - analizada)
+        desecho = max(0.0, muestra - devuelve)
+        rounding = self.sampling_uom_id.rounding or self.product_id.uom_id.rounding or 0.01
+        return {
+            'muestra': muestra,
+            'analizada': analizada,
+            'devuelve': devuelve,
+            'esperado': esperado,
+            'desecho': desecho,
+            'uom': self.sampling_uom_id.name or self.product_id.uom_id.name or '',
+            'cuadra': abs(devuelve - esperado) <= rounding,
+            'hay_motivo': bool(self.amunet_return_deviation_reason),
+            'destructiva': self.test_destructiveness == 'destructive',
+        }
 
     def action_sign_realized(self):
         """Abre wizard para firmar como Realizó (Analista o Supervisor)"""

@@ -32,6 +32,72 @@ class AmunetQualitySignatureWizard(models.TransientModel):
         ('authorized', 'Autorizó'),
     ], string="Tipo de Acción", default='finalize', required=True)
 
+    # ---- Aviso de muestreo antes de la firma que cierra ----------------------
+    # Se pregunta AQUI, en la firma de hecho, y no antes: quien cierra es quien
+    # responde por lo que pasa con las piezas, y al cerrar corre la disposicion
+    # que manda a Desechos lo que no se devuelve. Pedido por Mery el 29-sep-2026,
+    # a raiz de QC/2026/00514: la devolucion quedo en 0 con 80 de muestra y 20
+    # analizadas, y se fueron 60 pruebas buenas a la basura sin que nadie lo viera.
+    amunet_aviso_muestreo = fields.Html(
+        string='Revision del muestreo',
+        compute='_compute_amunet_aviso_muestreo',
+    )
+
+    amunet_muestreo_ok = fields.Boolean(
+        string='Revise las cantidades y confirmo que son correctas',
+    )
+
+    amunet_pide_confirmar = fields.Boolean(
+        compute='_compute_amunet_aviso_muestreo',
+    )
+
+    @api.depends('check_ids', 'signature_type')
+    def _compute_amunet_aviso_muestreo(self):
+        for wiz in self:
+            # solo en la firma que CIERRA el analisis
+            if wiz.signature_type not in ('authorized', 'finalize'):
+                wiz.amunet_aviso_muestreo = False
+                wiz.amunet_pide_confirmar = False
+                continue
+            bloques = []
+            pide = False
+            for check in wiz.check_ids:
+                r = check._amunet_resumen_muestreo()
+                if not r:
+                    continue
+                grave = r['desecho'] > 0 and not r['cuadra'] and not r['hay_motivo']
+                if grave:
+                    pide = True
+                color = 'alert-warning' if grave else 'alert-info'
+                filas = _(
+                    '<tr><td>Muestra que se llevó Calidad</td><td class="text-end"><b>%(mue)s %(uom)s</b></td></tr>'
+                    '<tr><td>Analizada (se consume)</td><td class="text-end">%(ana)s %(uom)s</td></tr>'
+                    '<tr><td>Regresa al almacén</td><td class="text-end"><b>%(dev)s %(uom)s</b></td></tr>'
+                    '<tr><td>Se va a Desechos</td><td class="text-end"><b>%(des)s %(uom)s</b></td></tr>'
+                ) % {'mue': r['muestra'], 'ana': r['analizada'], 'dev': r['devuelve'],
+                     'des': r['desecho'], 'uom': r['uom']}
+                if grave:
+                    remate = _(
+                        '<hr/><b>Lo esperado aquí serían %(esp)s %(uom)s de regreso</b>, '
+                        'porque lo analizado se consume y el resto vuelve. Con lo '
+                        'capturado, <b>%(des)s %(uom)s se dan por perdidas</b>.<br/><br/>'
+                        'Si el número está bien, marque la casilla de abajo. Si no, '
+                        'cancele, corrija la cantidad a devolver y vuelva a firmar. '
+                        'También puede escribir el motivo de la merma en el análisis.'
+                    ) % {'esp': r['esperado'], 'des': r['desecho'], 'uom': r['uom']}
+                elif r['hay_motivo']:
+                    remate = _('<hr/><i>Merma justificada: %s</i>') % (
+                        check.amunet_return_deviation_reason or '')
+                else:
+                    remate = ''
+                bloques.append(
+                    '<div class="alert %s" role="alert"><b>%s</b> — %s'
+                    '<table class="table table-sm mb-0 mt-2">%s</table>%s</div>' % (
+                        color, check.name or '', check.product_id.display_name or '',
+                        filas, remate))
+            wiz.amunet_aviso_muestreo = ''.join(bloques) or False
+            wiz.amunet_pide_confirmar = pide
+
     def _validate_credentials(self, password_or_pin):
         """
         Valida las credenciales del usuario (PIN o Contraseña).
@@ -114,6 +180,15 @@ class AmunetQualitySignatureWizard(models.TransientModel):
         """
         self.ensure_one()
         user = self.env.user
+
+        if self.amunet_pide_confirmar and not self.amunet_muestreo_ok:
+            raise ValidationError(_(
+                'Antes de firmar, revise las cantidades de muestreo y devolución '
+                'que muestra el aviso.\n\n'
+                'Si son correctas, marque la casilla de confirmación. Si no, '
+                'cancele y corrija la cantidad a devolver: al cerrar el análisis, '
+                'lo que no se devuelve se manda a Desechos y esas piezas se dan '
+                'por perdidas.'))
 
         if not self._validate_credentials(self.password):
             # Registrar fallido en log (Seguridad)
