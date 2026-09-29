@@ -604,6 +604,14 @@ class AmunetQualityCheck(models.Model):
         help='True cuando numeral 3 ha sido validado'
     )
 
+    amunet_return_deviation_reason = fields.Text(
+        string='Motivo de la merma de muestra',
+        help='Por que no regresa todo lo que no se analizo: se destruyo, se '
+             'contamino, se perdio, se guarda como testigo. Obligatorio cuando '
+             'la cantidad a devolver no es la esperada.',
+        tracking=True,
+    )
+
     sampling_confirmed = fields.Boolean(
         string='Muestreo confirmado',
         default=False,
@@ -2695,6 +2703,67 @@ class AmunetQualityCheck(models.Model):
                 subtype_xmlid='mail.mt_note',
             )
 
+    def _amunet_blockers_cantidades_muestreo(self):
+        """Por que las cantidades de muestreo y devolucion no cuadran todavia.
+
+        LA CUENTA: de lo que Calidad se lleva, lo analizado se consume y el resto
+        regresa. Asi que lo esperado a devolver es muestra menos analizada. Si se
+        devuelve menos, esas piezas se quedan en Desechos, y eso tiene que ser una
+        decision escrita, no un campo que nadie lleno.
+
+        POR QUE EXISTE: el 29-sep-2026 QC/2026/00514 (DMATB01) se cerro con la
+        devolucion en 0 teniendo 80 de muestra y 20 analizadas. La disposicion
+        calcula el desecho como muestra menos devolucion, asi que mando las 80 a
+        Desechos: 60 pruebas de tuberculosis buenas a la basura por un cero. Nadie
+        se salto ningun paso -el muestreo estaba confirmado-, el sistema acepto el
+        cero sin decir nada. Habia 5 casos mas con el mismo patron.
+        """
+        self.ensure_one()
+        blockers = []
+        muestra = self.qty_sampling or 0.0
+        analizada = self.qty_analyzed or 0.0
+        devuelve = self.qty_to_return or 0.0
+        if muestra <= 0:
+            return blockers
+        uom = self.sampling_uom_id.name or self.product_id.uom_id.name or ''
+        esperado = max(0.0, muestra - analizada)
+        rounding = self.sampling_uom_id.rounding or self.product_id.uom_id.rounding or 0.01
+
+        if devuelve > muestra + rounding:
+            blockers.append(_(
+                'La cantidad a devolver (%(dev)s %(uom)s) es mayor que la muestra '
+                '(%(mue)s %(uom)s). No se puede devolver mas de lo que se llevo.'
+            ) % {'dev': devuelve, 'mue': muestra, 'uom': uom})
+            return blockers
+
+        if abs(devuelve - esperado) > rounding and not self.amunet_return_deviation_reason:
+            if devuelve < esperado:
+                blockers.append(_(
+                    'Revise la cantidad a devolver antes de firmar.\n\n'
+                    'Muestra: %(mue)s %(uom)s\n'
+                    'Analizada: %(ana)s %(uom)s\n'
+                    'A devolver capturado: %(dev)s %(uom)s\n'
+                    'A devolver esperado: %(esp)s %(uom)s\n\n'
+                    'Lo analizado se consume y el resto regresa, asi que lo normal '
+                    'aqui serian %(esp)s %(uom)s. Con %(dev)s, el sistema va a '
+                    'mandar %(desecho)s %(uom)s a Desechos y esas piezas se dan por '
+                    'perdidas.\n\n'
+                    'Si el numero esta bien, escriba el motivo de la merma en el '
+                    'campo "Motivo de la merma de muestra" y vuelva a firmar. Si no, '
+                    'corrija la cantidad a devolver.'
+                ) % {'mue': muestra, 'ana': analizada, 'dev': devuelve,
+                     'esp': esperado, 'desecho': muestra - devuelve, 'uom': uom})
+            else:
+                blockers.append(_(
+                    'La cantidad a devolver (%(dev)s %(uom)s) es mayor que la '
+                    'esperada (%(esp)s %(uom)s): quedarian %(ana)s %(uom)s '
+                    'analizadas que tambien regresan al almacen.\n\n'
+                    'Si de verdad regresan -por ejemplo porque el analisis no las '
+                    'consumio-, escriba el motivo en "Motivo de la merma de '
+                    'muestra". Si no, corrija la cantidad.'
+                ) % {'dev': devuelve, 'esp': esperado, 'ana': analizada, 'uom': uom})
+        return blockers
+
     def action_sign_realized(self):
         """Abre wizard para firmar como Realizó (Analista o Supervisor)"""
         self.ensure_one()
@@ -2704,6 +2773,13 @@ class AmunetQualityCheck(models.Model):
 
         if self.global_result == 'pending':
             raise ValidationError("No se puede firmar si el análisis no está completo (Dictamen: Pendiente).")
+
+        # Se pregunta aqui y no solo al cerrar: el analista es quien sabe que paso
+        # con las piezas que se llevo, y si el error llega al cierre ya hubo dos
+        # firmas de por medio.
+        blockers = self._amunet_blockers_cantidades_muestreo()
+        if blockers:
+            raise ValidationError('\n\n'.join(blockers))
 
         return {
             'name': 'Firma Electrónica: Realizó',
@@ -2844,6 +2920,12 @@ class AmunetQualityCheck(models.Model):
                     'Debe completar la Información Adicional antes de firmar como "Autorizó":\n\n'
                     + '\n'.join([f'• {f}' for f in empty_fields])
                 )
+            # Red de seguridad: aqui se cierra el analisis y corre la disposicion
+            # que manda material a Desechos. Si las cantidades cambiaron despues de
+            # la firma de Realizo -o se escribieron por codigo-, se detiene aqui.
+            blockers = record._amunet_blockers_cantidades_muestreo()
+            if blockers:
+                raise ValidationError('\n\n'.join(blockers))
             record.write({'user_authorized_id': self.env.user.id})
 
             # Número ya generado al firmar Realizó; este es respaldo por si no se generó

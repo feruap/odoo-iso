@@ -17,6 +17,7 @@ class AmunetEquipment(models.Model):
     serial_number = fields.Char(string='Código/ID', tracking=True)
     brand = fields.Char(string='Marca')
     model_name = fields.Char(string='Modelo')
+    manufacturer_serial = fields.Char(string='N° Serie Fabricante', tracking=True)
     department = fields.Selection([
         ('ALMACÉN DE MATERIA PRIMA', 'Almacén de Materia Prima'),
         ('SOLUCIONES', 'Soluciones'),
@@ -37,7 +38,7 @@ class AmunetEquipment(models.Model):
 
     parent_equipment_id = fields.Many2one(
         'amunet.equipment',
-        string='Equipo padre (grupo)',
+        string='Equipo padre',
         ondelete='restrict',
         tracking=True,
         help='Equipo al que pertenece este accesorio o instrumento '

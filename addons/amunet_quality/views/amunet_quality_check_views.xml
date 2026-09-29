@@ -291,7 +291,17 @@
                         <group>
                             <field name="qty_analyzed"
                                    readonly="sampling_confirmed"/>
-                            <field name="qty_to_return" readonly="sampling_confirmed"/>
+                            <!-- La cantidad a devolver se sabe AL FINAL, cuando ya se
+                                 analizo, no al confirmar el muestreo. Congelarla ahi es
+                                 lo que empujaba a dejarla en 0: quedaba readonly antes de
+                                 que nadie supiera cuanto regresaba. Ahora se cierra con
+                                 la firma de Realizo. -->
+                            <field name="qty_to_return"
+                                   readonly="user_realized_id or state == 'done'"/>
+                            <field name="amunet_return_deviation_reason"
+                                   readonly="user_realized_id or state == 'done'"
+                                   invisible="not qty_sampling"
+                                   placeholder="Solo si no regresa todo lo que no se analizo: se destruyo, se contamino, se guarda como testigo..."/>
                             <field name="sampling_deviation_reason"
                                    readonly="sampling_confirmed"
                                    invisible="not sampling_plan_id"/>
