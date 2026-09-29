@@ -134,7 +134,9 @@ class AmunetComprasTablero(models.AbstractModel):
             #  - llego algo y el resto se cancelo     -> se da por recibida
             #    (backorder cancelado a proposito, p.ej. P00205)
             #  - no llego nada y no hay recepcion     -> sigue pendiente, pero
-            #    marcada: almacen no tiene donde recibirla (P00161, P00184...)
+            #    marcada: almacen no tiene donde recibirla (P00161, P00184...).
+            #    Ojo: hay recepciones "hechas" con cantidad cero (P00184,
+            #    P00185, P00188, P00189): eso NO cuenta como recibido.
             movs = lineas.mapped('move_ids')
             abiertos = movs.filtered(lambda m: m.state not in ('done', 'cancel'))
             hechos = movs.filtered(lambda m: m.state == 'done')
@@ -143,7 +145,7 @@ class AmunetComprasTablero(models.AbstractModel):
                 pendiente, sin_recepcion = False, False
             elif abiertos:
                 pendiente, sin_recepcion = True, False
-            elif hechos:
+            elif hechos and recibido > 0:
                 pendiente, sin_recepcion = False, False
             else:
                 pendiente, sin_recepcion = faltan, faltan
