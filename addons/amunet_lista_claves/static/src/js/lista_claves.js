@@ -8,10 +8,10 @@ const CLASIFICACIONES = {
     sp: { label: "Semiprocesado",          icon: "fa-flask",       color: "#1d3557" },
     st: { label: "Semiterminado",          icon: "fa-cogs",        color: "#6f42c1" },
     mi: { label: "Material de Impresión",  icon: "fa-print",       color: "#c53030" },
-    pt: { label: "Producto Terminado",     icon: "fa-box",         color: "#e85d04" },
-    ptr: { label: "PT Reactivos",          icon: "fa-flask",       color: "#d62828" },
+    pt: { label: "Producto Terminado",     icon: "fa-cube",        color: "#e85d04" },
+    ptr: { label: "PT Reactivos",          icon: "fa-eyedropper",  color: "#d62828" },
     eq: { label: "Equipos",               icon: "fa-wrench",      color: "#0d6efd" },
-    co: { label: "Consumibles",           icon: "fa-flask",       color: "#6c757d" },
+    co: { label: "Consumibles",           icon: "fa-archive",     color: "#6c757d" },
 };
 
 export class AmunetListaClaves extends Component {
