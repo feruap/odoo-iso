@@ -129,14 +129,46 @@ class AmunetQualityCheck(models.Model):
             'amunet_quality.action_report_anexo_solicitud'
         ).report_action(self)
 
+    def _amunet_anexo_bloqueado(self):
+        """Por que no se puede tocar el anexo, o False si si se puede.
+
+        El criterio vive AQUI y no repetido en cada lugar, porque antes estaba
+        escrito dos veces -en el boton que abre la captura y en el guardado- y
+        moverlo en uno solo dejaba el otro abierto.
+
+        Bloquea al firmar VERIFICO, no al firmar la RS. Lo pidio Diana el
+        29-sep-2026: el flujo es captura -> Realizo -> Verifico -> Autorizo RS, y
+        lo verificado ya es un dato revisado por una segunda persona. Si se
+        pudiera seguir editando entre Verifico y la RS, la RS autorizaria algo
+        distinto de lo que el verificador reviso.
+        """
+        self.ensure_one()
+        # El orden importa: se contesta con el motivo REAL. Un analisis puede estar
+        # finalizado sin que la RS haya firmado, y decirle a alguien que su anexo
+        # esta cerrado 'porque lo autorizo la RS' cuando no es cierto lo manda a
+        # buscar una firma que no existe.
+        if self.user_authorized_id:
+            return _('El anexo de %(folio)s ya fue autorizado por %(quien)s '
+                     '(Responsable Sanitario) y no se puede modificar.') % {
+                'folio': self.name or self.id, 'quien': self.user_authorized_id.name}
+        if self.user_verified_id:
+            return _('El anexo de %(folio)s ya fue verificado por %(quien)s y no '
+                     'se puede modificar. Lo verificado es lo que va a autorizar '
+                     'el Responsable Sanitario.') % {
+                'folio': self.name or self.id, 'quien': self.user_verified_id.name}
+        if self.state == 'done':
+            return _('El análisis %(folio)s está finalizado y su anexo no se '
+                     'puede modificar.') % {'folio': self.name or self.id}
+        return False
+
     def action_open_anexo_wizard(self):
         from odoo.exceptions import UserError
         self.ensure_one()
-        if self.state == 'done' or self.user_authorized_id:
-            raise UserError(
-                'Este análisis ya fue autorizado y no se puede modificar. '
-                'Si necesitas una corrección, contacta al Responsable Sanitario.'
-            )
+        motivo = self._amunet_anexo_bloqueado()
+        if motivo:
+            raise UserError('%s\n\n%s' % (
+                motivo,
+                _('Si hace falta una corrección, la pide el Responsable Sanitario.')))
         WizardModel = self.env['amunet.quality.anexo.wizard']
         # Si ya existe un wizard para este análisis, retomarlo para preservar datos no guardados
         wizard = WizardModel.search([('check_id', '=', self.id)], limit=1)

@@ -69,12 +69,11 @@ class AmunetQualityAnexoWizard(models.TransientModel):
         # captura ya lo impide, pero AQUI es donde de verdad se escribe: un
         # wizard abierto antes de la firma seguia guardando despues de ella, y
         # ahora los wizard viven 48 horas, asi que es facil que pase.
-        if check.user_authorized_id or check.state == 'done':
-            raise UserError(_(
-                'El análisis %(folio)s ya fue autorizado: su anexo no se puede '
-                'modificar.\n\nLo capturado en esta ventana no se guardó. Si '
-                'hace falta una corrección, la pide el Responsable Sanitario.'
-            ) % {'folio': check.name or check.id})
+        motivo = check._amunet_anexo_bloqueado()
+        if motivo:
+            raise UserError('%s\n\n%s' % (motivo, _(
+                'Lo capturado en esta ventana no se guardó. Si hace falta una '
+                'corrección, la pide el Responsable Sanitario.')))
         AnexoLine = self.env['amunet.quality.anexo.line']
 
         existing = check.anexo_line_ids.sorted(lambda l: (l.sequence, l.id))
