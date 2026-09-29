@@ -8,6 +8,7 @@ CLASIFICACIONES = [
     ('pt', 'Producto Terminado'),
     ('ptr', 'Producto Terminado Reactivos'),
     ('eq', 'Equipo'),
+    ('co', 'Consumible'),
 ]
 
 

@@ -11,6 +11,7 @@ const CLASIFICACIONES = {
     pt: { label: "Producto Terminado",     icon: "fa-box",         color: "#e85d04" },
     ptr: { label: "PT Reactivos",          icon: "fa-flask",       color: "#d62828" },
     eq: { label: "Equipos",               icon: "fa-wrench",      color: "#0d6efd" },
+    co: { label: "Consumibles",           icon: "fa-flask",       color: "#6c757d" },
 };
 
 export class AmunetListaClaves extends Component {
