@@ -115,9 +115,14 @@
                                     <strong>Lote Fábrica:</strong> <span t-field="o.lot_name_factory"/><br/>
                                 </t>
                                 <strong>Caducidad:</strong> <span t-field="o.expiration_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
-                                <t t-if="o.reanalysis_date">
-                                    <strong>Reanálisis:</strong> <span t-field="o.reanalysis_date" t-options='{"widget": "date", "format": "dd.MM.yy"}'/><br/>
-                                </t>
+                                <!-- La fecha de reanalisis se quito del certificado el 29-sep-2026
+                                     (Mery). No se borro el campo: lo sigue usando el cron diario que
+                                     avisa a Calidad, y sigue saliendo en la solicitud-reporte.
+                                     Motivo: el certificado imprimia una fecha distinta a la que muestra
+                                     el lote en Inventario. El analisis la calcula como caducidad menos
+                                     30 DIAS y el lote como caducidad menos UN MES, asi que en los meses
+                                     de 31 dias no coinciden. Igualar las dos reglas cambia una fecha
+                                     regulatoria en todos los lotes: eso lo decide Calidad. -->
                             </div>
                         </div>
                         <t t-if="o.prueba_rapida_id and o.prueba_rapida_id.descripcion">
