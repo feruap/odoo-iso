@@ -20,6 +20,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 PARAM_SECRETO = 'amunet_compras_general.hmac_secret'
+GRUPO_VB = 'amunet_compras_general.group_autoriza_compra'
 
 
 class AmunetSolicitudCompra(models.Model):
@@ -40,6 +41,16 @@ class AmunetSolicitudCompra(models.Model):
         copy=False,
         tracking=True,
     )
+    amunet_autorizacion_via = fields.Selection(
+        selection=[('telegram', 'Telegram'), ('odoo', 'Odoo')],
+        string='Visto bueno dado por', copy=False, readonly=True,
+        help='Por cual de las dos puertas se resolvio. Las dos valen igual; '
+             'se guarda para poder auditar.',
+    )
+    # El bot apaga los botones del mensaje que ya habia mandado cuando la
+    # solicitud se resolvio desde Odoo. Sin esto queda un boton vivo en el
+    # chat que ya no hace nada y confunde.
+    amunet_telegram_cerrado = fields.Boolean(copy=False, groups='base.group_system')
     amunet_autorizacion_token = fields.Char(copy=False, groups='base.group_system')
     amunet_autorizacion_fecha = fields.Datetime(string='Fecha de autorizacion de pago', copy=False, readonly=True)
     amunet_telegram_msg_id = fields.Char(copy=False, groups='base.group_system')
@@ -120,6 +131,52 @@ class AmunetSolicitudCompra(models.Model):
                     % (req.name, req.amunet_autorizacion_estado))
         self._amunet_encolar_autorizacion()
         return True
+
+    def action_amunet_vb(self, respuesta):
+        """Visto bueno de Direccion desde Odoo. Misma puerta que Telegram.
+
+        No duplica logica de estados: escribe exactamente lo mismo que
+        escribe el bot cuando se pulsa el boton del chat. Lo unico que
+        cambia es `amunet_autorizacion_via`, para saber por donde entro.
+        """
+        if respuesta not in ('si', 'no'):
+            raise UserError(_('Respuesta no valida.'))
+        if not (self.env.su or self.env.user.has_group(GRUPO_VB)):
+            raise UserError(_(
+                'Solo Direccion da el visto bueno de una compra.'))
+        for req in self:
+            estado = req.sudo().amunet_autorizacion_estado
+            if estado in ('autorizado', 'rechazado'):
+                raise UserError(_(
+                    '%s ya se habia resuelto (%s). Si hay que revertirlo, se '
+                    'hace desde la solicitud.') % (req.name, estado))
+            if estado not in ('por_enviar', 'pendiente'):
+                raise UserError(_(
+                    '%s no esta esperando visto bueno.') % req.name)
+            nuevo = 'autorizado' if respuesta == 'si' else 'rechazado'
+            req.sudo().write({
+                'amunet_autorizacion_estado': nuevo,
+                'amunet_autorizacion_fecha': fields.Datetime.now(),
+                'amunet_autorizacion_via': 'odoo',
+            })
+            if nuevo == 'autorizado' and req.amunet_forma_pago == 'transferencia':
+                cola = _(' Entra al corte de pagos de las 15:00, de lunes a '
+                         'viernes.')
+            elif nuevo == 'autorizado':
+                cola = _(' Se prepara la compra en la tienda.')
+            else:
+                cola = _(' No se publica nada.')
+            req.message_post(body=_(
+                '<b>%s desde Odoo</b> por %s.%s'
+            ) % (_('Autorizado') if nuevo == 'autorizado' else _('Rechazado'),
+                 self.env.user.name, cola))
+        return True
+
+    def action_amunet_vb_si(self):
+        return self.action_amunet_vb('si')
+
+    def action_amunet_vb_no(self):
+        return self.action_amunet_vb('no')
 
     def action_autorizar(self):
         """Primera firma (jefe directo). Si la compra ya trae forma de pago,

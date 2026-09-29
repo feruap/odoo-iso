@@ -46,6 +46,7 @@ GRUPOS_ACCESO = (
 )
 GRUPO_PRECIOS_OC = 'amunet_price_visibility.group_price_viewer'
 GRUPO_MONTOS_SC = 'amunet_compras_general.group_compras_monto'
+GRUPO_VB_TABLERO = 'amunet_compras_general.group_autoriza_compra'
 DIAS_RECIBIDAS = 30
 
 ESTADOS_OC_BORRADOR = ('draft', 'sent', 'to approve')
@@ -108,6 +109,19 @@ class AmunetComprasTablero(models.AbstractModel):
             'tarjetas': tarjetas,
             'accion_oc': self.env.ref('purchase.purchase_rfq').id,
         }
+
+    @api.model
+    def dar_visto_bueno(self, res_id, respuesta):
+        """Boton de autorizar del tablero.
+
+        El permiso de verdad lo revisa el modelo de la solicitud: aqui solo
+        se comprueba que quien llama pueda siquiera abrir el tablero."""
+        if not any(self._tiene(g) for g in GRUPOS_ACCESO):
+            raise AccessError(_('El tablero de compras es solo para Compras y Direccion.'))
+        sc = self.env['amunet.solicitud.compra'].browse(int(res_id))
+        if not sc.exists():
+            raise AccessError(_('Esa solicitud ya no existe.'))
+        return sc.action_amunet_vb(respuesta)
 
     # -- ordenes de compra ---------------------------------------------
     @api.model
@@ -233,6 +247,7 @@ class AmunetComprasTablero(models.AbstractModel):
     @api.model
     def _tarjetas_sc(self, hoy, ver_montos):
         SC = self.env['amunet.solicitud.compra'].sudo()
+        puede_vb = self._tiene(GRUPO_VB_TABLERO)
         solicitudes = SC.search([
             ('state', 'in', ESTADOS_SC_VIVOS),
             ('purchase_order_id', '=', False),
@@ -292,6 +307,11 @@ class AmunetComprasTablero(models.AbstractModel):
                 'pago': 'pagado' if s.state == 'purchased' or etapa == 'pagada' else False,
                 'pago_label': (_('Comprada') if s.state == 'purchased' else _('Pagada')) if (s.state == 'purchased' or etapa == 'pagada') else False,
                 'forma_pago': self._etiqueta(s, 'amunet_forma_pago'),
+                # Visto bueno de Direccion: la segunda puerta, la que no
+                # depende de traer el telefono a la mano.
+                'vb_estado': s.amunet_autorizacion_estado or False,
+                'vb_puede': puede_vb and s.amunet_autorizacion_estado in ('por_enviar', 'pendiente'),
+                'vb_via': s.amunet_autorizacion_via or False,
                 'via': False,
                 'via_code': False,
                 'via_pref': s.amunet_via_preferida or False,
