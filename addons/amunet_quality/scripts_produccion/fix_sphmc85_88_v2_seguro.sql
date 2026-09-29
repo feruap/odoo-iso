@@ -112,7 +112,11 @@ AND specification_config_id IN (
   JOIN amunet_quality_check_parameter cp ON cp.id = ppr.parameter_id
   WHERE pt.default_code IN ('SPHMC86','SPHMC87','SPHMC88')
     AND cp.code = 'MAVI-04'
-    AND psc.specification_name NOT IN ('Manchas y/o suciedad','Rasgaduras','Deformidad o deterioro')
+    AND (
+      psc.specification_name NOT IN ('Manchas y/o suciedad','Rasgaduras','Deformidad o deterioro')
+      OR (psc.specification_name = 'Deformidad o deterioro'
+          AND (psc.acceptance_criteria IS NULL OR psc.acceptance_criteria = ''))
+    )
 );
 -- Esperado: DELETE 12 (4 líneas × 3 análisis)
 
