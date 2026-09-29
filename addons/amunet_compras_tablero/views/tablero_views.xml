@@ -6,9 +6,14 @@
         <field name="path">compras-tablero</field>
     </record>
 
-    <!-- sequence 0: es lo primero que abre la app de Compras. -->
+    <!-- sequence 0: es lo primero que abre la app de Compras.
+         Se llama "Tablero de compras" y no solo "Tablero" a proposito: el
+         buscador de menus de Odoo lista una docena de entradas para
+         "compras", y "Compras / Tablero" no se distingue de las demas.
+         Con el nombre completo se encuentra escribiendo compras, tablero
+         o tablero de compras. -->
     <menuitem id="menu_compras_tablero"
-              name="Tablero"
+              name="Tablero de compras"
               parent="purchase.menu_purchase_root"
               action="action_compras_tablero"
               sequence="0"
