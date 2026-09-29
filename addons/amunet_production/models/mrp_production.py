@@ -1253,18 +1253,69 @@ class MrpProduction(models.Model):
             a_consumir |= m
         if a_consumir:
             a_consumir.sudo()._action_done(cancel_backorder=True)
-        # 2. Regresar el sobrante al anaquel, en el mismo acto: si se deja para
-        #    despues, nadie se acuerda y el material se queda en el piso.
+        # 2. El sobrante, en el mismo acto: si se deja para despues, nadie se
+        #    acuerda y el material se queda en el piso.
+        #    Un CONJUGADO no devuelve nada. Lo que se alicuoto y no se uso -el
+        #    resto de un tubo de nanoparticulas, la alicuota de anticuerpo- ya
+        #    no vuelve al anaquel: es desecho. Regla de Mery, 29-sep-2026.
         devolucion = False
-        if sobrantes and piso and destino and piso.id != destino.id:
-            devolucion = self._amunet_mover_material(
-                sobrantes, piso, destino,
-                _('Devolución de sobrante: %s') % self.name)
-            if devolucion:
-                self.sudo().message_post(body=_(
-                    'Sobrante devuelto a <b>%(dest)s</b> (%(doc)s).'
-                ) % {'dest': destino.complete_name, 'doc': devolucion.name})
-        return {'consumidos': len(a_consumir), 'devolucion': devolucion}
+        desecho = False
+        if sobrantes and piso:
+            if self.product_id.product_tmpl_id.amunet_es_conjugado:
+                desecho = self._amunet_desechar_sobrante(sobrantes, piso)
+            elif destino and piso.id != destino.id:
+                devolucion = self._amunet_mover_material(
+                    sobrantes, piso, destino,
+                    _('Devolución de sobrante: %s') % self.name)
+                if devolucion:
+                    self.sudo().message_post(body=_(
+                        'Sobrante devuelto a <b>%(dest)s</b> (%(doc)s).'
+                    ) % {'dest': destino.complete_name, 'doc': devolucion.name})
+        return {'consumidos': len(a_consumir), 'devolucion': devolucion,
+                'desecho': desecho}
+
+    def _amunet_desechar_sobrante(self, sobrantes, origen):
+        """Manda a desecho el material surtido que no se uso.
+
+        Se usa `stock.scrap`, que es el modelo propio de Odoo para esto: deja el
+        registro con producto, lote, cantidad y de donde salio. Un traslado a la
+        ubicacion de desecho moveria lo mismo pero sin decir que fue desperdicio,
+        y para Cofepris esa diferencia importa: el desperdicio se asienta, no se
+        evapora.
+        """
+        self.ensure_one()
+        scrap_loc = self.env.ref('stock.stock_location_scrapped',
+                                 raise_if_not_found=False)
+        if not scrap_loc:
+            raise UserError(_(
+                'No hay ubicacion de desecho configurada; no se puede cerrar la '
+                'conciliacion de un conjugado.'))
+        creados = self.env['stock.scrap'].sudo()
+        for m, cantidad, lote in sobrantes:
+            if not cantidad or cantidad <= 0:
+                continue
+            vals = {
+                'product_id': m.product_id.id,
+                'product_uom_id': m.product_uom.id,
+                'scrap_qty': cantidad,
+                'location_id': origen.id,
+                'scrap_location_id': scrap_loc.id,
+                'production_id': self.id,
+                'origin': _('Sobrante de conjugado: %s') % self.name,
+                'company_id': self.company_id.id,
+            }
+            if lote:
+                vals['lot_id'] = lote.id
+            creados |= creados.create(vals)
+        if not creados:
+            return False
+        creados.action_validate()
+        self.sudo().message_post(body=_(
+            'Sobrante mandado a <b>desecho</b> (%(docs)s). Un conjugado no '
+            'devuelve material al almacén: lo que se alicuotó y no se usó ya no '
+            'vuelve al anaquel.'
+        ) % {'docs': ', '.join(creados.mapped('name'))})
+        return creados
 
     def action_cancel(self):
         """Cancelar una orden cuyo producto YA existe no es cancelar: es mentir.
@@ -1341,20 +1392,28 @@ class MrpProduction(models.Model):
         return super().action_cancel()
 
     def _amunet_resumen_conciliacion(self):
-        """Lo que se va a descontar y lo que regresa, por componente."""
+        """Lo que se va a descontar y lo que regresa, por componente.
+
+        En un CONJUGADO no regresa nada: lo que no se uso es desecho.
+        """
         self.ensure_one()
+        es_conjugado = self.product_id.product_tmpl_id.amunet_es_conjugado
         filas = []
         for m in self.move_raw_ids:
             if m.state == 'cancel' or not (m.amunet_qty_supplied or 0) > 0:
                 continue
             surtido = m.amunet_qty_supplied or 0.0
             usado = m.amunet_qty_used or 0.0
+            sobra = max(surtido - usado, 0.0)
             filas.append({
                 'producto': m.product_id.display_name,
                 'uom': m.product_uom.name or '',
                 'surtido': surtido,
                 'usado': usado,
-                'regresa': max(surtido - usado, 0.0),
+                # Un CONJUGADO no regresa nada: lo que se alicuoto y no se uso
+                # ya no vuelve al anaquel. Regla de Mery, 29-sep-2026.
+                'regresa': 0.0 if es_conjugado else sobra,
+                'desecho': sobra if es_conjugado else 0.0,
             })
         return filas
 
