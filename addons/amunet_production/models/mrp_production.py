@@ -105,18 +105,7 @@ class MrpProduction(models.Model):
     solution_expiration_date = fields.Datetime(string='Fecha de Caducidad (Calendario)', compute='_compute_quality_params', store=True, readonly=False)
     amunet_expiration_text = fields.Char(string='Caducidad (Texto)', compute='_compute_quality_params', store=True, readonly=False)
     
-    # Checklist Operativa (Actividades de Fabricación)
-    # Estas cuatro casillas ya NO condicionan nada: la checklist operativa
-    # salio del flujo de soluciones el 21-sep-2026. Se conservan porque las
-    # ordenes viejas guardan su valor y es registro regulado.
-    amunet_check_history_log = fields.Boolean(string='Registro en Bitácoras', tracking=True)
-    amunet_check_calculations = fields.Boolean(string='Cálculos Realizados', tracking=True)
-    amunet_check_dilution = fields.Boolean(string='Dilución Realizada', tracking=True)
-    amunet_check_aforar = fields.Boolean(string='Aforado Correcto', tracking=True)
-
     # Configuración arrastrada desde la plantilla
-    amunet_sys_req_history = fields.Boolean(related='product_id.amunet_req_history_log')
-    amunet_sys_req_calc = fields.Boolean(related='product_id.amunet_req_calculations')
     amunet_sys_weighing_range = fields.Char(string='Rango de Pesaje Operativo', compute='_compute_quality_params', store=True, readonly=False)
     amunet_sys_req_dilution = fields.Boolean(related='product_id.amunet_req_dilution')
     amunet_sys_ph_range = fields.Char(related='product_id.amunet_ph_adj_range_text')
@@ -3302,9 +3291,7 @@ class MrpProduction(models.Model):
             elif not mo.amunet_all_ingredients_valid:
                 ok = False
             elif mo.amunet_is_solution_product:
-                # Solo soluciones: firma del jefe directo. La checklist de
-                # bitacoras/calculos/dilucion/aforar ya NO forma parte del
-                # flujo de soluciones (Mery, 21-sep-2026).
+                # Solo soluciones: firma del jefe directo.
                 if mo.amunet_supervision_state != 'done':
                     ok = False
             mo.amunet_puede_pedir_analisis = ok
@@ -3617,12 +3604,11 @@ class MrpProduction(models.Model):
                 raise UserError(f'ATENCIÓN: Los siguientes reactivos tienen Cantidad Utilizada inválida (negativa):\n{nombres}')
 
             # La checklist operativa (bitacoras / calculos / dilucion / aforar)
-            # ya NO forma parte del flujo de soluciones. Bloqueaba producir y
-            # solicitar analisis pidiendo marcar casillas que no existian en
-            # ninguna pantalla: ninguna solucion podia cerrarse. Los campos se
-            # conservan en el modelo por las ordenes historicas, pero no
-            # condicionan nada. Mery, 21-sep-2026.
-            
+            # salio del flujo el 21-sep-2026 y sus campos se BORRARON el
+            # 29-sep: ninguna vista los pintaba, ningun codigo los leia y
+            # ninguna de las 123 ordenes de produccion tenia una sola casilla
+            # marcada. Las columnas quedan en Postgres sin uso.
+
             # 2. Validar Calidad (solo si el producto lo requiere y NO es desarrollo).
             # Excepcion: la BAJA de un lote no conforme (rechazado) cierra la MO
             # por su propia via firmada por el RS, ruteando a APT/Rechazo.
