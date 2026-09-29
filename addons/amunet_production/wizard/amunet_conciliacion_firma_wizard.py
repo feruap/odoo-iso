@@ -37,21 +37,30 @@ class AmunetConciliacionFirmaWizard(models.TransientModel):
         filas = production._amunet_resumen_conciliacion()
         if not filas:
             return '<p>Esta orden no tiene material surtido que descontar.</p>'
+        # En un conjugado el sobrante no regresa: es desecho. Se pinta la
+        # columna que corresponde para que quien firma vea que esta firmando.
+        hay_desecho = any(f.get('desecho') for f in filas)
         cuerpo = []
         for f in filas:
+            ultima = (f.get('desecho', 0.0) if hay_desecho else f['regresa'])
             cuerpo.append(
                 '<tr><td>%(prod)s</td>'
                 '<td style="text-align:right">%(sur).4g</td>'
                 '<td style="text-align:right"><b>%(uso).4g</b></td>'
-                '<td style="text-align:right">%(reg).4g</td></tr>' % {
+                '<td style="text-align:right">%(ult).4g</td></tr>' % {
                     'prod': f['producto'], 'sur': f['surtido'],
-                    'uso': f['usado'], 'reg': f['regresa']})
+                    'uso': f['usado'], 'ult': ultima})
+        aviso = ''
+        if hay_desecho:
+            aviso = ('<p class="text-danger"><b>Este es un conjugado: el sobrante '
+                     'no regresa al almacén, se manda a desecho.</b></p>')
         return (
-            '<table class="table table-sm">'
+            '%s<table class="table table-sm">'
             '<thead><tr><th>Material</th><th style="text-align:right">Surtido</th>'
             '<th style="text-align:right">Usado</th>'
-            '<th style="text-align:right">Regresa</th></tr></thead>'
-            '<tbody>%s</tbody></table>' % ''.join(cuerpo))
+            '<th style="text-align:right">%s</th></tr></thead>'
+            '<tbody>%s</tbody></table>'
+            % (aviso, 'A desecho' if hay_desecho else 'Regresa', ''.join(cuerpo)))
 
     def action_confirmar(self):
         self.ensure_one()
@@ -68,8 +77,13 @@ class AmunetConciliacionFirmaWizard(models.TransientModel):
         production = self.production_id
         production.with_context(
             amunet_conciliacion_firmada=True).action_complete_reconciliation()
-        production.sudo().message_post(body=_(
-            'Conciliación firmada por <b>%s</b>: el material se descontó del '
-            'inventario y el sobrante regresó al almacén.'
-        ) % self.env.user.name)
+        if production.product_id.product_tmpl_id.amunet_es_conjugado:
+            cierre = _(
+                'Conciliación firmada por <b>%s</b>: el material se descontó del '
+                'inventario y el sobrante se mandó a desecho.') % self.env.user.name
+        else:
+            cierre = _(
+                'Conciliación firmada por <b>%s</b>: el material se descontó del '
+                'inventario y el sobrante regresó al almacén.') % self.env.user.name
+        production.sudo().message_post(body=cierre)
         return {'type': 'ir.actions.act_window_close'}
