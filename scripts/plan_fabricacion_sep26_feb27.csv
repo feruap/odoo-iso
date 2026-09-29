@@ -1,0 +1,39 @@
+clave;producto;temp_24_25;temp_25_26;factor;proyeccion;en_distribucion;en_PT;en_ordenes;A_FABRICAR;presentacion;cajas;piezas_pres;ordenes_abiertas
+DMCRD01;COMBO RESPIRATORIO INFLUENZA A y B + SARS-CoV-2 + RSV;21910;20085;0.92;18412;1140;3623;272;13377.0;COMBO RESPIRATORIO - Presentacion 10;1304;13045;0926/01/CRD (to_close, faltan 272)
+;;;;;;;;;;COMBO RESPIRATORIO - Presentacion 5;66;332;
+DMADB01;ANTIDOPING SALIVA 5P;732;4298;2.00;8596;2905;0;0;5691.0;Caja con 10 pruebas;563;5630;ninguna
+;;;;;;;;;;Caja con 5 pruebas;10;51;
+;;;;;;;;;;Caja con 2 pruebas;5;10;
+DMIAB01;Prueba rápida FLUNET;7520;6550;0.87;5705;2915;80;0;2710.0;FLUNET - Presentacion 20;130;2601;ninguna
+;;;;;;;;;;FLUNET - Presentacion 5;22;109;
+DIAM-024;Prueba rápida COVFLU-NET C o m b o S A R S - C o V - 2 + F L U A y B;4330;5360;1.24;6635;440;0;3600;2595.0;Caja con 10 pruebas;260;2595;0926/01/CCF (progress, faltan 3600)
+DMHBA01;HEMOGLOBINA CUALITATIVA;80;990;2.00;1980;170;0;0;1810.0;Caja con 20 pruebas;83;1653;ninguna
+;;;;;;;;;;Caja con 5 pruebas;31;157;
+DMPSA02;Prueba rápida PROSTATINET;582;1228;2.00;2456;702;0;0;1754.0;Caja con 20 pruebas;85;1709;ninguna
+;;;;;;;;;;Bolsa con 2 pruebas;22;45;
+DMVID01;Prueba rápida VITAMINET D;453;982;2.00;1964;725;0;0;1239.0;VITAMINET D 10 piezas;114;1143;ninguna
+;;;;;;;;;;VITAMINET D 5 piezas;14;70;
+;;;;;;;;;;VITAMINET D 2 piezas;12;25;
+DMADS01;Prueba rápida de Antidoping 5 parámetros (THC, MET, AMP, COC, OPI);643;1257;1.95;2457;1248;0;0;1209.0;Caja con 10 pruebas;112;1125;ninguna
+;;;;;;;;;;Caja con 5 pruebas;15;74;
+;;;;;;;;;;Caja con 2 pruebas;5;10;
+DMSPN02;Estreptococo A;380;785;2.00;1570;750;0;0;820.0;Caja con 20 pruebas;34;681;ninguna
+;;;;;;;;;;Caja con 5 pruebas;28;139;
+DMCLAM01;Prueba rápida CLAMIDIANET;665;1000;1.50;1504;840;0;0;664.0;Caja con 10 pruebas;58;584;ninguna
+;;;;;;;;;;Caja con 5 pruebas;16;80;
+DMRAV01;ROTADENET;350;475;1.36;645;165;10;0;470.0;Caja con 20 pruebas;19;386;ninguna
+;;;;;;;;;;Caja con 5 pruebas;17;84;
+DIAM-029;Prueba rápida COVINET nasofaringea;2787;2317;0.83;1926;1465;27;0;434.0;COVINET - Presentacion 10;43;429;ninguna
+;;;;;;;;;;COVINET - Presentacion 5;1;4;
+DMTSH02;Prueba rápida de TSH semicuantitativa;35;215;2.00;430;40;0;0;390.0;Caja con 20 pruebas;17;334;ninguna
+;;;;;;;;;;Caja con 5 pruebas;8;42;
+;;;;;;;;;;Caja con 10 pruebas;1;14;
+DMSVI01;COMBO SÍFILIS + VIH 1.2;620;730;1.18;860;580;0;0;280.0;Caja con 10 pruebas;28;280;ninguna
+DMDEN01;Prueba rápida DENGUE NET;28260;3725;0.50;1862;1640;0;0;222.0;Caja con 20 pruebas;11;211;ninguna
+;;;;;;;;;;Caja con 5 pruebas;2;11;
+DMVIH02;VIH 4ta GENERACIÓN (1.2 y p24);415;390;0.94;367;165;0;0;202.0;Caja con 5 pruebas;25;127;ninguna
+;;;;;;;;;;Caja con 2 pruebas;38;75;
+DMHPY01;H. pylori;516;444;0.86;382;188;0;0;194.0;Caja con 20 pruebas;8;165;ninguna
+;;;;;;;;;;Caja con 2 pruebas;14;29;
+DMPRO01;NT-proBNP;130;290;2.00;580;0;476;0;104.0;Caja con 10 pruebas;7;72;0926/01/ICN (to_close, faltan 0)
+;;;;;;;;;;Caja con 5 pruebas;6;32;
