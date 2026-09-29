@@ -100,10 +100,33 @@
                         <span t-if="t.sin_recepcion" class="o_ct_badge o_ct_b_warn" title="Almacén no tiene una recepción abierta para esta orden: no hay dónde recibirla. Revisar si llegó o cancelarla.">Sin recepción</span>
                         <span t-if="t.parcial" class="o_ct_badge o_ct_b_part">Parcial <t t-esc="t.pct"/>%</span>
                         <span t-if="t.pago and t.pago !== 'pendiente'" class="o_ct_badge o_ct_b_ok" t-esc="t.pago_label"/>
+                        <span t-if="t.auto" class="o_ct_badge o_ct_b_auto"
+                              t-att-title="'Compra asistida en ' + (t.auto_tienda || 'tienda') + ': se abre la página y se deja el carrito listo para confirmar. No es transferencia.'">
+                            <span class="o_ct_auto_a">A</span> <t t-esc="t.auto_tienda"/>
+                        </span>
                         <t t-set="v" t-value="via(t)"/>
                         <span t-if="v" t-att-class="'o_ct_badge ' + v.clase" t-att-title="v.title"><i t-att-class="'fa ' + v.icon"/> <t t-esc="v.texto"/></span>
                         <span t-if="t.forma_pago" class="o_ct_badge o_ct_b_muted" t-esc="t.forma_pago"/>
                         <span t-if="t.monto" class="o_ct_monto" t-esc="t.monto"/>
+                    </div>
+
+                    <div t-if="t.vb_puede" class="o_ct_vb">
+                        <span class="o_ct_vb_txt">Tu visto bueno:</span>
+                        <button class="btn btn-sm btn-success" t-att-disabled="state.vb === t.key"
+                                t-on-click="(ev) => this.visto(t, 'si', ev)"
+                                title="Autoriza la compra. Es lo mismo que el botón del mensaje de Telegram.">
+                            <i class="fa fa-check"/> Autorizo
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" t-att-disabled="state.vb === t.key"
+                                t-on-click="(ev) => this.visto(t, 'no', ev)"
+                                title="Rechaza la compra. No se publica ningún pago.">No
+                        </button>
+                    </div>
+                    <div t-elif="t.vb_estado === 'autorizado'" class="o_ct_meta o_ct_vb_hecho">
+                        <i class="fa fa-check-circle"/> Visto bueno dado<t t-if="t.vb_via"> por <t t-esc="t.vb_via === 'odoo' ? 'Odoo' : 'Telegram'"/></t>
+                    </div>
+                    <div t-elif="t.vb_estado === 'rechazado'" class="o_ct_meta o_ct_vb_no">
+                        <i class="fa fa-times-circle"/> Rechazada
                     </div>
                 </article>
             </div>

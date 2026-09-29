@@ -18,6 +18,26 @@
             <field name="comment">Puede capturar estado de pago, fecha y referencia en la orden de compra. Membresia nombrada.</field>
             <field name="implied_ids" eval="[(4, ref('amunet_compras_general.group_compras_monto'))]"/>
         </record>
+
+        <!-- Quien da el visto bueno de una compra (la segunda firma, la de
+             Direccion). Existia solo como el id de Telegram dentro del bot;
+             al abrir la puerta del tablero hace falta decirlo en Odoo.
+             Membresia nombrada, abajo, con noupdate="0" para que NO se
+             pierda en las actualizaciones: eso ya paso con
+             group_compras_pagos, que quedo sin un solo usuario en
+             produccion y dejo el campo bloqueado para todos. -->
+        <record id="group_autoriza_compra" model="res.groups">
+            <field name="name">Compras / Da el visto bueno</field>
+            <field name="comment">Puede autorizar o rechazar una compra desde el tablero, igual que con los botones de Telegram. Membresia nombrada.</field>
+        </record>
+    </data>
+    <data noupdate="0">
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'fernando.ruiz@amunet.com.mx')]"/>
+            </function>
+            <value eval="{'group_ids': [(4, ref('amunet_compras_general.group_autoriza_compra'))]}"/>
+        </function>
     </data>
     <!-- noupdate="0": se re-aplica en cada update para que los usuarios
          autorizados siempre tengan el acceso, incluso en produccion.

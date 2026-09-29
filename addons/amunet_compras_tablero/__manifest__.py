@@ -6,7 +6,7 @@
                'atrasado y que ya llego.',
     'author': 'Amunet',
     'category': 'Inventory/Purchase',
-    'version': '19.0.1.0.0',
+    'version': '19.0.3.0.0',
     # El tablero es solo lectura: junta en una pantalla lo que hoy esta
     # repartido entre Compras (OC) y el Marketplace Interno (SC).
     # Unico campo nuevo: la via que prefiere el solicitante (avion / barco),

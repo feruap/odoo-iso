@@ -99,8 +99,22 @@ class AmunetSolicitudCompra(models.Model):
                     'manda el dinero a otra cuenta.'
                 ) % len(limpia))
 
-    @api.constrains('amunet_forma_pago', 'amunet_clabe', 'amunet_titular', 'amunet_banco', 'state')
+    @api.constrains('amunet_forma_pago', 'amunet_clabe', 'amunet_titular',
+                    'amunet_banco', 'amunet_monto', 'state')
     def _check_datos_transferencia(self):
+        """Nadie firma una transferencia sin saber de cuanto es.
+
+        El importe se agrego a esta lista el 29-sep-2026: SC/2026/00001 llego
+        al jefe y al visto bueno de Direccion con 'Importe: sin capturar',
+        porque la migracion de SMP a SC dejo la cifra como texto en la
+        referencia de pago. Una orden de pago sin cifra es una firma en
+        blanco, y ademas obliga a que el monto real viaje por fuera del
+        sistema, que es justo donde se puede cambiar.
+
+        El monto lleva `groups=`, asi que se lee con sudo(): si no, para
+        quien no esta en el grupo el campo no existe y el candado nunca
+        se dispararia.
+        """
         for req in self:
             if req.amunet_forma_pago != 'transferencia' or req.state == 'draft':
                 continue
@@ -111,6 +125,8 @@ class AmunetSolicitudCompra(models.Model):
                 faltan.append('titular de la cuenta')
             if not req.amunet_banco:
                 faltan.append('banco')
+            if not req.sudo().amunet_monto:
+                faltan.append('importe a pagar')
             if faltan:
                 raise ValidationError(_(
                     'Para pagar por transferencia falta capturar: %s.\n\n'
