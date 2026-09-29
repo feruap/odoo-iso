@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="amunet_compras_tablero.Tablero">
+<div class="o_action o_amunet_ct">
+    <header class="o_ct_head">
+        <div class="o_ct_titlebar">
+            <div>
+                <h1 class="o_ct_h1">Compras</h1>
+                <div class="o_ct_sub">
+                    En qué va cada compra, de la solicitud a la llegada.
+                    <span t-if="state.actualizado"> · Actualizado <t t-esc="state.actualizado"/></span>
+                </div>
+            </div>
+            <div class="o_ct_headbtns">
+                <button class="btn btn-light" t-on-click="abrirListaOC" title="La lista clásica de Odoo">Lista de órdenes</button>
+                <button class="btn btn-primary" t-on-click="cargar" t-att-disabled="state.cargando">
+                    <i class="fa fa-refresh" t-att-class="state.cargando ? 'fa-spin' : ''"/> Actualizar
+                </button>
+            </div>
+        </div>
+
+        <div class="o_ct_kpis" t-if="state.datos">
+            <t t-set="r" t-value="resumen"/>
+            <div class="o_ct_kpi"><b t-esc="r.vivas"/><span>abiertas</span></div>
+            <div class="o_ct_kpi o_ct_kpi_dec"><b t-esc="r.decidir"/><span>por autorizar o comprar</span></div>
+            <div class="o_ct_kpi o_ct_kpi_paid"><b t-esc="r.pagadas"/><span>en marcha</span></div>
+            <div class="o_ct_kpi o_ct_kpi_late" t-att-class="r.atrasadas ? 'o_ct_on' : ''"><b t-esc="r.atrasadas"/><span>atrasadas</span></div>
+            <div class="o_ct_kpi o_ct_kpi_urg" t-att-class="r.urgentes ? 'o_ct_on' : ''"><b t-esc="r.urgentes"/><span>urgentes</span></div>
+        </div>
+
+        <div class="o_ct_filters">
+            <div class="o_ct_search">
+                <i class="fa fa-search"/>
+                <input type="search" t-model="state.q" placeholder="Buscar folio, proveedor, producto o solicitante…"/>
+            </div>
+            <div class="btn-group o_ct_seg" role="group">
+                <button class="btn" t-att-class="state.tipo === 'todo' ? 'btn-secondary active' : 'btn-light'" t-on-click="() => this.setTipo('todo')">Todo</button>
+                <button class="btn" t-att-class="state.tipo === 'productivo' ? 'btn-secondary active' : 'btn-light'" t-on-click="() => this.setTipo('productivo')">Productivo</button>
+                <button class="btn" t-att-class="state.tipo === 'general' ? 'btn-secondary active' : 'btn-light'" t-on-click="() => this.setTipo('general')">General</button>
+            </div>
+            <button class="btn o_ct_chip" t-att-class="state.soloUrgentes ? 'btn-warning' : 'btn-light'" t-on-click="toggleUrgentes">
+                <i class="fa fa-bolt"/> Solo urgentes
+            </button>
+            <button class="btn o_ct_chip" t-att-class="state.verRecibidas ? 'btn-light' : 'btn-light o_ct_off'" t-on-click="toggleRecibidas">
+                <i t-att-class="state.verRecibidas ? 'fa fa-eye' : 'fa fa-eye-slash'"/> Recibidas
+            </button>
+        </div>
+    </header>
+
+    <div t-if="state.error" class="alert alert-danger m-3" t-esc="state.error"/>
+    <div t-elif="!state.datos" class="o_ct_loading"><i class="fa fa-circle-o-notch fa-spin"/> Cargando…</div>
+
+    <div t-else="" class="o_ct_board">
+        <t t-set="grupos" t-value="porColumna"/>
+        <section t-foreach="columnasVisibles" t-as="col" t-key="col.id" class="o_ct_col" t-att-data-etapa="col.id">
+            <div class="o_ct_colhead" t-att-title="col.ayuda">
+                <span class="o_ct_dot"/>
+                <span class="o_ct_colname" t-esc="col.nombre"/>
+                <span class="o_ct_count" t-esc="grupos[col.id].length"/>
+            </div>
+            <div class="o_ct_colhelp">
+                <t t-esc="col.ayuda"/><t t-if="col.id === 'recibida'"> (<t t-esc="state.datos.dias_recibidas"/> días)</t>
+            </div>
+            <div class="o_ct_cards">
+                <div t-if="!grupos[col.id].length" class="o_ct_empty">Nada aquí</div>
+                <article t-foreach="grupos[col.id]" t-as="t" t-key="t.key" t-att-class="claseCard(t)" t-on-click="() => this.abrir(t)">
+                    <div class="o_ct_row1">
+                        <span class="o_ct_folio" t-esc="t.folio"/>
+                        <span t-if="t.urgencia_label" class="o_ct_badge o_ct_b_urg" t-att-title="t.urgencia_motivo or ''">
+                            <i class="fa fa-bolt"/> <t t-esc="t.urgencia_label"/>
+                        </span>
+                        <span t-elif="t.borrador" class="o_ct_badge o_ct_b_muted">Sin enviar</span>
+                        <span t-if="t.tipo === 'productivo'" class="o_ct_badge o_ct_b_prod">Prod.</span>
+                    </div>
+                    <div class="o_ct_titulo" t-esc="t.titulo"/>
+                    <div t-if="t.subtitulo" class="o_ct_meta" t-esc="t.subtitulo"/>
+                    <div t-if="t.solicitudes" class="o_ct_meta"><i class="fa fa-link"/> <t t-esc="t.solicitudes"/><t t-if="t.solicitante"> · <t t-esc="t.solicitante"/></t></div>
+                    <div t-if="t.productos and t.modelo === 'purchase.order'" class="o_ct_prod" t-esc="t.productos"/>
+
+                    <div t-if="t.modelo === 'purchase.order' and (t.etapa === 'transito' or t.etapa === 'pagada' or t.etapa === 'atrasada')" class="o_ct_bar" t-att-title="t.pct + '% recibido'">
+                        <div class="o_ct_barfill" t-att-style="'width:' + t.pct + '%'"/>
+                    </div>
+
+                    <div class="o_ct_foot">
+                        <t t-if="t.etapa === 'atrasada'">
+                            <span class="o_ct_when o_ct_late"><i class="fa fa-exclamation-triangle"/> <t t-esc="t.dias_atraso"/> días tarde</span>
+                        </t>
+                        <t t-elif="t.etapa === 'recibida'">
+                            <span class="o_ct_when o_ct_ok"><i class="fa fa-check"/> Llegó <t t-esc="fechaCorta(t.fecha_llegada)"/></span>
+                        </t>
+                        <t t-elif="(t.etapa === 'transito' or t.etapa === 'pagada') and t.fecha_esperada">
+                            <span class="o_ct_when"><i class="fa fa-truck"/> <t t-esc="t.eta_confirmada ? 'Llega' : 'Plan'"/> <t t-esc="fechaCorta(t.fecha_esperada)"/></span>
+                        </t>
+                        <t t-elif="t.requerida">
+                            <span class="o_ct_when"><i class="fa fa-calendar"/> Se requiere <t t-esc="fechaCorta(t.requerida)"/></span>
+                        </t>
+                        <t t-else="">
+                            <span class="o_ct_when o_ct_age"><i class="fa fa-clock-o"/> <t t-esc="edad(t.edad_dias)"/></span>
+                        </t>
+                        <span t-if="t.sin_recepcion" class="o_ct_badge o_ct_b_warn" title="Almacén no tiene una recepción abierta para esta orden: no hay dónde recibirla. Revisar si llegó o cancelarla.">Sin recepción</span>
+                        <span t-if="t.parcial" class="o_ct_badge o_ct_b_part">Parcial <t t-esc="t.pct"/>%</span>
+                        <span t-if="t.pago and t.pago !== 'pendiente'" class="o_ct_badge o_ct_b_ok" t-esc="t.pago_label"/>
+                        <t t-set="v" t-value="via(t)"/>
+                        <span t-if="v" t-att-class="'o_ct_badge ' + v.clase" t-att-title="v.title"><i t-att-class="'fa ' + v.icon"/> <t t-esc="v.texto"/></span>
+                        <span t-if="t.forma_pago" class="o_ct_badge o_ct_b_muted" t-esc="t.forma_pago"/>
+                        <span t-if="t.monto" class="o_ct_monto" t-esc="t.monto"/>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </div>
+</div>
+</t>
+</templates>
