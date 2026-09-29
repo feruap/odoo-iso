@@ -85,6 +85,16 @@ class ProductTemplate(models.Model):
         help='La solución se queda en el área (ARU/Stock): no se entrega a '
              'Materia Prima. Se sigue fabricando con orden, lote y receta.')
 
+    # Solucion de CAPTURA: la que se imprime en la membrana de la hoja maestra.
+    # Comparte categoria con las demas soluciones de trabajo, asi que hace falta
+    # una bandera para distinguirla. Hoy sirve para una cosa: su lote lleva una
+    # P antes del consecutivo -- 290926-P01 -- igual que un conjugado lleva C.
+    # El mismo dia pueden convivir 290926-01 (solucion), 290926-C01 (conjugado)
+    # y 290926-P01 (captura) sin pisarse. Regla de Mery, 29-sep-2026.
+    amunet_es_captura = fields.Boolean(
+        string='Es solución de captura', default=False, index=True,
+        help='Se imprime en la membrana. Su lote lleva P antes del consecutivo.')
+
     # Excepcion al enrutamiento a ARU. Por categoria, todos los reactivos se
     # consumen desde el almacen de reactivos en uso, porque el area los tiene
     # en su resguardo. Pero hay reactivos que NO se resguardan y se piden a
