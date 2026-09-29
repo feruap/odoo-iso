@@ -331,3 +331,16 @@ class ProductTemplate(models.Model):
                     "activada sin tener 'Requiere Control de Calidad' activo.\n\n"
                     "Por favor, active primero 'Requiere Control de Calidad'."
                 )
+
+    @api.model
+    def _set_sthis_descriptions(self):
+        descriptions = {
+            'STHIS01': 'Material destinado para la toma de muestras nasofaríngeas',
+            'STHIS02': 'Material destinado para la toma de muestras bucales',
+            'STHIS03': 'Material destinado para la toma de muestras vaginales',
+            'STHIS04': 'Material destinado para la toma de muestras cervicales',
+            'STHIS05': 'Material destinado para la autotoma de muestras cervicovaginales',
+            'STHIS06': 'Material destinado para la toma de muestras generales',
+        }
+        for code, desc in descriptions.items():
+            self.search([('default_code', '=', code)]).write({'description': desc})

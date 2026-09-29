@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Control de Calidad',
-    'version': '19.0.3.63.0',
+    'version': '19.0.3.64.0',
     'category': 'Quality',
     'summary': 'Sistema de Control de Calidad con Parámetros Jerárquicos',
     'description': """Sistema completo de Control de Calidad para la manufactura de
@@ -34,6 +34,7 @@ dispositivos médicos y productos farmacéuticos.""",
         'data/amunet_quality_sampling_plan_data.xml',
         'data/report_quality_params.xml',
         'data/cron_reanalisis_caducidad.xml',
+        'data/sthis_descriptions.xml',
 
         # Wizards
         'wizard/amunet_quality_reanalysis_wizard_views.xml',
