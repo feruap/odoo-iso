@@ -161,3 +161,27 @@
 
 .o_ct_vb_hecho { color: var(--success, #28a745); }
 .o_ct_vb_no { color: var(--danger, #dc3545); }
+
+
+// Compra asistida en tienda. La "A" va en un circulo para que se lea igual
+// que los iconos de avion o barco: de un vistazo, sin tener que leer.
+.o_ct_b_auto {
+    background: rgba(13, 110, 253, .08);
+    color: #0a58ca;
+    border: 1px solid rgba(13, 110, 253, .25);
+
+    .o_ct_auto_a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.05em;
+        height: 1.05em;
+        margin-right: .15rem;
+        border-radius: 50%;
+        background: #0a58ca;
+        color: #fff;
+        font-weight: 700;
+        font-size: .82em;
+        line-height: 1;
+    }
+}
