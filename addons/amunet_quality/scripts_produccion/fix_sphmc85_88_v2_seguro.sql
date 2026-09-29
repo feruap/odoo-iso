@@ -95,10 +95,10 @@ AND specification_name = 'Tiempo de migración' AND sequence < 99;
 
 -- ============================================================
 -- PARTE 2: Limpiar líneas no estándar de QC/00503, 00504, 00505
--- Borra SOLO: Letra, Letra adecuada, Sellado, Deformidad duplicada
--- Las 3 correctas (Manchas, Rasgaduras, Deformidad) quedan intactas
 -- ============================================================
 
+-- 2a) MAVI-04: borrar las 4 líneas no estándar (Letra, Letra adecuada, Sellado, Deformidad dup.)
+--     Las 3 correctas (Manchas, Rasgaduras, Deformidad) quedan intactas con sus veredictos
 DELETE FROM amunet_quality_test_line_detail
 WHERE check_id IN (
   SELECT id FROM amunet_quality_check
@@ -115,6 +115,25 @@ AND specification_config_id IN (
     AND psc.specification_name NOT IN ('Manchas y/o suciedad','Rasgaduras','Deformidad o deterioro')
 );
 -- Esperado: DELETE 12 (4 líneas × 3 análisis)
+
+-- 2b) MAVI-09: borrar las 2 líneas duplicadas seq=99 (sin criterio, pendientes)
+--     Las 2 correctas seq=10 (Liberación 1-30s, Migración 30-180s) quedan intactas
+DELETE FROM amunet_quality_test_line_detail
+WHERE check_id IN (
+  SELECT id FROM amunet_quality_check
+  WHERE name IN ('QC/2026/00503','QC/2026/00504','QC/2026/00505')
+)
+AND specification_config_id IN (
+  SELECT psc.id
+  FROM amunet_quality_parameter_specification_config psc
+  JOIN amunet_quality_parameter_product_rel ppr ON ppr.id = psc.product_parameter_rel_id
+  JOIN product_template pt ON pt.id = ppr.product_tmpl_id
+  JOIN amunet_quality_check_parameter cp ON cp.id = ppr.parameter_id
+  WHERE pt.default_code IN ('SPHMC86','SPHMC87','SPHMC88')
+    AND cp.code = 'MAVI-09'
+    AND psc.sequence >= 99
+);
+-- Esperado: DELETE 6 (2 líneas × 3 análisis)
 
 -- ============================================================
 -- VERIFICACIÓN FINAL
