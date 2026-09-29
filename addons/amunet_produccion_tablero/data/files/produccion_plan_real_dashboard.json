@@ -1,0 +1,372 @@
+{
+ "version": "18.5.10",
+ "sheets": [
+  {
+   "id": "37f926c4-370d-49ad-a019-56ef3d44660b",
+   "name": "Producción",
+   "colNumber": 8,
+   "rowNumber": 160,
+   "rows": {
+    "33": {
+     "size": 40
+    }
+   },
+   "cols": {
+    "0": {
+     "size": 110
+    },
+    "1": {
+     "size": 80
+    },
+    "2": {
+     "size": 80
+    },
+    "3": {
+     "size": 80
+    },
+    "4": {
+     "size": 230
+    },
+    "5": {
+     "size": 80
+    },
+    "6": {
+     "size": 80
+    },
+    "7": {
+     "size": 80
+    }
+   },
+   "merges": [],
+   "cells": {
+    "A1": "Producción: piezas planeadas vs reales",
+    "A2": "Planeado = fin programado de la orden (congelado antes de iniciar). Real = piezas de producto terminado entregadas por la orden ese día.",
+    "A33": "Por día",
+    "A34": "=PIVOT(1, 100)",
+    "E33": "Por producto",
+    "E34": "=PIVOT(2, 100)"
+   },
+   "styles": {
+    "A1": 1,
+    "A33": 2,
+    "E33": 2,
+    "A2": 3
+   },
+   "formats": {},
+   "borders": {},
+   "conditionalFormats": [],
+   "dataValidationRules": [],
+   "figures": [
+    {
+     "id": "becd8d2f-98c6-42fa-968c-ec888c40efea",
+     "width": 760,
+     "height": 340,
+     "tag": "chart",
+     "data": {
+      "title": {
+       "text": "Piezas por día: planeado vs real",
+       "align": "left",
+       "bold": true,
+       "color": "#434343"
+      },
+      "background": "#FFFFFF",
+      "legendPosition": "top",
+      "metaData": {
+       "groupBy": [
+        "fecha:day",
+        "tipo"
+       ],
+       "measure": "piezas",
+       "order": null,
+       "resModel": "amunet.produccion.diaria",
+       "mode": "bar"
+      },
+      "searchParams": {
+       "comparison": null,
+       "context": {
+        "fill_temporal": false
+       },
+       "domain": [],
+       "groupBy": [
+        "fecha:day",
+        "tipo"
+       ],
+       "orderBy": []
+      },
+      "type": "odoo_bar",
+      "dataSets": [
+       {},
+       {}
+      ],
+      "verticalAxisPosition": "left",
+      "stacked": false,
+      "axesDesign": {
+       "y": {
+        "title": {
+         "text": "Piezas"
+        }
+       }
+      },
+      "chartId": "becd8d2f-98c6-42fa-968c-ec888c40efea",
+      "fieldMatching": {
+       "9ccb867f-9e62-4079-814e-bff3099148dd": {
+        "chain": "fecha",
+        "type": "date",
+        "offset": 0
+       },
+       "4a1dd272-e1f2-468a-a237-dedbf425fda3": {
+        "chain": "product_id",
+        "type": "many2one"
+       },
+       "680af171-6c3e-4d94-addf-7c22dfe48835": {
+        "chain": "categ_id",
+        "type": "many2one"
+       }
+      }
+     },
+     "offset": {
+      "x": 0,
+      "y": 45
+     },
+     "col": 0,
+     "row": 0
+    },
+    {
+     "id": "e9401f40-c188-4fe3-b751-c53d328ddfc5",
+     "width": 760,
+     "height": 300,
+     "tag": "chart",
+     "data": {
+      "title": {
+       "text": "Acumulado del periodo: planeado vs real",
+       "align": "left",
+       "bold": true,
+       "color": "#434343"
+      },
+      "background": "#FFFFFF",
+      "legendPosition": "top",
+      "metaData": {
+       "groupBy": [
+        "fecha:day",
+        "tipo"
+       ],
+       "measure": "piezas",
+       "order": null,
+       "resModel": "amunet.produccion.diaria",
+       "mode": "line",
+       "cumulated": true
+      },
+      "searchParams": {
+       "comparison": null,
+       "context": {
+        "fill_temporal": false
+       },
+       "domain": [],
+       "groupBy": [
+        "fecha:day",
+        "tipo"
+       ],
+       "orderBy": []
+      },
+      "type": "odoo_line",
+      "dataSets": [
+       {},
+       {}
+      ],
+      "verticalAxisPosition": "left",
+      "stacked": false,
+      "axesDesign": {
+       "y": {
+        "title": {
+         "text": "Piezas"
+        }
+       }
+      },
+      "chartId": "e9401f40-c188-4fe3-b751-c53d328ddfc5",
+      "fieldMatching": {
+       "9ccb867f-9e62-4079-814e-bff3099148dd": {
+        "chain": "fecha",
+        "type": "date",
+        "offset": 0
+       },
+       "4a1dd272-e1f2-468a-a237-dedbf425fda3": {
+        "chain": "product_id",
+        "type": "many2one"
+       },
+       "680af171-6c3e-4d94-addf-7c22dfe48835": {
+        "chain": "categ_id",
+        "type": "many2one"
+       }
+      },
+      "cumulative": true
+     },
+     "offset": {
+      "x": 0,
+      "y": 400
+     },
+     "col": 0,
+     "row": 0
+    }
+   ],
+   "tables": [],
+   "areGridLinesVisible": false,
+   "isVisible": true,
+   "headerGroups": {
+    "ROW": [],
+    "COL": []
+   },
+   "comments": {}
+  }
+ ],
+ "styles": {
+  "1": {
+   "textColor": "#01666b",
+   "bold": true,
+   "fontSize": 16
+  },
+  "2": {
+   "textColor": "#434343",
+   "bold": true,
+   "fontSize": 11
+  },
+  "3": {
+   "textColor": "#666666",
+   "fontSize": 9
+  }
+ },
+ "formats": {},
+ "borders": {},
+ "revisionId": "START_REVISION",
+ "uniqueFigureIds": true,
+ "settings": {
+  "locale": {
+   "name": "Spanish (MX)",
+   "code": "es_MX",
+   "thousandsSeparator": ",",
+   "decimalSeparator": ".",
+   "dateFormat": "dd/mm/yyyy",
+   "timeFormat": "hh:mm:ss",
+   "formulaArgSeparator": ",",
+   "weekStart": 1
+  }
+ },
+ "pivots": {
+  "1": {
+   "type": "ODOO",
+   "domain": [],
+   "context": {},
+   "sortedColumn": null,
+   "measures": [
+    {
+     "id": "piezas:sum",
+     "fieldName": "piezas",
+     "aggregator": "sum"
+    }
+   ],
+   "model": "amunet.produccion.diaria",
+   "columns": [
+    {
+     "fieldName": "tipo"
+    }
+   ],
+   "rows": [
+    {
+     "fieldName": "fecha",
+     "order": "asc",
+     "granularity": "day"
+    }
+   ],
+   "name": "Plan vs real por día",
+   "actionXmlId": "amunet_produccion_tablero.action_produccion_diaria",
+   "formulaId": "1",
+   "fieldMatching": {
+    "9ccb867f-9e62-4079-814e-bff3099148dd": {
+     "chain": "fecha",
+     "type": "date",
+     "offset": 0
+    },
+    "4a1dd272-e1f2-468a-a237-dedbf425fda3": {
+     "chain": "product_id",
+     "type": "many2one"
+    },
+    "680af171-6c3e-4d94-addf-7c22dfe48835": {
+     "chain": "categ_id",
+     "type": "many2one"
+    }
+   }
+  },
+  "2": {
+   "type": "ODOO",
+   "domain": [],
+   "context": {},
+   "sortedColumn": null,
+   "measures": [
+    {
+     "id": "piezas:sum",
+     "fieldName": "piezas",
+     "aggregator": "sum"
+    }
+   ],
+   "model": "amunet.produccion.diaria",
+   "columns": [
+    {
+     "fieldName": "tipo"
+    }
+   ],
+   "rows": [
+    {
+     "fieldName": "product_id"
+    }
+   ],
+   "name": "Plan vs real por producto",
+   "actionXmlId": "amunet_produccion_tablero.action_produccion_diaria",
+   "formulaId": "2",
+   "fieldMatching": {
+    "9ccb867f-9e62-4079-814e-bff3099148dd": {
+     "chain": "fecha",
+     "type": "date",
+     "offset": 0
+    },
+    "4a1dd272-e1f2-468a-a237-dedbf425fda3": {
+     "chain": "product_id",
+     "type": "many2one"
+    },
+    "680af171-6c3e-4d94-addf-7c22dfe48835": {
+     "chain": "categ_id",
+     "type": "many2one"
+    }
+   }
+  }
+ },
+ "pivotNextId": 3,
+ "customTableStyles": {},
+ "globalFilters": [
+  {
+   "id": "9ccb867f-9e62-4079-814e-bff3099148dd",
+   "type": "date",
+   "label": "Periodo",
+   "defaultValue": "this_month"
+  },
+  {
+   "id": "4a1dd272-e1f2-468a-a237-dedbf425fda3",
+   "type": "relation",
+   "label": "Producto",
+   "modelName": "product.product",
+   "defaultValueDisplayNames": []
+  },
+  {
+   "id": "680af171-6c3e-4d94-addf-7c22dfe48835",
+   "type": "relation",
+   "label": "Categoría",
+   "modelName": "product.category",
+   "defaultValueDisplayNames": [],
+   "includeChildren": true
+  }
+ ],
+ "lists": {},
+ "listNextId": 1,
+ "chartOdooMenusReferences": {
+  "becd8d2f-98c6-42fa-968c-ec888c40efea": "amunet_produccion_tablero.menu_produccion_diaria",
+  "e9401f40-c188-4fe3-b751-c53d328ddfc5": "amunet_produccion_tablero.menu_produccion_diaria"
+ }
+}
