@@ -19,6 +19,7 @@
         'data/seeds_equipos.xml',
         'data/seeds_ptreactivos.xml',
         'data/seeds_soluciones_captura.xml',
+        'data/seeds_consumibles.xml',
     ],
     'assets': {
         'web.assets_backend': [

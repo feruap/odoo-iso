@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Envase -->
+    <record id="clave_coenv01" model="amunet.clave"><field name="clave">COENV01</field><field name="nombre">Envase de 1 L</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv02" model="amunet.clave"><field name="clave">COENV02</field><field name="nombre">Envase blanco de 250 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv03" model="amunet.clave"><field name="clave">COENV03</field><field name="nombre">Envase blanco de 100 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv04" model="amunet.clave"><field name="clave">COENV04</field><field name="nombre">Envase cuadrado de 75 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv05" model="amunet.clave"><field name="clave">COENV05</field><field name="nombre">Envase cuadrado de 30 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv06" model="amunet.clave"><field name="clave">COENV06</field><field name="nombre">Envase transparente de 30 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv07" model="amunet.clave"><field name="clave">COENV07</field><field name="nombre">Envase ámbar de 20 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv08" model="amunet.clave"><field name="clave">COENV08</field><field name="nombre">Envase transparente de 20 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv09" model="amunet.clave"><field name="clave">COENV09</field><field name="nombre">Envase transparente de 15 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv10" model="amunet.clave"><field name="clave">COENV10</field><field name="nombre">Envase transparente de 8 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv11" model="amunet.clave"><field name="clave">COENV11</field><field name="nombre">Envase con tapa blanca de 5 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv12" model="amunet.clave"><field name="clave">COENV12</field><field name="nombre">Envase cuadrado de 250 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv13" model="amunet.clave"><field name="clave">COENV13</field><field name="nombre">Envase cuadrado de 500 ml</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv14" model="amunet.clave"><field name="clave">COENV14</field><field name="nombre">Envase para reactivo de 100 g</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv15" model="amunet.clave"><field name="clave">COENV15</field><field name="nombre">Envase para reactivo de 250 g</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+    <record id="clave_coenv16" model="amunet.clave"><field name="clave">COENV16</field><field name="nombre">Envase para reactivo de 500 g</field><field name="clasificacion">co</field><field name="subcategoria">Envase</field></record>
+
+    <!-- Tubo -->
+    <record id="clave_cotub01" model="amunet.clave"><field name="clave">COTUB01</field><field name="nombre">Tubo de 0.2 ml</field><field name="clasificacion">co</field><field name="subcategoria">Tubo</field></record>
+    <record id="clave_cotub02" model="amunet.clave"><field name="clave">COTUB02</field><field name="nombre">Tubo de 0.5 ml</field><field name="clasificacion">co</field><field name="subcategoria">Tubo</field></record>
+    <record id="clave_cotub03" model="amunet.clave"><field name="clave">COTUB03</field><field name="nombre">Tubo de 2 ml (fondo cónico)</field><field name="clasificacion">co</field><field name="subcategoria">Tubo</field></record>
+    <record id="clave_cotub04" model="amunet.clave"><field name="clave">COTUB04</field><field name="nombre">Tubo de 2 ml (base redonda)</field><field name="clasificacion">co</field><field name="subcategoria">Tubo</field></record>
+    <record id="clave_cotub05" model="amunet.clave"><field name="clave">COTUB05</field><field name="nombre">Tubo de 10 ml</field><field name="clasificacion">co</field><field name="subcategoria">Tubo</field></record>
+    <record id="clave_cotub06" model="amunet.clave"><field name="clave">COTUB06</field><field name="nombre">Tubo de 15 ml</field><field name="clasificacion">co</field><field name="subcategoria">Tubo</field></record>
+    <record id="clave_cotub07" model="amunet.clave"><field name="clave">COTUB07</field><field name="nombre">Tubo de 50 ml</field><field name="clasificacion">co</field><field name="subcategoria">Tubo</field></record>
+
+    <!-- Punta -->
+    <record id="clave_copun01" model="amunet.clave"><field name="clave">COPUN01</field><field name="nombre">Puntas blancas (10 µl)</field><field name="clasificacion">co</field><field name="subcategoria">Punta</field></record>
+    <record id="clave_copun02" model="amunet.clave"><field name="clave">COPUN02</field><field name="nombre">Puntas blancas (10 µl) con filtro</field><field name="clasificacion">co</field><field name="subcategoria">Punta</field></record>
+    <record id="clave_copun03" model="amunet.clave"><field name="clave">COPUN03</field><field name="nombre">Puntas amarillas (200 µl)</field><field name="clasificacion">co</field><field name="subcategoria">Punta</field></record>
+    <record id="clave_copun04" model="amunet.clave"><field name="clave">COPUN04</field><field name="nombre">Puntas amarillas (200 µl) con filtro</field><field name="clasificacion">co</field><field name="subcategoria">Punta</field></record>
+    <record id="clave_copun05" model="amunet.clave"><field name="clave">COPUN05</field><field name="nombre">Puntas azules (1 ml)</field><field name="clasificacion">co</field><field name="subcategoria">Punta</field></record>
+
+    <!-- Rack de puntas -->
+    <record id="clave_corac01" model="amunet.clave"><field name="clave">CORAC01</field><field name="nombre">Rack de puntas amarillas</field><field name="clasificacion">co</field><field name="subcategoria">Rack de puntas</field></record>
+    <record id="clave_corac02" model="amunet.clave"><field name="clave">CORAC02</field><field name="nombre">Rack de puntas azules</field><field name="clasificacion">co</field><field name="subcategoria">Rack de puntas</field></record>
+
+    <!-- Criovial y vial -->
+    <record id="clave_cocri01" model="amunet.clave"><field name="clave">COCRI01</field><field name="nombre">Criovial BLK 0.5 ml</field><field name="clasificacion">co</field><field name="subcategoria">Criovial y vial</field></record>
+    <record id="clave_cocri02" model="amunet.clave"><field name="clave">COCRI02</field><field name="nombre">Criovial de 0.8 ml</field><field name="clasificacion">co</field><field name="subcategoria">Criovial y vial</field></record>
+    <record id="clave_cocri03" model="amunet.clave"><field name="clave">COCRI03</field><field name="nombre">Criovial 1.5 ml</field><field name="clasificacion">co</field><field name="subcategoria">Criovial y vial</field></record>
+    <record id="clave_covia03" model="amunet.clave"><field name="clave">COVIA03</field><field name="nombre">Vial 3 ml para buffer</field><field name="clasificacion">co</field><field name="subcategoria">Criovial y vial</field></record>
+    <record id="clave_covia10" model="amunet.clave"><field name="clave">COVIA10</field><field name="nombre">Vial 10 ml para buffer</field><field name="clasificacion">co</field><field name="subcategoria">Criovial y vial</field></record>
+
+    <!-- Placa petri -->
+    <record id="clave_coplp01" model="amunet.clave"><field name="clave">COPLP01</field><field name="nombre">Placa Petri</field><field name="clasificacion">co</field><field name="subcategoria">Placa petri</field></record>
+    <record id="clave_coplp02" model="amunet.clave"><field name="clave">COPLP02</field><field name="nombre">Placa Petri con división</field><field name="clasificacion">co</field><field name="subcategoria">Placa petri</field></record>
+
+    <!-- Filtro -->
+    <record id="clave_coacr01" model="amunet.clave"><field name="clave">COACR01</field><field name="nombre">Filtro azul no estéril (acrodisco)</field><field name="clasificacion">co</field><field name="subcategoria">Filtro</field></record>
+    <record id="clave_coacr02" model="amunet.clave"><field name="clave">COACR02</field><field name="nombre">Filtro negro estéril (acrodisco)</field><field name="clasificacion">co</field><field name="subcategoria">Filtro</field></record>
+
+    <!-- Placa petri (pequeña) -->
+    <record id="clave_coplp03" model="amunet.clave"><field name="clave">COPLP03</field><field name="nombre">Placa Petri pequeña</field><field name="clasificacion">co</field><field name="subcategoria">Placa petri</field></record>
+
+    <!-- EPP -->
+    <record id="clave_cobde01" model="amunet.clave"><field name="clave">COBDE01</field><field name="nombre">Bata desechable</field><field name="clasificacion">co</field><field name="subcategoria">EPP</field></record>
+    <record id="clave_cocbo01" model="amunet.clave"><field name="clave">COCBO01</field><field name="nombre">Cubrebocas</field><field name="clasificacion">co</field><field name="subcategoria">EPP</field></record>
+    <record id="clave_cocof01" model="amunet.clave"><field name="clave">COCOF01</field><field name="nombre">Cofias</field><field name="clasificacion">co</field><field name="subcategoria">EPP</field></record>
+    <record id="clave_cozap01" model="amunet.clave"><field name="clave">COZAP01</field><field name="nombre">Zapatones</field><field name="clasificacion">co</field><field name="subcategoria">EPP</field></record>
+    <record id="clave_cogch01" model="amunet.clave"><field name="clave">COGCH01</field><field name="nombre">Guantes de nitrilo chicos</field><field name="clasificacion">co</field><field name="subcategoria">EPP</field></record>
+    <record id="clave_cogec01" model="amunet.clave"><field name="clave">COGEC01</field><field name="nombre">Guantes de nitrilo extra chicos</field><field name="clasificacion">co</field><field name="subcategoria">EPP</field></record>
+    <record id="clave_cogme01" model="amunet.clave"><field name="clave">COGME01</field><field name="nombre">Guantes de nitrilo medianos</field><field name="clasificacion">co</field><field name="subcategoria">EPP</field></record>
+    <record id="clave_coggr01" model="amunet.clave"><field name="clave">COGGR01</field><field name="nombre">Guantes de nitrilo grandes</field><field name="clasificacion">co</field><field name="subcategoria">EPP</field></record>
+
+    <!-- Residuos RPBI -->
+    <record id="clave_cobrp01" model="amunet.clave"><field name="clave">COBRP01</field><field name="nombre">Bolsa para RPBI chica</field><field name="clasificacion">co</field><field name="subcategoria">Residuos RPBI</field></record>
+    <record id="clave_cobrp02" model="amunet.clave"><field name="clave">COBRP02</field><field name="nombre">Bolsa para RPBI mediana</field><field name="clasificacion">co</field><field name="subcategoria">Residuos RPBI</field></record>
+    <record id="clave_cobrp03" model="amunet.clave"><field name="clave">COBRP03</field><field name="nombre">Bolsa para RPBI grande</field><field name="clasificacion">co</field><field name="subcategoria">Residuos RPBI</field></record>
+    <record id="clave_cocrp01" model="amunet.clave"><field name="clave">COCRP01</field><field name="nombre">Contenedor RPBI para líquidos</field><field name="clasificacion">co</field><field name="subcategoria">Residuos RPBI</field></record>
+    <record id="clave_cocrp02" model="amunet.clave"><field name="clave">COCRP02</field><field name="nombre">Contenedor RPBI para punzocortantes</field><field name="clasificacion">co</field><field name="subcategoria">Residuos RPBI</field></record>
+
+    <!-- Vidriería -->
+    <record id="clave_cofdu01" model="amunet.clave"><field name="clave">COFDU01</field><field name="nombre">Frasco DURAN 100 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_cofdu02" model="amunet.clave"><field name="clave">COFDU02</field><field name="nombre">Frasco DURAN 250 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_cofdu03" model="amunet.clave"><field name="clave">COFDU03</field><field name="nombre">Frasco DURAN 1 L</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_cofdu04" model="amunet.clave"><field name="clave">COFDU04</field><field name="nombre">Frasco DURAN 2 L</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_comaf01" model="amunet.clave"><field name="clave">COMAF01</field><field name="nombre">Matraz aforado 10 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_comaf02" model="amunet.clave"><field name="clave">COMAF02</field><field name="nombre">Matraz aforado 500 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_comel01" model="amunet.clave"><field name="clave">COMEL01</field><field name="nombre">Matraz Erlenmeyer 500 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_comel02" model="amunet.clave"><field name="clave">COMEL02</field><field name="nombre">Matraz Erlenmeyer 2 L</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_coprb01" model="amunet.clave"><field name="clave">COPRB01</field><field name="nombre">Probeta 25 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_coprb02" model="amunet.clave"><field name="clave">COPRB02</field><field name="nombre">Probeta 100 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_coprb03" model="amunet.clave"><field name="clave">COPRB03</field><field name="nombre">Probeta de 500 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_coprb04" model="amunet.clave"><field name="clave">COPRB04</field><field name="nombre">Probeta 250 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_covpr01" model="amunet.clave"><field name="clave">COVPR01</field><field name="nombre">Vaso de precipitados 250 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_covpr02" model="amunet.clave"><field name="clave">COVPR02</field><field name="nombre">Vaso de precipitados 600 ml</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_covpr03" model="amunet.clave"><field name="clave">COVPR03</field><field name="nombre">Vaso de precipitados 1 L</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_covpr04" model="amunet.clave"><field name="clave">COVPR04</field><field name="nombre">Vaso de precipitados 2 L</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+    <record id="clave_copis01" model="amunet.clave"><field name="clave">COPIS01</field><field name="nombre">Piseta</field><field name="clasificacion">co</field><field name="subcategoria">Vidriería</field></record>
+
+    <!-- Bolsas y empaques -->
+    <record id="clave_cobce01" model="amunet.clave"><field name="clave">COBCE01</field><field name="nombre">Bolsa de celofán 6x15+3</field><field name="clasificacion">co</field><field name="subcategoria">Bolsas y empaques</field></record>
+    <record id="clave_cobce02" model="amunet.clave"><field name="clave">COBCE02</field><field name="nombre">Bolsa de celofán 10x15+3</field><field name="clasificacion">co</field><field name="subcategoria">Bolsas y empaques</field></record>
+    <record id="clave_cobce03" model="amunet.clave"><field name="clave">COBCE03</field><field name="nombre">Bolsa de celofán 10x20+3</field><field name="clasificacion">co</field><field name="subcategoria">Bolsas y empaques</field></record>
+    <record id="clave_cobme01" model="amunet.clave"><field name="clave">COBME01</field><field name="nombre">Bolsa metalizada 35x20</field><field name="clasificacion">co</field><field name="subcategoria">Bolsas y empaques</field></record>
+    <record id="clave_cobme02" model="amunet.clave"><field name="clave">COBME02</field><field name="nombre">Bolsa metalizada 19x25.5</field><field name="clasificacion">co</field><field name="subcategoria">Bolsas y empaques</field></record>
+    <record id="clave_cobme03" model="amunet.clave"><field name="clave">COBME03</field><field name="nombre">Bolsa metalizada 15.5x20</field><field name="clasificacion">co</field><field name="subcategoria">Bolsas y empaques</field></record>
+    <record id="clave_cobpe01" model="amunet.clave"><field name="clave">COBPE01</field><field name="nombre">Bolsa Whirl-Pak estéril</field><field name="clasificacion">co</field><field name="subcategoria">Bolsas y empaques</field></record>
+
+    <!-- Toma de muestra -->
+    <record id="clave_coavc01" model="amunet.clave"><field name="clave">COAVC01</field><field name="nombre">Aguja vacutainer (verde)</field><field name="clasificacion">co</field><field name="subcategoria">Toma de muestra</field></record>
+    <record id="clave_cotml01" model="amunet.clave"><field name="clave">COTML01</field><field name="nombre">Tubo para toma de muestra lila</field><field name="clasificacion">co</field><field name="subcategoria">Toma de muestra</field></record>
+    <record id="clave_cotmr01" model="amunet.clave"><field name="clave">COTMR01</field><field name="nombre">Tubo para toma de muestra rojo</field><field name="clasificacion">co</field><field name="subcategoria">Toma de muestra</field></record>
+    <record id="clave_cotmv01" model="amunet.clave"><field name="clave">COTMV01</field><field name="nombre">Tubo para toma de muestra verde</field><field name="clasificacion">co</field><field name="subcategoria">Toma de muestra</field></record>
+    <record id="clave_covrm01" model="amunet.clave"><field name="clave">COVRM01</field><field name="nombre">Vaso recolector de muestra</field><field name="clasificacion">co</field><field name="subcategoria">Toma de muestra</field></record>
+
+    <!-- Laboratorio general -->
+    <record id="clave_cotph01" model="amunet.clave"><field name="clave">COTPH01</field><field name="nombre">Tira para pH</field><field name="clasificacion">co</field><field name="subcategoria">Laboratorio general</field></record>
+    <record id="clave_cocen01" model="amunet.clave"><field name="clave">COCEN01</field><field name="nombre">Centricon 0.5</field><field name="clasificacion">co</field><field name="subcategoria">Laboratorio general</field></record>
+    <record id="clave_cotub08" model="amunet.clave"><field name="clave">COTUB08</field><field name="nombre">Tubo de vidrio 10 ml para DNA libre</field><field name="clasificacion">co</field><field name="subcategoria">Laboratorio general</field></record>
+    <record id="clave_cosan01" model="amunet.clave"><field name="clave">COSAN01</field><field name="nombre">Sanitas</field><field name="clasificacion">co</field><field name="subcategoria">Laboratorio general</field></record>
+    <record id="clave_cobhi01" model="amunet.clave"><field name="clave">COBHI01</field><field name="nombre">Bolsa híbrida</field><field name="clasificacion">co</field><field name="subcategoria">Laboratorio general</field></record>
+    <record id="clave_coalc01" model="amunet.clave"><field name="clave">COALC01</field><field name="nombre">Alcohol del 96%</field><field name="clasificacion">co</field><field name="subcategoria">Laboratorio general</field></record>
+    <record id="clave_cople01" model="amunet.clave"><field name="clave">COPLE01</field><field name="nombre">Placa de ELISA</field><field name="clasificacion">co</field><field name="subcategoria">Laboratorio general</field></record>
+    <record id="clave_cocat01" model="amunet.clave"><field name="clave">COCAT01</field><field name="nombre">Caja de almacenamiento de tubos PCR</field><field name="clasificacion">co</field><field name="subcategoria">Laboratorio general</field></record>
+
+    <!-- Papelería -->
+    <record id="clave_copap01" model="amunet.clave"><field name="clave">COPAP01</field><field name="nombre">Lapicero rojo</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap02" model="amunet.clave"><field name="clave">COPAP02</field><field name="nombre">Lapicero azul fino</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap03" model="amunet.clave"><field name="clave">COPAP03</field><field name="nombre">Lapicero azul mediano</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap04" model="amunet.clave"><field name="clave">COPAP04</field><field name="nombre">Lapicero azul punto de aguja</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap05" model="amunet.clave"><field name="clave">COPAP05</field><field name="nombre">Lapicero azul ultrafino</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap06" model="amunet.clave"><field name="clave">COPAP06</field><field name="nombre">Portaminas 0.5 mm</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap07" model="amunet.clave"><field name="clave">COPAP07</field><field name="nombre">Lápiz de grafito</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap08" model="amunet.clave"><field name="clave">COPAP08</field><field name="nombre">Block de notas</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap09" model="amunet.clave"><field name="clave">COPAP09</field><field name="nombre">Clip N°1</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap10" model="amunet.clave"><field name="clave">COPAP10</field><field name="nombre">Clip N°2</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap11" model="amunet.clave"><field name="clave">COPAP11</field><field name="nombre">USB 32 GB</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap12" model="amunet.clave"><field name="clave">COPAP12</field><field name="nombre">Marcatextos verde</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap13" model="amunet.clave"><field name="clave">COPAP13</field><field name="nombre">Marcatextos naranja</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap14" model="amunet.clave"><field name="clave">COPAP14</field><field name="nombre">Marcatextos azul</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap15" model="amunet.clave"><field name="clave">COPAP15</field><field name="nombre">Marcatextos rosa</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap16" model="amunet.clave"><field name="clave">COPAP16</field><field name="nombre">Marcatextos amarillo</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap17" model="amunet.clave"><field name="clave">COPAP17</field><field name="nombre">Marcatextos morado</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap18" model="amunet.clave"><field name="clave">COPAP18</field><field name="nombre">Cinta adhesiva 12 mm x 33 m</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap19" model="amunet.clave"><field name="clave">COPAP19</field><field name="nombre">Plumones para pizarrón</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap20" model="amunet.clave"><field name="clave">COPAP20</field><field name="nombre">Grapa Standard</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap21" model="amunet.clave"><field name="clave">COPAP21</field><field name="nombre">Goma de migajón</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap22" model="amunet.clave"><field name="clave">COPAP22</field><field name="nombre">Agarrapapel 19 mm</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap23" model="amunet.clave"><field name="clave">COPAP23</field><field name="nombre">Agarrapapel 32 mm</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap24" model="amunet.clave"><field name="clave">COPAP24</field><field name="nombre">Agarrapapel 41 mm</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap25" model="amunet.clave"><field name="clave">COPAP25</field><field name="nombre">Puntillas 0.7 mm</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap26" model="amunet.clave"><field name="clave">COPAP26</field><field name="nombre">Puntillas 0.5 mm</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap27" model="amunet.clave"><field name="clave">COPAP27</field><field name="nombre">Cinta color rojo</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap28" model="amunet.clave"><field name="clave">COPAP28</field><field name="nombre">Cinta color azul</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap29" model="amunet.clave"><field name="clave">COPAP29</field><field name="nombre">Cinta color verde</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap30" model="amunet.clave"><field name="clave">COPAP30</field><field name="nombre">Cinta color gris</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap31" model="amunet.clave"><field name="clave">COPAP31</field><field name="nombre">Cinta color amarillo</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap32" model="amunet.clave"><field name="clave">COPAP32</field><field name="nombre">Cinta color rosa</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap33" model="amunet.clave"><field name="clave">COPAP33</field><field name="nombre">Dedal de hule</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap34" model="amunet.clave"><field name="clave">COPAP34</field><field name="nombre">Repuesto para cutter grande</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap35" model="amunet.clave"><field name="clave">COPAP35</field><field name="nombre">Marcador punto fino y extrafino</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap36" model="amunet.clave"><field name="clave">COPAP36</field><field name="nombre">Marcador permanente</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap37" model="amunet.clave"><field name="clave">COPAP37</field><field name="nombre">Compás</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap38" model="amunet.clave"><field name="clave">COPAP38</field><field name="nombre">Sacapuntas</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap39" model="amunet.clave"><field name="clave">COPAP39</field><field name="nombre">Lapicero 4 tintas</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+    <record id="clave_copap40" model="amunet.clave"><field name="clave">COPAP40</field><field name="nombre">Hojas tamaño carta</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
+
+</odoo>

@@ -126,15 +126,25 @@
 }
 .o_amunet_lc_tab_inactivas {
     margin-left: auto;
-    color: #adb5bd;
+    color: #856404;
+    background: #fff8e1;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid #ffc107;
+    border-bottom: 2px solid transparent;
+}
+.o_amunet_lc_tab_inactivas:hover {
+    color: #533f03;
+    background: #fff3cd;
 }
 .o_amunet_lc_tab_inactivas.active {
-    color: #6c757d;
-    border-bottom-color: #6c757d;
+    color: #533f03;
+    background: #fff3cd;
+    border-bottom-color: #ffc107;
+    font-weight: 600;
 }
 .o_amunet_lc_tab_inactivas .o_amunet_lc_tab_badge {
-    background: #dee2e6;
-    color: #6c757d;
+    background: #ffc107;
+    color: #533f03;
 }
 
 /* ── Tabla ── */
