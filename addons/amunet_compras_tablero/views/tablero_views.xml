@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_compras_tablero" model="ir.actions.client">
+        <field name="name">Tablero de compras</field>
+        <field name="tag">amunet_compras_tablero</field>
+        <field name="path">compras-tablero</field>
+    </record>
+
+    <!-- sequence 0: es lo primero que abre la app de Compras. -->
+    <menuitem id="menu_compras_tablero"
+              name="Tablero"
+              parent="purchase.menu_purchase_root"
+              action="action_compras_tablero"
+              sequence="0"
+              groups="purchase.group_purchase_user,amunet_compras_general.group_compras_monto,amunet_material_request.group_material_manager"/>
+
+    <menuitem id="menu_compras_tablero_marketplace"
+              name="Tablero de compras"
+              parent="amunet_marketplace.menu_amunet_marketplace_root"
+              action="action_compras_tablero"
+              sequence="24"
+              groups="amunet_compras_general.group_compras_monto,amunet_material_request.group_material_manager"/>
+</odoo>
