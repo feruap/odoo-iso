@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Solicitud: la preferencia va junto a la urgencia, que es donde el
+         solicitante ya esta pensando en que tan rapido lo necesita. -->
+    <record id="view_solicitud_compra_form_via" model="ir.ui.view">
+        <field name="name">amunet.solicitud.compra.form.via</field>
+        <field name="model">amunet.solicitud.compra</field>
+        <field name="inherit_id" ref="amunet_marketplace.view_solicitud_compra_form"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amunet_urgencia_motivo']" position="after">
+                <field name="amunet_via_preferida" placeholder="Sin preferencia"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Orden de compra: Compras ve lo que pidio el solicitante justo arriba
+         de la via que va a capturar. -->
+    <record id="view_purchase_order_form_via" model="ir.ui.view">
+        <field name="name">purchase.order.form.via.amunet</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amunet_via_sugerida']" position="after">
+                <field name="amunet_via_preferida" readonly="1"
+                       invisible="not amunet_via_preferida"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
