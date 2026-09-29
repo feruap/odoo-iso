@@ -105,6 +105,25 @@
                         <span t-if="t.forma_pago" class="o_ct_badge o_ct_b_muted" t-esc="t.forma_pago"/>
                         <span t-if="t.monto" class="o_ct_monto" t-esc="t.monto"/>
                     </div>
+
+                    <div t-if="t.vb_puede" class="o_ct_vb">
+                        <span class="o_ct_vb_txt">Tu visto bueno:</span>
+                        <button class="btn btn-sm btn-success" t-att-disabled="state.vb === t.key"
+                                t-on-click="(ev) => this.visto(t, 'si', ev)"
+                                title="Autoriza la compra. Es lo mismo que el botón del mensaje de Telegram.">
+                            <i class="fa fa-check"/> Autorizo
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" t-att-disabled="state.vb === t.key"
+                                t-on-click="(ev) => this.visto(t, 'no', ev)"
+                                title="Rechaza la compra. No se publica ningún pago.">No
+                        </button>
+                    </div>
+                    <div t-elif="t.vb_estado === 'autorizado'" class="o_ct_meta o_ct_vb_hecho">
+                        <i class="fa fa-check-circle"/> Visto bueno dado<t t-if="t.vb_via"> por <t t-esc="t.vb_via === 'odoo' ? 'Odoo' : 'Telegram'"/></t>
+                    </div>
+                    <div t-elif="t.vb_estado === 'rechazado'" class="o_ct_meta o_ct_vb_no">
+                        <i class="fa fa-times-circle"/> Rechazada
+                    </div>
                 </article>
             </div>
         </section>

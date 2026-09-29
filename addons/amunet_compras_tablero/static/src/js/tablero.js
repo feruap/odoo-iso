@@ -44,6 +44,7 @@ export class ComprasTablero extends Component {
             soloUrgentes: false,
             verRecibidas: true,
             actualizado: "",
+            vb: false,
         });
         onWillStart(() => this.cargar());
     }
@@ -157,6 +158,22 @@ export class ComprasTablero extends Component {
                      title: "Sugerido por la urgencia de la solicitud. No está decidido." };
         }
         return null;
+    }
+
+    // Visto bueno desde el tablero. Existe para no depender del telefono:
+    // resuelve lo mismo que los botones del mensaje de Telegram.
+    async visto(t, respuesta, ev) {
+        ev.stopPropagation();
+        if (this.state.vb) return;
+        if (respuesta === "no" && !window.confirm(`¿Rechazar ${t.folio}? No se publica ningún pago.`)) return;
+        this.state.vb = t.key;
+        try {
+            await this.orm.call("amunet.compras.tablero", "dar_visto_bueno", [t.res_id, respuesta]);
+            await this.cargar();
+        } catch (e) {
+            this.state.error = (e && e.data && e.data.message) || (e && e.message) || "No se pudo registrar el visto bueno";
+        }
+        this.state.vb = false;
     }
 
     abrir(t) {

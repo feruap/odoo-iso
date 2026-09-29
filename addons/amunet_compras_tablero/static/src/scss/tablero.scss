@@ -138,3 +138,26 @@
         .o_ct_cards { overflow: visible; }
     }
 }
+
+
+// Visto bueno de Direccion en la tarjeta. Va al final y separado del pie
+// para que no se confunda con las etiquetas de estado: es lo unico de la
+// tarjeta en lo que se hace clic a proposito.
+.o_ct_vb {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .5rem;
+    padding-top: .5rem;
+    border-top: 1px dashed var(--border-color, #d8dadd);
+
+    .o_ct_vb_txt {
+        font-size: .75rem;
+        color: var(--o-gray-600, #6c757d);
+        margin-right: auto;
+    }
+    .btn { padding: .1rem .5rem; font-size: .75rem; }
+}
+
+.o_ct_vb_hecho { color: var(--success, #28a745); }
+.o_ct_vb_no { color: var(--danger, #dc3545); }
