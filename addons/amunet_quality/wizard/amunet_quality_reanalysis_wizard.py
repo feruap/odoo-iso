@@ -56,12 +56,12 @@ class AmunetQualityReanalysisWizard(models.TransientModel):
     qty_available = fields.Float(
         string='Stock disponible',
         compute='_compute_qty_available',
-        digits='Product Unit of Measure'
+        digits='Product Unit'
     )
 
     qty_reanalysis = fields.Float(
         string='Cantidad para reanálisis',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         required=True,
         help='Cantidad a muestrear para el reanálisis'
     )

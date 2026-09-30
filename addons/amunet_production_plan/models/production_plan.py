@@ -752,30 +752,30 @@ class ProductionPlanLine(models.Model):
         ('unknown', 'Sin origen definido'),
     ], string='Origen', default='manufacture')
 
-    qty_history = fields.Float(string='Vendido en la ventana', digits='Product Unit of Measure')
-    qty_daily = fields.Float(string='Demanda diaria', digits='Product Unit of Measure')
-    qty_need = fields.Float(string='Necesidad del horizonte', digits='Product Unit of Measure')
+    qty_history = fields.Float(string='Vendido en la ventana', digits='Product Unit')
+    qty_daily = fields.Float(string='Demanda diaria', digits='Product Unit')
+    qty_need = fields.Float(string='Necesidad del horizonte', digits='Product Unit')
     qty_pending_orders = fields.Float(
-        string='Pedidos sin surtir', digits='Product Unit of Measure',
+        string='Pedidos sin surtir', digits='Product Unit',
         help='Piezas vendidas en la tienda sin existencia (pedidos vivos). Se suman a la necesidad.')
-    qty_on_hand = fields.Float(string='Disponible contado', digits='Product Unit of Measure')
-    qty_free = fields.Float(string='Existencia libre total', digits='Product Unit of Measure')
-    qty_released = fields.Float(string='Liberada por Calidad', digits='Product Unit of Measure')
+    qty_on_hand = fields.Float(string='Disponible contado', digits='Product Unit')
+    qty_free = fields.Float(string='Existencia libre total', digits='Product Unit')
+    qty_released = fields.Float(string='Liberada por Calidad', digits='Product Unit')
     qty_sellable = fields.Float(
-        string='Vendible (caducidad >= N meses)', digits='Product Unit of Measure',
+        string='Vendible (caducidad >= N meses)', digits='Product Unit',
         help='Piezas en anaquel cuyo lote caduca en al menos los meses minimos del plan.')
     sheet_multiple = fields.Integer(
         string='Multiplo (hoja)', default=1,
         help='1 = sin redondeo; 70 = la cantidad se redondeo a hojas completas.')
-    qty_pending_qc = fields.Float(string='Esperando liberacion', digits='Product Unit of Measure')
+    qty_pending_qc = fields.Float(string='Esperando liberacion', digits='Product Unit')
     qty_incoming = fields.Float(
-        string='En camino', digits='Product Unit of Measure',
+        string='En camino', digits='Product Unit',
         help='Piezas ya compradas en ordenes de compra confirmadas y aun no recibidas.')
-    qty_wip = fields.Float(string='En produccion', digits='Product Unit of Measure')
-    qty_suggested = fields.Float(string='Sugerido', digits='Product Unit of Measure')
+    qty_wip = fields.Float(string='En produccion', digits='Product Unit')
+    qty_suggested = fields.Float(string='Sugerido', digits='Product Unit')
     mp_coverage = fields.Float(string='Cobertura MP (%)')
-    qty_to_produce = fields.Float(string='A producir', digits='Product Unit of Measure')
-    qty_to_buy = fields.Float(string='A comprar', digits='Product Unit of Measure')
+    qty_to_produce = fields.Float(string='A producir', digits='Product Unit')
+    qty_to_buy = fields.Float(string='A comprar', digits='Product Unit')
     blocking_note = fields.Char(string='Materia prima que falta')
     production_id = fields.Many2one('mrp.production', string='Orden creada', readonly=True)
 
@@ -812,10 +812,10 @@ class ProductionPlanShortage(models.Model):
 
     plan_id = fields.Many2one('amunet.production.plan', required=True, ondelete='cascade', index=True)
     product_id = fields.Many2one('product.product', string='Materia prima', required=True)
-    qty_required = fields.Float(string='Requerido', digits='Product Unit of Measure')
-    qty_available = fields.Float(string='Disponible', digits='Product Unit of Measure')
+    qty_required = fields.Float(string='Requerido', digits='Product Unit')
+    qty_available = fields.Float(string='Disponible', digits='Product Unit')
     qty_missing = fields.Float(string='Faltante', compute='_compute_missing', store=True,
-                               digits='Product Unit of Measure')
+                               digits='Product Unit')
     seller_id = fields.Many2one(
         'res.partner', string='Proveedor habitual', compute='_compute_seller', store=False)
 

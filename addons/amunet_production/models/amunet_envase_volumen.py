@@ -39,7 +39,7 @@ class ProductTemplate(models.Model):
 
     amunet_contenido_envase = fields.Float(
         string='Contenido del envase',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Cuánto trae un envase, en la unidad de consumo. Para el agua: '
              '20000 si el galón es de 20 L y se consume en ml.\n\n'
              'Se usa cuando el material se almacena y se entrega por envase '
@@ -60,16 +60,16 @@ class StockMove(models.Model):
         help='Técnico: el material se guarda por envase pero se anota por '
              'volumen. Lo usa la vista para pedir los ml en vez de la fracción.')
     amunet_ml_usados = fields.Float(
-        string='Cantidad usada (volumen)', digits='Product Unit of Measure',
+        string='Cantidad usada (volumen)', digits='Product Unit',
         help='Lo que de verdad se ocupó, en la unidad de consumo del material '
              '(ml para el agua). El sistema convierte solo a la fracción de '
              'envase que se descuenta.')
     amunet_envase_equivalente = fields.Float(
-        string='Equivale a', digits='Product Unit of Measure',
+        string='Equivale a', digits='Product Unit',
         compute='_compute_amunet_envase_equivalente',
         help='La fracción de envase que sale del volumen anotado.')
     amunet_por_consumir = fields.Float(
-        string='Por consumir', digits='Product Unit of Measure',
+        string='Por consumir', digits='Product Unit',
         compute='_compute_amunet_por_consumir',
         inverse='_inverse_amunet_por_consumir',
         help='La cantidad planeada, siempre en la unidad en que el operador la '
@@ -80,7 +80,7 @@ class StockMove(models.Model):
     amunet_uom_display_id = fields.Many2one(
         'uom.uom', string='U.M.', compute='_compute_amunet_uom_display')
     amunet_ml_receta = fields.Float(
-        string='Receta (ml)', digits='Product Unit of Measure',
+        string='Receta (ml)', digits='Product Unit',
         compute='_compute_amunet_ml_receta',
         help='Lo que la receta pide, en la unidad de consumo del material. Es '
              'el mismo dato que la cantidad a consumir, pero en mililitros en '

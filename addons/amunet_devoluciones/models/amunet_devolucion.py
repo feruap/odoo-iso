@@ -41,15 +41,15 @@ class AmunetDevolucion(models.Model):
                                   'y por lo tanto tampoco a que anaquel debe volver.')
 
     cantidad_declarada = fields.Float(string='Piezas declaradas', readonly=True,
-                                      digits='Product Unit of Measure')
+                                      digits='Product Unit')
     cantidad_recibida = fields.Float(string='Piezas recibidas', tracking=True,
-                                     digits='Product Unit of Measure',
+                                     digits='Product Unit',
                                      help='Lo que el almacen tiene enfrente. Puede llegar menos '
                                           'de lo que se declaro.')
     cantidad_liberada = fields.Float(string='Piezas liberadas', readonly=True, tracking=True,
-                                     digits='Product Unit of Measure')
+                                     digits='Product Unit')
     cantidad_desechada = fields.Float(string='Piezas desechadas', readonly=True, tracking=True,
-                                      digits='Product Unit of Measure')
+                                      digits='Product Unit')
 
     motivo = fields.Char(string='Motivo de la cancelacion', readonly=True)
     estado = fields.Selection(ESTADOS, string='Estado', default='pending_reception',

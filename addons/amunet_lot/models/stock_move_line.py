@@ -10,7 +10,7 @@ class StockMoveLine(models.Model):
     # ============================================================================
     qty_demanded = fields.Float(
         string='Cantidad solicitada',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         store=True,
         copy=True,
         help='Cantidad pedida en el traslado. Editable antes de marcar movimiento realizado.',
