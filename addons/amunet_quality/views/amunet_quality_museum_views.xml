@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Museo de Retención — historial de entradas con trazabilidad a análisis
+         ISO 13485 §7.5.1 / NOM-241 Cap. 5-6 -->
+
+    <record id="view_museum_move_list" model="ir.ui.view">
+        <field name="name">museum.move.line.list</field>
+        <field name="model">stock.move.line</field>
+        <field name="arch" type="xml">
+            <list string="Museo de Retención" create="false" delete="false" edit="false"
+                  default_order="date desc">
+                <field name="date" string="Fecha de entrada" optional="show"/>
+                <field name="product_id" string="Producto"/>
+                <field name="lot_id" string="Lote"/>
+                <field name="quantity" string="Cantidad"/>
+                <field name="product_uom_id" string="UdM" optional="show"/>
+                <field name="picking_id" string="Movimiento" optional="show"/>
+                <field name="reference" string="No. de análisis"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_museum_inventory" model="ir.actions.act_window">
+        <field name="name">Museo de Retención</field>
+        <field name="res_model">stock.move.line</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('location_dest_id.complete_name', 'ilike', 'museo'), ('state', '=', 'done')]</field>
+        <field name="view_id" ref="view_museum_move_list"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay muestras registradas en el museo de retención.
+            </p>
+            <p>
+                Las muestras se registran automáticamente al liberar un análisis
+                con cantidad en "A museo de retención".
+            </p>
+        </field>
+    </record>
+
+</odoo>

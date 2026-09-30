@@ -64,6 +64,7 @@ dispositivos médicos y productos farmacéuticos.""",
         'views/purchase_order_views.xml',
         'views/amunet_quality_tecno_standalone_views.xml',
         'views/amunet_equipment_inspection_views.xml',
+        'views/amunet_quality_museum_views.xml',
 
         # Menús (Hijos)
         'views/menus.xml',

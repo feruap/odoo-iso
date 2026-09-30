@@ -376,6 +376,22 @@ class AmunetQualityCheck(models.Model):
         help='Cantidad a devolver al lote (editable; auto-calculado al cambiar muestreo o análisis)'
     )
 
+    qty_museum = fields.Float(
+        string='A museo de retención',
+        store=True,
+        digits='Product Unit',
+        default=0.0,
+        help='Cantidad a enviar al museo de retención (se registra como movimiento de inventario al liberar)'
+    )
+
+    museum_move_id = fields.Many2one(
+        'stock.picking',
+        string='Movimiento a museo',
+        readonly=True,
+        copy=False,
+        help='Transferencia generada al liberar hacia el museo de retención'
+    )
+
     sampling_move_id = fields.Many2one(
         'stock.picking',
         string='Movimiento de muestreo',
@@ -2529,14 +2545,24 @@ class AmunetQualityCheck(models.Model):
         # piezas en Calidad donde debia haber 32 (QC/2026/00480, 22-sep-2026).
         if self.sampling_move_id and self.sampling_move_id.state != 'cancel':
             self._reverse_sampling_move()
-        elif self.sampling_confirmed:
+        elif self.sampling_move_id and self.sampling_move_id.state == 'cancel':
+            # El picking existe pero fue cancelado: estado de inventario incierto.
             raise UserError(_(
                 'El muestreo de %s figura como confirmado pero su transferencia '
-                'no existe o esta cancelada, asi que no se puede saber que '
+                'fue cancelada manualmente, asi que no se puede saber que '
                 'piezas regresar. Revisalo con Desarrollo antes de desbloquear: '
                 'si se desbloquea asi, la muestra se queda en Calidad y el '
                 'siguiente muestreo la suma encima.'
             ) % self.name)
+        elif self.sampling_confirmed and not self.sampling_move_id:
+            # El muestreo se confirmo antes de que el sistema generara
+            # transferencias de inventario (pre-T029-7). No hubo movimiento
+            # de inventario, asi que es seguro desbloquear sin reversa.
+            self.sudo().message_post(body=_(
+                'Muestreo desbloqueado sin reversa de inventario: '
+                'el analisis fue confirmado antes de que el sistema '
+                'implementara movimientos de inventario (sin picking previo).'
+            ), message_type='notification')
 
         self.write({
             'sampling_confirmed': False,
@@ -3179,6 +3205,7 @@ class AmunetQualityCheck(models.Model):
         qty_total = self.original_qty_received or self.lot_qty_available
         qty_sampling = self.qty_sampling or 0.0
         qty_to_return = self.qty_to_return or 0.0
+        qty_museum = self.qty_museum or 0.0
 
         # PRODUCTO TERMINADO vs COMPRA: son dos esquemas distintos.
         #
@@ -3197,7 +3224,7 @@ class AmunetQualityCheck(models.Model):
             qty_to_stock = max(0.0, qty_to_return)
         else:
             qty_to_stock = max(0.0, qty_total - qty_sampling + qty_to_return)
-        qty_to_scrap = max(0.0, qty_sampling - qty_to_return)
+        qty_to_scrap = max(0.0, qty_sampling - qty_to_return - qty_museum)
 
         # 1. Merma automática (irrevocable — el producto fue analizado/destruido)
         if qty_to_scrap > 0 and qc_location:
@@ -3205,7 +3232,20 @@ class AmunetQualityCheck(models.Model):
             if scrap:
                 messages.append(f'Merma: {qty_to_scrap} a desechos')
 
-        # 2. Crear picking de recepción final para almacén
+        # 2. Movimiento a museo de retención
+        if qty_museum > 0 and qc_location:
+            museum_location = self._get_museum_location()
+            if museum_location:
+                museum_move = self._create_disposition_move(
+                    qc_location, museum_location, qty_museum, 'Museo de retención'
+                )
+                if museum_move:
+                    self.museum_move_id = museum_move.id
+                    messages.append(f'Museo retención: {museum_move.name} ({qty_museum})')
+            else:
+                messages.append('AVISO: No se encontró la ubicación del museo de retención')
+
+        # 3. Crear picking de recepción final para almacén
         if qty_to_stock > 0:
             reception = self._create_final_reception_picking(qty_to_stock)
             if reception:
@@ -3554,6 +3594,14 @@ class AmunetQualityCheck(models.Model):
         """Obtiene la ubicación de existencias/stock"""
         return self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
 
+    def _get_museum_location(self):
+        """Obtiene la ubicación del museo de retención (APT/Museo de retencion, id=64)."""
+        loc = self.env['stock.location'].search([
+            ('complete_name', 'ilike', 'museo'),
+            ('usage', '=', 'internal'),
+        ], limit=1)
+        return loc or False
+
     def _get_scrap_location(self):
         """Obtiene o crea la ubicacion de desecho/scrap.
 
@@ -3813,7 +3861,7 @@ class AmunetQualityCheck(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': source_location.id,
             'location_dest_id': dest_location.id,
-            'origin': f'{description} - {self.name}',
+            'origin': f'{description} - {self.analysis_number or self.name}',
             'amunet_disposition_qc_id': self.id,
             'move_ids': [(0, 0, {
                 'product_id': self.product_id.id,

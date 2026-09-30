@@ -298,6 +298,10 @@
                                  analisis cierra, que es cuando el aviso de la firma
                                  obliga a revisarla. -->
                             <field name="qty_to_return" readonly="state == 'done'"/>
+                            <field name="qty_museum" readonly="state == 'done'"
+                                   invisible="not qty_sampling"/>
+                            <field name="museum_move_id" readonly="1"
+                                   invisible="not museum_move_id"/>
                             <field name="amunet_return_deviation_reason"
                                    readonly="state == 'done'"
                                    invisible="not qty_sampling"

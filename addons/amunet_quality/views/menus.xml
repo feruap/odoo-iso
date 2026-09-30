@@ -20,6 +20,13 @@
               action="action_equipment_inspection"
               sequence="25"/>
 
+    <menuitem id="menu_museum_inventory"
+              name="Museo de Retención"
+              parent="menu_quality_operations"
+              action="action_museum_inventory"
+              sequence="30"
+              groups="amunet_quality.group_quality_user,amunet_quality.group_quality_supervisor,amunet_quality.group_quality_manager,amunet_quality.group_quality_sanitary"/>
+
     <!-- Submenú: Configuración (Ya definido en menu_parents.xml) -->
     <menuitem id="menu_quality_parameter"
               name="Parámetros de calidad"
