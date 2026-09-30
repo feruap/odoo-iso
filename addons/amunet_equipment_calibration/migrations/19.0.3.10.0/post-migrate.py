@@ -29,7 +29,14 @@ def migrate(cr, version):
         equipos = env['amunet.equipment'].search([('department', '=', dept)])
         equipos.write({'location_id': location.id})
 
-    # Equipos de Desarrollo no entran al programa de calibración
-    env['amunet.equipment'].search([('department', '=', 'DESARROLLO')]).write({
-        'calibration_required': False,
-    })
+    # Equipos de Desarrollo nuevos no entran al programa FVA-002
+    # (los 12 con código DES/MIC/01-10, DES/FUE/01 y DES/TER/01 sí están en FVA-002)
+    fva002_codes = [
+        'DES/MIC/01', 'DES/MIC/02', 'DES/MIC/03', 'DES/MIC/04', 'DES/MIC/05',
+        'DES/MIC/06', 'DES/MIC/07', 'DES/MIC/08', 'DES/MIC/09', 'DES/MIC/10',
+        'DES/FUE/01', 'DES/TER/01',
+    ]
+    env['amunet.equipment'].search([
+        ('department', '=', 'DESARROLLO'),
+        ('serial_number', 'not in', fva002_codes),
+    ]).write({'calibration_required': False})
