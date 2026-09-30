@@ -108,6 +108,16 @@ class MrpProduction(models.Model):
             # Soluciones no llevan plan de presentacion
             if getattr(prod, 'amunet_is_solution_product', False):
                 continue
+            # Tampoco el LLENADO DE VIALES. El vial lleno es un insumo: sale a
+            # Almacen y se queda ahi hasta que un terminado lo consuma. La caja,
+            # la etiqueta y el manual los pone Acondicionado mucho despues, asi
+            # que aqui no hay nada que planear y el gate solo atoraba la orden.
+            # Su categoria es 'Semiterminado / Buffer', que no dice "solucion",
+            # por eso la excepcion de arriba no lo alcanzaba.
+            tmpl = prod.product_id.product_tmpl_id if prod.product_id else False
+            if (tmpl and 'amunet_etapa_ll' in tmpl._fields
+                    and tmpl.amunet_etapa_ll == 'llenado'):
+                continue
             aprobados = prod.packaging_plan_ids.filtered(
                 lambda p: p.state in ('approved', 'done')
             )

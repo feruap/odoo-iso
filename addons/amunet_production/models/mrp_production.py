@@ -1540,6 +1540,20 @@ class MrpProduction(models.Model):
                     and production.product_id.product_tmpl_id.amunet_es_conjugado):
                 production.location_dest_id = aru.lot_stock_id.id
                 continue
+            # LLENADO DE VIALES: el vial lleno entra por AMP/Entrada, la misma
+            # puerta que una compra. De ahi las reglas push que ya existen lo
+            # llevan solas a Control de calidad y luego a Existencias.
+            #
+            # A proposito NO usa AMP/Entrada Interna, que es el atajo de las
+            # soluciones: un vial SI se analiza, solo que despues de entregarlo,
+            # en el ciclo normal de ingreso. El analisis no frena la orden.
+            # Regla de Mery, 24-sep-2026.
+            if production._amunet_es_etapa_llenado():
+                entrada_amp = self.env.ref('stock.stock_location_company',
+                                           raise_if_not_found=False)
+                if entrada_amp and entrada_amp.usage == 'internal':
+                    production.location_dest_id = entrada_amp.id
+                continue
             # Las demas soluciones entran a Almacen como cualquier ingreso:
             # Produccion es el proveedor. Aterrizan en AMP/Entrada Interna y
             # Karla valida el ingreso; hasta entonces no son existencias.
@@ -1580,6 +1594,77 @@ class MrpProduction(models.Model):
             return base_date + relativedelta(days=int(round(val)))
         return base_date + relativedelta(months=24)
 
+    def _amunet_es_etapa_llenado(self):
+        """True si esta orden es de la etapa Llenado de Viales.
+
+        El chequeo del campo se hace con _fields a proposito: 'amunet_etapa_ll'
+        lo define amunet_process_inspection, que depende de este modulo y no al
+        contrario. Leerlo directo funcionaria mientras los dos esten instalados
+        y reventaria con AttributeError el dia que no. Todo lo del llenado pasa
+        por aqui para no repetir la guarda en cada sitio.
+        """
+        self.ensure_one()
+        tmpl = self.product_id.product_tmpl_id if self.product_id else False
+        if not tmpl or 'amunet_etapa_ll' not in tmpl._fields:
+            return False
+        return tmpl.amunet_etapa_ll == 'llenado'
+
+    def _amunet_lote_llenado_vial(self):
+        """Nombre de lote de un VIAL llenado, con el formato que ya tiene en
+        inventario: clave sin el 'ST' + mes + anio + consecutivo de dos digitos
+        (BBM01092601, BTR02092603, SAL01082601).
+
+        No se inventa nada: los 12 viales ya traen su secuencia Amunet
+        ('amunet.lot.BBM01.999', prefijo 'BBM01%(month)s%(y)s', padding 2) de
+        cuando entraban comprados. Ahora que se fabrican aqui, el lote tiene que
+        seguir la MISMA serie -- si no, el mismo producto quedaria con dos
+        formatos en el anaquel y nadie sabria cual es cual.
+
+        Se usa _amunet_next_lot_names, que calcula el consecutivo desde el
+        maximo existente en vez de avanzar la secuencia: si la orden no se
+        guarda, no deja un hueco en la numeracion.
+        """
+        self.ensure_one()
+        producto = self.product_id
+        # La secuencia y el generador los aporta amunet_lot, que este modulo no
+        # declara en depends: se comprueba antes de llamarlos, igual que con
+        # 'amunet_etapa_ll'. Sin secuencia Amunet se devuelve False y el lote
+        # cae al folio de la orden, que es el comportamiento de siempre.
+        if not producto or not hasattr(producto, '_amunet_next_lot_names'):
+            return False
+        tmpl = producto.product_tmpl_id
+        if (hasattr(tmpl, '_is_amunet_auto_lot_enabled')
+                and not tmpl._is_amunet_auto_lot_enabled()):
+            return False
+        nombres = producto.sudo()._amunet_next_lot_names(1)
+        return nombres[0] if nombres else False
+
+    def _amunet_caducidad_heredada_del_granel(self):
+        """Caducidad que el vial hereda del lote de la solucion que envasa.
+
+        Solo aplica a la etapa 'llenado'. Devuelve la caducidad MAS PROXIMA de
+        los lotes de solucion que la orden va a consumir, o None si todavia no
+        hay lote asignado -- en ese momento la orden usa su calculo normal y
+        esta funcion vuelve a correr cuando Almacen surte.
+
+        Se toma la mas proxima, no la del unico lote, porque una orden puede
+        surtirse de dos lotes del mismo granel: el vial no puede durar mas que
+        el peor de los que lleva dentro.
+        """
+        self.ensure_one()
+        if not self._amunet_es_etapa_llenado():
+            return False
+        fechas = []
+        for move in self.move_raw_ids:
+            categ = move.product_id.categ_id.complete_name or ''
+            if 'Soluciones de trabajo' not in categ:
+                continue          # el vial vacio no aporta caducidad
+            for linea in move.move_line_ids:
+                lote = linea.lot_id
+                if lote and lote.expiration_date:
+                    fechas.append(lote.expiration_date)
+        return min(fechas) if fechas else False
+
     def _compute_quality_params(self):
         for rec in self:
             if not rec.product_id:
@@ -1600,6 +1685,14 @@ class MrpProduction(models.Model):
             # muestra en DD.MM.YY; el resto conserva YYYY-MM.
             base_date = rec.date_start or fields.Datetime.now()
             expiration = rec._amunet_compute_expiration(product, base_date)
+            # LLENADO DE VIALES: el vial no tiene vida propia. Envasar no
+            # renueva nada -- la solucion sigue caducando el mismo dia que
+            # caducaba a granel. Si el vial se calculara desde su fecha de
+            # llenado, un granel a punto de vencer saldria envasado con meses
+            # por delante. Regla de Mery, 24-sep-2026.
+            heredada = rec._amunet_caducidad_heredada_del_granel()
+            if heredada:
+                expiration = heredada
             rec.solution_expiration_date = expiration
             if expiration:
                 if rec.amunet_is_solution_product:
@@ -1792,6 +1885,9 @@ class MrpProduction(models.Model):
             if prod.product_id and prod.product_id.tracking != 'none':
                 if prod.amunet_is_solution_product:
                     prod.solution_lot_id = prod._amunet_next_solution_lot_name()
+                elif prod._amunet_es_etapa_llenado():
+                    prod.solution_lot_id = (
+                        prod._amunet_lote_llenado_vial() or prod.name or 'Auto-Lote')
                 else:
                     prod.solution_lot_id = prod.name or 'Auto-Lote'
             else:
@@ -1810,6 +1906,9 @@ class MrpProduction(models.Model):
                 continue
             if prod.amunet_is_solution_product:
                 prod.solution_lot_id = prod._amunet_next_solution_lot_name()
+            elif prod._amunet_es_etapa_llenado():
+                prod.solution_lot_id = (
+                    prod._amunet_lote_llenado_vial() or prod.name or 'Auto-Lote')
             else:
                 prod.solution_lot_id = prod.name or 'Auto-Lote'
 
@@ -2521,6 +2620,13 @@ class MrpProduction(models.Model):
         Devuelve None si la orden no trae caducidad; quien llama decide.
         """
         self.ensure_one()
+        # LLENADO DE VIALES: manda el lote del granel, no el texto de la orden.
+        # Va ANTES del texto a proposito: el texto se calcula al crear la orden,
+        # cuando todavia no hay lote surtido, asi que siempre diria la fecha
+        # equivocada. Aqui ya se surtio y el lote real esta a la vista.
+        heredada = self._amunet_caducidad_heredada_del_granel()
+        if heredada:
+            return heredada
         texto = (self.amunet_expiration_text or '').strip()
         if texto:
             m = re.match(r'^(\d{4})-(\d{2})$', texto)
@@ -2564,6 +2670,27 @@ class MrpProduction(models.Model):
             nueva = prod._amunet_caducidad_de_la_orden()
             if not nueva:
                 continue
+            # LLENADO DE VIALES: refrescar la casilla Caducidad de la pantalla.
+            #
+            # Su valor lo pone el granel, y el granel no se conoce hasta que
+            # Almacen surte: para entonces _compute_quality_params ya corrio
+            # (no tiene @api.depends, solo se ejecuta al crear la orden) y la
+            # casilla se quedo con la fecha calculada del vial. La orden
+            # mostraba 2028-09 mientras el lote llevaba 2027-03: la nota que
+            # este mismo metodo deja en el historial del lote cita ese texto,
+            # asi que la trazabilidad quedaba contradiciendose sola.
+            #
+            # Va en sudo porque 'Caducidad (Texto)' es informacion general y
+            # esta bajo candado en cuanto la orden se planifica: solo Mery la
+            # edita. Eso es para las escrituras A MANO -- aqui no la esta
+            # tocando nadie, la esta copiando el sistema del lote del granel.
+            if prod._amunet_caducidad_heredada_del_granel():
+                texto = nueva.strftime('%Y-%m')
+                if prod.amunet_expiration_text != texto:
+                    prod.sudo().write({
+                        'amunet_expiration_text': texto,
+                        'solution_expiration_date': nueva,
+                    })
             for lote in prod.lot_producing_ids:
                 antes = lote.expiration_date
                 if antes and antes == nueva:
@@ -2627,6 +2754,11 @@ class MrpProduction(models.Model):
                     lot_name = prod.name
                     if prod.amunet_is_solution_product:
                         lot_name = prod._amunet_next_solution_lot_name()
+                    elif prod._amunet_es_etapa_llenado():
+                        # El vial NO lleva el folio de la orden: sigue su propia
+                        # serie, la que ya trae en inventario.
+                        lot_name = (prod._amunet_lote_llenado_vial()
+                                    or lot_name)
                     lot_vals = {
                         'name': lot_name,
                         'product_id': prod.product_id.id,
@@ -3681,8 +3813,17 @@ class MrpProduction(models.Model):
             # 2. Validar Calidad (solo si el producto lo requiere y NO es desarrollo).
             # Excepcion: la BAJA de un lote no conforme (rechazado) cierra la MO
             # por su propia via firmada por el RS, ruteando a APT/Rechazo.
+            # Excepcion: LLENADO DE VIALES. El vial se entrega primero y se
+            # analiza despues, en el ciclo normal de ingreso: entra por
+            # AMP/Entrada, pasa a Control de calidad y ahi espera su
+            # cuarentena y su analisis. Si el candado aplicara, la orden no
+            # podria cerrarse, el vial nunca llegaria a cuarentena y el
+            # analisis que se le exige jamas podria pedirse: la orden se
+            # quedaria esperando un analisis que dependia de cerrarla.
+            # Diseño cerrado con Mery el 24-sep-2026.
             if (record.amunet_sys_req_qc and not record.amunet_es_desarrollo
                     and record.quality_analysis_status != 'approved'
+                    and not record._amunet_es_etapa_llenado()
                     and not self.env.context.get('amunet_baja_rechazada')):
                 raise UserError('ATENCIÓN: Este producto requiere Análisis C.C. No puedes "Marcar como Hecho" hasta que el área de Calidad apruebe el análisis.')
                 

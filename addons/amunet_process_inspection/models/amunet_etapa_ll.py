@@ -24,6 +24,10 @@ ETAPAS = [
     ('pretratado', 'Pretratado y corte'),
     ('inyeccion', 'Inyección'),
     ('laminado', 'Laminado'),
+    # Llenado de viales: va de la solucion de corrimiento A GRANEL al vial lleno.
+    # Es el eslabon entre Soluciones y el producto terminado que la consume.
+    # No lleva etiquetado -- eso pasa hasta Acondicionado. Mery, 24-sep-2026.
+    ('llenado', 'Llenado de Viales'),
 ]
 
 
@@ -39,6 +43,25 @@ class ProductTemplate(models.Model):
 
 class MrpProduction(models.Model):
     _inherit = 'mrp.production'
+
+    # Para la vista: la caducidad de un vial NO se captura, se hereda del
+    # granel que lo llena. Sin este campo la casilla 'Caducidad' salia
+    # editable -- solo se bloquea para soluciones, y un vial es
+    # 'Semiterminado / Buffer' -- asi que el operador podia escribir una fecha
+    # que el sistema despues ignoraba. Una casilla que acepta lo que no
+    # respeta es peor que una bloqueada.
+    amunet_es_llenado_vial = fields.Boolean(
+        string='Es llenado de viales',
+        compute='_compute_amunet_es_llenado_vial',
+        help='Verdadero cuando el producto de la orden es de la etapa '
+             'Llenado de Viales.')
+
+    @api.depends('product_id')
+    def _compute_amunet_es_llenado_vial(self):
+        # Delega en amunet_production para que el criterio viva en UN solo sitio:
+        # ahi estan el destino, la caducidad heredada y el formato de lote.
+        for rec in self:
+            rec.amunet_es_llenado_vial = rec._amunet_es_etapa_llenado()
 
     @api.onchange('amunet_sublinea')
     def _amunet_onchange_sublinea_limpia_producto(self):

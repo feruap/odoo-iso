@@ -110,6 +110,24 @@ class AmunetPilotPreflight(models.Model):
                 vals['product_qty'] = vals.get('product_qty') or mo.product_qty
                 vals['bom_id'] = vals.get('bom_id') or mo.bom_id.id
                 vals['company_id'] = vals.get('company_id') or mo.company_id.id
+                # La ruta la manda la orden, no el default del campo.
+                #
+                # Faltaba copiarla, asi que un preflight de una orden de
+                # soluciones nacia como 'Fabricacion corta' -- el default -- y
+                # con eso se le aplicaban los checks de linea corta: pedia
+                # presentaciones de empaque, plan de muestreo y empaque exacto,
+                # cosas que una solucion no tiene. Terminaba 'Bloqueado' sin
+                # que nadie pudiera desatorarlo, porque en el formulario
+                # 'Ruta esperada' es readonly cuando hay orden: el operador
+                # ve el valor equivocado y no lo puede cambiar.
+                #
+                # Peor con un usuario de Soluciones: el check de empaque
+                # ni siquiera bloqueaba, TRONABA con AccessError al leer las
+                # presentaciones, un modelo al que ese grupo no tiene por que
+                # entrar. Lo topo Julissa al probar Llenado de Viales
+                # (30-sep-2026); ya habia pasado en produccion con
+                # PREF/2026/00025 de la orden 130726-01.
+                vals['route_type'] = vals.get('route_type') or mo.route_type or 'short'
         records = super().create(vals_list)
         records._set_default_participants()
         return records
@@ -123,6 +141,11 @@ class AmunetPilotPreflight(models.Model):
             rec.product_qty = rec.production_id.product_qty
             rec.bom_id = rec.production_id.bom_id
             rec.company_id = rec.production_id.company_id
+            # Misma razon que en create: al elegir la orden en el formulario,
+            # 'Ruta esperada' se queda en readonly, asi que este es el unico
+            # momento en que puede tomar el valor correcto.
+            if rec.production_id.route_type:
+                rec.route_type = rec.production_id.route_type
 
     @api.onchange('product_id', 'company_id')
     def _onchange_product_id(self):
@@ -504,6 +527,19 @@ class AmunetPilotPreflight(models.Model):
                     for line in bom.bom_line_ids
                 ]
             for product, required, comp_uom in components:
+                # La existencia se lee SIN el filtro de almacenes del usuario.
+                #
+                # El preflight es un juez: tiene que decir si el material
+                # existe, no si quien mira lo alcanza a ver. Un operador de
+                # Soluciones solo tiene ARU, y el vial, el agua y las
+                # sub-soluciones viven en Materia Prima porque los surte
+                # Almacen. Sin el sudo, qty_available le daba 0.000 para todo
+                # lo que no esta en ARU y el preflight quedaba 'Bloqueado'
+                # para siempre, sin manera de desatorarlo: asi terminaron
+                # PREF/2026/00025 y PREF/2026/00022 en produccion.
+                #
+                # Solo se leen CANTIDADES. No se toca ningun costo ni precio.
+                product = product.sudo()
                 available = product.qty_available
                 if product.uom_id and comp_uom and product.uom_id != comp_uom:
                     try:
@@ -518,7 +554,9 @@ class AmunetPilotPreflight(models.Model):
                         available,
                     ))
                 if product.tracking != 'none':
-                    lot_qty = StockQuant.search_count([
+                    # Mismo motivo que arriba: contar lotes reales, no los
+                    # que alcanza a ver el usuario.
+                    lot_qty = StockQuant.sudo().search_count([
                         ('product_id', '=', product.id),
                         ('lot_id', '!=', False),
                         ('location_id.usage', '=', 'internal'),
