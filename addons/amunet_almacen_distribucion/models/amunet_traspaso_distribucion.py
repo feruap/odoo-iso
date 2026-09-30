@@ -20,7 +20,7 @@ class AmunetTraspasoDistribucion(models.Model):
         string='Caducidad', related='lot_id.expiration_date', readonly=True)
     quantity = fields.Float(
         string='Cantidad', required=True, readonly=True,
-        digits='Product Unit of Measure')
+        digits='Product Unit')
     uom_id = fields.Many2one(
         'uom.uom', string='Unidad', readonly=True)
     origin_move_id = fields.Many2one(

@@ -16,7 +16,7 @@ class AmunetComboComponent(models.Model):
         'product.product', string='Producto real (hoja/insumo)', required=True)
     qty = fields.Float(
         string='Cantidad por combo', default=1.0,
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Cuánto de este componente sale por cada unidad de combo recibida.')
     product_uom_id = fields.Many2one(
         'uom.uom', string='UdM',
