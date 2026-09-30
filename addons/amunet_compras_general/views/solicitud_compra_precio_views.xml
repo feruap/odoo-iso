@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Precio en el renglon: sin el, nadie puede autorizar una compra
+         con liga (regla de Direccion, 30-sep-2026). -->
+    <record id="view_solicitud_compra_form_precio" model="ir.ui.view">
+        <field name="name">amunet.solicitud.compra.form.precio</field>
+        <field name="model">amunet.solicitud.compra</field>
+        <field name="inherit_id" ref="amunet_marketplace.view_solicitud_compra_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='line_ids']/list/field[@name='purchase_url']"
+                   position="before">
+                <field name="amunet_precio_unitario"
+                       placeholder="Precio de la liga"/>
+                <field name="amunet_importe_linea" sum="Total"/>
+            </xpath>
+
+            <xpath expr="//field[@name='line_ids']" position="after">
+                <group class="oe_subtotal_footer oe_right">
+                    <field name="amunet_total_lineas"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
