@@ -22,6 +22,8 @@ LO QUE ESTA SOLICITUD NO HACE, A PROPOSITO
   - No recibe: el material comprado entra por el flujo normal de Almacen.
 """
 
+from markupsafe import Markup
+
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
@@ -196,11 +198,11 @@ class AmunetSolicitudCompra(models.Model):
                     'mail.mail_activity_data_todo', user_id=jefe.id,
                     summary=_('Autorizar solicitud de compra %s') % req.name)
             else:
-                req.message_post(body=_(
+                req.message_post(body=Markup(_(
                     'Enviada. <b>Quien la pide no tiene jefe asignado en '
                     'Recursos Humanos</b>, asi que nadie puede autorizarla '
                     'todavia: hay que asignarle responsable o autorizarla '
-                    'desde el area de compras.'))
+                    'desde el area de compras.')))
         return True
 
     def action_autorizar(self):
@@ -273,13 +275,14 @@ class AmunetSolicitudCompra(models.Model):
         sueltos = self.line_ids.filtered(lambda l: not l.product_id)
         if not sueltos:
             return
-        detalle = ''.join('<li>%s</li>' % (l.name or '') for l in sueltos)
-        self.message_post(body=_(
+        detalle = Markup('').join(
+            Markup('<li>%s</li>') % (l.name or '') for l in sueltos)
+        self.message_post(body=Markup(_(
             '<b>Ojo: %(n)s renglon(es) no van a generar entrada al almacen</b>, '
             'porque no tienen producto del catalogo:<ul>%(detalle)s</ul>'
             'Si ese material va a llegar, hay que darlo de alta o elegirlo del '
             'catalogo antes de comprarlo; si no, nadie lo va a estar esperando.'
-        ) % {'n': len(sueltos), 'detalle': detalle})
+        )) % {'n': len(sueltos), 'detalle': detalle})
 
     def _generar_recepcion(self):
         """Crea las ordenes de entrada, una por almacen que recibe.
@@ -348,18 +351,24 @@ class AmunetSolicitudCompra(models.Model):
 
         omitidas = len(self.line_ids) - len(lineas)
         if creadas:
-            detalle = ''.join(
-                '<li><b>%s</b> en %s</li>' % (
+            detalle = Markup('').join(
+                Markup('<li><b>%s</b> en %s</li>') % (
                     p.name, p.picking_type_id.warehouse_id.name)
                 for p in creadas)
-            aviso = _(
-                'Autorizada. Se generaron las ordenes de recepcion:<ul>%s</ul>'
+            # No dice quien lo disparo a proposito: este mensaje se
+            # escribia cuando la entrada nacia al autorizar, y al mover la
+            # generacion a "marcar comprada" quedo diciendo "Autorizada" en
+            # el historial de solicitudes que nadie habia vuelto a autorizar
+            # (SC/2026/00011 y 00012 el 30-sep-2026). El historial es
+            # registro ISO: no puede nombrar mal el acto que lo genero.
+            aviso = Markup(_(
+                'Se generaron las ordenes de recepcion:<ul>%s</ul>'
                 'Cada almacen ya sabe que va a llegar este material.'
-            ) % detalle
+            )) % detalle
             if omitidas:
-                aviso += _(
+                aviso += Markup(_(
                     ' <b>Quedaron fuera %s renglon(es)</b> por no tener '
-                    'producto dado de alta.') % omitidas
+                    'producto dado de alta.')) % omitidas
             self.message_post(body=aviso)
         return creadas
 
@@ -400,6 +409,43 @@ class AmunetSolicitudCompra(models.Model):
             req.message_post(body=_('Marcada como comprada por %s.')
                              % self.env.user.name)
             req._generar_recepcion()
+            req._amunet_pedir_referencia_pago()
+        return True
+
+    def _amunet_pedir_referencia_pago(self):
+        """Sin referencia de pago no se puede amarrar el movimiento bancario.
+
+        Al 30-sep-2026, de 5 solicitudes con monto solo UNA tenia referencia,
+        asi que no habia manera de cruzar el estado de cuenta con la solicitud
+        que origino el gasto. Tampoco hay comprobante adjunto en ninguna.
+
+        Se avisa y se deja actividad, NO se bloquea: el material puede estar
+        comprado y en camino antes de que alguien capture la referencia, y
+        trabar el boton pararia a Compras sin arreglar el dato.
+
+        El monto NO se menciona aqui a proposito: el historial lo lee
+        cualquiera que abra la solicitud, y el monto solo lo pueden ver
+        Fernando y quien este en su grupo.
+        """
+        self.ensure_one()
+        if 'amunet_referencia_pago' not in self._fields:
+            return          # sin el modulo de pagos no hay nada que pedir
+        if self.amunet_referencia_pago:
+            return
+        if not self.sudo().amunet_monto:
+            return          # compra sin monto capturado: no aplica
+        self.message_post(body=Markup(_(
+            'Falta la <b>referencia del pago</b>. Sin ella no se puede cruzar '
+            'el movimiento del banco con esta solicitud: capturala en la '
+            'pestana de pago, y si la compra fue en tienda pon el folio del '
+            'ticket o de la nota. Conviene tambien adjuntar el comprobante.')))
+        self.activity_schedule(
+            'mail.mail_activity_data_todo',
+            user_id=self.env.uid,
+            summary=_('Capturar la referencia del pago de %s') % self.name,
+            note=_('La solicitud se marco como comprada sin referencia de '
+                   'pago. Captura la referencia del banco, o el folio del '
+                   'ticket si se compro en tienda, y adjunta el comprobante.'))
         return True
 
     def action_cerrar(self):
