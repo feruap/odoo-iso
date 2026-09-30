@@ -228,6 +228,7 @@ class AmunetSolicitudCompra(models.Model):
             })
             req.message_post(body=_('Autorizada por %s.') % self.env.user.name)
             req.activity_unlink(['mail.mail_activity_data_todo'])
+            req._avisar_renglones_sin_producto()
             req._generar_recepcion()
         return True
 
@@ -248,6 +249,27 @@ class AmunetSolicitudCompra(models.Model):
                 'Estos productos viven en Materia Prima y en Distribucion. '
                 'Indica el almacen en cada renglon antes de autorizar.'
             ) % detalle)
+
+    def _avisar_renglones_sin_producto(self):
+        """Deja asentado que lo escrito a mano NO va a llegar al almacen.
+
+        Un renglon sin producto del catalogo no genera movimiento de
+        inventario: la compra se hace, el material llega, y nadie lo esta
+        esperando en el sistema. No se bloquea -- a veces es legitimo, como una
+        refaccion que no esta dada de alta -- pero quien autoriza tiene que
+        enterarse, y tiene que quedar por escrito en la solicitud.
+        """
+        self.ensure_one()
+        sueltos = self.line_ids.filtered(lambda l: not l.product_id)
+        if not sueltos:
+            return
+        detalle = ''.join('<li>%s</li>' % (l.name or '') for l in sueltos)
+        self.message_post(body=_(
+            '<b>Ojo: %(n)s renglon(es) no van a generar entrada al almacen</b>, '
+            'porque no tienen producto del catalogo:<ul>%(detalle)s</ul>'
+            'Si ese material va a llegar, hay que darlo de alta o elegirlo del '
+            'catalogo antes de comprarlo; si no, nadie lo va a estar esperando.'
+        ) % {'n': len(sueltos), 'detalle': detalle})
 
     def _generar_recepcion(self):
         """Crea las ordenes de entrada, una por almacen que recibe.
@@ -343,6 +365,17 @@ class AmunetSolicitudCompra(models.Model):
         return accion
 
     def action_marcar_comprada(self):
+        """Marcar comprada tambien genera la orden de recepcion.
+
+        Antes solo se generaba al autorizar. El problema: si la solicitud se
+        autorizo con renglones escritos a mano -- sin producto del catalogo --
+        no se genero nada, y al corregir el renglon despues no habia forma de
+        crearla. Paso con SC/2026/00011 y SC/2026/00012: material pagado sin
+        una sola orden esperandolo en Almacen.
+
+        _generar_recepcion es idempotente: si la solicitud ya tiene sus ordenes,
+        las devuelve y no crea otras.
+        """
         for req in self:
             if req.state != 'approved':
                 raise ValidationError(_(
@@ -350,6 +383,7 @@ class AmunetSolicitudCompra(models.Model):
             req.state = 'purchased'
             req.message_post(body=_('Marcada como comprada por %s.')
                              % self.env.user.name)
+            req._generar_recepcion()
         return True
 
     def action_cerrar(self):
