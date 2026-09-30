@@ -2529,14 +2529,24 @@ class AmunetQualityCheck(models.Model):
         # piezas en Calidad donde debia haber 32 (QC/2026/00480, 22-sep-2026).
         if self.sampling_move_id and self.sampling_move_id.state != 'cancel':
             self._reverse_sampling_move()
-        elif self.sampling_confirmed:
+        elif self.sampling_move_id and self.sampling_move_id.state == 'cancel':
+            # El picking existe pero fue cancelado: estado de inventario incierto.
             raise UserError(_(
                 'El muestreo de %s figura como confirmado pero su transferencia '
-                'no existe o esta cancelada, asi que no se puede saber que '
+                'fue cancelada manualmente, asi que no se puede saber que '
                 'piezas regresar. Revisalo con Desarrollo antes de desbloquear: '
                 'si se desbloquea asi, la muestra se queda en Calidad y el '
                 'siguiente muestreo la suma encima.'
             ) % self.name)
+        elif self.sampling_confirmed and not self.sampling_move_id:
+            # El muestreo se confirmo antes de que el sistema generara
+            # transferencias de inventario (pre-T029-7). No hubo movimiento
+            # de inventario, asi que es seguro desbloquear sin reversa.
+            self.sudo().message_post(body=_(
+                'Muestreo desbloqueado sin reversa de inventario: '
+                'el analisis fue confirmado antes de que el sistema '
+                'implementara movimientos de inventario (sin picking previo).'
+            ), message_type='notification')
 
         self.write({
             'sampling_confirmed': False,
