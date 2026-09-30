@@ -204,7 +204,18 @@ class AmunetSolicitudCompra(models.Model):
         return True
 
     def action_autorizar(self):
-        """Solo el jefe directo, o compras. Nadie autoriza lo que pidio."""
+        """Solo el jefe directo, o compras. Nadie autoriza lo que pidio.
+
+        Autorizar NO crea la orden de recepcion: eso pasa al marcar comprada.
+        Autorizada solo quiere decir "tienes permiso para comprar", y hasta
+        que alguien compre el material no existe ni viene en camino. Cuando la
+        entrada nacia aqui (diseno original del 20-sep-2026) Almacen veia
+        recepciones de material que nadie habia comprado y podia validarlas:
+        inventario de piezas inexistentes. Ademas entre autorizar y comprar
+        cambian las cantidades y el proveedor, y la entrada quedaba con los
+        datos viejos. Lo noto Mery el 30-sep-2026: 4 recepciones esperando a
+        Almacen con una sola solicitud comprada.
+        """
         for req in self:
             if req.state != 'pending_approval':
                 raise ValidationError(_(
@@ -229,7 +240,6 @@ class AmunetSolicitudCompra(models.Model):
             req.message_post(body=_('Autorizada por %s.') % self.env.user.name)
             req.activity_unlink(['mail.mail_activity_data_todo'])
             req._avisar_renglones_sin_producto()
-            req._generar_recepcion()
         return True
 
     def _check_destino_definido(self):
@@ -281,8 +291,14 @@ class AmunetSolicitudCompra(models.Model):
         mano (todavia sin clave) no puede generar movimiento de inventario.
         """
         self.ensure_one()
-        if self.picking_ids:
-            return self.picking_ids
+        # Las canceladas no cuentan: si la entrada se cancelo (porque se
+        # cancelo la solicitud y luego se retomo, o porque la compra cambio),
+        # hay que poder generar una nueva. Contandolas, una solicitud
+        # retomada se quedaba sin entrada y el material llegaba sin que nadie
+        # lo esperara -- lo que ya paso con SC/2026/00011 y 00012.
+        vivas = self.picking_ids.filtered(lambda p: p.state != 'cancel')
+        if vivas:
+            return vivas
         lineas = self.line_ids.filtered('product_id')
         if not lineas:
             self.message_post(body=_(
@@ -404,12 +420,42 @@ class AmunetSolicitudCompra(models.Model):
         return True
 
     def action_cancelar(self):
+        """Cancelar la solicitud cancela tambien sus ordenes de recepcion.
+
+        Si no, quedan huerfanas: entradas vivas en la lista de Almacen, de
+        material de una compra que ya nadie va a hacer. Almacen no tiene por
+        que saber que la solicitud se cancelo, valida la entrada y mete al
+        inventario piezas que nunca llegaron. Paso con AMP/IN/00481 (30
+        hieleras de SC/2026/00001), que estuvo 19 dias en la lista como
+        pendiente y se cancelo a mano el 30-sep-2026.
+
+        Una entrada ya validada no se toca: el material entro de verdad y ese
+        movimiento de inventario es un hecho. En ese caso se avisa en el
+        historial, porque cancelar la solicitud no deshace la entrada.
+        """
         for req in self:
             if req.state == 'closed':
                 raise ValidationError(_('Una solicitud cerrada ya no se cancela.'))
             req.state = 'cancelled'
             req.activity_unlink(['mail.mail_activity_data_todo'])
             req.message_post(body=_('Cancelada por %s.') % self.env.user.name)
+            por_cancelar = req.picking_ids.filtered(
+                lambda p: p.state not in ('done', 'cancel'))
+            if por_cancelar:
+                nombres = ', '.join(por_cancelar.mapped('name'))
+                por_cancelar.action_cancel()
+                req.message_post(body=_(
+                    'Se cancelo tambien la orden de recepcion %s: el material '
+                    'ya no se va a comprar, asi que Almacen no debe validar '
+                    'esa entrada.') % nombres)
+            recibidas = req.picking_ids.filtered(lambda p: p.state == 'done')
+            if recibidas:
+                req.message_post(body=_(
+                    'Atencion: la recepcion %s ya estaba validada. Ese '
+                    'material SI entro al inventario y cancelar la solicitud '
+                    'no lo saca. Si no debio entrar, hay que devolverlo o '
+                    'ajustarlo en Almacen.') % ', '.join(
+                        recibidas.mapped('name')))
         return True
 
     def action_volver_borrador(self):
