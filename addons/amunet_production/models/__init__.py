@@ -15,3 +15,4 @@ from . import stock_picking_ingreso
 from . import amunet_nps_reaccion
 from . import mrp_production_folio
 from . import amunet_envase_volumen
+from . import stock_lot_cuarentena
