@@ -117,12 +117,40 @@ class AmunetSolicitudCompra(models.Model):
                 l.product_id.product_tmpl_id.marketplace_requires_approval
                 for l in req.line_ids if l.product_id)
 
+    _name_unico = models.Constraint(
+        'UNIQUE(name)',
+        'Ya existe una solicitud de compra con ese folio. Dos solicitudes no '
+        'pueden compartir folio: avisa a desarrollo.',
+    )
+
+    def _amunet_siguiente_folio(self):
+        """Folio SC/AA/MM/NNN, con el consecutivo reiniciando cada mes.
+
+        NO se usa ir.sequence. El 30-sep-2026 el contador del rango de fechas
+        aparecio en 1 cuando ya se habian emitido doce folios: la siguiente
+        solicitud habria nacido como SC/2026/00001, que ya existia, y el folio
+        no tiene restriccion de unicidad. El modulo ya llevaba noupdate="1" en
+        la secuencia, pero eso protege la SECUENCIA, no el rango de fechas que
+        Odoo crea aparte: el candado estaba en la puerta equivocada.
+
+        Este numerador se calcula del propio dato -- el folio mas alto del mes
+        en curso -- asi que no hay contador que se pueda reiniciar solo.
+        """
+        hoy = fields.Date.context_today(self)
+        raiz = 'SC/%s/%s/' % (hoy.strftime('%y'), hoy.strftime('%m'))
+        self.env.cr.execute("""
+            SELECT max(substring(name from '[0-9]+$')::int)
+            FROM amunet_solicitud_compra
+            WHERE name LIKE %s AND name ~ %s
+        """, (raiz + '%', '^' + raiz.replace('/', '\\/') + '[0-9]+$'))
+        ultimo = self.env.cr.fetchone()[0] or 0
+        return '%s%03d' % (raiz, ultimo + 1)
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', _('Nueva')) == _('Nueva'):
-                vals['name'] = self.env['ir.sequence'].next_by_code(
-                    'amunet.solicitud.compra') or _('Nueva')
+                vals['name'] = self._amunet_siguiente_folio()
         return super().create(vals_list)
 
     # ------------------------------------------------------------------
