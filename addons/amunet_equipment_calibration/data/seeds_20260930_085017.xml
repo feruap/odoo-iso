@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
     <data noupdate="1">
         <record id="seed_amunet_equipment_204" model="amunet.equipment">
@@ -7,7 +7,6 @@
             <field name="brand">HTC</field>
             <field name="model_name">HTC-1</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -16,7 +15,6 @@
             <field name="serial_number">DES/MSO/01</field>
             <field name="brand">OMAX</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -27,7 +25,6 @@
             <field name="model_name">MX-S</field>
             <field name="manufacturer_serial">VB216AN0024108</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -37,7 +34,6 @@
             <field name="model_name">MC-4K</field>
             <field name="manufacturer_serial">060720231002</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -48,7 +44,6 @@
             <field name="model_name">THZ-100</field>
             <field name="manufacturer_serial">151246827</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -58,7 +53,6 @@
             <field name="model_name">E5-60</field>
             <field name="manufacturer_serial">MU-E36-1224</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -68,7 +62,6 @@
             <field name="brand">BIO-RAD</field>
             <field name="model_name">CFX Opus 96</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -79,7 +72,6 @@
             <field name="model_name">BBS-DDC</field>
             <field name="manufacturer_serial">BBS11V15040203D</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -90,7 +82,6 @@
             <field name="model_name">HD-600P</field>
             <field name="manufacturer_serial">201706261307</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -100,7 +91,6 @@
             <field name="model_name">HY-PCR800</field>
             <field name="manufacturer_serial">PCR202412130026</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -110,7 +100,6 @@
             <field name="model_name">E5-60</field>
             <field name="manufacturer_serial">MU-E36-1040</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -120,7 +109,6 @@
             <field name="model_name">VCY-500</field>
             <field name="manufacturer_serial">0251210</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -131,7 +119,6 @@
             <field name="model_name">TC-96CG</field>
             <field name="manufacturer_serial">BYQ6031P-147</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -141,7 +128,6 @@
             <field name="model_name">TGL16MB</field>
             <field name="manufacturer_serial">D1607045QB</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -151,7 +137,6 @@
             <field name="brand">SAMSUNG</field>
             <field name="model_name">MS32F303TAW</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -162,7 +147,6 @@
             <field name="model_name">HB120-S</field>
             <field name="manufacturer_serial">0303027777</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -172,7 +156,6 @@
             <field name="model_name">MDB100</field>
             <field name="manufacturer_serial">120420241170</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -182,7 +165,6 @@
             <field name="model_name">MDB100</field>
             <field name="manufacturer_serial">12040241167</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -193,7 +175,6 @@
             <field name="model_name">ORION VERSA STAR PRO METER</field>
             <field name="manufacturer_serial">V18282</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -204,7 +185,6 @@
             <field name="model_name">Nanodrop one</field>
             <field name="manufacturer_serial">AZY2226009</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -215,7 +195,6 @@
             <field name="model_name">B0207</field>
             <field name="manufacturer_serial">532900</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -225,7 +204,6 @@
             <field name="model_name">DW-86W28</field>
             <field name="manufacturer_serial">JS240925M3612</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -235,7 +213,6 @@
             <field name="model_name">DZ-1B</field>
             <field name="manufacturer_serial">12321010128</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -243,7 +220,6 @@
             <field name="name">Contenedor para nitrógeno</field>
             <field name="serial_number">DES/CTN/01</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -253,7 +229,6 @@
             <field name="model_name">FM3942-013</field>
             <field name="manufacturer_serial">198160</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -264,7 +239,6 @@
             <field name="model_name">Bioflo 120</field>
             <field name="manufacturer_serial">1390LH302948</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -275,7 +249,6 @@
             <field name="model_name">EM (V.2)</field>
             <field name="manufacturer_serial">12876</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -286,7 +259,6 @@
             <field name="model_name">Q107322</field>
             <field name="manufacturer_serial">AG22331</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -297,7 +269,6 @@
             <field name="model_name">CM05100</field>
             <field name="manufacturer_serial">2047</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -308,7 +279,6 @@
             <field name="model_name">PST-60HL-4</field>
             <field name="manufacturer_serial">01012816040104</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -318,7 +288,6 @@
             <field name="model_name">CVP-3250C</field>
             <field name="manufacturer_serial">201602036</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -328,7 +297,6 @@
             <field name="model_name">L5110</field>
             <field name="manufacturer_serial">07151089</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -337,7 +305,6 @@
             <field name="serial_number">DES/SON/01</field>
             <field name="brand">Ultrasonic processor</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -347,7 +314,6 @@
             <field name="model_name">SM-100</field>
             <field name="manufacturer_serial">1212234</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -358,7 +324,6 @@
             <field name="model_name">EC200XL</field>
             <field name="manufacturer_serial">C1595101248547</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -369,7 +334,6 @@
             <field name="model_name">Biologic biofra</field>
             <field name="manufacturer_serial">496BR06163</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -379,7 +343,6 @@
             <field name="model_name">VM-210</field>
             <field name="manufacturer_serial">031420241111</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -390,7 +353,6 @@
             <field name="model_name">MRD190CCDLSW</field>
             <field name="manufacturer_serial">541310A06G843131311030</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -401,7 +363,6 @@
             <field name="model_name">25X-1</field>
             <field name="manufacturer_serial">D0031001</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -412,7 +373,6 @@
             <field name="model_name">Class 1 LED</field>
             <field name="manufacturer_serial">657022701410</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -423,7 +383,6 @@
             <field name="model_name">CF 48</field>
             <field name="manufacturer_serial">010213</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -433,7 +392,6 @@
             <field name="brand">DELL</field>
             <field name="manufacturer_serial">00330-50349-99922-AAOEM</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -441,7 +399,6 @@
             <field name="name">Microscopio</field>
             <field name="serial_number">DES/MSO/02</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -451,7 +408,6 @@
             <field name="model_name">FD-10N-60A</field>
             <field name="manufacturer_serial">FDA10N6022120902</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -461,7 +417,6 @@
             <field name="model_name">FD-10N-60A</field>
             <field name="manufacturer_serial">FDA10N6024101704</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -471,7 +426,6 @@
             <field name="model_name">FD-04H</field>
             <field name="manufacturer_serial">FD04H25032022</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -481,7 +435,6 @@
             <field name="model_name">2XZ-2</field>
             <field name="manufacturer_serial">A0008</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -491,7 +444,6 @@
             <field name="model_name">2XZ-2</field>
             <field name="manufacturer_serial">A2305</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -501,7 +453,6 @@
             <field name="model_name">2XZ-2</field>
             <field name="manufacturer_serial">A1596</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -511,7 +462,6 @@
             <field name="model_name">2XZ-2</field>
             <field name="manufacturer_serial">A4661</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -520,7 +470,6 @@
             <field name="serial_number">DES/PUA/01</field>
             <field name="model_name">CM-RO-C2</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -530,7 +479,6 @@
             <field name="model_name">0.5-10 µL</field>
             <field name="manufacturer_serial">07B9626</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -540,7 +488,6 @@
             <field name="model_name">2-20 µL</field>
             <field name="manufacturer_serial">04BG463</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -550,7 +497,6 @@
             <field name="model_name">2-20 µL</field>
             <field name="manufacturer_serial">04B6416</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -560,7 +506,6 @@
             <field name="model_name">20-200 µL</field>
             <field name="manufacturer_serial">251730289</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -570,7 +515,6 @@
             <field name="model_name">3-200 µL</field>
             <field name="manufacturer_serial">HX553443S</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -580,7 +524,6 @@
             <field name="model_name">50-1000 µL</field>
             <field name="manufacturer_serial">18048302</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -589,7 +532,6 @@
             <field name="brand">Trident</field>
             <field name="model_name">100-1000 µL</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -599,7 +541,6 @@
             <field name="model_name">20-200 µL</field>
             <field name="manufacturer_serial">169395</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -609,7 +550,6 @@
             <field name="model_name">100-1000 µL</field>
             <field name="manufacturer_serial">UH367163</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -619,7 +559,6 @@
             <field name="model_name">100-1000 µL</field>
             <field name="manufacturer_serial">544960414</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -629,7 +568,6 @@
             <field name="model_name">5-50 µL</field>
             <field name="manufacturer_serial">P05060326008</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
@@ -639,7 +577,6 @@
             <field name="model_name">100-1000 µL</field>
             <field name="manufacturer_serial">P01M60319021</field>
             <field name="department">DESARROLLO</field>
-            <field name="location_id" ref="seed_stock_location_53"/>
             <field name="state">active</field>
             <field name="maintenance_frequency_days">0</field>
         </record>
