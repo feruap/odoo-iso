@@ -21,7 +21,7 @@ class StockPicking(models.Model):
     bom_product_qty = fields.Float(
         string='Cantidad',
         default=1.0,
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Cantidad de productos a entregar'
     )
     available_bom_product_ids = fields.Many2many(

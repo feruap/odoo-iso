@@ -179,13 +179,13 @@ class AmunetMovimientoCaducidadLinea(models.TransientModel):
     location_destino_id = fields.Many2one(
         'stock.location', string='Anaquel destino', required=True)
     cantidad_en_anaquel = fields.Float(
-        string='Hay en el anaquel', readonly=True, digits='Product Unit of Measure')
+        string='Hay en el anaquel', readonly=True, digits='Product Unit')
     cantidad_reservada = fields.Float(
         string='Comprometido en pedidos', readonly=True,
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Piezas ya apartadas para pedidos. Muevelas solo si tambien cambias el pedido.')
     cantidad = fields.Float(
-        string='Se movio', digits='Product Unit of Measure',
+        string='Se movio', digits='Product Unit',
         help='Cuantas piezas moviste de verdad. Si moviste todo, deja el total.')
 
     @api.constrains('cantidad', 'cantidad_en_anaquel')

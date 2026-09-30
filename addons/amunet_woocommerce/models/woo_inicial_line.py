@@ -30,7 +30,7 @@ class AmunetWooInicialLine(models.Model):
         string='Caducidad',
         help='Obligatoria en productos que venden por caducidad (la tienda '
              'clasifica normal / corta / cortesia con esta fecha).')
-    qty = fields.Float(string='Piezas', required=True, digits='Product Unit of Measure')
+    qty = fields.Float(string='Piezas', required=True, digits='Product Unit')
     nota = fields.Char(string='Observacion')
     state = fields.Selection([
         ('pending', 'Por cargar'),

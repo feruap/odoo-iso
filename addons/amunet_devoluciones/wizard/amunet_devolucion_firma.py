@@ -26,7 +26,7 @@ class AmunetDevolucionFirma(models.TransientModel):
 
     cantidad_recibida = fields.Float(related='devolucion_id.cantidad_recibida', readonly=True)
     cantidad_liberada = fields.Float(string='Piezas que se liberan',
-                                     digits='Product Unit of Measure',
+                                     digits='Product Unit',
                                      help='Lo que no se libere se va a retenidos.')
     lote_nombre = fields.Char(related='devolucion_id.lot_id.name', string='Lote', readonly=True)
     condicion = fields.Selection(related='devolucion_id.condicion_al_volver',

@@ -45,9 +45,9 @@ class AmunetNpsReaccion(models.Model):
     # reaccion: el citrato y el oro. Es lo que el operador anota antes de
     # medir nada, asi que leer la tabla de izquierda a derecha sigue el
     # orden real del trabajo.
-    citrato = fields.Float(string='Citrato (ml)', digits='Product Unit of Measure',
+    citrato = fields.Float(string='Citrato (ml)', digits='Product Unit',
                            help='Citrato de sodio al 1% que se usó en esta reacción.')
-    oro = fields.Float(string='Oro (ml)', digits='Product Unit of Measure',
+    oro = fields.Float(string='Oro (ml)', digits='Product Unit',
                        help='Ácido cloroáurico al 1% que se usó en esta reacción.')
 
     # Antes se llamaba 'tamano' y decia 'Tamaño (nm)'. Lo que se mide en

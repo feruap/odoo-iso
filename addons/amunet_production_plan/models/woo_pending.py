@@ -39,7 +39,7 @@ class AmunetWooPendingLine(models.Model):
     qty_pending_units = fields.Float(string='Pendientes (cajas)', readonly=True)
     pieces_per_unit = fields.Float(string='Piezas por caja', readonly=True, default=1.0)
     qty_pending = fields.Float(string='Piezas pendientes', readonly=True,
-                               digits='Product Unit of Measure')
+                               digits='Product Unit')
     mapping_id = fields.Many2one('amunet.woo.product.mapping', string='Mapeo', readonly=True)
     product_id = fields.Many2one('product.product', string='Producto Odoo', readonly=True, index=True)
     source = fields.Selection([('item', 'Partida (agente)'), ('apt', 'APT faltante')],

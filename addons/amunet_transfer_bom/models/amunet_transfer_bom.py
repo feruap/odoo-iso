@@ -33,7 +33,7 @@ class AmunetTransferBom(models.Model):
         string='Cantidad base',
         default=1.0,
         required=True,
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Cantidad base para calcular componentes (normalmente 1.0)'
     )
     product_uom_id = fields.Many2one(
