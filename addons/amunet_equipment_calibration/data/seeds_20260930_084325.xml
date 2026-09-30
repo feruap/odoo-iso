@@ -1,0 +1,593 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="seed_amunet_equipment_204" model="amunet.equipment">
+            <field name="name">Termohigrómetro</field>
+            <field name="serial_number">DES/TER/01</field>
+            <field name="brand">HTC</field>
+            <field name="model_name">HTC-1</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_205" model="amunet.equipment">
+            <field name="name">Microscopio</field>
+            <field name="serial_number">DES/MSO/01</field>
+            <field name="brand">OMAX</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_206" model="amunet.equipment">
+            <field name="name">Vórtex</field>
+            <field name="serial_number">DES/VOR/01</field>
+            <field name="brand">Science MED</field>
+            <field name="model_name">MX-S</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_207" model="amunet.equipment">
+            <field name="name">Mini centrífuga</field>
+            <field name="serial_number">DES/MNC/01</field>
+            <field name="model_name">MC-4K</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_208" model="amunet.equipment">
+            <field name="name">Incubadora con agitador orbital</field>
+            <field name="serial_number">DES/INA/01</field>
+            <field name="brand">LUZEREN</field>
+            <field name="model_name">THZ-100</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_209" model="amunet.equipment">
+            <field name="name">Incubadora con agitador orbital</field>
+            <field name="serial_number">DES/INA/02</field>
+            <field name="model_name">E5-60</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_210" model="amunet.equipment">
+            <field name="name">Termociclador tiempo real</field>
+            <field name="serial_number">DES/TCR/02</field>
+            <field name="brand">BIO-RAD</field>
+            <field name="model_name">CFX Opus 96</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_211" model="amunet.equipment">
+            <field name="name">Campana de flujo laminar</field>
+            <field name="serial_number">DES/CFL/01</field>
+            <field name="brand">LUZEREN</field>
+            <field name="model_name">BBS-DDC</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_212" model="amunet.equipment">
+            <field name="name">Campana de flujo laminar</field>
+            <field name="serial_number">DES/CFL/02</field>
+            <field name="brand">WARITH</field>
+            <field name="model_name">HD-600P</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_213" model="amunet.equipment">
+            <field name="name">Campana de flujo laminar</field>
+            <field name="serial_number">DES/CFL/03</field>
+            <field name="model_name">HY-PCR800</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_214" model="amunet.equipment">
+            <field name="name">Mini incubadora con agitación</field>
+            <field name="serial_number">DES/MIA/01</field>
+            <field name="model_name">E5-60</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_215" model="amunet.equipment">
+            <field name="name">Ultra sonificador</field>
+            <field name="serial_number">DES/ULS/01</field>
+            <field name="model_name">VCY-500</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_216" model="amunet.equipment">
+            <field name="name">Termociclador</field>
+            <field name="serial_number">DES/TCR/01</field>
+            <field name="brand">Infinigen</field>
+            <field name="model_name">TC-96CG</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_217" model="amunet.equipment">
+            <field name="name">Centrífuga refrigerada</field>
+            <field name="serial_number">DES/CEN/01</field>
+            <field name="model_name">TGL16MB</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_218" model="amunet.equipment">
+            <field name="name">Microondas</field>
+            <field name="serial_number">DES/MOS/01</field>
+            <field name="brand">SAMSUNG</field>
+            <field name="model_name">MS32F303TAW</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_219" model="amunet.equipment">
+            <field name="name">Termobloque</field>
+            <field name="serial_number">DES/TBL/01</field>
+            <field name="brand">DLAB</field>
+            <field name="model_name">HB120-S</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_220" model="amunet.equipment">
+            <field name="name">Mini termobloque</field>
+            <field name="serial_number">DES/TBL/02</field>
+            <field name="model_name">MDB100</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_221" model="amunet.equipment">
+            <field name="name">Mini termobloque</field>
+            <field name="serial_number">DES/TBL/03</field>
+            <field name="model_name">MDB100</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_222" model="amunet.equipment">
+            <field name="name">Analizador multiparamétrico</field>
+            <field name="serial_number">DES/AMO/01</field>
+            <field name="brand">Thermo Scientific</field>
+            <field name="model_name">ORION VERSA STAR PRO METER</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_223" model="amunet.equipment">
+            <field name="name">Nanodrop</field>
+            <field name="serial_number">DES/NAN/01</field>
+            <field name="brand">Thermo Scientific</field>
+            <field name="model_name">Nanodrop one</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_224" model="amunet.equipment">
+            <field name="name">FPLC de proteínas</field>
+            <field name="serial_number">DES/FPL/01</field>
+            <field name="brand">BIO-RAD</field>
+            <field name="model_name">B0207</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_225" model="amunet.equipment">
+            <field name="name">Ultracongelador</field>
+            <field name="serial_number">DES/CON/02</field>
+            <field name="model_name">DW-86W28</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_226" model="amunet.equipment">
+            <field name="name">Generador de oxígeno</field>
+            <field name="serial_number">DES/GEN/01</field>
+            <field name="model_name">DZ-1B</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_227" model="amunet.equipment">
+            <field name="name">Contenedor para nitrógeno</field>
+            <field name="serial_number">DES/CTN/01</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_228" model="amunet.equipment">
+            <field name="name">Selladora al vacío</field>
+            <field name="serial_number">DES/SEL/01</field>
+            <field name="model_name">FM3942-013</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_229" model="amunet.equipment">
+            <field name="name">Biorreactor</field>
+            <field name="serial_number">DES/BIO/01</field>
+            <field name="brand">Eppendorf</field>
+            <field name="model_name">Bioflo 120</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_230" model="amunet.equipment">
+            <field name="name">Termostato</field>
+            <field name="serial_number">DES/TSO/01</field>
+            <field name="brand">JULABO GmbH</field>
+            <field name="model_name">EM (V.2)</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_231" model="amunet.equipment">
+            <field name="name">Bioflo</field>
+            <field name="serial_number">DES/BFO/01</field>
+            <field name="brand">Eppendorf</field>
+            <field name="model_name">Q107322</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_232" model="amunet.equipment">
+            <field name="name">Filtrador de flujo tangencial</field>
+            <field name="serial_number">DES/FIL/01</field>
+            <field name="brand">Merck</field>
+            <field name="model_name">CM05100</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_233" model="amunet.equipment">
+            <field name="name">Agitador termostático de placas</field>
+            <field name="serial_number">DES/AGI/01</field>
+            <field name="brand">Biosan</field>
+            <field name="model_name">PST-60HL-4</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_234" model="amunet.equipment">
+            <field name="name">Agitador magnético</field>
+            <field name="serial_number">DES/AGI/02</field>
+            <field name="model_name">CVP-3250C</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_235" model="amunet.equipment">
+            <field name="name">Mini incubadora</field>
+            <field name="serial_number">DES/MIA/02</field>
+            <field name="model_name">L5110</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_236" model="amunet.equipment">
+            <field name="name">Sonificador</field>
+            <field name="serial_number">DES/SON/01</field>
+            <field name="brand">Ultrasonic processor</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_237" model="amunet.equipment">
+            <field name="name">Mezclador especial</field>
+            <field name="serial_number">DES/MEZ/01</field>
+            <field name="model_name">SM-100</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_238" model="amunet.equipment">
+            <field name="name">Fuente de poder</field>
+            <field name="serial_number">DES/FUE/02</field>
+            <field name="brand">Thermo Scientific</field>
+            <field name="model_name">EC200XL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_239" model="amunet.equipment">
+            <field name="name">Colector de fracciones automatizado</field>
+            <field name="serial_number">DES/COL/01</field>
+            <field name="brand">BIO-RAD</field>
+            <field name="model_name">Biologic biofra</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_240" model="amunet.equipment">
+            <field name="name">Vórtex</field>
+            <field name="serial_number">DES/VOR/02</field>
+            <field name="model_name">VM-210</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_241" model="amunet.equipment">
+            <field name="name">Refrigerador</field>
+            <field name="serial_number">DES/REF/01</field>
+            <field name="brand">Midea</field>
+            <field name="model_name">MRD190CCDLSW</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_242" model="amunet.equipment">
+            <field name="name">Autoclave</field>
+            <field name="serial_number">DES/AUT/01</field>
+            <field name="brand">All American</field>
+            <field name="model_name">25X-1</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_243" model="amunet.equipment">
+            <field name="name">Transluminador</field>
+            <field name="serial_number">DES/TRA/01</field>
+            <field name="brand">Maestro gen</field>
+            <field name="model_name">Class 1 LED</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_244" model="amunet.equipment">
+            <field name="name">Congelador</field>
+            <field name="serial_number">DES/CON/01</field>
+            <field name="brand">Avanti</field>
+            <field name="model_name">CF 48</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_245" model="amunet.equipment">
+            <field name="name">Computadora</field>
+            <field name="serial_number">DES/PCP/01</field>
+            <field name="brand">DELL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_246" model="amunet.equipment">
+            <field name="name">Microscopio</field>
+            <field name="serial_number">DES/MSO/02</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_247" model="amunet.equipment">
+            <field name="name">Freeze dryer (Liofilizador)</field>
+            <field name="serial_number">DES/LIO/01</field>
+            <field name="model_name">FD-10N-60A</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_248" model="amunet.equipment">
+            <field name="name">Freeze dryer (Liofilizador)</field>
+            <field name="serial_number">DES/LIO/02</field>
+            <field name="model_name">FD-10N-60A</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_249" model="amunet.equipment">
+            <field name="name">Freeze dryer (Liofilizador)</field>
+            <field name="serial_number">DES/LIO/03</field>
+            <field name="model_name">FD-04H</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_250" model="amunet.equipment">
+            <field name="name">Bomba de vacío</field>
+            <field name="serial_number">DES/BOM/01</field>
+            <field name="model_name">2XZ-2</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_251" model="amunet.equipment">
+            <field name="name">Bomba de vacío</field>
+            <field name="serial_number">DES/BOM/02</field>
+            <field name="model_name">2XZ-2</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_252" model="amunet.equipment">
+            <field name="name">Bomba de vacío</field>
+            <field name="serial_number">DES/BOM/03</field>
+            <field name="model_name">2XZ-2</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_253" model="amunet.equipment">
+            <field name="name">Bomba de vacío</field>
+            <field name="serial_number">DES/BOM/04</field>
+            <field name="model_name">2XZ-2</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_254" model="amunet.equipment">
+            <field name="name">Ultra purificador de agua</field>
+            <field name="serial_number">DES/PUA/01</field>
+            <field name="model_name">CM-RO-C2</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_255" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Transferpette</field>
+            <field name="model_name">0.5-10 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_256" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Transferpette</field>
+            <field name="model_name">2-20 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_257" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Transferpette</field>
+            <field name="model_name">2-20 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_258" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Biopette plus</field>
+            <field name="model_name">20-200 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_259" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">A&amp;D</field>
+            <field name="model_name">3-200 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_260" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Sartorius Picus NxT</field>
+            <field name="model_name">50-1000 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_261" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Trident</field>
+            <field name="model_name">100-1000 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_262" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Lichen</field>
+            <field name="model_name">20-200 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_263" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">ACCUMAX</field>
+            <field name="model_name">100-1000 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_264" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Biopette Labnet</field>
+            <field name="model_name">100-1000 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_265" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Pipette P</field>
+            <field name="model_name">5-50 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+        <record id="seed_amunet_equipment_266" model="amunet.equipment">
+            <field name="name">Micropipeta</field>
+            <field name="brand">Pipette P</field>
+            <field name="model_name">100-1000 µL</field>
+            <field name="department">DESARROLLO</field>
+            <field name="location_id" ref="seed_stock_location_53"/>
+            <field name="state">active</field>
+            <field name="maintenance_frequency_days">0</field>
+        </record>
+    </data>
+</odoo>
