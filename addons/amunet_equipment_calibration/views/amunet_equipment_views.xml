@@ -63,6 +63,7 @@
                                 <field name="serial_number"/>
                                 <field name="brand"/>
                                 <field name="model_name"/>
+                                <field name="manufacturer_serial"/>
                                 <field name="department"/>
                                 <field name="parent_equipment_id"
                                        options="{'no_create': True}"
@@ -80,13 +81,14 @@
 
                         <notebook>
                             <page string="Accesorios / instrumentos" name="children"
-                                  invisible="parent_equipment_id != False">
+                                  invisible="parent_equipment_id != False or child_equipment_count == 0">
                                 <field name="child_equipment_ids" context="{'default_department': department, 'default_location_id': location_id, 'default_parent_equipment_id': id}">
                                     <list string="Accesorios" editable="bottom">
                                         <field name="serial_number"/>
                                         <field name="name"/>
                                         <field name="brand"/>
                                         <field name="model_name"/>
+                                        <field name="manufacturer_serial"/>
                                         <field name="calibration_required"/>
                                         <field name="state" widget="badge"
                                                decoration-success="state == 'active'"
