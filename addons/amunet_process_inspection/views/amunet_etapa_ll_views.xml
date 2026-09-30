@@ -11,4 +11,19 @@
             </xpath>
         </field>
     </record>
+    <!-- La caducidad de un vial la manda el granel, no el teclado -->
+    <record id="view_mrp_production_caducidad_vial" model="ir.ui.view">
+        <field name="name">mrp.production.form.amunet.caducidad.vial</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="amunet_production.view_mrp_production_form_amunet_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amunet_expiration_text']" position="before">
+                <field name="amunet_es_llenado_vial" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='amunet_expiration_text']" position="attributes">
+                <attribute name="readonly">amunet_es_llenado_vial or (amunet_is_solution_product and not amunet_es_desarrollo)</attribute>
+                <attribute name="help">En el Llenado de Viales la caducidad se toma del lote de solucion a granel que se envasa: la del vial nunca puede ser mas larga que la del contenido.</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>
