@@ -113,3 +113,21 @@ class ProductTemplate(models.Model):
     amunet_solution_dependency_id = fields.Many2one('product.product', string='Solución Requerida Previamente', help='Si requiere que otra solución se prepare primero (para lanzar la advertencia).')
     amunet_initial_ph = fields.Float(string='pH Inicial', help='El pH por defecto esperado para la solución (ej. 7.4)')
     amunet_expiration_text = fields.Char(string='Caducidad (Texto)', help='Tiempo de vida útil. Ejemplo: 6 Meses, 2.6 años')
+
+    # ------------------------------------------------------------------
+    # CUARENTENA DE INGRESO
+    # ------------------------------------------------------------------
+    # Dias que el material se queda en Control de calidad ANTES de que se le
+    # genere el analisis. Lo pidio Mery el 30-sep-2026 para el Llenado de
+    # Viales: un vial recien llenado no se puede juzgar el mismo dia, hay que
+    # dejarlo reposar para que se manifieste lo que tenga.
+    #
+    # Es DATO, no codigo: en cero -el default- nada cambia, que es como sigue
+    # todo el catalogo. Solo los productos con un numero aqui entran al reloj,
+    # y Calidad lo sube o lo baja sin que nadie toque el sistema.
+    amunet_dias_cuarentena = fields.Integer(
+        string='Días de cuarentena al ingresar',
+        default=0,
+        help='Días que este producto debe reposar en Control de calidad antes '
+             'de que se le genere el análisis. En 0 el análisis se genera al '
+             'validar la entrada, como siempre.')

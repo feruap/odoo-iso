@@ -2718,14 +2718,17 @@ class MrpProduction(models.Model):
                             vals[campo] = lote[campo] + delta
                 lote.sudo().with_context(
                     skip_lot_release_lock=True).write(vals)
-                lote.sudo().message_post(body=_(
+                # Markup: sin el, el historial del lote mostraba las
+                # etiquetas crudas (&lt;b&gt;) en vez de negritas. Es el
+                # registro que Calidad audita, asi que tiene que leerse.
+                lote.sudo().message_post(body=Markup(_(
                     'Caducidad tomada de la orden <b>%(orden)s</b>, que indica '
                     '<b>%(texto)s</b>: %(antes)s &rarr; <b>%(ahora)s</b>.',
                     orden=prod.name or '',
                     texto=prod.amunet_expiration_text or '',
                     antes=antes.strftime('%d/%m/%Y') if antes else _('sin fecha'),
                     ahora=nueva.strftime('%d/%m/%Y'),
-                ))
+                )))
 
     def action_confirm(self):
         # Candado: una solucion de DESARROLLO no se confirma sin caducidad.

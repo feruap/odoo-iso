@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- El reloj de cuarentena, visible en el lote. Se esconde cuando el
+         producto no tiene cuarentena, que es el caso de casi todo. -->
+    <record id="view_stock_lot_form_cuarentena" model="ir.ui.view">
+        <field name="name">stock.lot.form.amunet.cuarentena</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position="after">
+                <field name="amunet_cuarentena_estado" invisible="1"/>
+                <label for="amunet_cuarentena_inicio" string="Cuarentena de ingreso"
+                       invisible="amunet_cuarentena_estado == 'ninguna'"/>
+                <div class="o_row" invisible="amunet_cuarentena_estado == 'ninguna'">
+                    <field name="amunet_cuarentena_inicio" readonly="1"/>
+                    <span> &#8594; </span>
+                    <field name="amunet_cuarentena_fin" readonly="1"
+                           decoration-warning="amunet_cuarentena_estado == 'en_curso'"
+                           decoration-success="amunet_cuarentena_estado == 'cumplida'"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Los dias de cuarentena, junto al interruptor de analisis de recepcion:
+         los dos hablan de lo mismo, de que le pasa al material cuando entra. -->
+    <record id="view_product_template_cuarentena" model="ir.ui.view">
+        <field name="name">product.template.form.amunet.cuarentena</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="amunet_quality.view_product_template_form_quality"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='qc_required']" position="after">
+                <field name="amunet_dias_cuarentena"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
