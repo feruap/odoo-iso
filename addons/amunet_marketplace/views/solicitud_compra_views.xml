@@ -17,6 +17,10 @@
                     <button name="action_marcar_comprada" string="Marcar como comprada"
                             type="object" class="oe_highlight"
                             invisible="state != 'approved'"/>
+                    <button name="action_abrir_carrito" string="Abrir carrito"
+                            type="object" icon="fa-shopping-cart"
+                            invisible="state not in ('approved','purchased')"
+                            help="Arma el carrito de la tienda con todos los renglones y sus cantidades. El importe sale del total del carrito: no hace falta cotizar antes."/>
                     <button name="action_cerrar" string="Cerrar"
                             type="object"
                             invisible="state != 'purchased'"/>

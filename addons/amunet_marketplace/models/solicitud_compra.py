@@ -22,10 +22,13 @@ LO QUE ESTA SOLICITUD NO HACE, A PROPOSITO
   - No recibe: el material comprado entra por el flujo normal de Almacen.
 """
 
+import re
+from urllib.parse import parse_qs, urlparse
+
 from markupsafe import Markup
 
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class AmunetSolicitudCompra(models.Model):
@@ -371,6 +374,91 @@ class AmunetSolicitudCompra(models.Model):
                     'producto dado de alta.')) % omitidas
             self.message_post(body=aviso)
         return creadas
+
+    # Amazon guarda la matricula del articulo (ASIN) dentro de la liga, en
+    # /dp/, /gp/product/ o como parametro. Diez caracteres, letras y digitos.
+    _AMUNET_ASIN = re.compile(
+        r'/(?:dp|gp/product|gp/aws/d|product)/([A-Z0-9]{10})(?:[/?#]|$)', re.I)
+
+    @api.model
+    def _amunet_asin(self, url):
+        encontrado = self._AMUNET_ASIN.search(url or '')
+        if encontrado:
+            return encontrado.group(1).upper()
+        partes = parse_qs(urlparse(url or '').query)
+        for clave in ('asin', 'ASIN'):
+            if partes.get(clave):
+                return partes[clave][0].upper()
+        return False
+
+    def action_abrir_carrito(self):
+        """Arma el carrito de Amazon con todos los renglones, de un clic.
+
+        Por que existe: estas compras no van por transferencia, se compran en
+        una pagina. Hasta hoy el sistema solo marcaba la tarjeta como "compra
+        asistida" y no abria nada, asi que habia que ir renglon por renglon
+        copiando ligas. Peor: para pedirle el visto bueno a Fernando hay que
+        capturar el importe, y a nadie le consta el precio hasta abrir la
+        tienda -- SC/2026/00002 llevaba 9 dias parada por eso.
+
+        Amazon deja armar el carrito desde una liga, con varios articulos y
+        sus cantidades. Es una funcion publica suya, no un robot: quien compra
+        ve el carrito, el total real, y confirma. De ahi sale el importe.
+
+        Lo que NO hace, a proposito: comprar solo. Amazon no tiene manera de
+        que un tercero compre por API; lo unico posible seria un robot que
+        simule el navegador con la tarjeta de la empresa. Se rompe cada vez
+        que cambian la pagina, va contra sus terminos y obliga a guardar los
+        datos de pago en un script. No es defendible bajo ISO 13485.
+        """
+        self.ensure_one()
+        con_liga = self.line_ids.filtered(lambda l: (l.purchase_url or '').strip())
+        if not con_liga:
+            raise UserError(_(
+                'Ningun renglon tiene liga de compra.\n\nLa liga se trae del '
+                'catalogo: si el producto no la tiene, capturala en su ficha '
+                'o directo en el renglon.'))
+
+        amazon, otras, dominio = {}, [], 'www.amazon.com.mx'
+        for linea in con_liga:
+            url = linea.purchase_url.strip()
+            servidor = (urlparse(url).netloc or '').lower()
+            asin = self._amunet_asin(url) if 'amazon.' in servidor else False
+            if not asin:
+                otras.append((linea.name, url))
+                continue
+            if not amazon:
+                dominio = servidor
+            # El mismo articulo en dos renglones se suma en una sola partida.
+            amazon[asin] = amazon.get(asin, 0) + max(1, int(linea.qty or 1))
+
+        if otras:
+            detalle = Markup('').join(
+                Markup('<li>%s: <a href="%s" target="_blank">%s</a></li>')
+                % (nombre, url, url) for nombre, url in otras)
+            self.message_post(body=Markup(_(
+                'Estos renglones no son de Amazon y se compran aparte, cada '
+                'uno en su pagina:<ul>%s</ul>')) % detalle)
+
+        if not amazon:
+            if len(otras) == 1:
+                return {'type': 'ir.actions.act_url',
+                        'url': otras[0][1], 'target': 'new'}
+            raise UserError(_(
+                'Ninguna liga es de Amazon. Las ligas quedaron anotadas en el '
+                'historial de la solicitud para abrirlas una por una.'))
+
+        partida = []
+        for numero, (asin, cantidad) in enumerate(amazon.items(), start=1):
+            partida.append('ASIN.%d=%s&Quantity.%d=%d'
+                           % (numero, asin, numero, cantidad))
+        liga = 'https://%s/gp/aws/cart/add.html?%s' % (dominio, '&'.join(partida))
+        self.message_post(body=Markup(_(
+            'Se abrio el carrito de Amazon con %(n)s articulo(s) de esta '
+            'solicitud. <b>El importe se toma del total del carrito</b>, no '
+            'hace falta cotizar antes: capturalo en la pestana de pago para '
+            'poder pedir el visto bueno.')) % {'n': len(amazon)})
+        return {'type': 'ir.actions.act_url', 'url': liga, 'target': 'new'}
 
     def action_ver_recepcion(self):
         self.ensure_one()
