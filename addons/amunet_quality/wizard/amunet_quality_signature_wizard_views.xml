@@ -11,6 +11,13 @@
                         <br/>
                         <small class="text-muted">La firma queda ligada a su usuario, fecha/hora y significado de firma. Debe contar con capacitacion vigente en el PNO aplicable.</small>
                     </div>
+                    <field name="amunet_pide_confirmar" invisible="1"/>
+                    <field name="amunet_aviso_muestreo" widget="html" nolabel="1" readonly="1"
+                           invisible="not amunet_aviso_muestreo"/>
+                    <group invisible="not amunet_pide_confirmar">
+                        <field name="amunet_muestreo_ok"
+                               string="Revise las cantidades y confirmo que son correctas"/>
+                    </group>
                     <group>
                         <field name="password" password="True" string="Contrasena personal o PIN"/>
                         <field name="signature_type" invisible="1"/>
