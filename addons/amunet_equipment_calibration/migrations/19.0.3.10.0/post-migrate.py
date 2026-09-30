@@ -28,3 +28,8 @@ def migrate(cr, version):
             continue
         equipos = env['amunet.equipment'].search([('department', '=', dept)])
         equipos.write({'location_id': location.id})
+
+    # Equipos de Desarrollo no entran al programa de calibración
+    env['amunet.equipment'].search([('department', '=', 'DESARROLLO')]).write({
+        'calibration_required': False,
+    })

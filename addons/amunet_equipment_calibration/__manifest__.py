@@ -14,6 +14,7 @@ Módulo de Gestión de Calibración de Equipos (ISO 13485 Cláusula 7.6).
     'website': 'https://www.amunet.com',
     'depends': ['base', 'mail', 'stock', 'amunet_quality', 'amunet_lot'],
     'data': [
+        'data/seeds_20260930_085017.xml',
         'data/seeds_20260930_084314.xml',
         'data/seeds_20260930_084325.xml',
         'security/amunet_equipment_security.xml',
