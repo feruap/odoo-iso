@@ -29,7 +29,7 @@ class AmunetTransferBomLine(models.Model):
     product_qty = fields.Float(
         string='Cantidad',
         required=True,
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         default=1.0
     )
     product_uom_id = fields.Many2one(

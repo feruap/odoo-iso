@@ -14,7 +14,7 @@ class AmunetWooProductMappingSellable(models.Model):
 
     odoo_sellable_qty = fields.Float(
         string='Vendible (>= N meses)', compute='_compute_odoo_sellable_qty',
-        digits='Product Unit of Measure',
+        digits='Product Unit',
         help='Piezas en APT/Existencias cuyo lote caduca en al menos los meses '
              'minimos configurados (amunet_production_plan.min_shelf_months). '
              'Lo que caduca antes, o esta en caducidad corta / cortesia / retirar, '
