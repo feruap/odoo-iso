@@ -750,7 +750,7 @@
     </record>
     <record id="clave_MPREC35" model="amunet.clave">
         <field name="clave">MPREC35</field>
-        <field name="nombre">Ácido cloroáurico</field>
+        <field name="nombre">Aceite mineral (a granel)</field>
         <field name="clasificacion">mp</field>
         <field name="subcategoria">Reactivos</field>
         <field name="estado">activa</field>

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ── Soluciones de conjugado (SPCDE01–29) ── -->
+    <record id="clave_SPCDE01" model="amunet.clave">
+        <field name="clave">SPCDE01</field>
+        <field name="nombre">Solución de conjugado anti-Influenza A</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE02" model="amunet.clave">
+        <field name="clave">SPCDE02</field>
+        <field name="nombre">Solución de conjugado anti-Influenza B</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE03" model="amunet.clave">
+        <field name="clave">SPCDE03</field>
+        <field name="nombre">Solución de conjugado anti-fluoresceína (anti-FIT)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE04" model="amunet.clave">
+        <field name="clave">SPCDE04</field>
+        <field name="nombre">Solución de conjugado anti-Mioglobina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE05" model="amunet.clave">
+        <field name="clave">SPCDE05</field>
+        <field name="nombre">Solución de conjugado anti-CK-MB</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE06" model="amunet.clave">
+        <field name="clave">SPCDE06</field>
+        <field name="nombre">Solución de conjugado anti-cTnI</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE07" model="amunet.clave">
+        <field name="clave">SPCDE07</field>
+        <field name="nombre">Solución de conjugado anti-Chlamydia trachomatis</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE08" model="amunet.clave">
+        <field name="clave">SPCDE08</field>
+        <field name="nombre">Solución de conjugado anti-proteína N SARS-CoV-2</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE09" model="amunet.clave">
+        <field name="clave">SPCDE09</field>
+        <field name="nombre">Solución de conjugado Antígeno de Dengue</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE10" model="amunet.clave">
+        <field name="clave">SPCDE10</field>
+        <field name="nombre">Solución de conjugado anti-NS1 del Dengue</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE11" model="amunet.clave">
+        <field name="clave">SPCDE11</field>
+        <field name="nombre">Solución de conjugado anti-ferritina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE12" model="amunet.clave">
+        <field name="clave">SPCDE12</field>
+        <field name="nombre">Solución de conjugado anti-hCG</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE13" model="amunet.clave">
+        <field name="clave">SPCDE13</field>
+        <field name="nombre">Solución de conjugado anti-hemoglobina glicada</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE14" model="amunet.clave">
+        <field name="clave">SPCDE14</field>
+        <field name="nombre">Solución de conjugado anti-PSA</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE15" model="amunet.clave">
+        <field name="clave">SPCDE15</field>
+        <field name="nombre">Solución de conjugado anti-rotavirus</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE16" model="amunet.clave">
+        <field name="clave">SPCDE16</field>
+        <field name="nombre">Solución de conjugado anti-adenovirus</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE17" model="amunet.clave">
+        <field name="clave">SPCDE17</field>
+        <field name="nombre">Solución de conjugado anti-RSV</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE18" model="amunet.clave">
+        <field name="clave">SPCDE18</field>
+        <field name="nombre">Solución de conjugado anti-25(OH)D</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE19" model="amunet.clave">
+        <field name="clave">SPCDE19</field>
+        <field name="nombre">Solución de conjugado anti-TSH</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE20" model="amunet.clave">
+        <field name="clave">SPCDE20</field>
+        <field name="nombre">Solución de conjugado anti-Strep A</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE21" model="amunet.clave">
+        <field name="clave">SPCDE21</field>
+        <field name="nombre">Solución de conjugado control de detección</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE22" model="amunet.clave">
+        <field name="clave">SPCDE22</field>
+        <field name="nombre">Solución de conjugado Sífilis</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE23" model="amunet.clave">
+        <field name="clave">SPCDE23</field>
+        <field name="nombre">Solución de conjugado anti-Dímero D</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE24" model="amunet.clave">
+        <field name="clave">SPCDE24</field>
+        <field name="nombre">Solución de conjugado anti-Salmonella typhi</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE25" model="amunet.clave">
+        <field name="clave">SPCDE25</field>
+        <field name="nombre">Solución de conjugado anti-NT-proBNP</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE26" model="amunet.clave">
+        <field name="clave">SPCDE26</field>
+        <field name="nombre">Solución de conjugado p24 VIH 1</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE27" model="amunet.clave">
+        <field name="clave">SPCDE27</field>
+        <field name="nombre">Solución de conjugado anti-CA125</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE28" model="amunet.clave">
+        <field name="clave">SPCDE28</field>
+        <field name="nombre">Solución de conjugado anti-CA 15 3</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDE29" model="amunet.clave">
+        <field name="clave">SPCDE29</field>
+        <field name="nombre">Solución de conjugado control Sífilis</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de conjugado</field>
+        <field name="estado">activa</field>
+    </record>
+
+    <!-- ── Otras claves nuevas ── -->
+    <record id="clave_SPACL01" model="amunet.clave">
+        <field name="clave">SPACL01</field>
+        <field name="nombre">Ácido cloroáurico 1%</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones varias</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPCDS01" model="amunet.clave">
+        <field name="clave">SPCDS01</field>
+        <field name="nombre">Citrato de sodio 1%</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones varias</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPSAC02" model="amunet.clave">
+        <field name="clave">SPSAC02</field>
+        <field name="nombre">Solución de Ácido Clorhídrico 0.1 M</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones varias</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_SPSPA04" model="amunet.clave">
+        <field name="clave">SPSPA04</field>
+        <field name="nombre">Solución de pretratamiento para almohadilla de muestra orina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones de pretratamiento</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STDES01" model="amunet.clave">
+        <field name="clave">STDES01</field>
+        <field name="nombre">Solución de desarrollo</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">Soluciones varias</field>
+        <field name="estado">activa</field>
+    </record>
+
+</odoo>

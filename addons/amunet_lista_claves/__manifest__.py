@@ -20,6 +20,7 @@
         'data/seeds_ptreactivos.xml',
         'data/seeds_soluciones_captura.xml',
         'data/seeds_consumibles.xml',
+        'data/seeds_soluciones_conjugado.xml',
     ],
     'assets': {
         'web.assets_backend': [
