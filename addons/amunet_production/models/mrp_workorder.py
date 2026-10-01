@@ -93,7 +93,7 @@ class MrpWorkorder(models.Model):
         material_labels = {
             'assigned': 'Material disponible',
             'available': 'Material disponible',
-            'confirmed': 'Material pendiente de surtir',
+            'confirmed': 'Material pendiente de surtir (Almacen lo aparta al surtir)',
             'waiting': 'Esperando material u operacion previa',
             'late': 'Material con alerta',
             'unavailable': 'Material no disponible',
@@ -232,11 +232,25 @@ class MrpWorkorder(models.Model):
                 availability = wo.production_availability or wo.production_id.reservation_state or ''
                 if previous:
                     blocker = _('Operacion previa pendiente: %s') % ', '.join(previous[:3].mapped('name'))
+                    next_step = _('Resolver bloqueo antes de iniciar')
+                elif availability == 'confirmed':
+                    # NO es un faltante. Desde el 1-oct-2026 las ordenes no
+                    # apartan material al confirmarse: lo aparta Almacen al
+                    # iniciar el surtido. Antes este caso se mostraba como
+                    # "Resolver bloqueo antes de iniciar" y mandaba al operador
+                    # a reclamarle a Almacen material que si estaba en el
+                    # anaquel. Lo que falta es que lo surtan, no que exista.
+                    blocker = _('Material todavia no surtido. No es un '
+                                'faltante: Almacen lo aparta cuando inicia el '
+                                'surtido de esta orden.')
+                    next_step = _('Esperar el surtido de Almacen')
                 elif availability and availability not in ('assigned', 'available'):
                     blocker = material_labels.get(availability, availability)
-                elif not blocker:
-                    blocker = _('Operacion en estado %s; revisar ruta, materiales o disponibilidad.') % state_labels.get(wo.state, wo.state)
-                next_step = _('Resolver bloqueo antes de iniciar')
+                    next_step = _('Resolver bloqueo antes de iniciar')
+                else:
+                    if not blocker:
+                        blocker = _('Operacion en estado %s; revisar ruta, materiales o disponibilidad.') % state_labels.get(wo.state, wo.state)
+                    next_step = _('Resolver bloqueo antes de iniciar')
 
             equipment_blockers = wo._amunet_equipment_blockers()
             if equipment_blockers and wo.state in ('ready', 'progress', 'blocked', 'waiting', 'pending'):
