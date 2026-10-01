@@ -20,7 +20,13 @@
     <!-- Grupo: Supervisor de QC -->
     <record id="group_quality_supervisor" model="res.groups">
         <field name="name">Calidad / Supervisor QC</field>
-        <field name="implied_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <!-- Hereda de Analista QC. El comentario de abajo lo dice desde que se creo
+             el modulo ("Todos los permisos del Analista"), pero implied_ids apuntaba
+             solo a base.group_user, asi que no se cumplia: un supervisor NO podia
+             hacer lo del analista. Se detecto el 01-oct-2026 porque el preflight de
+             DMADB01 rechazaba a Diana Flores (Supervisor QC) por no pertenecer a
+             Analista QC. -->
+        <field name="implied_ids" eval="[(6, 0, [ref('base.group_user'), ref('group_quality_user')])]"/>
         <field name="comment">
             Todos los permisos del Analista.
             Puede firmar en el campo "Verificó".
@@ -30,7 +36,12 @@
     <!-- Grupo: Responsable Sanitario -->
     <record id="group_quality_sanitary" model="res.groups">
         <field name="name">Calidad / Responsable Sanitario</field>
-        <field name="implied_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <!-- Hereda de Supervisor QC, y por la cadena tambien de Analista. Igual que
+             arriba: su comentario decia "Todos los permisos del Supervisor" y no se
+             cumplia. La facultad propia del Responsable Sanitario, firmar "Autorizo"
+             y finalizar el analisis- NO se hereda hacia nadie: es exclusiva de este
+             grupo y asi se queda. -->
+        <field name="implied_ids" eval="[(6, 0, [ref('base.group_user'), ref('group_quality_supervisor')])]"/>
         <field name="comment">
             Todos los permisos del Supervisor.
             Puede firmar en el campo "Autorizó".
@@ -41,6 +52,12 @@
     <!-- Grupo: Manager de QC -->
     <record id="group_quality_manager" model="res.groups">
         <field name="name">Calidad / Manager QC</field>
+        <!-- A PROPOSITO SIN CADENA, y conviene saber por que: su comentario dice
+             "acceso total al modulo de calidad", que es ambiguo. Encadenarlo al
+             Responsable Sanitario le daria a los 3 managers la facultad de firmar
+             "Autorizo" y finalizar analisis, y eso es una decision regulatoria sobre
+             quien libera un lote, no se toma de paso en un arreglo de herencia-.
+             Pendiente de definir con Fernando y la Responsable Sanitario. -->
         <field name="implied_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
         <field name="comment">
             Acceso total al módulo de calidad.
