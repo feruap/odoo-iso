@@ -31,6 +31,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='qc_required']" position="after">
                 <field name="amunet_dias_cuarentena"/>
+                <field name="amunet_es_ajuste_ph"/>
             </xpath>
         </field>
     </record>

@@ -95,6 +95,13 @@ class StockMove(models.Model):
         copy=False,
     )
 
+    # Espejo de la bandera del producto, para que la lista de materiales de la
+    # orden pueda marcar el renglon sin bajar al producto en cada fila.
+    amunet_es_ajuste_ph = fields.Boolean(
+        string='Hasta ajustar pH',
+        related='product_id.product_tmpl_id.amunet_es_ajuste_ph',
+        readonly=True)
+
     amunet_qty_used = fields.Float(
         string='Cantidad utilizada',
         digits='Product Unit',
