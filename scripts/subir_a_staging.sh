@@ -82,9 +82,41 @@ git --no-pager log -1 --format='   %s'
 # ---- alinear el directorio compartido ----
 cd "$REPO"
 git fetch origin --quiet
+alinear_mixed() {
+  # Mueve HEAD a origin sin tocar el working tree. Los archivos que estan en origin y no
+  # en el disco quedan como "borrados": se traen de origin, que anade lo que falta sin
+  # sobrescribir nada ajeno.
+  local antes despues faltantes
+  antes=$(git status --porcelain | grep -c '^ M\|^??' || true)
+  git reset --mixed origin/staging >/dev/null
+  faltantes=$(git status --porcelain | awk '$1=="D"{print $2}')
+  if [ -n "$faltantes" ]; then
+    git checkout -- $faltantes
+    echo "   traidos de origin $(echo "$faltantes" | wc -l) archivo(s) que faltaban en el disco"
+  fi
+  despues=$(git status --porcelain | grep -c '^ M\|^??' || true)
+  verde "Directorio compartido alineado con origin/staging."
+  echo "   trabajo sin commitear de otras sesiones: antes=$antes  ahora=$despues"
+}
+
 if git merge-base --is-ancestor HEAD origin/staging; then
-  git merge --ff-only origin/staging --quiet 2>/dev/null || true
-  verde "El directorio compartido ya va al dia (fast-forward limpio)."
+  # Caso tipico: el archivo que acabamos de subir sigue marcado como modificado respecto
+  # al HEAD VIEJO, aunque su contenido ya sea identico al de origin. Entonces el
+  # fast-forward se niega -- "Your local changes would be overwritten by merge"- y el CI
+  # fallaria por lo mismo. Comprobado el 01-oct-2026.
+  if git merge --ff-only origin/staging --quiet 2>/dev/null; then
+    verde "El directorio compartido ya va al dia (fast-forward limpio)."
+  else
+    echo "   el fast-forward se niega por cambios locales; se alinea moviendo HEAD"
+    alinear_mixed
+  fi
+  # Comprobacion final: que el CI pueda hacer SU pull. Si esto falla, el workflow
+  # seguira en rojo y hay que mirarlo a mano.
+  if git merge-base --is-ancestor origin/staging HEAD || git merge --ff-only origin/staging --quiet 2>/dev/null; then
+    verde "Comprobado: el pull --ff-only del CI funcionaria."
+  else
+    rojo "OJO: el pull del CI seguiria fallando. Revisa 'git status' en $REPO."
+  fi
   exit 0
 fi
 
