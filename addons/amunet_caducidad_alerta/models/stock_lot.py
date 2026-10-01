@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from datetime import date
+from datetime import date, datetime, timedelta
+
+import pytz
 
 from odoo import models, fields, api, _
 
@@ -16,6 +18,23 @@ UMBRAL_RETIRO = 'amunet_caducidad.meses_retiro'      # por debajo de esto: retir
 # material que caduca en dias. El umbral es un parametro, no codigo: cambiar
 # amunet_caducidad.meses_retiro mueve la raya sin tocar nada.
 DEFAULTS = {UMBRAL_CORTA: 6, UMBRAL_CORTESIA: 4, UMBRAL_RETIRO: 1}
+
+# 01-oct-2026 (decision de Fernando): la condicion se cuenta por MES, no por dia.
+#   meses = mes de caducidad - mes en curso      (ej. en octubre, un lote de marzo = 5)
+#   corta si meses < 6 · cortesia si < 4 · retirar si < 1
+# Asi todo cambia de condicion el dia 1 de cada mes y no un dia distinto por lote.
+# El "hoy" se toma una hora atras, para que el cambio caiga el dia 1 a la 1:00.
+# La tienda (plugin amunet-inventario, AI_Condicion) cuenta igual: si cambias
+# esto, cambia aquello.
+# Un umbral dado en dias ("retiro_dias" de las PCR) se sigue midiendo en dias.
+ZONA_HORARIA = 'America/Mexico_City'
+HORA_DE_CAMBIO = 1
+
+
+def hoy_caducidad():
+    """La fecha con la que se clasifica: hora de Mexico menos una hora."""
+    ahora = datetime.now(pytz.timezone(ZONA_HORARIA))
+    return (ahora - timedelta(hours=HORA_DE_CAMBIO)).date()
 
 # Los anaqueles de promociones solo existen para producto terminado. Una materia
 # prima con caducidad corta no se vende con descuento: se usa antes o se da de
@@ -152,6 +171,7 @@ class StockLot(models.Model):
                     if llave + '_dias' in u:
                         try:
                             valores[clave] = float(u[llave + '_dias']) / 30.0
+                            valores.setdefault('_en_dias', {})[clave] = float(u[llave + '_dias'])
                             continue
                         except (TypeError, ValueError):
                             pass
@@ -172,19 +192,27 @@ class StockLot(models.Model):
         """
         if not fecha_caducidad:
             return 'sin_fecha', 0
-        hoy = hoy or fields.Date.context_today(self)
+        hoy = hoy or hoy_caducidad()
         if hasattr(fecha_caducidad, 'date'):
             fecha_caducidad = fecha_caducidad.date()
         dias = (fecha_caducidad - hoy).days
         if dias < 0:
             return 'vencido', dias
         u = self._amunet_umbrales(categoria)
-        meses = dias / 30.0
-        if meses < u[UMBRAL_RETIRO]:
+        en_dias = u.get('_en_dias', {})
+        meses = ((fecha_caducidad.year * 12 + fecha_caducidad.month)
+                 - (hoy.year * 12 + hoy.month))
+
+        def debajo(clave):
+            if clave in en_dias:
+                return dias < en_dias[clave]
+            return meses < u[clave]
+
+        if debajo(UMBRAL_RETIRO):
             return 'retirar', dias
-        if meses < u[UMBRAL_CORTESIA]:
+        if debajo(UMBRAL_CORTESIA):
             return 'cortesia', dias
-        if meses < u[UMBRAL_CORTA]:
+        if debajo(UMBRAL_CORTA):
             return 'corta', dias
         return 'normal', dias
 
@@ -309,7 +337,7 @@ class StockLot(models.Model):
 
     def _amunet_recalcular_caducidad(self):
         """Escribe la condicion en cada lote. Solo toca lo que cambio."""
-        hoy = fields.Date.context_today(self)
+        hoy = hoy_caducidad()
         for lote in self:
             # Cada categoria puede tener su propia escala: una PCR rapida
             # vive 6 meses y no puede medirse con la regla de una prueba
