@@ -157,8 +157,17 @@ class MarketplaceProductProposal(models.Model):
         for rec in self:
             if rec.state != 'approved':
                 raise UserError(_('La propuesta debe estar aprobada antes de crear el producto.'))
-            if not rec.category_id:
-                raise UserError(_('La propuesta debe indicar una categoria antes de crear el producto.'))
+            # La categoria manda la valoracion y las cuentas del inventario. A
+            # lo que NO se inventaria no le aplica, asi que no se exige: Odoo
+            # le pone la suya por omision. Exigirla solo obligaba a clasificar
+            # una escoba en una categoria de almacen que nadie va a consultar.
+            if rec.amunet_inventariable and not rec.category_id:
+                raise UserError(_(
+                    'La propuesta %s no tiene categoria.\n\nUn producto que se '
+                    'lleva en inventario necesita categoria: de ahi salen su '
+                    'valoracion y sus cuentas.\n\nSi este no se inventaria '
+                    '(limpieza, papeleria de uso inmediato), desmarca "Se lleva '
+                    'en inventario" y no hara falta.') % rec.name)
             clave = (rec.clave_propuesta or '').strip()
             # La clave es para cruzar con el inventario. Un producto que no se
             # inventaria -- un mechudo, un trapeador, papeleria de uso
@@ -183,7 +192,6 @@ class MarketplaceProductProposal(models.Model):
                     'clave.') % {'clave': clave, 'nombre': existente.name})
             vals = {
                 'name': rec.name,
-                'categ_id': rec.category_id.id,
                 'marketplace_enabled': True,
                 'marketplace_flow': rec.request_type,
                 'marketplace_purchase_url': rec.purchase_url,
@@ -194,6 +202,18 @@ class MarketplaceProductProposal(models.Model):
             }
             if clave:
                 vals['default_code'] = clave
+            if rec.category_id:
+                vals['categ_id'] = rec.category_id.id
+            else:
+                # Sin categoria explicita (solo pasa en lo que no se
+                # inventaria): se clasifica como GASTO, que es lo que es --
+                # se compra y se consume. Dejarlo sin categoria no es opcion:
+                # ya hay 9 productos asi en produccion y quedan fuera de
+                # cualquier reporte que agrupe por categoria.
+                gastos = self.env.ref('product.product_category_expenses',
+                                      raise_if_not_found=False)
+                if gastos:
+                    vals['categ_id'] = gastos.id
             product = ProductTemplate.create(vals)
             rec.with_context(marketplace_proposal_internal_write=True).write({
                 'product_tmpl_id': product.id,
