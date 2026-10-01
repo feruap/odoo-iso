@@ -16,6 +16,47 @@
             <h2 class="o_amunet_lc_hub_title">Lista Maestra de Claves</h2>
             <p class="o_amunet_lc_hub_sub">Catálogo de productos por clasificación</p>
         </div>
+
+        <!-- ── Verificador de clave ── -->
+        <div class="o_amunet_lc_verificador">
+            <div class="o_amunet_lc_verificador_input">
+                <i class="fa fa-search o_amunet_lc_verificador_icon"/>
+                <input type="text"
+                       class="o_amunet_lc_verificador_field"
+                       placeholder="Verifica si una clave está disponible..."
+                       t-model="state.busqueda"
+                       t-on-keydown="(ev) => ev.key === 'Enter' &amp;&amp; this.verificarClave()"
+                />
+                <button class="btn btn-primary btn-sm" t-on-click="verificarClave"
+                        t-att-disabled="state.buscando">
+                    <t t-if="state.buscando"><i class="fa fa-spinner fa-spin"/></t>
+                    <t t-else="">Verificar</t>
+                </button>
+                <button t-if="state.resultadoBusqueda" class="btn btn-link btn-sm"
+                        t-on-click="limpiarBusqueda">
+                    <i class="fa fa-times"/>
+                </button>
+            </div>
+            <t t-if="state.resultadoBusqueda">
+                <div t-attf-class="o_amunet_lc_resultado o_amunet_lc_resultado_#{state.resultadoBusqueda.tipo}">
+                    <t t-if="state.resultadoBusqueda.tipo === 'libre'">
+                        <i class="fa fa-check-circle me-2"/>
+                        <strong t-esc="state.resultadoBusqueda.clave"/> está disponible
+                    </t>
+                    <t t-elif="state.resultadoBusqueda.tipo === 'activa'">
+                        <i class="fa fa-times-circle me-2"/>
+                        <strong t-esc="state.resultadoBusqueda.clave"/> ya está en uso:
+                        <t t-esc="state.resultadoBusqueda.nombre"/>
+                    </t>
+                    <t t-else="">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <strong t-esc="state.resultadoBusqueda.clave"/> fue usada antes (archivada):
+                        <t t-esc="state.resultadoBusqueda.nombre"/>
+                    </t>
+                </div>
+            </t>
+        </div>
+
         <div class="o_amunet_lc_hub_cards">
             <t t-foreach="clasificacionesList" t-as="cl" t-key="cl.key">
                 <div class="o_amunet_lc_card" t-on-click="() => this.abrirClasificacion(cl.key)">

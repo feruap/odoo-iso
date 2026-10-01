@@ -183,6 +183,56 @@
     white-space: nowrap;
 }
 
+/* ── Verificador de clave ── */
+.o_amunet_lc_verificador {
+    margin-bottom: 24px;
+}
+.o_amunet_lc_verificador_input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+.o_amunet_lc_verificador_icon {
+    color: #6c757d;
+    font-size: 14px;
+}
+.o_amunet_lc_verificador_field {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    font-family: monospace;
+    color: #212529;
+}
+.o_amunet_lc_resultado {
+    margin-top: 10px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+}
+.o_amunet_lc_resultado_libre {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+.o_amunet_lc_resultado_activa {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+.o_amunet_lc_resultado_archivada {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+}
+
 /* ── Sin pestaña ── */
 .o_amunet_lc_sin_pestana_header {
     margin-top: 28px;

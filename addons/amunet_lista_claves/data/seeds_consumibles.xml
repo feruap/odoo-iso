@@ -161,4 +161,12 @@
     <record id="clave_copap39" model="amunet.clave"><field name="clave">COPAP39</field><field name="nombre">Lapicero 4 tintas</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
     <record id="clave_copap40" model="amunet.clave"><field name="clave">COPAP40</field><field name="nombre">Hojas tamaño carta</field><field name="clasificacion">co</field><field name="subcategoria">Papelería</field></record>
 
+    <!-- ── Cinta testigo ── -->
+    <record id="clave_COCIT01" model="amunet.clave">
+        <field name="clave">COCIT01</field>
+        <field name="nombre">Cinta testigo 25mm x 50mm</field>
+        <field name="clasificacion">co</field>
+        <field name="estado">activa</field>
+    </record>
+
 </odoo>

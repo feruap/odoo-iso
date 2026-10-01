@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 CLASIFICACIONES = [
     ('mp', 'Materia Prima'),
@@ -34,3 +34,24 @@ class AmunetClave(models.Model):
     _sql_constraints = [
         ('clave_unique', 'UNIQUE(clave)', 'Esta clave ya existe en el catálogo.'),
     ]
+
+    @api.onchange('clave')
+    def _onchange_clave_duplicado(self):
+        if not self.clave:
+            return
+        clave = self.clave.strip().upper()
+        existente = self.env['amunet.clave'].with_context(active_test=False).search(
+            [('clave', '=', clave), ('id', '!=', self._origin.id or 0)], limit=1
+        )
+        if existente:
+            if existente.estado == 'archivada':
+                return {'warning': {
+                    'title': 'Clave archivada',
+                    'message': f'La clave {clave} ya fue usada antes para "{existente.nombre}" '
+                               f'y está archivada. Considera usar el siguiente número disponible.',
+                }}
+            else:
+                return {'warning': {
+                    'title': 'Clave duplicada',
+                    'message': f'La clave {clave} ya está activa como "{existente.nombre}".',
+                }}

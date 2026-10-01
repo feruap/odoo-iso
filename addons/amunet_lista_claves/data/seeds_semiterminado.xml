@@ -379,4 +379,18 @@
         <field name="estado">activa</field>
     </record>
 
+    <!-- ── Perlas ── -->
+    <record id="clave_STPER01" model="amunet.clave">
+        <field name="clave">STPER01</field>
+        <field name="nombre">Perlas de vidrio experimentales 4 mm</field>
+        <field name="clasificacion">st</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_STPER02" model="amunet.clave">
+        <field name="clave">STPER02</field>
+        <field name="nombre">Perlas disruptoras 0.5 mm</field>
+        <field name="clasificacion">st</field>
+        <field name="estado">activa</field>
+    </record>
+
 </odoo>

@@ -21,13 +21,16 @@ export class AmunetListaClaves extends Component {
         this.orm    = useService("orm");
         this.action = useService("action");
         this.state  = useState({
-            vista:            "hub",
-            clasificacion:    null,
-            claves:           [],
-            clavesInactivas:  [],
-            counts:           {},
-            loading:          true,
-            tabActiva:        null,
+            vista:             "hub",
+            clasificacion:     null,
+            claves:            [],
+            clavesInactivas:   [],
+            counts:            {},
+            loading:           true,
+            tabActiva:         null,
+            busqueda:          "",
+            resultadoBusqueda: null,
+            buscando:          false,
         });
         onWillStart(() => this._cargarConteos());
     }
@@ -96,6 +99,35 @@ export class AmunetListaClaves extends Component {
     get gruposConPestana() { return this._gruposConPestana(this.state.claves); }
     get gruposSinPestana() { return this._gruposSinPestana(this.state.claves); }
     get hayInactivas()     { return this.state.clavesInactivas.length > 0; }
+
+    async verificarClave() {
+        const clave = this.state.busqueda.trim().toUpperCase();
+        if (!clave) { this.state.resultadoBusqueda = null; return; }
+        this.state.buscando = true;
+        const res = await this.orm.searchRead(
+            "amunet.clave",
+            [["clave", "=", clave]],
+            ["clave", "nombre", "clasificacion", "estado"],
+            { limit: 1, context: { active_test: false } },
+        );
+        if (!res.length) {
+            this.state.resultadoBusqueda = { tipo: "libre", clave };
+        } else {
+            const r = res[0];
+            this.state.resultadoBusqueda = {
+                tipo:   r.estado === "activa" ? "activa" : "archivada",
+                clave:  r.clave,
+                nombre: r.nombre,
+                clasificacion: r.clasificacion,
+            };
+        }
+        this.state.buscando = false;
+    }
+
+    limpiarBusqueda() {
+        this.state.busqueda          = "";
+        this.state.resultadoBusqueda = null;
+    }
 
     async nuevaClave() {
         await this.action.doAction({
