@@ -316,6 +316,15 @@ class MrpProduction(models.Model):
             raise UserError(_(
                 'No hay un tipo de operacion interna configurado; no se puede '
                 'mover el material.'))
+        # UN movimiento por producto, UNA linea por lote. Un componente puede
+        # venir surtido en varios lotes -- el buffer de 0926/01/CCF llego en
+        # dos, 3,535 + 215 -- y antes solo se movia el primero por el total:
+        # 3,750 piezas de un lote que tenia 3,535. No se puede crear un
+        # movimiento por lote porque action_confirm() fusiona los del mismo
+        # producto y el emparejamiento posterior se desalinea.
+        grupos = {}
+        for (m, q, l) in lineas:
+            grupos.setdefault(m.product_id.id, []).append((m, q, l))
         picking = self.env['stock.picking'].sudo().create({
             'picking_type_id': tipo.id,
             'location_id': origen.id,
@@ -323,34 +332,37 @@ class MrpProduction(models.Model):
             'origin': motivo,
             'company_id': self.company_id.id,
             'move_ids': [(0, 0, {
-                'product_id': m.product_id.id,
-                'product_uom_qty': q,
-                'product_uom': m.product_uom.id,
+                'product_id': grupo[0][0].product_id.id,
+                'product_uom_qty': sum(q for (_m, q, _l) in grupo),
+                'product_uom': grupo[0][0].product_uom.id,
                 'location_id': origen.id,
                 'location_dest_id': destino.id,
                 'company_id': self.company_id.id,
-            }) for (m, q, l) in lineas],
+            }) for grupo in grupos.values()],
         })
         picking.action_confirm()
         picking.action_assign()
-        # Fijar cantidad y lote linea por linea: la reserva automatica puede
-        # tomar otro lote, y en un sistema con trazabilidad eso no es un detalle.
-        for mv, (m, q, lote) in zip(picking.move_ids, lineas):
-            if lote:
-                # Lote explicito: se fuerza. La reserva automatica puede tomar
-                # otro lote y en un sistema con trazabilidad eso no es detalle.
+        # Fijar cantidad y lote: la reserva automatica puede tomar otro lote, y
+        # en un sistema con trazabilidad eso no es un detalle.
+        for mv in picking.move_ids:
+            grupo = grupos.get(mv.product_id.id)
+            if not grupo:
+                continue
+            con_lote = [(q, l) for (_m, q, l) in grupo if l]
+            if con_lote:
                 mv.move_line_ids.sudo().unlink()
-                self.env['stock.move.line'].sudo().create({
-                    'move_id': mv.id,
-                    'product_id': mv.product_id.id,
-                    'product_uom_id': mv.product_uom.id,
-                    'lot_id': lote.id,
-                    'quantity': q,
-                    'location_id': origen.id,
-                    'location_dest_id': destino.id,
-                })
+                for (q, lote) in con_lote:
+                    self.env['stock.move.line'].sudo().create({
+                        'move_id': mv.id,
+                        'product_id': mv.product_id.id,
+                        'product_uom_id': mv.product_uom.id,
+                        'lot_id': lote.id,
+                        'quantity': q,
+                        'location_id': origen.id,
+                        'location_dest_id': destino.id,
+                    })
             else:
-                mv.quantity = q
+                mv.quantity = sum(q for (_m, q, _l) in grupo)
             mv.picked = True
         picking.button_validate()
         return picking
@@ -388,7 +400,18 @@ class MrpProduction(models.Model):
                 # dato que no le toca capturar. Se salta y se avisa.
                 sin_lote.append(m.product_id.display_name)
                 continue
-            pendientes.append((m, qty, lote))
+            # Un componente puede venir surtido en VARIOS lotes. Se mueve cada
+            # uno con su cantidad; si lo que suman las lineas no cuadra con lo
+            # surtido, no se adivina el reparto y se mueve todo con el lote
+            # principal, como antes.
+            porlote = [(l.lot_id, l.quantity)
+                       for l in m.move_line_ids if l.lot_id and l.quantity > 0]
+            suma = sum(c for (_l, c) in porlote)
+            if len(porlote) > 1 and abs(suma - qty) < 0.000001:
+                for (lot, cant) in porlote:
+                    pendientes.append((m, cant, lot))
+            else:
+                pendientes.append((m, qty, lote))
         if sin_lote:
             self.sudo().message_post(body=_(
                 'Estos materiales NO se movieron al piso porque no tienen lote '
