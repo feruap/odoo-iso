@@ -32,7 +32,7 @@ DRY_RUN=True por defecto: la primera corrida solo ENSENA lo que haria. Para borr
 verdad hay que cambiarlo a False a mano, y eso lo decide una persona.
 """
 
-DRY_RUN = True      # en True no borra nada: solo lista
+DRY_RUN = False     # autorizado por Mery el 01-oct-2026 tras ver la simulacion
 DIAS_MINIMOS = 7    # un lote mas nuevo puede ser de una recepcion en curso
 
 from datetime import datetime, timedelta
