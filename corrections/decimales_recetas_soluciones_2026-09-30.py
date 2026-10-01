@@ -101,3 +101,62 @@ for clave in ('SPLPT01', 'SPSAG01', 'SPSDC01', 'SPSDC02', 'SPSPA01'):
         print('      %-9s %12s %s' % (l.product_id.default_code, l.product_qty,
                                       l.product_uom_id.name))
 print('=' * 96)
+
+# ---------------------------------------------------------------------------
+# AJUSTE DEL AGUA DE SPLPT01 (autorizado por Mery, 30-sep-2026)
+#
+# Con el PBS 10X en 100 ml la receta sumaba 1,090.5 ml para un lote de 1 L: se
+# pasaba 90.5 ml. El agua baja para que cierre en el litro exacto.
+#
+#   PBS 10X  100.0 ml
+#   Tween 20   0.5 ml
+#   agua     899.5 ml  =  899.5 / 20000 = 0.044975 garrafones
+#   -------------------
+#            1000.0 ml
+#
+# El garrafon son 20,000 ml (amunet_contenido_envase). Se guarda con los 4
+# decimales que ahora si admite el campo: 0.045 redondeado daria 900 ml y
+# 0.0449 daria 898 ml. Con 0.044975 el litro cierra exacto.
+# ---------------------------------------------------------------------------
+ML_GARRAFON = 20000.0
+p = env['product.product'].search([('default_code', '=', 'SPLPT01')], limit=1)
+b = env['mrp.bom'].search([('product_tmpl_id', '=', p.product_tmpl_id.id)], limit=1)
+
+# Lo que NO es agua, convertido a ml
+otros_ml = 0.0
+linea_agua = None
+for l in b.bom_line_ids:
+    if l.product_id.default_code == 'MPATR01':
+        linea_agua = l
+        continue
+    factor = {'ml': 1.0, 'L': 1000.0, 'µl': 0.001}.get(l.product_uom_id.name)
+    assert factor, 'No se como convertir %s a ml' % l.product_uom_id.name
+    otros_ml += l.product_qty * factor
+
+objetivo_ml = b.product_qty * 1000.0 if b.product_uom_id.name == 'L' else b.product_qty
+agua_ml = objetivo_ml - otros_ml
+agua_garrafon = agua_ml / ML_GARRAFON
+
+print()
+print('=' * 96)
+print('AJUSTE DEL AGUA DE SPLPT01')
+print('   la receta produce      %10.1f ml' % objetivo_ml)
+print('   los otros componentes  %10.1f ml' % otros_ml)
+print('   el agua debe ser       %10.1f ml  =  %.6f garrafones' % (agua_ml, agua_garrafon))
+antes_agua = linea_agua.product_qty
+linea_agua.write({'product_qty': agua_garrafon})
+linea_agua.flush_recordset()
+linea_agua.invalidate_recordset()
+env.cr.commit()
+print('   agua: %s -> %s garrafones (%.1f ml)' % (
+    antes_agua, linea_agua.product_qty, linea_agua.product_qty * ML_GARRAFON))
+
+# Comprobacion final: que sume el litro
+suma = otros_ml + linea_agua.product_qty * ML_GARRAFON
+print('-' * 96)
+print('   SUMA FINAL: %.2f ml contra %.2f ml que produce   -> %s' % (
+    suma, objetivo_ml, 'CIERRA' if abs(suma - objetivo_ml) < 0.5 else 'NO CIERRA'))
+for l in b.bom_line_ids.sorted(lambda x: x.product_id.default_code or ''):
+    print('      %-9s %12s %s' % (l.product_id.default_code, l.product_qty,
+                                  l.product_uom_id.name))
+print('=' * 96)
