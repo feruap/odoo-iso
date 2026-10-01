@@ -1,6 +1,6 @@
 {
     'name': 'Amunet - Marketplace Interno',
-    'version': '19.0.1.8.0',
+    'version': '19.0.1.10.0',
     'category': 'Inventory/Inventory',
     'summary': 'Catalogo interno conectado con solicitudes de material, compras y almacen',
     'description': """

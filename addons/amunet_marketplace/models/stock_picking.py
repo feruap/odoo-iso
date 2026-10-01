@@ -27,22 +27,46 @@ class StockPicking(models.Model):
         nadie hubiera apretado el boton.
         """
         res = super()._action_done()
+        quien = self.env.user.name
         for solicitud in self.mapped('amunet_solicitud_compra_id'):
             if solicitud.state not in ('approved', 'purchased'):
                 continue
-            pendientes = solicitud.picking_ids.filtered(
+            # TODO EL CIERRE VA CON sudo, no solo la lectura. Dos razones:
+            #
+            # 1. Quien valida la entrada es Almacen, y Almacen tiene LECTURA pero
+            #    no escritura sobre la solicitud de compra. Sin sudo, validar
+            #    reventaba con "No puede modificar registros 'Solicitud de
+            #    compra'" y la recepcion no se podia cerrar. Le paso a Karla el
+            #    01-oct-2026 en AMP/IN/00489.
+            #
+            # 2. Y NO se arregla dandole escritura a Almacen: la solicitud lleva
+            #    el monto, la forma de pago y la referencia del pago. Ampliar sus
+            #    permisos ahi abriria datos de compras a quien no le corresponde.
+            #    El cierre lo hace el SISTEMA al entrar el material, no la persona
+            #    que valida, asi que sudo es lo que describe lo que pasa.
+            #
+            # El sudo de la lectura, ademas, sigue siendo necesario: quien valida
+            # solo ve los pickings de SU almacen, y en una solicitud repartida en
+            # dos almacenes no veria la del otro y la cerraria con material sin
+            # llegar.
+            solicitud_sys = solicitud.sudo()
+            pendientes = solicitud_sys.picking_ids.filtered(
                 lambda p: p.state not in ('done', 'cancel'))
             if pendientes:
                 continue
-            if solicitud.state == 'approved':
-                solicitud.state = 'purchased'
-                solicitud.message_post(body=_(
+            recepciones = ', '.join(self.filtered(
+                lambda p: p.amunet_solicitud_compra_id == solicitud).mapped('name'))
+            if solicitud_sys.state == 'approved':
+                solicitud_sys.state = 'purchased'
+                solicitud_sys.message_post(body=_(
                     'Marcada como comprada automaticamente: el material llego '
-                    'y Almacen valido su entrada.'))
-            solicitud.state = 'closed'
-            solicitud.message_post(body=_(
-                'Cerrada automaticamente al validarse %s: el material entro '
-                'al inventario.') % ', '.join(self.filtered(
-                    lambda p: p.amunet_solicitud_compra_id == solicitud
-                ).mapped('name')))
+                    'y Almacen valido su entrada (%s).') % quien)
+            solicitud_sys.state = 'closed'
+            # Queda escrito QUIEN valido: el cierre lo ejecuta el sistema, pero
+            # el acto que lo dispara es de una persona y eso tiene que poder
+            # rastrearse.
+            solicitud_sys.message_post(body=_(
+                'Cerrada automaticamente al validarse %(recepciones)s por '
+                '%(quien)s: el material entro al inventario.'
+            ) % {'recepciones': recepciones, 'quien': quien})
         return res
