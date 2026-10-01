@@ -4,7 +4,7 @@
     'summary': 'Urgencia de la solicitud, forma de pago, autorizacion por Telegram y seguimiento de pago, embarque y llegada en la orden de compra.',
     'author': 'Amunet',
     'category': 'Inventory/Purchase',
-    'version': '19.0.9.0.0',
+    'version': '19.0.10.0.0',
     # amunet_material_request sigue siendo dependencia por res.users.amunet_material_head_id
     # (el jefe directo) y por el grupo group_material_manager (area de compras).
     # purchase_stock: la orden de compra ahora lleva seguimiento de pago y llegada.
@@ -15,6 +15,7 @@
         'security/ir.model.access.csv',
         'views/solicitud_compra_views.xml',
         'views/solicitud_compra_precio_views.xml',
+        'views/solicitud_compra_aviso_views.xml',
         'views/material_request_views.xml',
         'views/purchase_order_views.xml',
         'views/seguimiento_views.xml',

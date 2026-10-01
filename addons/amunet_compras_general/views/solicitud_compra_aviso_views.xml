@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Lo pedido y el ajuste, al lado de lo que se compro. Sin esta
+         columna nadie puede saber que la solicitud salio recortada. -->
+    <record id="view_solicitud_compra_form_aviso" model="ir.ui.view">
+        <field name="name">amunet.solicitud.compra.form.aviso</field>
+        <field name="model">amunet.solicitud.compra</field>
+        <field name="inherit_id" ref="amunet_marketplace.view_solicitud_compra_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='line_ids']/list/field[@name='qty']"
+                   position="before">
+                <field name="amunet_qty_pedida" readonly="1" optional="show"/>
+            </xpath>
+
+            <xpath expr="//field[@name='line_ids']/list/field[@name='qty']"
+                   position="after">
+                <field name="amunet_ajuste" optional="show"
+                       placeholder="Se deduce solo"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
