@@ -30,7 +30,10 @@ class StockPicking(models.Model):
         for solicitud in self.mapped('amunet_solicitud_compra_id'):
             if solicitud.state not in ('approved', 'purchased'):
                 continue
-            pendientes = solicitud.picking_ids.filtered(
+            # sudo: quien valida ve los pickings de SU almacen. En una
+            # solicitud repartida en dos almacenes, sin sudo no veria la del
+            # otro y cerraria la solicitud con material todavia sin llegar.
+            pendientes = solicitud.sudo().picking_ids.filtered(
                 lambda p: p.state not in ('done', 'cancel'))
             if pendientes:
                 continue
