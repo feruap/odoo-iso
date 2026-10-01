@@ -90,7 +90,8 @@
                         <group string="Ponente y fechas">
                             <field name="speaker_id"
                                    options="{'no_create': True}"
-                                   readonly="state != 'draft' and not is_hr_user_for_user"/>
+                                   readonly="state != 'draft' and not is_hr_user_for_user"
+                                   groups="hr.group_hr_user"/>
                             <field name="date_start"
                                    readonly="state in ('done','cancelled')"/>
                             <field name="date_end"

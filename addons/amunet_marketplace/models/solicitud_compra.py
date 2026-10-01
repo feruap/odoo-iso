@@ -100,8 +100,11 @@ class AmunetSolicitudCompra(models.Model):
 
     @api.depends('picking_ids')
     def _compute_picking_count(self):
+        # sudo: las recepciones se ven POR ALMACEN (hay una regla de registro
+        # por persona y almacen). Quien pide la compra no suele tener ninguno,
+        # asi que sin sudo el contador le dice 0 aunque la entrada exista.
         for req in self:
-            req.picking_count = len(req.picking_ids)
+            req.picking_count = len(req.sudo().picking_ids)
 
     amunet_material_request_id = fields.Many2one(
         'amunet.material.request', string='Solicitud de material de origen',
@@ -302,7 +305,10 @@ class AmunetSolicitudCompra(models.Model):
         # hay que poder generar una nueva. Contandolas, una solicitud
         # retomada se quedaba sin entrada y el material llegaba sin que nadie
         # lo esperara -- lo que ya paso con SC/2026/00011 y 00012.
-        vivas = self.picking_ids.filtered(lambda p: p.state != 'cancel')
+        # sudo: sin esto la guardia es ciega para quien no tiene el almacen y
+        # vuelve a crear la entrada. Paso el 30-sep-2026: Patricia marco
+        # comprada SC/2026/00012 y nacio AMP/IN/00488 con AMP/IN/00487 viva.
+        vivas = self.sudo().picking_ids.filtered(lambda p: p.state != 'cancel')
         if vivas:
             return vivas
         lineas = self.line_ids.filtered('product_id')
@@ -462,19 +468,27 @@ class AmunetSolicitudCompra(models.Model):
 
     def action_ver_recepcion(self):
         self.ensure_one()
-        if not self.picking_ids:
+        todas = self.sudo().picking_ids
+        if not todas:
             raise ValidationError(_('Esta solicitud no tiene orden de recepcion.'))
+        # Las recepciones se ven por almacen. Si existen pero este usuario no
+        # tiene ese almacen, mas vale decirselo que abrirle una lista vacia.
+        suyas = self.env['stock.picking'].search([('id', 'in', todas.ids)])
+        if not suyas:
+            raise ValidationError(_(
+                'Esta solicitud tiene la orden de recepcion %s, pero no tienes '
+                'acceso al almacen que la recibe. Preguntale a Almacen por ese '
+                'folio.') % ', '.join(todas.mapped('name')))
         accion = {
             'type': 'ir.actions.act_window',
             'res_model': 'stock.picking',
             'name': _('Recepciones de %s') % self.name,
-            'domain': [('id', 'in', self.picking_ids.ids)],
+            'domain': [('id', 'in', suyas.ids)],
             'view_mode': 'list,form',
             'target': 'current',
         }
-        if len(self.picking_ids) == 1:
-            accion.update(view_mode='form', res_id=self.picking_ids.id,
-                          domain=[])
+        if len(suyas) == 1:
+            accion.update(view_mode='form', res_id=suyas.id, domain=[])
         return accion
 
     def action_marcar_comprada(self):
@@ -541,7 +555,9 @@ class AmunetSolicitudCompra(models.Model):
             if req.state not in ('purchased', 'approved'):
                 raise ValidationError(_(
                     'Solo se cierra una solicitud ya comprada.'))
-            abiertas = req.picking_ids.filtered(
+            # sudo: sin esto, quien no ve los pickings lee una lista vacia y
+            # cierra la solicitud sin que Almacen haya validado la entrada.
+            abiertas = req.sudo().picking_ids.filtered(
                 lambda p: p.state not in ('done', 'cancel'))
             if abiertas:
                 raise ValidationError(_(
