@@ -387,6 +387,18 @@
                         column_invisible="parent.amunet_is_solution_product and not parent.amunet_user_puede_elaborar"
                         readonly="parent.state in ('done','cancel') or not (parent.amunet_is_solution_product and amunet_user_can_edit_consume)"
                         invisible="amunet_consumo_por_volumen"
+                        decoration-warning="amunet_es_ajuste_ph"
+                        optional="show"/>
+                    <!-- Marca el renglon que se titula en vez de medirse. La
+                         cantidad de la receta ahi es referencia para el surtido:
+                         el NaOH y el HCl se agregan HASTA el pH objetivo y quien
+                         fabrica anota lo que puso en Cantidad Utilizada.
+                         Sin esta columna el renglon se ve igual que los demas y
+                         el operador no tiene como saberlo.
+                         Regla de Mery, 1-oct-2026. -->
+                    <field name="amunet_es_ajuste_ph"
+                        string="Hasta ajustar pH"
+                        readonly="1"
                         optional="show"/>
                 </xpath>
 

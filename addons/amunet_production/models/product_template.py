@@ -131,3 +131,25 @@ class ProductTemplate(models.Model):
         help='Días que este producto debe reposar en Control de calidad antes '
              'de que se le genere el análisis. En 0 el análisis se genera al '
              'validar la entrada, como siempre.')
+
+    # ------------------------------------------------------------------
+    # REACTIVO DE AJUSTE DE pH
+    # ------------------------------------------------------------------
+    # El NaOH 20% y el HCl no se dosifican a una cantidad fija: se agregan
+    # HASTA llegar al pH objetivo, y lo que de verdad se puso lo anota quien
+    # fabrica en "Cantidad Utilizada".
+    #
+    # La receta tiene un numero -- SPSAG01 pide 9 ml de NaOH 20% -- y ese
+    # numero es REFERENCIA, para que Almacen surta material. El problema es que
+    # en pantalla no se distingue de los demas renglones, asi que el operador no
+    # tiene como saber que ahi debe titular en vez de medir.
+    #
+    # Esta bandera lo marca en la lista de materiales de la orden.
+    # Regla de Mery, 1-oct-2026: "Hasta ajustar pH pero que pongan cuanto le
+    # pusieron".
+    amunet_es_ajuste_ph = fields.Boolean(
+        string='Se dosifica hasta ajustar el pH',
+        default=False,
+        help='Este reactivo no lleva cantidad fija: se agrega hasta alcanzar el '
+             'pH objetivo. La cantidad de la receta es solo referencia para el '
+             'surtido, y quien fabrica anota lo que realmente usó.')
