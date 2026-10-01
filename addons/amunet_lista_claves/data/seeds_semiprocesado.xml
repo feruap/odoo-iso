@@ -97,7 +97,7 @@
     <!-- ── Soluciones de corrimiento ── -->
     <record id="clave_spapb01" model="amunet.clave">
         <field name="clave">SPAPB01</field>
-        <field name="nombre">Solución de corrimiento AC+PBS</field>
+        <field name="nombre">Solución de Corrimiento AC + PBS</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones de corrimiento</field>
         <field name="unidad">L</field>
@@ -141,21 +141,21 @@
     <!-- ── Soluciones de pretratamiento ── -->
     <record id="clave_spspa01" model="amunet.clave">
         <field name="clave">SPSPA01</field>
-        <field name="nombre">Solución de pretratamiento de almohadilla de conjugado</field>
+        <field name="nombre">Solución de pretratamiento para almohadilla de conjugado</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones de pretratamiento</field>
         <field name="unidad">L</field>
     </record>
     <record id="clave_spspa02" model="amunet.clave">
         <field name="clave">SPSPA02</field>
-        <field name="nombre">Solución de pretratamiento de almohadilla de muestra (sangre, suero, plasma)</field>
+        <field name="nombre">Solución de pretratamiento para almohadilla de muestra (sangre, suero, plasma)</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones de pretratamiento</field>
         <field name="unidad">L</field>
     </record>
     <record id="clave_spspa03" model="amunet.clave">
         <field name="clave">SPSPA03</field>
-        <field name="nombre">Solución de pretratamiento de almohadilla de muestra (nasofaríngea, nasal y saliva)</field>
+        <field name="nombre">Solución de pretratamiento para almohadilla de muestra (nasofaríngeas, nasales, saliva)</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones de pretratamiento</field>
         <field name="unidad">L</field>
@@ -185,7 +185,7 @@
     </record>
     <record id="clave_spspb03" model="amunet.clave">
         <field name="clave">SPSPB03</field>
-        <field name="nombre">Solución de bloqueo de caseína</field>
+        <field name="nombre">Solución de Bloqueo Caseina</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones de bloqueo</field>
         <field name="unidad">L</field>
@@ -208,7 +208,7 @@
     </record>
     <record id="clave_spsdm01" model="amunet.clave">
         <field name="clave">SPSDM01</field>
-        <field name="nombre">Solución diluyente 1/2 trehalosa</field>
+        <field name="nombre">Solución Diluyente β Trehalosa</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones diluyentes</field>
         <field name="unidad">L</field>
@@ -231,35 +231,35 @@
     </record>
     <record id="clave_spspc03" model="amunet.clave">
         <field name="clave">SPSPC03</field>
-        <field name="nombre">Solución amortiguadora de borato 0.1M</field>
+        <field name="nombre">Solución Amortiguadora de Borato 0.1 M</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
         <field name="unidad">L</field>
     </record>
     <record id="clave_spspc04" model="amunet.clave">
         <field name="clave">SPSPC04</field>
-        <field name="nombre">Solución amortiguadora de borato 20 mM 7.5</field>
+        <field name="nombre">Solución Amortiguadora de Borato 20 mM pH 7.5</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
         <field name="unidad">L</field>
     </record>
     <record id="clave_spspc05" model="amunet.clave">
         <field name="clave">SPSPC05</field>
-        <field name="nombre">Solución amortiguadora de borato 20 mM 8.5</field>
+        <field name="nombre">Solución Amortiguadora de Borato 20 mM pH 8.5</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
         <field name="unidad">L</field>
     </record>
     <record id="clave_sppbs01" model="amunet.clave">
         <field name="clave">SPPBS01</field>
-        <field name="nombre">Solución PBS 1x</field>
+        <field name="nombre">PBS 1X</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
         <field name="unidad">L</field>
     </record>
     <record id="clave_sppbs02" model="amunet.clave">
         <field name="clave">SPPBS02</field>
-        <field name="nombre">Solución PBS 10x</field>
+        <field name="nombre">PBS 10X</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones amortiguadoras y PBS</field>
         <field name="unidad">L</field>
@@ -268,7 +268,7 @@
     <!-- ── Reactivos auxiliares ── -->
     <record id="clave_spshs01" model="amunet.clave">
         <field name="clave">SPSHS01</field>
-        <field name="nombre">Solución Hidróxido de Sodio 1M</field>
+        <field name="nombre">Solución Hidroxido de Sodio 1 M</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Reactivos auxiliares</field>
         <field name="unidad">L</field>
@@ -282,7 +282,7 @@
     </record>
     <record id="clave_spshs03" model="amunet.clave">
         <field name="clave">SPSHS03</field>
-        <field name="nombre">Solución Hidróxido de Sodio al 5%</field>
+        <field name="nombre">Solución Hidroxido de Sodio al 5%</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Reactivos auxiliares</field>
         <field name="unidad">L</field>
@@ -296,21 +296,21 @@
     </record>
     <record id="clave_spsac01" model="amunet.clave">
         <field name="clave">SPSAC01</field>
-        <field name="nombre">Solución HCl 6M</field>
+        <field name="nombre">Solución HCl 6 M</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Reactivos auxiliares</field>
         <field name="unidad">L</field>
     </record>
     <record id="clave_spsas01" model="amunet.clave">
         <field name="clave">SPSAS01</field>
-        <field name="nombre">Azida de Sodio 20%</field>
+        <field name="nombre">Azida de sodio 20 %</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Reactivos auxiliares</field>
         <field name="unidad">L</field>
     </record>
     <record id="clave_splpt01" model="amunet.clave">
         <field name="clave">SPLPT01</field>
-        <field name="nombre">Solución de lavado PBS/Tween</field>
+        <field name="nombre">Solución de Lavado (PBS/Tween)</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Reactivos auxiliares</field>
         <field name="unidad">L</field>
@@ -319,14 +319,14 @@
     <!-- ── Sin pestaña ── -->
     <record id="clave_spnps01" model="amunet.clave">
         <field name="clave">SPNPS01</field>
-        <field name="nombre">Solución de nanopartículas</field>
+        <field name="nombre">Solución de corrimiento de nanopartículas</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones varios</field>
         <field name="unidad">L</field>
     </record>
     <record id="clave_spsrb01" model="amunet.clave">
         <field name="clave">SPSRB01</field>
-        <field name="nombre">Solución reactivo de Bradford</field>
+        <field name="nombre">Solución de Bradford</field>
         <field name="clasificacion">sp</field>
         <field name="subcategoria">Soluciones varios</field>
         <field name="unidad">L</field>
