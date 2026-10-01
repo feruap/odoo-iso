@@ -39,33 +39,116 @@ class StockPicking(models.Model):
         return super().button_validate()
 
     def _amunet_check_origen_destino_iguales(self):
-        """Bloquea validar un traslado interno cuando una línea de operación
-        mueve el material al MISMO lugar de donde salió (origen = destino).
+        """Bloquea validar cuando la LINEA DE OPERACION no mueve el material a
+        donde dice el movimiento.
 
-        Es un error de captura frecuente: al hacer un traslado entre almacenes
-        (ej. Burgos -> Fábrica) el encabezado se cambia bien, pero la línea de
-        operación conserva el destino por defecto (el mismo del origen), y el
-        material no se mueve (traslado en falso). Este candado lo cacha antes
-        de que quede 'hecho'.
+        EL BUG QUE ATRAPA. En Odoo el destino vive en DOS lugares: el del
+        movimiento (lo que se ve en la pantalla del traslado) y el de la linea de
+        operacion (lo que de verdad ejecuta el inventario, en la pestana de
+        operaciones detalladas). Cuando el tipo de operacion trae un destino por
+        defecto -- el de Burgos trae AMPB/Existencias, el MISMO que su origen- y el
+        operador cambia el encabezado, la linea se queda con el valor viejo. Arriba
+        se ve bien y abajo esta mal, y el material no llega a donde dice el papel.
+
+        Paso cinco veces en agosto de 2026 con traslados Burgos -> Fabrica: quedaron
+        'hechos' sin mover nada y el sistema decia que el material estaba en Fabrica
+        mientras seguia en Burgos.
+
+        DOS COMPROBACIONES, no una:
+
+        1. origen == destino en la linea: el material no se moveria.
+        2. el destino de la linea no esta dentro del destino de su movimiento: el
+           material se moveria a OTRO lugar del que dice el traslado. Este caso el
+           candado viejo no lo veia, y por eso se le escapo AMP/IN/00234, una
+           recepcion con 487 piezas que el movimiento mandaba a Existencias y la
+           linea dejo en cuarentena de Calidad.
+
+        Corre en CUALQUIER tipo de operacion. El candado viejo solo miraba los
+        traslados internos, asi que las recepciones y las salidas quedaban sin red.
+
+        Se acepta que la linea apunte a una ubicacion HIJA del destino del
+        movimiento: eso es legitimo en Odoo (reglas de ubicacion). Hoy Amunet no
+        tiene ninguna regla de ubicacion configurada y no existe un solo movimiento
+        historico que use esa flexibilidad, pero se respeta para no romper el dia
+        que se usen.
         """
         self.ensure_one()
-        if self.picking_type_code != 'internal':
+
+        sin_mover, otro_lugar = [], []
+        for ml in self.move_line_ids:
+            if not ml.quantity:
+                continue
+            destino_mov = ml.move_id.location_dest_id
+            if ml.location_id == ml.location_dest_id:
+                sin_mover.append(ml)
+            elif destino_mov and ml.location_dest_id != destino_mov and not (
+                    ml.location_dest_id.parent_path or '').startswith(
+                    destino_mov.parent_path or '\0'):
+                otro_lugar.append(ml)
+
+        if not sin_mover and not otro_lugar:
             return
-        malas = self.move_line_ids.filtered(
-            lambda ml: ml.quantity and ml.location_id == ml.location_dest_id)
-        if not malas:
-            return
-        detalle = '\n'.join(
-            '- %s: %s -> %s' % (
+
+        def linea(ml, con_movimiento=False):
+            txt = '- %s: %s -> %s' % (
                 ml.product_id.default_code or ml.product_id.display_name,
                 ml.location_id.complete_name, ml.location_dest_id.complete_name)
-            for ml in malas[:8])
+            if con_movimiento:
+                txt += '   (el traslado dice: %s)' % (
+                    ml.move_id.location_dest_id.complete_name or '?')
+            return txt
+
+        partes = []
+        if sin_mover:
+            partes.append(_(
+                'Hay lineas cuyo DESTINO es el MISMO que el origen, asi que el '
+                'material no se moveria:\n%s'
+            ) % '\n'.join(linea(ml) for ml in sin_mover[:8]))
+        if otro_lugar:
+            partes.append(_(
+                'Hay lineas que mandan el material a un lugar DISTINTO del que dice '
+                'el traslado:\n%s'
+            ) % '\n'.join(linea(ml, True) for ml in otro_lugar[:8]))
+
         raise UserError(_(
-            'No se puede validar este traslado: hay líneas cuyo DESTINO es el '
-            'MISMO que el origen, así que el material no se movería.\n\n'
-            'Corrige el destino de la operación al almacén/ubicación correcto '
-            '(ej. AMP/Existencias para Fábrica) y vuelve a validar.\n\n%s'
-        ) % detalle)
+            'No se puede validar: lo que dice el traslado y lo que haran las lineas '
+            'de operacion no coincide.\n\n%s\n\n'
+            'Revisa la pestana de operaciones detalladas y corrige el destino de '
+            'esas lineas (es el destino de abajo el que mueve el inventario, no el '
+            'de arriba). Si cambias el destino del encabezado, las lineas se '
+            'actualizan solas.'
+        ) % '\n\n'.join(partes))
+
+    def _amunet_propagar_destino_a_lineas(self):
+        """Hace que las lineas sigan al encabezado: la causa del bug, no el sintoma.
+
+        Cuando se cambia el origen o el destino del traslado, las lineas de
+        operacion ya creadas conservaban el valor viejo y nadie lo veia. Esto las
+        actualiza, para que lo que se ve en pantalla sea lo que se va a ejecutar.
+
+        Solo toca lineas NO hechas (ni validadas ni canceladas): lo ya hecho es
+        historial y no se reescribe.
+        """
+        for picking in self:
+            for mv in picking.move_ids:
+                if mv.state in ('done', 'cancel'):
+                    continue
+                cambios = {}
+                if mv.location_id != picking.location_id:
+                    cambios['location_id'] = picking.location_id.id
+                if mv.location_dest_id != picking.location_dest_id:
+                    cambios['location_dest_id'] = picking.location_dest_id.id
+                if cambios:
+                    mv.write(cambios)
+                lineas = mv.move_line_ids.filtered(
+                    lambda ml: ml.state not in ('done', 'cancel'))
+                vals = {}
+                if any(ml.location_id != mv.location_id for ml in lineas):
+                    vals['location_id'] = mv.location_id.id
+                if any(ml.location_dest_id != mv.location_dest_id for ml in lineas):
+                    vals['location_dest_id'] = mv.location_dest_id.id
+                if vals and lineas:
+                    lineas.write(vals)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -100,7 +183,18 @@ class StockPicking(models.Model):
                     operation='modificar'
                 )
 
-        return super().write(vals)
+        res = super().write(vals)
+
+        # Si se cambio el origen o el destino, las lineas de operacion tienen que
+        # seguir al encabezado. Sin esto, el operador cambia el destino arriba, abajo
+        # queda el viejo, y el material se mueve a donde nadie dijo. Es la causa de
+        # los cinco traslados en falso de Burgos de agosto-2026.
+        if 'location_id' in vals or 'location_dest_id' in vals:
+            self.filtered(
+                lambda p: p.state not in ('done', 'cancel')
+            )._amunet_propagar_destino_a_lineas()
+
+        return res
 
     def unlink(self):
         """Override para validar acceso al eliminar picking."""
