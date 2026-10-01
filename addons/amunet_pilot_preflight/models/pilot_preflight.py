@@ -193,38 +193,35 @@ class AmunetPilotPreflight(models.Model):
                 mo_user = rec.production_id.user_id
                 G = self.env.ref('amunet_production.group_solution_maker',
                                  raise_if_not_found=False)
+                # Se conserva el usuario REAL de la orden, que si es un dato: lo
+                # puso una persona. Lo que se quita es el fallback a "el primero del
+                # grupo", que era inventarse un responsable.
                 if mo_user and G and G in mo_user.group_ids:
-                    target = mo_user
-                else:
-                    target = rec._first_user('amunet_production.group_solution_maker')
-                if target and rec.production_user_id != target:
-                    vals['production_user_id'] = target.id
-            elif not rec.production_user_id:
-                vals['production_user_id'] = rec._first_user(
-                    'amunet_production.group_production_supervisor').id
-            if not rec.quality_user_id:
-                vals['quality_user_id'] = rec._first_user('amunet_quality.group_quality_user').id
-            if not rec.quality_supervisor_id:
-                vals['quality_supervisor_id'] = rec._first_user('amunet_quality.group_quality_supervisor').id
-            # Soluciones: NO se asigna Almacen ni Empaque (no aplican).
-            if not is_solution:
-                if not rec.warehouse_user_id:
-                    vals['warehouse_user_id'] = rec._first_user('amunet_material_request.group_material_warehouse').id
-                if not rec.packaging_user_id:
-                    vals['packaging_user_id'] = rec._first_user('amunet_packaging_planning.group_packaging_manager').id
+                    if rec.production_user_id != mo_user:
+                        vals['production_user_id'] = mo_user.id
+            # EL AUTOLLENADO SE QUITO el 01-oct-2026 (decision de Mery).
+            #
+            # Antes, cada rol se rellenaba con _first_user(grupo): "el primer usuario
+            # que aparezca en el grupo", sin orden definido, sin mirar si esta
+            # capacitado ni si trabaja en esa linea. Una vez escrito, ahi se quedaba.
+            #
+            # Eso creo un dato que el sistema se escribia solo y luego se rechazaba a
+            # si mismo: en PREF/2026/00001 (mayo) quedaron tres personas que despues
+            # cambiaron de grupo -- Diana paso a Supervisor QC, Veronica Natalia dejo
+            # Almacen- y el preflight siguio apuntandolas y bloqueando el piloto
+            # durante cuatro meses y medio.
+            #
+            # Ahora los campos de rol son INFORMATIVOS: quien se preve que lo haga. Si
+            # estan vacios no pasa nada, porque la validacion ya no pregunta por una
+            # persona concreta sino si HAY alguien que pueda ejercer el rol.
             if vals:
                 rec.write(vals)
 
-    def _first_user(self, group_xmlid):
-        group = self.env.ref(group_xmlid, raise_if_not_found=False)
-        if not group:
-            return self.env['res.users']
-        return self.env['res.users'].search([
-            ('active', '=', True),
-            ('group_ids', 'in', group.id),
-            ('share', '=', False),
-            ('login', '!=', 'fernando.ruiz@amunet.com.mx'),
-        ], limit=1)
+    # _first_user() se ELIMINO el 01-oct-2026. Escogia "el primer usuario del grupo"
+    # para rellenar los campos de rol, sin orden ni criterio, y ese dato inventado era
+    # el que despues bloqueaba el piloto. Si alguien lo necesita de nuevo, conviene
+    # revisar primero por que: nombrar a una persona concreta como responsable de un
+    # rol es justo lo que se quito.
 
     def _find_bom(self):
         self.ensure_one()
@@ -869,37 +866,90 @@ class AmunetPilotPreflight(models.Model):
                 ('people', 'Empaque / envios', rec.packaging_user_id, 'amunet_packaging_planning.group_packaging_manager'),
             ]
             for section, label, user, group_xmlid in role_specs:
-                group = self.env.ref(group_xmlid, raise_if_not_found=False)
-                if not user:
-                    rec._add_line(
-                        section,
-                        label,
-                        'block',
-                        'No hay usuario asignado para este rol.',
-                        'Asignar responsable antes del piloto.',
-                        sequence=500,
-                    )
-                    continue
-                if group and group not in user.group_ids:
-                    rec._add_line(
-                        section,
-                        label,
-                        'block',
-                        '%s no pertenece al grupo %s.' % (user.display_name, group.display_name),
-                        'Corregir permisos antes del piloto.',
-                        related=user,
-                        sequence=500,
-                    )
-                else:
-                    rec._add_line(
-                        section,
-                        label,
-                        'pass',
-                        '%s tiene permisos para su rol.' % user.display_name,
-                        related=user,
-                        sequence=500,
-                    )
-                self._check_training_for_user(rec, label, user)
+                rec._check_role_cubierto(section, label, user, group_xmlid)
+
+    def _check_role_cubierto(self, section, label, previsto, group_xmlid):
+        """Comprueba que HAYA alguien que pueda ejercer el rol, no que una persona
+        concreta lo tenga.
+
+        POR QUE CAMBIO (01-oct-2026, decision de Mery). Antes se exigia que la persona
+        escrita en el campo del rol perteneciera al grupo. Tres problemas:
+
+        1. Una ausencia paraba la produccion. Si esa persona estaba de vacaciones,
+           incapacitada o habia salido de la empresa, el piloto se bloqueaba aunque
+           hubiera cinco mas capacitadas para el mismo rol.
+        2. El dato lo escribia el propio sistema con "el primer usuario del grupo", y
+           cuando los grupos cambiaban el preflight seguia apuntando a quien ya no
+           correspondia. Asi estuvo PREF/2026/00001 bloqueado cuatro meses y medio.
+        3. Invitaba al error de persona. En ese mismo preflight se puso a "Veronica
+           Natalia Perez Ruiz" (PCR rapida) donde iba "Veronica Ortiz Moncada"
+           (almacen): dos nombres parecidos en una lista desplegable.
+
+        Lo que el preflight necesita garantizar es que el piloto SE PUEDE CORRER, y eso
+        se cumple si existe al menos una persona con el grupo y con capacitacion
+        vigente. Si no hay NADIE, ahi si bloquea: entonces de verdad no se puede.
+
+        El campo del rol queda informativo. Si trae a alguien que no ejerce ese rol se
+        avisa (warn), para que el dato desfasado se vea sin parar la produccion.
+        """
+        self.ensure_one()
+        group = self.env.ref(group_xmlid, raise_if_not_found=False)
+        if not group:
+            self._add_line(section, label, 'block',
+                           'El grupo %s no existe en el sistema.' % group_xmlid,
+                           'Revisar la instalacion del modulo.', sequence=500)
+            return
+
+        # has_group y no "group in group_ids": asi cuenta la herencia entre grupos. Un
+        # Supervisor QC puede hacer lo del Analista, y desde el 01-oct el modulo de
+        # calidad por fin lo implementa.
+        candidatos = self.env['res.users'].sudo().search([
+            ('active', '=', True), ('share', '=', False),
+        ]).filtered(lambda u: u.has_group(group_xmlid))
+
+        if not candidatos:
+            self._add_line(section, label, 'block',
+                           'Nadie en el sistema puede ejercer este rol (grupo %s vacio).'
+                           % group.display_name,
+                           'Asignar el grupo a quien corresponda antes del piloto.',
+                           sequence=500)
+            return
+
+        capacitados = candidatos.filtered(self._tiene_capacitacion_vigente)
+        if not capacitados:
+            self._add_line(section, label, 'block',
+                           '%s persona(s) con el rol, pero ninguna con capacitacion '
+                           'vigente: %s.' % (len(candidatos),
+                                             ', '.join(candidatos[:4].mapped('display_name'))),
+                           'Registrar la capacitacion antes del piloto.',
+                           related=candidatos[0], sequence=500)
+            return
+
+        self._add_line(section, label, 'pass',
+                       '%s persona(s) pueden ejercerlo con capacitacion vigente: %s.'
+                       % (len(capacitados),
+                          ', '.join(capacitados[:4].mapped('display_name'))),
+                       related=capacitados[0], sequence=500)
+
+        # El campo del rol es informativo: si trae a alguien que no lo ejerce, se avisa
+        # pero NO se bloquea. El piloto puede correr: hay quien lo haga.
+        if previsto and previsto not in capacitados:
+            motivo = ('no tiene capacitacion vigente' if previsto in candidatos
+                      else 'no ejerce ese rol')
+            self._add_line(section, '%s (previsto)' % label, 'warn',
+                           'El campo dice %s, que %s. El rol si esta cubierto por '
+                           'alguien mas.' % (previsto.display_name, motivo),
+                           'Actualizar el campo con quien lo vaya a hacer.',
+                           related=previsto, sequence=501)
+
+    def _tiene_capacitacion_vigente(self, user):
+        """sudo(): el preflight es una verificacion interna. Quien confirma una orden no
+        tiene por que poder navegar los registros de capacitacion de nadie. Sin sudo
+        revienta con AccessError y bloquea a quien no este en un grupo de Competencias
+        (reportado con Julissa el 09-sep-2026)."""
+        return bool(self.env['amunet.registro.capacitacion'].sudo().search_count([
+            ('user_id', '=', user.id), ('state', 'in', ('vigente', 'proxima')),
+        ]))
 
     def _check_training_for_user(self, rec, label, user):
         if not user:
