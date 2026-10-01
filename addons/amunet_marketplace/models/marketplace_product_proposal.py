@@ -129,13 +129,48 @@ class MarketplaceProductProposal(models.Model):
         return True
 
     def action_create_product(self):
+        """Da de alta el producto que propuso un area, ya aprobado.
+
+        amunet_alta_autorizada: el candado de altas bloquea la creacion de
+        productos por superusuario para que ningun proceso automatico cree
+        fichas 'al vuelo' al importar una orden de compra. Aqui NO es
+        automatico: la propuesta la aprobo alguien con permiso
+        (_check_can_manage) y el alta la dispara una persona apretando el
+        boton. Sin este contexto el boton era inservible: devolvia
+        "Creacion de producto bloqueada para procesos automaticos".
+
+        La clave es obligatoria: sin ella nace una ficha sin codificar, y de
+        esas se juntaron 37 en el catalogo del marketplace hasta el 30-sep-2026,
+        imposibles de cruzar con el inventario real.
+        """
         self._check_can_manage()
-        ProductTemplate = self.env['product.template'].sudo()
+        ProductTemplate = self.env['product.template'].sudo().with_context(
+            amunet_alta_autorizada=True)
         for rec in self:
             if rec.state != 'approved':
                 raise UserError(_('La propuesta debe estar aprobada antes de crear el producto.'))
+            if not rec.category_id:
+                raise UserError(_('La propuesta debe indicar una categoria antes de crear el producto.'))
+            clave = (rec.clave_propuesta or '').strip()
+            if not clave:
+                raise UserError(_(
+                    'La propuesta %s no tiene clave.\n\nUn producto sin clave '
+                    'no se puede cruzar con el inventario ni pedir por su '
+                    'codigo. Captura la clave propuesta antes de dar de alta '
+                    'el producto.') % rec.name)
+            existente = self.env['product.template'].sudo().with_context(
+                active_test=False).search([('default_code', '=', clave)], limit=1)
+            if existente:
+                raise UserError(_(
+                    'Ya existe un producto con la clave %(clave)s: '
+                    '%(nombre)s.\n\nNo se da de alta otro: seria el mismo '
+                    'articulo con dos fichas. Si es el mismo, liga esta '
+                    'propuesta a ese producto; si es distinto, cambiale la '
+                    'clave.') % {'clave': clave, 'nombre': existente.name})
             vals = {
                 'name': rec.name,
+                'default_code': clave,
+                'categ_id': rec.category_id.id,
                 'marketplace_enabled': True,
                 'marketplace_flow': rec.request_type,
                 'marketplace_purchase_url': rec.purchase_url,
@@ -144,10 +179,6 @@ class MarketplaceProductProposal(models.Model):
                 'sale_ok': False,
                 'is_storable': True,
             }
-            if rec.category_id:
-                vals['categ_id'] = rec.category_id.id
-            else:
-                raise UserError(_('La propuesta debe indicar una categoria antes de crear el producto.'))
             product = ProductTemplate.create(vals)
             rec.with_context(marketplace_proposal_internal_write=True).write({
                 'product_tmpl_id': product.id,
