@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 
 class AmunetQualityParameterProductRel(models.Model):
@@ -186,6 +187,74 @@ class AmunetQualityParameterProductRel(models.Model):
             # Esto se ejecutará al guardar, no en onchange
             # Ver método create() y write()
             pass
+
+    # ==================================================================
+    # AUDITORIA DEL BLOQUE
+    # ==================================================================
+    # Apagar un BLOQUE entero quita del analisis todas sus especificaciones de
+    # golpe, asi que necesita el mismo rastro que apagar una sola -- y la misma
+    # razon de cambio. Hasta el 2-oct-2026 este modelo no auditaba nada.
+    #
+    # Es el hermano del hueco que encontro el chequeo del 2-oct: 72
+    # especificaciones apagadas en ocho meses sin una sola linea de auditoria.
+    # Ver el encabezado de amunet_quality_parameter_specification_config.py.
+    #
+    # Razon de cambio exigida SOLO al desactivar. Decision de Mery, 2-oct-2026.
+    # ==================================================================
+
+    change_reason = fields.Char(
+        string='Razón de cambio',
+        help='Obligatoria para DESACTIVAR un bloque. Apagarlo quita del análisis '
+             'todas sus especificaciones a la vez.')
+
+    def _amunet_describe_bloque(self):
+        self.ensure_one()
+        prod = self.product_tmpl_id.default_code or self.product_tmpl_id.name or '?'
+        return '%s / %s' % (prod, self.parameter_id.name or '?')
+
+    def _amunet_asentar_bloque(self, campo, antes, despues, motivo):
+        self.ensure_one()
+        self.env['amunet.quality.audit.log'].sudo().create({
+            'model_name': self._name,
+            'res_id': self.id,
+            'res_name': self._amunet_describe_bloque(),
+            'field_name': campo,
+            'old_value': antes,
+            'new_value': despues,
+            'justification': motivo,
+            'user_id': self.env.user.id,
+        })
+
+    def write(self, vals):
+        if 'active' in vals and not vals.get('active'):
+            motivo = vals.get('change_reason')
+            for rec in self:
+                if rec.active and not (motivo or rec.change_reason):
+                    n = self.env['amunet.quality.parameter.specification.config'].sudo(
+                        ).search_count([('product_parameter_rel_id', '=', rec.id),
+                                        ('active', '=', True)])
+                    raise UserError(_(
+                        'Para DESACTIVAR el bloque "%(desc)s" hace falta una razón '
+                        'de cambio.\n\n'
+                        'Se apagarían de golpe sus %(n)s especificación(es) activas en '
+                        'todos los análisis futuros de ese producto. Escribe por qué '
+                        'en "Razón de cambio".'
+                    ) % {'desc': rec._amunet_describe_bloque(), 'n': n})
+
+        activos_antes = {rec.id: rec.active for rec in self} if 'active' in vals else {}
+        res = super().write(vals)
+        if res and 'active' in vals:
+            motivo_dado = vals.get('change_reason')
+            for rec in self:
+                if activos_antes.get(rec.id) == rec.active:
+                    continue
+                rec._amunet_asentar_bloque(
+                    'active', str(activos_antes.get(rec.id)), str(rec.active),
+                    motivo_dado or rec.change_reason or 'Cambio de configuración')
+                if rec.change_reason:
+                    super(AmunetQualityParameterProductRel,
+                          rec.sudo()).write({'change_reason': False})
+        return res
 
     # ========== Métodos CRUD ==========
 
