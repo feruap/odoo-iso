@@ -459,10 +459,131 @@ class AmunetQualityParameterProductRel(models.Model):
                         'max_value': 8.65,
                     })
 
+    @api.model
+    def _fix_soluciones_specs_v2(self):
+        """Correcciones de specs de soluciones según CC Soluciones actualizadas.docx (2026-10-02)."""
+        SpecConfig = self.env['amunet.quality.parameter.specification.config']
+        Tmpl = self.env['product.template']
+        cr = self.env.cr
+
+        # 1. MAVI-09: actualizar nominales y corregir SPAPB01 migración max 240→180
+        for code in ['SPAPB01', 'SPBAB01', 'SPBAB02', 'SPSAG01', 'SPHBB01']:
+            tmpl = Tmpl.search([('default_code', '=', code), ('active', '=', True)], limit=1)
+            if not tmpl:
+                continue
+            rel = self.search([
+                ('product_tmpl_id', '=', tmpl.id),
+                ('parameter_code', '=', 'MAVI-09'),
+                ('active', '=', True),
+            ])
+            if not rel:
+                continue
+            for sc in rel.specification_config_ids.filtered(lambda s: s.active):
+                sname = (sc.specification_name or '').lower()
+                if 'liberaci' in sname and sc.nominal_value == 0.0:
+                    sc.write({'nominal_value': 15.5})
+                elif 'migraci' in sname:
+                    update_vals = {}
+                    if sc.nominal_value == 0.0:
+                        update_vals['nominal_value'] = 105.0
+                    if abs(sc.max_value - 240.0) < 0.1 and tmpl.default_code == 'SPAPB01':
+                        update_vals.update({'max_value': 180.0, 'max_value_manual': 180.0})
+                    if update_vals:
+                        sc.write(update_vals)
+
+        # 2. Desactivar specs de MGA 0701 con valores cero en SPBAB02 y SPSAG01
+        for code in ['SPBAB02', 'SPSAG01']:
+            tmpl = Tmpl.search([('default_code', '=', code), ('active', '=', True)], limit=1)
+            if not tmpl:
+                continue
+            for rel in self.search([('product_tmpl_id', '=', tmpl.id), ('parameter_code', '=', 'MGA 0701')]):
+                for sc in rel.specification_config_ids.filtered(
+                    lambda s: s.active and s.nominal_value == 0.0
+                        and s.min_value == 0.0 and s.max_value == 0.0
+                ):
+                    cr.execute(
+                        "UPDATE amunet_quality_parameter_specification_config SET active=FALSE WHERE id=%s",
+                        (sc.id,)
+                    )
+
+        # 3. Corregir SPSAG01 MGA 0701 pH: 9.5 → 9.0 ± 0.05
+        spsag01 = Tmpl.search([('default_code', '=', 'SPSAG01'), ('active', '=', True)], limit=1)
+        if spsag01:
+            for rel in self.search([
+                ('product_tmpl_id', '=', spsag01.id),
+                ('parameter_code', '=', 'MGA 0701'),
+            ]):
+                for sc in rel.specification_config_ids.filtered(
+                    lambda s: s.active and abs(s.nominal_value - 9.5) < 0.01
+                ):
+                    sc.write({
+                        'nominal_value': 9.0,
+                        'min_value': 8.95,
+                        'max_value': 9.05,
+                        'min_value_manual': 8.95,
+                        'max_value_manual': 9.05,
+                    })
+
+        # 4. SPNPS01 MGA 0361: renombrar λmax y agregar IA, IS, AMA
+        spnps01 = Tmpl.search([('default_code', '=', 'SPNPS01'), ('active', '=', True)], limit=1)
+        if spnps01:
+            rel = self.search([
+                ('product_tmpl_id', '=', spnps01.id),
+                ('parameter_code', '=', 'MGA 0361'),
+                ('active', '=', True),
+            ], limit=1)
+            if rel:
+                active_specs = rel.specification_config_ids.filtered(lambda s: s.active)
+                existing_names = ' '.join(active_specs.mapped('specification_name') or [])
+
+                lmax_sc = active_specs.filtered(
+                    lambda s: s.specification_name == 'Densidad óptica'
+                )
+                if lmax_sc:
+                    lmax_sc.write({'specification_name': 'λmax 525 ± 2 nm'})
+
+                spec_ref = (lmax_sc or active_specs[:1]).specification_id
+                if not spec_ref:
+                    return
+
+                if 'IA' not in existing_names:
+                    SpecConfig.create({
+                        'product_parameter_rel_id': rel.id,
+                        'specification_id': spec_ref.id,
+                        'specification_name': 'IA (índice de amarillamiento) ≤ 0.07',
+                        'evaluation_type': 'numeric_range',
+                        'nominal_value': 0.0,
+                        'min_value': 0.0, 'max_value': 0.07,
+                        'min_value_manual': 0.0, 'max_value_manual': 0.07,
+                        'use_manual_range': True, 'active': True,
+                    })
+                if 'IS' not in existing_names:
+                    SpecConfig.create({
+                        'product_parameter_rel_id': rel.id,
+                        'specification_id': spec_ref.id,
+                        'specification_name': 'IS (índice de saturación) ≥ 13',
+                        'evaluation_type': 'numeric_range',
+                        'nominal_value': 0.0,
+                        'min_value': 13.0, 'max_value': 9999.0,
+                        'min_value_manual': 13.0, 'max_value_manual': 9999.0,
+                        'use_manual_range': True, 'active': True,
+                    })
+                if 'AMA' not in existing_names:
+                    SpecConfig.create({
+                        'product_parameter_rel_id': rel.id,
+                        'specification_id': spec_ref.id,
+                        'specification_name': 'AMA (ancho máximo de absorción) ≤ 57 nm',
+                        'evaluation_type': 'numeric_range',
+                        'nominal_value': 0.0,
+                        'min_value': 0.0, 'max_value': 57.0,
+                        'min_value_manual': 0.0, 'max_value_manual': 57.0,
+                        'use_manual_range': True, 'active': True,
+                    })
+
     def get_test_line_values(self):
         """
         Prepara los valores para crear una línea de test en el QC.
-        
+
         Returns:
             dict: Valores para amunet.quality.test.line
         """
