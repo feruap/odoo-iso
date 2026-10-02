@@ -9,6 +9,12 @@ class MarketplaceProductProposal(models.Model):
     _order = 'create_date desc, id desc'
 
     name = fields.Char(string='Producto propuesto', required=True, tracking=True)
+    amunet_inventariable = fields.Boolean(
+        string='Se lleva en inventario', default=True, tracking=True,
+        help='Marcado: el producto se cuenta en el almacen y necesita clave '
+             'Amunet. Sin marcar: se compra y se consume sin contarlo -- '
+             'limpieza, papeleria de uso inmediato, servicios -- y entonces '
+             'no se le pide clave.')
     requester_id = fields.Many2one(
         'res.users',
         string='Solicitante',
@@ -139,9 +145,11 @@ class MarketplaceProductProposal(models.Model):
         boton. Sin este contexto el boton era inservible: devolvia
         "Creacion de producto bloqueada para procesos automaticos".
 
-        La clave es obligatoria: sin ella nace una ficha sin codificar, y de
-        esas se juntaron 37 en el catalogo del marketplace hasta el 30-sep-2026,
-        imposibles de cruzar con el inventario real.
+        La clave es obligatoria SOLO para lo que se lleva en inventario: sin
+        ella nace una ficha sin codificar, y de esas se juntaron 37 en el
+        catalogo hasta el 30-sep-2026, imposibles de cruzar con las
+        existencias. Lo que no se inventaria (limpieza, papeleria de uso
+        inmediato) no tiene nada que cruzar y se da de alta sin clave.
         """
         self._check_can_manage()
         ProductTemplate = self.env['product.template'].sudo().with_context(
@@ -149,16 +157,31 @@ class MarketplaceProductProposal(models.Model):
         for rec in self:
             if rec.state != 'approved':
                 raise UserError(_('La propuesta debe estar aprobada antes de crear el producto.'))
-            if not rec.category_id:
-                raise UserError(_('La propuesta debe indicar una categoria antes de crear el producto.'))
-            clave = (rec.clave_propuesta or '').strip()
-            if not clave:
+            # La categoria manda la valoracion y las cuentas del inventario. A
+            # lo que NO se inventaria no le aplica, asi que no se exige: Odoo
+            # le pone la suya por omision. Exigirla solo obligaba a clasificar
+            # una escoba en una categoria de almacen que nadie va a consultar.
+            if rec.amunet_inventariable and not rec.category_id:
                 raise UserError(_(
-                    'La propuesta %s no tiene clave.\n\nUn producto sin clave '
-                    'no se puede cruzar con el inventario ni pedir por su '
-                    'codigo. Captura la clave propuesta antes de dar de alta '
-                    'el producto.') % rec.name)
-            existente = self.env['product.template'].sudo().with_context(
+                    'La propuesta %s no tiene categoria.\n\nUn producto que se '
+                    'lleva en inventario necesita categoria: de ahi salen su '
+                    'valoracion y sus cuentas.\n\nSi este no se inventaria '
+                    '(limpieza, papeleria de uso inmediato), desmarca "Se lleva '
+                    'en inventario" y no hara falta.') % rec.name)
+            clave = (rec.clave_propuesta or '').strip()
+            # La clave es para cruzar con el inventario. Un producto que no se
+            # inventaria -- un mechudo, un trapeador, papeleria de uso
+            # inmediato -- no tiene nada que cruzar, y exigirsela solo obliga a
+            # inventar codigos que nadie va a usar.
+            if rec.amunet_inventariable and not clave:
+                raise UserError(_(
+                    'La propuesta %s no tiene clave.\n\nUn producto que se '
+                    'lleva en inventario necesita clave para cruzarlo con las '
+                    'existencias y pedirlo por su codigo.\n\nSi este no se '
+                    'inventaria (limpieza, papeleria de uso inmediato), '
+                    'desmarca "Se lleva en inventario" y no hara falta.'
+                ) % rec.name)
+            existente = clave and self.env['product.template'].sudo().with_context(
                 active_test=False).search([('default_code', '=', clave)], limit=1)
             if existente:
                 raise UserError(_(
@@ -169,16 +192,28 @@ class MarketplaceProductProposal(models.Model):
                     'clave.') % {'clave': clave, 'nombre': existente.name})
             vals = {
                 'name': rec.name,
-                'default_code': clave,
-                'categ_id': rec.category_id.id,
                 'marketplace_enabled': True,
                 'marketplace_flow': rec.request_type,
                 'marketplace_purchase_url': rec.purchase_url,
                 'image_1920': rec.image_1920,
                 'purchase_ok': True,
                 'sale_ok': False,
-                'is_storable': True,
+                'is_storable': rec.amunet_inventariable,
             }
+            if clave:
+                vals['default_code'] = clave
+            if rec.category_id:
+                vals['categ_id'] = rec.category_id.id
+            else:
+                # Sin categoria explicita (solo pasa en lo que no se
+                # inventaria): se clasifica como GASTO, que es lo que es --
+                # se compra y se consume. Dejarlo sin categoria no es opcion:
+                # ya hay 9 productos asi en produccion y quedan fuera de
+                # cualquier reporte que agrupe por categoria.
+                gastos = self.env.ref('product.product_category_expenses',
+                                      raise_if_not_found=False)
+                if gastos:
+                    vals['categ_id'] = gastos.id
             product = ProductTemplate.create(vals)
             rec.with_context(marketplace_proposal_internal_write=True).write({
                 'product_tmpl_id': product.id,
