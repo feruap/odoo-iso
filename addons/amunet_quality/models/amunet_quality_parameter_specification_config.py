@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
 
 
 class AmunetQualityParameterSpecificationConfig(models.Model):
@@ -559,3 +559,124 @@ class AmunetQualityParameterSpecificationConfig(models.Model):
                 raise ValidationError(
                     f'La especificación "{record.specification_id.name}" ya está configurada para este parámetro'
                 )
+
+    # ==================================================================
+    # AUDITORIA DEL CATALOGO
+    # ==================================================================
+    # POR QUE EXISTE. Hasta el 2-oct-2026 este modelo -- el CATALOGO maestro de
+    # especificaciones por producto -- no tenia ninguna auditoria, mientras que su
+    # gemelo `amunet.quality.check.parameter.specification` (la COPIA que vive
+    # dentro de un analisis ya creado) si auditaba 8 campos y hasta exigia razon
+    # de cambio.
+    #
+    # Estaba vigilado el lugar equivocado: en la copia el daño es local, a un solo
+    # analisis; en el catalogo se propaga a TODOS los analisis futuros, porque de
+    # aqui se copian.
+    #
+    # LO QUE COSTO. El chequeo diario del 2-oct encontro 15 bloques que salen
+    # vacios en el analisis: 72 especificaciones apagadas, repartidas en OCHO MESES
+    # (18-feb, 25-feb, 17-ago, 02-sep, 17-sep, 24-sep), por manos distintas, y
+    # **ninguna con rastro de quien ni por que**. El log de auditoria existia y no
+    # registro una sola.
+    #
+    # LA RAZON DE CAMBIO SE EXIGE SOLO AL DESACTIVAR. Decision de Mery,
+    # 2-oct-2026. Apagar un criterio de aceptacion es el acto que de verdad
+    # necesita explicacion -- es el que nos mordio --; corregir un rango de 0-0 a
+    # su valor correcto es evidentemente una correccion y pedir justificacion ahi
+    # solo pondria friccion al trabajo.
+    # ==================================================================
+
+    AMUNET_CAMPOS_AUDITADOS = (
+        'active', 'min_value', 'max_value', 'nominal_value', 'tolerance',
+        'evaluation_type', 'acceptance_criteria', 'specification_name',
+    )
+
+    change_reason = fields.Char(
+        string='Razón de cambio',
+        help='Obligatoria para DESACTIVAR una especificación. Apagar un criterio '
+             'de aceptación deja de pedirlo en todos los análisis futuros, así que '
+             'tiene que quedar dicho por qué.')
+
+    def _amunet_valor_legible(self, valor):
+        """Un valor como lo leeria una persona en el log."""
+        if hasattr(valor, 'display_name'):
+            return valor.display_name or str(valor.id)
+        if hasattr(valor, 'name'):
+            return valor.name
+        return str(valor)
+
+    def _amunet_asentar(self, campo, antes, despues, motivo):
+        self.ensure_one()
+        self.env['amunet.quality.audit.log'].sudo().create({
+            'model_name': self._name,
+            'res_id': self.id,
+            'res_name': self.display_name or ('config %s' % self.id),
+            'field_name': campo,
+            'old_value': antes,
+            'new_value': despues,
+            'justification': motivo,
+            'user_id': self.env.user.id,
+        })
+
+    def _amunet_describe(self):
+        """De quien es esta especificacion, para que el log se entienda solo."""
+        self.ensure_one()
+        rel = self.product_parameter_rel_id
+        prod = rel.product_tmpl_id.default_code or rel.product_tmpl_id.name or '?'
+        bloque = rel.parameter_id.name or '?'
+        return '%s / %s / %s' % (prod, bloque, self.specification_name or '(sin nombre)')
+
+    def write(self, vals):
+        tocados = [c for c in self.AMUNET_CAMPOS_AUDITADOS if c in vals]
+
+        # La razon se exige SOLO al desactivar, y solo a las que de verdad se apagan.
+        if 'active' in vals and not vals.get('active'):
+            motivo = vals.get('change_reason')
+            for rec in self:
+                if rec.active and not (motivo or rec.change_reason):
+                    raise UserError(_(
+                        'Para DESACTIVAR la especificación "%(desc)s" hace falta una '
+                        'razón de cambio.\n\n'
+                        'Apagarla deja de pedirla en todos los análisis futuros de ese '
+                        'producto, y el bloque puede quedar vacío sin que nadie se '
+                        'entere. Escribe por qué en "Razón de cambio".'
+                    ) % {'desc': rec._amunet_describe()})
+
+        antes = {}
+        for rec in self:
+            for campo in tocados:
+                antes[(rec.id, campo)] = rec._amunet_valor_legible(rec[campo])
+
+        res = super().write(vals)
+
+        if res and tocados:
+            motivo_dado = vals.get('change_reason')
+            for rec in self:
+                motivo = motivo_dado or rec.change_reason or 'Cambio de configuración'
+                for campo in tocados:
+                    v_antes = antes.get((rec.id, campo))
+                    v_despues = rec._amunet_valor_legible(rec[campo])
+                    if v_antes != v_despues:
+                        rec._amunet_asentar(campo, v_antes, v_despues, motivo)
+                if rec.change_reason:
+                    super(AmunetQualityParameterSpecificationConfig,
+                          rec.sudo()).write({'change_reason': False})
+        return res
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Crear una especificacion con un rango es tan auditable como cambiarla:
+        # para Cofepris "aparecio" necesita explicacion igual que "cambio".
+        recs = super().create(vals_list)
+        for rec in recs:
+            rec._amunet_asentar(
+                'create', '', rec._amunet_describe(),
+                (rec.change_reason or 'Alta de especificación en el catálogo'))
+        return recs
+
+    def unlink(self):
+        # Se asienta ANTES de borrar: despues ya no hay de donde leer.
+        for rec in self:
+            rec._amunet_asentar('unlink', rec._amunet_describe(), '',
+                                (rec.change_reason or 'Baja de especificación del catálogo'))
+        return super().unlink()
