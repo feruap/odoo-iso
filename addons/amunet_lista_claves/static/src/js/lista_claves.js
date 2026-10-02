@@ -3,6 +3,15 @@ import { Component, useState, onWillStart } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
+// Subcategorías que se agrupan bajo una pestaña padre
+const GRUPOS_PADRE = {
+    "Hojas Maestras": ["HMC", "HMT"],
+};
+const SUBCAT_A_PADRE = {};
+for (const [padre, subs] of Object.entries(GRUPOS_PADRE)) {
+    for (const sub of subs) SUBCAT_A_PADRE[sub] = padre;
+}
+
 const CLASIFICACIONES = {
     mp: { label: "Materia Prima",          icon: "fa-cubes",       color: "#2d6a4f" },
     sp: { label: "Semiprocesado",          icon: "fa-flask",       color: "#1d3557" },
@@ -28,6 +37,7 @@ export class AmunetListaClaves extends Component {
             counts:            {},
             loading:           true,
             tabActiva:         null,
+            subTabActiva:      null,
             busqueda:          "",
             resultadoBusqueda: null,
             buscando:          false,
@@ -64,7 +74,9 @@ export class AmunetListaClaves extends Component {
         this.state.vista            = "clasificacion";
         this.state.loading          = false;
         const conTab = this._gruposConPestana(this.state.claves);
-        this.state.tabActiva = conTab.length ? conTab[0].nombre : null;
+        const primerTab = conTab.length ? conTab[0] : null;
+        this.state.tabActiva    = primerTab ? primerTab.nombre : null;
+        this.state.subTabActiva = primerTab?.esGrupoPadre ? (primerTab.subgrupos[0]?.nombre ?? null) : null;
     }
 
     volverHub() {
@@ -74,7 +86,13 @@ export class AmunetListaClaves extends Component {
         this._cargarConteos();
     }
 
-    setTab(nombre) { this.state.tabActiva = nombre; }
+    setTab(nombre) {
+        this.state.tabActiva = nombre;
+        const grupo = this.gruposConPestana.find(g => g.nombre === nombre);
+        this.state.subTabActiva = grupo?.esGrupoPadre ? (grupo.subgrupos[0]?.nombre ?? null) : null;
+    }
+
+    setSubTab(nombre) { this.state.subTabActiva = nombre; }
 
     _agrupar(claves) {
         const map = {};
@@ -86,8 +104,32 @@ export class AmunetListaClaves extends Component {
         return Object.entries(map).map(([nombre, items]) => ({ nombre, items }));
     }
 
-    _gruposConPestana(claves)  { return this._agrupar(claves).filter(g => g.items.length >= 2); }
-    _gruposSinPestana(claves)  { return this._agrupar(claves).filter(g => g.items.length < 2); }
+    _gruposConPestana(claves) {
+        const grupos = this._agrupar(claves);
+        const padresVistos = new Set();
+        const resultado = [];
+        for (const g of grupos) {
+            if (g.items.length < 2) continue;
+            const padre = SUBCAT_A_PADRE[g.nombre];
+            if (padre) {
+                if (!padresVistos.has(padre)) {
+                    padresVistos.add(padre);
+                    const subgrupos = grupos
+                        .filter(x => SUBCAT_A_PADRE[x.nombre] === padre && x.items.length >= 2)
+                        .map(x => ({ nombre: x.nombre, items: x.items }));
+                    const total = subgrupos.reduce((s, x) => s + x.items.length, 0);
+                    resultado.push({ nombre: padre, esGrupoPadre: true, subgrupos, items: [], total });
+                }
+            } else {
+                resultado.push({ nombre: g.nombre, esGrupoPadre: false, subgrupos: null, items: g.items, total: g.items.length });
+            }
+        }
+        return resultado;
+    }
+
+    _gruposSinPestana(claves) {
+        return this._agrupar(claves).filter(g => g.items.length < 2 && !SUBCAT_A_PADRE[g.nombre]);
+    }
 
     get clasificacionActual()  { return CLASIFICACIONES[this.state.clasificacion] || {}; }
     get clasificacionesList()  {

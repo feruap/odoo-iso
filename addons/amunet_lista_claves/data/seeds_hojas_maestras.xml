@@ -1,0 +1,703 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="clave_sphmc01" model="amunet.clave">
+        <field name="clave">SPHMC01</field>
+        <field name="nombre">Hoja Maestra Covinet Ag</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc02" model="amunet.clave">
+        <field name="clave">SPHMC02</field>
+        <field name="nombre">Hoja Maestra Coronavirus</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc03" model="amunet.clave">
+        <field name="clave">SPHMC03</field>
+        <field name="nombre">Hoja Maestra Clamidia IgM Ac</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc04" model="amunet.clave">
+        <field name="clave">SPHMC04</field>
+        <field name="nombre">Hoja Maestra Albúmina cualitativa</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc05" model="amunet.clave">
+        <field name="clave">SPHMC05</field>
+        <field name="nombre">Hoja Maestra Chagas</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc06" model="amunet.clave">
+        <field name="clave">SPHMC06</field>
+        <field name="nombre">Hoja Maestra VIH 1.2</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc07" model="amunet.clave">
+        <field name="clave">SPHMC07</field>
+        <field name="nombre">Hoja Maestra Hemoglobina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc08" model="amunet.clave">
+        <field name="clave">SPHMC08</field>
+        <field name="nombre">Hoja Maestra Clamidia</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc09" model="amunet.clave">
+        <field name="clave">SPHMC09</field>
+        <field name="nombre">Hoja Maestra Vitamina D</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc10" model="amunet.clave">
+        <field name="clave">SPHMC10</field>
+        <field name="nombre">Hoja Maestra Marihuana (THC) en orina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc11" model="amunet.clave">
+        <field name="clave">SPHMC11</field>
+        <field name="nombre">Hoja Maestra Anfetamina (AMP) en orina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc12" model="amunet.clave">
+        <field name="clave">SPHMC12</field>
+        <field name="nombre">Hoja Maestra Cocaina (COC) en orina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc13" model="amunet.clave">
+        <field name="clave">SPHMC13</field>
+        <field name="nombre">Hoja Maestra Metanfetamina (MET) en orina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc14" model="amunet.clave">
+        <field name="clave">SPHMC14</field>
+        <field name="nombre">Hoja Maestra Opiáceos (OPI) en orina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc15" model="amunet.clave">
+        <field name="clave">SPHMC15</field>
+        <field name="nombre">Hoja Maestra Influenza A+B</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc16" model="amunet.clave">
+        <field name="clave">SPHMC16</field>
+        <field name="nombre">Hoja Maestra Albumina semicuantitativa</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc17" model="amunet.clave">
+        <field name="clave">SPHMC17</field>
+        <field name="nombre">Hoja Maestra Cardiac combo</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc18" model="amunet.clave">
+        <field name="clave">SPHMC18</field>
+        <field name="nombre">Hoja Maestra Dengue IgG/IgM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc19" model="amunet.clave">
+        <field name="clave">SPHMC19</field>
+        <field name="nombre">Hoja Maestra Dengue NS1</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc20" model="amunet.clave">
+        <field name="clave">SPHMC20</field>
+        <field name="nombre">Hoja Maestra RSV</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc21" model="amunet.clave">
+        <field name="clave">SPHMC21</field>
+        <field name="nombre">Hoja Maestra hCG múltimuestra</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc22" model="amunet.clave">
+        <field name="clave">SPHMC22</field>
+        <field name="nombre">Hoja Maestra Sifilis</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc23" model="amunet.clave">
+        <field name="clave">SPHMC23</field>
+        <field name="nombre">Hoja Maestra VIH p24</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc24" model="amunet.clave">
+        <field name="clave">SPHMC24</field>
+        <field name="nombre">Hoja Maestra PSA cualitativa</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc25" model="amunet.clave">
+        <field name="clave">SPHMC25</field>
+        <field name="nombre">Hoja Maestra Ferritina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc26" model="amunet.clave">
+        <field name="clave">SPHMC26</field>
+        <field name="nombre">Hoja Maestra AMH</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc27" model="amunet.clave">
+        <field name="clave">SPHMC27</field>
+        <field name="nombre">Hoja Maestra Rotavirus/Adenovirus</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc28" model="amunet.clave">
+        <field name="clave">SPHMC28</field>
+        <field name="nombre">Hoja Maestra Tuberculosis</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc29" model="amunet.clave">
+        <field name="clave">SPHMC29</field>
+        <field name="nombre">Hoja Maestra Giardia lamblia</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc30" model="amunet.clave">
+        <field name="clave">SPHMC30</field>
+        <field name="nombre">Hoja Maestra Mononucleosis</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc31" model="amunet.clave">
+        <field name="clave">SPHMC31</field>
+        <field name="nombre">Hoja Maestra Entamoeba, Giardia, Crypto</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc32" model="amunet.clave">
+        <field name="clave">SPHMC32</field>
+        <field name="nombre">Hoja Maestra Mycoplasma</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc33" model="amunet.clave">
+        <field name="clave">SPHMC33</field>
+        <field name="nombre">Hoja Maestra CA 125</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc34" model="amunet.clave">
+        <field name="clave">SPHMC34</field>
+        <field name="nombre">Hoja Maestra CA 15-3</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc35" model="amunet.clave">
+        <field name="clave">SPHMC35</field>
+        <field name="nombre">Hoja Maestra CA 19-9</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc36" model="amunet.clave">
+        <field name="clave">SPHMC36</field>
+        <field name="nombre">Hoja Maestra Alfafetoproteína</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc37" model="amunet.clave">
+        <field name="clave">SPHMC37</field>
+        <field name="nombre">Hoja Maestra TSH cualitativa</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc38" model="amunet.clave">
+        <field name="clave">SPHMC38</field>
+        <field name="nombre">Hoja Maestra PSA semicuantitativa</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc39" model="amunet.clave">
+        <field name="clave">SPHMC39</field>
+        <field name="nombre">Hoja Maestra Dimero D</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc40" model="amunet.clave">
+        <field name="clave">SPHMC40</field>
+        <field name="nombre">Hoja Maestra H. pylori Ac</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc41" model="amunet.clave">
+        <field name="clave">SPHMC41</field>
+        <field name="nombre">Hoja Maestra Tetanos</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc42" model="amunet.clave">
+        <field name="clave">SPHMC42</field>
+        <field name="nombre">Hoja Maestra Factor reumatoide</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc43" model="amunet.clave">
+        <field name="clave">SPHMC43</field>
+        <field name="nombre">Hoja Maestra Tifoidea</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc44" model="amunet.clave">
+        <field name="clave">SPHMC44</field>
+        <field name="nombre">Hoja Maestra Campylobacter</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc45" model="amunet.clave">
+        <field name="clave">SPHMC45</field>
+        <field name="nombre">Hoja Maestra Salmonella typhi</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc46" model="amunet.clave">
+        <field name="clave">SPHMC46</field>
+        <field name="nombre">Hoja Maestra H. pylori Ag</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc47" model="amunet.clave">
+        <field name="clave">SPHMC47</field>
+        <field name="nombre">Hoja Maestra Fibronectina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc48" model="amunet.clave">
+        <field name="clave">SPHMC48</field>
+        <field name="nombre">Hoja Maestra Entamoeba</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc49" model="amunet.clave">
+        <field name="clave">SPHMC49</field>
+        <field name="nombre">Hoja Maestra ToRCH Toxoplasma IgG/IgM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc50" model="amunet.clave">
+        <field name="clave">SPHMC50</field>
+        <field name="nombre">Hoja Maestra IgE</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc51" model="amunet.clave">
+        <field name="clave">SPHMC51</field>
+        <field name="nombre">Hoja Maestra Estreptococcus B</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc52" model="amunet.clave">
+        <field name="clave">SPHMC52</field>
+        <field name="nombre">Hoja Maestra TSH semicuantitativa</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc53" model="amunet.clave">
+        <field name="clave">SPHMC53</field>
+        <field name="nombre">Hoja Maestra Antidoping Saliva 2 Parámetros (MET, THC)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc54" model="amunet.clave">
+        <field name="clave">SPHMC54</field>
+        <field name="nombre">Hoja Maestra Antidoping Saliva 3 Parámetros (OPI, COC, AMP)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc55" model="amunet.clave">
+        <field name="clave">SPHMC55</field>
+        <field name="nombre">Hoja Maestra Calprotectina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc56" model="amunet.clave">
+        <field name="clave">SPHMC56</field>
+        <field name="nombre">Hoja Maestra Chikungunya</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc57" model="amunet.clave">
+        <field name="clave">SPHMC57</field>
+        <field name="nombre">Hoja Maestra Estreptococcus A</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc58" model="amunet.clave">
+        <field name="clave">SPHMC58</field>
+        <field name="nombre">Hoja Maestra Streptococcus pneumoniae</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc59" model="amunet.clave">
+        <field name="clave">SPHMC59</field>
+        <field name="nombre">Hoja Maestra NT-proBNP</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc60" model="amunet.clave">
+        <field name="clave">SPHMC60</field>
+        <field name="nombre">Hoja Maestra Shigella</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc61" model="amunet.clave">
+        <field name="clave">SPHMC61</field>
+        <field name="nombre">Hoja Maestra Zika NS1</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc62" model="amunet.clave">
+        <field name="clave">SPHMC62</field>
+        <field name="nombre">Hoja Maestra Zika IgG/IgM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc63" model="amunet.clave">
+        <field name="clave">SPHMC63</field>
+        <field name="nombre">Hoja Maestra Fentanilo</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc64" model="amunet.clave">
+        <field name="clave">SPHMC64</field>
+        <field name="nombre">Hoja Maestra Transferrina/FOB</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc65" model="amunet.clave">
+        <field name="clave">SPHMC65</field>
+        <field name="nombre">Hoja Maestra hCG SSP</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc66" model="amunet.clave">
+        <field name="clave">SPHMC66</field>
+        <field name="nombre">Hoja Maestra Candida</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc67" model="amunet.clave">
+        <field name="clave">SPHMC67</field>
+        <field name="nombre">Hoja Maestra Alcohol en saliva</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc68" model="amunet.clave">
+        <field name="clave">SPHMC68</field>
+        <field name="nombre">Hoja Maestra pH vaginal</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc69" model="amunet.clave">
+        <field name="clave">SPHMC69</field>
+        <field name="nombre">Hoja Maestra ToRCH Rubeolla IgG/IgM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc70" model="amunet.clave">
+        <field name="clave">SPHMC70</field>
+        <field name="nombre">Hoja Maestra ToRCH Citomegalovirus IgG/IgM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc71" model="amunet.clave">
+        <field name="clave">SPHMC71</field>
+        <field name="nombre">Hoja Maestra Gonorrea</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc72" model="amunet.clave">
+        <field name="clave">SPHMC72</field>
+        <field name="nombre">Hoja Maestra Cryptococcus</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc73" model="amunet.clave">
+        <field name="clave">SPHMC73</field>
+        <field name="nombre">Hoja Maestra FABP (cardiac combo)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc74" model="amunet.clave">
+        <field name="clave">SPHMC74</field>
+        <field name="nombre">Hoja Maestra cTnl I (cardiac combo)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc75" model="amunet.clave">
+        <field name="clave">SPHMC75</field>
+        <field name="nombre">Hoja Maestra Antidoping Sangre 2 Parámetros (COC, AMP)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc76" model="amunet.clave">
+        <field name="clave">SPHMC76</field>
+        <field name="nombre">Hoja Maestra Antidoping Sangre 3 Parámetros (OPI, MET, THC)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc77" model="amunet.clave">
+        <field name="clave">SPHMC77</field>
+        <field name="nombre">Hoja Maestra Transglutaminasa IgA</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc78" model="amunet.clave">
+        <field name="clave">SPHMC78</field>
+        <field name="nombre">Hoja Maestra HPV E7</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc79" model="amunet.clave">
+        <field name="clave">SPHMC79</field>
+        <field name="nombre">Hoja Maestra CARBA 5 en 1</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc80" model="amunet.clave">
+        <field name="clave">SPHMC80</field>
+        <field name="nombre">Hoja Maestra ToRCH Herpes 1/2 IgG/IgM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc81" model="amunet.clave">
+        <field name="clave">SPHMC81</field>
+        <field name="nombre">Hoja Maestra Antidoping Saliva 5 Parametros (OPI/COC/AMP/MET/THC)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc82" model="amunet.clave">
+        <field name="clave">SPHMC82</field>
+        <field name="nombre">Hoja Maestra Zika Combo IgG/IgM + NS1</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc83" model="amunet.clave">
+        <field name="clave">SPHMC83</field>
+        <field name="nombre">Hoja Maestra Dengue/Zika/Chikungunya Combo 3en1</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc84" model="amunet.clave">
+        <field name="clave">SPHMC84</field>
+        <field name="nombre">Hoja Maestra Zika/Chikungunya Combo</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc85" model="amunet.clave">
+        <field name="clave">SPHMC85</field>
+        <field name="nombre">Hoja Maestra Dengue IgG/IgM CM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc86" model="amunet.clave">
+        <field name="clave">SPHMC86</field>
+        <field name="nombre">Hoja Maestra Zika IgG/IgM CM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc87" model="amunet.clave">
+        <field name="clave">SPHMC87</field>
+        <field name="nombre">Hoja Maestra Chikungunya IgG CM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmc88" model="amunet.clave">
+        <field name="clave">SPHMC88</field>
+        <field name="nombre">Hoja Maestra Chikungunya IgM CM</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMC</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt01" model="amunet.clave">
+        <field name="clave">SPHMT01</field>
+        <field name="nombre">Hoja Maestra Biotina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt02" model="amunet.clave">
+        <field name="clave">SPHMT02</field>
+        <field name="nombre">Hoja Maestra Infecciones urinarias</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt03" model="amunet.clave">
+        <field name="clave">SPHMT03</field>
+        <field name="nombre">Hoja Maestra VPH</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt04" model="amunet.clave">
+        <field name="clave">SPHMT04</field>
+        <field name="nombre">Hoja Maestra Pylorinet</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt05" model="amunet.clave">
+        <field name="clave">SPHMT05</field>
+        <field name="nombre">Hoja Maestra TB-DxNet</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt06" model="amunet.clave">
+        <field name="clave">SPHMT06</field>
+        <field name="nombre">Hoja Maestra hCG orina</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt07" model="amunet.clave">
+        <field name="clave">SPHMT07</field>
+        <field name="nombre">Hoja Maestra Marihuana (THC)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt08" model="amunet.clave">
+        <field name="clave">SPHMT08</field>
+        <field name="nombre">Hoja Maestra Anfetamina (AMP)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt09" model="amunet.clave">
+        <field name="clave">SPHMT09</field>
+        <field name="nombre">Hoja Maestra Cocaina (COC)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt10" model="amunet.clave">
+        <field name="clave">SPHMT10</field>
+        <field name="nombre">Hoja Maestra Metanfetamina (MET)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt11" model="amunet.clave">
+        <field name="clave">SPHMT11</field>
+        <field name="nombre">Hoja Maestra Opiaceos (OPI)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_sphmt12" model="amunet.clave">
+        <field name="clave">SPHMT12</field>
+        <field name="nombre">Hoja Maestra Fentanilo (FEN)</field>
+        <field name="clasificacion">sp</field>
+        <field name="subcategoria">HMT</field>
+        <field name="estado">activa</field>
+    </record>
+</odoo>

@@ -52,6 +52,7 @@
                         <i class="fa fa-exclamation-triangle me-2"/>
                         <strong t-esc="state.resultadoBusqueda.clave"/> fue usada antes (archivada):
                         <t t-esc="state.resultadoBusqueda.nombre"/>
+                        <span class="o_amunet_lc_resultado_nota">— Pide verificación completa antes de reutilizar</span>
                     </t>
                 </div>
             </t>
@@ -95,7 +96,7 @@
                     <button t-attf-class="o_amunet_lc_tab {{ state.tabActiva === grupo.nombre ? 'active' : '' }}"
                             t-on-click="() => this.setTab(grupo.nombre)">
                         <t t-esc="grupo.nombre"/>
-                        <span class="o_amunet_lc_tab_badge" t-esc="grupo.items.length"/>
+                        <span class="o_amunet_lc_tab_badge" t-esc="grupo.total"/>
                     </button>
                 </t>
                 <t t-if="hayInactivas">
@@ -109,8 +110,30 @@
             <div class="o_amunet_lc_tab_content">
                 <t t-foreach="gruposConPestana" t-as="grupo" t-key="grupo.nombre">
                     <t t-if="state.tabActiva === grupo.nombre">
-                        <t t-call="amunet_lista_claves.TablaClaves">
-                            <t t-set="items" t-value="grupo.items"/>
+                        <!-- Grupo padre: muestra sub-pestañas y su tabla -->
+                        <t t-if="grupo.esGrupoPadre">
+                            <div class="o_amunet_lc_subtabs">
+                                <t t-foreach="grupo.subgrupos" t-as="sub" t-key="sub.nombre">
+                                    <button t-attf-class="o_amunet_lc_subtab {{ state.subTabActiva === sub.nombre ? 'active' : '' }}"
+                                            t-on-click="() => this.setSubTab(sub.nombre)">
+                                        <t t-esc="sub.nombre"/>
+                                        <span class="o_amunet_lc_tab_badge" t-esc="sub.items.length"/>
+                                    </button>
+                                </t>
+                            </div>
+                            <t t-foreach="grupo.subgrupos" t-as="sub" t-key="sub.nombre">
+                                <t t-if="state.subTabActiva === sub.nombre">
+                                    <t t-call="amunet_lista_claves.TablaClaves">
+                                        <t t-set="items" t-value="sub.items"/>
+                                    </t>
+                                </t>
+                            </t>
+                        </t>
+                        <!-- Grupo normal: muestra tabla directamente -->
+                        <t t-else="">
+                            <t t-call="amunet_lista_claves.TablaClaves">
+                                <t t-set="items" t-value="grupo.items"/>
+                            </t>
                         </t>
                     </t>
                 </t>

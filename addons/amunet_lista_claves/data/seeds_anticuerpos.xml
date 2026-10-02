@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="clave_mpant01" model="amunet.clave">
+        <field name="clave">MPANT01</field>
+        <field name="nombre">Anticuerpo de detección anti-HSA</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant02" model="amunet.clave">
+        <field name="clave">MPANT02</field>
+        <field name="nombre">Anticuerpo de captura anti-HSA</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant03" model="amunet.clave">
+        <field name="clave">MPANT03</field>
+        <field name="nombre">Anticuerpo policlonal anti-ratón (línea control)</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant04" model="amunet.clave">
+        <field name="clave">MPANT04</field>
+        <field name="nombre">Anticuerpo de captura anti-proteína N SARS-CoV-2</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant05" model="amunet.clave">
+        <field name="clave">MPANT05</field>
+        <field name="nombre">Anticuerpo de detección anti-proteína N SARS-CoV-2</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant06" model="amunet.clave">
+        <field name="clave">MPANT06</field>
+        <field name="nombre">Anticuerpo de ratón, control de detección</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant07" model="amunet.clave">
+        <field name="clave">MPANT07</field>
+        <field name="nombre">Anticuerpo de captura anti-IgG humano</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant08" model="amunet.clave">
+        <field name="clave">MPANT08</field>
+        <field name="nombre">Anticuerpo de captura anti-IgM</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant09" model="amunet.clave">
+        <field name="clave">MPANT09</field>
+        <field name="nombre">Anticuerpo de captura anti-hCG</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant10" model="amunet.clave">
+        <field name="clave">MPANT10</field>
+        <field name="nombre">Anticuerpo de detección anti-hCG</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant11" model="amunet.clave">
+        <field name="clave">MPANT11</field>
+        <field name="nombre">Anticuerpo de detección trypanosoma cruzi</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant12" model="amunet.clave">
+        <field name="clave">MPANT12</field>
+        <field name="nombre">Anticuerpo de captura anti-HbA1c</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant13" model="amunet.clave">
+        <field name="clave">MPANT13</field>
+        <field name="nombre">Anticuerpo de detección anti-HbA1c</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant14" model="amunet.clave">
+        <field name="clave">MPANT14</field>
+        <field name="nombre">Anticuerpo de captura anti-clamidia</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant15" model="amunet.clave">
+        <field name="clave">MPANT15</field>
+        <field name="nombre">Anticuerpo de detección anti-clamidia</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant16" model="amunet.clave">
+        <field name="clave">MPANT16</field>
+        <field name="nombre">Anticuerpo de detección anti-25(OH)D</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant17" model="amunet.clave">
+        <field name="clave">MPANT17</field>
+        <field name="nombre">Anticuerpo de captura anti-COC</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant18" model="amunet.clave">
+        <field name="clave">MPANT18</field>
+        <field name="nombre">Anticuerpo de captura anti-THC</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant19" model="amunet.clave">
+        <field name="clave">MPANT19</field>
+        <field name="nombre">Anticuerpo de captura anti-AMP</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant20" model="amunet.clave">
+        <field name="clave">MPANT20</field>
+        <field name="nombre">Anticuerpo de captura anti-met</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant21" model="amunet.clave">
+        <field name="clave">MPANT21</field>
+        <field name="nombre">Anticuerpo de captura anti-OPI</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant22" model="amunet.clave">
+        <field name="clave">MPANT22</field>
+        <field name="nombre">Anticuerpo de captura anti-influenza A</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant23" model="amunet.clave">
+        <field name="clave">MPANT23</field>
+        <field name="nombre">Anticuerpo de captura anti-influenza B</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant24" model="amunet.clave">
+        <field name="clave">MPANT24</field>
+        <field name="nombre">Anticuerpo de captura anti-MYO</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant25" model="amunet.clave">
+        <field name="clave">MPANT25</field>
+        <field name="nombre">Anticuerpo de captura anti-ckmb</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant26" model="amunet.clave">
+        <field name="clave">MPANT26</field>
+        <field name="nombre">Anticuerpo de captura anti-cTnl</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant27" model="amunet.clave">
+        <field name="clave">MPANT27</field>
+        <field name="nombre">Anticuerpo de captura anti-biotina</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant28" model="amunet.clave">
+        <field name="clave">MPANT28</field>
+        <field name="nombre">Anticuerpo de captura anti-NS1 del dengue</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant29" model="amunet.clave">
+        <field name="clave">MPANT29</field>
+        <field name="nombre">Anticuerpo de detección anti-CKMB</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant30" model="amunet.clave">
+        <field name="clave">MPANT30</field>
+        <field name="nombre">Anticuerpo de detección anti-influenza B</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant31" model="amunet.clave">
+        <field name="clave">MPANT31</field>
+        <field name="nombre">Anticuerpo de detección anti-influenza A</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant32" model="amunet.clave">
+        <field name="clave">MPANT32</field>
+        <field name="nombre">Anticuerpo de detección anti-NS1 del Dengue</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant33" model="amunet.clave">
+        <field name="clave">MPANT33</field>
+        <field name="nombre">Anticuerpo de detección anti-MYO</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant34" model="amunet.clave">
+        <field name="clave">MPANT34</field>
+        <field name="nombre">Anticuerpo de detección anti-FITC</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant35" model="amunet.clave">
+        <field name="clave">MPANT35</field>
+        <field name="nombre">Anticuerpo de detección anti-cTnl</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant36" model="amunet.clave">
+        <field name="clave">MPANT36</field>
+        <field name="nombre">Anticuerpo de detección anti-PSA</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant37" model="amunet.clave">
+        <field name="clave">MPANT37</field>
+        <field name="nombre">Anticuerpo de captura anti-PSA</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant38" model="amunet.clave">
+        <field name="clave">MPANT38</field>
+        <field name="nombre">Anticuerpo de detección anti-RSV</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant39" model="amunet.clave">
+        <field name="clave">MPANT39</field>
+        <field name="nombre">Anticuerpo de captura anti-RSV</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant40" model="amunet.clave">
+        <field name="clave">MPANT40</field>
+        <field name="nombre">Anticuerpo de detección anti-p24</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant41" model="amunet.clave">
+        <field name="clave">MPANT41</field>
+        <field name="nombre">Anticuerpo de captura anti-p24</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant42" model="amunet.clave">
+        <field name="clave">MPANT42</field>
+        <field name="nombre">Anticuerpo de captura anti-ferritina</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant43" model="amunet.clave">
+        <field name="clave">MPANT43</field>
+        <field name="nombre">Anticuerpo de detección anti-ferritina</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant44" model="amunet.clave">
+        <field name="clave">MPANT44</field>
+        <field name="nombre">Anticuerpo de captura anti-rotavirus</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant45" model="amunet.clave">
+        <field name="clave">MPANT45</field>
+        <field name="nombre">Anticuerpo de detección anti-rotavirus</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant46" model="amunet.clave">
+        <field name="clave">MPANT46</field>
+        <field name="nombre">Anticuerpo de captura anti-adenovirus</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant47" model="amunet.clave">
+        <field name="clave">MPANT47</field>
+        <field name="nombre">Anticuerpo de detección anti-adenovirus</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant48" model="amunet.clave">
+        <field name="clave">MPANT48</field>
+        <field name="nombre">Anticuerpo de detección control sifilis</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant49" model="amunet.clave">
+        <field name="clave">MPANT49</field>
+        <field name="nombre">Anticuerpo de captura anti-salmonella</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant50" model="amunet.clave">
+        <field name="clave">MPANT50</field>
+        <field name="nombre">Anticuerpo de detección anti-salmonella typhi</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant51" model="amunet.clave">
+        <field name="clave">MPANT51</field>
+        <field name="nombre">Anticuerpos de captura anti-streptococcus</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant52" model="amunet.clave">
+        <field name="clave">MPANT52</field>
+        <field name="nombre">Anticuerpo de detección anti-streptococcus</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant53" model="amunet.clave">
+        <field name="clave">MPANT53</field>
+        <field name="nombre">Anticuerpo de captura anti-Dimero D</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant54" model="amunet.clave">
+        <field name="clave">MPANT54</field>
+        <field name="nombre">Anticuerpo de detección anti-Dimero D</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant55" model="amunet.clave">
+        <field name="clave">MPANT55</field>
+        <field name="nombre">Anticuerpo de captura anti-TSH</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant56" model="amunet.clave">
+        <field name="clave">MPANT56</field>
+        <field name="nombre">Anticuerpo de detección anti-TSH</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant57" model="amunet.clave">
+        <field name="clave">MPANT57</field>
+        <field name="nombre">Anticuerpo de captura anti-vitamina D-BSA</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant58" model="amunet.clave">
+        <field name="clave">MPANT58</field>
+        <field name="nombre">Anticuerpo de detección anti-vitamina D</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant59" model="amunet.clave">
+        <field name="clave">MPANT59</field>
+        <field name="nombre">Anticuerpo de captura anti-LAMP gral</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant60" model="amunet.clave">
+        <field name="clave">MPANT60</field>
+        <field name="nombre">Anticuerpo de detección anti-LAMP gral</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant61" model="amunet.clave">
+        <field name="clave">MPANT61</field>
+        <field name="nombre">Anticuerpo anti-INTERFERON Y</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant62" model="amunet.clave">
+        <field name="clave">MPANT62</field>
+        <field name="nombre">Anticuerpo anti-INHB</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant63" model="amunet.clave">
+        <field name="clave">MPANT63</field>
+        <field name="nombre">Anticuerpo anti-ct</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant64" model="amunet.clave">
+        <field name="clave">MPANT64</field>
+        <field name="nombre">Anticuerpo anti-ST2</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant65" model="amunet.clave">
+        <field name="clave">MPANT65</field>
+        <field name="nombre">Anticuerpo de captura anti-nNT-proBNP</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant66" model="amunet.clave">
+        <field name="clave">MPANT66</field>
+        <field name="nombre">Anticuerpo de detección Anti-NT-proBNP</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant67" model="amunet.clave">
+        <field name="clave">MPANT67</field>
+        <field name="nombre">Anticuerpo de detección anti-strepto A</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant68" model="amunet.clave">
+        <field name="clave">MPANT68</field>
+        <field name="nombre">Anticuerpo de captura anti-strepto A</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant69" model="amunet.clave">
+        <field name="clave">MPANT69</field>
+        <field name="nombre">Anticuerpo control de detección</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+    <record id="clave_mpant70" model="amunet.clave">
+        <field name="clave">MPANT70</field>
+        <field name="nombre">Anticuerpo anti-HIS tag (FPZ0892)</field>
+        <field name="clasificacion">mp</field>
+        <field name="subcategoria">Anticuerpos</field>
+        <field name="estado">activa</field>
+    </record>
+</odoo>

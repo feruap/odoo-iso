@@ -21,6 +21,8 @@
         'data/seeds_soluciones_captura.xml',
         'data/seeds_consumibles.xml',
         'data/seeds_soluciones_conjugado.xml',
+        'data/seeds_anticuerpos.xml',
+        'data/seeds_hojas_maestras.xml',
     ],
     'assets': {
         'web.assets_backend': [
