@@ -27,6 +27,27 @@ RECORDATORIOS = [
     (  5, '🔴 Vencimiento en 5 días',               '#dc2626'),
 ]
 
+# Cada tipo de documento tiene sus propios plazos. Antes TODOS usaban la lista de arriba
+# y un permiso de importacion recibia 10 correos desde 240 dias antes, con un texto que
+# hablaba de plazos de DIGIPRiS que no le aplican. Saturar de avisos es la forma mas
+# segura de que dejen de leerse.
+#
+# Dias confirmados con Stacey (documentacion) y el equipo el 01-oct-2026.
+RECORDATORIOS_POR_TIPO = {
+    'permiso_importacion': [
+        (70, '🟢 PRIMER AVISO — Iniciar trámite de renovación', '#27ae60'),
+        (60, '🔴 URGENTE — Plazo límite para renovar',          '#c0392b'),
+    ],
+    'cert_libre_venta': [
+        (70, '🟢 PRIMER AVISO — Iniciar gestión del certificado', '#27ae60'),
+        (60, '🔴 URGENTE — Plazo límite para renovar',            '#c0392b'),
+    ],
+    'certificado_bpf': [
+        (200, '🟢 PRIMER AVISO — Iniciar preparación BPF',        '#27ae60'),
+        (180, '🔴 FECHA LÍMITE — Someter solicitud a COFEPRIS',   '#c0392b'),
+    ],
+}
+
 TIPO_SELECTION = [
     ('registro_sanitario',  'Registro sanitario'),
     ('certificado_bpf',     'Certificado BPF'),
@@ -265,8 +286,11 @@ class AmunetVencimiento(models.Model):
         etiqueta = '⚠️ Recordatorio de vencimiento'
         color = '#b45309'
 
+        # El tipo manda; si no tiene lista propia, se usa la general.
+        recordatorios = RECORDATORIOS_POR_TIPO.get(self.tipo, RECORDATORIOS)
+
         if not forzar:
-            for d, lbl, clr in RECORDATORIOS:
+            for d, lbl, clr in recordatorios:
                 disparo = self.fecha_vencimiento - timedelta(days=d)
                 if hoy >= disparo and not self._ya_enviado(d):
                     disparar = d
@@ -277,14 +301,55 @@ class AmunetVencimiento(models.Model):
                 return
         else:
             disparar = dias
-            for d, lbl, clr in RECORDATORIOS:
+            for d, lbl, clr in recordatorios:
                 if dias <= d:
                     etiqueta = lbl
                     color = clr
                     break
 
-        fecha_ideal = self.fecha_vencimiento - timedelta(days=180)
-        fecha_limite = self.fecha_vencimiento - timedelta(days=150)
+        # Las fechas y las acciones del correo tambien dependen del tipo: antes decian
+        # siempre "180 dias ideal / 150 limite" aunque el documento tuviera otros plazos.
+        if self.tipo in ('permiso_importacion', 'cert_libre_venta'):
+            ref1 = self.fecha_vencimiento - timedelta(days=70)
+            ref2 = self.fecha_vencimiento - timedelta(days=60)
+            fechas_html = (
+                '<tr><td>📅 Primer aviso — iniciar trámite (70 días antes):</td>'
+                '<td><b>%s</b></td></tr>'
+                '<tr><td>⚠️ Plazo límite (60 días antes):</td>'
+                '<td><b>%s</b></td></tr>'
+            ) % (ref1.strftime('%d/%m/%Y'), ref2.strftime('%d/%m/%Y'))
+            acciones_html = (
+                '<li><b>70 días antes:</b> Iniciar el trámite de renovación.</li>'
+                '<li><b>60 días antes:</b> Plazo límite. Si no se ha iniciado, es urgente.</li>'
+            )
+        elif self.tipo == 'certificado_bpf':
+            ref1 = self.fecha_vencimiento - timedelta(days=200)
+            ref2 = self.fecha_vencimiento - timedelta(days=180)
+            fechas_html = (
+                '<tr><td>📅 Iniciar preparación (200 días antes):</td>'
+                '<td><b>%s</b></td></tr>'
+                '<tr><td>⚠️ Someter a COFEPRIS (180 días antes):</td>'
+                '<td><b>%s</b></td></tr>'
+            ) % (ref1.strftime('%d/%m/%Y'), ref2.strftime('%d/%m/%Y'))
+            acciones_html = (
+                '<li><b>200 días antes:</b> Iniciar preparación de documentos BPF.</li>'
+                '<li><b>180 días antes:</b> Someter solicitud a COFEPRIS.</li>'
+            )
+        else:
+            ref1 = self.fecha_vencimiento - timedelta(days=180)
+            ref2 = self.fecha_vencimiento - timedelta(days=150)
+            fechas_html = (
+                '<tr><td>📅 Fecha ideal — someter en DIGIPRiS (180 días antes):</td>'
+                '<td><b>%s</b></td></tr>'
+                '<tr><td>⚠️ Fecha límite legal — plazo COFEPRIS (150 días antes):</td>'
+                '<td><b>%s</b></td></tr>'
+            ) % (ref1.strftime('%d/%m/%Y'), ref2.strftime('%d/%m/%Y'))
+            acciones_html = (
+                '<li><b>240 días antes:</b> Revisar checklist e iniciar recopilación de documentos.</li>'
+                '<li><b>200 días antes:</b> Confirmar que todos los documentos estén listos y vigentes.</li>'
+                '<li><b>180 días antes:</b> Someter la solicitud de prórroga en DIGIPRiS (COFEPRIS).</li>'
+                '<li><b>150 días antes:</b> Último día legal para presentar. Si no se ha hecho, es urgente.</li>'
+            )
         checklist_html = self._bloque_checklist() if disparar == 240 else ''
 
         asunto = '%s — %s (vence %s)' % (
@@ -309,10 +374,7 @@ class AmunetVencimiento(models.Model):
 
           <h3>Fechas clave para la prórroga</h3>
           <table cellpadding="6" style="font-size:13px;">
-            <tr><td>📅 Fecha ideal — someter en DIGIPRiS (180 días antes):</td>
-                <td><b>%(fecha_ideal)s</b></td></tr>
-            <tr><td>⚠️ Fecha límite legal — plazo COFEPRIS (150 días antes):</td>
-                <td><b>%(fecha_limite)s</b></td></tr>
+            %(fechas_html)s
             <tr><td>⛔ Vencimiento del registro:</td>
                 <td><b style="color:#dc2626;">%(fecha_vencimiento)s</b></td></tr>
           </table>
@@ -321,10 +383,7 @@ class AmunetVencimiento(models.Model):
 
           <h3>Acciones requeridas</h3>
           <ul style="font-size:13px;">
-            <li><b>240 días antes:</b> Revisar checklist e iniciar recopilación de documentos.</li>
-            <li><b>200 días antes:</b> Confirmar que todos los documentos estén listos y vigentes.</li>
-            <li><b>180 días antes:</b> Someter la solicitud de prórroga en DIGIPRiS (COFEPRIS).</li>
-            <li><b>150 días antes:</b> Último día legal para presentar. Si no se ha hecho, es urgente.</li>
+            %(acciones_html)s
           </ul>
 
           <p style="font-size:11px;color:#7f8c8d;">
@@ -339,8 +398,8 @@ class AmunetVencimiento(models.Model):
             'numero': self.numero or '—',
             'tipo': dict(TIPO_SELECTION).get(self.tipo, self.tipo),
             'titular': self.titular or '—',
-            'fecha_ideal': fecha_ideal.strftime('%d/%m/%Y'),
-            'fecha_limite': fecha_limite.strftime('%d/%m/%Y'),
+            'fechas_html': fechas_html,
+            'acciones_html': acciones_html,
             'fecha_vencimiento': self.fecha_vencimiento.strftime('%d/%m/%Y'),
             'checklist_html': checklist_html,
         })
