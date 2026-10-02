@@ -513,6 +513,54 @@ class MrpWorkorder(models.Model):
             raise UserError(_(
                 'Faltan datos por capturar:\n%s'
             ) % '\n'.join(errores))
+
+        # La cantidad surtida se iguala a la que de verdad salio del almacen.
+        #
+        # POR QUE AQUI. 'Cantidad surtida' se autollena al INICIAR el surtido con la
+        # cantidad por consumir de ese momento, y no se vuelve a mirar. Si despues la
+        # orden cambia de tamano o se anade un segundo lote, el campo se queda con el
+        # valor viejo. Paso en 0826/01/ECO (la orden empezo en 48 piezas y subio a 84) y
+        # en 0826/01/DCZ (llego un segundo lote de cajas).
+        #
+        # Y NO ES COSMETICO: al recibir el surtido, Produccion copia
+        # amunet_qty_supplied -> quantity. O sea que el numero desfasado acaba siendo el
+        # CONSUMO registrado de la orden. En ECO habria consumido 48 piezas de material
+        # cuando salieron 84.
+        #
+        # Este es el momento correcto para fijarlo: Almacen esta firmando "esto entregue"
+        # y los lotes ya estan capturados. No bloquea a nadie; corrige y deja constancia.
+        #
+        # En productos con lote cuenta SOLO lo que tiene lote asignado: una linea sin
+        # lote es reserva pendiente, no material que haya salido. En productos sin
+        # trazabilidad no hay lote que exigir, asi que cuenta todo.
+        ajustes = []
+        for move in self.production_id.move_raw_ids:
+            if move.state == 'cancel':
+                continue
+            if es_solucion and not move.amunet_needs_surtido:
+                continue
+            if move.product_id.tracking in ('lot', 'serial'):
+                real = sum(move.move_line_ids.filtered(lambda l: l.lot_id).mapped('quantity'))
+            else:
+                real = sum(move.move_line_ids.mapped('quantity'))
+            anterior = move.amunet_qty_supplied or 0.0
+            if real and abs(real - anterior) > 0.001:
+                move.with_context(amunet_supply_internal=True).amunet_qty_supplied = real
+                ajustes.append((move.product_id.display_name, anterior, real))
+
+        if ajustes and self.production_id:
+            filas = ''.join(
+                '<tr><td>%s</td><td style="text-align:right">%s</td>'
+                '<td style="text-align:right"><b>%s</b></td></tr>' % a for a in ajustes)
+            self.production_id.sudo().message_post(body=Markup(_(
+                '<p><b>Cantidad surtida ajustada a los lotes capturados</b> al confirmar '
+                'el surtido, en %(n)s componente(s):</p>'
+                '<table border="1" cellpadding="4" style="border-collapse:collapse">'
+                '<tr><th>Componente</th><th>Decia</th><th>Quedo</th></tr>%(filas)s</table>'
+                '<p>El campo se habia llenado al iniciar el surtido y la orden o los '
+                'lotes cambiaron despues. Manda lo que salio del almacen.</p>'
+            )) % {'n': len(ajustes), 'filas': filas})
+
         # Pausar timer sin cerrar la WO.
         if hasattr(self, 'end_all'):
             self.sudo().end_all()
