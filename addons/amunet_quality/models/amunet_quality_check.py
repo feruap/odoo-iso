@@ -1984,6 +1984,19 @@ class AmunetQualityCheck(models.Model):
                 'anexo_col7_header': 'Desempeño',
                 'anexo_col8_header': '',
             })
+        elif code.startswith('SP') and not code.startswith(('SPHMC', 'SPHMT', 'SPALMA')):
+            self.write({
+                'tiene_anexos': True,
+                'anexo_titulo': 'ANEXO SOLUCIÓN DE TRABAJO',
+                'anexo_col1_header': '',
+                'anexo_col2_header': '',
+                'anexo_col3_header': '',
+                'anexo_col4_header': '',
+                'anexo_col5_header': '',
+                'anexo_col6_header': '',
+                'anexo_col7_header': '',
+                'anexo_col8_header': '',
+            })
 
     def _load_product_parameters(self):
         """
