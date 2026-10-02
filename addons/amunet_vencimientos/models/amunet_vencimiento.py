@@ -42,11 +42,11 @@ RECORDATORIOS_POR_TIPO = {
         (70, '🟢 PRIMER AVISO — Iniciar gestión del certificado', '#27ae60'),
         (60, '🔴 URGENTE — Plazo límite para renovar',            '#c0392b'),
     ],
-    'certificado_bpf': [
-        (200, '🟢 PRIMER AVISO — Iniciar preparación BPF',        '#27ae60'),
-        (180, '🔴 FECHA LÍMITE — Someter solicitud a COFEPRIS',   '#c0392b'),
-    ],
 }
+# BPF NO lleva lista propia, y es a proposito: Documentacion lo corrigio el 01-oct-2026.
+# Ya recibia sus avisos de 200 y 180 dias porque esos dias estan en la lista global, y
+# ademas los otros ocho. Darle lista propia lo dejaba con SOLO dos: despues del aviso de
+# 180 dias no recibiria ninguno mas hasta el vencimiento.
 
 TIPO_SELECTION = [
     ('registro_sanitario',  'Registro sanitario'),
@@ -322,20 +322,9 @@ class AmunetVencimiento(models.Model):
                 '<li><b>70 días antes:</b> Iniciar el trámite de renovación.</li>'
                 '<li><b>60 días antes:</b> Plazo límite. Si no se ha iniciado, es urgente.</li>'
             )
-        elif self.tipo == 'certificado_bpf':
-            ref1 = self.fecha_vencimiento - timedelta(days=200)
-            ref2 = self.fecha_vencimiento - timedelta(days=180)
-            fechas_html = (
-                '<tr><td>📅 Iniciar preparación (200 días antes):</td>'
-                '<td><b>%s</b></td></tr>'
-                '<tr><td>⚠️ Someter a COFEPRIS (180 días antes):</td>'
-                '<td><b>%s</b></td></tr>'
-            ) % (ref1.strftime('%d/%m/%Y'), ref2.strftime('%d/%m/%Y'))
-            acciones_html = (
-                '<li><b>200 días antes:</b> Iniciar preparación de documentos BPF.</li>'
-                '<li><b>180 días antes:</b> Someter solicitud a COFEPRIS.</li>'
-            )
         else:
+            # Aqui caen tambien el certificado BPF y el registro sanitario: los dos
+            # conservan el texto de siempre.
             ref1 = self.fecha_vencimiento - timedelta(days=180)
             ref2 = self.fecha_vencimiento - timedelta(days=150)
             fechas_html = (
