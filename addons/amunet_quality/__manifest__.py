@@ -35,6 +35,7 @@ dispositivos médicos y productos farmacéuticos.""",
         'data/report_quality_params.xml',
         'data/cron_reanalisis_caducidad.xml',
         'data/sthis_descriptions.xml',
+        'data/migrate_soluciones_vama_a_mavi.xml',
 
         # Wizards
         'wizard/amunet_quality_reanalysis_wizard_views.xml',

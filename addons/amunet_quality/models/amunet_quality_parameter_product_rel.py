@@ -348,6 +348,117 @@ class AmunetQualityParameterProductRel(models.Model):
         self.ensure_one()
         return self.specification_config_ids.filtered(lambda c: c.active)
 
+    @api.model
+    def _migrate_soluciones_vama_to_mavi(self):
+        """Migración VAMA→MAVI en soluciones de trabajo semiprocesado. Idempotente."""
+        Tmpl = self.env['product.template']
+        SpecConfig = self.env['amunet.quality.parameter.specification.config']
+        cr = self.env.cr
+
+        # Parámetros del catálogo
+        MAVI_07_ID = self.env.ref('amunet_quality.param_mavi_07').id
+        MAVI_13_ID = self.env.ref('amunet_quality.param_vama_004').id
+        MGA_0701_ID = self.env.ref('amunet_quality.param_mga_0701').id
+
+        # Specs de catálogo para MAVI-07 (Muestra negativa=628, positiva=629)
+        mavi07_specs = self.env['amunet.quality.check.parameter.specification'].search([
+            ('parameter_id', '=', MAVI_07_ID),
+            ('name', 'in', ['Muestra negativa', 'Muestra positiva']),
+            ('active', '=', True),
+        ])
+
+        # 1. VAMA-034 → MAVI-07 en 5 soluciones
+        for code in ['SPAPB01', 'SPBAB01', 'SPBAB02', 'SPSAG01', 'SPHBB01']:
+            tmpl = Tmpl.search([('default_code', '=', code), ('active', '=', True)], limit=1)
+            if not tmpl:
+                continue
+            if self.search([('product_tmpl_id', '=', tmpl.id), ('parameter_id', '=', MAVI_07_ID)]):
+                continue  # ya migrado
+            # Desactivar VAMA-034
+            self.search([
+                ('product_tmpl_id', '=', tmpl.id),
+                ('parameter_code', '=', 'VAMA-034'),
+                ('active', '=', True),
+            ]).write({'active': False})
+            # Crear rel MAVI-07 via SQL para evitar el batch create problemático
+            cr.execute("""
+                INSERT INTO amunet_quality_parameter_product_rel
+                    (product_tmpl_id, parameter_id, parameter_code, parameter_name,
+                     active, create_uid, write_uid, create_date, write_date)
+                VALUES (%s, %s, 'MAVI-07', 'Visualización de líneas resultado base',
+                        TRUE, 1, 1, NOW(), NOW()) RETURNING id
+            """, (tmpl.id, MAVI_07_ID))
+            new_rel_id = cr.fetchone()[0]
+            for spec in mavi07_specs:
+                SpecConfig.create({
+                    'product_parameter_rel_id': new_rel_id,
+                    'specification_id': spec.id,
+                    'active': True,
+                })
+
+        # 2. SPNPS01: renombrar VAMA → MAVI (solo si siguen con código VAMA)
+        spnps01 = Tmpl.search([('default_code', '=', 'SPNPS01'), ('active', '=', True)], limit=1)
+        if spnps01:
+            renames = [
+                ('VAMA-006', 'MAVI-03',  'Determinación de color NPS'),
+                ('VAMA-065', 'MGA 0361', 'Espectrofotometría visible y ultravioleta'),
+                ('VAMA-066', 'MAVI-16',  'Apariencia colorimétrica'),
+                ('VAMA-067', 'MAVI-10',  'Apariencia y aglomeración después de las fuerzas centrífugas'),
+            ]
+            for old_code, new_code, new_name in renames:
+                rel = self.search([
+                    ('product_tmpl_id', '=', spnps01.id),
+                    ('parameter_code', '=', old_code),
+                    ('active', '=', True),
+                ])
+                if rel:
+                    rel.write({'parameter_code': new_code, 'parameter_name': new_name})
+
+        # 3. SPSPA05: agregar MAVI-13 y MGA 0701 si no existen
+        spspa05 = Tmpl.search([('default_code', '=', 'SPSPA05'), ('active', '=', True)], limit=1)
+        if spspa05:
+            if not self.search([('product_tmpl_id', '=', spspa05.id), ('parameter_id', '=', MAVI_13_ID)]):
+                spec_m13 = self.env['amunet.quality.check.parameter.specification'].search([
+                    ('parameter_id', '=', MAVI_13_ID), ('active', '=', True),
+                ], limit=1)
+                if spec_m13:
+                    cr.execute("""
+                        INSERT INTO amunet_quality_parameter_product_rel
+                            (product_tmpl_id, parameter_id, parameter_code, parameter_name,
+                             active, create_uid, write_uid, create_date, write_date)
+                        VALUES (%s, %s, 'MAVI-13', 'Examen de partículas',
+                                TRUE, 1, 1, NOW(), NOW()) RETURNING id
+                    """, (spspa05.id, MAVI_13_ID))
+                    SpecConfig.create({
+                        'product_parameter_rel_id': cr.fetchone()[0],
+                        'specification_id': spec_m13.id,
+                        'active': True,
+                    })
+            if not self.search([('product_tmpl_id', '=', spspa05.id), ('parameter_id', '=', MGA_0701_ID)]):
+                spec_mga = self.env['amunet.quality.check.parameter.specification'].search([
+                    ('parameter_id', '=', MGA_0701_ID),
+                    ('evaluation_type', '=', 'numeric_range'),
+                    ('active', '=', True),
+                ], limit=1)
+                if spec_mga:
+                    cr.execute("""
+                        INSERT INTO amunet_quality_parameter_product_rel
+                            (product_tmpl_id, parameter_id, parameter_code, parameter_name,
+                             active, create_uid, write_uid, create_date, write_date)
+                        VALUES (%s, %s, 'MGA 0701', 'Determinación de pH',
+                                TRUE, 1, 1, NOW(), NOW()) RETURNING id
+                    """, (spspa05.id, MGA_0701_ID))
+                    SpecConfig.create({
+                        'product_parameter_rel_id': cr.fetchone()[0],
+                        'specification_id': spec_mga.id,
+                        'active': True,
+                        'specification_name': 'pH',
+                        'nominal_value': 8.6,
+                        'tolerance': 0.05,
+                        'min_value': 8.55,
+                        'max_value': 8.65,
+                    })
+
     def get_test_line_values(self):
         """
         Prepara los valores para crear una línea de test en el QC.

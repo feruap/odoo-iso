@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Migración VAMA→MAVI en soluciones de trabajo semiprocesado (2026-10-01) -->
+<!-- Calidad / Diana Flores -->
+<odoo>
+    <data noupdate="1">
+        <function model="amunet.quality.parameter.product.rel"
+                  name="_migrate_soluciones_vama_to_mavi"/>
+    </data>
+</odoo>
